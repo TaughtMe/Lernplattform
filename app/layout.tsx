@@ -1,14 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import { ThemeToggle } from "./components/theme-toggle";
 import "./globals.css";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#df625f",
-  colorScheme: "light",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fffaf4" },
+    { media: "(prefers-color-scheme: dark)", color: "#171311" },
+  ],
+  colorScheme: "light dark",
 };
+
+const themeBootScript = `(()=>{try{const p=localStorage.getItem("theme-preference")||"system";const t=p==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{}})()`;
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -60,8 +66,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de">
-      <body>{children}</body>
+    <html lang="de" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body>
+        {children}
+        <ThemeToggle />
+      </body>
     </html>
   );
 }

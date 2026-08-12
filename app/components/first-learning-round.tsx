@@ -12,6 +12,7 @@ import {
 } from "../../src/domain/learning-session";
 import { deriveLeitnerProgress } from "../../src/domain/leitner-schedule";
 import { createPersonalLearningEventRepository } from "../../src/storage/personal-learning-events";
+import { LeitnerTrack } from "./leitner-track";
 
 const exampleBundle = parseLearningBundleV1({
   schemaVersion: LEARNING_BUNDLE_VERSION,
@@ -246,35 +247,43 @@ export function FirstLearningRound() {
 
         <aside className="progress-card" aria-labelledby="progress-title">
           <span className="learning-card__step">4 · Lernstand</span>
-          <h2 id="progress-title">Auf diesem Gerät</h2>
+          <h2 id="progress-title">Deine Lernbox</h2>
           {loading ? (
             <p>Gespeicherter Lernstand wird geladen …</p>
           ) : (
-            <dl className="progress-values">
-              <div>
-                <dt>Bedeutung</dt>
-                <dd>Box {leitnerProgress.knowledge.box}</dd>
+            <>
+              <p className="leitner-explanation">
+                Richtig beantwortet wandert die Karte weiter. Bei einem Fehler
+                beginnt sie wieder in Box 1.
+              </p>
+              <div className="leitner-tracks">
+                <LeitnerTrack
+                  label="Bedeutung"
+                  currentBox={leitnerProgress.knowledge.box}
+                />
+                <LeitnerTrack
+                  label="Schreiben"
+                  currentBox={leitnerProgress.writing.box}
+                />
               </div>
-              <div>
-                <dt>Schreiben</dt>
-                <dd>Box {leitnerProgress.writing.box}</dd>
-              </div>
-              <div>
-                <dt>Versuche</dt>
-                <dd>{progress.attempts}</dd>
-              </div>
-              <div>
-                <dt>Nächste Wiederholung</dt>
-                <dd>
-                  {nextDueAt <= new Date().toISOString()
-                    ? "jetzt"
-                    : new Intl.DateTimeFormat("de-DE", {
-                        day: "2-digit",
-                        month: "2-digit",
-                      }).format(new Date(nextDueAt))}
-                </dd>
-              </div>
-            </dl>
+              <dl className="progress-values progress-values--compact">
+                <div>
+                  <dt>Versuche</dt>
+                  <dd>{progress.attempts}</dd>
+                </div>
+                <div>
+                  <dt>Nächste Wiederholung</dt>
+                  <dd>
+                    {nextDueAt <= new Date().toISOString()
+                      ? "jetzt"
+                      : new Intl.DateTimeFormat("de-DE", {
+                          day: "2-digit",
+                          month: "2-digit",
+                        }).format(new Date(nextDueAt))}
+                  </dd>
+                </div>
+              </dl>
+            </>
           )}
           <p className="progress-note">
             Dieser Prototyp sendet den Lernstand nicht an einen Server.

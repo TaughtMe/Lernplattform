@@ -48,6 +48,16 @@ text-secondary: gedämpftes Braun/Grau
 
 Die endgültigen Farbwerte werden bei der Implementierung festgelegt und auf ausreichenden Kontrast nach WCAG geprüft.
 
+## Heller und dunkler Darstellungsmodus
+
+Lernraum unterstützt von Beginn an **Hell**, **Dunkel** und **System**. Die Wahl gilt plattformweit, wird lokal auf dem Gerät gespeichert und vor dem ersten Rendern angewendet, damit beim Seitenwechsel kein heller oder dunkler Blitz entsteht. „System“ folgt der Betriebssystemeinstellung und reagiert auch auf deren Änderung.
+
+- Alle Farben werden über semantische Design-Tokens wie Hintergrund, Oberfläche, Text, Linie und Aktionsfarbe vergeben.
+- Fach- und Statusfarben müssen in beiden Modi ausreichenden Kontrast besitzen und dürfen nie die einzige Information tragen.
+- Neue Komponenten gelten erst als fertig, wenn Fokus, Hover, Fehler, Erfolg, deaktivierte Zustände und Inhalte in beiden Modi geprüft wurden.
+- Browserleisten erhalten einen zur Systemeinstellung passenden Farbhinweis.
+- Der Umschalter bleibt auf Smartphone, Tablet und Desktop erreichbar, ohne Lernaktionen oder die mobile Navigation zu verdecken.
+
 ## Navigation
 
 Nach dem Schülereinstieg wechselt die Plattform in eine bewusst minimalistische Arbeitsoberfläche. Sie zeigt zunächst nur **Meine Klasse(n)** und **Freies Üben**. Innerhalb einer Klasse bilden **Heute üben** und **Aufgaben** die primäre Navigation. Fachmodule erscheinen nur, wenn die Lehrkraft sie für diese Klasse aktiviert hat.

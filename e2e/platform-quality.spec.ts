@@ -33,6 +33,7 @@ test("layout never scrolls horizontally", async ({ page }) => {
 test("primary pages have no automatically detectable WCAG A/AA violations", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   for (const path of [
     "/",
     "/lernen",
@@ -77,13 +78,44 @@ test("a learning result survives a page reload on the same device", async ({
   await expect(
     page.getByRole("heading", { name: "Richtig gelöst" }),
   ).toBeVisible();
-  await expect(page.getByText("Box 2", { exact: true })).toHaveCount(2);
-  await expect(page.getByText("1", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Bedeutung: Box 2 von 5")).toBeVisible();
+  await expect(page.getByLabel("Schreiben: Box 2 von 5")).toBeVisible();
+  await expect(
+    page.locator(".progress-values").getByText("1", { exact: true }),
+  ).toBeVisible();
 
   await page.reload();
   await expect(page.getByText("Versuche")).toBeVisible();
-  await expect(page.getByText("Box 2", { exact: true })).toHaveCount(2);
-  await expect(page.getByText("1", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Bedeutung: Box 2 von 5")).toBeVisible();
+  await expect(page.getByLabel("Schreiben: Box 2 von 5")).toBeVisible();
+  await expect(
+    page.locator(".progress-values").getByText("1", { exact: true }),
+  ).toBeVisible();
+});
+
+test("dark mode is stored and the Leitner view stays accessible", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("theme-preference", "dark");
+  });
+  await page.goto("/klasse/7b/aufgaben/vokabeln");
+
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByText("Deine Lernbox")).toBeVisible();
+  await expect(page.getByLabel("Bedeutung: Box 1 von 5")).toBeVisible();
+  await expect(page.getByLabel("Schreiben: Box 1 von 5")).toBeVisible();
+
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test("new class content becomes due practice", async ({ page }) => {

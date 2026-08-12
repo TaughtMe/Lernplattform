@@ -75,7 +75,8 @@ test("keeps mobile and tablet support in the platform shell", async () => {
   assert.match(header, /mobile-navigation/);
   assert.match(layout, /viewportFit:\s*"cover"/);
   assert.match(styles, /env\(safe-area-inset-bottom\)/);
-  assert.match(styles, /min-width:\s*320px/);
+  assert.match(styles, /body\s*{[^}]*min-width:\s*0/s);
+  assert.match(styles, /@media\s*\(max-width:\s*370px\)/);
   assert.match(styles, /pointer:\s*coarse/);
   assert.match(strategy, /iOS Safari/);
   assert.match(strategy, /Android Chrome/);

@@ -74,6 +74,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Fehlerhaften Klassenversuch automatisch in „Heute üben“ aufnehmen
 - [x] Fehlerwiederholung nach einem späteren richtigen Abruf wieder schließen
 - [x] Fälligkeiten aus Leitner-Boxen zusätzlich in „Heute üben“ aufnehmen
+- [x] Leitner-Prinzip als sichtbare Fünf-Boxen-Reihen für Bedeutung und Schreiben darstellen
 - [ ] Modulfreigaben als versioniertes Klassenpaket auf Schülergeräte veröffentlichen
 - [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
 - [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen
@@ -97,6 +98,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Datenschutzfreundliche Fehlerdiagnose ohne vollständige Schülerantworten konzipieren
 - [ ] Leistungsbudgets für schwächere Schulgeräte und große Datenbestände festlegen
 - [x] Mobile-first als verbindliche Entwicklungs- und Abnahmegrundlage festlegen
+- [x] Hellen, dunklen und systemabhängigen Darstellungsmodus als Plattformgrundlage umsetzen
 - [x] Gemeinsame Mobil- und Tablet-Navigation mit Safe-Area-Unterstützung anlegen
 - [x] Jede neue Ansicht ab 320 CSS-Pixel Breite und ohne horizontales Scrollen prüfen
 - [ ] Hochformat, Querformat und eingeblendete Bildschirmtastatur pro Lernmodus testen
