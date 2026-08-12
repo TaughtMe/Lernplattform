@@ -71,6 +71,14 @@ export const learningEventV1Schema = z
     direction: learningDirectionSchema,
     answerMode: answerModeSchema,
     help: helpKindSchema,
+    classContext: z
+      .object({
+        classId: entityIdSchema,
+        assignmentId: entityIdSchema.optional(),
+        rankingEligible: z.boolean(),
+      })
+      .strict()
+      .optional(),
     assessment: z
       .object({
         knowledge: assessmentSchema,

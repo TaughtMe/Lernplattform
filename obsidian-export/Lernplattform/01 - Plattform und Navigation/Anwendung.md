@@ -6,7 +6,13 @@ Eine gemeinsame Oberfläche verbindet Unterricht, LernBox, Duelle und Lehrerbere
 
 ## Anwendung
 
-Schüler sehen eine bewusst einfache Startseite mit **Heute lernen**, **Raum beitreten**, **Duell** und **Mein Haus**. Lehrkräfte öffnen zusätzlich das umfangreichere Lehrer-Cockpit.
+Nach einem bewusst ruhigen Schülereinstieg zeigt **Mein Lernraum** zunächst nur die eigenen Klassen und **Freies Üben**. Freies Üben bietet alle verfügbaren Grundfunktionen, verlangt aber eine bewusste Auswahl von Fach, Thema und Übungsform.
+
+Die öffentliche Hauptseite beschränkt sich auf zwei gleichwertige zentrale Einstiege: **Mein Lernraum** und **Freies Üben**. Darunter bleibt der Beitritt per Klassen- oder Raumcode erreichbar. Beispielgruppen, Duell, Haus und weitere Arbeitsbereiche erscheinen dort nicht.
+
+**Mein Lernraum** zeigt ausschließlich alle Klassen des Schülers und erneut den Code-Beitritt. Freies Üben ist dort nicht doppelt eingebaut, sondern bleibt ein eigener Einstieg von der Hauptseite.
+
+Innerhalb einer Klasse stehen **Heute üben** für fällige Inhalte und gezielte Fehlerwiederholungen sowie **Aufgaben** für alle von der Lehrkraft vergebenen Arbeitsaufträge zur Verfügung.
 
 Lehrer und Schüler verwenden dieselbe App. Ein Schülergerät kann einen privaten Lernbereich und seine Klassenmitgliedschaften als getrennte Einstiege anzeigen. Der individuelle Einschreibungs-QR aktiviert ausschließlich den Schülerbereich der Klasse und die von der Lehrkraft freigegebenen Funktionen.
 
@@ -15,6 +21,8 @@ Lehrer und Schüler verwenden dieselbe App. Ein Schülergerät kann einen privat
 - Schülerfunktionen bleiben einfach und selbsterklärend.
 - Komplexe Datenverwaltung und Auswertungen liegen im Lehrerbereich.
 - Rollen bestimmen, welche Navigation und Funktionen sichtbar sind.
+- Eine Klasse besitzt aktivierbare Module. Nicht aktivierte Module erscheinen weder in Navigation noch Tagesauswahl oder Aufgaben.
+- Leistungen aus „Heute üben“ und „Aufgaben“ können in den Klassenbeitrag einfließen; freies Üben wird nicht automatisch geteilt.
 - Das Verlassen eines Klassenmodus gewährt keine Lehrerrechte.
 - Der Lehrerbereich erfordert eine eigene Lehrer-Authentifizierung und wird auf Schülergeräten nicht als freier Moduswechsel angeboten.
 - Persönlicher Lernstand, Klasseninhalte und Lehrerdaten liegen in getrennten lokalen Speicherbereichen.

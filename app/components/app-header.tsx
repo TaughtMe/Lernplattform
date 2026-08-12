@@ -11,7 +11,7 @@ export function AppHeader() {
           <span>Lernraum</span>
         </Link>
         <nav className="desktop-navigation" aria-label="Hauptnavigation">
-          <Link href="/lernen">Heute lernen</Link>
+          <Link href="/lernen">Mein Lernraum</Link>
           <Link href="/#raumcode">Raum beitreten</Link>
           <Link href="/duell">Duell</Link>
           <Link href="/haus">Mein Haus</Link>
@@ -21,7 +21,7 @@ export function AppHeader() {
         </Link>
       </header>
       <nav className="mobile-navigation" aria-label="Mobile Hauptnavigation">
-        <Link href="/lernen">Lernen</Link>
+        <Link href="/lernen">Lernraum</Link>
         <Link href="/#raumcode">Raum</Link>
         <Link href="/duell">Duell</Link>
         <Link href="/haus">Haus</Link>

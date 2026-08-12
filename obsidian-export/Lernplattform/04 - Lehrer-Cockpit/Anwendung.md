@@ -17,6 +17,8 @@ Das Lehrer-Cockpit bündelt Planung, Durchführung und datensparsame Auswertung 
 - QR-Abgaberunden mit Fortschritt „abgegeben / ausstehend“ verwalten
 - Scanergebnisse akustisch, haptisch und visuell bestätigen
 - Inhalte freigeben und versionieren
+- pro Klasse Module wie Vokabeln, Deutsch, Mathematik, Tipptraining oder Laufdiktat aktivieren und deaktivieren
+- Aufgaben veröffentlichen und festlegen, welche Inhalte in „Heute üben“ einfließen
 - lokale Namens- oder Aliaszuordnungen verwalten
 - gespeicherte Daten exportieren und löschen
 

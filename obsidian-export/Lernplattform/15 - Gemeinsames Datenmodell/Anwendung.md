@@ -21,6 +21,10 @@ Alle Anwendungen benötigen ein gemeinsames, versioniertes Austauschformat, vorl
 - Synchronisationsstatus
 - Duell- und Punktereignis
 - Klassenmitgliedschaft mit stabiler pseudonymer ID
+- Klassenkonfiguration mit aktivierten Modulen
+- Klassenaufgabe mit Modul, Status, Freigabe und optionaler Fälligkeit
+- Tagesübung mit Auslöser „fällig“, „Fehler“ oder „Lehrkraft“
+- optionaler Klassenkontext im Lernereignis mit Klassen-ID, Aufgaben-ID und Rankingfreigabe
 - QR-Leistungsbrief mit Turnus-ID, Standnummer, Paket-ID und Signatur
 - lokaler Abgabestatus je Turnus oder Aufgabenpaket
 - Datenformat-Version

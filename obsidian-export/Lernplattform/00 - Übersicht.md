@@ -16,10 +16,11 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 
 ## Einstieg für Schüler
 
-- **Heute lernen:** fällige und schwierige Inhalte bearbeiten
-- **Raum beitreten:** per Raumcode oder QR-Code an einer Lehrerübung teilnehmen
-- **Duell:** Mitschüler mit einem gemeinsamen Wortschatz herausfordern
-- **Mein Haus:** gemeinsame Ziele, Fortschritt und positive Teamerfolge sehen
+- **Mein Lernraum:** die eigenen Klassen und das freie Üben öffnen
+- **Freies Üben:** Deutsch, Mathematik, Vokabeln, Tipptraining und weitere Grundfunktionen selbstbestimmt auswählen
+- **Klasse:** nur die von der Lehrkraft aktivierten Lernbereiche sehen
+- **Heute üben:** innerhalb einer Klasse fällige Inhalte und durch Fehler aktivierte Wiederholungen bearbeiten
+- **Aufgaben:** alle von der Lehrkraft freigeschalteten Arbeitsaufträge sehen
 
 ## Einstieg für Lehrkräfte
 
@@ -60,6 +61,8 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 - Schüler benötigen möglichst kein Konto.
 - Persönliche Lernstände bleiben standardmäßig lokal auf dem Schülergerät.
 - Lehrerinhalte und persönliche Schülerdaten werden technisch getrennt behandelt.
+- Freies Üben bleibt persönlich; Klassenbereiche können ausdrücklich rankingfähige Ereignisse erzeugen.
+- Eine Klasse kann alle Module enthalten. Die erstellende Lehrkraft aktiviert nur die benötigten Bereiche.
 - Genauigkeit und Lernfortschritt zählen stärker als Geschwindigkeit.
 - Lernstand und Leistungswertung bleiben getrennt: Eine selbst korrigierte Eingabe kann fachlich richtig sein, ohne die volle Punktzahl zu erhalten.
 - Fehler führen nicht zu öffentlicher Bloßstellung oder Minuspunkten.

@@ -4,6 +4,8 @@
 
 Die LernBox ist das lokale Langzeitgedächtnis des Schülers. In Version 1 sammelt sie Unterrichtsvokabeln, eigene Inhalte und optional übernommene Wörter aus Duellen. Später kommen Lernwörter und mathematische Aufgabenfamilien als eigene Lernobjekte hinzu.
 
+Die LernBox bleibt ein eigener persönlicher Bereich und wird nicht durch „Heute üben“ ersetzt. Eine Klassen-Tagesauswahl darf Fälligkeiten und Fehlerhinweise aus dem gemeinsamen Lernkern verwenden, zeigt sie aber im Kontext der jeweiligen Klasse und ihrer aktivierten Module.
+
 ## Anwendung
 
 Die Startansicht zeigt zum Beispiel:
@@ -44,6 +46,7 @@ Mathematik wird später nicht als Sammlung einzelner falscher Ergebnisse gespeic
 ## Regeln
 
 - Persönliche Lernstände gehören dem Gerät.
+- Freies Üben und persönliche LernBox werden nicht automatisch dem Klassenranking zugerechnet.
 - Entfernte Lehrervokabeln werden nicht automatisch aus der LernBox gelöscht.
 - Eigene Wörter werden ohne bewusste Freigabe nicht übertragen.
 - Bei gemeinsam genutzten Geräten müssen Profile oder getrennte lokale Bereiche vorgesehen werden.

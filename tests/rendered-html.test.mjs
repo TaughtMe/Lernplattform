@@ -24,9 +24,10 @@ test("server-renders the Lernraum start page", async () => {
   const html = await response.text();
   assert.match(html, /<html[^>]+lang="de"/i);
   assert.match(html, /Lernraum/);
-  assert.match(html, /Gemeinsam lernen, im Unterricht und zu Hause/);
-  assert.match(html, /Öffentliche Demo/);
-  assert.match(html, /Meine LernBox öffnen/);
+  assert.match(html, /Wie möchtest du heute lernen/);
+  assert.match(html, /Mein Lernraum/);
+  assert.match(html, /Freies Üben/);
+  assert.doesNotMatch(html, /Beispiel-Lerngruppen|Duell|Mein Haus/);
   assert.doesNotMatch(
     html,
     /codex-preview|react-loading-skeleton|Building your site/i,
@@ -35,7 +36,9 @@ test("server-renders the Lernraum start page", async () => {
 
 test("server-renders stable module entry pages", async () => {
   for (const [path, title] of [
-    ["/lernen", "Heute lernen"],
+    ["/lernen", "Meine Klassen"],
+    ["/frei", "Freies Üben"],
+    ["/klasse/7b", "Heute üben"],
     ["/lernbox", "Meine LernBox"],
     ["/raum", "Raum beitreten"],
     ["/lehrer", "Lehrer-Login"],

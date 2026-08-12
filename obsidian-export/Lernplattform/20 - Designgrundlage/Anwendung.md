@@ -50,6 +50,8 @@ Die endgültigen Farbwerte werden bei der Implementierung festgelegt und auf aus
 
 ## Navigation
 
+Nach dem Schülereinstieg wechselt die Plattform in eine bewusst minimalistische Arbeitsoberfläche. Sie zeigt zunächst nur **Meine Klasse(n)** und **Freies Üben**. Innerhalb einer Klasse bilden **Heute üben** und **Aufgaben** die primäre Navigation. Fachmodule erscheinen nur, wenn die Lehrkraft sie für diese Klasse aktiviert hat.
+
 Die öffentliche Startseite ist schülerorientiert. Die Hauptnavigation lautet:
 
 1. **Heute lernen**
@@ -110,6 +112,8 @@ Echte Klassen, Schülernamen, Mitgliederzahlen und persönliche Lernstände werd
 - Karten verwenden helle Flächen, feine Konturen, moderate Rundungen und wenig Schatten.
 - Fachfarben unterstützen die Orientierung, ersetzen aber keine Textbeschriftung.
 - Sprache bleibt kurz, freundlich und handlungsorientiert.
+- Arbeitsansichten verzichten auf öffentliche Demo-Inhalte, große Werbe-Heros und unnötige Navigation.
+- „Heute üben“ erklärt knapp, warum ein Inhalt erscheint: fällig, aus Fehlern oder durch die Lehrkraft.
 
 ## Responsive und barrierearme Umsetzung
 

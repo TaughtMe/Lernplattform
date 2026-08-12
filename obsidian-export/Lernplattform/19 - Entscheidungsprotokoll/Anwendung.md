@@ -224,3 +224,13 @@ Bekannte, nicht sofort behebbare Abhängigkeitsrisiken werden mit Reichweite, Ge
 - Der Lernstand bleibt nach einem Neuladen auf demselben Gerät erhalten.
 - Der Ablauf dient als Integrationsmuster für LernBox und Laufdiktat, ohne deren wechselnde Oberflächen vorwegzunehmen.
 - Browser-, Mobil-, Mindestbreiten- und Barrierefreiheitstests gehören zur Abnahme dieses Durchstichs.
+
+## 16. Schülereinstieg, freies Üben und Klassenarbeitsraum – 12. August 2026
+
+**Beschlossen:** Nach einem sauberen Schülereinstieg werden Klassen und freies Üben getrennt angeboten. Freies Üben enthält alle verfügbaren Grundfunktionen zur freien Auswahl und bleibt persönlich. Eine Klasse kann technisch alle Module aufnehmen; die erstellende Lehrkraft entscheidet jedoch pro Klasse, welche Module sichtbar und nutzbar sind.
+
+Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehler oder die Lehrkraft aktivierte Wiederholungen. **Aufgaben** zeigt sämtliche veröffentlichten Arbeitsaufträge. Lernereignisse aus beiden Klassenbereichen können einen ausdrücklichen rankingfähigen Klassenkontext tragen. Persönliche LernBox und freies Üben werden nicht automatisch geteilt.
+
+## 17. Reduzierte Hauptseite und getrennte Einstiege – 12. August 2026
+
+**Beschlossen:** Die Hauptseite enthält zentral nur **Mein Lernraum**, **Freies Üben** und darunter den Code-Beitritt. Öffentliche Beispielgruppen sowie direkte Einstiege zu Duell und Haus werden entfernt. Mein Lernraum listet ausschließlich alle Klassen und bietet erneut den Code-Beitritt. Für die Aufbauphase bleiben Deutsch, Mathematik, Vokabeln und Tipptraining aktiv; die spätere Lehrer-Konfiguration schränkt sie pro Klasse ein.

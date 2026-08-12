@@ -106,11 +106,16 @@ export function FirstLearningRound() {
       id: crypto.randomUUID(),
       learningObjectId: item.id,
       occurredAt: new Date().toISOString(),
-      source: "learning-box",
+      source: "lesson",
       roundId: crypto.randomUUID(),
       direction: "prompt-to-answer",
       answerMode: "typed",
       help: "none",
+      classContext: {
+        classId: "klasse-7b",
+        assignmentId: "english-school-words",
+        rankingEligible: true,
+      },
       assessment: {
         knowledge: assessment,
         writing: assessment,
@@ -142,8 +147,8 @@ export function FirstLearningRound() {
   return (
     <section className="learning-round" aria-labelledby="learning-round-title">
       <div className="learning-round__intro">
-        <p className="eyebrow">Erster vollständiger Lernweg</p>
-        <h1 id="learning-round-title">Heute lernen</h1>
+        <p className="eyebrow">Klasse 7b · Vokabelaufgabe</p>
+        <h1 id="learning-round-title">School words</h1>
         <p>
           Öffne ein kleines Lernpaket, löse eine Aufgabe und sieh direkt, wie
           dein Ergebnis auf diesem Gerät gespeichert wird.

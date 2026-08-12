@@ -66,6 +66,10 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Plattform und Betrieb
 
+- [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen
+- [x] Klassenansicht mit „Heute üben“ und „Aufgaben“ als Grundstruktur anlegen
+- [x] Aktivierbare Klassenmodule im Domänenmodell validieren
+- [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
 - [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen
 - [x] Strikte TypeScript- und Architekturregeln aktivieren
 - [x] Laufzeitvalidierung für LearningBundle v1 mit Zod anlegen
