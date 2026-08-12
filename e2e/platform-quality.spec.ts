@@ -77,11 +77,21 @@ test("a learning result survives a page reload on the same device", async ({
   await expect(
     page.getByRole("heading", { name: "Richtig gelöst" }),
   ).toBeVisible();
-  await expect(page.getByText("1", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Box 2", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("1", { exact: true })).toBeVisible();
 
   await page.reload();
   await expect(page.getByText("Versuche")).toBeVisible();
-  await expect(page.getByText("1", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Box 2", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("1", { exact: true })).toBeVisible();
+});
+
+test("new class content becomes due practice", async ({ page }) => {
+  await page.goto("/klasse/7b");
+  await expect(page.getByText("Heute fällig")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /School words wiederholen/ }),
+  ).toBeVisible();
 });
 
 test("a class error becomes practice and disappears after correction", async ({

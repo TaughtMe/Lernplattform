@@ -242,3 +242,7 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 ## 19. Übungsplattform statt allgemeiner Aufgabenplanung – 12. August 2026
 
 **Beschlossen:** Der Kern des Lernraums ist selbstständiges Üben und Wiederholen. Die Lehrkraft erstellt im Normalfall keine freien Aufgabenpakete, sondern aktiviert pro Klasse die benötigten Übungsbereiche und sieht datensparsam, was bearbeitet wurde. **Heute üben** entsteht aus Fälligkeiten, Fehlern und passenden Wiederholungsregeln. Nur fachlich definierte Angebote wie Schreibtrainings in Deutsch können später als strukturierte Trainingspakete gezielt freigeschaltet werden. Ein allgemeiner Aufgabenplaner gehört nicht zum Plattformkern.
+
+## 20. Leitner-Fälligkeiten werden aus Ereignissen abgeleitet – 12. August 2026
+
+**Beschlossen:** Boxstand und nächste Wiederholung werden aus der unveränderlichen lokalen Lernhistorie berechnet und nicht als konkurrierender Zustand doppelt gespeichert. Bedeutung und Schreiben bleiben getrennt. Fehler werden sofort wiederholbar, eine spätere richtige Lösung schließt den Fehler ohne direkten Aufstieg, Hilfen verhindern den Aufstieg und pro Runde ist höchstens ein Aufstieg möglich. Die erste Intervallstaffel 1 / 3 / 7 / 14 / 30 Tage ist eine zentrale, vorläufige Ausgangsbasis und muss pädagogisch erprobt werden.

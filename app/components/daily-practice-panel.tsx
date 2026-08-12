@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CLASS_MODULE_LABELS } from "../../src/domain/class-workspace";
 import {
-  selectErrorPractice,
+  selectDailyPractice,
   type DailyPracticeGroup,
 } from "../../src/domain/daily-practice";
 import { demoClass } from "../../src/domain/demo-class";
@@ -16,6 +16,7 @@ const practiceCatalog = [
     title: "School words wiederholen",
     module: "vocabulary" as const,
     route: "/klasse/7b/aufgaben/vokabeln",
+    availableAt: "2026-08-12T08:00:00.000Z",
   },
 ];
 
@@ -32,11 +33,12 @@ export function DailyPracticePanel() {
       .then((events) => {
         if (!active) return;
         setPractice(
-          selectErrorPractice({
+          selectDailyPractice({
             events,
             catalog: practiceCatalog,
             classId: demoClass.id,
             enabledModules: demoClass.enabledModules,
+            now: new Date().toISOString(),
           }),
         );
       })
@@ -87,11 +89,20 @@ export function DailyPracticePanel() {
             <span className="content-type">
               {CLASS_MODULE_LABELS[item.module]}
             </span>
-            <span className="reason-label">Aus deinem letzten Fehler</span>
+            <span className="reason-label">
+              {item.reason === "error"
+                ? "Aus deinem letzten Fehler"
+                : "Heute fällig"}
+            </span>
           </div>
           <h3>{item.title}</h3>
           <p>{item.amount} Inhalt zum Wiederholen</p>
-          <strong>Fehler jetzt üben →</strong>
+          <strong>
+            {item.reason === "error"
+              ? "Fehler jetzt üben"
+              : "Jetzt wiederholen"}{" "}
+            →
+          </strong>
         </Link>
       ))}
     </div>

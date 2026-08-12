@@ -8,14 +8,14 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
 - [x] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
 - [x] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
-- [ ] Leitner-Boxen und Fälligkeiten lokal umsetzen
+- [x] Leitner-Boxen und Fälligkeiten lokal aus Lernereignissen ableiten
 - [ ] Vokabelmodus im Laufdiktat entwickeln
 - [ ] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
 - [ ] Dublettenfreie Übergabe vom Laufdiktat an die LernBox umsetzen
 - [ ] Falsche Testvokabeln automatisch als fällig markieren
 - [ ] Schaltfläche **„Meine Fehler jetzt üben“** und persönliche Fehlerrunde umsetzen
 - [ ] Nach Hilfen einen verdeckten Abruf erzwingen
-- [ ] Tagesauswahl und kurzfristige Wiederholungen ergänzen
+- [x] Tagesauswahl aus Fälligkeiten und kurzfristigen Fehlerwiederholungen ergänzen
 - [ ] Datei-Export und Wiederherstellung testen
 
 ## Danach: Lernwörter
@@ -73,7 +73,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Allgemeine Aufgabenplanung zugunsten des Übungs- und Wiederholungskreislaufs entfernen
 - [x] Fehlerhaften Klassenversuch automatisch in „Heute üben“ aufnehmen
 - [x] Fehlerwiederholung nach einem späteren richtigen Abruf wieder schließen
-- [ ] Fälligkeiten aus Leitner-Boxen zusätzlich in „Heute üben“ aufnehmen
+- [x] Fälligkeiten aus Leitner-Boxen zusätzlich in „Heute üben“ aufnehmen
 - [ ] Modulfreigaben als versioniertes Klassenpaket auf Schülergeräte veröffentlichen
 - [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
 - [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen

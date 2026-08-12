@@ -41,3 +41,9 @@ Ein Wort kann die höchste Merkstufe erreicht haben und wegen eines neuen Fehler
 ## Nachweisstärke
 
 Freie Texteingabe ist ein stärkerer Lernnachweis als Multiple Choice oder selbst bewertetes Aufdecken. Geschwindigkeit beeinflusst Punkte, aber nicht den Boxstand.
+
+## Erste technische Fälligkeitsstaffel
+
+Für den ersten überprüfbaren Durchstich verwendet Lernraum eine zentrale, später kalibrierbare Staffel: Box 1 nach einem Tag, Box 2 nach drei Tagen, Box 3 nach sieben Tagen, Box 4 nach vierzehn Tagen und Box 5 nach dreißig Tagen. Ein Fehler setzt den betroffenen Wissens- beziehungsweise Schreibstand auf Box 1 und macht ihn sofort wiederholbar. Die erste spätere richtige Lösung schließt den Fehler, führt aber noch nicht zum Aufstieg. Hinweise und Lösungen erlauben ebenfalls keinen Aufstieg; innerhalb derselben Runde ist höchstens ein Aufstieg möglich.
+
+Boxstand und Fälligkeit werden aus unveränderlichen Lernereignissen abgeleitet. Dadurch entsteht kein zweiter widersprüchlicher Lernstand. Die Intervalle sind eine technische Ausgangsbasis und werden vor dem Schuleinsatz pädagogisch erprobt.

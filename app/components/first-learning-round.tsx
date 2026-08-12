@@ -10,6 +10,7 @@ import {
   evaluateVocabularyAnswer,
   summarizeLearningProgress,
 } from "../../src/domain/learning-session";
+import { deriveLeitnerProgress } from "../../src/domain/leitner-schedule";
 import { createPersonalLearningEventRepository } from "../../src/storage/personal-learning-events";
 
 const exampleBundle = parseLearningBundleV1({
@@ -67,6 +68,16 @@ export function FirstLearningRound() {
   >();
 
   const progress = summarizeLearningProgress(events, item.id);
+  const leitnerProgress = deriveLeitnerProgress({
+    events,
+    learningObjectId: item.id,
+    direction: "prompt-to-answer",
+    availableAt: exampleBundle.createdAt,
+  });
+  const nextDueAt =
+    leitnerProgress.knowledge.dueAt < leitnerProgress.writing.dueAt
+      ? leitnerProgress.knowledge.dueAt
+      : leitnerProgress.writing.dueAt;
 
   useEffect(() => {
     let active = true;
@@ -241,16 +252,27 @@ export function FirstLearningRound() {
           ) : (
             <dl className="progress-values">
               <div>
+                <dt>Bedeutung</dt>
+                <dd>Box {leitnerProgress.knowledge.box}</dd>
+              </div>
+              <div>
+                <dt>Schreiben</dt>
+                <dd>Box {leitnerProgress.writing.box}</dd>
+              </div>
+              <div>
                 <dt>Versuche</dt>
                 <dd>{progress.attempts}</dd>
               </div>
               <div>
-                <dt>Richtig</dt>
-                <dd>{progress.correct}</dd>
-              </div>
-              <div>
-                <dt>Zu wiederholen</dt>
-                <dd>{progress.incorrect}</dd>
+                <dt>Nächste Wiederholung</dt>
+                <dd>
+                  {nextDueAt <= new Date().toISOString()
+                    ? "jetzt"
+                    : new Intl.DateTimeFormat("de-DE", {
+                        day: "2-digit",
+                        month: "2-digit",
+                      }).format(new Date(nextDueAt))}
+                </dd>
               </div>
             </dl>
           )}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LearningEventV1 } from "./learning-bundle";
-import { selectErrorPractice } from "./daily-practice";
+import { selectDailyPractice } from "./daily-practice";
 
 const catalog = [
   {
@@ -8,6 +8,7 @@ const catalog = [
     title: "School words wiederholen",
     module: "vocabulary" as const,
     route: "/klasse/7b/aufgaben/vokabeln",
+    availableAt: "2026-08-12T08:00:00.000Z",
   },
 ];
 
@@ -38,18 +39,19 @@ function event(
 describe("daily error practice", () => {
   it("selects a class error for another practice round", () => {
     expect(
-      selectErrorPractice({
+      selectDailyPractice({
         events: [event("one", "incorrect", "2026-08-12T10:00:00.000Z")],
         catalog,
         classId: "klasse-7b",
         enabledModules: ["vocabulary"],
+        now: "2026-08-12T12:00:00.000Z",
       }),
     ).toEqual([{ ...catalog[0], reason: "error", amount: 1 }]);
   });
 
   it("removes an error after a later correct retrieval", () => {
     expect(
-      selectErrorPractice({
+      selectDailyPractice({
         events: [
           event("old", "incorrect", "2026-08-12T10:00:00.000Z"),
           event("new", "correct", "2026-08-12T11:00:00.000Z"),
@@ -57,20 +59,34 @@ describe("daily error practice", () => {
         catalog,
         classId: "klasse-7b",
         enabledModules: ["vocabulary"],
+        now: "2026-08-12T12:00:00.000Z",
       }),
     ).toEqual([]);
   });
 
   it("ignores other classes and disabled modules", () => {
     expect(
-      selectErrorPractice({
+      selectDailyPractice({
         events: [
           event("other", "incorrect", "2026-08-12T10:00:00.000Z", "klasse-8a"),
         ],
         catalog,
         classId: "klasse-7b",
         enabledModules: ["german"],
+        now: "2026-08-12T12:00:00.000Z",
       }),
     ).toEqual([]);
+  });
+
+  it("selects a correct learning object again when its box is due", () => {
+    expect(
+      selectDailyPractice({
+        events: [event("right", "correct", "2026-08-12T10:00:00.000Z")],
+        catalog,
+        classId: "klasse-7b",
+        enabledModules: ["vocabulary"],
+        now: "2026-08-16T10:00:00.000Z",
+      }),
+    ).toEqual([{ ...catalog[0], reason: "due", amount: 1 }]);
   });
 });
