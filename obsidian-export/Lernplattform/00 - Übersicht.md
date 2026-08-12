@@ -53,6 +53,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 18. [[18 - Aufgabenübersicht/Anwendung|Aufgabenübersicht]]
 19. [[19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]]
 20. [[20 - Designgrundlage/Anwendung|Designgrundlage]]
+21. [[21 - Qualitätsgrundlage und Freigabe/Anwendung|Qualitätsgrundlage und Freigabe]]
 
 ## Grundprinzipien
 
@@ -64,10 +65,10 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 - Fehler führen nicht zu öffentlicher Bloßstellung oder Minuspunkten.
 - Lehrkräfte sehen standardmäßig nur die für den Unterricht erforderlichen Daten.
 - Alle Module verwenden ein gemeinsames, versioniertes Datenmodell.
+- Qualität wird nicht nachträglich geprüft, sondern gehört zur Definition of Done jeder Funktion.
 
 ## Offene Entscheidungen
 
-- Soll die Plattform eine gemeinsame PWA oder mehrere Apps mit gemeinsamem Kern werden?
 - Welche Daten darf das Lehrergerät dauerhaft speichern?
 - Welcher erste Cloudanbieter soll für verschlüsselte Backups unterstützt werden?
 - Welche Lernstandsregeln werden in Version 1 verbindlich umgesetzt?

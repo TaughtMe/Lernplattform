@@ -66,6 +66,30 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Plattform und Betrieb
 
+- [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen
+- [x] Strikte TypeScript- und Architekturregeln aktivieren
+- [x] Laufzeitvalidierung für LearningBundle v1 mit Zod anlegen
+- [x] Unit-, Nutzerinteraktions- und Eigenschaftstests einrichten
+- [x] Browser-, Mobil- und automatische Barrierefreiheitstests einrichten
+- [x] Automatische Quality Gates für Push und Pull Request anlegen
+- [ ] Sicherheitsmeldung der vinext-Bildabhängigkeit nach Upstream-Aktualisierung schließen
+- [ ] React-Aria-Grundkomponenten erst mit dem ersten komplexen Widget einführen
+- [ ] Netzwerkfehler-Simulation mit Mock Service Worker beim ersten Raumabruf ergänzen
+- [x] Verbindliche Qualitätsgrundlage und Definition of Done dokumentieren
+- [x] Vorlage für einen Qualitätsbericht pro Meilenstein anlegen
+- [ ] Testdatensätze für leere, kleine, große, alte und beschädigte Datenbestände erstellen
+- [ ] Migrations- und Rückfallstrategie vor der ersten Datenformatänderung umsetzen
+- [ ] PWA-Update- und Cache-Strategie festlegen und testen
+- [ ] Speicherknappheit und gelöschten Browserspeicher erkennbar behandeln
+- [ ] Zeit-, Zeitzonen- und Tagesgrenzen für Fälligkeiten festlegen
+- [ ] Unicode-, Tastatur- und Autokorrekturregeln für Lernantworten definieren
+- [ ] Datenschutzfreundliche Fehlerdiagnose ohne vollständige Schülerantworten konzipieren
+- [ ] Leistungsbudgets für schwächere Schulgeräte und große Datenbestände festlegen
+- [x] Mobile-first als verbindliche Entwicklungs- und Abnahmegrundlage festlegen
+- [x] Gemeinsame Mobil- und Tablet-Navigation mit Safe-Area-Unterstützung anlegen
+- [ ] Jede neue Ansicht ab 320 CSS-Pixel Breite und ohne horizontales Scrollen prüfen
+- [ ] Hochformat, Querformat und eingeblendete Bildschirmtastatur pro Lernmodus testen
+- [ ] Geräte- und Browsermatrix vor jedem größeren Meilenstein vollständig durchlaufen
 - [ ] Lehrer-Cockpit und Rollenmodell entwickeln
 - [ ] Gemeinsame App mit getrennten privaten, Klassen- und Lehrerarbeitsbereichen umsetzen
 - [ ] Lehrerbereich mit eigener Authentifizierung schützen

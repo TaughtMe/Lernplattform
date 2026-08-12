@@ -18,4 +18,4 @@ npm test
 npm run lint
 ```
 
-Die Architekturentscheidungen stehen in [docs/architecture.md](docs/architecture.md). Die vollständige fachliche Konzeption liegt derzeit unter `obsidian-export/Lernplattform`.
+Die Architekturentscheidungen stehen in [docs/architecture.md](docs/architecture.md), der verbindliche Coding- und Bibliotheksstandard in [docs/engineering-quality.md](docs/engineering-quality.md) und die mobile Teststrategie in [docs/device-support.md](docs/device-support.md). Die vollständige fachliche Konzeption liegt derzeit unter `obsidian-export/Lernplattform`.

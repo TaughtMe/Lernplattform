@@ -171,3 +171,45 @@ Siehe [[../10 - Häuser, Punkte und Motivation/Anwendung|Häuser, Punkte und Mot
 - schulrechtliche und organisatorische Freigabe vor produktivem Einsatz
 
 Die daraus abgeleiteten Umsetzungsschritte stehen in [[../18 - Aufgabenübersicht/Anwendung|Aufgabenübersicht]].
+
+## 12. Geräteübergreifende Entwicklung – 12. August 2026
+
+**Beschlossen:** Lernraum wird von Beginn an mobile-first für Smartphones, Tablets, Chromebooks, Notebooks und Desktopgeräte entwickelt. Eine nachträgliche separate Mobilversion ist nicht vorgesehen.
+
+- Gemeinsame responsive Komponenten werden im Plattformkern gepflegt.
+- Jede neue Funktion muss Touch, Maus, Tastatur, Hoch- und Querformat berücksichtigen.
+- Smartphones werden ab 320 CSS-Pixel Breite unterstützt.
+- Touch-Ziele, Safe Areas und Bildschirmtastatur dürfen keine zentralen Aktionen verdecken.
+- Die Abnahme umfasst iOS Safari, Android Chrome sowie die verbreiteten Desktop-Browser.
+- Laufdiktat und LernBox verwenden dieselben Navigations-, Layout- und Geräteprinzipien.
+
+Die konkrete Testmatrix steht zusätzlich in `docs/device-support.md` des Projektrepositories.
+
+## 13. Qualitätskontrolle als Entwicklungsbestandteil – 12. August 2026
+
+**Beschlossen:** Qualitätssicherung wird nicht erst vor der Veröffentlichung ergänzt. Jede Funktion erhält fachliche, technische, gerätebezogene, barrierebezogene, sicherheitsbezogene und datenschutzbezogene Abnahmekriterien.
+
+- Ein erfolgreicher Build allein reicht nicht für eine Freigabe.
+- Datenverlust, Migration, Offlinebetrieb, Wiederherstellung und fehlerhafte Eingaben gehören zu den regulären Testfällen.
+- Größere Meilensteine erhalten einen kurzen Qualitätsbericht und eine ausdrückliche Freigabestufe.
+- Pilotbetrieb erfolgt begrenzt, mit Sicherungsmöglichkeit, Rückfallplan und dokumentierten Einschränkungen.
+- Automatisierte Prüfungen werden durch reale Geräte-, Browser- und Nutzertests ergänzt.
+- Pädagogische Regeln werden anhand konkreter Beispiele und nicht nur anhand technischer Funktion geprüft.
+
+Die vollständige Definition of Done und Prüfstrategie steht unter [[../21 - Qualitätsgrundlage und Freigabe/Anwendung|Qualitätsgrundlage und Freigabe]].
+
+## 14. Technischer Qualitäts- und Bibliotheksstandard – 12. August 2026
+
+**Beschlossen:** Nutzerfreundlichkeit, pädagogische Regeln, Barrierefreiheit, Datenintegrität und Gerätekompatibilität werden durch verbindliche Coding-Regeln und automatische Quality Gates abgesichert.
+
+- Fachlogik bleibt framework-unabhängiges, streng typisiertes TypeScript.
+- Zod validiert alle Daten an Systemgrenzen; Dexie kapselt später den lokalen IndexedDB-Speicher.
+- Vitest, Testing Library und fast-check prüfen Beispiele, reale Interaktionen und generierte Grenzfälle.
+- Playwright testet Chromium, Firefox, WebKit sowie Mobil- und Tabletprofile.
+- axe-core ergänzt Browserprüfungen um automatische WCAG-A/AA-Kontrollen.
+- ESLint verhindert unzulässige Abhängigkeiten des fachlichen Kerns auf React oder Next.
+- GitHub Actions führt den vollständigen Qualitätscheck automatisch aus.
+- React Aria Components wird nur für komplexe Widgets eingesetzt; natives HTML bleibt der Standard.
+- Neue Bibliotheken benötigen einen konkreten Qualitätsnutzen und eine Architekturbegründung.
+
+Bekannte, nicht sofort behebbare Abhängigkeitsrisiken werden mit Reichweite, Gegenmaßnahme und Neubewertung dokumentiert.

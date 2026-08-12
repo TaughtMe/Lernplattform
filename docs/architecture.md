@@ -21,6 +21,12 @@ Laufdiktat und LernBox werden noch weiterentwickelt. Eine direkte Zusammenführu
 
 Kein Bereich erhält automatisch Zugriff auf einen anderen. Übertragungen verwenden ein explizites, versioniertes Format.
 
+## Geräteübergreifende Grundlage
+
+Alle Module werden mobile-first und responsiv entwickelt. Gemeinsame Navigation, Layout-Tokens und Bedienregeln liegen im Plattformkern, damit Laufdiktat und LernBox keine abweichenden mobilen Sonderlösungen benötigen. Die verbindliche Geräte- und Browsermatrix steht in [device-support.md](device-support.md).
+
+Der verbindliche Coding-, Bibliotheks- und Teststandard steht in [engineering-quality.md](engineering-quality.md).
+
 ## Nächster fachlicher Schritt
 
 Als nächstes sollte `LearningBundleV1` mit realen Beispieldaten aus Laufdiktat und LernBox abgeglichen werden. Danach folgen ein IndexedDB-Adapter, Migrationsregeln und Tests für Dubletten, Ereignis-Idempotenz und die vier getrennten Lernstände.
