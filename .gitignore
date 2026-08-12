@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -41,4 +42,5 @@ yarn-error.log*
 /.wrangler/
 /outputs/
 /work/
+/public/integrations/
 .sites-dev.*.log

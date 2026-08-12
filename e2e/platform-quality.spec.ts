@@ -67,6 +67,30 @@ test("mobile learners retain direct access to the two learner entries", async ({
   ).toBeVisible();
 });
 
+test("the complete LernBox module creates and opens a personal deck", async ({
+  page,
+}) => {
+  await page.goto("/lernbox");
+  const lernbox = page.frameLocator('iframe[title="Meine LernBox"]');
+
+  await expect(
+    lernbox.getByRole("textbox", { name: "Name der neuen Lernbox" }),
+  ).toBeVisible();
+  await lernbox
+    .getByRole("textbox", { name: "Name der neuen Lernbox" })
+    .fill("Englisch 7b");
+  await lernbox.getByRole("button", { name: "Erstellen" }).click();
+
+  await expect(lernbox.getByText("Englisch 7b", { exact: true })).toBeVisible();
+  await lernbox.getByText("Englisch 7b", { exact: true }).click();
+  await expect(
+    lernbox.getByRole("heading", { name: "Englisch 7b" }),
+  ).toBeVisible();
+  await expect(
+    lernbox.getByRole("button", { name: "Neue Karte" }),
+  ).toBeVisible();
+});
+
 test("a learning result survives a page reload on the same device", async ({
   page,
 }) => {

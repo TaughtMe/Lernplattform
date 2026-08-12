@@ -264,3 +264,9 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 **Beschlossen:** LernBoxV2 und Laufdiktat sind vollständig funktionsfähige Quellanwendungen. Ihre Fachlogik, Bedienabläufe, Komponenten und Tests werden in den Lernraum übernommen. Der Lernraum erfindet vorhandene Funktionen nicht neu, sondern ergänzt ausschließlich die gemeinsame Plattformhülle, Klassenfreigaben, Identitätszuordnung und Ergebnisübergabe.
 
 Der zuvor beschriebene Ansatz, nur Oberflächenmuster oder einzelne Sitzungsstrukturen zu übernehmen, ist damit überholt. Dies betrifft insbesondere die Entscheidungen 20, 21 und 23, soweit dort eigenständige Lernraum-Regeln an die Stelle des vorhandenen LernBox-Verhaltens gesetzt wurden. Abweichungen vom jeweiligen Quellmodul müssen künftig ausdrücklich begründet und getestet werden. Als abgeglichene Ausgangsstände gelten LernBoxV2 `64051b6` und Laufdiktat `6c2ade4`.
+
+## 25. LernBoxV2 als isoliert gebautes Quellmodul – 12. August 2026
+
+**Beschlossen:** Die vollständige LernBoxV2-Quelle liegt im Lernraum unter `integrations/lernbox` und wird bei Entwicklung und Produktion automatisch mitgebaut. Sie läuft unter einem eigenen Pfad und behält dadurch ihre Dexie-Datenbank, internen Routen, PWA-Funktionen und vollständigen Bedienabläufe. Der Lernraum stellt außen den persönlichen Einstieg, Rücknavigation und die gemeinsame Theme-Präferenz bereit.
+
+Diese erste Integration verändert keine fachlichen LernBox-Regeln. Die noch ausstehende Verbindung zu Klassenfreigaben und gemeinsamen Ergebnissen erfolgt über Adapter an den Modulgrenzen. Ein Browsertest erstellt und öffnet eine persönliche Lernbox in der eingebetteten Originalanwendung; die Einbettung gehört außerdem zur gemeinsamen Barrierefreiheits- und Gerätematrix.

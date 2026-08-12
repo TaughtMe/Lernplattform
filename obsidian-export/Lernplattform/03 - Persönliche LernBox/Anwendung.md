@@ -36,7 +36,9 @@ Eine Lernrunde bildet keinen einzelnen Demo-Versuch ab, sondern wählt beim Star
 - **Richtungen:** Fremdsprache → Deutsch und Deutsch → Fremdsprache besitzen getrennte Fälligkeiten und Boxstände.
 - **Rundenende:** Die Oberfläche fasst gewusste und weiter zu übende Karten zusammen. Fehler können danach als neue fällige Runde erneut geladen werden.
 
-Die Sitzungsstruktur orientiert sich an LernBoxV2. Speicherung, Fälligkeit und Leistungsnachweis verwenden jedoch ausschließlich die gemeinsamen unveränderlichen Lernraum-Ereignisse.
+Die vollständige LernBoxV2 ist unter **Meine LernBox** integriert. Deckverwaltung, Kartenverwaltung, Leitner-Lernen, beide Lernrichtungen, Schreibtraining, Übungsmodus, Vokabeltests, Tags, Import, Export, Sicherung, Einstellungen und lokale Dexie-Speicherung stammen aus dem funktionsfähigen Quellmodul. Der zuvor gebaute einzelne Lernraum-Prototyp ist nicht mehr die Zielimplementierung.
+
+Die Lernraum-Hülle ergänzt den gemeinsamen Einstieg und übernimmt die systemweite Theme-Präferenz. Klassenfreigaben und die Ergebnisübergabe werden als Adapter ergänzt, ohne die vorhandene LernBox-Fachlogik zu ersetzen.
 
 ## Persönliche Fehlerübung
 

@@ -72,7 +72,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 - [x] LernBoxV2 und Laufdiktat als verbindliche Quellmodule statt als Vorbilder für einen Nachbau festlegen
 - [x] Aktuelle Upstream-Repositories und Commitstände dokumentieren
-- [ ] Vollständigen LernBoxV2-Code unter dem LernBox-Einstieg integrieren
+- [x] Vollständigen LernBoxV2-Code unter dem LernBox-Einstieg integrieren
 - [ ] Vollständigen Laufdiktat-Code mit Schüler- und Lehreransicht integrieren
 - [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
 - [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten

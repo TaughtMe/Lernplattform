@@ -30,7 +30,7 @@ Diese Ergänzungen dürfen das Verhalten des Quellmoduls nicht stillschweigend v
 
 ## Integrationsreihenfolge
 
-1. LernBoxV2 vollständig unter dem persönlichen LernBox-Einstieg verfügbar machen.
+1. LernBoxV2 vollständig unter dem persönlichen LernBox-Einstieg verfügbar machen. Die übernommene Quelle liegt unter `integrations/lernbox`; ihr Produktionsbuild wird automatisch und isoliert unter `/integrations/lernbox/` eingebettet.
 2. Laufdiktat mit Schüleransicht, Lehrer-Dashboard und allen vorhandenen Modi einbinden.
 3. Router, Theme und lokale Speicherbereiche in die Lernraum-Hülle überführen.
 4. Klassenfreigaben und Ergebnisadapter ergänzen.
