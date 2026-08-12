@@ -8,7 +8,6 @@ import {
 import { demoClass } from "../../src/domain/demo-class";
 import {
   createTeacherClassSettingsRepository,
-  TEACHER_CLASS_SETTINGS_UPDATED_EVENT,
   toggleClassModule,
 } from "../../src/storage/teacher-class-settings";
 
@@ -71,11 +70,6 @@ export function TeacherClassConfigurator() {
         enabledModules,
         updatedAt: new Date().toISOString(),
       });
-      window.dispatchEvent(
-        new CustomEvent(TEACHER_CLASS_SETTINGS_UPDATED_EVENT, {
-          detail: { classId: demoClass.id, enabledModules },
-        }),
-      );
       setSaved(true);
     } catch {
       setMessage(

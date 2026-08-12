@@ -12,7 +12,7 @@ Die öffentliche Hauptseite beschränkt sich auf zwei gleichwertige zentrale Ein
 
 **Mein Lernraum** zeigt ausschließlich alle Klassen des Schülers und erneut den Code-Beitritt. Freies Üben ist dort nicht doppelt eingebaut, sondern bleibt ein eigener Einstieg von der Hauptseite.
 
-Innerhalb einer Klasse stehen **Heute üben** für fällige Inhalte und gezielte Fehlerwiederholungen sowie **Aufgaben** für alle von der Lehrkraft vergebenen Arbeitsaufträge zur Verfügung.
+Innerhalb einer Klasse steht **Heute üben** im Mittelpunkt: Hier erscheinen fällige Inhalte und gezielte Fehlerwiederholungen automatisch. Ein Bereich **Aufgaben** erscheint nur, wenn ein Modul ein klar definiertes Trainingspaket vorsieht und die Lehrkraft dieses freigeschaltet hat.
 
 Lehrer und Schüler verwenden dieselbe App. Ein Schülergerät kann einen privaten Lernbereich und seine Klassenmitgliedschaften als getrennte Einstiege anzeigen. Der individuelle Einschreibungs-QR aktiviert ausschließlich den Schülerbereich der Klasse und die von der Lehrkraft freigegebenen Funktionen.
 

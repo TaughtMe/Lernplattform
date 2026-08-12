@@ -23,8 +23,6 @@ export const teacherClassSettingsSchema = z
   });
 
 export type TeacherClassSettings = z.infer<typeof teacherClassSettingsSchema>;
-export const TEACHER_CLASS_SETTINGS_UPDATED_EVENT =
-  "lernraum:teacher-class-settings-updated";
 
 export class TeacherClassDatabase extends Dexie {
   classSettings!: Table<TeacherClassSettings, string>;

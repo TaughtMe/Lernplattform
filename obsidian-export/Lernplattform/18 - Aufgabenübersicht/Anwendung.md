@@ -70,10 +70,10 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Klassenansicht mit „Heute üben“ und „Aufgaben“ als Grundstruktur anlegen
 - [x] Aktivierbare Klassenmodule im Domänenmodell validieren
 - [x] Erste lokale Lehreroberfläche für Modulfreigaben mit Schülervorschau bauen
-- [x] Lokale Aufgabenentwürfe mit Modul, Zielbereich und optionalem Termin anlegen
-- [x] Entwurf und „bereit zur Veröffentlichung“ technisch trennen
-- [x] Auftragsauswahl unmittelbar auf die aktiven Klassenmodule begrenzen
-- [ ] Bewusste Veröffentlichung eines vorbereiteten Auftrags als versioniertes Klassenpaket umsetzen
+- [x] Allgemeine Aufgabenplanung zugunsten des Übungs- und Wiederholungskreislaufs entfernen
+- [x] Fehlerhaften Klassenversuch automatisch in „Heute üben“ aufnehmen
+- [x] Fehlerwiederholung nach einem späteren richtigen Abruf wieder schließen
+- [ ] Fälligkeiten aus Leitner-Boxen zusätzlich in „Heute üben“ aufnehmen
 - [ ] Modulfreigaben als versioniertes Klassenpaket auf Schülergeräte veröffentlichen
 - [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
 - [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen

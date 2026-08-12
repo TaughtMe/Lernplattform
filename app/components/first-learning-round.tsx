@@ -113,7 +113,6 @@ export function FirstLearningRound() {
       help: "none",
       classContext: {
         classId: "klasse-7b",
-        assignmentId: "english-school-words",
         rankingEligible: true,
       },
       assessment: {
@@ -147,7 +146,7 @@ export function FirstLearningRound() {
   return (
     <section className="learning-round" aria-labelledby="learning-round-title">
       <div className="learning-round__intro">
-        <p className="eyebrow">Klasse 7b · Vokabelaufgabe</p>
+        <p className="eyebrow">Klasse 7b · Vokabelübung</p>
         <h1 id="learning-round-title">School words</h1>
         <p>
           Öffne ein kleines Lernpaket, löse eine Aufgabe und sieh direkt, wie

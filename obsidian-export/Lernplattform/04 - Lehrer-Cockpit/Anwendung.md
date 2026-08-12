@@ -6,7 +6,7 @@ Das Lehrer-Cockpit bündelt Planung, Durchführung und datensparsame Auswertung 
 
 ## Funktionen
 
-- Vokabeln, Aufgaben und Stapel erstellen
+- Vokabeln, Lerninhalte und Stapel verwalten
 - Inhalte importieren und korrigieren
 - Räume und Laufdiktate starten
 - Lernhilfen konfigurieren
@@ -18,7 +18,7 @@ Das Lehrer-Cockpit bündelt Planung, Durchführung und datensparsame Auswertung 
 - Scanergebnisse akustisch, haptisch und visuell bestätigen
 - Inhalte freigeben und versionieren
 - pro Klasse Module wie Vokabeln, Deutsch, Mathematik, Tipptraining oder Laufdiktat aktivieren und deaktivieren
-- Aufgaben veröffentlichen und festlegen, welche Inhalte in „Heute üben“ einfließen
+- bei Bedarf klar definierte, modulspezifische Trainingspakete freischalten
 - lokale Namens- oder Aliaszuordnungen verwalten
 - gespeicherte Daten exportieren und löschen
 
@@ -28,7 +28,7 @@ Die Lehrkraft entscheidet vor einer Aktivität, welche Inhalte, Hilfen, Sozialfo
 
 Der erste umgesetzte Cockpit-Baustein ist die lokale Modulkonfiguration einer Klasse. Die Lehrkraft kann Vokabeln, Deutsch, Mathematik und Tipptraining einzeln aktivieren. Eine reduzierte Schülervorschau zeigt sofort, welche Bereiche sichtbar wären. Mindestens ein Modul bleibt aktiv. Die tatsächliche Veröffentlichung auf Schülergeräte erfolgt später über ein versioniertes Klassenpaket; eine lokale Lehreränderung greift nicht unbemerkt auf Schülerdaten zu.
 
-Der zweite Baustein ist die lokale Auftragsvorbereitung. Ein Auftrag erhält Titel, Arbeitsanweisung, aktives Klassenmodul, Zielbereich **Heute üben** oder **Aufgaben** und optional einen Termin. Beim Speichern entsteht zunächst ausschließlich ein Entwurf. Die Lehrkraft kann ihn anschließend als **bereit zur Veröffentlichung** markieren; auch dieser Status überträgt noch nichts auf Schülergeräte. Erst der spätere, ausdrücklich bestätigte Veröffentlichungsschritt darf daraus ein versioniertes Klassenpaket erzeugen.
+Die Lehrkraft erstellt im Normalfall keine freien Aufgabenpakete. Der Lernraum erzeugt Übungsbedarf aus Fälligkeiten und Fehlern und führt passende Inhalte automatisch in **Heute üben** zurück. Die Lehrkraft entscheidet vor allem, welche der vier Übungsbereiche eine Klasse verwendet, und erhält eine datensparsame Übersicht über Aktivität und Lernentwicklung. Nur dort, wo ein Modul fachlich festgelegte Trainingspakete vorsieht – beispielsweise Schreibtrainings in Deutsch –, kann sie eines davon auswählen und freischalten.
 
 ## Lokaler Klassenbriefkasten
 

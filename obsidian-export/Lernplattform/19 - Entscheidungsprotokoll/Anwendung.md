@@ -239,6 +239,6 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 
 **Beschlossen:** Modulfreigaben werden zunächst im getrennten lokalen Lehrerbereich bearbeitet und dort gespeichert. Eine Schülervorschau zeigt die beabsichtigte Sichtbarkeit, verändert aber noch nicht direkt den Schülerbereich. Erst eine bewusste spätere Veröffentlichung erzeugt ein versioniertes Klassenpaket für Schülergeräte. So bleibt die technische Trennung zwischen Lehrer- und Schülerdaten erhalten.
 
-## 19. Aufträge werden als Entwurf vorbereitet – 12. August 2026
+## 19. Übungsplattform statt allgemeiner Aufgabenplanung – 12. August 2026
 
-**Beschlossen:** Das Anlegen eines Auftrags veröffentlicht niemals automatisch Schülerdaten. Die Lehrkraft speichert zunächst einen lokalen Entwurf und ordnet ihn einem aktiven Modul sowie **Heute üben** oder **Aufgaben** zu. Der Zwischenstatus **bereit zur Veröffentlichung** bestätigt nur die inhaltliche Vorbereitung. Die spätere Übertragung auf Schülergeräte bleibt ein eigener, ausdrücklich ausgelöster und versionierter Schritt.
+**Beschlossen:** Der Kern des Lernraums ist selbstständiges Üben und Wiederholen. Die Lehrkraft erstellt im Normalfall keine freien Aufgabenpakete, sondern aktiviert pro Klasse die benötigten Übungsbereiche und sieht datensparsam, was bearbeitet wurde. **Heute üben** entsteht aus Fälligkeiten, Fehlern und passenden Wiederholungsregeln. Nur fachlich definierte Angebote wie Schreibtrainings in Deutsch können später als strukturierte Trainingspakete gezielt freigeschaltet werden. Ein allgemeiner Aufgabenplaner gehört nicht zum Plattformkern.

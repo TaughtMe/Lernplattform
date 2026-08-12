@@ -25,7 +25,7 @@
 ## Sinnvolles erstes Minimum
 
 - Schüler sieht nach dem Einstieg seine Klasse und das freie Üben klar getrennt.
-- Innerhalb einer Klasse sind „Heute üben“ und „Aufgaben“ getrennte, reduzierte Bereiche.
+- Innerhalb einer Klasse steht „Heute üben“ im Mittelpunkt; „Aufgaben“ erscheint nur bei tatsächlich freigeschalteten, modulspezifischen Trainingspaketen.
 - Die Lehrkraft kann je Klasse nur die benötigten Module aktivieren.
 - Lehrer erstellt einen Vokabelstapel.
 - Schüler tritt per Code bei.
