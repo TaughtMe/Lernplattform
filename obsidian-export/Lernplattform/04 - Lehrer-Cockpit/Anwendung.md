@@ -28,6 +28,8 @@ Die Lehrkraft entscheidet vor einer Aktivität, welche Inhalte, Hilfen, Sozialfo
 
 Der erste umgesetzte Cockpit-Baustein ist die lokale Modulkonfiguration einer Klasse. Die Lehrkraft kann Vokabeln, Deutsch, Mathematik und Tipptraining einzeln aktivieren. Eine reduzierte Schülervorschau zeigt sofort, welche Bereiche sichtbar wären. Mindestens ein Modul bleibt aktiv. Die tatsächliche Veröffentlichung auf Schülergeräte erfolgt später über ein versioniertes Klassenpaket; eine lokale Lehreränderung greift nicht unbemerkt auf Schülerdaten zu.
 
+Der zweite Baustein ist die lokale Auftragsvorbereitung. Ein Auftrag erhält Titel, Arbeitsanweisung, aktives Klassenmodul, Zielbereich **Heute üben** oder **Aufgaben** und optional einen Termin. Beim Speichern entsteht zunächst ausschließlich ein Entwurf. Die Lehrkraft kann ihn anschließend als **bereit zur Veröffentlichung** markieren; auch dieser Status überträgt noch nichts auf Schülergeräte. Erst der spätere, ausdrücklich bestätigte Veröffentlichungsschritt darf daraus ein versioniertes Klassenpaket erzeugen.
+
 ## Lokaler Klassenbriefkasten
 
 Für einen Turnus oder ein Aufgabenpaket startet die Lehrkraft eine Abgaberunde. Das Dashboard zeigt die erwarteten Klassenmitglieder und aktualisiert beim fortlaufenden Scannen unmittelbar den Status:

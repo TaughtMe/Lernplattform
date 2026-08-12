@@ -238,3 +238,7 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 ## 18. Lokale Lehrer-Konfiguration vor Veröffentlichung – 12. August 2026
 
 **Beschlossen:** Modulfreigaben werden zunächst im getrennten lokalen Lehrerbereich bearbeitet und dort gespeichert. Eine Schülervorschau zeigt die beabsichtigte Sichtbarkeit, verändert aber noch nicht direkt den Schülerbereich. Erst eine bewusste spätere Veröffentlichung erzeugt ein versioniertes Klassenpaket für Schülergeräte. So bleibt die technische Trennung zwischen Lehrer- und Schülerdaten erhalten.
+
+## 19. Aufträge werden als Entwurf vorbereitet – 12. August 2026
+
+**Beschlossen:** Das Anlegen eines Auftrags veröffentlicht niemals automatisch Schülerdaten. Die Lehrkraft speichert zunächst einen lokalen Entwurf und ordnet ihn einem aktiven Modul sowie **Heute üben** oder **Aufgaben** zu. Der Zwischenstatus **bereit zur Veröffentlichung** bestätigt nur die inhaltliche Vorbereitung. Die spätere Übertragung auf Schülergeräte bleibt ein eigener, ausdrücklich ausgelöster und versionierter Schritt.

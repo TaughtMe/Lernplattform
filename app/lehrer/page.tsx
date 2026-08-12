@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TeacherClassConfigurator } from "../components/teacher-class-configurator";
+import { TeacherAssignmentManager } from "../components/teacher-assignment-manager";
 
 export const metadata: Metadata = { title: "Lehrerbereich" };
 
@@ -17,6 +18,7 @@ export default function Page() {
         <span>Lehrerbereich · Prototyp</span>
       </header>
       <TeacherClassConfigurator />
+      <TeacherAssignmentManager />
     </main>
   );
 }

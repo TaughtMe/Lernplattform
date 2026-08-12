@@ -83,3 +83,31 @@ test("a learning result survives a page reload on the same device", async ({
   await expect(page.getByText("Versuche")).toBeVisible();
   await expect(page.getByText("1", { exact: true })).toHaveCount(2);
 });
+
+test("a teacher can prepare an assignment without publishing it", async ({
+  page,
+}) => {
+  await page.goto("/lehrer");
+
+  await page.getByLabel("Titel").fill("School words · Teil 2");
+  await page
+    .getByLabel("Kurze Arbeitsanweisung")
+    .fill("Bearbeite die nächste Vokabelrunde.");
+  await page.getByLabel("Erscheint unter").selectOption("today");
+  await page.getByRole("button", { name: "Als Entwurf speichern" }).click();
+
+  await expect(page.getByText("Entwurf gespeichert.")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "School words · Teil 2" }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Zur Veröffentlichung vorbereiten" })
+    .click();
+  await expect(page.getByText("Bereit", { exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "School words · Teil 2" }),
+  ).toBeVisible();
+});
