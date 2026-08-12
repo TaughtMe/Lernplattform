@@ -2,7 +2,7 @@
 
 Gemeinsam lernen, im Unterricht und zu Hause.
 
-Dieses Repository enthält den gemeinsamen Unterbau der Lernplattform: die schülerorientierte Startseite, stabile Moduleinstiege und den ersten versionierten Datenvertrag. Laufdiktat und LernBox bleiben bewusst als unabhängig entwickelbare Module angebunden.
+Dieses Repository enthält den gemeinsamen Lernraum: die schülerorientierte Startseite, Klassenbereiche und die integrierten Anwendungen. LernBoxV2 und Laufdiktat werden mit ihrer bestehenden Fachlogik und ihren vollständigen Funktionsabläufen übernommen; der Lernraum ergänzt Navigation, Klassenfreigaben, Identität und Ergebnisübergabe.
 
 ## Lokal starten
 

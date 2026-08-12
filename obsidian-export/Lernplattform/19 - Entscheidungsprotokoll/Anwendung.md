@@ -258,3 +258,9 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 ## 23. LernBox-Sitzung statt Ein-Karten-Demo – 12. August 2026
 
 **Beschlossen:** Die Vokabelansicht übernimmt aus LernBoxV2 die Sitzungsstruktur mit fälliger Kartenauswahl, Restanzeige, zwei Abfragerichtungen, Schreibmodus, Aufdecken mit Selbstbewertung und Abschluss. Es wird kein zweiter Karten- oder Boxstand aus LernBoxV2 übernommen. Jede Bewertung erzeugt ein gemeinsames Lernraum-Ereignis; daraus werden Bedeutung, Schreiben und Fälligkeit weiterhin abgeleitet. Aufdecken gilt als schwächerer Nachweis, bewertet kein Schreiben und führt wegen der sichtbaren Lösung nicht zum regulären Boxaufstieg.
+
+## 24. LernBoxV2 und Laufdiktat werden integriert, nicht nachgebaut – 12. August 2026
+
+**Beschlossen:** LernBoxV2 und Laufdiktat sind vollständig funktionsfähige Quellanwendungen. Ihre Fachlogik, Bedienabläufe, Komponenten und Tests werden in den Lernraum übernommen. Der Lernraum erfindet vorhandene Funktionen nicht neu, sondern ergänzt ausschließlich die gemeinsame Plattformhülle, Klassenfreigaben, Identitätszuordnung und Ergebnisübergabe.
+
+Der zuvor beschriebene Ansatz, nur Oberflächenmuster oder einzelne Sitzungsstrukturen zu übernehmen, ist damit überholt. Dies betrifft insbesondere die Entscheidungen 20, 21 und 23, soweit dort eigenständige Lernraum-Regeln an die Stelle des vorhandenen LernBox-Verhaltens gesetzt wurden. Abweichungen vom jeweiligen Quellmodul müssen künftig ausdrücklich begründet und getestet werden. Als abgeglichene Ausgangsstände gelten LernBoxV2 `64051b6` und Laufdiktat `6c2ade4`.

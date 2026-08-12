@@ -3,7 +3,7 @@
 ## Empfohlene Reihenfolge
 
 0. Minimalistischen Schülereinstieg, Klassenarbeitsraum, aktivierbare Module und freies Üben als Plattformrahmen umsetzen.
-1. Bestehendes Laufdiktat stabil halten.
+1. LernBoxV2 und Laufdiktat als vollständige Quellmodule commitgenau übernehmen.
 2. LearningBundle v1 und stabile IDs definieren.
 3. LernBox auf Tags, Herkunft und getrennte Lernstände vorbereiten.
 4. Vokabelmodus im Laufdiktat entwickeln.
@@ -20,7 +20,7 @@
 15. Verschlüsselten Export und Cloud-Backup ergänzen.
 16. Tastschreibtraining als getrennten Schreibbereich entwickeln.
 17. Mathematik über Kompetenz-IDs und Aufgabenfamilien integrieren.
-18. Anwendungen unter einer Plattformoberfläche zusammenführen.
+18. Übernommene Anwendungen dauerhaft mit ihren Upstream-Repositories abgleichen.
 
 ## Sinnvolles erstes Minimum
 
