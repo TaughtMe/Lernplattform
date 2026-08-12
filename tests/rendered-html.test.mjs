@@ -41,7 +41,7 @@ test("server-renders stable module entry pages", async () => {
     ["/klasse/7b", "Heute üben"],
     ["/lernbox", "Meine LernBox"],
     ["/raum", "Raum beitreten"],
-    ["/lehrer", "Lehrer-Login"],
+    ["/lehrer", "Klassenverwaltung"],
   ]) {
     const response = await render(path);
     assert.equal(response.status, 200, path);

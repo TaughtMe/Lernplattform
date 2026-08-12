@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
-import { ModulePlaceholder } from "../components/module-placeholder";
+import Link from "next/link";
+import { TeacherClassConfigurator } from "../components/teacher-class-configurator";
+
 export const metadata: Metadata = { title: "Lehrerbereich" };
+
 export default function Page() {
   return (
-    <ModulePlaceholder
-      eyebrow="Geschützter Arbeitsbereich"
-      title="Lehrer-Login"
-      description="Das Lehrer-Cockpit erhält eine eigene Authentifizierung und bleibt technisch vom Schülerbereich getrennt."
-      status="Authentifizierungsentscheidung noch offen"
-    />
+    <main className="teacher-shell">
+      <header className="teacher-topbar">
+        <Link className="brand" href="/" aria-label="Lernraum Startseite">
+          <span className="brand__mark" aria-hidden="true">
+            L
+          </span>
+          <span>Lernraum</span>
+        </Link>
+        <span>Lehrerbereich · Prototyp</span>
+      </header>
+      <TeacherClassConfigurator />
+    </main>
   );
 }

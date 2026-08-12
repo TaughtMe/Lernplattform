@@ -234,3 +234,7 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 ## 17. Reduzierte Hauptseite und getrennte Einstiege – 12. August 2026
 
 **Beschlossen:** Die Hauptseite enthält zentral nur **Mein Lernraum**, **Freies Üben** und darunter den Code-Beitritt. Öffentliche Beispielgruppen sowie direkte Einstiege zu Duell und Haus werden entfernt. Mein Lernraum listet ausschließlich alle Klassen und bietet erneut den Code-Beitritt. Für die Aufbauphase bleiben Deutsch, Mathematik, Vokabeln und Tipptraining aktiv; die spätere Lehrer-Konfiguration schränkt sie pro Klasse ein.
+
+## 18. Lokale Lehrer-Konfiguration vor Veröffentlichung – 12. August 2026
+
+**Beschlossen:** Modulfreigaben werden zunächst im getrennten lokalen Lehrerbereich bearbeitet und dort gespeichert. Eine Schülervorschau zeigt die beabsichtigte Sichtbarkeit, verändert aber noch nicht direkt den Schülerbereich. Erst eine bewusste spätere Veröffentlichung erzeugt ein versioniertes Klassenpaket für Schülergeräte. So bleibt die technische Trennung zwischen Lehrer- und Schülerdaten erhalten.

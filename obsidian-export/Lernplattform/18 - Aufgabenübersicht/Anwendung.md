@@ -69,6 +69,8 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen
 - [x] Klassenansicht mit „Heute üben“ und „Aufgaben“ als Grundstruktur anlegen
 - [x] Aktivierbare Klassenmodule im Domänenmodell validieren
+- [x] Erste lokale Lehreroberfläche für Modulfreigaben mit Schülervorschau bauen
+- [ ] Modulfreigaben als versioniertes Klassenpaket auf Schülergeräte veröffentlichen
 - [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
 - [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen
 - [x] Strikte TypeScript- und Architekturregeln aktivieren
