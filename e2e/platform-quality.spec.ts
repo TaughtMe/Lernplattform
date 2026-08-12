@@ -65,3 +65,21 @@ test("mobile learners retain direct access to all primary areas", async ({
     mobileNavigation.getByRole("link", { name: "Haus" }),
   ).toBeVisible();
 });
+
+test("a learning result survives a page reload on the same device", async ({
+  page,
+}) => {
+  await page.goto("/lernen");
+  await page.getByRole("button", { name: "Lernrunde starten" }).click();
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("Bibliothek");
+  await page.getByRole("button", { name: "Antwort prüfen" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Richtig gelöst" }),
+  ).toBeVisible();
+  await expect(page.getByText("1", { exact: true })).toHaveCount(2);
+
+  await page.reload();
+  await expect(page.getByText("Versuche")).toBeVisible();
+  await expect(page.getByText("1", { exact: true })).toHaveCount(2);
+});

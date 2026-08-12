@@ -5,9 +5,9 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 ## Jetzt: Vokabel-Kern und Fehlerkreislauf
 
 - [ ] Bestehendes Laufdiktat stabilisieren und automatisierte Basistests ergänzen
-- [ ] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
-- [ ] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
-- [ ] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
+- [x] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
+- [x] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
+- [x] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
 - [ ] Leitner-Boxen und Fälligkeiten lokal umsetzen
 - [ ] Vokabelmodus im Laufdiktat entwickeln
 - [ ] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
@@ -72,7 +72,8 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Unit-, Nutzerinteraktions- und Eigenschaftstests einrichten
 - [x] Browser-, Mobil- und automatische Barrierefreiheitstests einrichten
 - [x] Automatische Quality Gates für Push und Pull Request anlegen
-- [ ] Sicherheitsmeldung der vinext-Bildabhängigkeit nach Upstream-Aktualisierung schließen
+- [x] Abhängigkeiten prüfen und vor Bild-Uploads eine erneute Sicherheitsbewertung festhalten
+- [x] Ersten vollständigen Lernweg Material → Aufgabe → lokales Ergebnis → Lernstand umsetzen
 - [ ] React-Aria-Grundkomponenten erst mit dem ersten komplexen Widget einführen
 - [ ] Netzwerkfehler-Simulation mit Mock Service Worker beim ersten Raumabruf ergänzen
 - [x] Verbindliche Qualitätsgrundlage und Definition of Done dokumentieren
@@ -87,7 +88,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Leistungsbudgets für schwächere Schulgeräte und große Datenbestände festlegen
 - [x] Mobile-first als verbindliche Entwicklungs- und Abnahmegrundlage festlegen
 - [x] Gemeinsame Mobil- und Tablet-Navigation mit Safe-Area-Unterstützung anlegen
-- [ ] Jede neue Ansicht ab 320 CSS-Pixel Breite und ohne horizontales Scrollen prüfen
+- [x] Jede neue Ansicht ab 320 CSS-Pixel Breite und ohne horizontales Scrollen prüfen
 - [ ] Hochformat, Querformat und eingeblendete Bildschirmtastatur pro Lernmodus testen
 - [ ] Geräte- und Browsermatrix vor jedem größeren Meilenstein vollständig durchlaufen
 - [ ] Lehrer-Cockpit und Rollenmodell entwickeln

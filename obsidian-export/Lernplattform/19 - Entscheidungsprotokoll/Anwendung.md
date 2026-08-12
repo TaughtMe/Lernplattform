@@ -213,3 +213,14 @@ Die vollständige Definition of Done und Prüfstrategie steht unter [[../21 - Qu
 - Neue Bibliotheken benötigen einen konkreten Qualitätsnutzen und eine Architekturbegründung.
 
 Bekannte, nicht sofort behebbare Abhängigkeitsrisiken werden mit Reichweite, Gegenmaßnahme und Neubewertung dokumentiert.
+
+## 15. Erster vertikaler Lernweg – 12. August 2026
+
+**Beschlossen und umgesetzt:** Neue Lernfunktionen werden zunächst als kleine vollständige Abläufe gebaut. Der erste Durchstich öffnet ein versioniertes Beispiel-Lernpaket, lässt eine Vokabel beantworten, speichert ein unveränderliches Lernereignis lokal in IndexedDB und zeigt daraus den Lernstand an.
+
+- Die Fachlogik für Antwortprüfung und Fortschritt bleibt unabhängig von React und Dexie.
+- Die Oberfläche greift nur über ein typisiertes Repository auf den lokalen Speicher zu.
+- Richtige und falsche Versuche werden gespeichert; ein Fehler verschwindet nicht als scheinbar leerer Lernstand.
+- Der Lernstand bleibt nach einem Neuladen auf demselben Gerät erhalten.
+- Der Ablauf dient als Integrationsmuster für LernBox und Laufdiktat, ohne deren wechselnde Oberflächen vorwegzunehmen.
+- Browser-, Mobil-, Mindestbreiten- und Barrierefreiheitstests gehören zur Abnahme dieses Durchstichs.
