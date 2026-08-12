@@ -93,6 +93,59 @@ test("a learning result survives a page reload on the same device", async ({
   ).toBeVisible();
 });
 
+test("a vocabulary session advances through several due cards", async ({
+  page,
+}) => {
+  await page.goto("/klasse/7b/aufgaben/vokabeln");
+  await expect(page.getByText("5 von 5 Karten fällig")).toBeVisible();
+  await page.getByRole("button", { name: "Lernrunde starten" }).click();
+  await expect(page.getByLabel("Karte 1 von 5")).toBeVisible();
+
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("Bibliothek");
+  await page.getByRole("button", { name: "Antwort prüfen" }).click();
+  await page.getByRole("button", { name: "Nächste Karte" }).click();
+
+  await expect(page.getByLabel("Karte 2 von 5")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "classroom" }),
+  ).toBeVisible();
+});
+
+test("vocabulary can be written in the reverse direction", async ({ page }) => {
+  await page.goto("/klasse/7b/aufgaben/vokabeln");
+  const reverseDirection = page.getByRole("button", {
+    name: "Deutsch → Englisch",
+  });
+  await reverseDirection.click();
+  await expect(reverseDirection).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Lernrunde starten" }).click();
+
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Bibliothek" }),
+  ).toBeVisible();
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("library");
+  await page.getByRole("button", { name: "Antwort prüfen" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Richtig gelöst" }),
+  ).toBeVisible();
+});
+
+test("flashcard mode reveals and self-assesses an answer", async ({ page }) => {
+  await page.goto("/klasse/7b/aufgaben/vokabeln");
+  const flashcards = page.getByRole("button", { name: /Karteikarten/ });
+  await flashcards.click();
+  await expect(flashcards).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Lernrunde starten" }).click();
+  await page.getByRole("button", { name: "Antwort aufdecken" }).click();
+
+  await expect(page.getByText("Bibliothek", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Gewusst" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Richtig gelöst" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Schreiben: Box 1 von 5")).toBeVisible();
+});
+
 test("dark mode is stored and the Leitner view stays accessible", async ({
   page,
 }) => {

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { LearningEventV1, VocabularyItemV1 } from "./learning-bundle";
 import {
   evaluateVocabularyAnswer,
+  evaluateVocabularyAnswerForDirection,
+  getVocabularyPrompt,
   summarizeLearningProgress,
 } from "./learning-session";
 
@@ -55,6 +57,21 @@ describe("evaluateVocabularyAnswer", () => {
       accepted: false,
       expectedAnswer: "Bibliothek",
     });
+  });
+
+  it("reverses question and accepted answer without mutating the item", () => {
+    expect(getVocabularyPrompt(item, "answer-to-prompt")).toEqual({
+      question: item.answer,
+      expected: item.prompt,
+    });
+    expect(
+      evaluateVocabularyAnswerForDirection(
+        item,
+        " library ",
+        "answer-to-prompt",
+      ),
+    ).toEqual({ accepted: true, expectedAnswer: "library" });
+    expect(item.prompt.text).toBe("library");
   });
 });
 

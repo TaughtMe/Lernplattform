@@ -254,3 +254,7 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 ## 22. Dunkelmodus als warmes Anthrazit – 12. August 2026
 
 **Beschlossen:** Der Dunkelmodus behält dieselbe zurückhaltende Flächenhierarchie wie der Lightmode. Hintergrund und neutrale Karten liegen farblich eng beieinander; große braune oder stark eingefärbte Flächen entfallen. Lernraum und freies Üben behalten ihre Unterscheidung durch äußerst subtile Rot- beziehungsweise Türkistönung. Header, Tags, Konturen, Schatten sowie Coral und Teal folgen den in der Designgrundlage dokumentierten Darkmode-Tokens.
+
+## 23. LernBox-Sitzung statt Ein-Karten-Demo – 12. August 2026
+
+**Beschlossen:** Die Vokabelansicht übernimmt aus LernBoxV2 die Sitzungsstruktur mit fälliger Kartenauswahl, Restanzeige, zwei Abfragerichtungen, Schreibmodus, Aufdecken mit Selbstbewertung und Abschluss. Es wird kein zweiter Karten- oder Boxstand aus LernBoxV2 übernommen. Jede Bewertung erzeugt ein gemeinsames Lernraum-Ereignis; daraus werden Bedeutung, Schreiben und Fälligkeit weiterhin abgeleitet. Aufdecken gilt als schwächerer Nachweis, bewertet kein Schreiben und führt wegen der sichtbaren Lösung nicht zum regulären Boxaufstieg.

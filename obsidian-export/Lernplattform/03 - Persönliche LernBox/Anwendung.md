@@ -27,6 +27,17 @@ Die Startansicht zeigt zum Beispiel:
 - nach persönlicher Schwierigkeit
 - nach Lernobjekttyp: Vokabel, Lernwort oder später mathematische Aufgabenfamilie
 
+## Vokabel-Lernrunde
+
+Eine Lernrunde bildet keinen einzelnen Demo-Versuch ab, sondern wählt beim Start die für Modus und Richtung fälligen Karten eines Stapels aus. Die Auswahl bleibt während der Runde stabil und zeigt Karte, Restmenge und Abschlussstand.
+
+- **Schreiben:** Die Antwort wird verdeckt selbst eingegeben. Eine richtige Eingabe bewertet Bedeutung und Schreiben; eine falsche Eingabe setzt beide betroffenen Stände nach den Leitner-Regeln zurück.
+- **Karteikarten:** Die Lösung wird bewusst aufgedeckt und anschließend mit „Gewusst“ oder „Noch üben“ selbst bewertet. Dieser schwächere Nachweis verändert nur den Bedeutungsstand und erlaubt wegen der gezeigten Lösung keinen regulären Aufstieg.
+- **Richtungen:** Fremdsprache → Deutsch und Deutsch → Fremdsprache besitzen getrennte Fälligkeiten und Boxstände.
+- **Rundenende:** Die Oberfläche fasst gewusste und weiter zu übende Karten zusammen. Fehler können danach als neue fällige Runde erneut geladen werden.
+
+Die Sitzungsstruktur orientiert sich an LernBoxV2. Speicherung, Fälligkeit und Leistungsnachweis verwenden jedoch ausschließlich die gemeinsamen unveränderlichen Lernraum-Ereignisse.
+
 ## Persönliche Fehlerübung
 
 Nach einem Test erzeugt **„Meine Fehler jetzt üben“** aus den fehlerhaften Vokabel-IDs eine Übungsrunde. Nach Hilfen folgt immer noch ein verdeckter Abruf. Erst eine spätere richtige Antwort ohne Hilfe erlaubt den regulären Aufstieg im Leitner-System.

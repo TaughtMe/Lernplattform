@@ -1,4 +1,8 @@
-import type { LearningEventV1, VocabularyItemV1 } from "./learning-bundle";
+import type {
+  LearningDirection,
+  LearningEventV1,
+  VocabularyItemV1,
+} from "./learning-bundle";
 import { normalizeVocabularyText } from "./learning-bundle";
 
 export type VocabularyAnswerResult = {
@@ -12,20 +16,42 @@ export type LearningProgressSummary = {
   incorrect: number;
 };
 
+export type VocabularyPrompt = {
+  question: VocabularyItemV1["prompt"];
+  expected: VocabularyItemV1["answer"];
+};
+
+export function getVocabularyPrompt(
+  item: VocabularyItemV1,
+  direction: LearningDirection,
+): VocabularyPrompt {
+  return direction === "prompt-to-answer"
+    ? { question: item.prompt, expected: item.answer }
+    : { question: item.answer, expected: item.prompt };
+}
+
+export function evaluateVocabularyAnswerForDirection(
+  item: VocabularyItemV1,
+  input: string,
+  direction: LearningDirection,
+): VocabularyAnswerResult {
+  const { expected } = getVocabularyPrompt(item, direction);
+  const normalizedInput = normalizeVocabularyText(input, expected.locale);
+  const acceptedAnswers = [expected.text, ...(expected.alternatives ?? [])].map(
+    (answer) => normalizeVocabularyText(answer, expected.locale),
+  );
+
+  return {
+    accepted: acceptedAnswers.includes(normalizedInput),
+    expectedAnswer: expected.text,
+  };
+}
+
 export function evaluateVocabularyAnswer(
   item: VocabularyItemV1,
   input: string,
 ): VocabularyAnswerResult {
-  const normalizedInput = normalizeVocabularyText(input, item.answer.locale);
-  const acceptedAnswers = [
-    item.answer.text,
-    ...(item.answer.alternatives ?? []),
-  ].map((answer) => normalizeVocabularyText(answer, item.answer.locale));
-
-  return {
-    accepted: acceptedAnswers.includes(normalizedInput),
-    expectedAnswer: item.answer.text,
-  };
+  return evaluateVocabularyAnswerForDirection(item, input, "prompt-to-answer");
 }
 
 export function summarizeLearningProgress(

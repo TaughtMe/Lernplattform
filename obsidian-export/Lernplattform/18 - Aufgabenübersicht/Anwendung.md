@@ -16,6 +16,10 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Schaltfläche **„Meine Fehler jetzt üben“** und persönliche Fehlerrunde umsetzen
 - [ ] Nach Hilfen einen verdeckten Abruf erzwingen
 - [x] Tagesauswahl aus Fälligkeiten und kurzfristigen Fehlerwiederholungen ergänzen
+- [x] Fällige Mehrkarten-Lernrunde für Vokabelstapel umsetzen
+- [x] Schreib- und Karteikartenmodus mit unterschiedlicher Nachweisstärke umsetzen
+- [x] Beide Vokabelrichtungen mit getrennten Fälligkeiten anbieten
+- [x] Sitzungsfortschritt und Rundenabschluss anzeigen
 - [ ] Datei-Export und Wiederherstellung testen
 
 ## Danach: Lernwörter
