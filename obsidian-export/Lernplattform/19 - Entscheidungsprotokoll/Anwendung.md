@@ -250,3 +250,7 @@ Innerhalb der Klasse bündelt **Heute üben** fällige Inhalte sowie durch Fehle
 ## 21. Sichtbare Lernbox und plattformweites Theme – 12. August 2026
 
 **Beschlossen:** Lernraum übernimmt das erprobte visuelle Fünf-Boxen-Muster und die Theme-Grundstruktur aus LernBoxV2. Die fachlichen Regeln des Lernraums bleiben dabei maßgeblich. Bedeutung und Schreiben werden als zwei getrennte Fächerreihen sichtbar, statt den Boxstand nur als Textwert zu nennen. Hell, Dunkel und System werden als semantische, lokal gespeicherte Plattformgrundlage umgesetzt und gehören ab jetzt zur Abnahme jeder neuen Oberfläche.
+
+## 22. Dunkelmodus als warmes Anthrazit – 12. August 2026
+
+**Beschlossen:** Der Dunkelmodus behält dieselbe zurückhaltende Flächenhierarchie wie der Lightmode. Hintergrund und neutrale Karten liegen farblich eng beieinander; große braune oder stark eingefärbte Flächen entfallen. Lernraum und freies Üben behalten ihre Unterscheidung durch äußerst subtile Rot- beziehungsweise Türkistönung. Header, Tags, Konturen, Schatten sowie Coral und Teal folgen den in der Designgrundlage dokumentierten Darkmode-Tokens.

@@ -58,6 +58,27 @@ Lernraum unterstützt von Beginn an **Hell**, **Dunkel** und **System**. Die Wah
 - Browserleisten erhalten einen zur Systemeinstellung passenden Farbhinweis.
 - Der Umschalter bleibt auf Smartphone, Tablet und Desktop erreichbar, ohne Lernaktionen oder die mobile Navigation zu verdecken.
 
+### Dunkelmodus: warm charcoal statt dunkelbrauner Flächen
+
+Der Dunkelmodus übersetzt die ruhige Hierarchie des Lightmodes und ist keine bloße Abdunkelung. Große Flächen liegen eng beieinander; Farbe bleibt auf Orientierung und Aktionen begrenzt.
+
+```text
+background:     #171513
+surface:        #211E1B
+surface-hover:  #28231F
+border:         #39332E
+text-primary:   #F4EEE8
+text-secondary: #B9ADA3
+accent-coral:   #E77A78
+accent-teal:    #58B8B5
+```
+
+- Header verwenden denselben warmen Anthrazitgrund wie die Seite und werden nur durch eine feine Linie `#302B27` getrennt.
+- Die Lernraum-Karte darf mit `#241D1B` minimal rötlich, die Karte „Freies Üben“ mit `#192322` minimal türkis getönt sein.
+- Karten verzichten im Ruhezustand auf starke Schatten und farbige Konturen. Hover hebt Fläche und Kontur nur leicht an.
+- Modultags bleiben transparent mit zurückhaltender Kontur `#554C45` und sekundärer Textfarbe.
+- Das Türkis wird im Dunkelmodus entsättigt und darf auf großen Aktionsflächen nicht wie eine neue Markenfarbe wirken.
+
 ## Navigation
 
 Nach dem Schülereinstieg wechselt die Plattform in eine bewusst minimalistische Arbeitsoberfläche. Sie zeigt zunächst nur **Meine Klasse(n)** und **Freies Üben**. Innerhalb einer Klasse bilden **Heute üben** und **Aufgaben** die primäre Navigation. Fachmodule erscheinen nur, wenn die Lehrkraft sie für diese Klasse aktiviert hat.

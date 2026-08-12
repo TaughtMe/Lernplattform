@@ -99,9 +99,28 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
   await page.addInitScript(() => {
     window.localStorage.setItem("theme-preference", "dark");
   });
-  await page.goto("/klasse/7b/aufgaben/vokabeln");
-
+  await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(23, 21, 19)",
+  );
+  await expect(page.locator(".main-action--class")).toHaveCSS(
+    "background-color",
+    "rgb(36, 29, 27)",
+  );
+  await expect(page.locator(".main-action--free")).toHaveCSS(
+    "background-color",
+    "rgb(25, 35, 34)",
+  );
+
+  await page.goto("/lernen");
+  const moduleTag = page.locator(".module-chips span").first();
+  await expect(moduleTag).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(moduleTag).toHaveCSS("border-color", "rgb(85, 76, 69)");
+  await expect(moduleTag).toHaveCSS("color", "rgb(185, 173, 163)");
+
+  await page.goto("/klasse/7b/aufgaben/vokabeln");
   await expect(page.getByText("Deine Lernbox")).toBeVisible();
   await expect(page.getByLabel("Bedeutung: Box 1 von 5")).toBeVisible();
   await expect(page.getByLabel("Schreiben: Box 1 von 5")).toBeVisible();
