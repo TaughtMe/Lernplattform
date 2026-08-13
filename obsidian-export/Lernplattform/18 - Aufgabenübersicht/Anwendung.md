@@ -70,11 +70,19 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Langfristig: Mathematik
 
-- [ ] Kompetenz-IDs und Aufgabenfamilien fachlich definieren
+- [x] Erste stabile Kompetenz-IDs für Plus, Minus, Mal und Geteilt samt Zahlenraum definieren
 - [ ] Metadaten für Thema, Schwierigkeit und Lösungsstrategie festlegen
-- [ ] Fehler aus Aufgaben einer passenden Aufgabenfamilie zuordnen
-- [ ] Neue passende Aufgaben statt einzelner Fehleraufgaben erzeugen
-- [ ] Mathematische Lernwege und Hilfsstrategien prototypisch testen
+- [x] Fehler aus Kopfrechenaufgaben einer passenden Grundrechenfamilie zuordnen
+- [x] Neue passende Aufgaben statt einzelner Fehleraufgaben erzeugen
+- [x] Vollständigen Kopfrechenprototyp aus Laufdiktat nativ integrieren
+  - [x] Zahlenraum von/bis und alle vier Grundrechenarten
+  - [x] Negative Ergebnisse sowie Null als Operand oder Ergebnis steuerbar machen
+  - [x] Einmaleins-Reihen für Mal und Geteilt auswählbar machen
+  - [x] Lückenaufgaben an erstem Operand, zweitem Operand oder Ergebnis erzeugen
+  - [x] Eigene Aufgaben mit Dezimalzahlen, Klammern, Potenzen, Brüchen und Wurzeln sicher ohne `eval` auswerten
+  - [x] Aufgabenliste erzeugen, einzelne Aufgaben neu würfeln oder löschen
+  - [x] Tastaturfluss mit Enter, Autofokus und automatischem Weitergehen umsetzen
+- [ ] Weiterführende mathematische Lernwege und Hilfsstrategien außerhalb des Kopfrechnens prototypisch testen
 
 ## Plattform und Betrieb
 

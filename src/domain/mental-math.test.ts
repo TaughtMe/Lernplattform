@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   checkMentalMathAnswer,
+  evaluateMentalMathExpression,
   generateMentalMathTasks,
+  parseMentalMathTask,
   type MentalMathOperation,
 } from "./mental-math";
 
@@ -74,5 +76,45 @@ describe("mental math copied from the Laufdiktat task model", () => {
         "3,5",
       ),
     ).toBe(true);
+  });
+
+  it("supports the safe Laufdiktat expression syntax without eval", () => {
+    expect(evaluateMentalMathExpression("2 + 3 * 4")).toBe(14);
+    expect(evaluateMentalMathExpression("\\frac{3}{4} + \\frac{1}{4}")).toBe(1);
+    expect(evaluateMentalMathExpression("\\sqrt[3]{27} + 2^3")).toBe(11);
+    expect(evaluateMentalMathExpression("\\sqrt{-4}")).toBeNull();
+  });
+
+  it("creates selectable gap tasks at every equation position", () => {
+    expect(parseMentalMathTask("7 + 5", 0, "left")).toMatchObject({
+      prompt: "_ + 5 = 12",
+      answer: 7,
+    });
+    expect(parseMentalMathTask("7 + 5", 0, "right")).toMatchObject({
+      prompt: "7 + _ = 12",
+      answer: 5,
+    });
+    expect(parseMentalMathTask("7 + 5", 0, "result")).toMatchObject({
+      prompt: "7 + 5 = _",
+      answer: 12,
+    });
+  });
+
+  it("honors selected multiplication tables and zero rules", () => {
+    const tasks = generateMentalMathTasks(
+      {
+        operations: ["multiply", "divide"],
+        minValue: 0,
+        maxValue: 100,
+        count: 50,
+        multiplicationTables: [5],
+        excludeZeroOperand: true,
+        excludeZeroResult: true,
+      },
+      () => 0.42,
+    );
+    expect(tasks).toHaveLength(50);
+    expect(tasks.every((task) => task.answer !== 0)).toBe(true);
+    expect(tasks.every((task) => task.source.includes("5"))).toBe(true);
   });
 });

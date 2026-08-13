@@ -380,3 +380,13 @@ Text, Vokabeln und Kopfrechenaufgaben laufen danach in einer nativen Lernraum-Ob
 - Aufgaben und Lösungen werden nie über öffentliche Broadcasts übertragen. Schüler- und Lehrkrafttoken bleiben getrennt.
 - Der globale Hell-/Dunkelmodus, mobile Darstellung und gemeinsame Lernraum-Navigation gelten auch für diese Oberflächen.
 - Die zentrale Live-Auswertung bleibt sitzungsbezogen. Persönliche langfristige Förderung entsteht erst über den ausdrücklich vorgesehenen lokalen Ergebnisadapter.
+
+## 38. Laufdiktat-Kopfrechnen als gemeinsamer Mathematikkern – 13. August 2026
+
+**Beschlossen und umgesetzt:** Der freie Mathematikbereich und der Kopfrechengenerator im Lehrer-Laufdiktat verwenden dieselbe portierte Fachlogik aus Laufdiktat `6c2ade4`.
+
+- Alle vier Grundrechenarten halten Operanden und Ergebnis im gewählten Zahlenraum.
+- Negative Ergebnisse, Nullregeln, Einmaleinsreihen und Lückenpositionen sind explizite Einstellungen.
+- Eigene Aufgaben dürfen Dezimalzahlen, Klammern, Potenzen, Brüche und Wurzeln enthalten und werden durch einen sicheren Parser ohne `eval` berechnet.
+- Fehler werden als Grundrechenfamilie mit Zahlenraum gespeichert. Eine anschließende Förderübung erzeugt neue passende Rechnungen statt bloßer Fehlerkopien.
+- Der Mathebereich bleibt auf basale Kopfrechenkompetenzen ausgerichtet. Geometrie oder prüfungsspezifische Stoffpakete gehören nicht zu diesem Kern.

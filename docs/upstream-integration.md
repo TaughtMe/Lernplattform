@@ -66,6 +66,7 @@ Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests
 - Stationsmodus mit Schülernummern, stabiler optionaler Reihenfolge, Spickerzählung und sicherem Stationsfortschritt
 - Battle mit fairer Ladung, Tinte, Flimmern, Schild und zielgerichteten Realtime-Ereignissen
 - detaillierte Live-Auswertung mit Aktiv-/Fertig-Status, Fortschritt, Sternen, Fehlerhäufigkeiten und CSV-Export
+- vollständiger gemeinsamer Kopfrechenkern mit Zahlenraum, Null-/Negativregeln, Einmaleinsreihen, Lückenaufgaben und sicherem Ausdrucksparser für Dezimalzahlen, Klammern, Potenzen, Brüche und Wurzeln
 
 Die App-Hülle, ihr Router, Service Worker, eigenes Theme und allgemeine Einstellungen wurden bewusst nicht übernommen. Laufdiktat läuft als fester Bestandteil des Lernraums und verwendet dessen Theme, Navigation und responsive Qualitätsgrundlage. Noch offen bleibt die vollständige lokale Übergabe aller Live-Fehler an die jeweiligen persönlichen Fördermodule; dafür ist weiterhin ein ausdrücklicher, datensparsamer Rückgabeweg nötig.
 

@@ -5,6 +5,11 @@ import {
   type VocabularyDirection,
 } from "../../domain/running-dictation";
 import type { LiveWord } from "./live-session";
+import {
+  generateMentalMathTasks,
+  parseMentalMathTask,
+  type MentalMathOperation,
+} from "../../domain/mental-math";
 
 export type TeacherContentMode = "text" | "vocabulary" | "math";
 export type TeacherGameMode = "UEBUNG" | "TEST" | "BATTLE" | "STATION";
@@ -44,61 +49,26 @@ export type TeacherRoomConfig = {
   appVersion: "lernraum-0.1.0";
 };
 
-const NUMBER_PATTERN = "-?\\d+(?:[.,]\\d+)?";
-const MATH_LINE = new RegExp(
-  `^(${NUMBER_PATTERN})\\s*([+\\-−*×·/:÷])\\s*(${NUMBER_PATTERN})(?:\\s*=\\s*(${NUMBER_PATTERN}))?$`,
-);
-
-function parseNumber(value: string) {
-  return Number.parseFloat(value.replace(",", "."));
-}
-
-function round(value: number) {
-  return Math.round(value * 1e9) / 1e9;
-}
-
 function parseMathLine(line: string, index: number): LiveWord | null {
-  const match = line.trim().match(MATH_LINE);
-  if (!match) return null;
-  const leftRaw = match[1];
-  const operatorRaw = match[2];
-  const rightRaw = match[3];
-  if (!leftRaw || !operatorRaw || !rightRaw) return null;
-
-  const left = parseNumber(leftRaw);
-  const right = parseNumber(rightRaw);
-  const operator =
-    operatorRaw === "−"
-      ? "-"
-      : operatorRaw === "×" || operatorRaw === "·"
-        ? "*"
-        : operatorRaw === ":" || operatorRaw === "÷"
-          ? "/"
-          : operatorRaw;
-  const result =
-    operator === "+"
-      ? left + right
-      : operator === "-"
-        ? left - right
-        : operator === "*"
-          ? left * right
-          : right !== 0
-            ? left / right
-            : Number.NaN;
-  if (!Number.isFinite(result)) return null;
-
-  const expected = match[4] ? parseNumber(match[4]) : result;
-  if (!Number.isFinite(expected) || Math.abs(expected - result) > 1e-9) {
-    return null;
+  const gapParts = line.split(/\s*=>\s*/);
+  if (gapParts.length === 2 && gapParts[0]?.includes("_")) {
+    const answer = Number(gapParts[1]?.replace(",", "."));
+    if (!Number.isFinite(answer)) return null;
+    return {
+      id: `math-gap-${index}`,
+      kind: "math",
+      prompt: gapParts[0],
+      targetWord: String(answer),
+    };
   }
-
-  const promptOperator =
-    operator === "*" ? "·" : operator === "/" ? ":" : operator;
+  const task = parseMentalMathTask(line, index);
+  if (!task) return null;
   return {
-    id: `math-${index}-${leftRaw}-${operator}-${rightRaw}`,
+    id: task.id,
     kind: "math",
-    prompt: `${leftRaw} ${promptOperator} ${rightRaw}`,
-    targetWord: String(round(result)),
+    prompt: task.prompt,
+    targetWord: String(task.answer),
+    isLatex: task.operation === "mixed-expression",
   };
 }
 
@@ -175,31 +145,39 @@ export function generateMentalMathSource(options: {
   min: number;
   max: number;
   operations: MathOperation[];
+  allowNegativeResults?: boolean;
+  excludeZeroOperand?: boolean;
+  excludeZeroResult?: boolean;
+  multiplicationTables?: number[];
+  gapMode?: boolean;
 }) {
-  const operations = options.operations.length ? options.operations : ["+"];
-  const min = Math.min(options.min, options.max);
-  const max = Math.max(options.min, options.max);
-  const random = (from: number, to: number) =>
-    from + Math.floor(Math.random() * (to - from + 1));
-  const lines: string[] = [];
-  for (let index = 0; index < Math.max(1, options.count); index += 1) {
-    const operation = operations[index % operations.length] ?? "+";
-    if (operation === "*") {
-      const left = random(Math.max(1, min), Math.min(10, Math.max(1, max)));
-      const right = random(1, 10);
-      lines.push(`${left} · ${right}`);
-      continue;
-    }
-    if (operation === "/") {
-      const divisor = random(1, Math.min(10, Math.max(1, max)));
-      const result = random(1, 10);
-      lines.push(`${divisor * result} : ${divisor}`);
-      continue;
-    }
-    const left = random(min, max);
-    const right =
-      operation === "-" ? random(min, Math.max(min, left)) : random(min, max);
-    lines.push(`${left} ${operation} ${right}`);
-  }
-  return lines.join("\n");
+  const operationMap: Record<MathOperation, MentalMathOperation> = {
+    "+": "add",
+    "-": "subtract",
+    "*": "multiply",
+    "/": "divide",
+  };
+  return generateMentalMathTasks({
+    count: options.count,
+    minValue: options.min,
+    maxValue: options.max,
+    operations: options.operations.map((operation) => operationMap[operation]),
+    ...(options.allowNegativeResults === undefined
+      ? {}
+      : { allowNegativeResults: options.allowNegativeResults }),
+    ...(options.excludeZeroOperand === undefined
+      ? {}
+      : { excludeZeroOperand: options.excludeZeroOperand }),
+    ...(options.excludeZeroResult === undefined
+      ? {}
+      : { excludeZeroResult: options.excludeZeroResult }),
+    ...(options.multiplicationTables === undefined
+      ? {}
+      : { multiplicationTables: options.multiplicationTables }),
+    ...(options.gapMode === undefined ? {} : { gapMode: options.gapMode }),
+  })
+    .map((task) =>
+      task.gap ? `${task.prompt} => ${task.answer}` : task.source,
+    )
+    .join("\n");
 }

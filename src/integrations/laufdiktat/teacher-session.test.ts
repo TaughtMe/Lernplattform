@@ -113,4 +113,19 @@ describe("teacher live session builder", () => {
     expect(source.split("\n")).toHaveLength(12);
     expect(buildTeacherWords("math", source, "left-to-right")).toHaveLength(12);
   });
+
+  it("carries generated gap tasks into the live room", () => {
+    const source = generateMentalMathSource({
+      count: 8,
+      min: 0,
+      max: 50,
+      operations: ["+", "-"],
+      gapMode: true,
+      excludeZeroResult: true,
+    });
+    expect(source).toContain("=>");
+    const words = buildTeacherWords("math", source, "left-to-right");
+    expect(words).toHaveLength(8);
+    expect(words.every((word) => word.prompt?.includes("_"))).toBe(true);
+  });
 });

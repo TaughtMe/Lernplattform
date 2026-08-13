@@ -443,6 +443,12 @@ test("teachers can prepare every native live-room content type", async ({
   await expect(page.getByText("3 Aufgaben")).toBeVisible();
   await page.getByRole("button", { name: "Kopfrechnen" }).click();
   await expect(page.getByText("4 Aufgaben")).toBeVisible();
+  await expect(
+    page.getByRole("checkbox", { name: "Negative Ergebnisse" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("checkbox", { name: "Lückenaufgaben" }),
+  ).toBeVisible();
 
   await page
     .getByRole("button", { name: "Weiter zu den Einstellungen" })
@@ -468,6 +474,13 @@ test("teachers can prepare every native live-room content type", async ({
 
 test("mental math advances automatically after Enter", async ({ page }) => {
   await page.goto("/frei/mathematics");
+  await expect(
+    page.getByRole("checkbox", { name: "Lückenaufgaben" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Mal/ }).click();
+  await expect(
+    page.getByRole("group", { name: /Einmaleins-Reihen/ }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Runde starten" }).click();
   const taskHeading = page.locator("#math-task-title");
   await expect(taskHeading).toBeVisible();

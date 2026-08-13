@@ -11,6 +11,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { VocabularyDirection } from "../../src/domain/running-dictation";
+import { MULTIPLICATION_TABLES } from "../../src/domain/mental-math";
 import {
   getLiveRoomClient,
   type LiveRoomConfig,
@@ -115,6 +116,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [mathMin, setMathMin] = useState(0);
   const [mathMax, setMathMax] = useState(20);
   const [mathOps, setMathOps] = useState<MathOperation[]>(["+", "-"]);
+  const [mathAllowNegative, setMathAllowNegative] = useState(false);
+  const [mathExcludeZeroOperand, setMathExcludeZeroOperand] = useState(false);
+  const [mathExcludeZeroResult, setMathExcludeZeroResult] = useState(false);
+  const [mathGap, setMathGap] = useState(false);
+  const [mathTables, setMathTables] = useState<number[]>([]);
   const [room, setRoom] = useState<OpenedLiveRoom | null>(null);
   const [participants, setParticipants] = useState<LiveRoomParticipant[]>([]);
   const [presenceNames, setPresenceNames] = useState<string[]>([]);
@@ -452,69 +458,125 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
               ))}
             </fieldset>
             {contentMode === "math" && (
-              <div className="teacher-live__math-generator">
-                <label>
-                  Anzahl
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={mathCount}
-                    onChange={(e) => setMathCount(Number(e.target.value))}
+              <div className="teacher-live__math-workbench">
+                <div className="teacher-live__math-generator">
+                  <label>
+                    Anzahl
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={mathCount}
+                      onChange={(e) => setMathCount(Number(e.target.value))}
+                    />
+                  </label>
+                  <label>
+                    Von
+                    <input
+                      type="number"
+                      value={mathMin}
+                      onChange={(e) => setMathMin(Number(e.target.value))}
+                    />
+                  </label>
+                  <label>
+                    Bis
+                    <input
+                      type="number"
+                      value={mathMax}
+                      onChange={(e) => setMathMax(Number(e.target.value))}
+                    />
+                  </label>
+                  <fieldset>
+                    <legend>Rechenarten</legend>
+                    {(["+", "-", "*", "/"] as const).map((op) => (
+                      <label key={op}>
+                        <input
+                          type="checkbox"
+                          checked={mathOps.includes(op)}
+                          onChange={() =>
+                            setMathOps((current) =>
+                              current.includes(op)
+                                ? current.filter((item) => item !== op)
+                                : [...current, op],
+                            )
+                          }
+                        />
+                        {op === "*" ? "·" : op === "/" ? ":" : op}
+                      </label>
+                    ))}
+                  </fieldset>
+                  <button
+                    type="button"
+                    className="button button--quiet"
+                    onClick={() =>
+                      setSources((current) => ({
+                        ...current,
+                        math: generateMentalMathSource({
+                          count: mathCount,
+                          min: mathMin,
+                          max: mathMax,
+                          operations: mathOps,
+                          allowNegativeResults: mathAllowNegative,
+                          excludeZeroOperand: mathExcludeZeroOperand,
+                          excludeZeroResult: mathExcludeZeroResult,
+                          multiplicationTables: mathTables,
+                          gapMode: mathGap,
+                        }),
+                      }))
+                    }
+                  >
+                    Aufgaben erzeugen
+                  </button>
+                </div>
+                <div className="teacher-live__math-rules">
+                  <Option
+                    label="Negative Ergebnisse"
+                    checked={mathAllowNegative}
+                    set={setMathAllowNegative}
                   />
-                </label>
-                <label>
-                  Von
-                  <input
-                    type="number"
-                    value={mathMin}
-                    onChange={(e) => setMathMin(Number(e.target.value))}
+                  <Option
+                    label="0 als Rechenzahl vermeiden"
+                    checked={mathExcludeZeroOperand}
+                    set={setMathExcludeZeroOperand}
                   />
-                </label>
-                <label>
-                  Bis
-                  <input
-                    type="number"
-                    value={mathMax}
-                    onChange={(e) => setMathMax(Number(e.target.value))}
+                  <Option
+                    label="Ergebnis 0 vermeiden"
+                    checked={mathExcludeZeroResult}
+                    set={setMathExcludeZeroResult}
                   />
-                </label>
-                <fieldset>
-                  <legend>Rechenarten</legend>
-                  {(["+", "-", "*", "/"] as const).map((op) => (
-                    <label key={op}>
-                      <input
-                        type="checkbox"
-                        checked={mathOps.includes(op)}
-                        onChange={() =>
-                          setMathOps((current) =>
-                            current.includes(op)
-                              ? current.filter((item) => item !== op)
-                              : [...current, op],
+                  <Option
+                    label="Lückenaufgaben"
+                    checked={mathGap}
+                    set={setMathGap}
+                  />
+                </div>
+                {mathOps.some(
+                  (operation) => operation === "*" || operation === "/",
+                ) ? (
+                  <fieldset className="teacher-live__math-tables">
+                    <legend>
+                      Einmaleins-Reihen · nichts gewählt bedeutet alle
+                    </legend>
+                    {MULTIPLICATION_TABLES.map((table) => (
+                      <button
+                        type="button"
+                        key={table}
+                        aria-pressed={mathTables.includes(table)}
+                        onClick={() =>
+                          setMathTables((active) =>
+                            active.includes(table)
+                              ? active.filter((entry) => entry !== table)
+                              : [...active, table].sort(
+                                  (left, right) => left - right,
+                                ),
                           )
                         }
-                      />
-                      {op === "*" ? "·" : op === "/" ? ":" : op}
-                    </label>
-                  ))}
-                </fieldset>
-                <button
-                  type="button"
-                  className="button button--quiet"
-                  onClick={() =>
-                    setSources((current) => ({
-                      ...current,
-                      math: generateMentalMathSource({
-                        count: mathCount,
-                        min: mathMin,
-                        max: mathMax,
-                        operations: mathOps,
-                      }),
-                    }))
-                  }
-                >
-                  Aufgaben erzeugen
-                </button>
+                      >
+                        {table}
+                      </button>
+                    ))}
+                  </fieldset>
+                ) : null}
               </div>
             )}
             <label className="teacher-live__source">

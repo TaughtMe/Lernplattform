@@ -12,6 +12,12 @@ describe("TeacherLiveRoom", () => {
     expect(screen.getByText("3 Aufgaben")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Kopfrechnen" }));
     expect(screen.getByText("4 Aufgaben")).toBeVisible();
+    expect(
+      screen.getByRole("checkbox", { name: "Negative Ergebnisse" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("checkbox", { name: "Lückenaufgaben" }),
+    ).toBeVisible();
   });
 
   it("does not pretend to open an unconfigured live lobby", async () => {

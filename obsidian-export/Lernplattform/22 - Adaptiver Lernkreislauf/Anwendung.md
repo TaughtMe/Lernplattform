@@ -41,6 +41,8 @@ Es geht nicht primär um kurzfristige Vorbereitung auf einzelne Prüfungen. Sch�
 
 Ein Mathematikfehler wird niemals als Vokabelkarte gespeichert. Der gemeinsame Kern speichert das Lernsignal; das zuständige Fachmodul entscheidet über die passende Übung.
 
+Der erste Mathematik-Kreislauf ist für die vier Grundrechenarten umgesetzt. Ein Fehler wird mit Rechenfamilie und Zahlenraum lokal gespeichert. Die anschließende Fehlerübung erzeugt neue Aufgaben derselben Rechenfamilie im gewählten Zahlenraum, statt lediglich die identische Rechnung erneut vorzulegen. Einmaleinsreihe, Nullregeln, negative Ergebnisse und Lückenform bleiben dabei Teil der gewählten Übungskonfiguration.
+
 ## Rolle von Laufdiktat und LernBox
 
 Das Laufdiktat liefert kurzfristige, aussagekräftige Lernsignale: Fehlversuche, verwendete Hilfen, Merkspanne, Abfragerichtung und sicheren verdeckten Abruf. Die LernBox organisiert die langfristige Wiederholung von Vokabeln und getrennte Schreib- beziehungsweise Bedeutungsstände. Erst ihre Verbindung macht aus beiden Anwendungen den Lernraum.
