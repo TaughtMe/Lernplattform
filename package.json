@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "dexie": "4.4.4",
+    "qr-scanner": "1.4.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "4.4.3"

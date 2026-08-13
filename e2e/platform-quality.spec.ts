@@ -10,7 +10,12 @@ test("start page exposes the core learner actions", async ({ page }) => {
       name: "Wie möchtest du heute lernen?",
     }),
   ).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "Raumcode" })).toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "Klassen- oder Raumcode" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Mein Lernraum", exact: false }),
   ).toBeVisible();
@@ -392,6 +397,9 @@ test("the class room presents one connected adaptive learning loop", async ({
   ).toHaveAttribute("href", "/frei/german/lernwoerter");
   await expect(page.getByRole("textbox", { name: "Raumcode" })).toBeVisible();
   await expect(
+    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
+  ).toBeVisible();
+  await expect(
     page.getByText(/Vollständige Antworten werden nicht übertragen/),
   ).toBeVisible();
 });
@@ -410,6 +418,9 @@ test("free practice opens the foundation modules directly", async ({
     "/lernbox",
   );
   await expect(page.getByRole("textbox", { name: "Raumcode" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
+  ).toBeVisible();
 });
 
 test("mental math advances automatically after Enter", async ({ page }) => {

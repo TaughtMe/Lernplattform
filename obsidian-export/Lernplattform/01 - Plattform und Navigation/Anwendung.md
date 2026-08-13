@@ -18,6 +18,8 @@ Die verbindliche Klassenoberfläche ordnet alle aktiven Module drei wiederkehren
 
 Deutsch führt direkt zu den Lernwörtern, Vokabeln direkt zur LernBox und Mathematik direkt zum Kopfrechnen. Das klassische Laufdiktat ist kein Deutsch-Untermodul. Es wird über ein separates Raumcodefeld im Klassenraum und im freien Bereich betreten.
 
+Jede Code-Eingabe bietet neben der Tastatureingabe eine Kameraaktion für QR-Codes. Das gilt auch auf der öffentlichen Startseite und in **Meine Klassen**, damit Klassenbeitritt und Laufdiktat auf Mobilgeräten ohne Abtippen möglich sind. Externe Ziele aus einem QR-Code werden nicht geöffnet; Lernraum liest ausschließlich den vorgesehenen Klassen- oder Raumcode aus.
+
 Lehrer und Schüler verwenden dieselbe App. Ein Schülergerät kann einen privaten Lernbereich und seine Klassenmitgliedschaften als getrennte Einstiege anzeigen. Der individuelle Einschreibungs-QR aktiviert ausschließlich den Schülerbereich der Klasse und die von der Lehrkraft freigegebenen Funktionen.
 
 ## Wichtige Regeln

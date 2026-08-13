@@ -4,6 +4,14 @@ import { describe, expect, it } from "vitest";
 import { RoomCodeForm } from "./room-code-form";
 
 describe("RoomCodeForm", () => {
+  it("offers camera scanning next to manual entry", () => {
+    render(<RoomCodeForm />);
+
+    expect(
+      screen.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
+    ).toBeVisible();
+  });
+
   it("explains an invalid room code accessibly", async () => {
     const user = userEvent.setup();
     render(<RoomCodeForm />);

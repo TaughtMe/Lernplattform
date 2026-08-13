@@ -341,3 +341,7 @@ Die verbindliche Beschreibung steht unter [[../22 - Adaptiver Lernkreislauf/Anwe
 - Deutsch öffnet direkt die Lernwörter, Vokabeln direkt die LernBox und Mathematik direkt das Kopfrechnen aus der Laufdiktat-Fachlogik.
 - Das klassische Laufdiktat ist keine Deutsch-Kachel. Raumcode oder QR-Code führen aus Klasse und freiem Bereich in Lobby und Spiel.
 - Freie Übungsbereiche erhalten feste Orientierungssymbole. Klassen zeigen nur ein Symbol, wenn die Lehrkraft selbst eines hinterlegt hat.
+
+## 33. QR-Scanner an allen Code-Einstiegen – 13. August 2026
+
+**Beschlossen:** Raum- und Klassenbeitritt bieten überall dieselben zwei Wege: Code eintippen oder QR-Code mit der Kamera scannen. Die Kameraaktion erscheint auf Startseite, in **Meine Klassen**, im Klassenraum und unter **Freies Üben**. Lernraum extrahiert ausschließlich den erwarteten Code und öffnet keine beliebige Adresse aus einem gescannten QR-Code.

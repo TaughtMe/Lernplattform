@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CLASS_MODULE_LABELS } from "../../src/domain/class-workspace";
 import { demoClass } from "../../src/domain/demo-class";
+import { RoomCodeForm } from "./room-code-form";
 
 export function StudentHome() {
   return (
@@ -44,25 +45,15 @@ export function StudentHome() {
           </Link>
         </div>
 
-        <form className="join-class join-class--panel" action="/klasse/7b">
+        <section className="join-class join-class--panel">
           <div>
             <span>
               <strong>Weitere Klasse oder Raum öffnen</strong>
               <small>Gib den Code deiner Lehrkraft ein.</small>
             </span>
           </div>
-          <label className="sr-only" htmlFor="student-class-code">
-            Klassen- oder Raumcode
-          </label>
-          <div className="join-class__controls">
-            <input
-              id="student-class-code"
-              name="code"
-              placeholder="Klassen- oder Raumcode"
-            />
-            <button className="button button--secondary">Beitreten</button>
-          </div>
-        </form>
+          <RoomCodeForm idPrefix="student-class" mode="auto" />
+        </section>
       </section>
     </main>
   );

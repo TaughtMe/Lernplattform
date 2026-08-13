@@ -43,7 +43,7 @@ export default function Home() {
         </div>
 
         <div className="main-entry__code">
-          <RoomCodeForm />
+          <RoomCodeForm idPrefix="main-join" mode="auto" />
         </div>
         <p className="privacy-note">
           Persönliche Lernstände bleiben auf diesem Gerät.

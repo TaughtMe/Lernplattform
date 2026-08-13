@@ -19,6 +19,8 @@ Der Unterrichtsraum ermöglicht gemeinsame, von der Lehrkraft gesteuerte Aktivit
 
 Das klassische Laufdiktat wird nicht als frei wählbare Deutsch-Kachel dargestellt. Es ist eine gemeinsame Unterrichtsrunde und beginnt deshalb immer mit Raumcode oder QR-Code. Ein Codefeld steht sowohl im Klassenraum als auch unter **Freies Üben** bereit und führt in die native Lobby, danach in das Spiel.
 
+Der QR-Scanner verwendet bevorzugt die rückseitige Kamera, lässt sich jederzeit schließen und fällt bei fehlender Kamerafreigabe auf die manuelle Code-Eingabe zurück. Ein gescannter Link wird nicht als fremde Adresse geöffnet; nur sein vierstelliger Raumcode wird übernommen.
+
 Der persönliche Deutschbereich öffnet stattdessen direkt die Lernwörter. Die vorhandene Laufdiktat-Fachlogik darf außerdem in anderen Grundlagenmodulen weiterverwendet werden, insbesondere für das Kopfrechnen und seine Aufgabenfamilien.
 
 ## Regeln
