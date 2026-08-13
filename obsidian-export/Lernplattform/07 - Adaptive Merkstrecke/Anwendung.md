@@ -40,6 +40,8 @@ Die App wählt Hilfen und Verzögerungen anhand bisheriger Fehler. Erfolgreiche 
 
 Fehlerfrei und ohne Hilfe führt zur nächsten Merkstufe. Eine falsch abgesendete Lösung oder verwendete Hilfe hält das Wort in der Stufe. Wiederholte Fehler können zu einer niedrigeren Merkstufe führen.
 
+Der erste native Funktionsprototyp ist im freien Deutschbereich umgesetzt. Er lässt alle fünf Stufen mit eigenen Wörtern ausprobieren, zeigt Hilfen bewusst als aufstiegshemmend und empfiehlt nach wiederholten Fehlern eine leichtere Stufe. Die Ergebnisse gelten zunächst nur für die laufende Runde; die dauerhafte Kopplung an den getrennten Leitner-Stand folgt mit dem Lernwort-Datenmodell.
+
 In Stufe 5 wählt der Schüler eine Blockgröße von beispielsweise 1, 2, 3 oder 5 Wörtern. Eine größere Blockgröße bringt einen Merkbonus, darf sorgfältiges und fehlerfreies Schreiben aber nicht überkompensieren. Ein optionaler Sequenzmodus kann später zusätzlich die Reihenfolge prüfen.
 
 ## Tastschreibtraining als eigener Bereich

@@ -40,6 +40,7 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/frei",
     "/frei/german",
     "/frei/german/laufdiktat",
+    "/frei/german/lernwoerter",
     "/klasse/7b",
     "/lernbox",
     "/raum",
@@ -163,6 +164,42 @@ test("a native Laufdiktat mistake becomes due LernBox practice", async ({
   await page.getByRole("link", { name: "Meine Fehler jetzt üben" }).click();
   await expect(
     page.getByRole("heading", { name: "Fehler aus Laufdiktat" }),
+  ).toBeVisible();
+});
+
+test("the five-stage learning-word path can be tried without an account", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/lernwoerter");
+  await page.getByRole("button", { name: /4 Ansehen & verdecken/ }).click();
+  await page
+    .getByRole("textbox", { name: "Deine Lernwörter" })
+    .fill("Schulweg");
+  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
+
+  await expect(page.getByText("Schulweg", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Wörter verdecken" }).click();
+  await expect(
+    page.getByRole("heading", { name: "_ _ _ _ _ _ _ _" }),
+  ).toBeVisible();
+  await page.getByRole("textbox", { name: "Deine Lösung" }).fill("Schulweck");
+  await page.getByRole("button", { name: "Prüfen" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Noch nicht sicher" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Verdeckt noch einmal versuchen" })
+    .click();
+  await page.getByRole("button", { name: "Wörter verdecken" }).click();
+  await page.getByRole("textbox", { name: "Deine Lösung" }).fill("Schulweg");
+  await page.getByRole("button", { name: "Prüfen" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Richtig geschrieben" }),
+  ).toBeVisible();
+  await expect(page.getByText(/bleiben auf Merkstufe 4/)).toBeVisible();
+  await page.getByRole("button", { name: "Runde auswerten" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Du hast die Stufe ausprobiert." }),
   ).toBeVisible();
 });
 

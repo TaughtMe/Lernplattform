@@ -25,15 +25,17 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Danach: Lernwörter
 
+**Aktueller Funktionsprototyp:** Die fünf Merkstufen können im freien Deutschbereich bereits mit eigenen Wörtern vollständig durchlaufen werden. Die dauerhafte Speicherung als Lernobjekt, Leitner-Fälligkeit und Punktewertung sind bewusst noch nicht angebunden.
+
 - [ ] Lernobjekttyp „Lernwort“ im gemeinsamen Datenmodell ergänzen
 - [ ] Merkstufe und Leitner-Box getrennt speichern
-- [ ] Stufe 1: vollständiges Wort fehlerfrei abschreiben
-- [ ] Stufe 2: wenige fehlende Buchstaben ergänzen
-- [ ] Stufe 3: Wort mit vielen Lücken rekonstruieren
-- [ ] Stufe 4: Wort ansehen, verdecken und mit Längenstrichen tippen
-- [ ] Stufe 5: mehrere Wörter ansehen, merken und tippen
-- [ ] Blockgrößen 1, 2, 3 und 5 ohne verpflichtende Reihenfolge anbieten
-- [ ] Regeln für Aufstieg, Verbleib, Rückstufung und Hilfen implementieren
+- [x] Stufe 1 als überprüfbaren Funktionsprototyp: vollständiges Wort fehlerfrei abschreiben
+- [x] Stufe 2 als überprüfbaren Funktionsprototyp: wenige fehlende Buchstaben ergänzen
+- [x] Stufe 3 als überprüfbaren Funktionsprototyp: Wort mit vielen Lücken rekonstruieren
+- [x] Stufe 4 als überprüfbaren Funktionsprototyp: Wort ansehen, verdecken und mit Längenstrichen tippen
+- [x] Stufe 5 als überprüfbaren Funktionsprototyp: mehrere Wörter ansehen, merken und tippen
+- [x] Blockgrößen 1, 2, 3 und 5 ohne verpflichtende Reihenfolge prototypisch anbieten
+- [x] Regeln für Aufstieg, Verbleib, Rückstufung und Hilfen im Funktionsprototyp implementieren
 - [ ] Lernstand und Leistungswertung technisch trennen
 - [ ] Selbstkorrekturen erfassen, aber die endgültig richtige Lösung als fachlich richtig werten
 - [ ] 5.000-Punkte-Wertung und Sterneanzeige prototypisch umsetzen

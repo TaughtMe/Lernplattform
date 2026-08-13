@@ -293,3 +293,13 @@ Diese Entscheidung ersetzt Entscheidung 25 vollständig und präzisiert Entschei
 - Die Auswahl **alle / nur fehlerhafte / keine übernehmen** wirkt über `LearningBundleV1` auf die gemeinsame persönliche LernBox.
 - Textfehler werden noch nicht vorschnell als normale Vokabeln gespeichert; dafür folgt der im Vault geplante Lernobjekttyp Lernwort.
 - Live-Raum, Lehrer-Dashboard, Stationen und Battle bleiben nachfolgende Integrationsschritte und erhalten keine zweite App-Hülle.
+
+## 28. Fachfunktionen vor Rollen- und Plattformbetrieb – 13. August 2026
+
+**Beschlossen:** Die nächste Aufbauphase macht zunächst mehr der im Vault beschriebenen fachlichen Lernwege als zusammenhängende, lokal überprüfbare Funktionsprototypen sichtbar. Schülerkonten, Lehrerrollen, Klassenveröffentlichung, Ranking und Synchronisation werden in dieser Phase nicht vorgezogen.
+
+- Der freie Übungsbereich dient als Werkstatt, in der Ablauf und Lernlogik mit eigenen Inhalten ausprobiert werden können.
+- Ein Funktionsprototyp muss seinen fachlichen Ablauf vollständig zeigen und automatisiert geprüft sein, darf aber eine spätere dauerhafte Speicherung ausdrücklich ausklammern.
+- Der erste neue Prototyp bildet die fünfstufige Lernwort-Merkstrecke einschließlich Blockgrößen, Hilferegel und Aufstiegs-/Rückstufungsempfehlung ab.
+- Merkstufe und Leitner-Fälligkeit werden erst mit dem gemeinsamen Lernwort-Datenmodell dauerhaft gespeichert und bleiben fachlich getrennte Werte.
+- Die Plattformoberfläche wird schrittweise über echte Lernwege zusammengeführt; reine Platzhalter werden nicht als fertige Module behandelt.

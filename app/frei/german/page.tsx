@@ -16,8 +16,9 @@ export default function GermanPracticePage() {
         <p className="eyebrow">Deutsch</p>
         <h1>Wie möchtest du üben?</h1>
         <p>
-          Beginne mit einem Laufdiktat. Lernwörter und weitere Schreibtrainings
-          kommen anschließend als eigene, klar getrennte Lernwege dazu.
+          Wähle einen zusammenhängenden Lernweg: Texte und Vokabeln aus dem
+          Gedächtnis schreiben oder einzelne Lernwörter Schritt für Schritt
+          sichern.
         </p>
         <div className="free-area-grid">
           <Link className="free-area-card" href="/frei/german/laufdiktat">
@@ -25,6 +26,15 @@ export default function GermanPracticePage() {
             <h2>Laufdiktat</h2>
             <p>Texte oder Vokabeln ansehen, merken und verdeckt schreiben.</p>
             <strong>Starten →</strong>
+          </Link>
+          <Link className="free-area-card" href="/frei/german/lernwoerter">
+            <span className="entry-card__label">5 Merkstufen</span>
+            <h2>Lernwörter</h2>
+            <p>
+              Abschreiben, Lücken ergänzen, verdecken und mehrere Wörter
+              behalten.
+            </p>
+            <strong>Lernweg testen →</strong>
           </Link>
         </div>
       </section>

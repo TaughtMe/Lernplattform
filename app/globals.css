@@ -2743,3 +2743,302 @@ body,
     transition: none !important;
   }
 }
+
+/* Native learning-word path: the five-stage memory sequence from the Vault. */
+.learning-word-shell {
+  min-height: 100vh;
+  background: var(--shell);
+}
+.learning-word-setup,
+.learning-word-session,
+.learning-word-complete {
+  width: min(100% - 40px, 1180px);
+  margin-inline: auto;
+  padding-block: 72px 100px;
+}
+.learning-word-heading {
+  max-width: 790px;
+  margin-bottom: 42px;
+}
+.learning-word-heading h1,
+.learning-word-complete h1 {
+  max-width: 800px;
+  margin: 12px 0 18px;
+}
+.learning-word-heading > p:last-child,
+.learning-word-complete > p {
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.learning-word-stages {
+  margin: 0 0 32px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  list-style: none;
+}
+.learning-word-stages button {
+  width: 100%;
+  min-height: 170px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.learning-word-stages button:hover {
+  border-color: var(--teal);
+  background: var(--surface-hover);
+}
+.learning-word-stages button[aria-pressed="true"] {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 11%, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--teal);
+}
+.learning-word-stages button > span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-weight: 850;
+}
+.learning-word-stages button[aria-pressed="true"] > span {
+  background: var(--teal);
+  color: #171513;
+}
+.learning-word-stages strong {
+  font-size: 1rem;
+}
+.learning-word-stages small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+.learning-word-config {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+  gap: 22px;
+}
+.learning-word-config > label,
+.learning-word-config > aside {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+.learning-word-config label,
+.learning-word-card label {
+  display: grid;
+  gap: 10px;
+  color: var(--ink);
+  font-weight: 780;
+}
+.learning-word-config textarea,
+.learning-word-config select,
+.learning-word-card textarea,
+.learning-word-card input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font: inherit;
+}
+.learning-word-config textarea,
+.learning-word-card textarea,
+.learning-word-card input {
+  padding: 15px 17px;
+  line-height: 1.6;
+}
+.learning-word-config select {
+  min-height: 48px;
+  padding-inline: 12px;
+}
+.learning-word-config small {
+  color: var(--muted);
+  font-weight: 500;
+}
+.learning-word-config > aside {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 14px;
+}
+.learning-word-config aside h2,
+.learning-word-config aside p {
+  margin: 0;
+}
+.learning-word-config aside > strong {
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.learning-word-config aside .button {
+  width: 100%;
+}
+.learning-word-session {
+  max-width: 900px;
+}
+.learning-word-card {
+  min-height: 480px;
+  margin-top: 28px;
+  padding: clamp(30px, 6vw, 70px);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgb(70 45 30 / 8%);
+  text-align: center;
+}
+.learning-word-card > *,
+.learning-word-card form {
+  width: min(100%, 650px);
+}
+.learning-word-card h1 {
+  margin: 12px 0 22px;
+  overflow-wrap: anywhere;
+  font-size: clamp(2.3rem, 7vw, 5.5rem);
+  letter-spacing: 0.08em;
+}
+.learning-word-card p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.learning-word-card input,
+.learning-word-card textarea {
+  background: var(--shell);
+  text-align: center;
+}
+.learning-word-memory-list {
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.learning-word-memory-list strong {
+  padding: 12px 17px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--coral) 11%, var(--surface));
+  font-size: clamp(1.25rem, 4vw, 2.1rem);
+}
+.learning-word-actions,
+.running-complete-actions {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.learning-word-help,
+.learning-word-solution,
+.prototype-note {
+  margin: 18px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  line-height: 1.55;
+}
+.learning-word-session > .text-button {
+  margin: 24px auto 0;
+  display: block;
+}
+.learning-word-complete {
+  max-width: 900px;
+  text-align: center;
+}
+.learning-word-complete > p {
+  margin-inline: auto;
+}
+.learning-word-result-grid {
+  margin: 38px 0 26px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.learning-word-result-grid article {
+  min-height: 145px;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.learning-word-result-grid strong {
+  font-size: 2.4rem;
+}
+.learning-word-result-grid span {
+  color: var(--muted);
+}
+.learning-word-complete .prototype-note {
+  max-width: none;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 800px) {
+  .learning-word-stages {
+    grid-template-columns: 1fr;
+  }
+  .learning-word-stages button {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+  .learning-word-stages button small {
+    grid-column: 2;
+  }
+  .learning-word-config {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .learning-word-setup,
+  .learning-word-session,
+  .learning-word-complete {
+    width: min(100% - 28px, 1180px);
+    padding-block: 46px 80px;
+  }
+  .learning-word-heading {
+    margin-bottom: 28px;
+  }
+  .learning-word-config > label,
+  .learning-word-config > aside,
+  .learning-word-card {
+    padding: 22px;
+  }
+  .learning-word-card {
+    min-height: 420px;
+  }
+  .learning-word-result-grid {
+    grid-template-columns: 1fr;
+  }
+  .learning-word-result-grid article {
+    min-height: 100px;
+  }
+  .learning-word-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+  .learning-word-actions .button {
+    width: 100%;
+  }
+}
