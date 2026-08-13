@@ -59,7 +59,10 @@ Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests
 - native Lobby mit Supabase Presence sowie Übernahme der vorhandenen Ereignisse `session-start` und `session-ended`
 - autorisierter Sitzungsabruf über `get_room_state_secure`; öffentliche Broadcasts enthalten weiterhin weder Aufgaben noch Lösungen
 - natives Live-Spiel für Text, Vokabeln und Kopfrechnen mit ursprünglicher Antwortprüfung, Fortschrittsrückgabe, Wiederaufnahme und Teilnehmer-Heartbeat
+- native Lehrkraft-Erstellung für Text-, Vokabel- und Kopfrechenrunden mit Übungsmodus und Lernstandscheck
+- scanbare QR-/Code-Lobby mit kombinierter Presence- und Heartbeat-Teilnehmeranzeige
+- sicherer Sitzungsstart über `update_session_secure`; das anschließende Broadcast-Ereignis enthält keine Aufgaben oder Lösungen
 
-Die App-Hülle, ihr Router, Service Worker, eigenes Theme und Zustandsspeicher wurden bewusst nicht übernommen. Lehrer-Dashboard, Stationen, Battle und die vollständige lokale Fehlerübergabe folgen in getrennten, getesteten Integrationsschritten.
+Die App-Hülle, ihr Router, Service Worker, eigenes Theme und Zustandsspeicher wurden bewusst nicht übernommen. Stationsmodus, Battle, die detaillierte Live-Auswertung und die vollständige lokale Fehlerübergabe folgen in getrennten, getesteten Integrationsschritten.
 
 Der Raumbeitritt lädt nur dann den Browserclient, wenn `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` gesetzt sind. Ein Service-Role-Schlüssel darf niemals im Browser liegen. Ohne Konfiguration bleibt die lokale Anwendung vollständig nutzbar und nennt die fehlende Live-Verbindung verständlich; sie simuliert keinen erfolgreichen Raumbeitritt.

@@ -100,7 +100,9 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
   - [x] Sicheren Schülerbeitritt und native Wartelobby aus Laufdiktat portieren
   - [x] Autorisierte Sitzungsdaten in ein natives Spiel für Text, Vokabeln und Kopfrechnen übernehmen
   - [x] Fortschritt, Wiederaufnahme und Teilnehmer-Heartbeat an den bestehenden sicheren Raumvertrag anbinden
-  - [ ] Lehrerraum, Stationen und Battle in Lernraum-Oberflächen überführen
+  - [x] Lehrerraum mit Inhaltserstellung, QR-/Code-Lobby, Teilnehmerliste und sicherem Sitzungsstart überführen
+  - [ ] Stationsmodus in die Lernraum-Oberfläche überführen
+  - [ ] Battle in die Lernraum-Oberfläche überführen
 - [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
 - [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten
 - [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen

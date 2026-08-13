@@ -24,6 +24,84 @@ export type LiveProgress = {
   wordErrors?: Record<string, number>;
 };
 
+export type OpenedLiveRoom = {
+  roomId: string;
+  code: string;
+  accessToken: string;
+};
+
+export type LiveRoomParticipant = {
+  studentName: string;
+  lastSeenAt: string;
+};
+
+export async function openLiveRoom(
+  config: LiveRoomConfig,
+  roomConfig: Record<string, unknown>,
+): Promise<OpenedLiveRoom> {
+  const { data, error } = await getLiveRoomClient(config).rpc(
+    "open_room_secure",
+    { p_config: roomConfig },
+  );
+  if (error) throw new Error(error.message);
+  const row = data?.[0];
+  if (!row) throw new Error("Der Raum konnte nicht geöffnet werden.");
+  return {
+    roomId: row.room_id,
+    code: row.code,
+    accessToken: row.access_token,
+  };
+}
+
+export async function updateLiveSession(
+  config: LiveRoomConfig,
+  room: Pick<OpenedLiveRoom, "roomId" | "accessToken">,
+  sessionId: string,
+  roomConfig: Record<string, unknown>,
+) {
+  const { error } = await getLiveRoomClient(config).rpc(
+    "update_session_secure",
+    {
+      p_room_id: room.roomId,
+      p_access_token: room.accessToken,
+      p_session_id: sessionId,
+      p_config: roomConfig,
+    },
+  );
+  if (error) throw new Error(error.message);
+}
+
+export async function endLiveRoom(
+  config: LiveRoomConfig,
+  room: Pick<OpenedLiveRoom, "roomId" | "accessToken">,
+) {
+  const { error } = await getLiveRoomClient(config).rpc("end_room_secure", {
+    p_room_id: room.roomId,
+    p_access_token: room.accessToken,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function getLiveRoomParticipants(
+  config: LiveRoomConfig,
+  room: Pick<OpenedLiveRoom, "roomId" | "accessToken">,
+): Promise<LiveRoomParticipant[]> {
+  const { data, error } = await getLiveRoomClient(config).rpc(
+    "get_room_participants_secure",
+    {
+      p_room_id: room.roomId,
+      p_access_token: room.accessToken,
+    },
+  );
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(
+    (row: { student_key: string; last_seen_at: string }) => ({
+      studentName: row.student_key,
+      lastSeenAt: row.last_seen_at,
+    }),
+  );
+}
+
 export async function joinLiveRoom(
   config: LiveRoomConfig,
   code: string,

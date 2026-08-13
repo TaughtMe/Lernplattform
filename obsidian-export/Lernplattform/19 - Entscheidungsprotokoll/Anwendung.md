@@ -357,3 +357,14 @@ Live-Räume sind die begrenzte Ausnahme vom sonstigen Lokal-first-Lernen: Währe
 **Beschlossen:** Das öffentliche Realtime-Ereignis `session-start` ist ausschließlich ein Wecksignal. Es enthält weder Aufgaben noch Lösungen. Das Schülergerät liest Status, Sitzungs-ID und Konfiguration anschließend mit seinem gerätegebundenen Teilnehmertoken über `get_room_state_secure` und validiert die Daten vor der Anzeige.
 
 Text, Vokabeln und Kopfrechenaufgaben laufen danach in einer nativen Lernraum-Oberfläche. Antwortprüfung, stabile individuelle Reihenfolge, Fortschrittsrückgabe, Wiederaufnahme nach Verbindungsabbruch und der verbindungsunabhängige Teilnehmer-Heartbeat werden aus Laufdiktat `6c2ade4` übernommen. Stationsmodus, Battle und die Lehrkraftoberfläche bleiben eigene folgende Integrationsschritte.
+
+## 36. Nativer Lehrkraft-Raum mit sicherer Freigabe – 13. August 2026
+
+**Beschlossen und umgesetzt:** Der Lehrerbereich erstellt Unterrichtsrunden nativ aus Text, Vokabeln oder Kopfrechenaufgaben. Die Lehrkraft kann Inhalte prüfen, Übungsmodus oder Lernstandscheck wählen, eine Lobby öffnen und die verbundenen Geräte vor dem Start sehen. QR-Code und vierstelliger Code führen ausschließlich zum Lernraum-Raumbeitritt.
+
+- Die Parser für Text und Vokabeln verwenden die bereits portierte Laufdiktat-Fachlogik; der Kopfrechenimport übernimmt das sichere Rechenprinzip ohne `eval` und akzeptiert die schulüblichen Operatoren.
+- Der geheime Raumzugang der Lehrkraft wird nicht im QR-Code, in einer URL oder dauerhaft im Browser gespeichert.
+- Aufgaben und Lösungen werden vor dem Start über `update_session_secure` hinterlegt. `session-start` bleibt ein inhaltsfreies Wecksignal.
+- Die Teilnehmeranzeige kombiniert Realtime Presence mit dem autorisierten Teilnehmer-Heartbeat. Presence dient nur dem kurzlebigen Verbindungszustand und nicht als dauerhafte Lernhistorie.
+- Ohne `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` bleibt der lokale Lernraum nutzbar, zeigt aber ehrlich an, dass keine Live-Lobby geöffnet werden kann.
+- Stationsmodus und Battle bleiben getrennte nächste Integrationsschritte, damit ihre abweichenden Raum- und Spiellogiken nicht stillschweigend vereinfacht werden.

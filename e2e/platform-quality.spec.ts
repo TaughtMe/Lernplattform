@@ -423,6 +423,34 @@ test("free practice opens the foundation modules directly", async ({
   ).toBeVisible();
 });
 
+test("teachers can prepare every native live-room content type", async ({
+  page,
+}) => {
+  const runtimeErrors: string[] = [];
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") runtimeErrors.push(message.text());
+  });
+  await page.goto("/lehrer");
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Gemeinsam starten" }),
+  ).toBeVisible();
+  await expect(page.getByText("2 Aufgaben")).toBeVisible();
+
+  await page.getByRole("button", { name: "Vokabeln" }).click();
+  await expect.poll(() => runtimeErrors).toEqual([]);
+  await expect(page.getByText("3 Aufgaben")).toBeVisible();
+  await page.getByRole("button", { name: "Kopfrechnen" }).click();
+  await expect(page.getByText("4 Aufgaben")).toBeVisible();
+
+  await page.getByRole("button", { name: "Lobby öffnen" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Live-Räume sind lokal noch nicht konfiguriert",
+  );
+  await expect(page.getByText("Noch nicht geöffnet")).toBeVisible();
+});
+
 test("mental math advances automatically after Enter", async ({ page }) => {
   await page.goto("/frei/mathematics");
   await page.getByRole("button", { name: "Runde starten" }).click();
