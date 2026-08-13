@@ -38,6 +38,8 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/",
     "/lernen",
     "/frei",
+    "/frei/german",
+    "/frei/german/laufdiktat",
     "/klasse/7b",
     "/lernbox",
     "/raum",
@@ -122,6 +124,45 @@ test("the native LernBox creates and opens a personal deck", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Karte hinzufügen" }),
+  ).toBeVisible();
+});
+
+test("a native Laufdiktat mistake becomes due LernBox practice", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/laufdiktat");
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await page.getByRole("button", { name: "Vokabeln" }).click();
+  const source = page.getByRole("textbox", {
+    name: /Vokabeln – eine Zeile pro Paar/,
+  });
+  await source.fill("library;Bibliothek");
+  await page.getByRole("button", { name: "Laufdiktat starten" }).click();
+
+  await expect(page.getByRole("heading", { name: "library" })).toBeVisible();
+  await page
+    .getByRole("button", { name: "Verstanden – jetzt schreiben" })
+    .click();
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("Bücherei");
+  await page.getByRole("button", { name: "Prüfen" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Noch nicht richtig" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Noch einmal versuchen" }).click();
+  await page
+    .getByRole("button", { name: "Verstanden – jetzt schreiben" })
+    .click();
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("Bibliothek");
+  await page.getByRole("button", { name: "Prüfen" }).click();
+  await page.getByRole("button", { name: "Runde abschließen" }).click();
+
+  await expect(
+    page.getByText("1 Vokabeln sind jetzt in deiner LernBox fällig."),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Meine Fehler jetzt üben" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Fehler aus Laufdiktat" }),
   ).toBeVisible();
 });
 

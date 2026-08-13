@@ -31,3 +31,15 @@ Bei Textaufgaben kann die App Zieltext und Eingabe wortweise vergleichen. Ein ei
 ## Nutzen
 
 Der Unterricht wird zum Ausgangspunkt des langfristigen Lernens.
+
+## Aktueller nativer Stand – 13. August 2026
+
+Im persönlichen Deutschbereich ist der erste vollständige Laufdiktat-Weg nativ umgesetzt. Er verwendet die geprüfte Fachlogik aus Laufdiktat `6c2ade4` für Antwortprüfung, Vokabelimport, gemischte Abfragerichtungen, deterministische Hinweise und Sternebewertung.
+
+- Texte werden in Sätze und Zeilen zerlegt und über Ansehen, Verdecken und Schreiben geübt.
+- Vokabeltabellen unterstützen Alternativantworten sowie beide Richtungen und eine gemischte Runde.
+- Klassisches Laufdiktat und freies Üben mit stufenweisen Tipps sind getrennt auswählbar.
+- Nach einer Vokabelrunde werden je nach Auswahl alle, nur fehlerhafte oder keine Vokabeln über `LearningBundleV1` in die gemeinsame persönliche LernBox übergeben.
+- **Meine Fehler jetzt üben** öffnet anschließend direkt die LernBox; vorhandene Karten werden nicht dupliziert, sondern wieder fällig markiert.
+
+Noch nicht Teil dieses Schritts sind Live-Raum, Lehrer-Dashboard, Stationen, Battle und Realtime. Sie werden ebenfalls nativ integriert und verwenden später dieselbe Fachlogik und denselben Ergebnisadapter.

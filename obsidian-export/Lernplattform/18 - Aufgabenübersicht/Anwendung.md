@@ -9,12 +9,12 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
 - [x] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
 - [x] Leitner-Boxen und Fälligkeiten lokal aus Lernereignissen ableiten
-- [ ] Vokabelmodus im Laufdiktat entwickeln
+- [x] Persönlichen Vokabelmodus im Laufdiktat mit beiden und gemischten Richtungen integrieren
 - [ ] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
 - [x] Dublettenfreien LernBox-Eingangsadapter für Laufdiktat-Fehler umsetzen
-- [ ] Laufdiktat-Ergebnisfluss an den gemeinsamen LernBox-Eingangsadapter anschließen
-- [ ] Falsche Testvokabeln automatisch als fällig markieren
-- [ ] Schaltfläche **„Meine Fehler jetzt üben“** und persönliche Fehlerrunde umsetzen
+- [x] Persönlichen Laufdiktat-Ergebnisfluss an den gemeinsamen LernBox-Eingangsadapter anschließen
+- [x] Falsche Vokabeln aus persönlichen Laufdiktat-Runden automatisch als fällig markieren
+- [x] Schaltfläche **„Meine Fehler jetzt üben“** nach persönlichen Vokabelrunden umsetzen
 - [ ] Nach Hilfen einen verdeckten Abruf erzwingen
 - [x] Tagesauswahl aus Fälligkeiten und kurzfristigen Fehlerwiederholungen ergänzen
 - [x] Fällige Mehrkarten-Lernrunde für Vokabelstapel umsetzen
@@ -77,6 +77,9 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Eigenständige LernBox-PWA-Hülle, iframe, Router, Service Worker und doppelte Einstellungen entfernen
 - [x] Native LernBox-Oberfläche an globales Theme, Navigation und persönliche Lerndatenbank anbinden
 - [ ] Laufdiktat-Fachlogik und benötigte Schüler-/Lehrerabläufe gezielt nativ integrieren
+- [x] Ersten nativen persönlichen Laufdiktat-Weg für Text und Vokabeln integrieren
+- [x] Antwortprüfung, Hinweise, Vokabelimport und Sterneberechnung aus Laufdiktat `6c2ade4` portieren und testen
+- [ ] Live-Raum, Lehrer-Dashboard, Stationen und Battle nativ integrieren
 - [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
 - [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten
 - [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen

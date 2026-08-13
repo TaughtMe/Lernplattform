@@ -44,3 +44,16 @@ Diese Ergänzungen dürfen das Verhalten des Quellmoduls nicht stillschweigend v
 4. Fehler und Ergebnisse über `LearningBundleV1` dublettenfrei an die persönliche LernBox übergeben.
 5. Die Tests beider Quellprojekte in das gemeinsame Quality Gate aufnehmen.
 6. Upstream-Änderungen regelmäßig commitgenau abgleichen.
+
+## Aktueller Laufdiktat-Port
+
+Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests geschützt:
+
+- typabhängige Antwortprüfung für Text und Vokabeln
+- Vokabelimport mit Alternativantworten und drei Abfragerichtungen
+- deterministische, stufenweise Hinweise im freien Üben
+- Textzerlegung für Sätze und Zeilen im persönlichen Einstieg
+- ursprüngliche Fünf-Sterne-Berechnung nach Fehlerquote
+- Ablauf Ansehen → Verdecken → Schreiben → Rückmeldung → Abschluss
+
+Die App-Hülle, ihr Router, Service Worker, eigenes Theme und Zustandsspeicher wurden bewusst nicht übernommen. Live-Räume, Lehrer-Dashboard, Stationen und Battle folgen in getrennten, getesteten Integrationsschritten.

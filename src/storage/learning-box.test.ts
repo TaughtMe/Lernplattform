@@ -114,7 +114,12 @@ describe("learning box repository", () => {
       added: 1,
       reused: 0,
     });
-    await expect(repository.ingestBundle(input)).resolves.toMatchObject({
+    await expect(
+      repository.ingestBundle({
+        ...input,
+        source: { ...input.source, sourceId: "run-2" },
+      }),
+    ).resolves.toMatchObject({
       added: 0,
       reused: 1,
     });

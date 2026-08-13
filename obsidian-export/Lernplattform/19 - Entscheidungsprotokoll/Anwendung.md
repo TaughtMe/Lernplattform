@@ -282,3 +282,14 @@ Diese erste Integration verändert keine fachlichen LernBox-Regeln. Die noch aus
 - Upstream-Änderungen werden weiterhin commitgenau geprüft, aber nur als passende Änderungen in den gemeinsamen Lernraum portiert.
 
 Diese Entscheidung ersetzt Entscheidung 25 vollständig und präzisiert Entscheidung 24. „Integrieren“ bedeutet die gezielte Wiederverwendung vorhandenen Codes innerhalb einer Anwendung, nicht den Betrieb einer PWA innerhalb der Lernraum-PWA.
+
+## 27. Laufdiktat beginnt als persönlicher nativer Vertikalschnitt – 13. August 2026
+
+**Beschlossen und umgesetzt:** Die Laufdiktat-Integration beginnt mit einem vollständigen persönlichen Lernweg im Deutschbereich. Dieser Schritt portiert die bereits geprüften reinen Fachfunktionen aus Laufdiktat `6c2ade4` und verbindet sie direkt mit der gemeinsamen LernBox, bevor Realtime und Lehrersteuerung folgen.
+
+- Text- und Vokabelrunden verwenden den Ablauf Ansehen, Verdecken, Schreiben, Rückmeldung und Abschluss.
+- Klassisches Laufdiktat und freies Üben mit deterministischen, stufenweisen Tipps bleiben unterscheidbar.
+- Vokabeln unterstützen Alternativantworten und beide festen sowie die gemischte Abfragerichtung.
+- Die Auswahl **alle / nur fehlerhafte / keine übernehmen** wirkt über `LearningBundleV1` auf die gemeinsame persönliche LernBox.
+- Textfehler werden noch nicht vorschnell als normale Vokabeln gespeichert; dafür folgt der im Vault geplante Lernobjekttyp Lernwort.
+- Live-Raum, Lehrer-Dashboard, Stationen und Battle bleiben nachfolgende Integrationsschritte und erhalten keine zweite App-Hülle.

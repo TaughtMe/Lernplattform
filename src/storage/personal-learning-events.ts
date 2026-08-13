@@ -236,6 +236,13 @@ export function createLearningBoxRepository(
             .first()
         : undefined;
       if (!deck) {
+        deck = await database.learningBoxDecks
+          .where("source.kind")
+          .equals(input.source.kind)
+          .filter((candidate) => candidate.title === input.title)
+          .first();
+      }
+      if (!deck) {
         deck = createLearningBoxDeck({
           title: input.title,
           source: input.source,

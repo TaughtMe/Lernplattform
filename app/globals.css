@@ -27,6 +27,330 @@
   --content: 1180px;
 }
 
+/* Native Laufdiktat: reused Fachlogik inside the shared Lernraum shell. */
+.running-shell {
+  min-height: 100svh;
+  background: var(--shell);
+  color: var(--ink);
+}
+
+.running-topbar {
+  min-height: 68px;
+  padding: 12px clamp(20px, 5vw, 80px);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+  background: var(--surface);
+}
+
+.running-topbar > div {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.running-topbar > div span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.running-topbar > .back-link:last-child {
+  justify-self: end;
+}
+
+.running-setup,
+.running-session,
+.running-complete {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(52px, 8vw, 96px) 0 100px;
+}
+
+.running-heading {
+  max-width: 760px;
+}
+
+.running-heading h1,
+.running-complete h1 {
+  margin: 12px 0 18px;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 450;
+  letter-spacing: -0.065em;
+}
+
+.running-heading > p:last-child,
+.running-complete > p {
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.65;
+}
+
+.running-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 42px;
+}
+
+.running-choice-grid fieldset,
+.learning-session-config fieldset {
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: var(--surface);
+}
+
+.running-choice-grid legend,
+.learning-session-config legend {
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.running-choice-grid fieldset button,
+.learning-session-config fieldset button {
+  min-height: 46px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.running-choice-grid fieldset button[aria-pressed="true"],
+.learning-session-config fieldset button[aria-pressed="true"] {
+  border-color: var(--coral);
+  color: var(--ink);
+  background: var(--cream-strong);
+}
+
+.running-source {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.running-source textarea,
+.running-settings-row select,
+.running-task-card input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+}
+
+.running-source textarea {
+  min-height: 180px;
+  padding: 20px;
+  resize: vertical;
+  line-height: 1.65;
+}
+
+.running-settings-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.running-settings-row label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.running-settings-row select {
+  min-height: 50px;
+  padding: 0 14px;
+}
+
+.running-start {
+  margin-top: 24px;
+}
+
+.running-session {
+  width: min(860px, calc(100% - 40px));
+  display: grid;
+  gap: 28px;
+}
+
+.running-progress {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.running-progress > div {
+  grid-column: 1 / -1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.running-progress > div span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--teal);
+}
+
+.running-task-card {
+  min-height: min(560px, 65svh);
+  padding: clamp(30px, 7vw, 72px);
+  border: 1px solid var(--line);
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: var(--surface);
+}
+
+.running-task-card > *,
+.running-task-card form {
+  width: min(100%, 660px);
+}
+
+.running-task-card h1 {
+  margin: 14px 0 38px;
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.running-task-card form label {
+  display: grid;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.running-task-card input {
+  min-height: 76px;
+  padding: 12px 20px;
+  font-size: clamp(1.3rem, 4vw, 2rem);
+  text-align: center;
+}
+
+.running-write-actions,
+.running-complete-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.running-hint {
+  margin: -12px 0 28px;
+  color: var(--teal);
+  font-size: clamp(1.4rem, 5vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+}
+
+.running-feedback p:not(.eyebrow) {
+  margin: -18px 0 28px;
+  color: var(--muted);
+}
+
+.running-feedback.is-correct .eyebrow {
+  color: var(--teal);
+}
+
+.running-feedback.is-wrong .eyebrow {
+  color: var(--coral);
+}
+
+.running-complete {
+  max-width: 760px;
+  text-align: center;
+}
+
+.running-stars {
+  margin: 28px 0 20px;
+  font-size: clamp(2rem, 7vw, 4rem);
+  letter-spacing: 0.08em;
+}
+
+.running-stars span {
+  color: #e4a743;
+}
+
+.running-stars i {
+  color: var(--line);
+  font-style: normal;
+}
+
+.german-practice-hub {
+  max-width: 1120px;
+}
+
+.german-practice-hub .free-area-grid {
+  margin-top: 36px;
+  max-width: 540px;
+}
+
+@media (max-width: 720px) {
+  .running-topbar {
+    grid-template-columns: 1fr auto;
+    padding-inline: 18px;
+  }
+
+  .running-topbar > div {
+    display: none;
+  }
+
+  .running-choice-grid,
+  .running-settings-row {
+    grid-template-columns: 1fr;
+  }
+
+  .running-setup,
+  .running-session,
+  .running-complete {
+    width: min(100% - 28px, 1120px);
+    padding-top: 40px;
+  }
+
+  .running-task-card {
+    min-height: 58svh;
+    border-radius: 24px;
+  }
+
+  .running-write-actions .button,
+  .running-complete-actions .button {
+    width: 100%;
+  }
+}
+
 :root[data-theme="dark"] {
   --coral: #e77a78;
   --coral-dark: #ef9794;
