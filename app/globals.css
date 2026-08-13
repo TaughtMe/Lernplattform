@@ -2099,8 +2099,21 @@ h2 {
   border-radius: 20px;
   background: white;
 }
+.free-area-card__icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--teal) 11%, var(--surface));
+  color: var(--teal-dark);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
 .free-area-card h2 {
-  margin: 16px 0 8px;
+  margin: 10px 0 8px;
   font-size: 1.65rem;
 }
 .free-area-card p {
@@ -2111,6 +2124,31 @@ h2 {
 .free-area-card strong {
   margin-top: auto;
   color: var(--teal-dark);
+}
+.running-room-entry {
+  margin-top: 20px;
+  padding: clamp(22px, 4vw, 34px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+  align-items: center;
+  gap: 32px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface-soft);
+}
+.running-room-entry h2,
+.running-room-entry h3 {
+  margin: 5px 0 8px;
+  font-size: 1.65rem;
+}
+.running-room-entry p:last-child {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.running-room-entry--inside {
+  margin-top: 18px;
 }
 .sr-only {
   width: 1px;
@@ -2809,7 +2847,7 @@ body,
   margin-inline: auto;
   padding: 7px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   position: sticky;
   top: 10px;
   z-index: 10;
@@ -3005,10 +3043,167 @@ body,
   }
   .learning-room-nav {
     overflow-x: auto;
-    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
   }
   .learning-path-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mental-math-shell {
+  min-height: 100dvh;
+  background: var(--shell);
+}
+.mental-math-setup,
+.mental-math-round,
+.mental-math-complete {
+  width: min(100% - 32px, 780px);
+  margin: 0 auto;
+  padding: clamp(40px, 8vw, 82px) 0 100px;
+}
+.mental-math-setup > p,
+.mental-math-complete > p {
+  max-width: 670px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.mental-math-setup h1,
+.mental-math-complete h1 {
+  margin: 8px 0 16px;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+}
+.mental-math-setup fieldset {
+  margin: 34px 0 0;
+  padding: 0;
+  border: 0;
+}
+.mental-math-setup legend {
+  margin-bottom: 12px;
+  color: var(--ink);
+  font-weight: 850;
+}
+.mental-math-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.mental-math-options button {
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 800;
+}
+.mental-math-options button[aria-pressed="true"] {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 12%, var(--surface));
+  color: var(--ink);
+}
+.mental-math-settings {
+  margin: 16px 0 26px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.mental-math-settings label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+.mental-math-settings select {
+  min-height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.mental-math-round {
+  text-align: center;
+}
+.mental-math-progress {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1fr);
+  align-items: center;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+.mental-math-progress progress {
+  width: 100%;
+  accent-color: var(--teal);
+}
+.mental-math-round > .eyebrow {
+  margin-top: 70px;
+}
+.mental-math-round h1 {
+  margin: 12px 0 36px;
+  font-size: clamp(4rem, 14vw, 8rem);
+  letter-spacing: -0.06em;
+}
+.mental-math-round form {
+  max-width: 430px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+}
+.mental-math-round form label {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: left;
+}
+.mental-math-round input {
+  min-width: 0;
+  min-height: 58px;
+  padding: 8px 16px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.5rem;
+  font-weight: 850;
+  text-align: center;
+}
+.mental-math-round input:focus {
+  border-color: var(--teal);
+  outline: 3px solid color-mix(in srgb, var(--teal) 20%, transparent);
+}
+.mental-math-feedback {
+  min-height: 34px;
+  margin-top: 18px;
+  font-weight: 850;
+}
+.mental-math-feedback.correct {
+  color: #2f7a54;
+}
+.mental-math-feedback.incorrect {
+  color: var(--coral-dark);
+}
+
+@media (max-width: 700px) {
+  .running-room-entry {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .mental-math-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .mental-math-settings,
+  .mental-math-round form {
+    grid-template-columns: 1fr;
+  }
+  .mental-math-round form label {
+    grid-column: 1;
   }
 }
 @media (max-width: 600px) {

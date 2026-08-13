@@ -41,6 +41,7 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/frei/german",
     "/frei/german/laufdiktat",
     "/frei/german/lernwoerter",
+    "/frei/mathematics",
     "/klasse/7b",
     "/lernbox",
     "/raum",
@@ -378,9 +379,6 @@ test("the class room presents one connected adaptive learning loop", async ({
     page.getByRole("heading", { name: "Was hilft dir heute weiter?" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Von der Lehrkraft" }),
-  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Frei üben" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Mein Fortschritt" }),
@@ -390,8 +388,51 @@ test("the class room presents one connected adaptive learning loop", async ({
     page.getByRole("link", { name: /Vokabeln.*Üben/ }),
   ).toHaveAttribute("href", "/lernbox");
   await expect(
+    page.getByRole("link", { name: /Deutsch.*Üben/ }),
+  ).toHaveAttribute("href", "/frei/german/lernwoerter");
+  await expect(page.getByRole("textbox", { name: "Raumcode" })).toBeVisible();
+  await expect(
     page.getByText(/Vollständige Antworten werden nicht übertragen/),
   ).toBeVisible();
+});
+
+test("free practice opens the foundation modules directly", async ({
+  page,
+}) => {
+  await page.goto("/frei");
+
+  await expect(page.getByRole("link", { name: /Deutsch/ })).toHaveAttribute(
+    "href",
+    "/frei/german/lernwoerter",
+  );
+  await expect(page.getByRole("link", { name: /Vokabeln/ })).toHaveAttribute(
+    "href",
+    "/lernbox",
+  );
+  await expect(page.getByRole("textbox", { name: "Raumcode" })).toBeVisible();
+});
+
+test("mental math advances automatically after Enter", async ({ page }) => {
+  await page.goto("/frei/mathematics");
+  await page.getByRole("button", { name: "Runde starten" }).click();
+  const taskHeading = page.locator("#math-task-title");
+  await expect(taskHeading).toBeVisible();
+  const task = await taskHeading.innerText();
+  const [left, right] = task.match(/\d+/g)?.map(Number) ?? [];
+  if (left === undefined || right === undefined) {
+    throw new Error(`Ungültige Kopfrechenaufgabe: ${task}`);
+  }
+  const answer = task.includes("+")
+    ? left + right
+    : task.includes("−")
+      ? left - right
+      : task.includes("·")
+        ? left * right
+        : left / right;
+  const input = page.getByRole("textbox", { name: "Dein Ergebnis" });
+  await input.fill(String(answer));
+  await input.press("Enter");
+  await expect(page.getByText("Aufgabe 2 von 10")).toBeVisible();
 });
 
 test("a class error becomes practice and disappears after correction", async ({

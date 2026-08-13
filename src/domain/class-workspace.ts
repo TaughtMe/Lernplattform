@@ -82,7 +82,7 @@ export function parseClassWorkspace(value: unknown): ClassWorkspace {
 export const CLASS_MODULE_LABELS: Record<ClassModule, string> = {
   vocabulary: "Vokabeln",
   german: "Deutsch",
-  mathematics: "Mathematik",
+  mathematics: "Kopfrechnen",
   typing: "Tipptraining",
   "running-dictation": "Laufdiktat",
 };

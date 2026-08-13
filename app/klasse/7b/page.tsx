@@ -4,6 +4,7 @@ import { CLASS_MODULE_LABELS } from "../../../src/domain/class-workspace";
 import { demoClass } from "../../../src/domain/demo-class";
 import { AdaptiveProgressPanel } from "../../components/adaptive-progress-panel";
 import { DailyPracticePanel } from "../../components/daily-practice-panel";
+import { RoomCodeForm } from "../../components/room-code-form";
 
 export const metadata: Metadata = { title: demoClass.name };
 
@@ -18,7 +19,7 @@ const freePaths = [
     module: "german",
     label: "Deutsch",
     detail: "Rechtschreibung, Merkfähigkeit und Lernwörter trainieren",
-    route: "/frei/german",
+    route: "/frei/german/lernwoerter",
   },
   {
     module: "mathematics",
@@ -54,8 +55,9 @@ export default function ClassPage() {
           <p className="eyebrow">Dein Lernraum · {demoClass.teacherName}</p>
           <h1>Was hilft dir heute weiter?</h1>
           <p>
-            Lernraum verbindet Hinweise deiner Lehrkraft mit dem, was du schon
-            geübt hast. Du kannst Empfehlungen öffnen oder selbst entscheiden.
+            Lernraum verbindet das, was du schon geübt hast, mit sinnvollen
+            Wiederholungen. Du kannst Empfehlungen öffnen oder selbst
+            entscheiden.
           </p>
         </div>
         <aside aria-label="Aktive Lernbereiche">
@@ -70,7 +72,6 @@ export default function ClassPage() {
 
       <nav className="learning-room-nav" aria-label="Bereiche im Lernraum">
         <a href="#heute">Heute üben</a>
-        <a href="#lehrkraft">Von der Lehrkraft</a>
         <a href="#frei">Frei üben</a>
         <a href="#fortschritt">Mein Fortschritt</a>
       </nav>
@@ -97,33 +98,6 @@ export default function ClassPage() {
           </div>
         </section>
 
-        <section className="learning-loop-section" id="lehrkraft">
-          <header>
-            <div>
-              <p className="eyebrow">Gezielter Impuls</p>
-              <h2>Von der Lehrkraft</h2>
-            </div>
-            <p>Ergänzt dein freies und persönliches Üben</p>
-          </header>
-          <article className="teacher-impulse-card">
-            <div>
-              <span className="content-type">Deutsch · Lernwörter</span>
-              <span className="reason-label">Hausaufgabe · diese Woche</span>
-            </div>
-            <h3>Wörter mit Dehnungs-h</h3>
-            <p>
-              Wähle eine Runde mit 5, 10 oder 20 Wörtern. Auch eine kleine Runde
-              zählt als sinnvolle Arbeit.
-            </p>
-            <Link
-              className="button button--primary"
-              href="/frei/german/lernwoerter"
-            >
-              Lernwörter öffnen
-            </Link>
-          </article>
-        </section>
-
         <section className="learning-loop-section" id="frei">
           <header>
             <div>
@@ -141,6 +115,20 @@ export default function ClassPage() {
               </Link>
             ))}
           </div>
+          <section
+            className="running-room-entry running-room-entry--inside"
+            aria-labelledby="class-room-title"
+          >
+            <div>
+              <p className="eyebrow">Gemeinsame Runde</p>
+              <h3 id="class-room-title">Zum Laufdiktat</h3>
+              <p>
+                Gib den vierstelligen Raumcode ein. Das Laufdiktat öffnet sich
+                getrennt von deinen freien Deutschübungen.
+              </p>
+            </div>
+            <RoomCodeForm idPrefix="class-running-room" />
+          </section>
         </section>
 
         <section className="learning-loop-section" id="fortschritt">

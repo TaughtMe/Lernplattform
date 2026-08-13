@@ -17,7 +17,7 @@ Das Lehrer-Cockpit bündelt Planung, Durchführung und datensparsame Auswertung 
 - QR-Abgaberunden mit Fortschritt „abgegeben / ausstehend“ verwalten
 - Scanergebnisse akustisch, haptisch und visuell bestätigen
 - Inhalte freigeben und versionieren
-- pro Klasse Module wie Vokabeln, Deutsch, Mathematik, Tipptraining oder Laufdiktat aktivieren und deaktivieren
+- pro Klasse Module wie Vokabeln, Deutsch, Kopfrechnen und Tipptraining aktivieren und deaktivieren
 - bei Bedarf klar definierte, modulspezifische Trainingspakete freischalten
 - lokale Namens- oder Aliaszuordnungen verwalten
 - gespeicherte Daten exportieren und löschen
@@ -26,7 +26,7 @@ Das Lehrer-Cockpit bündelt Planung, Durchführung und datensparsame Auswertung 
 
 Die Lehrkraft entscheidet vor einer Aktivität, welche Inhalte, Hilfen, Sozialform und Auswertung verwendet werden. Persönliche Zuordnungen müssen ausdrücklich aktiviert und lokal geschützt werden.
 
-Der erste umgesetzte Cockpit-Baustein ist die lokale Modulkonfiguration einer Klasse. Die Lehrkraft kann Vokabeln, Deutsch, Mathematik und Tipptraining einzeln aktivieren. Eine reduzierte Schülervorschau zeigt sofort, welche Bereiche sichtbar wären. Mindestens ein Modul bleibt aktiv. Die tatsächliche Veröffentlichung auf Schülergeräte erfolgt später über ein versioniertes Klassenpaket; eine lokale Lehreränderung greift nicht unbemerkt auf Schülerdaten zu.
+Der erste umgesetzte Cockpit-Baustein ist die lokale Modulkonfiguration einer Klasse. Die Lehrkraft kann Vokabeln, Deutsch, Kopfrechnen und Tipptraining einzeln aktivieren. Eine reduzierte Schülervorschau zeigt sofort, welche Bereiche sichtbar wären. Mindestens ein Modul bleibt aktiv. Die tatsächliche Veröffentlichung auf Schülergeräte erfolgt später über ein versioniertes Klassenpaket; eine lokale Lehreränderung greift nicht unbemerkt auf Schülerdaten zu. Das klassische Laufdiktat wird nicht als dauerhaftes Klassenmodul geschaltet, sondern über eine von der Lehrkraft gestartete Lobby und deren Raumcode betreten.
 
 Die Lehrkraft erstellt im Normalfall keine freien Aufgabenpakete. Der Lernraum erzeugt Übungsbedarf aus Fälligkeiten und Fehlern und führt passende Inhalte automatisch in **Heute üben** zurück. Die Lehrkraft entscheidet vor allem, welche der vier Übungsbereiche eine Klasse verwendet, und erhält eine datensparsame Übersicht über Aktivität und Lernentwicklung. Nur dort, wo ein Modul fachlich festgelegte Trainingspakete vorsieht – beispielsweise Schreibtrainings in Deutsch –, kann sie eines davon auswählen und freischalten.
 

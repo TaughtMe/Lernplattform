@@ -170,8 +170,8 @@ export function LearningWordApp() {
   return (
     <main className="learning-word-shell">
       <header className="running-topbar">
-        <Link href="/frei/german" className="back-link">
-          ← Deutsch
+        <Link href="/frei" className="back-link">
+          ← Freies Üben
         </Link>
         <div>
           <strong>Lernwörter</strong>
@@ -502,8 +502,8 @@ export function LearningWordApp() {
             <button className="button button--primary" onClick={reset}>
               Andere Stufe testen
             </button>
-            <Link className="button button--quiet" href="/frei/german">
-              Zur Deutschübersicht
+            <Link className="button button--quiet" href="/frei">
+              Andere Übung wählen
             </Link>
           </div>
         </section>

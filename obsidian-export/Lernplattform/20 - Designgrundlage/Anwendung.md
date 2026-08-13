@@ -83,14 +83,13 @@ accent-teal:    #58B8B5
 
 Die Startseite bleibt ruhig und zeigt als zentrale Entscheidungen **Mein Lernraum** und **Freies Üben**. Darunter steht die Code-Eingabe für einen Raum. Beispielgruppen, Duell und Haus gehören nicht auf die Hauptseite.
 
-Nach dem Einstieg zeigt **Mein Lernraum** die lokal bekannten Klassen und erneut die Möglichkeit, per Code beizutreten. Innerhalb einer Klasse kehren vier Bereiche in derselben Reihenfolge wieder:
+Nach dem Einstieg zeigt **Mein Lernraum** die lokal bekannten Klassen und erneut die Möglichkeit, per Code beizutreten. Innerhalb einer Klasse kehren drei Bereiche in derselben Reihenfolge wieder:
 
 1. **Heute üben** – fällige Inhalte sowie sinnvolle Wiederholungen aus früheren Fehlern
-2. **Von der Lehrkraft** – gezielte, kleine Lernimpulse statt eines allgemeinen Aufgabenplaners
-3. **Frei üben** – alle in der Klasse aktivierten Grundlagenmodule
-4. **Mein Fortschritt** – private Rückmeldung zu Aktivität und verbesserten Fehlern
+2. **Frei üben** – alle in der Klasse aktivierten Grundlagenmodule
+3. **Mein Fortschritt** – private Rückmeldung zu Aktivität und verbesserten Fehlern
 
-Diese vier Bereiche bilden eine zusammenhängende Arbeitsansicht, keine Sammlung getrennter Anwendungen. LernBox und Laufdiktat erscheinen deshalb nicht als eigene PWA-Navigation, sondern als Lernformen innerhalb des Lernraums.
+Diese drei Bereiche bilden eine zusammenhängende Arbeitsansicht, keine Sammlung getrennter Anwendungen. LernBox ist ein fester Lernweg. Das klassische Laufdiktat wird separat per Raumcode betreten, bleibt aber technisch ein nativer Teil des Lernraums.
 
 ## Verbindliche Ansichten
 
@@ -100,7 +99,7 @@ Der Einstieg beantwortet nur: **Wo möchte ich arbeiten?** Große, ruhige Fläch
 
 ### Klassenraum
 
-Der Klassenraum beantwortet: **Was hilft mir heute weiter?** Er verbindet persönliche Fälligkeiten, Impulse der Lehrkraft, freie Wahl und Fortschritt auf einer Seite. Eine kompakte Sprungnavigation darf die vier Bereiche sichtbar halten.
+Der Klassenraum beantwortet: **Was hilft mir heute weiter?** Er verbindet persönliche Fälligkeiten, freie Wahl und Fortschritt auf einer Seite. Eine kompakte Sprungnavigation darf die drei Bereiche sichtbar halten.
 
 ### Aktive Lernrunde
 
@@ -108,7 +107,9 @@ Während einer Aufgabe wird die Oberfläche deutlich reduziert. Eingabe, Rückme
 
 ### Lehrkraft
 
-Die Lehrkraft aktiviert zunächst die Grundlagenmodule einer Klasse. Sie kann anschließend kleine fachliche Impulse veröffentlichen, etwa eine Lernwortgruppe, eine Vokabel-Unit oder eine Kopfrechen-Fertigkeit. Die Oberfläche heißt deshalb nicht „Aufgaben planen“ und bildet keinen klassischen Wochenplaner ab.
+Die Lehrkraft aktiviert die Grundlagenmodule einer Klasse. Hausaufgaben und konkrete Übungsbereiche teilt sie weiterhin klassisch mit; Lernraum bildet keinen digitalen Wochen- oder Aufgabenplaner ab.
+
+Freie Übungsbereiche erhalten feste Orientierungssymbole. Klassen erhalten kein automatisch zugewiesenes Symbol; ein Klassensymbol erscheint nur, wenn die Lehrkraft später selbst eines hinterlegt.
 
 ## Komponentenprinzipien
 

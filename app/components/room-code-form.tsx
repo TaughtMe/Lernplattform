@@ -2,8 +2,14 @@
 
 import { FormEvent, useState } from "react";
 
-export function RoomCodeForm() {
+type RoomCodeFormProps = {
+  idPrefix?: string;
+};
+
+export function RoomCodeForm({ idPrefix = "room" }: RoomCodeFormProps) {
   const [error, setError] = useState("");
+  const inputId = `${idPrefix}-code-input`;
+  const errorId = `${idPrefix}-code-error`;
 
   function joinRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -11,24 +17,26 @@ export function RoomCodeForm() {
     const roomCode = String(form.get("roomCode") ?? "")
       .replace(/[^a-zA-Z0-9]/g, "")
       .toUpperCase();
-    if (roomCode.length < 6) {
-      setError("Bitte gib einen sechsstelligen Raumcode ein.");
+    if (!/^\d{4}$/.test(roomCode)) {
+      setError("Bitte gib den vierstelligen Raumcode ein.");
       return;
     }
     window.location.assign(`/raum?code=${encodeURIComponent(roomCode)}`);
   }
 
   return (
-    <div className="room-code" id="raumcode">
+    <div className="room-code">
       <form onSubmit={joinRoom} noValidate>
-        <label htmlFor="room-code-input">Raumcode</label>
+        <label htmlFor={inputId}>Raumcode</label>
         <input
-          id="room-code-input"
+          id={inputId}
           name="roomCode"
           autoComplete="off"
-          maxLength={8}
-          placeholder="z. B. 482913"
-          aria-describedby={error ? "room-code-error" : undefined}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={4}
+          placeholder="z. B. 4829"
+          aria-describedby={error ? errorId : undefined}
           aria-invalid={Boolean(error)}
           onChange={() => error && setError("")}
         />
@@ -37,7 +45,7 @@ export function RoomCodeForm() {
         </button>
       </form>
       {error ? (
-        <p id="room-code-error" role="alert">
+        <p id={errorId} role="alert">
           {error}
         </p>
       ) : null}

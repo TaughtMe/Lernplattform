@@ -79,10 +79,12 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 ## Plattform und Betrieb
 
 - [x] Adaptiven Lernkreislauf als übergeordnete Produkt- und Facharchitektur dokumentieren
-- [x] Klassenansicht auf „Heute üben / Von der Lehrkraft / Frei üben / Mein Fortschritt“ umstrukturieren
+- [x] Klassenansicht auf „Heute üben / Frei üben / Mein Fortschritt“ reduzieren
 - [x] Erste lokale Fortschrittsübersicht für Aktivität, aktive Tage und bewältigte frühere Fehler umsetzen
 - [ ] Alle Lernmodule über ein gemeinsames typisiertes Lernsignalmodell an den adaptiven Kern anbinden
-- [ ] Lehrerimpulse als lokal gespeichertes, versioniertes Klassenpaket veröffentlichen
+- [x] Digitale Hausaufgaben und Lehrerimpulse aus der Klassenansicht entfernen; Aufgaben werden klassisch mitgeteilt
+- [x] Deutsch direkt mit Lernwörtern, Vokabeln direkt mit LernBox und Mathematik direkt mit Kopfrechnen verknüpfen
+- [x] Separaten Laufdiktat-Raumcode in Klassenraum und freiem Bereich platzieren
 - [ ] Klassen-QR und Raumcode für Einschreibung und Inhaltsübertragung umsetzen
 - [ ] Aggregierten QR-Klassenbeitrag mit persönlichem Lob und gedeckelten Punkten umsetzen
 

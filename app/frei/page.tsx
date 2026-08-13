@@ -1,13 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { RoomCodeForm } from "../components/room-code-form";
 
 export const metadata: Metadata = { title: "Freies Üben" };
 
 const areas = [
-  ["Deutsch", "Rechtschreibung, Lernwörter und Deutschmodule", "german"],
-  ["Mathematik", "Thema und Schwierigkeit selbst auswählen", "mathematics"],
-  ["Vokabeln", "Eigene Stapel und persönliche LernBox", "vocabulary"],
-  ["Tipptraining", "Genauigkeit und ruhigen Rhythmus trainieren", "typing"],
+  {
+    title: "Deutsch",
+    detail: "Lernwörter und Rechtschreibstrategien Schritt für Schritt sichern",
+    href: "/frei/german/lernwoerter",
+    icon: "Aa",
+  },
+  {
+    title: "Kopfrechnen",
+    detail: "Grundrechenarten und Aufgabenfamilien sicher automatisieren",
+    href: "/frei/mathematics",
+    icon: "×",
+  },
+  {
+    title: "Vokabeln",
+    detail: "Eigene Stapel mit dem Leitner-Prinzip langfristig lernen",
+    href: "/lernbox",
+    icon: "ABC",
+  },
+  {
+    title: "Tipptraining",
+    detail: "Genauigkeit und ruhigen Rhythmus trainieren",
+    href: "/frei/typing",
+    icon: "⌨",
+  },
 ] as const;
 
 export default function FreePracticePage() {
@@ -29,19 +50,32 @@ export default function FreePracticePage() {
           </p>
         </div>
         <div className="free-area-grid">
-          {areas.map(([title, detail, module]) => (
-            <Link
-              className="free-area-card"
-              href={`/frei/${module}`}
-              key={module}
-            >
+          {areas.map((area) => (
+            <Link className="free-area-card" href={area.href} key={area.title}>
+              <span className="free-area-card__icon" aria-hidden="true">
+                {area.icon}
+              </span>
               <span className="entry-card__label">Freies Üben</span>
-              <h2>{title}</h2>
-              <p>{detail}</p>
+              <h2>{area.title}</h2>
+              <p>{area.detail}</p>
               <strong>Auswählen →</strong>
             </Link>
           ))}
         </div>
+        <section
+          className="running-room-entry"
+          aria-labelledby="free-room-title"
+        >
+          <div>
+            <p className="eyebrow">Gemeinsame Runde</p>
+            <h2 id="free-room-title">Zum Laufdiktat</h2>
+            <p>
+              Hat deine Lehrkraft einen Raum geöffnet? Mit dem Code kommst du
+              zuerst in die Lobby und anschließend in die gemeinsame Runde.
+            </p>
+          </div>
+          <RoomCodeForm idPrefix="free-running-room" />
+        </section>
       </section>
     </main>
   );

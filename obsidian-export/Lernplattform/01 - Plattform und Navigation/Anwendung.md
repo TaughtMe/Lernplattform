@@ -14,7 +14,9 @@ Die öffentliche Hauptseite beschränkt sich auf zwei gleichwertige zentrale Ein
 
 Innerhalb einer Klasse steht **Heute üben** im Mittelpunkt: Hier erscheinen fällige Inhalte und gezielte Fehlerwiederholungen automatisch. Ein Bereich **Aufgaben** erscheint nur, wenn ein Modul ein klar definiertes Trainingspaket vorsieht und die Lehrkraft dieses freigeschaltet hat.
 
-Die verbindliche Klassenoberfläche ordnet alle aktiven Module vier wiederkehrenden Einstiegen unter: **Heute üben**, **Von der Lehrkraft**, **Frei üben** und **Mein Fortschritt**. Dadurch bleibt die Plattform auch mit vielen Fachmodulen als ein Lernraum verständlich. Siehe [[../22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]].
+Die verbindliche Klassenoberfläche ordnet alle aktiven Module drei wiederkehrenden Einstiegen unter: **Heute üben**, **Frei üben** und **Mein Fortschritt**. Hausaufgaben werden weiterhin klassisch mitgeteilt und nicht automatisch auf Schülergeräte verteilt. Dadurch bleibt die Plattform auch mit vielen Fachmodulen als ein Lernraum verständlich. Siehe [[../22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]].
+
+Deutsch führt direkt zu den Lernwörtern, Vokabeln direkt zur LernBox und Mathematik direkt zum Kopfrechnen. Das klassische Laufdiktat ist kein Deutsch-Untermodul. Es wird über ein separates Raumcodefeld im Klassenraum und im freien Bereich betreten.
 
 Lehrer und Schüler verwenden dieselbe App. Ein Schülergerät kann einen privaten Lernbereich und seine Klassenmitgliedschaften als getrennte Einstiege anzeigen. Der individuelle Einschreibungs-QR aktiviert ausschließlich den Schülerbereich der Klasse und die von der Lehrkraft freigegebenen Funktionen.
 

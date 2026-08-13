@@ -12,7 +12,7 @@ describe("RoomCodeForm", () => {
     await user.click(screen.getByRole("button", { name: "Beitreten" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Bitte gib einen sechsstelligen Raumcode ein.",
+      "Bitte gib den vierstelligen Raumcode ein.",
     );
     expect(screen.getByRole("textbox", { name: "Raumcode" })).toHaveAttribute(
       "aria-invalid",

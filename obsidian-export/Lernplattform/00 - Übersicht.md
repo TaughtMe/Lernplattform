@@ -17,7 +17,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 ## Einstieg für Schüler
 
 - **Mein Lernraum:** die eigenen Klassen und das freie Üben öffnen
-- **Freies Üben:** Deutsch, Mathematik, Vokabeln, Tipptraining und weitere Grundfunktionen selbstbestimmt auswählen
+- **Freies Üben:** Lernwörter, Kopfrechnen, Vokabeln und Tipptraining direkt und selbstbestimmt öffnen
 - **Klasse:** nur die von der Lehrkraft aktivierten Lernbereiche sehen
 - **Heute üben:** innerhalb einer Klasse fällige Inhalte und durch Fehler aktivierte Wiederholungen bearbeiten
 - **Aufgaben:** alle von der Lehrkraft freigeschalteten Arbeitsaufträge sehen

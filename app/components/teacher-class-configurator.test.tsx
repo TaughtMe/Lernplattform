@@ -20,7 +20,7 @@ describe("TeacherClassConfigurator", () => {
     render(<TeacherClassConfigurator />);
 
     const mathematics = await screen.findByRole("checkbox", {
-      name: /Mathematik/,
+      name: /Kopfrechnen/,
     });
     await waitFor(() => expect(mathematics).toBeEnabled());
     await user.click(mathematics);
