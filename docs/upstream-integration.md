@@ -2,37 +2,45 @@
 
 ## Verbindliche Quellen
 
-| Modul      | Repository            | abgeglichener Stand                        | Rolle                                                                                                        |
-| ---------- | --------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| LernBox    | `TaughtMe/LernBoxV2`  | `64051b6da45a9a29ce67cdecceef815718a13818` | vollständige Referenz für Decks, Karten, Leitner-Lernen, Import/Export, Einstellungen und lokale Speicherung |
-| Laufdiktat | `TaughtMe/Laufdiktat` | `6c2ade41eadd2721f051df168244ed09563cea21` | vollständige Referenz für Dashboard, Räume, Spielmodi, Stationen, Battle, Importe, Feedback und Realtime     |
+| Modul      | Repository            | abgeglichener Stand                        | Rolle                                                                                                    |
+| ---------- | --------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| LernBox    | `TaughtMe/LernBoxV2`  | `64051b6da45a9a29ce67cdecceef815718a13818` | Referenz für Decks, Karten, Leitner-Lernen, Import/Export und lokale Speicherung                         |
+| Laufdiktat | `TaughtMe/Laufdiktat` | `6c2ade41eadd2721f051df168244ed09563cea21` | vollständige Referenz für Dashboard, Räume, Spielmodi, Stationen, Battle, Importe, Feedback und Realtime |
 
 Ein neuer Abgleich aktualisiert die Commit-IDs in diesem Dokument. Änderungen werden anschließend als Upstream-Differenz geprüft, statt Funktionen im Lernraum erneut zu entwerfen.
 
-## Was unverändert übernommen wird
+## Was gezielt übernommen wird
 
 - fachliche Regeln und Zustandsübergänge
 - vorhandene Lern- und Unterrichtsabläufe
 - getestete Utility-Funktionen und Validierungen
-- Komponentenstruktur, soweit sie nicht von einem eigenständigen Router abhängt
+- zugängliche Interaktionsmuster, soweit sie in die Lernraum-Komponenten passen
 - vorhandene Unit-Tests als Integrationsschutz
 
-## Was der Lernraum ergänzt
+## Was ausdrücklich nicht übernommen wird
+
+- eigenständige App- und Layout-Hüllen
+- eigener Router oder eingebettete Seiten per iframe
+- eigenes PWA-Manifest und eigener Service Worker
+- eigene Theme-, Navigations- oder allgemeine Einstellungsverwaltung
+- parallele IndexedDB-Datenbank für denselben persönlichen Lernbereich
+
+## Was der Lernraum bereitstellt
 
 - gemeinsame Kopfzeile, Navigation und responsives Theme
-- Einbettung unter stabilen Lernraum-Routen
+- native Darstellung unter stabilen Lernraum-Routen
 - Klassen- und Modulfreigaben
 - Zuordnung zu Schüler, Klasse und Lehrkraft
 - Übergabe vorhandener Ergebnisse an den gemeinsamen Lernverlauf und das optionale Klassenranking
-- Namensräume für lokale Daten, Cache und Realtime-Konfiguration
+- gemeinsame lokale Datenbereiche, Cache und Realtime-Konfiguration
 
 Diese Ergänzungen dürfen das Verhalten des Quellmoduls nicht stillschweigend verändern. Abweichungen brauchen einen dokumentierten pädagogischen oder technischen Grund und einen Test.
 
 ## Integrationsreihenfolge
 
-1. LernBoxV2 vollständig unter dem persönlichen LernBox-Einstieg verfügbar machen. Die übernommene Quelle liegt unter `integrations/lernbox`; ihr Produktionsbuild wird automatisch und isoliert unter `/integrations/lernbox/` eingebettet.
-2. Laufdiktat mit Schüleransicht, Lehrer-Dashboard und allen vorhandenen Modi einbinden.
-3. Router, Theme und lokale Speicherbereiche in die Lernraum-Hülle überführen.
-4. Klassenfreigaben und Ergebnisadapter ergänzen.
+1. LernBox-Fachlogik für Decks, Karten, Leitner-Stände, Richtungen und Sicherungen in den gemeinsamen Domänen- und Speicherbereich portieren.
+2. Eine native LernBox-Oberfläche mit Lernraum-Theme und gemeinsamer Navigation bereitstellen.
+3. Laufdiktat-Fachlogik und benötigte Unterrichtsabläufe ebenso gezielt integrieren.
+4. Fehler und Ergebnisse über `LearningBundleV1` dublettenfrei an die persönliche LernBox übergeben.
 5. Die Tests beider Quellprojekte in das gemeinsame Quality Gate aufnehmen.
 6. Upstream-Änderungen regelmäßig commitgenau abgleichen.

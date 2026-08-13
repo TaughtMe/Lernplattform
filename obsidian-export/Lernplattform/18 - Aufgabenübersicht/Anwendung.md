@@ -11,7 +11,8 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Leitner-Boxen und Fälligkeiten lokal aus Lernereignissen ableiten
 - [ ] Vokabelmodus im Laufdiktat entwickeln
 - [ ] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
-- [ ] Dublettenfreie Übergabe vom Laufdiktat an die LernBox umsetzen
+- [x] Dublettenfreien LernBox-Eingangsadapter für Laufdiktat-Fehler umsetzen
+- [ ] Laufdiktat-Ergebnisfluss an den gemeinsamen LernBox-Eingangsadapter anschließen
 - [ ] Falsche Testvokabeln automatisch als fällig markieren
 - [ ] Schaltfläche **„Meine Fehler jetzt üben“** und persönliche Fehlerrunde umsetzen
 - [ ] Nach Hilfen einen verdeckten Abruf erzwingen
@@ -72,8 +73,10 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 - [x] LernBoxV2 und Laufdiktat als verbindliche Quellmodule statt als Vorbilder für einen Nachbau festlegen
 - [x] Aktuelle Upstream-Repositories und Commitstände dokumentieren
-- [x] Vollständigen LernBoxV2-Code unter dem LernBox-Einstieg integrieren
-- [ ] Vollständigen Laufdiktat-Code mit Schüler- und Lehreransicht integrieren
+- [x] LernBox-Leitnerlogik, Decks, Karten und Sicherungen gezielt in den gemeinsamen Lernraum portieren
+- [x] Eigenständige LernBox-PWA-Hülle, iframe, Router, Service Worker und doppelte Einstellungen entfernen
+- [x] Native LernBox-Oberfläche an globales Theme, Navigation und persönliche Lerndatenbank anbinden
+- [ ] Laufdiktat-Fachlogik und benötigte Schüler-/Lehrerabläufe gezielt nativ integrieren
 - [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
 - [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten
 - [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen

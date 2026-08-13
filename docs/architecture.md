@@ -2,16 +2,17 @@
 
 ## Gewählter Schnitt
 
-Lernraum wird als gemeinsame PWA aufgebaut. LernBoxV2 und Laufdiktat sind dabei keine Vorbilder für einen Nachbau, sondern die verbindlichen, bereits funktionsfähigen Quellmodule:
+Lernraum wird als eine gemeinsame PWA aufgebaut. LernBoxV2 und Laufdiktat sind verbindliche, bereits funktionsfähige Quellreferenzen für die Fachmodule:
 
 - `app/` enthält die gemeinsame Navigation und die Lernraum-Einstiege.
-- Die vorhandene Fachlogik, Bedienabläufe, Komponenten und Tests aus LernBoxV2 und Laufdiktat werden übernommen.
-- `src/domain/` enthält nur die zusätzlichen plattformweiten Verträge für Klasse, Freigabe, Herkunft und Ergebnisübergabe.
-- `src/storage/` ergänzt Adapter, wo persönliche, Klassen- und Lehrerdaten voneinander getrennt werden müssen.
+- Wiederverwendbare Fachlogik, Bedienabläufe und Tests werden gezielt portiert.
+- App-Hüllen, Router, PWA-Manifeste, Service Worker, eigene Themes und doppelte Einstellungen werden nicht übernommen.
+- `src/domain/` enthält die framework-unabhängige Lernlogik und die plattformweiten Verträge für Klasse, Freigabe, Herkunft und Ergebnisübergabe.
+- `src/storage/` stellt gemeinsame persönliche, Klassen- und Lehrerdatenbereiche bereit.
 
 ## Integrationsregel
 
-Vor einer neuen Fachimplementierung wird immer zuerst im jeweiligen Quellrepository geprüft, ob die Funktion dort bereits vorhanden ist. Vorhandener Code wird portiert und nur an Routing, Theme, Identität, Klassenfreigaben und den gemeinsamen Ergebnisfluss angepasst. Eine parallele Eigenimplementierung derselben LernBox- oder Laufdiktat-Funktion ist nicht vorgesehen.
+Vor einer neuen Fachimplementierung wird immer zuerst im jeweiligen Quellrepository geprüft, ob die Funktion dort bereits vorhanden ist. Geeigneter Code wird auf seine Abhängigkeiten geprüft, gezielt portiert und an das gemeinsame Routing, Theme, Datenmodell, die Identität, Klassenfreigaben und den Ergebnisfluss angepasst. Eine zweite Anwendung innerhalb des Lernraums und eine parallele Eigenimplementierung derselben Fachregel sind nicht vorgesehen.
 
 Die aktuell abgeglichenen Quellstände und die Übernahmeregeln stehen in [upstream-integration.md](upstream-integration.md).
 
@@ -31,4 +32,4 @@ Der verbindliche Coding-, Bibliotheks- und Teststandard steht in [engineering-qu
 
 ## Nächster fachlicher Schritt
 
-Zuerst werden LernBoxV2 und Laufdiktat funktionsweise unter den Lernraum-Routen eingebunden. Danach werden die vorhandenen Speicher- und Realtime-Dienste über kleine Lernraum-Adapter mit Klassenfreigaben und Ergebnisübergabe verbunden. `LearningBundleV1` bleibt das Austauschformat zwischen den Modulen, ersetzt aber nicht deren vorhandene Fachlogik.
+Zuerst werden die fachlichen Kerne von LernBoxV2 und Laufdiktat nativ unter Lernraum-Routen integriert. Gemeinsame Speicher- und Ergebnisadapter verbinden sie mit Klassenfreigaben und Fehlerwiederholungen. `LearningBundleV1` ist das versionierte Austauschformat zwischen den Modulen und transportiert beispielsweise fehlerhafte Laufdiktat-Wörter dublettenfrei in die persönliche LernBox.

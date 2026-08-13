@@ -1,0 +1,178 @@
+import "fake-indexeddb/auto";
+import Dexie from "dexie";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  LEARNING_BUNDLE_VERSION,
+  parseLearningBundleV1,
+} from "../domain/learning-bundle";
+import {
+  createLearningBoxRepository,
+  migrateLegacyLearningBox,
+  PersonalLearningDatabase,
+} from "./personal-learning-events";
+
+const databases: PersonalLearningDatabase[] = [];
+
+afterEach(async () => {
+  await Promise.all(databases.map((database) => database.delete()));
+  await Dexie.delete("LernBoxDB");
+  databases.length = 0;
+});
+
+describe("learning box repository", () => {
+  it("manages decks, cards and backups in the shared personal database", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const deck = await repository.createDeck({ title: "Französisch" });
+    expect(await repository.getDeck(deck.id)).toEqual(deck);
+
+    await repository.putDeck({ ...deck, title: "Französisch 7" });
+    const first = await repository.addCard({
+      deckId: deck.id,
+      question: "bonjour",
+      answer: "Guten Tag",
+    });
+    const duplicate = await repository.addCard({
+      deckId: deck.id,
+      question: " BONJOUR ",
+      answer: "guten tag",
+    });
+    expect(first.added).toBe(true);
+    expect(duplicate.added).toBe(false);
+    expect(await repository.getCard(first.card.id)).toEqual(first.card);
+
+    const updated = { ...first.card, box: 2 as const, level: 2 as const };
+    await repository.putCard(updated);
+    expect(await repository.exportBackup()).toMatchObject({
+      decks: [{ title: "Französisch 7" }],
+      cards: [{ box: 2 }],
+    });
+
+    const secondDatabase = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(secondDatabase);
+    const secondRepository = createLearningBoxRepository(secondDatabase);
+    const backup = await repository.exportBackup();
+    await secondRepository.importBackup(backup);
+    await secondRepository.importBackup(backup);
+    expect(await secondRepository.listCards(deck.id)).toHaveLength(1);
+    await secondRepository.deleteCard(first.card.id);
+    expect(await secondRepository.listCards(deck.id)).toHaveLength(0);
+
+    await repository.deleteDeck(deck.id);
+    expect(await repository.getDeck(deck.id)).toBeUndefined();
+    expect(await repository.listCards(deck.id)).toHaveLength(0);
+  });
+
+  it("imports running-dictation mistakes without duplicates and makes them due", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const bundle = parseLearningBundleV1({
+      schemaVersion: LEARNING_BUNDLE_VERSION,
+      id: "run-1",
+      revision: 1,
+      createdAt: "2026-08-13T08:00:00.000Z",
+      source: { kind: "teacher", id: "class-7b" },
+      vocabulary: [
+        {
+          kind: "vocabulary",
+          id: "library",
+          prompt: { text: "library", locale: "en" },
+          answer: { text: "Bibliothek", locale: "de" },
+          tagIds: ["school"],
+          createdAt: "2026-08-13T08:00:00.000Z",
+          updatedAt: "2026-08-13T08:00:00.000Z",
+        },
+      ],
+      stacks: [
+        {
+          id: "mistakes",
+          title: "Fehler",
+          itemIds: ["library"],
+          tagIds: ["school"],
+        },
+      ],
+    });
+    const input = {
+      bundle,
+      title: "Fehler aus Laufdiktat",
+      source: {
+        kind: "running-dictation" as const,
+        sourceId: "run-1",
+        classId: "class-7b",
+      },
+    };
+
+    await expect(repository.ingestBundle(input)).resolves.toMatchObject({
+      added: 1,
+      reused: 0,
+    });
+    await expect(repository.ingestBundle(input)).resolves.toMatchObject({
+      added: 0,
+      reused: 1,
+    });
+    const decks = await repository.listDecks();
+    const cards = await repository.listCards(decks[0]!.id);
+    expect(decks).toHaveLength(1);
+    expect(cards).toHaveLength(1);
+    expect(cards[0]?.source.kind).toBe("running-dictation");
+  });
+
+  it("migrates the former standalone LernBox database only once", async () => {
+    const legacy = new Dexie("LernBoxDB");
+    legacy.version(2).stores({
+      decks: "++id, name, createdAt",
+      cards: "++id, deckId, level, nextReview, createdAt, [deckId+nextReview]",
+    });
+    const deckId = await legacy.table("decks").add({
+      name: "Altbestand",
+      front_lang: "en-US",
+      back_lang: "de-DE",
+      createdAt: 100,
+    });
+    await legacy.table("cards").add({
+      deckId,
+      question: "library",
+      answer: "Bibliothek",
+      level: 3,
+      box: 3,
+      interval: 1,
+      nextReview: 200,
+      reverseBox: 2,
+      reverseInterval: 1,
+      reverseNextReview: 300,
+      createdAt: 100,
+    });
+    legacy.close();
+
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    await expect(migrateLegacyLearningBox(database)).resolves.toEqual({
+      decks: 1,
+      cards: 1,
+    });
+    await expect(migrateLegacyLearningBox(database)).resolves.toEqual({
+      decks: 0,
+      cards: 0,
+    });
+
+    const repository = createLearningBoxRepository(database);
+    const decks = await repository.listDecks();
+    const cards = await repository.listCards(decks[0]!.id);
+    expect(decks[0]).toMatchObject({
+      title: "Altbestand",
+      frontLocale: "en-US",
+      backLocale: "de-DE",
+    });
+    expect(cards[0]).toMatchObject({ box: 3, reverseBox: 2 });
+  });
+});

@@ -270,3 +270,15 @@ Der zuvor beschriebene Ansatz, nur Oberflächenmuster oder einzelne Sitzungsstru
 **Beschlossen:** Die vollständige LernBoxV2-Quelle liegt im Lernraum unter `integrations/lernbox` und wird bei Entwicklung und Produktion automatisch mitgebaut. Sie läuft unter einem eigenen Pfad und behält dadurch ihre Dexie-Datenbank, internen Routen, PWA-Funktionen und vollständigen Bedienabläufe. Der Lernraum stellt außen den persönlichen Einstieg, Rücknavigation und die gemeinsame Theme-Präferenz bereit.
 
 Diese erste Integration verändert keine fachlichen LernBox-Regeln. Die noch ausstehende Verbindung zu Klassenfreigaben und gemeinsamen Ergebnissen erfolgt über Adapter an den Modulgrenzen. Ein Browsertest erstellt und öffnet eine persönliche Lernbox in der eingebetteten Originalanwendung; die Einbettung gehört außerdem zur gemeinsamen Barrierefreiheits- und Gerätematrix.
+
+## 26. LernBox und Laufdiktat als native Bestandteile – 13. August 2026
+
+**Beschlossen:** Die Quellrepositories dienen als geprüfte Code- und Fachreferenz. Geeignete Fachlogik, Lernabläufe und Tests werden gezielt in die gemeinsame Lernraum-Architektur übernommen. Die Anwendungen werden nicht als getrennte PWAs, iframes oder vollständige App-Hüllen eingebettet.
+
+- LernBox und Laufdiktat verwenden die globale Lernraum-Navigation, das gemeinsame responsive Theme und gemeinsame Datenbereiche.
+- Eigene Router, PWA-Manifeste, Service Worker und allgemeine Theme- oder App-Einstellungen der Quellanwendungen werden nicht übernommen.
+- Die ursprünglichen Leitner-Regeln der LernBox bleiben als framework-unabhängige Fachlogik erhalten und werden durch Tests gegen unbeabsichtigte Abweichungen geschützt.
+- Fehler aus dem Laufdiktat werden über einen versionierten, dublettenfreien Adapter in die persönliche LernBox übergeben und dort sofort fällig.
+- Upstream-Änderungen werden weiterhin commitgenau geprüft, aber nur als passende Änderungen in den gemeinsamen Lernraum portiert.
+
+Diese Entscheidung ersetzt Entscheidung 25 vollständig und präzisiert Entscheidung 24. „Integrieren“ bedeutet die gezielte Wiederverwendung vorhandenen Codes innerhalb einer Anwendung, nicht den Betrieb einer PWA innerhalb der Lernraum-PWA.

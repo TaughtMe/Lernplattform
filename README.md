@@ -2,7 +2,7 @@
 
 Gemeinsam lernen, im Unterricht und zu Hause.
 
-Dieses Repository enthält den gemeinsamen Lernraum: die schülerorientierte Startseite, Klassenbereiche und die integrierten Anwendungen. LernBoxV2 und Laufdiktat werden mit ihrer bestehenden Fachlogik und ihren vollständigen Funktionsabläufen übernommen; der Lernraum ergänzt Navigation, Klassenfreigaben, Identität und Ergebnisübergabe.
+Dieses Repository enthält den gemeinsamen Lernraum: die schülerorientierte Startseite, Klassenbereiche und die integrierten Lernmodule. Aus LernBoxV2 und Laufdiktat werden geprüfte Fachlogik, Lernabläufe und Tests gezielt übernommen. Eigene App-Hüllen, Router, Themes, Einstellungen und Service Worker werden nicht eingebettet; Navigation, Speicherung und Ergebnisfluss bleiben gemeinsame Lernraum-Grundlagen.
 
 ## Lokal starten
 

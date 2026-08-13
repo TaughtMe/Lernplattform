@@ -67,27 +67,61 @@ test("mobile learners retain direct access to the two learner entries", async ({
   ).toBeVisible();
 });
 
-test("the complete LernBox module creates and opens a personal deck", async ({
+test("the native LernBox creates and opens a personal deck", async ({
   page,
 }) => {
+  const runtimeErrors: string[] = [];
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") runtimeErrors.push(message.text());
+  });
   await page.goto("/lernbox");
-  const lernbox = page.frameLocator('iframe[title="Meine LernBox"]');
+  await expect(page.locator("iframe")).toHaveCount(0);
 
   await expect(
-    lernbox.getByRole("textbox", { name: "Name der neuen Lernbox" }),
+    page.getByRole("textbox", { name: "Name der neuen Lernbox" }),
   ).toBeVisible();
-  await lernbox
-    .getByRole("textbox", { name: "Name der neuen Lernbox" })
-    .fill("Englisch 7b");
-  await lernbox.getByRole("button", { name: "Erstellen" }).click();
+  const deckName = page.getByRole("textbox", {
+    name: "Name der neuen Lernbox",
+  });
+  await deckName.fill("Englisch 7b");
+  await expect(deckName).toHaveValue("Englisch 7b");
+  await page.getByRole("button", { name: "Erstellen" }).click();
 
-  await expect(lernbox.getByText("Englisch 7b", { exact: true })).toBeVisible();
-  await lernbox.getByText("Englisch 7b", { exact: true }).click();
+  await expect.poll(() => runtimeErrors).toEqual([]);
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const request = indexedDB.open("lernraum:personal:v1");
+          const database = await new Promise<IDBDatabase>((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+          const transaction = database.transaction(
+            "learningBoxDecks",
+            "readonly",
+          );
+          const read = transaction.objectStore("learningBoxDecks").getAll();
+          const values = await new Promise<Array<{ title: string }>>(
+            (resolve, reject) => {
+              read.onsuccess = () => resolve(read.result);
+              read.onerror = () => reject(read.error);
+            },
+          );
+          database.close();
+          return values.map((value) => value.title);
+        }),
+      { timeout: 10_000 },
+    )
+    .toContain("Englisch 7b");
+  await expect(page.getByText("Englisch 7b", { exact: true })).toBeVisible();
+  await page.getByText("Englisch 7b", { exact: true }).click();
   await expect(
-    lernbox.getByRole("heading", { name: "Englisch 7b" }),
+    page.getByRole("heading", { name: "Englisch 7b" }),
   ).toBeVisible();
   await expect(
-    lernbox.getByRole("button", { name: "Neue Karte" }),
+    page.getByRole("button", { name: "Karte hinzufügen" }),
   ).toBeVisible();
 });
 

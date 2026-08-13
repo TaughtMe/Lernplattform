@@ -31,12 +31,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "coverage",
-    "playwright-report",
-    "integrations",
-    "public/integrations"
-  ]
+  "exclude": ["node_modules", "dist", "coverage", "playwright-report"]
 }

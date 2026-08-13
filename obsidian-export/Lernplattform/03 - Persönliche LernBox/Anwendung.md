@@ -36,9 +36,9 @@ Eine Lernrunde bildet keinen einzelnen Demo-Versuch ab, sondern wählt beim Star
 - **Richtungen:** Fremdsprache → Deutsch und Deutsch → Fremdsprache besitzen getrennte Fälligkeiten und Boxstände.
 - **Rundenende:** Die Oberfläche fasst gewusste und weiter zu übende Karten zusammen. Fehler können danach als neue fällige Runde erneut geladen werden.
 
-Die vollständige LernBoxV2 ist unter **Meine LernBox** integriert. Deckverwaltung, Kartenverwaltung, Leitner-Lernen, beide Lernrichtungen, Schreibtraining, Übungsmodus, Vokabeltests, Tags, Import, Export, Sicherung, Einstellungen und lokale Dexie-Speicherung stammen aus dem funktionsfähigen Quellmodul. Der zuvor gebaute einzelne Lernraum-Prototyp ist nicht mehr die Zielimplementierung.
+Unter **Meine LernBox** läuft keine zweite Anwendung. Deckverwaltung, Kartenverwaltung, die ursprünglichen Leitner-Übergänge, beide Lernrichtungen, Schreib- und Karteikartenmodus sowie Datei-Sicherung sind gezielt aus LernBoxV2 in den gemeinsamen Lernraum portiert. Die Oberfläche verwendet die globale Navigation, Theme-Präferenz und responsive Grundlage; eine eigene PWA-Hülle, ein eigener Router, ein eigener Service Worker und doppelte allgemeine Einstellungen sind ausgeschlossen.
 
-Die Lernraum-Hülle ergänzt den gemeinsamen Einstieg und übernimmt die systemweite Theme-Präferenz. Klassenfreigaben und die Ergebnisübergabe werden als Adapter ergänzt, ohne die vorhandene LernBox-Fachlogik zu ersetzen.
+Decks, Karten, Herkunft und Lernstände liegen in derselben persönlichen Lernraum-Datenbank wie die gemeinsamen Lernereignisse. Ein versionierter Eingangsadapter kann fehlerhafte Wörter aus dem Laufdiktat dublettenfrei übernehmen und sofort fällig machen. Bis das Laufdiktat selbst nativ integriert ist, ist sein Ergebnisfluss noch an diesen Adapter anzuschließen.
 
 ## Persönliche Fehlerübung
 

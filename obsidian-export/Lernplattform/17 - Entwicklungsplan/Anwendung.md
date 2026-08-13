@@ -3,7 +3,7 @@
 ## Empfohlene Reihenfolge
 
 0. Minimalistischen Schülereinstieg, Klassenarbeitsraum, aktivierbare Module und freies Üben als Plattformrahmen umsetzen.
-1. LernBoxV2 und Laufdiktat als vollständige Quellmodule commitgenau übernehmen.
+1. LernBoxV2 und Laufdiktat commitgenau prüfen und geeignete Fachlogik, Abläufe und Tests gezielt in den gemeinsamen Lernraum integrieren.
 2. LearningBundle v1 und stabile IDs definieren.
 3. LernBox auf Tags, Herkunft und getrennte Lernstände vorbereiten.
 4. Vokabelmodus im Laufdiktat entwickeln.

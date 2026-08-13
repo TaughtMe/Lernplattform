@@ -2,24 +2,17 @@
   "name": "lernraum",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "integrations/*"
-  ],
   "packageManager": "npm@11.9.0",
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
-    "build:integrations": "npm --workspace @lernraum/lernbox run build",
-    "predev": "npm run build:integrations",
     "dev": "vinext dev",
-    "prebuild": "npm run build:integrations",
     "build": "vinext build",
     "start": "vinext start",
     "format": "prettier --write app src e2e tests docs *.json *.ts *.mjs",
     "format:check": "prettier --check app src e2e tests docs *.json *.ts *.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "lint:integrations": "npm --workspace @lernraum/lernbox run lint",
     "typecheck": "tsc --noEmit",
     "test": "npm run test:unit && npm run build && npm run test:render",
     "test:unit": "vitest run",
@@ -27,7 +20,7 @@
     "test:render": "node --test tests/rendered-html.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:chromium": "playwright test --project=desktop-chromium --project=mobile-chrome --project=minimum-width",
-    "check": "npm run format:check && npm run lint && npm run lint:integrations && npm run typecheck && npm run test:coverage && npm run build && npm run test:render",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run test:render",
     "quality": "npm run check && npm run test:e2e"
   },
   "dependencies": {
