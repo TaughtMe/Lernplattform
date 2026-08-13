@@ -351,3 +351,9 @@ Die verbindliche Beschreibung steht unter [[../22 - Adaptiver Lernkreislauf/Anwe
 **Beschlossen:** Der Laufdiktat-Raum wird als Lernraum-Ablauf integriert und nicht als zweite PWA eingebettet. Der Einstieg übernimmt den vierstelligen Raumcode oder QR-Code, fragt den Namen ab und führt mit der bestehenden sicheren Raumfunktion in eine native Wartelobby. Teilnehmeridentität und Presence folgen dabei der Fachlogik aus Laufdiktat `6c2ade4`; Layout, Theme und Navigation kommen ausschließlich aus Lernraum.
 
 Live-Räume sind die begrenzte Ausnahme vom sonstigen Lokal-first-Lernen: Während einer gemeinsamen Unterrichtsrunde benötigt die Lobby eine flüchtige Realtime-Verbindung. Persönliche Lernhistorie, LernBox und freie Übungen werden dadurch nicht zentral synchronisiert. Im Browser wird ausschließlich ein öffentlicher Publishable Key verwendet; ohne konfigurierte Live-Verbindung wird kein erfolgreicher Beitritt vorgetäuscht.
+
+## 35. Autorisierte Live-Sitzung im nativen Lernraum – 13. August 2026
+
+**Beschlossen:** Das öffentliche Realtime-Ereignis `session-start` ist ausschließlich ein Wecksignal. Es enthält weder Aufgaben noch Lösungen. Das Schülergerät liest Status, Sitzungs-ID und Konfiguration anschließend mit seinem gerätegebundenen Teilnehmertoken über `get_room_state_secure` und validiert die Daten vor der Anzeige.
+
+Text, Vokabeln und Kopfrechenaufgaben laufen danach in einer nativen Lernraum-Oberfläche. Antwortprüfung, stabile individuelle Reihenfolge, Fortschrittsrückgabe, Wiederaufnahme nach Verbindungsabbruch und der verbindungsunabhängige Teilnehmer-Heartbeat werden aus Laufdiktat `6c2ade4` übernommen. Stationsmodus, Battle und die Lehrkraftoberfläche bleiben eigene folgende Integrationsschritte.
