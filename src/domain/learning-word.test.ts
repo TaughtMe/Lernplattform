@@ -5,6 +5,7 @@ import {
   chunkLearningWords,
   evaluateLearningWords,
   parseLearningWords,
+  selectLearningWordRound,
   updateLearningWordStage,
 } from "./learning-word";
 
@@ -72,5 +73,14 @@ describe("learning-word domain", () => {
       ["c", "d"],
       ["e"],
     ]);
+  });
+
+  it("selects a manageable round across the full word bank", () => {
+    const words = Array.from({ length: 100 }, (_, index) => `Wort${index + 1}`);
+    const round = selectLearningWordRound(words, 10);
+    expect(round).toHaveLength(10);
+    expect(round[0]).toBe("Wort1");
+    expect(round.at(-1)).toBe("Wort91");
+    expect(selectLearningWordRound(words, "all")).toEqual(words);
   });
 });

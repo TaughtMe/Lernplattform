@@ -220,6 +220,24 @@ test("the five-stage learning-word path can be tried without an account", async 
   await expect(directAnswer).toBeFocused();
 });
 
+test("large German word banks create manageable learning rounds", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/lernwoerter");
+  await page.getByRole("button", { name: /Merkwörter & Fremdwörter/ }).click();
+  const source = page.getByRole("textbox", { name: "Deine Lernwörter" });
+  await expect(source).toHaveValue(/Computer/);
+  expect((await source.inputValue()).split("\n").length).toBeGreaterThanOrEqual(
+    100,
+  );
+  await expect(page.getByLabel("Wörter in dieser Runde")).toHaveValue("10");
+  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
+  await expect(page.locator(".running-progress strong")).toHaveText("1 / 10");
+  await expect(
+    page.getByRole("textbox", { name: "Deine Lösung" }),
+  ).toBeFocused();
+});
+
 test("a learning result survives a page reload on the same device", async ({
   page,
 }) => {

@@ -85,3 +85,16 @@ export function chunkLearningWords(
   }
   return chunks;
 }
+
+export function selectLearningWordRound(
+  words: readonly string[],
+  size: number | "all",
+): string[] {
+  if (size === "all" || size >= words.length) return [...words];
+  const count = Math.max(1, Math.floor(size));
+  const step = words.length / count;
+  return Array.from(
+    { length: count },
+    (_, index) => words[Math.floor(index * step)]!,
+  );
+}

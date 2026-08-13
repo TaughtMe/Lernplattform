@@ -21,6 +21,7 @@ import {
   chunkLearningWords,
   evaluateLearningWords,
   parseLearningWords,
+  selectLearningWordRound,
   updateLearningWordStage,
   type LearningWordBlockSize,
   type LearningWordStage,
@@ -63,6 +64,7 @@ export function LearningWordApp() {
   const [source, setSource] = useState(sampleWords);
   const [stage, setStage] = useState<LearningWordStage>(1);
   const [blockSize, setBlockSize] = useState<LearningWordBlockSize>(3);
+  const [roundSize, setRoundSize] = useState<5 | 10 | 20 | "all">(10);
   const [blocks, setBlocks] = useState<string[][]>([]);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("setup");
@@ -104,7 +106,8 @@ export function LearningWordApp() {
 
   function start() {
     if (!words.length) return;
-    setBlocks(chunkLearningWords(words, stage === 5 ? blockSize : 1));
+    const roundWords = selectLearningWordRound(words, roundSize);
+    setBlocks(chunkLearningWords(roundWords, stage === 5 ? blockSize : 1));
     setIndex(0);
     setAnswer("");
     setUsedHelp(false);
@@ -223,6 +226,7 @@ export function LearningWordApp() {
               <button
                 aria-pressed={collectionId === "own"}
                 onClick={() => setCollectionId("own")}
+                disabled={!interactionReady}
               >
                 <strong>Eigene Wörter</strong>
                 <span>frei eingeben</span>
@@ -232,9 +236,12 @@ export function LearningWordApp() {
                   key={collection.id}
                   aria-pressed={collectionId === collection.id}
                   onClick={() => selectCollection(collection.id)}
+                  disabled={!interactionReady}
                 >
                   <strong>{collection.title}</strong>
-                  <span>{collection.strategy}</span>
+                  <span>
+                    {collection.strategy} · {collection.words.length} Wörter
+                  </span>
                 </button>
               ))}
             </div>
@@ -286,7 +293,25 @@ export function LearningWordApp() {
                   </select>
                 </label>
               )}
-              <strong>{words.length} unterschiedliche Wörter</strong>
+              <label>
+                Wörter in dieser Runde
+                <select
+                  value={roundSize}
+                  onChange={(event) =>
+                    setRoundSize(
+                      event.target.value === "all"
+                        ? "all"
+                        : (Number(event.target.value) as 5 | 10 | 20),
+                    )
+                  }
+                >
+                  <option value={5}>5 Wörter</option>
+                  <option value={10}>10 Wörter</option>
+                  <option value={20}>20 Wörter</option>
+                  <option value="all">Alle Wörter</option>
+                </select>
+              </label>
+              <strong>{words.length} Wörter in der Wortbank</strong>
               <button
                 className="button button--primary"
                 onClick={start}

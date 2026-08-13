@@ -43,7 +43,9 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] 5.000-Punkte-Wertung und Sterneanzeige prototypisch umsetzen
 - [ ] Punktabzüge und Merkbonus mit Schülern erproben und kalibrieren
 - [ ] Feste Lernwortlisten nach allen vorgesehenen Rechtschreibphänomenen anlegen
-- [x] Erste überprüfbare Sammlungen für Doppelkonsonanten, ck/tz, Auslautverhärtung, Umlaute, langes i und Dehnungs-h anlegen
+- [x] Wortbanken mit jeweils mindestens 100 eindeutigen Wörtern für Doppelkonsonanten, ck/tz, Auslautverhärtung, Umlaute, langes i und Dehnungs-h anlegen
+- [x] Eigene Wortbank „Merkwörter & Fremdwörter“ für Wörter ohne verlässliche Regel anlegen
+- [x] Überschaubare Rundengrößen 5, 10, 20 oder gesamte Wortbank anbieten
 - [x] Erste Sammlungen mit den Rechtschreibstrategien Silbieren, Verlängern, Ableiten und Merken taggen
 - [ ] Lernwörter aus Tests, Lehrerzuweisungen und eigenen Texten übernehmen
 

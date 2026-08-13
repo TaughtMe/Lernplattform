@@ -11,13 +11,24 @@ describe("German learning content", () => {
     );
     expect(
       LEARNING_WORD_COLLECTIONS.every(
-        ({ strategy, words }) => Boolean(strategy) && words.length >= 5,
+        ({ strategy, words }) => Boolean(strategy) && words.length >= 100,
       ),
     ).toBe(true);
+    for (const collection of LEARNING_WORD_COLLECTIONS) {
+      expect(
+        new Set(collection.words.map((word) => word.toLocaleLowerCase("de-DE")))
+          .size,
+      ).toBe(collection.words.length);
+      expect(collection.words.every((word) => !word.includes("?"))).toBe(true);
+    }
   });
 
   it("finds a collection without inventing an unknown one", () => {
     expect(getLearningWordCollection("umlaut")?.strategy).toBe("Ableiten");
+    expect(getLearningWordCollection("memory-words")).toMatchObject({
+      title: "Merkwörter & Fremdwörter",
+      strategy: "Merkwort",
+    });
     expect(getLearningWordCollection("unknown")).toBeUndefined();
   });
 });

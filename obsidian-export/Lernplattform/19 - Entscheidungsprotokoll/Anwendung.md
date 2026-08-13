@@ -314,3 +314,9 @@ Diese Entscheidung ersetzt Entscheidung 25 vollständig und präzisiert Entschei
 - Fehler bleiben sichtbar und benötigen einen bewussten erneuten verdeckten Abruf; Enter startet diesen ohne Mausweg.
 - In Merkstufe 4 wird unmittelbar auf den Längenstrichen geschrieben. Die Striche sind funktionaler Eingaberaum und keine davon getrennte Dekoration.
 - Der Deutschbereich erhält schrittweise feste Lernwortsammlungen mit Rechtschreibphänomen und den Strategien Silbieren, Verlängern, Ableiten und Merken.
+
+## 30. Große Wortbanken, kleine Lernrunden und echte Merkwörter – 13. August 2026
+
+**Beschlossen:** Eine feste Rechtschreibsammlung enthält mindestens 100 eindeutige Wörter, wird aber nicht automatisch als eine 100-Wörter-Runde abgefragt. Standardmäßig wählt die Merkstrecke 10 über die Wortbank verteilte Wörter; 5, 20 oder alle Wörter bleiben bewusst auswählbar.
+
+**Merkwörter & Fremdwörter** sind ein eigener fachlicher Bereich. Wenn keine verlässliche Strategie wie Silbieren, Verlängern oder Ableiten greift, kennzeichnet Lernraum das Wort ausdrücklich als Merkwort. Das Wortbild wird dann über die Merkstrecke gesichert, ohne eine nicht tragfähige Regel zu behaupten.
