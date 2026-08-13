@@ -575,46 +575,83 @@ h2 {
   border-color: #d9c9bc;
 }
 .room-code {
-  min-width: min(100%, 365px);
+  width: min(100%, 520px);
+  min-width: 0;
 }
 .room-code form {
-  min-height: 54px;
-  padding: 4px;
   display: grid;
-  grid-template-columns: auto minmax(82px, 1fr) auto auto;
-  align-items: center;
-  background: white;
-  border: 1px solid #d8cec7;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgb(65 42 28 / 5%);
+  gap: 12px;
 }
-.room-code label {
-  padding-left: 14px;
-  font-size: 0.82rem;
+.room-code__heading {
+  display: grid;
+  gap: 3px;
+}
+.room-code label,
+.room-code__label {
+  color: var(--ink);
+  font-size: 0.92rem;
   font-weight: 800;
 }
-.room-code input {
+.room-code__heading small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.room-code__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px auto;
+  align-items: center;
+  gap: 9px;
+}
+.room-code__controls > input {
   width: 100%;
+  height: 48px;
   min-width: 0;
-  padding: 10px;
-  border: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
   outline: none;
   color: var(--ink);
-  background: transparent;
+  background: var(--field);
+  font-size: 1rem;
+}
+.room-code__controls > input:focus,
+.room-code__digits input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 15%, transparent);
+}
+.room-code__digits {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(38px, 48px));
+  gap: 8px;
+}
+.room-code__digits input {
+  width: 100%;
+  height: 48px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  outline: none;
+  background: var(--field);
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-align: center;
 }
 .room-code .button {
-  min-height: 44px;
-  padding-inline: 18px;
+  min-height: 48px;
+  padding-inline: 20px;
 }
 .room-code__camera {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid color-mix(in srgb, var(--teal) 24%, var(--line));
-  border-radius: 11px;
+  border-radius: 13px;
   background: color-mix(in srgb, var(--teal) 17%, var(--surface));
   color: var(--teal-dark);
 }
@@ -759,7 +796,6 @@ h2 {
   grid-template-columns: 1fr auto;
   gap: 10px;
 }
-.live-room-code-input,
 .live-room-name-input {
   width: 100%;
   min-width: 0;
@@ -769,13 +805,12 @@ h2 {
   color: var(--ink);
   outline: none;
 }
-.live-room-code-input {
+.live-room-code-row .room-code__digits {
+  grid-template-columns: repeat(4, minmax(42px, 58px));
+}
+.live-room-code-row .room-code__digits input {
   height: 58px;
-  padding: 8px 16px;
-  font-size: 1.65rem;
-  font-weight: 800;
-  letter-spacing: 0.55em;
-  text-align: center;
+  border-radius: 14px;
 }
 .live-room-code-row .room-code__camera {
   width: 58px;
@@ -787,7 +822,6 @@ h2 {
   padding: 12px 15px;
   font-size: 1rem;
 }
-.live-room-code-input:focus,
 .live-room-name-input:focus {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 16%, transparent);
@@ -2268,7 +2302,8 @@ h2 {
   line-height: 1.45;
 }
 .main-entry__code {
-  max-width: 430px;
+  width: min(100%, 520px);
+  max-width: none;
   margin: 24px auto 0;
 }
 .class-list {
@@ -2831,18 +2866,10 @@ body,
   .hero__actions > .button {
     width: 100%;
   }
-  .room-code form {
-    grid-template-columns: 1fr auto;
+  .room-code__controls {
+    grid-template-columns: minmax(0, 1fr) 48px;
   }
-  .room-code label {
-    grid-column: 1 / -1;
-    padding: 8px 12px 0;
-    text-align: left;
-  }
-  .room-code input {
-    font-size: 1rem;
-  }
-  .room-code .button {
+  .room-code__controls .button {
     width: 100%;
     grid-column: 1 / -1;
   }
@@ -2946,6 +2973,15 @@ body,
   }
 }
 @media (max-width: 370px) {
+  .room-code__controls {
+    grid-template-columns: minmax(0, 1fr) 48px;
+    gap: 8px;
+  }
+  .room-code__digits,
+  .live-room-code-row .room-code__digits {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
   .brand {
     font-size: 1rem;
   }

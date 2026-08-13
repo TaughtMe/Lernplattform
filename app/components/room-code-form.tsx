@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import { QrCodeScanner } from "./qr-code-scanner";
+import { SegmentedRoomCode } from "./segmented-room-code";
 
 type RoomCodeFormProps = {
   idPrefix?: string;
@@ -16,6 +17,7 @@ export function RoomCodeForm({
   const [error, setError] = useState("");
   const [code, setCode] = useState("");
   const inputId = `${idPrefix}-code-input`;
+  const labelId = `${idPrefix}-code-label`;
   const errorId = `${idPrefix}-code-error`;
   const label = mode === "room" ? "Raumcode" : "Klassen- oder Raumcode";
 
@@ -53,27 +55,56 @@ export function RoomCodeForm({
   return (
     <div className="room-code">
       <form onSubmit={joinRoom} noValidate>
-        <label htmlFor={inputId}>{label}</label>
-        <input
-          id={inputId}
-          name="roomCode"
-          autoComplete="off"
-          inputMode={mode === "room" ? "numeric" : "text"}
-          pattern={mode === "room" ? "[0-9]*" : undefined}
-          maxLength={mode === "room" ? 4 : 12}
-          placeholder={mode === "room" ? "z. B. 4829" : "Code eingeben"}
-          value={code}
-          aria-describedby={error ? errorId : undefined}
-          aria-invalid={Boolean(error)}
-          onChange={(event) => {
-            setCode(normalizeJoinCode(event.target.value));
-            if (error) setError("");
-          }}
-        />
-        <QrCodeScanner onResult={useScan} />
-        <button className="button button--secondary" type="submit">
-          Beitreten
-        </button>
+        <div className="room-code__heading">
+          {mode === "room" ? (
+            <span id={labelId} className="room-code__label">
+              {label}
+            </span>
+          ) : (
+            <label id={labelId} htmlFor={inputId}>
+              {label}
+            </label>
+          )}
+          <small>
+            {mode === "room"
+              ? "Vierstelligen Code eingeben oder QR-Code scannen"
+              : "Code von deiner Lehrkraft eingeben oder QR-Code scannen"}
+          </small>
+        </div>
+        <div className="room-code__controls">
+          {mode === "room" ? (
+            <SegmentedRoomCode
+              idPrefix={idPrefix}
+              labelId={labelId}
+              value={code}
+              invalid={Boolean(error)}
+              describedBy={error ? errorId : undefined}
+              onChange={(value) => {
+                setCode(value);
+                if (error) setError("");
+              }}
+            />
+          ) : (
+            <input
+              id={inputId}
+              name="roomCode"
+              autoComplete="off"
+              maxLength={12}
+              placeholder="Code eingeben"
+              value={code}
+              aria-describedby={error ? errorId : undefined}
+              aria-invalid={Boolean(error)}
+              onChange={(event) => {
+                setCode(normalizeJoinCode(event.target.value));
+                if (error) setError("");
+              }}
+            />
+          )}
+          <QrCodeScanner onResult={useScan} />
+          <button className="button button--secondary" type="submit">
+            Beitreten
+          </button>
+        </div>
       </form>
       {error ? (
         <p id={errorId} role="alert">

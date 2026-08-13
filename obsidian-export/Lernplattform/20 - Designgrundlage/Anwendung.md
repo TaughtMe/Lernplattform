@@ -128,7 +128,9 @@ Freie Übungsbereiche erhalten feste Orientierungssymbole. Klassen erhalten kein
 ## Responsive und barrierearme Umsetzung
 
 - Navigation wird auf kleinen Bildschirmen verdichtet, ohne den Raumbeitritt zu verstecken.
-- Raumcodefeld und Hauptaktionen werden mobil untereinander angeordnet.
+- Beschriftung und kurzer Hilfetext stehen oberhalb der Code-Eingabe; Eingabe, Kamera und Beitritt werden nicht mit dem Text in eine enge gemeinsame Zeile gezwängt.
+- Reine vierstellige Raumcodes verwenden vier kleine Ziffernfelder mit automatischem Fokuswechsel und Einfügen-Unterstützung. Kombinierte Klassen- oder Raumcodes behalten wegen ihrer variablen Länge ein zusammenhängendes Feld.
+- Codefelder und Hauptaktionen werden mobil bei Bedarf untereinander angeordnet.
 - Kacheln wechseln von drei Spalten auf zwei beziehungsweise eine Spalte.
 - Interaktive Elemente erhalten ausreichend große Trefferflächen und sichtbare Fokuszustände.
 - Informationen werden nie ausschließlich über Farbe vermittelt.

@@ -16,13 +16,14 @@ describe("RoomCodeForm", () => {
     const user = userEvent.setup();
     render(<RoomCodeForm />);
 
-    await user.type(screen.getByRole("textbox", { name: "Raumcode" }), "12");
+    await user.type(screen.getByRole("textbox", { name: "Ziffer 1" }), "1");
+    await user.type(screen.getByRole("textbox", { name: "Ziffer 2" }), "2");
     await user.click(screen.getByRole("button", { name: "Beitreten" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Bitte gib den vierstelligen Raumcode ein.",
     );
-    expect(screen.getByRole("textbox", { name: "Raumcode" })).toHaveAttribute(
+    expect(screen.getByRole("textbox", { name: "Ziffer 1" })).toHaveAttribute(
       "aria-invalid",
       "true",
     );
@@ -32,12 +33,13 @@ describe("RoomCodeForm", () => {
     const user = userEvent.setup();
     render(<RoomCodeForm />);
 
-    const input = screen.getByRole("textbox", { name: "Raumcode" });
-    await user.type(input, "12");
+    const firstDigit = screen.getByRole("textbox", { name: "Ziffer 1" });
+    await user.type(firstDigit, "1");
+    await user.type(screen.getByRole("textbox", { name: "Ziffer 2" }), "2");
     await user.click(screen.getByRole("button", { name: "Beitreten" }));
-    await user.type(input, "3");
+    await user.type(screen.getByRole("textbox", { name: "Ziffer 3" }), "3");
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(input).toHaveAttribute("aria-invalid", "false");
+    expect(firstDigit).toHaveAttribute("aria-invalid", "false");
   });
 });

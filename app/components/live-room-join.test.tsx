@@ -7,9 +7,8 @@ describe("LiveRoomJoin", () => {
   it("prefills the room code and uses an icon-only camera action", () => {
     render(<LiveRoomJoin initialCode="4829" liveRoomConfig={null} />);
 
-    expect(screen.getByRole("textbox", { name: "Raumcode" })).toHaveValue(
-      "4829",
-    );
+    expect(screen.getByRole("textbox", { name: "Ziffer 1" })).toHaveValue("4");
+    expect(screen.getByRole("textbox", { name: "Ziffer 4" })).toHaveValue("9");
     expect(
       screen.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
     ).toBeVisible();

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import {
   getLiveRoomClient,
@@ -13,6 +13,7 @@ import {
   type JoinedLiveRoom,
 } from "../../src/integrations/laufdiktat/room-api";
 import { QrCodeScanner } from "./qr-code-scanner";
+import { SegmentedRoomCode } from "./segmented-room-code";
 
 type View = "join" | "connecting" | "lobby" | "starting";
 
@@ -32,7 +33,6 @@ export function LiveRoomJoin({
   const [view, setView] = useState<View>("join");
   const [error, setError] = useState("");
   const [room, setRoom] = useState<JoinedLiveRoom | null>(null);
-  const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!room || view !== "lobby" || !liveRoomConfig) return;
@@ -66,7 +66,6 @@ export function LiveRoomJoin({
     const scanned = extractJoinCode(value).replace(/\D/g, "").slice(0, 4);
     setCode(scanned);
     setError("");
-    codeRef.current?.focus();
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -75,7 +74,6 @@ export function LiveRoomJoin({
     const normalizedName = name.trim().replace(/\s+/g, " ").slice(0, 32);
     if (!/^\d{4}$/.test(normalizedCode)) {
       setError("Bitte gib den vierstelligen Raumcode ein.");
-      codeRef.current?.focus();
       return;
     }
     if (normalizedName.length < 2) {
@@ -151,21 +149,18 @@ export function LiveRoomJoin({
           Gib den Code von der Tafel ein oder scanne den QR-Code.
         </p>
         <form onSubmit={submit} noValidate>
-          <label htmlFor="live-room-code">Raumcode</label>
+          <span id="live-room-code-label" className="room-code__label">
+            Raumcode
+          </span>
           <div className="live-room-code-row">
-            <input
-              ref={codeRef}
-              id="live-room-code"
-              className="live-room-code-input"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              autoComplete="off"
-              maxLength={4}
+            <SegmentedRoomCode
+              idPrefix="live-room"
+              labelId="live-room-code-label"
               value={code}
-              aria-invalid={Boolean(error)}
-              aria-describedby={error ? "live-room-error" : undefined}
-              onChange={(event) => {
-                setCode(event.target.value.replace(/\D/g, "").slice(0, 4));
+              invalid={Boolean(error)}
+              describedBy={error ? "live-room-error" : undefined}
+              onChange={(value) => {
+                setCode(value);
                 setError("");
               }}
             />

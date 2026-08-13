@@ -395,7 +395,7 @@ test("the class room presents one connected adaptive learning loop", async ({
   await expect(
     page.getByRole("link", { name: /Deutsch.*Üben/ }),
   ).toHaveAttribute("href", "/frei/german/lernwoerter");
-  await expect(page.getByRole("textbox", { name: "Raumcode" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
@@ -417,7 +417,7 @@ test("free practice opens the foundation modules directly", async ({
     "href",
     "/lernbox",
   );
-  await expect(page.getByRole("textbox", { name: "Raumcode" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
