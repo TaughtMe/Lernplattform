@@ -62,7 +62,11 @@ Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests
 - native Lehrkraft-Erstellung für Text-, Vokabel- und Kopfrechenrunden mit Übungsmodus und Lernstandscheck
 - scanbare QR-/Code-Lobby mit kombinierter Presence- und Heartbeat-Teilnehmeranzeige
 - sicherer Sitzungsstart über `update_session_secure`; das anschließende Broadcast-Ereignis enthält keine Aufgaben oder Lösungen
+- vollständiger nativer Lehrer-Wizard mit Dateiimport, Kopfrechengenerator, Hilfen, vier Spielmodi und wiederaufnehmbarem Lehrerraum
+- Stationsmodus mit Schülernummern, stabiler optionaler Reihenfolge, Spickerzählung und sicherem Stationsfortschritt
+- Battle mit fairer Ladung, Tinte, Flimmern, Schild und zielgerichteten Realtime-Ereignissen
+- detaillierte Live-Auswertung mit Aktiv-/Fertig-Status, Fortschritt, Sternen, Fehlerhäufigkeiten und CSV-Export
 
-Die App-Hülle, ihr Router, Service Worker, eigenes Theme und Zustandsspeicher wurden bewusst nicht übernommen. Stationsmodus, Battle, die detaillierte Live-Auswertung und die vollständige lokale Fehlerübergabe folgen in getrennten, getesteten Integrationsschritten.
+Die App-Hülle, ihr Router, Service Worker, eigenes Theme und allgemeine Einstellungen wurden bewusst nicht übernommen. Laufdiktat läuft als fester Bestandteil des Lernraums und verwendet dessen Theme, Navigation und responsive Qualitätsgrundlage. Noch offen bleibt die vollständige lokale Übergabe aller Live-Fehler an die jeweiligen persönlichen Fördermodule; dafür ist weiterhin ein ausdrücklicher, datensparsamer Rückgabeweg nötig.
 
 Der Raumbeitritt lädt nur dann den Browserclient, wenn `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` gesetzt sind. Ein Service-Role-Schlüssel darf niemals im Browser liegen. Ohne Konfiguration bleibt die lokale Anwendung vollständig nutzbar und nennt die fehlende Live-Verbindung verständlich; sie simuliert keinen erfolgreichen Raumbeitritt.

@@ -7,7 +7,8 @@ import {
 import type { LiveWord } from "./live-session";
 
 export type TeacherContentMode = "text" | "vocabulary" | "math";
-export type TeacherGameMode = "UEBUNG" | "TEST";
+export type TeacherGameMode = "UEBUNG" | "TEST" | "BATTLE" | "STATION";
+export type TeacherBattleOptions = { ink: boolean; flicker: boolean };
 
 export type TeacherSessionOptions = {
   contentMode: TeacherContentMode;
@@ -16,20 +17,30 @@ export type TeacherSessionOptions = {
   gameMode: TeacherGameMode;
   shuffleWords: boolean;
   repeatWrongAnswers: boolean;
+  isTtsEnabled?: boolean;
+  uebungMaxAttempts?: number;
+  uebungAssistanceEnabled?: boolean;
+  showStars?: boolean;
+  strictTypingMode?: boolean;
+  stationCount?: number;
+  stationShuffle?: boolean;
+  battleOptions?: TeacherBattleOptions;
 };
 
 export type TeacherRoomConfig = {
   words: LiveWord[];
-  gameMode: TeacherGameMode;
-  stationMode: false;
-  stationCount: 1;
-  isTtsEnabled: false;
+  gameMode: "UEBUNG" | "TEST" | "BATTLE";
+  battleOptions: TeacherBattleOptions;
+  stationMode: boolean;
+  stationCount: number;
+  isTtsEnabled: boolean;
   uebungMaxAttempts: number;
   uebungAssistanceEnabled: boolean;
   repeatWrongAnswers: boolean;
-  showStars: true;
+  showStars: boolean;
   shuffleWords: boolean;
-  strictTypingMode: false;
+  strictTypingMode: boolean;
+  stationShuffle: boolean;
   appVersion: "lernraum-0.1.0";
 };
 
@@ -133,16 +144,62 @@ export function buildTeacherRoomConfig(
       options.source,
       options.vocabularyDirection,
     ),
-    gameMode: options.gameMode,
-    stationMode: false,
-    stationCount: 1,
-    isTtsEnabled: false,
-    uebungMaxAttempts: options.gameMode === "TEST" ? 1 : 3,
-    uebungAssistanceEnabled: options.gameMode === "UEBUNG",
-    repeatWrongAnswers: options.repeatWrongAnswers,
-    showStars: true,
-    shuffleWords: options.shuffleWords,
-    strictTypingMode: false,
+    gameMode: options.gameMode === "STATION" ? "UEBUNG" : options.gameMode,
+    battleOptions: options.battleOptions ?? { ink: true, flicker: true },
+    stationMode: options.gameMode === "STATION",
+    stationCount: options.stationCount ?? 20,
+    isTtsEnabled: options.isTtsEnabled ?? false,
+    uebungMaxAttempts:
+      options.gameMode === "TEST" ? 1 : (options.uebungMaxAttempts ?? 3),
+    uebungAssistanceEnabled:
+      options.gameMode === "UEBUNG" &&
+      (options.uebungAssistanceEnabled ?? true),
+    repeatWrongAnswers:
+      options.gameMode === "UEBUNG" &&
+      (options.uebungAssistanceEnabled ?? true) &&
+      options.repeatWrongAnswers,
+    showStars: options.gameMode !== "STATION" && (options.showStars ?? true),
+    shuffleWords: options.gameMode !== "STATION" && options.shuffleWords,
+    strictTypingMode:
+      options.gameMode !== "STATION" && (options.strictTypingMode ?? false),
+    stationShuffle:
+      options.gameMode === "STATION" && (options.stationShuffle ?? true),
     appVersion: "lernraum-0.1.0",
   };
+}
+
+export type MathOperation = "+" | "-" | "*" | "/";
+
+export function generateMentalMathSource(options: {
+  count: number;
+  min: number;
+  max: number;
+  operations: MathOperation[];
+}) {
+  const operations = options.operations.length ? options.operations : ["+"];
+  const min = Math.min(options.min, options.max);
+  const max = Math.max(options.min, options.max);
+  const random = (from: number, to: number) =>
+    from + Math.floor(Math.random() * (to - from + 1));
+  const lines: string[] = [];
+  for (let index = 0; index < Math.max(1, options.count); index += 1) {
+    const operation = operations[index % operations.length] ?? "+";
+    if (operation === "*") {
+      const left = random(Math.max(1, min), Math.min(10, Math.max(1, max)));
+      const right = random(1, 10);
+      lines.push(`${left} · ${right}`);
+      continue;
+    }
+    if (operation === "/") {
+      const divisor = random(1, Math.min(10, Math.max(1, max)));
+      const result = random(1, 10);
+      lines.push(`${divisor * result} : ${divisor}`);
+      continue;
+    }
+    const left = random(min, max);
+    const right =
+      operation === "-" ? random(min, Math.max(min, left)) : random(min, max);
+    lines.push(`${left} ${operation} ${right}`);
+  }
+  return lines.join("\n");
 }

@@ -27,6 +27,7 @@ import { QrCodeScanner } from "./qr-code-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
 
 type View = "join" | "connecting" | "lobby" | "starting" | "game";
+type AttackType = "ink" | "flicker";
 
 type LiveRoomJoinProps = {
   initialCode?: string;
@@ -49,6 +50,12 @@ export function LiveRoomJoin({
   const [initialProgress, setInitialProgress] = useState<LiveProgress | null>(
     null,
   );
+  const [roster, setRoster] = useState<Record<string, number>>({});
+  const [incomingAttack, setIncomingAttack] = useState<{
+    id: number;
+    type: AttackType;
+    from: string;
+  } | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
@@ -64,11 +71,9 @@ export function LiveRoomJoin({
 
     async function syncAuthorizedRoomState() {
       try {
-        const state = await getLiveRoomState(
-          activeConfig,
-          activeRoom.roomId,
-          activeRoom.participantToken,
-        );
+        const state = await getLiveRoomState(activeConfig, activeRoom.roomId, {
+          participantToken: activeRoom.participantToken,
+        });
         if (!state || state.status === "ended") {
           setSession(null);
           setRoom(null);
@@ -106,6 +111,46 @@ export function LiveRoomJoin({
       })
       .on("broadcast", { event: "session-ended" }, () => {
         void syncAuthorizedRoomState();
+      })
+      .on("broadcast", { event: "student-progress" }, ({ payload }) => {
+        const update = payload as { name?: unknown; index?: unknown };
+        if (typeof update.name !== "string" || typeof update.index !== "number")
+          return;
+        const name = update.name;
+        const index = update.index;
+        setRoster((current) => ({ ...current, [name]: index }));
+      })
+      .on("broadcast", { event: "student-finished" }, ({ payload }) => {
+        const update = payload as { name?: unknown; currentIndex?: unknown };
+        if (
+          typeof update.name !== "string" ||
+          typeof update.currentIndex !== "number"
+        )
+          return;
+        const name = update.name;
+        const index = update.currentIndex;
+        setRoster((current) => ({
+          ...current,
+          [name]: index,
+        }));
+      })
+      .on("broadcast", { event: "attack" }, ({ payload }) => {
+        const attack = payload as {
+          to?: unknown;
+          from?: unknown;
+          type?: unknown;
+        };
+        if (
+          attack.to !== activeRoom.studentName ||
+          typeof attack.from !== "string" ||
+          (attack.type !== "ink" && attack.type !== "flicker")
+        )
+          return;
+        setIncomingAttack({
+          id: Date.now(),
+          from: attack.from,
+          type: attack.type,
+        });
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -164,7 +209,9 @@ export function LiveRoomJoin({
           roomId: room.roomId,
           sessionId: session.sessionId,
           participantToken: room.participantToken,
-          studentName: room.studentName,
+          studentName: progress.stationNumber
+            ? `station-${progress.stationNumber}`
+            : room.studentName,
         },
         progress,
       ).catch(() => {
@@ -175,12 +222,42 @@ export function LiveRoomJoin({
       void channelRef.current?.send({
         type: "broadcast",
         event: progress.finished ? "student-finished" : "student-progress",
-        payload: progress.finished
-          ? { name: room.studentName, ...progress }
-          : { name: room.studentName, index: progress.currentIndex },
+        payload: {
+          name: progress.stationNumber
+            ? `Station ${progress.stationNumber}`
+            : room.studentName,
+          index: progress.currentIndex,
+          ...progress,
+        },
       });
     },
     [liveRoomConfig, room, session],
+  );
+
+  const loadProgress = useCallback(
+    async (studentKey: string) => {
+      if (!liveRoomConfig || !room || !session) return null;
+      return getLiveProgress(liveRoomConfig, {
+        roomId: room.roomId,
+        sessionId: session.sessionId,
+        participantToken: room.participantToken,
+        studentName: studentKey,
+      });
+    },
+    [liveRoomConfig, room, session],
+  );
+
+  const sendAttack = useCallback(
+    (to: string, type: AttackType) => {
+      if (!room || !channelRef.current) return false;
+      void channelRef.current.send({
+        type: "broadcast",
+        event: "attack",
+        payload: { from: room.studentName, to, type },
+      });
+      return true;
+    },
+    [room],
   );
 
   function useScan(value: string) {
@@ -248,6 +325,10 @@ export function LiveRoomJoin({
         connectionWarning={connectionWarning}
         initialProgress={initialProgress}
         onProgress={reportProgress}
+        onLoadProgress={loadProgress}
+        roster={roster}
+        incomingAttack={incomingAttack}
+        onSendAttack={sendAttack}
       />
     );
   }

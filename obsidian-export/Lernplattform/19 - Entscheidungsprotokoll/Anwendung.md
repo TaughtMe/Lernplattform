@@ -368,3 +368,15 @@ Text, Vokabeln und Kopfrechenaufgaben laufen danach in einer nativen Lernraum-Ob
 - Die Teilnehmeranzeige kombiniert Realtime Presence mit dem autorisierten Teilnehmer-Heartbeat. Presence dient nur dem kurzlebigen Verbindungszustand und nicht als dauerhafte Lernhistorie.
 - Ohne `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` bleibt der lokale Lernraum nutzbar, zeigt aber ehrlich an, dass keine Live-Lobby geöffnet werden kann.
 - Stationsmodus und Battle bleiben getrennte nächste Integrationsschritte, damit ihre abweichenden Raum- und Spiellogiken nicht stillschweigend vereinfacht werden.
+
+## 37. Vollständiges Laufdiktat-Dashboard als Lernraum-Bestandteil – 13. August 2026
+
+**Beschlossen und umgesetzt:** Das Lehrerdashboard, der klassische Stationsmodus und Battle werden aus Laufdiktat `6c2ade4` als native Lernraum-Funktionen übernommen. Es entsteht keine zweite PWA und keine parallele Einstellungsverwaltung.
+
+- Der Lehrer-Wizard umfasst Inhalt, Einstellungen, Lobby und Live-Auswertung.
+- Text, Vokabeln und Kopfrechnen unterstützen Dateiimport beziehungsweise Aufgabenerzeugung.
+- Freies Üben, Lernstandscheck, Battle und Stations-Laufdiktat behalten ihre unterschiedlichen Fachregeln.
+- Stationen verwenden Schülernummern und wiederaufnehmbaren, monotonen Fortschritt; Battle verwendet kurzlebige Realtime-Angriffe ohne dauerhafte Kampfdaten.
+- Aufgaben und Lösungen werden nie über öffentliche Broadcasts übertragen. Schüler- und Lehrkrafttoken bleiben getrennt.
+- Der globale Hell-/Dunkelmodus, mobile Darstellung und gemeinsame Lernraum-Navigation gelten auch für diese Oberflächen.
+- Die zentrale Live-Auswertung bleibt sitzungsbezogen. Persönliche langfristige Förderung entsteht erst über den ausdrücklich vorgesehenen lokalen Ergebnisadapter.

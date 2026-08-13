@@ -30,6 +30,13 @@ const liveSessionConfigSchema = z
     showStars: z.boolean().default(true),
     shuffleWords: z.boolean().default(false),
     strictTypingMode: z.boolean().default(false),
+    stationShuffle: z.boolean().default(false),
+    battleOptions: z
+      .object({
+        ink: z.boolean().default(true),
+        flicker: z.boolean().default(true),
+      })
+      .default({ ink: true, flicker: true }),
   })
   .passthrough();
 

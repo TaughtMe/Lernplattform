@@ -434,7 +434,7 @@ test("teachers can prepare every native live-room content type", async ({
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Gemeinsam starten" }),
+    page.getByRole("heading", { name: "Unterrichtsrunde" }),
   ).toBeVisible();
   await expect(page.getByText("2 Aufgaben")).toBeVisible();
 
@@ -443,6 +443,21 @@ test("teachers can prepare every native live-room content type", async ({
   await expect(page.getByText("3 Aufgaben")).toBeVisible();
   await page.getByRole("button", { name: "Kopfrechnen" }).click();
   await expect(page.getByText("4 Aufgaben")).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Weiter zu den Einstellungen" })
+    .click();
+  await expect(page.getByRole("button", { name: /Freies Üben/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Battle/ })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Lernstandscheck/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /Laufdiktat/ })).toBeVisible();
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
 
   await page.getByRole("button", { name: "Lobby öffnen" }).click();
   await expect(page.getByRole("alert")).toContainText(

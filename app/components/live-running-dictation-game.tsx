@@ -8,8 +8,10 @@ import {
   type LiveSession,
 } from "../../src/integrations/laufdiktat/live-session";
 import type { LiveProgress } from "../../src/integrations/laufdiktat/room-api";
+import { LiveStationGame } from "./live-station-game";
 
 type Phase = "reveal" | "write" | "wrong" | "correct" | "complete";
+type AttackType = "ink" | "flicker";
 
 type LiveRunningDictationGameProps = {
   code: string;
@@ -18,6 +20,10 @@ type LiveRunningDictationGameProps = {
   connectionWarning: string;
   initialProgress: LiveProgress | null;
   onProgress: (progress: LiveProgress) => void;
+  onLoadProgress?: (studentKey: string) => Promise<LiveProgress | null>;
+  roster?: Record<string, number>;
+  incomingAttack?: { id: number; type: AttackType; from: string } | null;
+  onSendAttack?: (to: string, type: AttackType) => boolean;
 };
 
 export function LiveRunningDictationGame({
@@ -27,6 +33,10 @@ export function LiveRunningDictationGame({
   connectionWarning,
   initialProgress,
   onProgress,
+  onLoadProgress,
+  roster = {},
+  incomingAttack,
+  onSendAttack,
 }: LiveRunningDictationGameProps) {
   const restoredIndex = Math.min(
     initialProgress?.currentIndex ?? 0,
@@ -42,7 +52,13 @@ export function LiveRunningDictationGame({
   const [errors, setErrors] = useState(initialProgress?.errors ?? 0);
   const [wordErrors, setWordErrors] = useState<Record<string, number>>({});
   const [hasWrittenCurrent, setHasWrittenCurrent] = useState(false);
+  const [charge, setCharge] = useState(0);
+  const [shield, setShield] = useState(false);
+  const [picker, setPicker] = useState<AttackType | null>(null);
+  const [activeAttack, setActiveAttack] = useState<AttackType | null>(null);
+  const [battleMessage, setBattleMessage] = useState("");
   const startedAt = useRef(0);
+  const lastAttackId = useRef(0);
   const answerRef = useRef<HTMLInputElement>(null);
   const current = session.words[index];
 
@@ -91,19 +107,44 @@ export function LiveRunningDictationGame({
     if (phase === "write") answerRef.current?.focus();
   }, [phase]);
 
+  useEffect(() => {
+    if (!incomingAttack || session.gameMode !== "BATTLE") return;
+    if (lastAttackId.current === incomingAttack.id) return;
+    lastAttackId.current = incomingAttack.id;
+    let endTimer = 0;
+    const startTimer = window.setTimeout(() => {
+      if (shield) {
+        setShield(false);
+        setBattleMessage(`Angriff von ${incomingAttack.from} geblockt.`);
+        return;
+      }
+      setActiveAttack(incomingAttack.type);
+      setBattleMessage(
+        incomingAttack.type === "ink"
+          ? `Tintenangriff von ${incomingAttack.from}`
+          : `Flimmerangriff von ${incomingAttack.from}`,
+      );
+      endTimer = window.setTimeout(() => {
+        setActiveAttack(null);
+        setBattleMessage("");
+      }, 15_000);
+    }, 0);
+    return () => {
+      window.clearTimeout(startTimer);
+      window.clearTimeout(endTimer);
+    };
+  }, [incomingAttack, session.gameMode, shield]);
+
   if (session.stationMode) {
-    return (
-      <main className="live-game-page">
-        <section className="live-room-state">
-          <p className="eyebrow">Raum {code} · Stationsmodus</p>
-          <h1>Du bist angemeldet, {studentName}.</h1>
-          <p>
-            Die Stationszuordnung folgt als eigener Integrationsschritt. Bleib
-            in diesem Raum, damit deine Anmeldung erhalten bleibt.
-          </p>
-        </section>
-      </main>
-    );
+    return onLoadProgress ? (
+      <LiveStationGame
+        code={code}
+        session={session}
+        connectionWarning={connectionWarning}
+        onProgress={onProgress}
+        onLoadProgress={onLoadProgress}
+      />
+    ) : null;
   }
 
   if (phase === "complete") {
@@ -150,6 +191,14 @@ export function LiveRunningDictationGame({
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     if (checkLiveAnswer(activeWord, answer)) {
+      if (session.gameMode === "BATTLE") {
+        const othersAhead = Object.entries(roster).filter(
+          ([name, otherIndex]) => name !== studentName && otherIndex > index,
+        ).length;
+        setCharge((value) =>
+          Math.min(100, value + (othersAhead >= 1 ? 34 : 25)),
+        );
+      }
       setPhase("correct");
       return;
     }
@@ -182,7 +231,9 @@ export function LiveRunningDictationGame({
   }
 
   return (
-    <main className="live-game-page">
+    <main
+      className={`live-game-page${activeAttack === "flicker" ? " is-flickering" : ""}`}
+    >
       <header className="live-game-topbar">
         <div>
           <span>Raum {code}</span>
@@ -200,6 +251,86 @@ export function LiveRunningDictationGame({
         <p className="live-game-warning" role="status">
           {connectionWarning}
         </p>
+      ) : null}
+
+      {session.gameMode === "BATTLE" ? (
+        <section className="live-battle" aria-label="Battle-Aktionen">
+          <div className="live-battle__charge">
+            <span>Battle-Ladung</span>
+            <progress max="100" value={charge}>
+              {charge}%
+            </progress>
+            <strong>{charge}%</strong>
+          </div>
+          <div className="live-battle__actions">
+            {session.battleOptions.ink ? (
+              <button disabled={charge < 100} onClick={() => setPicker("ink")}>
+                Tinte
+              </button>
+            ) : null}
+            {session.battleOptions.flicker ? (
+              <button
+                disabled={charge < 100}
+                onClick={() => setPicker("flicker")}
+              >
+                Flimmern
+              </button>
+            ) : null}
+            <button
+              disabled={charge < 100}
+              aria-pressed={shield}
+              onClick={() => {
+                setShield(true);
+                setCharge(0);
+                setPicker(null);
+                setBattleMessage("Schild aktiviert.");
+              }}
+            >
+              Schild
+            </button>
+          </div>
+          {picker ? (
+            <div className="live-battle__targets">
+              <strong>Wen möchtest du treffen?</strong>
+              {Object.entries(roster)
+                .filter(([name]) => name !== studentName)
+                .sort(
+                  ([, left], [, right]) =>
+                    Math.abs(left - index) - Math.abs(right - index),
+                )
+                .slice(0, 3)
+                .map(([name]) => (
+                  <button
+                    key={name}
+                    onClick={() => {
+                      if (onSendAttack?.(name, picker)) {
+                        setCharge(0);
+                        setPicker(null);
+                        setBattleMessage(`Angriff auf ${name} gestartet.`);
+                      }
+                    }}
+                  >
+                    {name}
+                  </button>
+                ))}
+              {!Object.keys(roster).some((name) => name !== studentName) ? (
+                <p>Noch kein Mitspieler als Ziel sichtbar.</p>
+              ) : null}
+              <button className="text-button" onClick={() => setPicker(null)}>
+                Abbrechen
+              </button>
+            </div>
+          ) : null}
+          {battleMessage ? <p role="status">{battleMessage}</p> : null}
+        </section>
+      ) : null}
+
+      {activeAttack === "ink" ? (
+        <div className="live-battle__ink" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
       ) : null}
 
       <section className="live-game-task" aria-live="polite">

@@ -50,4 +50,13 @@ Im persönlichen Deutschbereich ist der erste vollständige Laufdiktat-Weg nativ
 - Nach einer Vokabelrunde werden je nach Auswahl alle, nur fehlerhafte oder keine Vokabeln über `LearningBundleV1` in die gemeinsame persönliche LernBox übergeben.
 - **Meine Fehler jetzt üben** öffnet anschließend direkt die LernBox; vorhandene Karten werden nicht dupliziert, sondern wieder fällig markiert.
 
-Noch nicht Teil dieses Schritts sind Live-Raum, Lehrer-Dashboard, Stationen, Battle und Realtime. Sie werden ebenfalls nativ integriert und verwenden später dieselbe Fachlogik und denselben Ergebnisadapter.
+Der Live-Raum und das vollständige Lehrerdashboard sind inzwischen ebenfalls nativ integriert:
+
+- Die Lehrkraft erstellt Text-, Vokabel- oder Kopfrecheninhalte, importiert Text-/CSV-Dateien oder erzeugt Kopfrechenaufgaben.
+- Freies Üben, Lernstandscheck, Battle und klassisches Laufdiktat sind als vier getrennte Modi verfügbar.
+- QR-Code, Raumcode, Lobby, Teilnehmerstatus, sicherer Start, Wiederaufnahme nach Reload und Raumende folgen dem tokengebundenen Raumvertrag des Quellprojekts.
+- Der klassische Stationsmodus verwendet Schülernummern, eine stabile optionale Reihenfolge pro Nummer, Spickerzählung und wiederaufnehmbaren Stationsfortschritt.
+- Battle übernimmt Ladung, Tinte, Flimmern, Schild und Realtime-Zielangriffe innerhalb derselben Lernraum-Oberfläche.
+- Das Live-Dashboard zeigt Aktivität, Abschluss, Fortschritt, Sterne, häufige Fehler und einen CSV-Export.
+
+Die persönliche Übergabe von Vokabelfehlern an die LernBox bleibt davon getrennt erhalten. Die zentrale Live-Runde speichert keine vollständige persönliche Lernhistorie.

@@ -17,10 +17,27 @@ describe("TeacherLiveRoom", () => {
   it("does not pretend to open an unconfigured live lobby", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
+    await user.click(
+      screen.getByRole("button", { name: "Weiter zu den Einstellungen" }),
+    );
     await user.click(screen.getByRole("button", { name: "Lobby öffnen" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Live-Räume sind lokal noch nicht konfiguriert",
     );
     expect(screen.queryByText("Lobby geöffnet")).not.toBeInTheDocument();
+  });
+
+  it("offers every native Laufdiktat mode in the Lernraum dashboard", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    await user.click(
+      screen.getByRole("button", { name: "Weiter zu den Einstellungen" }),
+    );
+    expect(screen.getByRole("button", { name: /Freies Üben/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Battle/ })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /Lernstandscheck/ }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: /Laufdiktat/ })).toBeVisible();
   });
 });

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildTeacherRoomConfig, buildTeacherWords } from "./teacher-session";
+import {
+  buildTeacherRoomConfig,
+  buildTeacherWords,
+  generateMentalMathSource,
+} from "./teacher-session";
 
 describe("teacher live session builder", () => {
   it("turns a text into native dictation items", () => {
@@ -61,5 +65,52 @@ describe("teacher live session builder", () => {
       repeatWrongAnswers: true,
     });
     expect(config.words).toHaveLength(1);
+  });
+
+  it("preserves the distinct station and battle rules from Laufdiktat", () => {
+    const station = buildTeacherRoomConfig({
+      contentMode: "text",
+      source: "Ein Wort.",
+      vocabularyDirection: "left-to-right",
+      gameMode: "STATION",
+      shuffleWords: true,
+      repeatWrongAnswers: true,
+      stationCount: 28,
+      stationShuffle: true,
+    });
+    expect(station).toMatchObject({
+      gameMode: "UEBUNG",
+      stationMode: true,
+      stationCount: 28,
+      stationShuffle: true,
+      shuffleWords: false,
+      showStars: false,
+    });
+
+    const battle = buildTeacherRoomConfig({
+      contentMode: "text",
+      source: "Ein Wort.",
+      vocabularyDirection: "left-to-right",
+      gameMode: "BATTLE",
+      shuffleWords: false,
+      repeatWrongAnswers: false,
+      battleOptions: { ink: false, flicker: true },
+    });
+    expect(battle).toMatchObject({
+      gameMode: "BATTLE",
+      stationMode: false,
+      battleOptions: { ink: false, flicker: true },
+    });
+  });
+
+  it("generates valid mental-math source without eval", () => {
+    const source = generateMentalMathSource({
+      count: 12,
+      min: 1,
+      max: 20,
+      operations: ["+", "-", "*", "/"],
+    });
+    expect(source.split("\n")).toHaveLength(12);
+    expect(buildTeacherWords("math", source, "left-to-right")).toHaveLength(12);
   });
 });

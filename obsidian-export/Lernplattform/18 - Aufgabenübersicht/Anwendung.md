@@ -93,16 +93,16 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] LernBox-Leitnerlogik, Decks, Karten und Sicherungen gezielt in den gemeinsamen Lernraum portieren
 - [x] Eigenständige LernBox-PWA-Hülle, iframe, Router, Service Worker und doppelte Einstellungen entfernen
 - [x] Native LernBox-Oberfläche an globales Theme, Navigation und persönliche Lerndatenbank anbinden
-- [ ] Laufdiktat-Fachlogik und benötigte Schüler-/Lehrerabläufe gezielt nativ integrieren
+- [x] Laufdiktat-Fachlogik und benötigte Schüler-/Lehrerabläufe gezielt nativ integrieren
 - [x] Ersten nativen persönlichen Laufdiktat-Weg für Text und Vokabeln integrieren
 - [x] Antwortprüfung, Hinweise, Vokabelimport und Sterneberechnung aus Laufdiktat `6c2ade4` portieren und testen
-- [ ] Live-Raum, Lehrer-Dashboard, Stationen und Battle nativ integrieren
+- [x] Live-Raum, Lehrer-Dashboard, Stationen und Battle nativ integrieren
   - [x] Sicheren Schülerbeitritt und native Wartelobby aus Laufdiktat portieren
   - [x] Autorisierte Sitzungsdaten in ein natives Spiel für Text, Vokabeln und Kopfrechnen übernehmen
   - [x] Fortschritt, Wiederaufnahme und Teilnehmer-Heartbeat an den bestehenden sicheren Raumvertrag anbinden
   - [x] Lehrerraum mit Inhaltserstellung, QR-/Code-Lobby, Teilnehmerliste und sicherem Sitzungsstart überführen
-  - [ ] Stationsmodus in die Lernraum-Oberfläche überführen
-  - [ ] Battle in die Lernraum-Oberfläche überführen
+  - [x] Stationsmodus in die Lernraum-Oberfläche überführen
+  - [x] Battle in die Lernraum-Oberfläche überführen
 - [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
 - [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten
 - [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen
