@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+} from "react";
+import {
+  LEARNING_WORD_COLLECTIONS,
+  getLearningWordCollection,
+} from "../../src/domain/german-learning-content";
 import {
   LEARNING_WORD_STAGES,
   buildLearningWordLengthPattern,
@@ -14,7 +26,8 @@ import {
   type LearningWordStage,
 } from "../../src/domain/learning-word";
 
-type Phase = "setup" | "memorize" | "recall" | "feedback" | "complete";
+type Phase =
+  "setup" | "memorize" | "recall" | "feedback" | "success" | "complete";
 type Result = {
   words: string[];
   usedHelp: boolean;
@@ -56,8 +69,11 @@ export function LearningWordApp() {
   const [answer, setAnswer] = useState("");
   const [usedHelp, setUsedHelp] = useState(false);
   const [incorrectAttempts, setIncorrectAttempts] = useState(0);
-  const [lastCorrect, setLastCorrect] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
+  const [collectionId, setCollectionId] = useState("own");
+  const answerRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const actionRef = useRef<HTMLButtonElement>(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const interactionReady = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -65,6 +81,26 @@ export function LearningWordApp() {
   );
   const current = blocks[index] ?? [];
   const words = useMemo(() => parseLearningWords(source), [source]);
+
+  useEffect(() => {
+    if (phase === "recall") answerRef.current?.focus();
+    if (phase === "memorize" || phase === "feedback") {
+      actionRef.current?.focus();
+    }
+  }, [phase, index]);
+
+  useEffect(
+    () => () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    },
+    [],
+  );
+
+  function selectCollection(id: string) {
+    setCollectionId(id);
+    const collection = getLearningWordCollection(id);
+    if (collection) setSource(collection.words.join("\n"));
+  }
 
   function start() {
     if (!words.length) return;
@@ -85,29 +121,26 @@ export function LearningWordApp() {
       ? incorrectAttempts
       : incorrectAttempts + 1;
     setIncorrectAttempts(nextIncorrectAttempts);
-    setLastCorrect(attempt.correct);
-    setPhase("feedback");
-  }
-
-  function continueRound() {
-    if (!lastCorrect) {
-      setAnswer("");
-      setPhase(stage >= 4 ? "memorize" : "recall");
-      return;
-    }
-    setResults((previous) => [
-      ...previous,
-      {
+    if (attempt.correct) {
+      const result: Result = {
         words: [...current],
         usedHelp,
-        incorrectAttempts,
+        incorrectAttempts: nextIncorrectAttempts,
         nextStage: updateLearningWordStage(stage, {
           correct: true,
           usedHelp,
-          incorrectAttempts,
+          incorrectAttempts: nextIncorrectAttempts,
         }),
-      },
-    ]);
+      };
+      setResults((previous) => [...previous, result]);
+      setPhase("success");
+      successTimerRef.current = setTimeout(() => advanceAfterSuccess(), 650);
+      return;
+    }
+    setPhase("feedback");
+  }
+
+  function advanceAfterSuccess() {
     if (index + 1 >= blocks.length) {
       setPhase("complete");
       return;
@@ -119,9 +152,15 @@ export function LearningWordApp() {
     setPhase(stage >= 4 ? "memorize" : "recall");
   }
 
+  function continueRound() {
+    setAnswer("");
+    setPhase(stage >= 4 ? "memorize" : "recall");
+  }
+
   function reset() {
     setBlocks([]);
     setResults([]);
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
     setPhase("setup");
   }
 
@@ -168,13 +207,49 @@ export function LearningWordApp() {
             ))}
           </ol>
 
+          <section
+            className="learning-word-collections"
+            aria-labelledby="collection-title"
+          >
+            <div>
+              <p className="eyebrow">Wörter auswählen</p>
+              <h2 id="collection-title">Eigene Wörter oder eine Sammlung</h2>
+              <p>
+                Die Sammlungen verbinden ein Rechtschreibphänomen mit der
+                passenden Strategie aus dem Vault.
+              </p>
+            </div>
+            <div className="learning-word-collection-list">
+              <button
+                aria-pressed={collectionId === "own"}
+                onClick={() => setCollectionId("own")}
+              >
+                <strong>Eigene Wörter</strong>
+                <span>frei eingeben</span>
+              </button>
+              {LEARNING_WORD_COLLECTIONS.map((collection) => (
+                <button
+                  key={collection.id}
+                  aria-pressed={collectionId === collection.id}
+                  onClick={() => selectCollection(collection.id)}
+                >
+                  <strong>{collection.title}</strong>
+                  <span>{collection.strategy}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
           <div className="learning-word-config">
             <label>
               Deine Lernwörter
               <textarea
                 rows={7}
                 value={source}
-                onChange={(event) => setSource(event.target.value)}
+                onChange={(event) => {
+                  setSource(event.target.value);
+                  setCollectionId("own");
+                }}
               />
               <small>Ein Wort pro Zeile oder durch Komma getrennt.</small>
             </label>
@@ -184,6 +259,14 @@ export function LearningWordApp() {
                 {stage}. {stageCopy[stage].title}
               </h2>
               <p>{stageCopy[stage].detail}</p>
+              {collectionId !== "own" && (
+                <div className="learning-word-strategy">
+                  <strong>
+                    {getLearningWordCollection(collectionId)?.strategy}
+                  </strong>
+                  <span>{getLearningWordCollection(collectionId)?.detail}</span>
+                </div>
+              )}
               {stage === 5 && (
                 <label>
                   Wörter pro Merkblock
@@ -216,7 +299,10 @@ export function LearningWordApp() {
         </section>
       )}
 
-      {(phase === "memorize" || phase === "recall" || phase === "feedback") && (
+      {(phase === "memorize" ||
+        phase === "recall" ||
+        phase === "feedback" ||
+        phase === "success") && (
         <section className="learning-word-session" aria-live="polite">
           <div className="running-progress">
             <span>
@@ -247,6 +333,7 @@ export function LearningWordApp() {
                     : "Präge dir das Wort ein. Danach bleibt nur seine Länge sichtbar."}
                 </p>
                 <button
+                  ref={actionRef}
                   className="button button--primary"
                   onClick={() => setPhase("recall")}
                 >
@@ -258,7 +345,7 @@ export function LearningWordApp() {
             {phase === "recall" && (
               <form onSubmit={submit}>
                 <p className="eyebrow">Selbstständig schreiben</p>
-                <h1>{getPrompt(current[0] ?? "", stage)}</h1>
+                {stage !== 4 && <h1>{getPrompt(current[0] ?? "", stage)}</h1>}
                 {stage === 5 && (
                   <p>{current.length} Wörter aus dem Merkblock</p>
                 )}
@@ -267,24 +354,49 @@ export function LearningWordApp() {
                     {current.join(" · ")}
                   </div>
                 )}
-                <label>
-                  {stage === 5 ? "Ein Wort pro Zeile" : "Deine Lösung"}
-                  {stage === 5 ? (
-                    <textarea
-                      rows={Math.max(3, current.length)}
-                      value={answer}
-                      onChange={(event) => setAnswer(event.target.value)}
-                      spellCheck={false}
-                    />
-                  ) : (
-                    <input
-                      value={answer}
-                      onChange={(event) => setAnswer(event.target.value)}
-                      spellCheck={false}
-                      autoComplete="off"
-                    />
-                  )}
-                </label>
+                {stage === 4 ? (
+                  <UnderlineAnswer
+                    ref={(element) => {
+                      answerRef.current = element;
+                    }}
+                    word={current[0] ?? ""}
+                    value={answer}
+                    onChange={setAnswer}
+                  />
+                ) : (
+                  <label>
+                    {stage === 5
+                      ? "Wörter eingeben · Enter prüft, Umschalt + Enter erzeugt eine neue Zeile"
+                      : "Deine Lösung"}
+                    {stage === 5 ? (
+                      <textarea
+                        ref={(element) => {
+                          answerRef.current = element;
+                        }}
+                        rows={Math.max(3, current.length)}
+                        value={answer}
+                        onChange={(event) => setAnswer(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" && !event.shiftKey) {
+                            event.preventDefault();
+                            event.currentTarget.form?.requestSubmit();
+                          }
+                        }}
+                        spellCheck={false}
+                      />
+                    ) : (
+                      <input
+                        ref={(element) => {
+                          answerRef.current = element;
+                        }}
+                        value={answer}
+                        onChange={(event) => setAnswer(event.target.value)}
+                        spellCheck={false}
+                        autoComplete="off"
+                      />
+                    )}
+                  </label>
+                )}
                 <div className="learning-word-actions">
                   <button
                     type="button"
@@ -299,35 +411,30 @@ export function LearningWordApp() {
             )}
 
             {phase === "feedback" && (
-              <div className={lastCorrect ? "is-correct" : "is-wrong"}>
+              <div className="is-wrong">
                 <p className="eyebrow">Auswertung</p>
-                <h1>
-                  {lastCorrect ? "Richtig geschrieben" : "Noch nicht sicher"}
-                </h1>
+                <h1>Noch nicht sicher</h1>
                 <p>
-                  {lastCorrect && !usedHelp
-                    ? incorrectAttempts >= 2
-                      ? `Nach mehreren Anläufen wird Merkstufe ${Math.max(1, stage - 1)} empfohlen.`
-                      : incorrectAttempts === 0
-                        ? `Ohne Hilfe geschafft – Merkstufe ${Math.min(5, stage + 1)} wird empfohlen.`
-                        : `Nach dem Fehler richtig abgerufen – die Wörter bleiben auf Merkstufe ${stage}.`
-                    : `Die Wörter bleiben auf Merkstufe ${stage}.`}
+                  Die Wörter bleiben auf Merkstufe {stage}. Versuche sie noch
+                  einmal verdeckt abzurufen.
                 </p>
-                {!lastCorrect && (
-                  <div className="learning-word-solution">
-                    Richtig: <strong>{current.join(" · ")}</strong>
-                  </div>
-                )}
+                <div className="learning-word-solution">
+                  Richtig: <strong>{current.join(" · ")}</strong>
+                </div>
                 <button
+                  ref={actionRef}
                   className="button button--primary"
                   onClick={continueRound}
                 >
-                  {!lastCorrect
-                    ? "Verdeckt noch einmal versuchen"
-                    : index + 1 < blocks.length
-                      ? "Weiter"
-                      : "Runde auswerten"}
+                  Verdeckt noch einmal versuchen
                 </button>
+              </div>
+            )}
+
+            {phase === "success" && (
+              <div className="learning-word-success" role="status">
+                <span aria-hidden="true">✓</span>
+                <strong>Richtig</strong>
               </div>
             )}
           </article>
@@ -386,3 +493,46 @@ function getPrompt(word: string, stage: LearningWordStage): string {
   if (stage === 4) return buildLearningWordLengthPattern(word);
   return "Welche Wörter hast du dir gemerkt?";
 }
+
+const UnderlineAnswer = forwardRef<
+  HTMLInputElement,
+  { word: string; value: string; onChange: (value: string) => void }
+>(function UnderlineAnswer({ word, value, onChange }, ref) {
+  const slots = Array.from(word);
+  const entered = Array.from(value);
+
+  return (
+    <label className="learning-word-underline-answer">
+      <span>Deine Lösung</span>
+      <span className="learning-word-letter-slots" aria-hidden="true">
+        {slots.map((letter, index) => {
+          const isLetter = /[\p{L}\p{M}]/u.test(letter);
+          return (
+            <i
+              className={
+                isLetter && index === entered.length ? "is-active" : undefined
+              }
+              key={`${letter}-${index}`}
+            >
+              {isLetter ? (entered[index] ?? "\u00a0") : letter}
+            </i>
+          );
+        })}
+      </span>
+      <input
+        ref={ref}
+        className="learning-word-slot-input"
+        aria-label="Deine Lösung"
+        value={value}
+        maxLength={slots.length}
+        onChange={(event) =>
+          onChange(
+            Array.from(event.target.value).slice(0, slots.length).join(""),
+          )
+        }
+        autoComplete="off"
+        spellCheck={false}
+      />
+    </label>
+  );
+});

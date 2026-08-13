@@ -303,3 +303,14 @@ Diese Entscheidung ersetzt Entscheidung 25 vollständig und präzisiert Entschei
 - Der erste neue Prototyp bildet die fünfstufige Lernwort-Merkstrecke einschließlich Blockgrößen, Hilferegel und Aufstiegs-/Rückstufungsempfehlung ab.
 - Merkstufe und Leitner-Fälligkeit werden erst mit dem gemeinsamen Lernwort-Datenmodell dauerhaft gespeichert und bleiben fachlich getrennte Werte.
 - Die Plattformoberfläche wird schrittweise über echte Lernwege zusammengeführt; reine Platzhalter werden nicht als fertige Module behandelt.
+
+## 29. Tastaturfluss und direkte Lernworteingabe – 13. August 2026
+
+**Beschlossen:** Schreibübungen werden auf einen ununterbrochenen Eingabefluss optimiert. Tastaturbedienung ist kein nachträglicher Zusatz, sondern Teil des fachlichen Ablaufs.
+
+- Eine erwartete Texteingabe erhält automatisch den Fokus; Lernende müssen nicht mit Tab zwischen jedem Wort navigieren.
+- Enter bestätigt Antworten. Muss eine Vorlage zuerst bewusst verdeckt werden, führt Enter von der Merkanzeige zur fokussierten Eingabe.
+- Richtige Antworten zeigen nur eine kurze positive Bestätigung und wechseln automatisch zur nächsten sinnvollen Ansicht.
+- Fehler bleiben sichtbar und benötigen einen bewussten erneuten verdeckten Abruf; Enter startet diesen ohne Mausweg.
+- In Merkstufe 4 wird unmittelbar auf den Längenstrichen geschrieben. Die Striche sind funktionaler Eingaberaum und keine davon getrennte Dekoration.
+- Der Deutschbereich erhält schrittweise feste Lernwortsammlungen mit Rechtschreibphänomen und den Strategien Silbieren, Verlängern, Ableiten und Merken.

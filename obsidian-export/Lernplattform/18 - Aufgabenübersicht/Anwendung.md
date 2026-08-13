@@ -36,12 +36,15 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Stufe 5 als überprüfbaren Funktionsprototyp: mehrere Wörter ansehen, merken und tippen
 - [x] Blockgrößen 1, 2, 3 und 5 ohne verpflichtende Reihenfolge prototypisch anbieten
 - [x] Regeln für Aufstieg, Verbleib, Rückstufung und Hilfen im Funktionsprototyp implementieren
+- [x] Tastaturfluss mit Autofokus, Enter-Bestätigung und automatischem Weitergehen nach richtigen Antworten umsetzen
+- [x] Stufe 4 als direkte Eingabe auf den Längenstrichen statt als getrenntes Eingabefeld umsetzen
 - [ ] Lernstand und Leistungswertung technisch trennen
 - [ ] Selbstkorrekturen erfassen, aber die endgültig richtige Lösung als fachlich richtig werten
 - [ ] 5.000-Punkte-Wertung und Sterneanzeige prototypisch umsetzen
 - [ ] Punktabzüge und Merkbonus mit Schülern erproben und kalibrieren
-- [ ] Feste Lernwortlisten nach Rechtschreibphänomenen anlegen
-- [ ] Rechtschreibstrategien Silbieren, Verlängern, Ableiten und Merken taggen
+- [ ] Feste Lernwortlisten nach allen vorgesehenen Rechtschreibphänomenen anlegen
+- [x] Erste überprüfbare Sammlungen für Doppelkonsonanten, ck/tz, Auslautverhärtung, Umlaute, langes i und Dehnungs-h anlegen
+- [x] Erste Sammlungen mit den Rechtschreibstrategien Silbieren, Verlängern, Ableiten und Merken taggen
 - [ ] Lernwörter aus Tests, Lehrerzuweisungen und eigenen Texten übernehmen
 
 ## Später: automatische Fehleranalyse

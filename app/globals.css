@@ -2830,6 +2830,72 @@ body,
   grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
   gap: 22px;
 }
+.learning-word-collections {
+  margin-bottom: 22px;
+  padding: 26px 28px;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.65fr) minmax(0, 1.35fr);
+  gap: 26px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+.learning-word-collections h2,
+.learning-word-collections p {
+  margin: 0;
+}
+.learning-word-collections h2 {
+  margin-block: 7px 10px;
+  font-size: 1.35rem;
+}
+.learning-word-collections > div:first-child > p:last-child {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.learning-word-collection-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.learning-word-collection-list button {
+  min-height: 64px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.learning-word-collection-list button:hover,
+.learning-word-collection-list button[aria-pressed="true"] {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 9%, var(--surface));
+}
+.learning-word-collection-list button span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.learning-word-strategy {
+  width: 100%;
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--teal) 10%, var(--surface));
+}
+.learning-word-strategy strong {
+  color: var(--teal-dark);
+}
+.learning-word-strategy span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
 .learning-word-config > label,
 .learning-word-config > aside {
   padding: 28px;
@@ -2921,6 +2987,48 @@ body,
   background: var(--shell);
   text-align: center;
 }
+.learning-word-underline-answer {
+  margin-block: 30px 10px;
+  display: grid !important;
+  position: relative;
+  gap: 14px !important;
+}
+.learning-word-letter-slots {
+  display: flex;
+  justify-content: center;
+  gap: clamp(5px, 1.2vw, 12px);
+}
+.learning-word-letter-slots i {
+  width: clamp(28px, 6vw, 58px);
+  min-height: clamp(52px, 9vw, 82px);
+  display: grid;
+  place-items: end center;
+  border-bottom: clamp(3px, 0.5vw, 6px) solid var(--ink);
+  color: var(--ink);
+  font-size: clamp(2rem, 6vw, 4.4rem);
+  font-style: normal;
+  line-height: 1;
+}
+.learning-word-letter-slots i.is-active {
+  border-color: var(--teal);
+  animation: learning-word-caret 0.9s steps(1) infinite;
+}
+.learning-word-slot-input {
+  position: absolute;
+  inset: 30px 0 0;
+  opacity: 0.01;
+  cursor: text;
+}
+.learning-word-underline-answer:focus-within .learning-word-letter-slots {
+  outline: 3px solid color-mix(in srgb, var(--teal) 35%, transparent);
+  outline-offset: 10px;
+  border-radius: 8px;
+}
+@keyframes learning-word-caret {
+  50% {
+    border-color: transparent;
+  }
+}
 .learning-word-memory-list {
   margin: 24px 0;
   display: flex;
@@ -2953,6 +3061,51 @@ body,
   background: var(--surface-soft);
   color: var(--muted);
   line-height: 1.55;
+}
+.learning-word-success {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: #287448;
+  animation: learning-word-success 0.65s ease both;
+}
+.learning-word-success span {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #dff4e6;
+  font-size: 4rem;
+  line-height: 1;
+}
+.learning-word-success strong {
+  font-size: 1.25rem;
+}
+@keyframes learning-word-success {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+    background: color-mix(in srgb, #63c782 18%, transparent);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.03);
+    background: color-mix(in srgb, #63c782 18%, transparent);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    background: transparent;
+  }
+}
+:root[data-theme="dark"] .learning-word-success {
+  color: #a8dbb7;
+}
+:root[data-theme="dark"] .learning-word-success span {
+  background: #203b2a;
 }
 .learning-word-session > .text-button {
   margin: 24px auto 0;
@@ -3009,6 +3162,9 @@ body,
   .learning-word-config {
     grid-template-columns: 1fr;
   }
+  .learning-word-collections {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 600px) {
   .learning-word-setup,
@@ -3022,8 +3178,12 @@ body,
   }
   .learning-word-config > label,
   .learning-word-config > aside,
+  .learning-word-collections,
   .learning-word-card {
     padding: 22px;
+  }
+  .learning-word-collection-list {
+    grid-template-columns: 1fr;
   }
   .learning-word-card {
     min-height: 420px;

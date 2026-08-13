@@ -178,29 +178,46 @@ test("the five-stage learning-word path can be tried without an account", async 
   await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
 
   await expect(page.getByText("Schulweg", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Wörter verdecken" }).click();
-  await expect(
-    page.getByRole("heading", { name: "_ _ _ _ _ _ _ _" }),
-  ).toBeVisible();
-  await page.getByRole("textbox", { name: "Deine Lösung" }).fill("Schulweck");
-  await page.getByRole("button", { name: "Prüfen" }).click();
+  const reveal = page.getByRole("button", { name: "Wörter verdecken" });
+  await expect(reveal).toBeFocused();
+  await page.keyboard.press("Enter");
+  const answer = page.getByRole("textbox", { name: "Deine Lösung" });
+  await expect(answer).toBeFocused();
+  await expect(page.locator(".learning-word-letter-slots i")).toHaveCount(8);
+  await answer.fill("Schulweck");
+  await page.keyboard.press("Enter");
   await expect(
     page.getByRole("heading", { name: "Noch nicht sicher" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Verdeckt noch einmal versuchen" })
-    .click();
-  await page.getByRole("button", { name: "Wörter verdecken" }).click();
-  await page.getByRole("textbox", { name: "Deine Lösung" }).fill("Schulweg");
-  await page.getByRole("button", { name: "Prüfen" }).click();
   await expect(
-    page.getByRole("heading", { name: "Richtig geschrieben" }),
-  ).toBeVisible();
-  await expect(page.getByText(/bleiben auf Merkstufe 4/)).toBeVisible();
-  await page.getByRole("button", { name: "Runde auswerten" }).click();
+    page.getByRole("button", { name: "Verdeckt noch einmal versuchen" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(reveal).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(answer).toBeFocused();
+  await answer.fill("Schulweg");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toContainText("Richtig");
   await expect(
     page.getByRole("heading", { name: "Du hast die Stufe ausprobiert." }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 3_000 });
+
+  await page.getByRole("button", { name: "Andere Stufe testen" }).click();
+  await page.getByRole("button", { name: /2 Wenige Lücken/ }).click();
+  await page
+    .getByRole("textbox", { name: "Deine Lernwörter" })
+    .fill("Sonne\nMutter");
+  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
+  const directAnswer = page.getByRole("textbox", { name: "Deine Lösung" });
+  await expect(directAnswer).toBeFocused();
+  await directAnswer.fill("Sonne");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toContainText("Richtig");
+  await expect(page.locator(".running-progress strong")).toHaveText("2 / 2", {
+    timeout: 3_000,
+  });
+  await expect(directAnswer).toBeFocused();
 });
 
 test("a learning result survives a page reload on the same device", async ({
