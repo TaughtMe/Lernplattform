@@ -24,8 +24,8 @@ export default function FreePracticePage() {
           <p className="eyebrow">Du entscheidest</p>
           <h1 id="free-title">Freies Üben</h1>
           <p>
-            Wähle selbst, was du üben möchtest. Dieser Bereich wird nicht
-            automatisch mit einer Klasse geteilt.
+            Stärke grundlegende Fähigkeiten in deinem Tempo. Jede sinnvolle
+            Übung zählt; persönliche Ergebnisse bleiben zunächst bei dir.
           </p>
         </div>
         <div className="free-area-grid">

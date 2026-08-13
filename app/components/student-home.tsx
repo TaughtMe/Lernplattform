@@ -22,8 +22,9 @@ export function StudentHome() {
           <p className="eyebrow">Mein Lernraum</p>
           <h1 id="student-start-title">Meine Klassen</h1>
           <p>
-            Öffne eine Klasse, um deine heutige Auswahl und alle Aufgaben zu
-            sehen.
+            Jede Klasse verbindet deine persönlichen Lernsignale mit den
+            Impulsen deiner Lehrkraft. Deine vollständigen Ergebnisse bleiben
+            auf diesem Gerät.
           </p>
         </div>
 
@@ -39,7 +40,7 @@ export function StudentHome() {
                 <span key={module}>{CLASS_MODULE_LABELS[module]}</span>
               ))}
             </div>
-            <strong>Klasse öffnen →</strong>
+            <strong>Lernraum öffnen →</strong>
           </Link>
         </div>
 

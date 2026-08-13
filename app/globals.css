@@ -2744,6 +2744,413 @@ body,
   }
 }
 
+/* The connected learning room: teacher impulses, local signals and free practice. */
+.learning-room-shell {
+  min-height: 100vh;
+  background: var(--shell);
+}
+.learning-room-topbar {
+  min-height: 70px;
+  padding-inline: max(24px, calc((100vw - 1120px) / 2));
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--header-strong);
+}
+.learning-room-topbar > strong {
+  color: var(--ink);
+}
+.learning-room-topbar > span {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.learning-room-hero {
+  width: min(100% - 40px, 1120px);
+  margin-inline: auto;
+  padding-block: 64px 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.5fr);
+  align-items: end;
+  gap: 54px;
+}
+.learning-room-hero h1 {
+  max-width: 800px;
+  margin: 10px 0 16px;
+  font-size: clamp(2.8rem, 6vw, 5.2rem);
+}
+.learning-room-hero > div > p:last-child {
+  max-width: 690px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+.learning-room-hero aside {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.learning-room-hero aside > span {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.learning-room-nav {
+  width: min(100% - 40px, 1120px);
+  margin-inline: auto;
+  padding: 7px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  position: sticky;
+  top: 10px;
+  z-index: 10;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 12px 32px rgb(55 38 28 / 7%);
+  backdrop-filter: blur(14px);
+}
+.learning-room-nav a {
+  min-height: 44px;
+  padding: 10px 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
+}
+.learning-room-nav a:hover,
+.learning-room-nav a:focus-visible {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.learning-room-content {
+  width: min(100% - 40px, 1120px);
+  margin-inline: auto;
+  padding-block: 24px 110px;
+  display: grid;
+  gap: 18px;
+}
+.learning-loop-section {
+  scroll-margin-top: 86px;
+  padding: clamp(26px, 4vw, 44px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+}
+.learning-loop-section--today {
+  background: color-mix(in srgb, var(--teal) 5%, var(--surface));
+}
+.learning-loop-section > header {
+  margin-bottom: 26px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.learning-loop-section h2 {
+  margin: 5px 0 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+}
+.learning-loop-section > header > p {
+  max-width: 360px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  text-align: right;
+}
+.learning-loop-explanation {
+  margin-top: 18px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-radius: 13px;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.learning-loop-explanation > span {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--teal) 18%, var(--surface));
+  color: var(--teal-dark);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+.learning-loop-explanation p {
+  margin: 0;
+  line-height: 1.5;
+}
+.teacher-impulse-card {
+  padding: 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 28px;
+  border: 1px solid color-mix(in srgb, var(--coral) 35%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--coral) 6%, var(--surface));
+}
+.teacher-impulse-card > div,
+.teacher-impulse-card h3,
+.teacher-impulse-card p {
+  grid-column: 1;
+}
+.teacher-impulse-card > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.teacher-impulse-card h3 {
+  margin: 10px 0 0;
+  font-size: 1.55rem;
+}
+.teacher-impulse-card p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.teacher-impulse-card .button {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+.learning-path-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.learning-path-grid > a {
+  min-height: 180px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+.learning-path-grid > a:hover {
+  border-color: var(--teal);
+  background: var(--surface-hover);
+}
+.learning-path-grid span {
+  color: var(--ink);
+  font-size: 1.1rem;
+  font-weight: 850;
+}
+.learning-path-grid p {
+  margin: 10px 0 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.learning-path-grid strong {
+  margin-top: auto;
+  color: var(--teal-dark);
+}
+.learning-loop-loading {
+  padding: 22px;
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.learning-loop-progress > p {
+  margin: 18px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.learning-loop-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.learning-loop-metrics article {
+  min-height: 138px;
+  padding: 22px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+.learning-loop-metrics strong {
+  color: var(--ink);
+  font-size: 2.4rem;
+}
+.learning-loop-metrics span {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 850px) {
+  .learning-room-hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .learning-room-nav {
+    overflow-x: auto;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+  }
+  .learning-path-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .learning-room-topbar {
+    min-height: 62px;
+    padding-inline: 14px;
+    grid-template-columns: 1fr auto;
+  }
+  .learning-room-topbar > strong {
+    display: none;
+  }
+  .learning-room-topbar > span {
+    font-size: 0.72rem;
+  }
+  .learning-room-hero,
+  .learning-room-nav,
+  .learning-room-content {
+    width: min(100% - 28px, 1120px);
+  }
+  .learning-room-hero {
+    padding-block: 42px 26px;
+  }
+  .learning-room-hero h1 {
+    font-size: 2.7rem;
+  }
+  .learning-room-nav {
+    margin-inline: 14px;
+    top: 6px;
+  }
+  .learning-loop-section {
+    padding: 22px;
+  }
+  .learning-loop-section > header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .learning-loop-section > header > p {
+    text-align: left;
+  }
+  .teacher-impulse-card {
+    grid-template-columns: 1fr;
+  }
+  .teacher-impulse-card .button {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+    margin-top: 12px;
+  }
+  .learning-path-grid,
+  .learning-loop-metrics {
+    grid-template-columns: 1fr;
+  }
+  .learning-path-grid > a {
+    min-height: 140px;
+  }
+  .learning-loop-metrics article {
+    min-height: 100px;
+  }
+}
+.teacher-impulse-builder {
+  margin-top: 22px;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+.teacher-impulse-options {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.teacher-impulse-options article {
+  min-height: 230px;
+  padding: 22px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface-soft);
+}
+.teacher-impulse-options article > span {
+  color: var(--coral-dark);
+  font-size: 0.77rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.teacher-impulse-options h3 {
+  margin: 14px 0 8px;
+}
+.teacher-impulse-options p {
+  margin: 0 0 20px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.teacher-impulse-options .button {
+  width: 100%;
+  margin-top: auto;
+}
+.teacher-publish-preview {
+  margin-top: 12px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--teal) 9%, var(--surface));
+}
+.teacher-publish-preview p {
+  max-width: 700px;
+  margin: 5px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.teacher-publish-preview > span {
+  flex: 0 0 auto;
+  color: var(--teal-dark);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+@media (max-width: 850px) {
+  .teacher-impulse-options {
+    grid-template-columns: 1fr;
+  }
+  .teacher-impulse-options article {
+    min-height: 0;
+  }
+  .teacher-publish-preview {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 600px) {
+  .teacher-impulse-builder {
+    padding: 22px;
+  }
+}
+
 /* Native learning-word path: the five-stage memory sequence from the Vault. */
 .learning-word-shell {
   min-height: 100vh;

@@ -369,6 +369,31 @@ test("new class content becomes due practice", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("the class room presents one connected adaptive learning loop", async ({
+  page,
+}) => {
+  await page.goto("/klasse/7b");
+
+  await expect(
+    page.getByRole("heading", { name: "Was hilft dir heute weiter?" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Von der Lehrkraft" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Frei üben" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Mein Fortschritt" }),
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole("link", { name: /Vokabeln.*Üben/ }),
+  ).toHaveAttribute("href", "/lernbox");
+  await expect(
+    page.getByText(/Vollständige Antworten werden nicht übertragen/),
+  ).toBeVisible();
+});
+
 test("a class error becomes practice and disappears after correction", async ({
   page,
 }) => {

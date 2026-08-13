@@ -320,3 +320,16 @@ Diese Entscheidung ersetzt Entscheidung 25 vollständig und präzisiert Entschei
 **Beschlossen:** Eine feste Rechtschreibsammlung enthält mindestens 100 eindeutige Wörter, wird aber nicht automatisch als eine 100-Wörter-Runde abgefragt. Standardmäßig wählt die Merkstrecke 10 über die Wortbank verteilte Wörter; 5, 20 oder alle Wörter bleiben bewusst auswählbar.
 
 **Merkwörter & Fremdwörter** sind ein eigener fachlicher Bereich. Wenn keine verlässliche Strategie wie Silbieren, Verlängern oder Ableiten greift, kennzeichnet Lernraum das Wort ausdrücklich als Merkwort. Das Wortbild wird dann über die Merkstrecke gesichert, ohne eine nicht tragfähige Regel zu behaupten.
+
+## 31. Adaptiver Lernkreislauf als Produktkern – 13. August 2026
+
+**Beschlossen:** Lernraum wird nicht nach einzelnen Apps oder Fächern strukturiert. Laufdiktat, LernBox, Deutsch, Kopfrechnen und Tastschreiben liefern beziehungsweise verarbeiten fachlich typisierte Lernsignale innerhalb eines gemeinsamen lokalen Förderkreislaufs.
+
+- Die Klassenoberfläche verwendet verbindlich **Heute üben**, **Von der Lehrkraft**, **Frei üben** und **Mein Fortschritt**.
+- Vokabelfehler aktivieren LernBox-Wiederholungen; Rechtschreibfehler aktivieren Lernwörter; Rechenfehler aktivieren neue Aufgaben derselben Kopfrechenfamilie; Tippunsicherheiten aktivieren passende Tastensequenzen.
+- Freies Üben ist eine vollwertige Lernleistung und wird positiv anerkannt.
+- Lehrerimpulse ergänzen die adaptive und freie Auswahl, ohne sie zu ersetzen.
+- Persönliches Lob würdigt jede sinnvolle Aktivität. Klassenpunkte sind davon getrennt, aggregiert und gedeckelt.
+- Vollständige Lernsignale bleiben lokal; ein späterer QR-Klassenbeitrag enthält nur ausdrücklich freigegebene Zusammenfassungen.
+
+Die verbindliche Beschreibung steht unter [[../22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]].

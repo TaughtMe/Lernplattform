@@ -165,6 +165,63 @@ export function TeacherClassConfigurator() {
           </p>
         </aside>
       </div>
+
+      <section
+        className="teacher-impulse-builder"
+        aria-labelledby="impulse-title"
+      >
+        <div className="teacher-panel__heading">
+          <div>
+            <p className="eyebrow">Lernimpulse statt Aufgabenplaner</p>
+            <h2 id="impulse-title">Was soll die Klasse gezielt üben?</h2>
+          </div>
+          <span>Klassenpaket · Entwurf</span>
+        </div>
+        <div className="teacher-impulse-options">
+          <article>
+            <span>Deutsch</span>
+            <h3>Lernwörter auswählen</h3>
+            <p>Zum Beispiel Dehnungs-h mit 5, 10 oder 20 Wörtern.</p>
+            {/* The client-component test runner does not provide next/link. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a className="button button--quiet" href="/frei/german/lernwoerter">
+              Lernwörter ansehen
+            </a>
+          </article>
+          <article>
+            <span>Vokabeln</span>
+            <h3>Unit oder Stapel freigeben</h3>
+            <p>
+              Vokabeln können anschließend in Laufdiktat und LernBox wirken.
+            </p>
+            <a className="button button--quiet" href="/lernbox">
+              LernBox ansehen
+            </a>
+          </article>
+          <article>
+            <span>Kopfrechnen</span>
+            <h3>Grundfertigkeit anstoßen</h3>
+            <p>
+              Eine Aufgabenfamilie wird geübt, nicht eine einzelne
+              Fehleraufgabe.
+            </p>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a className="button button--quiet" href="/frei/mathematics">
+              Kopfrechnen ansehen
+            </a>
+          </article>
+        </div>
+        <div className="teacher-publish-preview">
+          <div>
+            <strong>Klasse veröffentlichen</strong>
+            <p>
+              Aktive Module und Lernimpulse werden später als versioniertes
+              Paket per QR-Code oder kurzlebigem Raumcode übertragen.
+            </p>
+          </div>
+          <span>Keine Lernhistorie wird synchronisiert</span>
+        </div>
+      </section>
     </section>
   );
 }

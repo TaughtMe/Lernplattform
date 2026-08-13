@@ -55,6 +55,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 19. [[19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]]
 20. [[20 - Designgrundlage/Anwendung|Designgrundlage]]
 21. [[21 - Qualitätsgrundlage und Freigabe/Anwendung|Qualitätsgrundlage und Freigabe]]
+22. [[22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]]
 
 ## Grundprinzipien
 

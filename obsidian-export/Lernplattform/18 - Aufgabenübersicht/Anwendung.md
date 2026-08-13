@@ -78,6 +78,14 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Plattform und Betrieb
 
+- [x] Adaptiven Lernkreislauf als übergeordnete Produkt- und Facharchitektur dokumentieren
+- [x] Klassenansicht auf „Heute üben / Von der Lehrkraft / Frei üben / Mein Fortschritt“ umstrukturieren
+- [x] Erste lokale Fortschrittsübersicht für Aktivität, aktive Tage und bewältigte frühere Fehler umsetzen
+- [ ] Alle Lernmodule über ein gemeinsames typisiertes Lernsignalmodell an den adaptiven Kern anbinden
+- [ ] Lehrerimpulse als lokal gespeichertes, versioniertes Klassenpaket veröffentlichen
+- [ ] Klassen-QR und Raumcode für Einschreibung und Inhaltsübertragung umsetzen
+- [ ] Aggregierten QR-Klassenbeitrag mit persönlichem Lob und gedeckelten Punkten umsetzen
+
 - [x] LernBoxV2 und Laufdiktat als verbindliche Quellmodule statt als Vorbilder für einen Nachbau festlegen
 - [x] Aktuelle Upstream-Repositories und Commitstände dokumentieren
 - [x] LernBox-Leitnerlogik, Decks, Karten und Sicherungen gezielt in den gemeinsamen Lernraum portieren

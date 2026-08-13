@@ -23,19 +23,22 @@ export default function Home() {
         <div className="main-entry__intro">
           <p className="eyebrow">Dein Lernraum</p>
           <h1 id="main-entry-title">Wie möchtest du heute lernen?</h1>
-          <p>Öffne deine Klassen oder wähle selbst, was du üben möchtest.</p>
+          <p>
+            Öffne deinen Lernraum. Er verbindet Hinweise deiner Lehrkraft mit
+            dem, was dir beim Üben als Nächstes hilft.
+          </p>
         </div>
 
         <div className="main-entry__actions">
           <Link className="main-action main-action--class" href="/lernen">
             <span className="main-action__label">Deine Klassen</span>
             <strong>Mein Lernraum</strong>
-            <small>Heute üben und Aufgaben öffnen</small>
+            <small>Empfehlungen, Lehrerimpulse und Fortschritt verbinden</small>
           </Link>
           <Link className="main-action main-action--free" href="/frei">
             <span className="main-action__label">Selbst auswählen</span>
             <strong>Freies Üben</strong>
-            <small>Deutsch, Mathematik, Vokabeln und Tippen</small>
+            <small>Grundfähigkeiten selbstständig und sinnvoll festigen</small>
           </Link>
         </div>
 

@@ -6,7 +6,7 @@ tags:
   - ux
   - startseite
 status: designgrundlage
-stand: 2026-08-12
+stand: 2026-08-13
 ---
 
 # Designgrundlage
@@ -81,58 +81,34 @@ accent-teal:    #58B8B5
 
 ## Navigation
 
-Nach dem Schülereinstieg wechselt die Plattform in eine bewusst minimalistische Arbeitsoberfläche. Sie zeigt zunächst nur **Meine Klasse(n)** und **Freies Üben**. Innerhalb einer Klasse bilden **Heute üben** und **Aufgaben** die primäre Navigation. Fachmodule erscheinen nur, wenn die Lehrkraft sie für diese Klasse aktiviert hat.
+Die Startseite bleibt ruhig und zeigt als zentrale Entscheidungen **Mein Lernraum** und **Freies Üben**. Darunter steht die Code-Eingabe für einen Raum. Beispielgruppen, Duell und Haus gehören nicht auf die Hauptseite.
 
-Die öffentliche Startseite ist schülerorientiert. Die Hauptnavigation lautet:
+Nach dem Einstieg zeigt **Mein Lernraum** die lokal bekannten Klassen und erneut die Möglichkeit, per Code beizutreten. Innerhalb einer Klasse kehren vier Bereiche in derselben Reihenfolge wieder:
 
-1. **Heute lernen**
-2. **Raum beitreten**
-3. **Duell**
-4. **Mein Haus**
+1. **Heute üben** – fällige Inhalte sowie sinnvolle Wiederholungen aus früheren Fehlern
+2. **Von der Lehrkraft** – gezielte, kleine Lernimpulse statt eines allgemeinen Aufgabenplaners
+3. **Frei üben** – alle in der Klasse aktivierten Grundlagenmodule
+4. **Mein Fortschritt** – private Rückmeldung zu Aktivität und verbesserten Fehlern
 
-Der **Lehrer-Login** steht getrennt rechts im Header. Es gibt keinen frei zugänglichen Umschalter, der auf einem Schülergerät Lehrerrechte eröffnet.
+Diese vier Bereiche bilden eine zusammenhängende Arbeitsansicht, keine Sammlung getrennter Anwendungen. LernBox und Laufdiktat erscheinen deshalb nicht als eigene PWA-Navigation, sondern als Lernformen innerhalb des Lernraums.
 
-## Hero-Bereich
+## Verbindliche Ansichten
 
-Leitüberschrift:
+### Bereichseinstieg
 
-> Gemeinsam lernen, im Unterricht und zu Hause.
+Der Einstieg beantwortet nur: **Wo möchte ich arbeiten?** Große, ruhige Flächen führen zu Klasse oder freiem Üben. Fachmodule werden als Wege dargestellt, nicht als konkurrierende Produktwelten.
 
-Erklärung:
+### Klassenraum
 
-> Lernraum verbindet Unterricht und selbstständiges Wiederholen. Lehrkräfte erstellen Übungen, Schüler:innen bearbeiten sie gemeinsam und übernehmen die Inhalte anschließend in ihre persönliche LernBox.
+Der Klassenraum beantwortet: **Was hilft mir heute weiter?** Er verbindet persönliche Fälligkeiten, Impulse der Lehrkraft, freie Wahl und Fortschritt auf einer Seite. Eine kompakte Sprungnavigation darf die vier Bereiche sichtbar halten.
 
-Zentrale Aktionen:
+### Aktive Lernrunde
 
-- Eingabe eines Raumcodes mit der Aktion **Beitreten** in Teal
-- **Meine LernBox öffnen** als primäre persönliche Aktion in Korall
+Während einer Aufgabe wird die Oberfläche deutlich reduziert. Eingabe, Rückmeldung und nächster sinnvoller Schritt stehen im Vordergrund. Enter bestätigt; nach einer richtigen Antwort folgt bei passenden Formaten automatisch die nächste Aufgabe mit gesetztem Fokus.
 
-Schüler benötigen für den Raumbeitritt grundsätzlich keinen allgemeinen Plattform-Login. Die Lehrkraft verwendet den getrennten Lehrer-Login.
+### Lehrkraft
 
-## Beispiel-Lerngruppen
-
-Die Startseite kann sechs ausdrücklich als Demo gekennzeichnete Lerngruppen zeigen:
-
-- Englisch
-- Französisch
-- Spanisch
-- Latein
-- Deutsch
-- Mathematik
-
-Eine Kachel enthält:
-
-- Fachkürzel und Fachfarbe
-- fiktive Klasse und Jahrgang
-- aktuelles Thema
-- zwei bis drei kurze Beispielinhalte
-- die zurückhaltende Aktion **Vorschau ansehen**
-
-Der Hinweis lautet:
-
-> Öffentliche Demo · echte Klassen nur per Raumcode
-
-Echte Klassen, Schülernamen, Mitgliederzahlen und persönliche Lernstände werden nicht öffentlich dargestellt. Die Demo-Kacheln führen nicht zu einer Loginpflicht für Schüler.
+Die Lehrkraft aktiviert zunächst die Grundlagenmodule einer Klasse. Sie kann anschließend kleine fachliche Impulse veröffentlichen, etwa eine Lernwortgruppe, eine Vokabel-Unit oder eine Kopfrechen-Fertigkeit. Die Oberfläche heißt deshalb nicht „Aufgaben planen“ und bildet keinen klassischen Wochenplaner ab.
 
 ## Komponentenprinzipien
 
@@ -145,6 +121,8 @@ Echte Klassen, Schülernamen, Mitgliederzahlen und persönliche Lernstände werd
 - Sprache bleibt kurz, freundlich und handlungsorientiert.
 - Arbeitsansichten verzichten auf öffentliche Demo-Inhalte, große Werbe-Heros und unnötige Navigation.
 - „Heute üben“ erklärt knapp, warum ein Inhalt erscheint: fällig, aus Fehlern oder durch die Lehrkraft.
+- Positive Rückmeldung würdigt jede sinnvolle Übung; Menge darf sichtbar werden, aber kleine Beiträge werden nicht abgewertet.
+- Modulgrenzen sind visuell erkennbar, unterbrechen aber nicht den gemeinsamen Lernfluss.
 
 ## Responsive und barrierearme Umsetzung
 
@@ -157,6 +135,6 @@ Echte Klassen, Schülernamen, Mitgliederzahlen und persönliche Lernstände werd
 
 ## Abgrenzung
 
-Diese Grundlage definiert zunächst die gemeinsame visuelle Sprache und die öffentliche Startseite. Detailansichten für LernBox, Unterrichtsraum, Duell, Haus und Lehrer-Cockpit werden daraus abgeleitet und jeweils fachlich geprüft.
+Diese Grundlage beschreibt die gemeinsame visuelle Sprache und die verbindliche Struktur der Hauptansichten. Fachlogik und Datengrenzen werden in den jeweiligen Modulen festgelegt.
 
-Siehe auch [[../01 - Plattform und Navigation/Anwendung|Plattform und Navigation]], [[../03 - Persönliche LernBox/Anwendung|Persönliche LernBox]], [[../04 - Lehrer-Cockpit/Anwendung|Lehrer-Cockpit]] und [[../13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]].
+Siehe auch [[../01 - Plattform und Navigation/Anwendung|Plattform und Navigation]], [[../03 - Persönliche LernBox/Anwendung|Persönliche LernBox]], [[../04 - Lehrer-Cockpit/Anwendung|Lehrer-Cockpit]], [[../13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]] und [[../22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]].
