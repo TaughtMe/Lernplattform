@@ -24,6 +24,7 @@
     "quality": "npm run check && npm run test:e2e"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.105.4",
     "dexie": "4.4.4",
     "qr-scanner": "1.4.2",
     "react": "19.2.8",

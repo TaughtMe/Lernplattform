@@ -607,22 +607,51 @@ h2 {
   padding-inline: 18px;
 }
 .room-code__camera {
-  min-height: 44px;
-  padding: 8px 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border: 1px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--teal) 24%, var(--line));
   border-radius: 11px;
-  background: var(--surface-soft);
-  color: var(--ink);
-  font-size: 0.78rem;
-  font-weight: 800;
+  background: color-mix(in srgb, var(--teal) 17%, var(--surface));
+  color: var(--teal-dark);
 }
 .room-code__camera:hover {
   border-color: var(--teal);
-  background: color-mix(in srgb, var(--teal) 10%, var(--surface));
+  background: color-mix(in srgb, var(--teal) 25%, var(--surface));
+}
+.room-code__camera-icon {
+  width: 23px;
+  height: 16px;
+  position: relative;
+  display: block;
+  border: 2.5px solid currentColor;
+  border-radius: 4px;
+}
+.room-code__camera-icon::before {
+  width: 7px;
+  height: 7px;
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 2.5px solid currentColor;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.room-code__camera-icon::after {
+  width: 8px;
+  height: 4px;
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  border: 2.5px solid currentColor;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  transform: translateX(-50%);
 }
 .qr-scanner-backdrop {
   padding: 20px;
@@ -678,6 +707,115 @@ h2 {
   margin: 14px 0 0;
   color: var(--coral-dark);
   line-height: 1.5;
+}
+
+.live-room-page {
+  min-height: calc(100svh - 72px);
+  padding: clamp(48px, 8vw, 104px) 20px;
+  display: grid;
+  place-items: start center;
+  background:
+    radial-gradient(
+      circle at 50% 0,
+      color-mix(in srgb, var(--teal) 8%, transparent),
+      transparent 42%
+    ),
+    var(--shell);
+}
+.live-room-join,
+.live-room-state {
+  width: min(100%, 620px);
+  padding: clamp(28px, 6vw, 56px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.live-room-join h1,
+.live-room-state h1 {
+  margin: 10px 0 14px;
+  font-size: clamp(2.65rem, 8vw, 5rem);
+  font-weight: 450;
+  letter-spacing: -0.06em;
+  line-height: 0.96;
+}
+.live-room-join__intro,
+.live-room-state > p:last-child {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.live-room-join form {
+  margin-top: 34px;
+  display: grid;
+  gap: 12px;
+}
+.live-room-join label {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+.live-room-code-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+.live-room-code-input,
+.live-room-name-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--field);
+  color: var(--ink);
+  outline: none;
+}
+.live-room-code-input {
+  height: 58px;
+  padding: 8px 16px;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: 0.55em;
+  text-align: center;
+}
+.live-room-code-row .room-code__camera {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+}
+.live-room-name-input {
+  min-height: 52px;
+  padding: 12px 15px;
+  font-size: 1rem;
+}
+.live-room-code-input:focus,
+.live-room-name-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 16%, transparent);
+}
+.live-room-join .button {
+  width: 100%;
+  margin-top: 10px;
+}
+.live-room-error {
+  margin: 2px 0 0;
+  color: var(--coral-dark);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.live-room-state {
+  text-align: center;
+}
+.live-room-state__mark {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--teal) 17%, var(--surface));
+  color: var(--teal-dark);
+  font-size: 1.9rem;
+  font-weight: 850;
 }
 .qr-scanner-hint {
   margin: 14px 0 0;

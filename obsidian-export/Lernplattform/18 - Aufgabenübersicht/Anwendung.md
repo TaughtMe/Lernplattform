@@ -97,6 +97,9 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Ersten nativen persönlichen Laufdiktat-Weg für Text und Vokabeln integrieren
 - [x] Antwortprüfung, Hinweise, Vokabelimport und Sterneberechnung aus Laufdiktat `6c2ade4` portieren und testen
 - [ ] Live-Raum, Lehrer-Dashboard, Stationen und Battle nativ integrieren
+  - [x] Sicheren Schülerbeitritt und native Wartelobby aus Laufdiktat portieren
+  - [ ] Sitzungsdaten in das native Spiel übernehmen
+  - [ ] Lehrerraum, Stationen und Battle in Lernraum-Oberflächen überführen
 - [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
 - [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten
 - [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen

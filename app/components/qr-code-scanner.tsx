@@ -61,8 +61,7 @@ export function QrCodeScanner({ onResult }: QrCodeScannerProps) {
         onClick={openScanner}
         aria-label="QR-Code mit Kamera scannen"
       >
-        <span aria-hidden="true">▣</span>
-        <span>Kamera</span>
+        <span className="room-code__camera-icon" aria-hidden="true" />
       </button>
       {open ? (
         <div className="qr-scanner-backdrop" role="presentation">

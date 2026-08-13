@@ -345,3 +345,9 @@ Die verbindliche Beschreibung steht unter [[../22 - Adaptiver Lernkreislauf/Anwe
 ## 33. QR-Scanner an allen Code-Einstiegen – 13. August 2026
 
 **Beschlossen:** Raum- und Klassenbeitritt bieten überall dieselben zwei Wege: Code eintippen oder QR-Code mit der Kamera scannen. Die Kameraaktion erscheint auf Startseite, in **Meine Klassen**, im Klassenraum und unter **Freies Üben**. Lernraum extrahiert ausschließlich den erwarteten Code und öffnet keine beliebige Adresse aus einem gescannten QR-Code.
+
+## 34. Nativer Laufdiktat-Raumbeitritt – 13. August 2026
+
+**Beschlossen:** Der Laufdiktat-Raum wird als Lernraum-Ablauf integriert und nicht als zweite PWA eingebettet. Der Einstieg übernimmt den vierstelligen Raumcode oder QR-Code, fragt den Namen ab und führt mit der bestehenden sicheren Raumfunktion in eine native Wartelobby. Teilnehmeridentität und Presence folgen dabei der Fachlogik aus Laufdiktat `6c2ade4`; Layout, Theme und Navigation kommen ausschließlich aus Lernraum.
+
+Live-Räume sind die begrenzte Ausnahme vom sonstigen Lokal-first-Lernen: Während einer gemeinsamen Unterrichtsrunde benötigt die Lobby eine flüchtige Realtime-Verbindung. Persönliche Lernhistorie, LernBox und freie Übungen werden dadurch nicht zentral synchronisiert. Im Browser wird ausschließlich ein öffentlicher Publishable Key verwendet; ohne konfigurierte Live-Verbindung wird kein erfolgreicher Beitritt vorgetäuscht.

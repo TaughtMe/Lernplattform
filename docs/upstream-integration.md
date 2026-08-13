@@ -55,5 +55,9 @@ Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests
 - Textzerlegung für Sätze und Zeilen im persönlichen Einstieg
 - ursprüngliche Fünf-Sterne-Berechnung nach Fehlerquote
 - Ablauf Ansehen → Verdecken → Schreiben → Rückmeldung → Abschluss
+- gesicherter Raumbeitritt über `join_room_secure` mit wiederverwendbarer, sitzungsgebundener Teilnehmeridentität
+- native Lobby mit Supabase Presence sowie Übernahme der vorhandenen Ereignisse `session-start` und `session-ended`
 
 Die App-Hülle, ihr Router, Service Worker, eigenes Theme und Zustandsspeicher wurden bewusst nicht übernommen. Live-Räume, Lehrer-Dashboard, Stationen und Battle folgen in getrennten, getesteten Integrationsschritten.
+
+Der Raumbeitritt lädt nur dann den Browserclient, wenn `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` gesetzt sind. Ein Service-Role-Schlüssel darf niemals im Browser liegen. Ohne Konfiguration bleibt die lokale Anwendung vollständig nutzbar und nennt die fehlende Live-Verbindung verständlich; sie simuliert keinen erfolgreichen Raumbeitritt.
