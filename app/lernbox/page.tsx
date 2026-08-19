@@ -1,4 +1,19 @@
 import type { Metadata } from "next";
-import { ModulePlaceholder } from "../components/module-placeholder";
+import { AppHeader } from "../components/app-header";
+import { LernBoxApp } from "../components/lernbox/lernbox-app";
+
 export const metadata: Metadata = { title: "Meine LernBox" };
-export default function Page() { return <ModulePlaceholder eyebrow="Dein persönlicher Lernstand" title="Meine LernBox" description="Vokabeln, Fälligkeiten und persönliche Fehlerübungen bekommen hier ein Zuhause – standardmäßig lokal auf deinem Gerät." status="LernBox wird separat weiterentwickelt" />; }
+
+export default function Page() {
+  return (
+    <main className="module-page">
+      <AppHeader />
+      <section className="module-hero module-hero--wide">
+        <p className="eyebrow">Dein persönlicher Lernstand</p>
+        <h1>Meine LernBox</h1>
+        <p>Vokabeln, Fälligkeiten und persönliche Fehlerübungen – standardmäßig lokal auf diesem Gerät gespeichert.</p>
+        <LernBoxApp />
+      </section>
+    </main>
+  );
+}

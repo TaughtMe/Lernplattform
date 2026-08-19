@@ -5,10 +5,10 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 ## Jetzt: Vokabel-Kern und Fehlerkreislauf
 
 - [ ] Bestehendes Laufdiktat stabilisieren und automatisierte Basistests ergänzen
-- [ ] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
-- [ ] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
-- [ ] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
-- [ ] Leitner-Boxen und Fälligkeiten lokal umsetzen
+- [x] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
+- [x] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
+- [x] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
+- [x] Leitner-Boxen und Fälligkeiten lokal umsetzen
 - [ ] Vokabelmodus im Laufdiktat entwickeln
 - [ ] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
 - [ ] Dublettenfreie Übergabe vom Laufdiktat an die LernBox umsetzen
@@ -16,7 +16,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Schaltfläche **„Meine Fehler jetzt üben“** und persönliche Fehlerrunde umsetzen
 - [ ] Nach Hilfen einen verdeckten Abruf erzwingen
 - [ ] Tagesauswahl und kurzfristige Wiederholungen ergänzen
-- [ ] Datei-Export und Wiederherstellung testen
+- [x] Datei-Export und Wiederherstellung testen
 
 ## Danach: Lernwörter
 
