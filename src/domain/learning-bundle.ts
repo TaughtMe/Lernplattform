@@ -52,6 +52,8 @@ export interface DirectionProgressV1 {
   box: 1 | 2 | 3 | 4 | 5;
   dueAt: IsoDateTime;
   lastEventId?: EntityId;
+  /** Round of the last box advance, so repeated correct answers in one round don't advance twice. */
+  lastAdvancedRoundId?: EntityId;
 }
 
 export interface LearningProgressV1 {
