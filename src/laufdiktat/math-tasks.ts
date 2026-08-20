@@ -79,6 +79,44 @@ export function parseMathLine(line: string): WordItem | null {
   return e ? normalMathWord(e) : null;
 }
 
+export type GapSlot = "a" | "b" | "result";
+
+const GAP_PLACEHOLDER = "␣";
+
+/** Task with one operand or the result hidden, e.g. "4 + ␣ = 7" (slot "b", answer "3"). */
+export function buildGapTask(e: MathExpr, slot: GapSlot): WordItem {
+  let prompt: string;
+  let answer: number;
+  switch (slot) {
+    case "a":
+      prompt = `${GAP_PLACEHOLDER} ${opSymbol(e.op)} ${displayOperand(e.b)} = ${displayNum(e.result)}`;
+      answer = e.a;
+      break;
+    case "b":
+      prompt = `${displayOperand(e.a)} ${opSymbol(e.op)} ${GAP_PLACEHOLDER} = ${displayNum(e.result)}`;
+      answer = e.b;
+      break;
+    case "result":
+      prompt = `${formatPrompt(e.a, e.op, e.b)} = ${GAP_PLACEHOLDER}`;
+      answer = e.result;
+      break;
+  }
+  return { id: uid(), kind: "math", prompt, targetWord: String(answer) };
+}
+
+function randomGapSlot(): GapSlot {
+  const slots: GapSlot[] = ["a", "b", "result"];
+  return slots[Math.floor(Math.random() * slots.length)];
+}
+
+/** Same generator as generateMathLines, but hides a random operand or the result instead of always asking for the result. */
+export function generateGapMathWords(opts: GenOptions): WordItem[] {
+  return generateMathLines(opts)
+    .map((line) => parseMathExpr(line))
+    .filter((e): e is MathExpr => e !== null)
+    .map((e) => buildGapTask(e, randomGapSlot()));
+}
+
 export const MULTIPLICATION_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 export interface GenOptions {

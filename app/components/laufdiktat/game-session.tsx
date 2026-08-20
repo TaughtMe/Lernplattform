@@ -5,12 +5,16 @@ import { useGameRoom } from "../../../src/laufdiktat/use-game-room.ts";
 import { useBattleMode } from "../../../src/laufdiktat/use-battle-mode.ts";
 import { checkAnswer } from "../../../src/laufdiktat/check-answer.ts";
 import { buildHint } from "../../../src/laufdiktat/build-hint.ts";
+import { karaokeHighlight } from "../../../src/laufdiktat/typing-highlight.ts";
+import { speak, isSpeechSupported } from "../../../src/laufdiktat/speech.ts";
+import { MathDisplay } from "./math-display.tsx";
 import { computeStars } from "../../../src/laufdiktat/scoring.ts";
 import { seededShuffle } from "../../../src/laufdiktat/seeded-shuffle.ts";
 import { isSuspiciousBulkInsert, sanitizeMathInput, STRICT_INPUT_ATTRS } from "../../../src/laufdiktat/strict-typing.ts";
 import { APP_VERSION } from "../../../src/laufdiktat/app-version.ts";
 import { upsertProgress, getMyProgress } from "../../../src/laufdiktat/room-api.ts";
 import { clearRoomIdentity } from "../../../src/laufdiktat/room-identity.ts";
+import { useIsClient } from "../use-is-client.ts";
 import { animalToFileName, parseStudentName } from "../../../src/laufdiktat/animal-names.ts";
 import { vocabularyWordsToBundle } from "../../../src/laufdiktat/lernbox-bridge.ts";
 import { createLernBoxService } from "../../../src/domain/lernbox-service.ts";
@@ -67,6 +71,7 @@ export function GameSession({ roomCode, studentName, roomId, participantToken, o
   const sessionIdRef = useRef("");
   const hasSentFinishedRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isClient = useIsClient();
 
   const onSessionStart = useCallback(
     (data: SessionStartData) => {
@@ -203,6 +208,7 @@ export function GameSession({ roomCode, studentName, roomId, participantToken, o
   const currentWord = activeWords[currentWordIndex];
   const { animal } = parseStudentName(studentName);
   const isMath = currentWord?.kind === "math";
+  const isLatex = currentWord?.promptFormat === "latex";
   const displayPrompt = currentWord ? (currentWord.prompt ?? currentWord.targetWord) : "";
   const effectiveMode: GameMode = practiceWords ? "UEBUNG" : gameMode;
 
@@ -391,23 +397,45 @@ export function GameSession({ roomCode, studentName, roomId, participantToken, o
 
       {gameState === "REVEALED" && currentWord && (
         <>
-          <p className="game-card__word">{displayPrompt}</p>
+          <p className="game-card__word">
+            {isLatex ? <MathDisplay latex={displayPrompt} /> : displayPrompt}
+            {isClient && !isMath && isSpeechSupported() && (
+              <button type="button" className="game-card__speak" aria-label="Wort vorlesen" onClick={() => speak(displayPrompt, currentWord.promptLang ?? "de-DE")}>🔊</button>
+            )}
+          </p>
           <button className="button button--secondary" type="button" onClick={() => setGameState("WRITING")}>Verdecken &amp; schreiben</button>
         </>
       )}
 
       {gameState === "WRITING" && (
         <form onSubmit={handleSubmit} className="game-card__form">
-          {copyMode && currentWord && <p className="game-card__word game-card__word--copy">{currentWord.targetWord}</p>}
+          {copyMode && currentWord && (
+            <p className="game-card__word game-card__word--copy">
+              {currentWord.targetWord}
+              {isClient && isSpeechSupported() && (
+                <button type="button" className="game-card__speak" aria-label="Wort vorlesen" onClick={() => speak(currentWord.targetWord, currentWord.answerLang ?? "de-DE")}>🔊</button>
+              )}
+            </p>
+          )}
           {showHint && <p className="game-card__hint-text">{hintText}</p>}
-          <input
-            ref={inputRef}
-            value={inputValue}
-            onChange={(event) => handleInputChange(event.target.value)}
-            inputMode={isMath ? "decimal" : undefined}
-            aria-label="Deine Antwort"
-            {...STRICT_INPUT_ATTRS}
-          />
+          <div className="game-card__typing-wrap">
+            <input
+              ref={inputRef}
+              value={inputValue}
+              onChange={(event) => handleInputChange(event.target.value)}
+              inputMode={isMath ? "decimal" : undefined}
+              aria-label="Deine Antwort"
+              className="game-card__typing-metrics"
+              {...STRICT_INPUT_ATTRS}
+            />
+            {currentWord && (
+              <div className="game-card__karaoke game-card__typing-metrics" aria-hidden="true">
+                {karaokeHighlight(currentWord.targetWord, inputValue).map((c, i) => (
+                  <span key={i} className={c.correct ? "game-card__karaoke-char--correct" : "game-card__karaoke-char--wrong"}>{c.char}</span>
+                ))}
+              </div>
+            )}
+          </div>
           <button className="button button--primary" type="submit">Prüfen</button>
         </form>
       )}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "./theme-toggle.tsx";
 
 export function AppHeader() {
   return (
@@ -7,7 +8,7 @@ export function AppHeader() {
       <nav aria-label="Hauptnavigation">
         <Link href="/lernen">Heute lernen</Link><Link href="/#raumcode">Raum beitreten</Link><Link href="/duell">Duell</Link><Link href="/haus">Mein Haus</Link>
       </nav>
-      <span aria-hidden="true" />
+      <ThemeToggle />
     </header>
   );
 }

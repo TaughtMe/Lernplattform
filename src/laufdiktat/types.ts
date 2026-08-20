@@ -8,6 +8,8 @@ export interface WordItem {
   targetWord: string;
   /** Shown instead of targetWord when set (math task, vocabulary source side). */
   prompt?: string;
+  /** When "latex", `prompt` is KaTeX source and must be rendered, not shown as plain text. */
+  promptFormat?: "latex";
   acceptedAnswers?: string[];
   caseSensitive?: boolean;
   promptLang?: string;

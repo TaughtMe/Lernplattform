@@ -9,7 +9,7 @@ import { animalToFileName, parseStudentName, generateStudentName } from "../src/
 import { buildHint } from "../src/laufdiktat/build-hint.ts";
 import { isBlockedInputType, isSuspiciousBulkInsert, sanitizeMathInput } from "../src/laufdiktat/strict-typing.ts";
 import { pickAttackCandidates } from "../src/laufdiktat/attack-candidates.ts";
-import { parseMathExpr, parseMathLine, generateMathLines, displayNum } from "../src/laufdiktat/math-tasks.ts";
+import { parseMathExpr, parseMathLine, generateMathLines, displayNum, buildGapTask, generateGapMathWords } from "../src/laufdiktat/math-tasks.ts";
 import { initialAdaptiveState, nextAdaptiveState, generateAdaptiveTask, LEVELS, MAX_LEVEL } from "../src/laufdiktat/adaptive-math.ts";
 import { wordsFromText, wordsFromMathLines, wordsFromVocabLines } from "../src/laufdiktat/word-import.ts";
 
@@ -202,6 +202,35 @@ test("math-tasks: generateMathLines stays within the configured number range", (
 test("math-tasks: displayNum uses a German decimal comma", () => {
   assert.equal(displayNum(0.5), "0,5");
   assert.equal(displayNum(3), "3");
+});
+
+test("math-tasks: buildGapTask hides the requested slot and asks for it", () => {
+  const e = parseMathExpr("4 + 3");
+  assert.equal(buildGapTask(e, "a").prompt, "␣ + 3 = 7");
+  assert.equal(buildGapTask(e, "a").targetWord, "4");
+  assert.equal(buildGapTask(e, "b").prompt, "4 + ␣ = 7");
+  assert.equal(buildGapTask(e, "b").targetWord, "3");
+  assert.equal(buildGapTask(e, "result").prompt, "4 + 3 = ␣");
+  assert.equal(buildGapTask(e, "result").targetWord, "7");
+});
+
+test("math-tasks: generateGapMathWords produces math tasks with a blank in the prompt", () => {
+  const words = generateGapMathWords({
+    ops: ["+", "-"],
+    minValue: 0,
+    maxValue: 10,
+    count: 15,
+    allowNegativeResults: false,
+    excludeZeroOperand: false,
+    excludeZeroResult: false,
+    multiplicationTables: [],
+  });
+  assert.equal(words.length, 15);
+  for (const w of words) {
+    assert.equal(w.kind, "math");
+    assert.ok(w.prompt.includes("␣"), `expected a blank in "${w.prompt}"`);
+    assert.ok(!Number.isNaN(Number(w.targetWord)), `targetWord should be numeric: ${w.targetWord}`);
+  }
 });
 
 test("adaptive-math: starts at level 0 by default", () => {

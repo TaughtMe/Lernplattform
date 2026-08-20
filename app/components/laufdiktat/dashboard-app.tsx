@@ -4,7 +4,8 @@ import { useRef, useState, type FormEvent } from "react";
 import { isSupabaseConfigured } from "../../../src/laufdiktat/supabase-client.ts";
 import { useDashboardRoom, type DashboardStep } from "../../../src/laufdiktat/use-dashboard-room.ts";
 import { computeStars } from "../../../src/laufdiktat/scoring.ts";
-import { generateMathLines, type MathOp } from "../../../src/laufdiktat/math-tasks.ts";
+import { generateMathLines, generateGapMathWords, type MathOp } from "../../../src/laufdiktat/math-tasks.ts";
+import { generateLatexMathWords, parseLatexMathLines, type LatexTaskKind } from "../../../src/laufdiktat/latex-math.ts";
 import { wordsFromText, wordsFromMathLines, wordsFromVocabLines } from "../../../src/laufdiktat/word-import.ts";
 import type { BattleOptions, GameMode, WordItem } from "../../../src/laufdiktat/types.ts";
 import { RoomQrOverlay } from "./room-qr-overlay.tsx";
@@ -35,11 +36,14 @@ export function DashboardApp() {
 function DashboardRoom() {
   const [words, setWords] = useState<WordItem[]>([]);
   const [contentType, setContentType] = useState<"text" | "math" | "vocabulary">("text");
-  const [mathTab, setMathTab] = useState<"generator" | "manual">("generator");
+  const [mathTab, setMathTab] = useState<"generator" | "manual" | "latex">("generator");
   const [mathOps, setMathOps] = useState<MathOp[]>(["+", "-"]);
   const [mathMin, setMathMin] = useState(0);
   const [mathMax, setMathMax] = useState(20);
   const [mathCount, setMathCount] = useState(10);
+  const [mathGapMode, setMathGapMode] = useState(false);
+  const [latexKinds, setLatexKinds] = useState<LatexTaskKind[]>(["fraction"]);
+  const [latexCount, setLatexCount] = useState(10);
 
   const [gameMode, setGameMode] = useState<GameMode>("LAUFDIKTAT");
   const [battleOptions, setBattleOptions] = useState<BattleOptions>({ ink: true, flicker: true });
@@ -115,7 +119,7 @@ function DashboardRoom() {
   }
 
   function handleGenerateMath() {
-    const lines = generateMathLines({
+    const genOptions = {
       ops: mathOps,
       minValue: mathMin,
       maxValue: mathMax,
@@ -124,8 +128,8 @@ function DashboardRoom() {
       excludeZeroOperand: false,
       excludeZeroResult: false,
       multiplicationTables: [],
-    });
-    const parsed = wordsFromMathLines(lines);
+    };
+    const parsed = mathGapMode ? generateGapMathWords(genOptions) : wordsFromMathLines(generateMathLines(genOptions));
     if (parsed.length === 0) return;
     setWords(parsed);
     setCurrentStep("SETTINGS");
@@ -133,6 +137,27 @@ function DashboardRoom() {
 
   function toggleMathOp(op: MathOp) {
     setMathOps((prev) => (prev.includes(op) ? prev.filter((o) => o !== op) : [...prev, op]));
+  }
+
+  function toggleLatexKind(kind: LatexTaskKind) {
+    setLatexKinds((prev) => (prev.includes(kind) ? prev.filter((k) => k !== kind) : [...prev, kind]));
+  }
+
+  function handleGenerateLatex() {
+    const parsed = generateLatexMathWords({ kinds: latexKinds, count: latexCount });
+    if (parsed.length === 0) return;
+    setWords(parsed);
+    setCurrentStep("SETTINGS");
+  }
+
+  function handleImportLatexManual(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = String(new FormData(event.currentTarget).get("latexlist") ?? "");
+    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+    const parsed = parseLatexMathLines(lines);
+    if (parsed.length === 0) return;
+    setWords(parsed);
+    setCurrentStep("SETTINGS");
   }
 
   return (
@@ -170,6 +195,7 @@ function DashboardRoom() {
               <div className="dashboard-app__tabs dashboard-app__tabs--sub">
                 <button type="button" className={mathTab === "generator" ? "is-active" : ""} onClick={() => setMathTab("generator")}>Generator</button>
                 <button type="button" className={mathTab === "manual" ? "is-active" : ""} onClick={() => setMathTab("manual")}>Manuell</button>
+                <button type="button" className={mathTab === "latex" ? "is-active" : ""} onClick={() => setMathTab("latex")}>Brüche, Wurzeln, Potenzen</button>
               </div>
 
               {mathTab === "generator" && (
@@ -194,6 +220,10 @@ function DashboardRoom() {
                     Anzahl Aufgaben
                     <input type="number" min={1} max={100} value={mathCount} onChange={(e) => setMathCount(Number(e.target.value))} />
                   </label>
+                  <label className="dashboard-app__checkbox">
+                    <input type="checkbox" checked={mathGapMode} onChange={(e) => setMathGapMode(e.target.checked)} />
+                    Lückenaufgaben (z. B. „4 + ␣ = 7“ statt „4 + 3 = ␣“)
+                  </label>
                   <button className="button button--primary" type="button" onClick={handleGenerateMath} disabled={mathOps.length === 0}>
                     Aufgaben erzeugen
                   </button>
@@ -206,6 +236,41 @@ function DashboardRoom() {
                   <textarea id="mathlist" name="mathlist" rows={10} placeholder={"4 + 4\n12 − 5"} required />
                   <button className="button button--primary" type="submit">Weiter</button>
                 </form>
+              )}
+
+              {mathTab === "latex" && (
+                <>
+                  <div className="dashboard-app__math-generator">
+                    <div className="dashboard-app__op-picker">
+                      <label>
+                        <input type="checkbox" checked={latexKinds.includes("fraction")} onChange={() => toggleLatexKind("fraction")} />
+                        Brüche
+                      </label>
+                      <label>
+                        <input type="checkbox" checked={latexKinds.includes("root")} onChange={() => toggleLatexKind("root")} />
+                        Wurzeln
+                      </label>
+                      <label>
+                        <input type="checkbox" checked={latexKinds.includes("power")} onChange={() => toggleLatexKind("power")} />
+                        Potenzen
+                      </label>
+                    </div>
+                    <label>
+                      Anzahl Aufgaben
+                      <input type="number" min={1} max={100} value={latexCount} onChange={(e) => setLatexCount(Number(e.target.value))} />
+                    </label>
+                    <button className="button button--primary" type="button" onClick={handleGenerateLatex} disabled={latexKinds.length === 0}>
+                      Aufgaben erzeugen
+                    </button>
+                  </div>
+                  <form onSubmit={handleImportLatexManual}>
+                    <label htmlFor="latexlist">
+                      Oder manuell (eine pro Zeile: Brüche „1/2 + 1/3“, Wurzeln „sqrt(16)“, Potenzen „3^2“)
+                    </label>
+                    <textarea id="latexlist" name="latexlist" rows={6} placeholder={"1/2 + 1/3\nsqrt(16)\n3^2"} required />
+                    <button className="button button--primary" type="submit">Weiter</button>
+                  </form>
+                </>
               )}
             </>
           )}
