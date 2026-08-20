@@ -5,7 +5,7 @@ export type EntityId = string;
 export type IsoDateTime = string;
 export type LocaleCode = string;
 
-export type LearningObjectKind = "vocabulary";
+export type LearningObjectKind = "vocabulary" | "lernwort";
 export type LearningDirection = "prompt-to-answer" | "answer-to-prompt";
 export type AnswerMode = "typed" | "choice" | "self-check";
 export type EventSource = "learning-box" | "lesson" | "test" | "running-dictation" | "duel";
@@ -25,6 +25,31 @@ export interface VocabularyItemV1 {
 }
 
 export interface VocabularyStackV1 {
+  id: EntityId;
+  sourceId?: EntityId;
+  title: string;
+  itemIds: EntityId[];
+  tagIds: EntityId[];
+}
+
+/** Herkunft laut "15 - Gemeinsames Datenmodell": woher ein einzelnes Lernwort stammt. */
+export type LernwortOrigin = "teacher" | "self" | "peer" | "import" | "text-error";
+
+export interface LernwortItemV1 {
+  kind: "lernwort";
+  id: EntityId;
+  sourceId?: EntityId;
+  /** Zielschreibung. */
+  targetWord: string;
+  /** Rechtschreibphänomene, z. B. "Doppelkonsonant", "ck/tz", "Dehnungs-h" — freie Tags, keine feste Taxonomie. */
+  phenomenonTags: string[];
+  origin: LernwortOrigin;
+  tagIds: EntityId[];
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}
+
+export interface LernwortListV1 {
   id: EntityId;
   sourceId?: EntityId;
   title: string;
@@ -70,6 +95,9 @@ export interface LearningBundleV1 {
   source: { kind: "teacher" | "self" | "peer" | "import"; id?: EntityId };
   vocabulary: VocabularyItemV1[];
   stacks: VocabularyStackV1[];
+  /** Optional, additive: bundles from before "Lernwörter" existed have neither field. */
+  lernwoerter?: LernwortItemV1[];
+  lernwortLists?: LernwortListV1[];
   events?: LearningEventV1[];
 }
 
@@ -89,4 +117,8 @@ export function normalizeVocabularyText(value: string, locale = "de"): string {
 
 export function vocabularyFingerprint(item: Pick<VocabularyItemV1, "prompt" | "answer">): string {
   return `${normalizeVocabularyText(item.prompt.text, item.prompt.locale)}::${normalizeVocabularyText(item.answer.text, item.answer.locale)}`;
+}
+
+export function lernwortFingerprint(item: Pick<LernwortItemV1, "targetWord">): string {
+  return normalizeVocabularyText(item.targetWord);
 }

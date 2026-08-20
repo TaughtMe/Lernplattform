@@ -24,7 +24,7 @@ export const BOX_INTERVAL_DAYS: Record<1 | 2 | 3 | 4 | 5, number> = {
 
 const DIRECTIONS: LearningDirection[] = ["prompt-to-answer", "answer-to-prompt"];
 
-function addDays(iso: IsoDateTime, days: number): IsoDateTime {
+export function addDays(iso: IsoDateTime, days: number): IsoDateTime {
   const date = new Date(iso);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString();

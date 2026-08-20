@@ -156,6 +156,18 @@ h2 { margin: 0; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; letter-spa
 .practice-card__ask { margin: 0 0 14px; font-weight: 700; }
 .practice-card__help { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px; color: var(--muted); font-size: .9rem; }
 .practice-card__actions { display: flex; justify-content: center; gap: 12px; }
+.practice-card--correct { box-shadow: 0 0 0 4px rgb(7 155 150 / 25%); }
+.practice-card--wrong { box-shadow: 0 0 0 4px rgb(223 98 95 / 25%); }
+
+.lernwort-card__word { font-family: inherit; }
+.lernwort-card__word--reference { font-family: ui-monospace, "SF Mono", Consolas, monospace; letter-spacing: .12em; }
+.lernwort-card__retry { margin: -10px 0 14px; color: #a12d2d; font-size: .88rem; font-weight: 700; }
+.lernwort-card__tags { color: var(--muted); font-weight: 500; font-size: .85rem; }
+.lernwort-card__block-sizes { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 18px; }
+.lernwort-card__block-words { margin: 0 0 20px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.lernwort-card__block-words li { padding: 10px; border-radius: 10px; background: var(--cream-strong); font-size: 1.3rem; font-weight: 700; }
+.lernwort-card__block-word--correct { background: #e2f5e9; color: #1f7a4d; }
+.lernwort-card__block-word--wrong { background: #fbe6e6; color: #a12d2d; }
 
 .room-join { max-width: 380px; margin: 40px auto 0; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); text-align: center; }
 .room-join label { align-self: flex-start; font-weight: 700; font-size: .85rem; }

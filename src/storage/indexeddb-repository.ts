@@ -6,10 +6,26 @@ import { LOCAL_DATA_AREAS, type LocalDataArea, type LocalRepository, type LocalR
  * handler, before any `open()` call for a not-yet-known collection.
  */
 const AREA_COLLECTIONS: Record<LocalDataArea, readonly string[]> = {
-  personal: ["vocabulary-stacks", "vocabulary-items", "learning-progress", "learning-events"],
+  personal: [
+    "vocabulary-stacks",
+    "vocabulary-items",
+    "learning-progress",
+    "learning-events",
+    "lernwort-lists",
+    "lernwort-items",
+    "lernwort-progress",
+  ],
   classes: [],
   teacher: [],
 };
+
+/**
+ * Bump when AREA_COLLECTIONS gains a collection — IndexedDB only runs
+ * onupgradeneeded (where stores get created) when the requested version is
+ * higher than what's already on disk. Creation is idempotent per collection,
+ * so this never needs per-version migration logic, just the version bump.
+ */
+const DB_VERSION = 2;
 
 function promisifyRequest<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -21,7 +37,7 @@ function promisifyRequest<T>(request: IDBRequest<T>): Promise<T> {
 function openDatabase(area: LocalDataArea): Promise<IDBDatabase> {
   const collections = AREA_COLLECTIONS[area];
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(LOCAL_DATA_AREAS[area], 1);
+    const request = indexedDB.open(LOCAL_DATA_AREAS[area], DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
       for (const collection of collections) {

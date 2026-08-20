@@ -29,6 +29,9 @@ export default function Home() {
             <Link className="button button--primary" href="/lernbox">Meine LernBox öffnen</Link>
           </div>
           <p className="privacy-note">Ohne Schülerkonto · Lernstände bleiben auf diesem Gerät</p>
+          <p className="module-hero__alt-link">
+            Rechtschreibung üben? <Link href="/lernwoerter">Meine Lernwörter öffnen →</Link>
+          </p>
         </div>
       </section>
 
