@@ -29,6 +29,16 @@ Die persönliche LernBox ist als erster funktionierender Kern umgesetzt, orienti
 - `src/storage/indexeddb-repository.ts` implementiert `LocalRepositoryFactory` browserseitig über IndexedDB, ausschließlich für den Datenbereich `personal`.
 - `src/domain/lernbox-service.ts` bündelt Stapel-/Vokabel-CRUD, die Fälligkeits-Warteschlange, das Verbuchen von Lernereignissen sowie Export/Import von `LearningBundleV1`-Dateien (Import ist global fingerprint-dedupliziert, bestehende Lernstände werden dabei nie überschrieben).
 - `app/lernbox/` bindet das als Client-Komponente ein: Stapel anlegen, Vokabeln hinzufügen, in beiden Richtungen üben (Bedeutung und Schreiben getrennt abgefragt), als Datei sichern/wiederherstellen.
+- **Vervollständigt:** `src/domain/leitner.ts` hat jetzt `minBox()` (schwächster der vier Tracks, als einfaches "wie gut sitzt das schon"-Signal). Die Stapelübersicht zeigt pro Stapel "N fällig"/"N auf Box 1", jede Vokabel im Stapel ihre aktuelle Box. Ein zweiter Übungsknopf „Meine Fehler jetzt üben" (`errorQueue()`) startet eine Runde nur mit Vokabeln, die auf mindestens einem Track noch auf Box 1 stehen — unabhängig vom regulären Fälligkeits-Rhythmus.
+
+## Laufdiktat ↔ LernBox
+
+Die im Architekturschnitt vorgesehene Übergabe ist umgesetzt, an der einzigen dafür vorgesehenen Stelle — `LearningBundleV1`:
+
+- `src/laufdiktat/lernbox-bridge.ts`: `vocabularyWordsToBundle()` baut aus den `kind: "vocabulary"`-Wörtern einer Laufdiktat-Runde ein `LearningBundleV1` (reine Funktion, keine IndexedDB-Abhängigkeit, deshalb ohne Browser testbar).
+- Lehrer-Dashboard: neuer Import-Tab „Vokabeln" (`Wort = Übersetzung`, mehrere Übersetzungen mit `/` getrennt) neben Text und Mathe.
+- Schülerseite: Ist eine beendete Runde Vokabeln, erscheint auf dem Ergebnis-Screen „In meine LernBox übernehmen" — ruft `createLernBoxService(...).importBundle(...)` direkt im Browser auf, ganz ohne Supabase. Die globale Fingerprint-Deduplizierung aus der LernBox greift dabei unverändert: dieselbe Liste zweimal übernehmen (z. B. von zwei Geräten oder nach einer Wiederholungsrunde) erzeugt keine doppelten Vokabeln.
+- Per End-to-End-Test (Bundle bauen → `importBundle` → erneut importieren) verifiziert, inklusive des Dedup-Falls.
 
 ## Stand der Laufdiktat-Integration
 
@@ -55,4 +65,4 @@ Unter `/mathe-ueben` (verlinkt von `/raum`) können Schüler ohne Raumcode und o
 
 ## Nächster fachlicher Schritt
 
-Live-Raum-Betrieb nach der Supabase-Einrichtung manuell mit mindestens zwei Geräten durchspielen. Danach: Vokabelmodus im Laufdiktat (WordItem `kind: "vocabulary"` ist bereits vorbereitet) und die dublettenfreie Übergabe Laufdiktat → LernBox über `LearningBundleV1`. In der LernBox selbst fehlen noch eine sichtbare Box-/Fälligkeits-Übersicht pro Stapel sowie die persönliche Fehlerrunde „Meine Fehler jetzt üben“.
+Live-Raum-Betrieb nach der Supabase-Einrichtung manuell mit mindestens zwei Geräten durchspielen. In Laufdiktat fehlen noch: komplexe Mathe-Aufgaben (Brüche/Wurzeln/Potenzen), Lückenaufgaben, Vorlesen, automatische Update-Fortsetzung, Karaoke-Tippanzeige, Dark/Light-Theme (siehe "Stand der Laufdiktat-Integration").

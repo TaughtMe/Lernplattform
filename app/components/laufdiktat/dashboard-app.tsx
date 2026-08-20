@@ -4,21 +4,10 @@ import { useRef, useState, type FormEvent } from "react";
 import { isSupabaseConfigured } from "../../../src/laufdiktat/supabase-client.ts";
 import { useDashboardRoom, type DashboardStep } from "../../../src/laufdiktat/use-dashboard-room.ts";
 import { computeStars } from "../../../src/laufdiktat/scoring.ts";
-import { parseMathLine, generateMathLines, type MathOp } from "../../../src/laufdiktat/math-tasks.ts";
+import { generateMathLines, type MathOp } from "../../../src/laufdiktat/math-tasks.ts";
+import { wordsFromText, wordsFromMathLines, wordsFromVocabLines } from "../../../src/laufdiktat/word-import.ts";
 import type { BattleOptions, GameMode, WordItem } from "../../../src/laufdiktat/types.ts";
 import { RoomQrOverlay } from "./room-qr-overlay.tsx";
-
-function wordsFromText(text: string): WordItem[] {
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line, i) => ({ id: `w-${i}`, kind: "text", targetWord: line }));
-}
-
-function wordsFromMathLines(lines: string[]): WordItem[] {
-  return lines.map((line) => parseMathLine(line)).filter((w): w is WordItem => w !== null);
-}
 
 const MATH_OPS: Array<{ op: MathOp; label: string }> = [
   { op: "+", label: "+" },
@@ -45,7 +34,7 @@ export function DashboardApp() {
 
 function DashboardRoom() {
   const [words, setWords] = useState<WordItem[]>([]);
-  const [contentType, setContentType] = useState<"text" | "math">("text");
+  const [contentType, setContentType] = useState<"text" | "math" | "vocabulary">("text");
   const [mathTab, setMathTab] = useState<"generator" | "manual">("generator");
   const [mathOps, setMathOps] = useState<MathOp[]>(["+", "-"]);
   const [mathMin, setMathMin] = useState(0);
@@ -106,6 +95,15 @@ function DashboardRoom() {
     setCurrentStep("SETTINGS");
   }
 
+  function handleImportVocab(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = String(new FormData(event.currentTarget).get("vocablist") ?? "");
+    const parsed = wordsFromVocabLines(text);
+    if (parsed.length === 0) return;
+    setWords(parsed);
+    setCurrentStep("SETTINGS");
+  }
+
   function handleImportMathManual(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = String(new FormData(event.currentTarget).get("mathlist") ?? "");
@@ -146,6 +144,7 @@ function DashboardRoom() {
         <div className="dashboard-app__import">
           <div className="dashboard-app__tabs">
             <button type="button" className={contentType === "text" ? "is-active" : ""} onClick={() => setContentType("text")}>Text</button>
+            <button type="button" className={contentType === "vocabulary" ? "is-active" : ""} onClick={() => setContentType("vocabulary")}>Vokabeln</button>
             <button type="button" className={contentType === "math" ? "is-active" : ""} onClick={() => setContentType("math")}>Mathe</button>
           </div>
 
@@ -153,6 +152,15 @@ function DashboardRoom() {
             <form onSubmit={handleImportText}>
               <label htmlFor="wordlist">Wortliste (ein Wort oder Satz pro Zeile)</label>
               <textarea id="wordlist" name="wordlist" rows={10} placeholder={"Baum\nHaus\nSchule"} required />
+              <button className="button button--primary" type="submit">Weiter</button>
+            </form>
+          )}
+
+          {contentType === "vocabulary" && (
+            <form onSubmit={handleImportVocab}>
+              <label htmlFor="vocablist">Vokabeln (eine pro Zeile: „Wort = Übersetzung“, mehrere Übersetzungen mit „/“ trennen)</label>
+              <textarea id="vocablist" name="vocablist" rows={10} placeholder={"the house = das Haus\nthe car = das Auto/der Wagen"} required />
+              <p className="dashboard-app__hint">Diese Vokabeln lassen sich nach der Runde direkt in die LernBox der Schüler übernehmen.</p>
               <button className="button button--primary" type="submit">Weiter</button>
             </form>
           )}

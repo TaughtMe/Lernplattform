@@ -11,6 +11,7 @@ import { isBlockedInputType, isSuspiciousBulkInsert, sanitizeMathInput } from ".
 import { pickAttackCandidates } from "../src/laufdiktat/attack-candidates.ts";
 import { parseMathExpr, parseMathLine, generateMathLines, displayNum } from "../src/laufdiktat/math-tasks.ts";
 import { initialAdaptiveState, nextAdaptiveState, generateAdaptiveTask, LEVELS, MAX_LEVEL } from "../src/laufdiktat/adaptive-math.ts";
+import { wordsFromText, wordsFromMathLines, wordsFromVocabLines } from "../src/laufdiktat/word-import.ts";
 
 test("checkAnswer: plain text is trimmed but otherwise matched exactly", () => {
   const word = { id: "1", kind: "text", targetWord: "Baum" };
@@ -265,4 +266,35 @@ test("adaptive-math: LEVELS is a non-empty, increasingly permissive ladder", () 
   for (let i = 1; i < LEVELS.length; i++) {
     assert.ok(LEVELS[i].maxValue >= LEVELS[i - 1].maxValue, `level ${i} should not be easier than level ${i - 1}`);
   }
+});
+
+test("wordsFromText: one word or sentence per line, blank lines dropped", () => {
+  const words = wordsFromText("Baum\n\nHaus  \n  Schule");
+  assert.deepEqual(words.map((w) => w.targetWord), ["Baum", "Haus", "Schule"]);
+  assert.ok(words.every((w) => w.kind === "text"));
+});
+
+test("wordsFromMathLines: skips lines that don't parse as a math expression", () => {
+  const words = wordsFromMathLines(["4+4", "not a task", "6·7"]);
+  assert.deepEqual(words.map((w) => w.targetWord), ["8", "42"]);
+});
+
+test("wordsFromVocabLines: parses 'Wort = Übersetzung' pairs", () => {
+  const words = wordsFromVocabLines("the house = das Haus\nthe car = das Auto");
+  assert.equal(words.length, 2);
+  assert.equal(words[0].kind, "vocabulary");
+  assert.equal(words[0].prompt, "the house");
+  assert.equal(words[0].targetWord, "das Haus");
+  assert.equal(words[0].acceptedAnswers, undefined);
+});
+
+test("wordsFromVocabLines: a slash-separated right side becomes accepted answers", () => {
+  const [word] = wordsFromVocabLines("the car = das Auto/der Wagen");
+  assert.equal(word.targetWord, "das Auto");
+  assert.deepEqual(word.acceptedAnswers, ["der Wagen"]);
+});
+
+test("wordsFromVocabLines: ignores lines without '=' and lines missing a side", () => {
+  const words = wordsFromVocabLines("no equals sign here\n = missing prompt\nthe dog = ");
+  assert.equal(words.length, 0);
 });

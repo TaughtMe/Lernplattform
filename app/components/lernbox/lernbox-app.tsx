@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { createLernBoxService, type AnswerResult, type DueEntry, type LernBoxService } from "../../../src/domain/lernbox-service";
-import type { VocabularyItemV1, VocabularyStackV1 } from "../../../src/domain/learning-bundle";
+import { createLernBoxService, type AnswerResult, type DueEntry, type LernBoxService, type StackStats } from "../../../src/domain/lernbox-service";
+import type { VocabularyItemV1, VocabularyStackV1, LearningProgressV1 } from "../../../src/domain/learning-bundle";
+import { minBox } from "../../../src/domain/leitner";
 import { createIndexedDbRepositoryFactory } from "../../../src/storage/indexeddb-repository";
 import { PracticeSession } from "./practice-session";
 
@@ -27,25 +28,41 @@ export function LernBoxApp() {
     [isClient],
   );
   const [stacks, setStacks] = useState<VocabularyStackV1[]>([]);
+  const [stats, setStats] = useState<Record<string, StackStats>>({});
   const [items, setItems] = useState<VocabularyItemV1[]>([]);
+  const [itemProgress, setItemProgress] = useState<Record<string, LearningProgressV1>>({});
   const [view, setView] = useState<View>({ mode: "overview" });
   const [queue, setQueue] = useState<DueEntry[]>([]);
+  const [practiceLabel, setPracticeLabel] = useState("Vokabeln üben");
   const [message, setMessage] = useState<string | null>(null);
   const roundIdRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const refreshStacks = useCallback((svc: LernBoxService) => {
     svc.listStacks().then(setStacks);
+    svc.stackStats().then(setStats);
   }, []);
 
   useEffect(() => {
     if (service) refreshStacks(service);
   }, [service, refreshStacks]);
 
+  const refreshItems = useCallback(
+    (svc: LernBoxService, stackId: string) => {
+      svc.listItems(stackId).then((loaded) => {
+        setItems(loaded);
+        Promise.all(loaded.map((item) => svc.getProgress(item.id).then((progress) => [item.id, progress] as const))).then((pairs) => {
+          setItemProgress(Object.fromEntries(pairs));
+        });
+      });
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!service || view.mode !== "stack") return;
-    service.listItems(view.stackId).then(setItems);
-  }, [service, view]);
+    refreshItems(service, view.stackId);
+  }, [service, view, refreshItems]);
 
   if (!service) {
     return (
@@ -85,13 +102,17 @@ export function LernBoxApp() {
         setMessage("Diese Vokabel gibt es in diesem Stapel schon.");
       } else {
         setMessage(null);
-        service!.listItems(stackId).then(setItems);
+        refreshItems(service!, stackId);
+        refreshStacks(service!);
       }
     }).catch((error: Error) => setMessage(error.message));
   }
 
   function handleRemoveItem(stackId: string, itemId: string) {
-    service!.removeVocabularyItem(stackId, itemId).then(() => service!.listItems(stackId).then(setItems));
+    service!.removeVocabularyItem(stackId, itemId).then(() => {
+      refreshItems(service!, stackId);
+      refreshStacks(service!);
+    });
   }
 
   function startPractice() {
@@ -102,13 +123,33 @@ export function LernBoxApp() {
       }
       roundIdRef.current = crypto.randomUUID();
       setQueue(due);
+      setPracticeLabel("Vokabeln üben");
+      setMessage(null);
+      setView({ mode: "practice" });
+    });
+  }
+
+  function startErrorPractice() {
+    service!.errorQueue().then((due) => {
+      if (due.length === 0) {
+        setMessage("Aktuell gibt es nichts zu wiederholen — kein Wort steht auf Box 1.");
+        return;
+      }
+      roundIdRef.current = crypto.randomUUID();
+      setQueue(due);
+      setPracticeLabel("Meine Fehler üben");
       setMessage(null);
       setView({ mode: "practice" });
     });
   }
 
   function handleAnswer(entry: DueEntry, result: AnswerResult) {
-    service!.recordAnswer(entry.item, entry.direction, roundIdRef.current, result);
+    service!.recordAnswer(entry.item, entry.direction, roundIdRef.current, result).then(() => refreshStacks(service!));
+  }
+
+  function finishPractice() {
+    setView({ mode: "overview" });
+    refreshStacks(service!);
   }
 
   function handleExport() {
@@ -140,13 +181,17 @@ export function LernBoxApp() {
 
       <div className="lernbox-app__toolbar">
         <button className="button button--primary" type="button" onClick={startPractice}>Vokabeln üben</button>
+        <button className="button button--secondary" type="button" onClick={startErrorPractice}>Meine Fehler jetzt üben</button>
         <button className="button button--quiet" type="button" onClick={handleExport}>Als Datei sichern</button>
         <button className="button button--quiet" type="button" onClick={() => fileInputRef.current?.click()}>Sicherung wiederherstellen</button>
         <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleImportFile} />
       </div>
 
       {view.mode === "practice" && (
-        <PracticeSession queue={queue} onAnswer={handleAnswer} onFinish={() => setView({ mode: "overview" })} />
+        <>
+          <p className="lernbox-app__practice-label">{practiceLabel}</p>
+          <PracticeSession queue={queue} onAnswer={handleAnswer} onFinish={finishPractice} />
+        </>
       )}
 
       {view.mode !== "practice" && (
@@ -158,17 +203,26 @@ export function LernBoxApp() {
               <button className="button button--secondary" type="submit">Anlegen</button>
             </form>
             <ul>
-              {stacks.map((stack) => (
-                <li key={stack.id}>
-                  <button
-                    className={`stack-list__item${view.mode === "stack" && view.stackId === stack.id ? " stack-list__item--active" : ""}`}
-                    type="button"
-                    onClick={() => setView({ mode: "stack", stackId: stack.id })}
-                  >
-                    {stack.title} <span>({stack.itemIds.length})</span>
-                  </button>
-                </li>
-              ))}
+              {stacks.map((stack) => {
+                const stackStats = stats[stack.id];
+                return (
+                  <li key={stack.id}>
+                    <button
+                      className={`stack-list__item${view.mode === "stack" && view.stackId === stack.id ? " stack-list__item--active" : ""}`}
+                      type="button"
+                      onClick={() => setView({ mode: "stack", stackId: stack.id })}
+                    >
+                      <span className="stack-list__title">{stack.title} <span>({stack.itemIds.length})</span></span>
+                      {stackStats && (stackStats.dueCount > 0 || stackStats.strugglingCount > 0) && (
+                        <span className="stack-list__badges">
+                          {stackStats.dueCount > 0 && <span className="stack-list__badge stack-list__badge--due">{stackStats.dueCount} fällig</span>}
+                          {stackStats.strugglingCount > 0 && <span className="stack-list__badge stack-list__badge--struggling">{stackStats.strugglingCount} auf Box 1</span>}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
               {stacks.length === 0 && <li className="stack-list__empty">Noch kein Stapel angelegt.</li>}
             </ul>
           </section>
@@ -185,12 +239,16 @@ export function LernBoxApp() {
                 <button className="button button--secondary" type="submit">Vokabel hinzufügen</button>
               </form>
               <ul className="stack-detail__items">
-                {items.map((item) => (
-                  <li key={item.id}>
-                    <span>{item.prompt.text} → {item.answer.text}</span>
-                    <button type="button" onClick={() => handleRemoveItem(view.stackId, item.id)} aria-label={`${item.prompt.text} entfernen`}>×</button>
-                  </li>
-                ))}
+                {items.map((item) => {
+                  const progress = itemProgress[item.id];
+                  return (
+                    <li key={item.id}>
+                      <span>{item.prompt.text} → {item.answer.text}</span>
+                      {progress && <span className={`stack-detail__box stack-detail__box--${minBox(progress)}`}>Box {minBox(progress)}</span>}
+                      <button type="button" onClick={() => handleRemoveItem(view.stackId, item.id)} aria-label={`${item.prompt.text} entfernen`}>×</button>
+                    </li>
+                  );
+                })}
                 {items.length === 0 && <li className="stack-detail__empty">Noch keine Vokabeln in diesem Stapel.</li>}
               </ul>
             </section>

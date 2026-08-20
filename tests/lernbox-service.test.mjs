@@ -110,3 +110,33 @@ test("rejects a file that is not a valid learning bundle", async () => {
   const service = await freshService();
   await assert.rejects(() => service.importBundle({ not: "a bundle" }));
 });
+
+test("errorQueue only contains words still at box 1, even though both are due", async () => {
+  const service = await freshService();
+  const stack = await service.createStack("Englisch Unit 3");
+  const advanced = await service.addVocabularyItem(stack.id, "the house", "das Haus");
+  const fresh = await service.addVocabularyItem(stack.id, "the car", "das Auto");
+  await service.recordAnswer(advanced, "prompt-to-answer", "round-1", { knowledgeCorrect: true, writingCorrect: true });
+
+  const due = await service.dueQueue();
+  assert.ok(due.some((e) => e.item.id === advanced.id), "the advanced word is still due in its other direction");
+
+  const errors = await service.errorQueue();
+  assert.equal(errors.some((e) => e.item.id === fresh.id), true, "the never-answered word is at box 1");
+  assert.equal(errors.some((e) => e.item.id === advanced.id && e.direction === "prompt-to-answer"), false, "the advanced direction is not box 1 anymore");
+});
+
+test("stackStats reports due and struggling counts per stack", async () => {
+  const service = await freshService();
+  const stackA = await service.createStack("Stapel A");
+  const stackB = await service.createStack("Stapel B");
+  const item = await service.addVocabularyItem(stackA.id, "the house", "das Haus");
+  await service.addVocabularyItem(stackB.id, "the car", "das Auto");
+  await service.recordAnswer(item, "prompt-to-answer", "round-1", { knowledgeCorrect: true, writingCorrect: true });
+
+  const stats = await service.stackStats();
+  assert.equal(stats[stackA.id].dueCount, 1, "still due in the other direction");
+  assert.equal(stats[stackA.id].strugglingCount, 1, "still box 1 on three of four tracks");
+  assert.equal(stats[stackB.id].dueCount, 1);
+  assert.equal(stats[stackB.id].strugglingCount, 1);
+});

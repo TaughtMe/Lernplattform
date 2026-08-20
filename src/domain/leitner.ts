@@ -141,6 +141,16 @@ function writingOutcome(assessment: LearningEventV1["assessment"], canAdvance: b
   return canAdvance ? "advance" : "stay";
 }
 
+/** Lowest box across all four tracks — a simple "how well is this known" signal for overviews. */
+export function minBox(progress: LearningProgressV1): DirectionProgressV1["box"] {
+  return Math.min(
+    progress.knowledge["prompt-to-answer"].box,
+    progress.knowledge["answer-to-prompt"].box,
+    progress.writing["prompt-to-answer"].box,
+    progress.writing["answer-to-prompt"].box,
+  ) as DirectionProgressV1["box"];
+}
+
 export function dueDirections(
   progress: LearningProgressV1,
   now: IsoDateTime,

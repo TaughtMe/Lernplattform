@@ -1,5 +1,5 @@
 import type { LocalRepositoryFactory } from "../storage/local-data-boundaries.ts";
-import { applyLearningEvent, dueDirections, initialLearningProgress, isDue } from "./leitner.ts";
+import { applyLearningEvent, dueDirections, initialLearningProgress, isDue, minBox } from "./leitner.ts";
 import {
   isLearningBundleV1,
   vocabularyFingerprint,
@@ -21,6 +21,12 @@ export interface DueEntry {
   stack: VocabularyStackV1;
   direction: LearningDirection;
   progress: LearningProgressV1;
+}
+
+export interface StackStats {
+  dueCount: number;
+  /** Items with at least one track still at box 1 — freshly added or recently missed. */
+  strugglingCount: number;
 }
 
 export interface AnswerResult {
@@ -151,6 +157,34 @@ export function createLernBoxService(factory: LocalRepositoryFactory) {
   }
 
   /**
+   * Every direction of every item currently at box 1 on at least one track —
+   * i.e. freshly added or recently gotten wrong ("Fehler jetzt üben"). Box 1
+   * is always due immediately, so this is a themed subset of dueQueue(), not
+   * a separate due-date computation.
+   */
+  async function errorQueue(now: IsoDateTime = nowIso()): Promise<DueEntry[]> {
+    const due = await dueQueue(now);
+    return due.filter((entry) => entry.progress.knowledge[entry.direction].box === 1 || entry.progress.writing[entry.direction].box === 1);
+  }
+
+  /** Per-stack counts for the overview list: how much is due, how much is still struggling. */
+  async function stackStats(now: IsoDateTime = nowIso()): Promise<Record<EntityId, StackStats>> {
+    const allStacks = await stacks.list();
+    const result: Record<EntityId, StackStats> = {};
+    for (const stack of allStacks) {
+      let dueCount = 0;
+      let strugglingCount = 0;
+      for (const itemId of stack.itemIds) {
+        const progress = await getProgress(itemId, now);
+        if (dueDirections(progress, now).length > 0) dueCount += 1;
+        if (minBox(progress) === 1) strugglingCount += 1;
+      }
+      result[stack.id] = { dueCount, strugglingCount };
+    }
+    return result;
+  }
+
+  /**
    * Records one review: a wrong meaning implies a wrong writing result too
    * ("Bedeutung falsch | beide fallen"), so writingCorrect is only asked
    * for in the UI when knowledgeCorrect is true.
@@ -245,6 +279,8 @@ export function createLernBoxService(factory: LocalRepositoryFactory) {
     addVocabularyItem,
     removeVocabularyItem,
     dueQueue,
+    errorQueue,
+    stackStats,
     recordAnswer,
     getProgress,
     exportBundle,

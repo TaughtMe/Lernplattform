@@ -12,6 +12,9 @@ import { APP_VERSION } from "../../../src/laufdiktat/app-version.ts";
 import { upsertProgress, getMyProgress } from "../../../src/laufdiktat/room-api.ts";
 import { clearRoomIdentity } from "../../../src/laufdiktat/room-identity.ts";
 import { animalToFileName, parseStudentName } from "../../../src/laufdiktat/animal-names.ts";
+import { vocabularyWordsToBundle } from "../../../src/laufdiktat/lernbox-bridge.ts";
+import { createLernBoxService } from "../../../src/domain/lernbox-service.ts";
+import { createIndexedDbRepositoryFactory } from "../../../src/storage/indexeddb-repository.ts";
 import type { AttackType, BattleOptions, GameMode, GameState, GameMetrics, SessionStartData, WordItem } from "../../../src/laufdiktat/types.ts";
 
 type Props = {
@@ -46,6 +49,8 @@ export function GameSession({ roomCode, studentName, roomId, participantToken, o
   const [versionMismatch, setVersionMismatch] = useState(false);
   const [finalStars, setFinalStars] = useState<number | null>(null);
   const [finalErrorCount, setFinalErrorCount] = useState(0);
+  const [lernBoxImport, setLernBoxImport] = useState<"idle" | "done">("idle");
+  const [lernBoxImportSummary, setLernBoxImportSummary] = useState("");
 
   // Freies Üben (UEBUNG): consecutive wrong attempts on the current word,
   // and whether the max was reached (show the full word to copy instead of hints).
@@ -82,6 +87,7 @@ export function GameSession({ roomCode, studentName, roomId, participantToken, o
       setWrongCount(0);
       setCopyMode(false);
       setPracticeWords(null);
+      setLernBoxImport("idle");
       startedAtRef.current = 0;
       errorsRef.current = 0;
       wordErrorsRef.current = {};
@@ -282,6 +288,25 @@ export function GameSession({ roomCode, studentName, roomId, participantToken, o
     onLeave();
   }
 
+  function importToLernBox() {
+    const bundle = vocabularyWordsToBundle(words, `Laufdiktat · ${new Date().toLocaleDateString("de-DE")}`);
+    if (!bundle) return;
+    createLernBoxService(createIndexedDbRepositoryFactory())
+      .importBundle(bundle)
+      .then(({ importedItems }) => {
+        setLernBoxImport("done");
+        setLernBoxImportSummary(
+          importedItems > 0
+            ? `${importedItems} ${importedItems === 1 ? "Vokabel" : "Vokabeln"} in deine LernBox übernommen.`
+            : "Diese Vokabeln waren schon in deiner LernBox.",
+        );
+      })
+      .catch(() => {
+        setLernBoxImport("done");
+        setLernBoxImportSummary("Das hat leider nicht geklappt.");
+      });
+  }
+
   if (versionMismatch) {
     return (
       <div className="game-card">
@@ -314,6 +339,13 @@ export function GameSession({ roomCode, studentName, roomId, participantToken, o
         {!practiceWords && <p className="game-card__meta">{finalErrorCount} Fehler bei {words.length} Wörtern</p>}
         {!practiceWords && hasErrors && (
           <button className="button button--secondary" type="button" onClick={startErrorPractice}>Nur meine Fehler üben</button>
+        )}
+        {!practiceWords && words.some((w) => w.kind === "vocabulary") && (
+          lernBoxImport === "done" ? (
+            <p className="game-card__meta" role="status">{lernBoxImportSummary}</p>
+          ) : (
+            <button className="button button--secondary" type="button" onClick={importToLernBox}>In meine LernBox übernehmen</button>
+          )
         )}
         {practiceWords && (
           <button className="button button--quiet" type="button" onClick={() => setPracticeWords(null)}>Zurück zum Ergebnis</button>

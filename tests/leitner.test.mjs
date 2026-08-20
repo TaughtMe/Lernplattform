@@ -4,6 +4,7 @@ import {
   applyLearningEvent,
   dueDirections,
   initialLearningProgress,
+  minBox,
 } from "../src/domain/leitner.ts";
 
 const NOW = "2026-08-19T08:00:00.000Z";
@@ -107,4 +108,15 @@ test("advancing to a higher box pushes the due date further out", () => {
   const progress = initialLearningProgress("word-1", NOW);
   const next = applyLearningEvent(progress, makeEvent(), NOW);
   assert.ok(next.knowledge["prompt-to-answer"].dueAt > NOW);
+});
+
+test("minBox: a fresh item is box 1 on every track", () => {
+  const progress = initialLearningProgress("word-1", NOW);
+  assert.equal(minBox(progress), 1);
+});
+
+test("minBox: reports the weakest track, not the strongest", () => {
+  let progress = initialLearningProgress("word-1", NOW);
+  progress = applyLearningEvent(progress, makeEvent(), NOW); // prompt-to-answer advances to box 2
+  assert.equal(minBox(progress), 1, "the other three tracks are still at box 1");
 });
