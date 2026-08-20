@@ -11,6 +11,8 @@ npm install
 npm run dev
 ```
 
+Für Laufdiktat-Live-Räume (`/raum`, `/lehrer`) zusätzlich `.env.example` nach `.env` kopieren, ein Supabase-Projekt anlegen, die Migrationen unter `supabase/migrations/` anwenden und die Werte eintragen. Ohne das laden beide Seiten trotzdem, zeigen aber nur einen Hinweis statt echter Räume.
+
 ## Prüfen
 
 ```bash
