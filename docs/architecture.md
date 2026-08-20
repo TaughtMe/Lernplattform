@@ -45,6 +45,14 @@ Der klassische Laufdiktat-Modus (Wort ansehen → verdecken → aus dem Gedächt
 
 **Setup:** Supabase-Projekt anlegen, die SQL-Dateien unter `supabase/migrations/` in Dateinamen-Reihenfolge anwenden, `.env.example` nach `.env` kopieren und die Werte eintragen (siehe dort).
 
+### Selbstständiges Mathe-Üben ohne Raum
+
+Unter `/mathe-ueben` (verlinkt von `/raum`) können Schüler ohne Raumcode und ohne Lehrkraft üben — läuft komplett lokal, braucht kein Supabase:
+
+- `src/laufdiktat/adaptive-math.ts`: eine Schwierigkeitsleiter (`LEVELS`, aktuell 7 Stufen, von reiner Addition bis 0–100 mit allen vier Rechenarten) plus eine reine Zustandsübergangsfunktion `nextAdaptiveState()` — drei richtige Antworten in Folge stufen eine Stufe hoch, zwei falsche in Folge eine runter, Streaks werden dabei jeweils zurückgesetzt. Der Schwierigkeitsgrad orientiert sich damit laufend am Leistungsstand der Schülerin/des Schülers, ohne dass irgendein Fortschritt serverseitig gespeichert wird.
+- `app/components/laufdiktat/self-practice.tsx`: „Automatisch, passend zu deinem Können" (adaptiv) oder „Eigene Aufgaben erstellen" (derselbe Generator wie im Lehrer-Dashboard, frei wählbare Rechenarten und Zahlenraum) — jeweils mit fester Anzahl (10/20/30) oder unbegrenzt mit jederzeitigem „Beenden".
+- Vollständig im echten Browser verifiziert (kein Supabase nötig): Stufenanstieg bei Serien richtiger Antworten geprüft (1→1→1→2→2→2→3→3→3→4), manueller Generator mit eingeschränkten Rechenarten erzeugt nur passende Aufgaben, unbegrenzter Modus zählt im Abschluss nur tatsächlich beantwortete Aufgaben (ein Zähl-Bug wurde dabei gefunden und behoben). 8 zusätzliche Unit-Tests für die Stufenlogik.
+
 ## Nächster fachlicher Schritt
 
 Live-Raum-Betrieb nach der Supabase-Einrichtung manuell mit mindestens zwei Geräten durchspielen. Danach: Vokabelmodus im Laufdiktat (WordItem `kind: "vocabulary"` ist bereits vorbereitet) und die dublettenfreie Übergabe Laufdiktat → LernBox über `LearningBundleV1`. In der LernBox selbst fehlen noch eine sichtbare Box-/Fälligkeits-Übersicht pro Stapel sowie die persönliche Fehlerrunde „Meine Fehler jetzt üben“.

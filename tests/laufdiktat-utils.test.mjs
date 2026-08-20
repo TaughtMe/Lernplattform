@@ -10,6 +10,7 @@ import { buildHint } from "../src/laufdiktat/build-hint.ts";
 import { isBlockedInputType, isSuspiciousBulkInsert, sanitizeMathInput } from "../src/laufdiktat/strict-typing.ts";
 import { pickAttackCandidates } from "../src/laufdiktat/attack-candidates.ts";
 import { parseMathExpr, parseMathLine, generateMathLines, displayNum } from "../src/laufdiktat/math-tasks.ts";
+import { initialAdaptiveState, nextAdaptiveState, generateAdaptiveTask, LEVELS, MAX_LEVEL } from "../src/laufdiktat/adaptive-math.ts";
 
 test("checkAnswer: plain text is trimmed but otherwise matched exactly", () => {
   const word = { id: "1", kind: "text", targetWord: "Baum" };
@@ -200,4 +201,68 @@ test("math-tasks: generateMathLines stays within the configured number range", (
 test("math-tasks: displayNum uses a German decimal comma", () => {
   assert.equal(displayNum(0.5), "0,5");
   assert.equal(displayNum(3), "3");
+});
+
+test("adaptive-math: starts at level 0 by default", () => {
+  assert.deepEqual(initialAdaptiveState(), { level: 0, correctStreak: 0, wrongStreak: 0 });
+});
+
+test("adaptive-math: initial level is clamped into range", () => {
+  assert.equal(initialAdaptiveState(-5).level, 0);
+  assert.equal(initialAdaptiveState(999).level, MAX_LEVEL);
+});
+
+test("adaptive-math: three correct answers in a row level up and reset streaks", () => {
+  let state = initialAdaptiveState(0);
+  state = nextAdaptiveState(state, true);
+  state = nextAdaptiveState(state, true);
+  assert.equal(state.level, 0, "not yet — only 2 in a row");
+  state = nextAdaptiveState(state, true);
+  assert.deepEqual(state, { level: 1, correctStreak: 0, wrongStreak: 0 });
+});
+
+test("adaptive-math: two wrong answers in a row level down and reset streaks", () => {
+  let state = initialAdaptiveState(3);
+  state = nextAdaptiveState(state, false);
+  assert.equal(state.level, 3, "not yet — only 1 wrong");
+  state = nextAdaptiveState(state, false);
+  assert.deepEqual(state, { level: 2, correctStreak: 0, wrongStreak: 0 });
+});
+
+test("adaptive-math: level never drops below 0 or exceeds MAX_LEVEL", () => {
+  let low = initialAdaptiveState(0);
+  low = nextAdaptiveState(low, false);
+  low = nextAdaptiveState(low, false);
+  assert.equal(low.level, 0);
+
+  let high = initialAdaptiveState(MAX_LEVEL);
+  high = nextAdaptiveState(high, true);
+  high = nextAdaptiveState(high, true);
+  high = nextAdaptiveState(high, true);
+  assert.equal(high.level, MAX_LEVEL);
+});
+
+test("adaptive-math: a correct answer after a wrong one resets the wrong streak (no double-counting)", () => {
+  let state = initialAdaptiveState(3);
+  state = nextAdaptiveState(state, false);
+  state = nextAdaptiveState(state, true);
+  assert.equal(state.wrongStreak, 0);
+  assert.equal(state.level, 3, "one wrong + one correct should not have leveled down");
+});
+
+test("adaptive-math: generates a task matching the state's difficulty level", () => {
+  const state = initialAdaptiveState(0);
+  const task = generateAdaptiveTask(state);
+  assert.equal(task.kind, "math");
+  const expr = parseMathExpr(task.prompt);
+  assert.ok(expr);
+  assert.equal(expr.op, "+", "level 0 only uses addition");
+  assert.ok(expr.a >= 0 && expr.a <= 10 && expr.b >= 0 && expr.b <= 10);
+});
+
+test("adaptive-math: LEVELS is a non-empty, increasingly permissive ladder", () => {
+  assert.ok(LEVELS.length > 1);
+  for (let i = 1; i < LEVELS.length; i++) {
+    assert.ok(LEVELS[i].maxValue >= LEVELS[i - 1].maxValue, `level ${i} should not be easier than level ${i - 1}`);
+  }
 });

@@ -154,6 +154,15 @@ h2 { margin: 0; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; letter-spa
 .qr-overlay__error { padding: 20px; border-radius: var(--radius-md); background: var(--cream-strong); color: var(--muted); font-size: .9rem; text-align: center; }
 .qr-overlay__cancel { width: 100%; }
 
+.module-hero__alt-link { margin-top: 18px; color: var(--muted); font-size: .92rem; }
+.module-hero__alt-link a { font-weight: 700; color: var(--coral-dark); }
+
+.self-practice { max-width: 480px; margin: 40px auto 0; padding: 24px; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.self-practice fieldset { margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+.self-practice legend { padding: 0 6px; font-weight: 800; font-size: .85rem; }
+.self-practice__radio { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.self-practice__count-picker { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+
 .game-card { max-width: 480px; margin: 40px auto 0; padding: 32px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); text-align: center; box-shadow: var(--shadow); transition: box-shadow .15s ease; }
 .game-card--correct { box-shadow: 0 0 0 4px rgb(7 155 150 / 25%); }
 .game-card--wrong { box-shadow: 0 0 0 4px rgb(223 98 95 / 25%); }
