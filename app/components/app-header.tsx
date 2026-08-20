@@ -7,7 +7,7 @@ export function AppHeader() {
       <nav aria-label="Hauptnavigation">
         <Link href="/lernen">Heute lernen</Link><Link href="/#raumcode">Raum beitreten</Link><Link href="/duell">Duell</Link><Link href="/haus">Mein Haus</Link>
       </nav>
-      <Link className="teacher-link" href="/lehrer">Lehrer-Login</Link>
+      <span aria-hidden="true" />
     </header>
   );
 }

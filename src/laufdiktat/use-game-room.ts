@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { supabase } from "./supabase-client.ts";
 import { getRoomState } from "./room-api.ts";
 import { useParticipantHeartbeat } from "./use-participant-heartbeat.ts";
-import type { SessionStartData } from "./types.ts";
+import type { AttackType, SessionStartData } from "./types.ts";
 
 interface UseGameRoomArgs {
   roomCode: string | undefined;
@@ -14,12 +14,13 @@ interface UseGameRoomArgs {
   currentWordIndexRef: RefObject<number>;
   onSessionStart: (data: SessionStartData) => void;
   onSessionEnded: () => void;
+  onAttack?: (type: AttackType) => void;
 }
 
 /**
  * Student-side Supabase Realtime connection: subscribed channel, incoming
- * events (session start/end, roster progress) and the send functions.
- * Ported (trimmed of battle/station mode) from TaughtMe/Laufdiktat's
+ * events (session start/end, roster progress, battle attacks) and the send
+ * functions. Ported (trimmed of station mode) from TaughtMe/Laufdiktat's
  * hooks/game/useGameRoom.ts.
  */
 export function useGameRoom({
@@ -30,12 +31,21 @@ export function useGameRoom({
   currentWordIndexRef,
   onSessionStart,
   onSessionEnded,
+  onAttack,
 }: UseGameRoomArgs) {
   const [connectionWarning, setConnectionWarning] = useState(false);
   const [presenceOk, setPresenceOk] = useState(false);
   const [roster, setRoster] = useState<Record<string, number>>({});
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const hasFetchedRoomStateRef = useRef(false);
+  const lastIncomingAttackAtRef = useRef(0);
+  // onAttack changes identity across renders in the caller (a fresh useBattleMode
+  // closure each time); read the latest one through a ref so the channel effect
+  // below doesn't need to resubscribe just because the callback changed.
+  const onAttackRef = useRef(onAttack);
+  useEffect(() => {
+    onAttackRef.current = onAttack;
+  }, [onAttack]);
 
   useEffect(() => {
     if (!roomCode || !roomId || !participantToken) return;
@@ -118,6 +128,14 @@ export function useGameRoom({
           });
         }
       })
+      .on("broadcast", { event: "attack" }, (payload) => {
+        const { to, type } = payload.payload as { to: string; type: AttackType };
+        if (to !== studentName || (type !== "ink" && type !== "flicker")) return;
+        const now = Date.now();
+        if (now - lastIncomingAttackAtRef.current < 1000) return;
+        lastIncomingAttackAtRef.current = now;
+        onAttackRef.current?.(type);
+      })
       .subscribe(async (status) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           setConnectionWarning(true);
@@ -168,5 +186,14 @@ export function useGameRoom({
     channelRef.current?.send({ type: "broadcast", event: "student-finished", payload });
   }, []);
 
-  return { connectionWarning, presenceOk, roster, sendProgress, sendFinished };
+  const sendAttack = useCallback(
+    (to: string, type: AttackType): boolean => {
+      if (!channelRef.current) return false;
+      channelRef.current.send({ type: "broadcast", event: "attack", payload: { from: studentName, to, type } });
+      return true;
+    },
+    [studentName],
+  );
+
+  return { connectionWarning, presenceOk, roster, sendProgress, sendFinished, sendAttack };
 }

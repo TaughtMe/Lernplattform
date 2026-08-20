@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useMemo, useState, type FormEvent } from "react";
+import { Camera } from "lucide-react";
 import { isSupabaseConfigured } from "../../../src/laufdiktat/supabase-client.ts";
 import { joinRoom } from "../../../src/laufdiktat/room-api.ts";
 import { generateStudentName, animalToFileName, parseStudentName } from "../../../src/laufdiktat/animal-names.ts";
 import { readRoomIdentity, saveRoomIdentity, clearRoomIdentity } from "../../../src/laufdiktat/room-identity.ts";
 import { useIsClient } from "../use-is-client.ts";
 import { GameSession } from "./game-session.tsx";
+import { StationGame } from "./station-game.tsx";
+import { QrScannerOverlay } from "./qr-scanner-overlay.tsx";
 
-type JoinedRoom = { roomCode: string; studentName: string; roomId: string; participantToken: string };
+type JoinedRoom = { roomCode: string; studentName: string; roomId: string; participantToken: string; stationMode: boolean };
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, "").slice(0, 4);
@@ -16,6 +19,19 @@ function digitsOnly(value: string): string {
 
 function codeFromUrl(): string {
   return digitsOnly(new URLSearchParams(window.location.search).get("code") ?? "");
+}
+
+/** Extracts a 4-digit room code from a scanned QR payload (a join URL, or a bare digit sequence). */
+function codeFromScan(text: string): string {
+  try {
+    const url = new URL(text);
+    const fromParam = url.searchParams.get("code");
+    if (fromParam) return digitsOnly(fromParam);
+  } catch {
+    // not a URL — fall through to a plain digit search
+  }
+  const match = text.match(/\d{4,}/);
+  return digitsOnly(match ? match[0] : text);
 }
 
 export function JoinRoom() {
@@ -48,12 +64,29 @@ function JoinRoomForm() {
   const [code, setCode] = useState(codeFromUrl);
   const [studentName, setStudentName] = useState(generateStudentName);
   const [joining, setJoining] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joined, setJoined] = useState<JoinedRoom | null>(null);
   const { animal } = useMemo(() => parseStudentName(studentName), [studentName]);
 
+  const handleScanResult = useCallback((text: string) => {
+    const scanned = codeFromScan(text);
+    setScanning(false);
+    if (scanned.length === 4) {
+      setCode(scanned);
+      setError(null);
+    }
+  }, []);
+
   if (joined) {
-    return (
+    return joined.stationMode ? (
+      <StationGame
+        roomCode={joined.roomCode}
+        roomId={joined.roomId}
+        participantToken={joined.participantToken}
+        onLeave={() => setJoined(null)}
+      />
+    ) : (
       <GameSession
         roomCode={joined.roomCode}
         studentName={joined.studentName}
@@ -82,7 +115,7 @@ function JoinRoomForm() {
         return;
       }
       saveRoomIdentity(code, room.studentName, room.participantToken);
-      setJoined({ roomCode: code, studentName: room.studentName, roomId: room.roomId, participantToken: room.participantToken });
+      setJoined({ roomCode: code, studentName: room.studentName, roomId: room.roomId, participantToken: room.participantToken, stationMode: room.stationMode });
     } catch {
       setError("Der Beitritt ist gerade nicht möglich. Prüfe deine Internetverbindung.");
       setJoining(false);
@@ -92,16 +125,21 @@ function JoinRoomForm() {
   return (
     <form onSubmit={handleJoin} className="room-join">
       <label htmlFor="laufdiktat-code">Raumcode</label>
-      <input
-        id="laufdiktat-code"
-        value={code}
-        onChange={(event) => setCode(digitsOnly(event.target.value))}
-        inputMode="numeric"
-        pattern="[0-9]*"
-        maxLength={4}
-        placeholder="z. B. 4821"
-        autoComplete="off"
-      />
+      <div className="room-join__code-row">
+        <input
+          id="laufdiktat-code"
+          value={code}
+          onChange={(event) => setCode(digitsOnly(event.target.value))}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={4}
+          placeholder="z. B. 4821"
+          autoComplete="off"
+        />
+        <button type="button" className="room-join__scan" onClick={() => setScanning(true)} aria-label="QR-Code scannen" title="QR-Code scannen">
+          <Camera className="qr-overlay__icon" />
+        </button>
+      </div>
 
       <img src={`/animals/${animalToFileName(animal)}.svg`} alt="" className="room-join__avatar" onError={(e) => { e.currentTarget.style.display = "none"; }} />
       <div className="room-join__name">{studentName}</div>
@@ -112,6 +150,8 @@ function JoinRoomForm() {
       <button className="button button--primary" type="submit" disabled={joining}>
         {joining ? "Trete bei …" : "Beitreten"}
       </button>
+
+      {scanning && <QrScannerOverlay onResult={handleScanResult} onClose={() => setScanning(false)} />}
     </form>
   );
 }

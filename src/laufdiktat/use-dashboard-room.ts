@@ -17,7 +17,7 @@ import {
 import { ONLINE_THRESHOLD_MS, PARTICIPANTS_POLL_MS } from "./presence-config.ts";
 import { createDebounced, type Debounced } from "./debounce.ts";
 import { saveDashboardRoomSession, readDashboardRoomSession, clearDashboardRoomSession } from "./dashboard-room-session.ts";
-import type { WordItem } from "./types.ts";
+import type { BattleOptions, GameMode, RoomConfig, StationStudentState, WordItem } from "./types.ts";
 
 export interface StudentResult {
   name: string;
@@ -28,7 +28,7 @@ export interface StudentResult {
   wordErrors?: Record<string, number>;
 }
 
-export type DashboardStep = "IMPORT" | "LOBBY" | "LIVE";
+export type DashboardStep = "IMPORT" | "SETTINGS" | "LOBBY" | "LIVE";
 
 const resultsFromStudents = (students: RoomStudentRow[]): StudentResult[] =>
   students
@@ -42,11 +42,28 @@ const resultsFromStudents = (students: RoomStudentRow[]): StudentResult[] =>
       wordErrors: s.wordErrors,
     }));
 
+const stationStatesFromStudents = (students: RoomStudentRow[]): Map<number, StationStudentState> => {
+  const map = new Map<number, StationStudentState>();
+  for (const s of students) {
+    if (s.stationNumber != null) {
+      map.set(s.stationNumber, { currentIndex: s.currentIndex, peeks: s.peeks, finished: s.finished });
+    }
+  }
+  return map;
+};
+
 interface UseDashboardRoomArgs {
   stepRef: RefObject<DashboardStep>;
   setCurrentStep: (step: DashboardStep) => void;
   words: WordItem[];
+  gameMode: GameMode;
+  battleOptions: BattleOptions;
+  stationMode: boolean;
+  stationCount: number;
+  uebungMaxAttempts: number;
+  showStars: boolean;
   shuffleWords: boolean;
+  strictTypingMode: boolean;
   clearWords: () => void;
 }
 
@@ -56,7 +73,20 @@ interface UseDashboardRoomArgs {
  * (trimmed of battle/station mode) from TaughtMe/Laufdiktat's
  * hooks/dashboard/useDashboardRoom.ts.
  */
-export function useDashboardRoom({ stepRef, setCurrentStep, words, shuffleWords, clearWords }: UseDashboardRoomArgs) {
+export function useDashboardRoom({
+  stepRef,
+  setCurrentStep,
+  words,
+  gameMode,
+  battleOptions,
+  stationMode,
+  stationCount,
+  uebungMaxAttempts,
+  showStars,
+  shuffleWords,
+  strictTypingMode,
+  clearWords,
+}: UseDashboardRoomArgs) {
   const [roomCode, setRoomCode] = useState("");
   const [openLobbyError, setOpenLobbyError] = useState<string | null>(null);
   const [results, setResults] = useState<StudentResult[]>([]);
@@ -64,7 +94,13 @@ export function useDashboardRoom({ stepRef, setCurrentStep, words, shuffleWords,
   const [participants, setParticipants] = useState<RoomParticipantRow[]>([]);
   const [connectionWarning, setConnectionWarning] = useState(false);
   const [liveProgress, setLiveProgress] = useState<Record<string, number>>({});
+  const [stationStates, setStationStates] = useState<Map<number, StationStudentState>>(new Map());
+  const stationStatesRef = useRef<Map<number, StationStudentState>>(new Map());
   const [nowTs, setNowTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    stationStatesRef.current = stationStates;
+  }, [stationStates]);
 
   const registeredStudents = useMemo(() => participants.map((p) => p.studentKey), [participants]);
 
@@ -87,6 +123,7 @@ export function useDashboardRoom({ stepRef, setCurrentStep, words, shuffleWords,
   const applyAuthoritativeStudents = (students: RoomStudentRow[]) => {
     const currentStudents = sessionIdRef.current ? students.filter((s) => s.sessionId === sessionIdRef.current) : students;
     setResults(resultsFromStudents(currentStudents));
+    setStationStates(stationStatesFromStudents(currentStudents));
     setLiveProgress((prev) => ({
       ...prev,
       ...Object.fromEntries(currentStudents.map((s) => [s.studentKey, s.currentIndex])),
@@ -199,6 +236,24 @@ export function useDashboardRoom({ stepRef, setCurrentStep, words, shuffleWords,
     channel.on("broadcast", { event: "student-finished" }, () => scheduleAuthoritativeRefresh());
     channel.on("broadcast", { event: "student-progress" }, () => scheduleAuthoritativeRefresh());
 
+    // Station mode: a station tablet joining asks whether the dashboard
+    // already has a progress state for its number (e.g. the dashboard
+    // reloaded mid-session); if so, it's told to fetch it from the DB.
+    channel.on("broadcast", { event: "request-station-state" }, (payload) => {
+      const { studentNumber } = payload.payload as { studentNumber: number };
+      if (stationStatesRef.current.get(studentNumber)) {
+        channel.send({ type: "broadcast", event: "sync-station-state", payload: { studentNumber } });
+        return;
+      }
+      refreshAuthoritativeStudents()
+        .then(() => channel.send({ type: "broadcast", event: "sync-station-state", payload: { studentNumber } }))
+        .catch(() => {});
+    });
+    channel.on("broadcast", { event: "update-station-state" }, (payload) => {
+      const { studentNumber } = payload.payload as { studentNumber: number };
+      if (typeof studentNumber === "number") scheduleAuthoritativeRefresh();
+    });
+
     return channel;
   };
 
@@ -278,12 +333,22 @@ export function useDashboardRoom({ stepRef, setCurrentStep, words, shuffleWords,
     if (!channelRef.current || !roomIdRef.current) return;
 
     sessionIdRef.current = crypto.randomUUID();
+    const config: RoomConfig = {
+      words,
+      gameMode,
+      battleOptions,
+      stationMode,
+      // Station numbers have a fixed spatial mapping to the word at that
+      // station, so never shuffle in station mode.
+      stationCount,
+      uebungMaxAttempts,
+      showStars,
+      shuffleWords: stationMode ? false : shuffleWords,
+      strictTypingMode,
+      appVersion: APP_VERSION,
+    };
     try {
-      await updateSession(roomIdRef.current, accessTokenRef.current, sessionIdRef.current, {
-        words,
-        shuffleWords,
-        appVersion: APP_VERSION,
-      });
+      await updateSession(roomIdRef.current, accessTokenRef.current, sessionIdRef.current, config);
     } catch {
       setOpenLobbyError("Die Sitzung konnte serverseitig nicht gestartet werden. Bitte Internetverbindung prüfen und erneut versuchen.");
       return;
@@ -317,6 +382,7 @@ export function useDashboardRoom({ stepRef, setCurrentStep, words, shuffleWords,
     setPresentKeys(new Set());
     setParticipants([]);
     setLiveProgress({});
+    setStationStates(new Map());
     setRoomCode("");
     roomIdRef.current = "";
     accessTokenRef.current = "";
@@ -332,6 +398,7 @@ export function useDashboardRoom({ stepRef, setCurrentStep, words, shuffleWords,
     registeredStudents,
     connectionWarning,
     liveProgress,
+    stationStates,
     handleOpenLobby,
     handleStartSession,
     handleEndSession,

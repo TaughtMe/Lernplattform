@@ -38,6 +38,7 @@ export interface JoinedRoom {
   status: "lobby" | "live" | "ended";
   studentName: string;
   participantToken: string;
+  stationMode: boolean;
 }
 
 export interface RoomState {
@@ -76,6 +77,7 @@ export async function joinRoom(
       status: row.status,
       studentName: row.assigned_student_key,
       participantToken: row.participant_token,
+      stationMode: row.station_mode,
     };
   });
 }
@@ -170,6 +172,8 @@ export interface UpsertProgressInput extends StudentProgress {
   durationMs?: number;
   wordErrors?: Record<string, number>;
   appVersion?: string;
+  /** Set only in station mode. */
+  stationNumber?: number;
 }
 
 /** Writes/updates exactly one student's progress (see upsert_progress_secure() in the migration). */
@@ -187,7 +191,7 @@ export async function upsertProgress(input: UpsertProgressInput): Promise<void> 
     p_duration_ms: input.durationMs ?? null,
     p_word_errors: input.wordErrors ?? null,
     p_app_version: input.appVersion ?? null,
-    p_station_number: null,
+    p_station_number: input.stationNumber ?? null,
   });
   if (error) throw new Error(error.message);
 }
@@ -196,6 +200,7 @@ export interface RoomStudentRow extends StudentProgress {
   roomId: string;
   sessionId: string;
   studentKey: string;
+  stationNumber: number | null;
   durationMs: number | null;
   wordErrors: Record<string, number>;
   appVersion: string | null;
@@ -240,6 +245,7 @@ export async function getRoomStudents(roomId: string, accessToken: string): Prom
     roomId: row.room_id as string,
     sessionId: row.session_id as string,
     studentKey: row.student_key as string,
+    stationNumber: (row.station_number as number | null) ?? null,
     currentIndex: row.current_index as number,
     peeks: row.peeks as number,
     attempts: row.attempts as number,
