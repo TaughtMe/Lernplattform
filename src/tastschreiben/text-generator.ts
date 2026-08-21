@@ -76,14 +76,21 @@ export function generateDrillText(opts: DrillOptions): string {
 
 // --- Kuratierte Wort-/Satzlisten für die Lektionen ab "alle Tasten bekannt". ---
 
-const WORDS = [
+const WORDS_EASY = [
   "Haus", "Baum", "Schule", "Wasser", "Sonne", "Wolke", "Straße", "Fenster", "Garten", "Tisch",
   "Stuhl", "Lampe", "Blume", "Vogel", "Berg", "Fluss", "Wiese", "Wald", "Brot", "Milch",
   "Freund", "Familie", "Hund", "Katze", "Auto", "Fahrrad", "Zeit", "Jahr", "Monat", "Woche",
   "Morgen", "Abend", "Nacht", "Licht", "Farbe", "Musik", "Bild", "Buch", "Papier", "Stift",
 ];
 
-const SENTENCES = [
+const WORDS_HARD = [
+  "Geburtstag", "Fahrradweg", "Kindergarten", "Herbstwetter", "Sonnenschein", "Wochenende", "Nachbarschaft", "Gemeinschaft",
+  "Wissenschaft", "Freundschaft", "Verantwortung", "Möglichkeit", "Gewohnheit", "Erfahrung", "Entwicklung", "Bibliothek",
+  "Geschwindigkeit", "Zusammenarbeit", "Veranstaltung", "Rechtschreibung", "Handschrift", "Tastatur", "Bildschirm", "Kopfhörer",
+  "Verabredung", "Untersuchung", "Ausflug", "Feuerwehr", "Krankenhaus", "Universität",
+];
+
+const SENTENCES_EASY = [
   "Die Sonne scheint über dem Garten.",
   "Wir lesen jeden Abend ein Buch.",
   "Der Zug fährt pünktlich um acht Uhr ab.",
@@ -96,9 +103,21 @@ const SENTENCES = [
   "Die Bibliothek öffnet um neun Uhr morgens.",
 ];
 
+const SENTENCES_HARD = [
+  "Obwohl es draußen regnete, gingen wir trotzdem spazieren, weil wir frische Luft brauchten.",
+  "Nachdem die Schule beendet war, trafen sich alle Schüler:innen noch kurz auf dem Pausenhof.",
+  "Die Bibliothekarin, die schon seit zwanzig Jahren dort arbeitet, kennt jedes Buch im Regal.",
+  "Wenn man regelmäßig übt, wird das Zehnfingerschreiben mit der Zeit fast automatisch.",
+  "Der Zug, der eigentlich um acht Uhr abfahren sollte, hatte an diesem Morgen zehn Minuten Verspätung.",
+  "Sobald die ersten Schneeflocken fielen, freuten sich die Kinder auf einen freien Tag.",
+  "Man kann nicht nur schneller, sondern auch genauer tippen, wenn man auf den Bildschirm statt auf die Tastatur schaut.",
+  "Nachdem er lange überlegt hatte, entschied er sich schließlich doch für den längeren, aber schöneren Weg.",
+];
+
 const FREE_TEXTS = [
   "Zehnfingerschreiben braucht vor allem eines: Geduld. Am Anfang fühlen sich die Finger noch unsicher an, aber mit jeder Übung wird die Bewegung selbstverständlicher. Wichtig ist, nicht auf die Tastatur zu schauen — die Finger finden ihren Weg von ganz allein, wenn man ihnen die Zeit dazu gibt.",
   "Ein guter Text zum Abschreiben sollte weder zu leicht noch zu schwer sein. Kurze Wörter wechseln sich mit längeren ab, Kommas und Punkte kommen regelmäßig vor. So übt man genau das, was auch beim echten Schreiben gebraucht wird: flüssige Bewegungen, ohne den Blick von der Vorlage zu nehmen.",
+  "Am Anfang zählt nicht die Geschwindigkeit, sondern die Genauigkeit. Wer sich zu früh auf Tempo konzentriert, gewöhnt sich leicht falsche Bewegungen an, die später schwer wieder abzulegen sind. Lieber langsam und richtig als schnell und fehlerhaft — die Geschwindigkeit kommt mit der Zeit von ganz allein.",
 ];
 
 function generateFromList(list: readonly string[], count: number, seed: string, joiner: string): string {
@@ -108,12 +127,34 @@ function generateFromList(list: readonly string[], count: number, seed: string, 
   return picked.join(joiner);
 }
 
-export function generateWords(count: number, seed: string): string {
-  return generateFromList(WORDS, count, seed, " ").toLowerCase();
+/**
+ * Kurze, synthetische "Wörter" (2-4 Buchstaben) aus einem begrenzten
+ * Tastenpool — für Spiele wie Buchstabenregen, solange noch nicht alle
+ * Tasten gelernt sind. Kein echtes Deutsch, aber genau die Tasten, die
+ * gerade geübt werden.
+ */
+export function generateWordPool(availableKeys: string[], count: number, seed: string): string[] {
+  const rand = seededRandom(seed);
+  const pool = availableKeys.filter((k) => k !== " ");
+  if (pool.length === 0) return [];
+  const words: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const len = 2 + Math.floor(rand() * 3);
+    let word = "";
+    for (let j = 0; j < len; j++) word += pick(pool, rand);
+    words.push(word);
+  }
+  return words;
 }
 
-export function generateSentences(count: number, seed: string): string {
-  return generateFromList(SENTENCES, count, seed, " ");
+export function generateWords(count: number, seed: string, difficulty: "easy" | "hard" = "easy"): string {
+  const list = difficulty === "hard" ? WORDS_HARD : WORDS_EASY;
+  return generateFromList(list, count, seed, " ").toLowerCase();
+}
+
+export function generateSentences(count: number, seed: string, difficulty: "easy" | "hard" = "easy"): string {
+  const list = difficulty === "hard" ? SENTENCES_HARD : SENTENCES_EASY;
+  return generateFromList(list, count, seed, " ");
 }
 
 export function pickFreeText(seed: string): string {
@@ -136,9 +177,9 @@ export function generatePracticeText(lesson: LessonDef, seed: string): string {
         seed,
       });
     case "words":
-      return generateWords(WORD_COUNT, seed);
+      return generateWords(WORD_COUNT, seed, lesson.difficulty);
     case "sentences":
-      return generateSentences(SENTENCE_COUNT, seed);
+      return generateSentences(SENTENCE_COUNT, seed, lesson.difficulty);
     case "free-text":
       return pickFreeText(seed);
   }

@@ -5,39 +5,58 @@ export interface LessonDef {
   title: string;
   description: string;
   kind: LessonKind;
-  /** Zeichen, die in dieser Lektion neu hinzukommen (leer bei reinen Kombi-/Shift-Lektionen). */
+  /** Zeichen, die in dieser Lektion neu hinzukommen (leer bei reinen Kombi-/Shift-/Wiederholungs-Lektionen). */
   newKeys: string[];
   /** Bei true wird bewusst mit Großschreibung (Shift) der schon bekannten Buchstaben geübt. */
   introducesShift?: boolean;
+  /** Nur für kind "words"/"sentences": wählt die einfachere oder anspruchsvollere Liste. Ohne Angabe: "easy". */
+  difficulty?: "easy" | "hard";
 }
 
 /**
- * Lehrplan: von der Grundstellung über jede Tastenreihe bis zu Großschreibung,
- * Zahlen, Satzzeichen, Wörtern, Sätzen und freiem Abschreibtext — nach "07 -
- * Adaptive Merkstrecke", Abschnitt "Tastschreibtraining als eigener Bereich".
- * Bis einschließlich "satzzeichen" ist jedes Zeichen der Tastatur genau einer
- * Lektion als "neu" zugeordnet (siehe Test), danach brauchen Wörter/Sätze/freier
- * Text keine Buchstabenbeschränkung mehr.
+ * Lehrplan: von der Grundstellung finger- statt handweise über jede
+ * Tastenreihe bis zu Großschreibung, Zahlen, Satzzeichen, Wörtern, Sätzen und
+ * freiem Abschreibtext — nach "07 - Adaptive Merkstrecke", Abschnitt
+ * "Tastschreibtraining als eigener Bereich". Jedes Fingerpaar bekommt eine
+ * eigene, kleine Lektion (näher an typischen Tipptrainern wie TypingClub als
+ * "eine ganze Hand auf einmal"), dazu eine Wiederholungslektion nach jeder
+ * Tastenreihe. Bis einschließlich "satzzeichen" ist jedes Zeichen der
+ * Tastatur genau einer Lektion als "neu" zugeordnet (siehe Test), danach
+ * brauchen Wörter/Sätze/freier Text keine Buchstabenbeschränkung mehr.
  */
 export const LESSONS: LessonDef[] = [
   {
-    id: "grundstellung-links",
-    title: "Grundstellung: linke Hand",
-    description: "Leg die linke Hand auf A S D F — der kleine Höcker auf der F-Taste hilft dir, sie ohne Hinsehen zu finden.",
+    id: "grundstellung-zeigefinger",
+    title: "Grundstellung: Zeigefinger",
+    description: "F und J — die beiden Tasten mit dem kleinen Höcker. Beide Zeigefinger finden sie ohne hinzusehen.",
     kind: "drill",
-    newKeys: ["a", "s", "d", "f"],
+    newKeys: ["f", "j"],
   },
   {
-    id: "grundstellung-rechts",
-    title: "Grundstellung: rechte Hand",
-    description: "Leg die rechte Hand auf J K L Ö — der Höcker auf der J-Taste ist das Gegenstück zu F.",
+    id: "grundstellung-mittelfinger",
+    title: "Grundstellung: Mittelfinger",
+    description: "D und K — je eine Taste links und rechts von den Zeigefingertasten.",
     kind: "drill",
-    newKeys: ["j", "k", "l", "ö"],
+    newKeys: ["d", "k"],
   },
   {
-    id: "grundreihe-kombiniert",
-    title: "Grundreihe kombiniert",
-    description: "Beide Hände zusammen, mit der Leertaste dazwischen — je ein Daumen bedient sie.",
+    id: "grundstellung-ringfinger",
+    title: "Grundstellung: Ringfinger",
+    description: "S und L — noch eine Taste weiter außen.",
+    kind: "drill",
+    newKeys: ["s", "l"],
+  },
+  {
+    id: "grundstellung-kleinfinger",
+    title: "Grundstellung: kleiner Finger",
+    description: "A und Ö — die äußersten Tasten der Grundreihe.",
+    kind: "drill",
+    newKeys: ["a", "ö"],
+  },
+  {
+    id: "grundreihe-leertaste",
+    title: "Grundreihe mit Leertaste",
+    description: "Alle acht Grundreihen-Tasten zusammen, mit der Leertaste dazwischen — je ein Daumen bedient sie.",
     kind: "drill",
     newKeys: [" "],
   },
@@ -49,18 +68,39 @@ export const LESSONS: LessonDef[] = [
     newKeys: ["g", "h"],
   },
   {
-    id: "obere-reihe-links",
-    title: "Obere Reihe: linke Hand",
-    description: "Q W E R T — jeder Finger einen Schritt nach oben, T greift der Zeigefinger von F aus.",
+    id: "grundreihe-wiederholung",
+    title: "Grundreihe: Wiederholung",
+    description: "Alle zehn Grundreihen-Tasten gemischt — bevor es mit der oberen Reihe weitergeht.",
     kind: "drill",
-    newKeys: ["q", "w", "e", "r", "t"],
+    newKeys: [],
   },
   {
-    id: "obere-reihe-rechts",
-    title: "Obere Reihe: rechte Hand",
-    description: "Z U I O P — Z greift der Zeigefinger von J aus, die anderen Finger je eine Taste nach oben.",
+    id: "obere-reihe-links-1",
+    title: "Obere Reihe: Q W E",
+    description: "Kleiner, Ring- und Mittelfinger der linken Hand je eine Taste nach oben.",
     kind: "drill",
-    newKeys: ["z", "u", "i", "o", "p"],
+    newKeys: ["q", "w", "e"],
+  },
+  {
+    id: "obere-reihe-links-2",
+    title: "Obere Reihe: R T",
+    description: "Der linke Zeigefinger deckt zwei Tasten ab — R und T.",
+    kind: "drill",
+    newKeys: ["r", "t"],
+  },
+  {
+    id: "obere-reihe-rechts-1",
+    title: "Obere Reihe: Z U",
+    description: "Der rechte Zeigefinger deckt ebenfalls zwei Tasten ab — Z und U.",
+    kind: "drill",
+    newKeys: ["z", "u"],
+  },
+  {
+    id: "obere-reihe-rechts-2",
+    title: "Obere Reihe: I O P",
+    description: "Mittel-, Ring- und kleiner Finger der rechten Hand je eine Taste nach oben.",
+    kind: "drill",
+    newKeys: ["i", "o", "p"],
   },
   {
     id: "ue-einfuehren",
@@ -70,21 +110,49 @@ export const LESSONS: LessonDef[] = [
     newKeys: ["ü"],
   },
   {
-    id: "untere-reihe-links",
-    title: "Untere Reihe: linke Hand",
-    description: "Y X C V B — ein Schritt nach unten. Y sitzt dort, wo bei englischen Tastaturen Z ist.",
+    id: "obere-reihe-wiederholung",
+    title: "Obere Reihe: Wiederholung",
+    description: "Grundreihe und obere Reihe gemischt.",
     kind: "drill",
-    newKeys: ["y", "x", "c", "v", "b"],
+    newKeys: [],
   },
   {
-    id: "untere-reihe-rechts",
-    title: "Untere Reihe: rechte Hand",
-    description: "N M , . — Komma und Punkt tippt der Ring- und der kleine Finger, ohne hinzusehen.",
+    id: "untere-reihe-links-1",
+    title: "Untere Reihe: Y X",
+    description: "Kleiner und Ringfinger der linken Hand einen Schritt nach unten. Y sitzt dort, wo bei englischen Tastaturen Z ist.",
     kind: "drill",
-    newKeys: ["n", "m", ",", "."],
+    newKeys: ["y", "x"],
   },
   {
-    id: "grossbuchstaben",
+    id: "untere-reihe-links-2",
+    title: "Untere Reihe: C V B",
+    description: "Mittelfinger und Zeigefinger — der Zeigefinger deckt wieder zwei Tasten ab.",
+    kind: "drill",
+    newKeys: ["c", "v", "b"],
+  },
+  {
+    id: "untere-reihe-rechts-1",
+    title: "Untere Reihe: N M",
+    description: "Der rechte Zeigefinger, wieder zwei Tasten.",
+    kind: "drill",
+    newKeys: ["n", "m"],
+  },
+  {
+    id: "untere-reihe-rechts-2",
+    title: "Untere Reihe: Komma und Punkt",
+    description: "Komma und Punkt tippt der Ring- und der kleine Finger, ohne hinzusehen.",
+    kind: "drill",
+    newKeys: [",", "."],
+  },
+  {
+    id: "untere-reihe-wiederholung",
+    title: "Untere Reihe: Wiederholung",
+    description: "Alle drei Buchstabenreihen gemischt.",
+    kind: "drill",
+    newKeys: [],
+  },
+  {
+    id: "grossbuchstaben-einfuehren",
     title: "Großbuchstaben",
     description: "Die Shift-Taste drückt immer die gegenüberliegende Hand — nie derselbe Finger, der auch den Buchstaben tippt.",
     kind: "drill",
@@ -92,11 +160,26 @@ export const LESSONS: LessonDef[] = [
     introducesShift: true,
   },
   {
-    id: "zahlenreihe",
-    title: "Zahlenreihe",
-    description: "1 bis 0 — jeder Finger bleibt in seiner Spalte, nur weiter oben.",
+    id: "grossbuchstaben-wiederholung",
+    title: "Großbuchstaben: Wiederholung",
+    description: "Noch mehr Groß- und Kleinschreibung im Wechsel, bis die Shift-Hand automatisch mitgeht.",
     kind: "drill",
-    newKeys: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    newKeys: [],
+    introducesShift: true,
+  },
+  {
+    id: "zahlenreihe-links",
+    title: "Zahlenreihe: 1 bis 5",
+    description: "Die linke Hand, jeder Finger bleibt in seiner Spalte, nur weiter oben.",
+    kind: "drill",
+    newKeys: ["1", "2", "3", "4", "5"],
+  },
+  {
+    id: "zahlenreihe-rechts",
+    title: "Zahlenreihe: 6 bis 0",
+    description: "Die rechte Hand vervollständigt die Zahlenreihe.",
+    kind: "drill",
+    newKeys: ["6", "7", "8", "9", "0"],
   },
   {
     id: "satzzeichen",
@@ -106,18 +189,43 @@ export const LESSONS: LessonDef[] = [
     newKeys: ["ß", "ä", "-"],
   },
   {
-    id: "woerter",
-    title: "Wörter",
-    description: "Jetzt sind alle Tasten bekannt — ganze Wörter am Stück, ohne auf die Tastatur zu schauen.",
-    kind: "words",
+    id: "alle-tasten-wiederholung",
+    title: "Alle Tasten: Wiederholung",
+    description: "Die ganze Tastatur gemischt — die letzte Übung, bevor es mit echten Wörtern weitergeht.",
+    kind: "drill",
     newKeys: [],
   },
   {
-    id: "saetze",
-    title: "Sätze",
+    id: "woerter-kurz",
+    title: "Wörter: kurz",
+    description: "Jetzt sind alle Tasten bekannt — kurze, alltägliche Wörter am Stück, ohne auf die Tastatur zu schauen.",
+    kind: "words",
+    newKeys: [],
+    difficulty: "easy",
+  },
+  {
+    id: "woerter-lang",
+    title: "Wörter: länger",
+    description: "Längere Wörter mit mehr Buchstaben pro Anschlagfolge.",
+    kind: "words",
+    newKeys: [],
+    difficulty: "hard",
+  },
+  {
+    id: "saetze-einfach",
+    title: "Sätze: einfach",
     description: "Kurze, vollständige Sätze mit Groß- und Kleinschreibung.",
     kind: "sentences",
     newKeys: [],
+    difficulty: "easy",
+  },
+  {
+    id: "saetze-anspruchsvoll",
+    title: "Sätze: anspruchsvoll",
+    description: "Längere Sätze mit mehr Satzzeichen und verschachtelten Nebensätzen.",
+    kind: "sentences",
+    newKeys: [],
+    difficulty: "hard",
   },
   {
     id: "freier-text",

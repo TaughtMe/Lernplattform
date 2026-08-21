@@ -52,6 +52,19 @@ test("generateSentences: joins the requested number of curated sentences", () =>
   assert.ok((text.match(/\./g) || []).length >= 3);
 });
 
+test("generateWords: the 'hard' tier produces longer average words than 'easy'", () => {
+  const easy = generateWords(30, "diff-seed").split(" ");
+  const hard = generateWords(30, "diff-seed", "hard").split(" ");
+  const avg = (words) => words.reduce((sum, w) => sum + w.length, 0) / words.length;
+  assert.ok(avg(hard) > avg(easy), `expected hard words to average longer: easy=${avg(easy)}, hard=${avg(hard)}`);
+});
+
+test("generateSentences: the 'hard' tier produces longer sentences than 'easy'", () => {
+  const easy = generateSentences(5, "diff-seed-2");
+  const hard = generateSentences(5, "diff-seed-2", "hard");
+  assert.ok(hard.length > easy.length, `expected hard sentences to be longer overall: easy=${easy.length} chars, hard=${hard.length} chars`);
+});
+
 test("pickFreeText: returns a non-empty paragraph, deterministic per seed", () => {
   const a = pickFreeText("free-seed");
   const b = pickFreeText("free-seed");
@@ -67,7 +80,7 @@ test("generatePracticeText: dispatches correctly for every lesson kind without t
 });
 
 test("generatePracticeText: a drill lesson's text only contains characters available by that lesson", () => {
-  const lesson = lessonById("obere-reihe-links");
+  const lesson = lessonById("obere-reihe-links-2");
   const text = generatePracticeText(lesson, "drill-check");
   const used = new Set(text.replace(/ /g, ""));
   const allowed = new Set(["a", "s", "d", "f", "j", "k", "l", "ö", "g", "h", "q", "w", "e", "r", "t"]);

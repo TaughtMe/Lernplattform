@@ -8,8 +8,13 @@ import type { TypingStats } from "../../../src/tastschreiben/typing-stats.ts";
 import { createIndexedDbRepositoryFactory } from "../../../src/storage/indexeddb-repository.ts";
 import { useIsClient } from "../use-is-client.ts";
 import { TypingPractice } from "./typing-practice.tsx";
+import { FallingWordsGame } from "./falling-words-game.tsx";
 
-type View = { mode: "overview" } | { mode: "lesson"; lesson: LessonDef; roundSeed: string } | { mode: "result"; lesson: LessonDef; stats: TypingStats };
+type View =
+  | { mode: "overview" }
+  | { mode: "lesson"; lesson: LessonDef; roundSeed: string }
+  | { mode: "result"; lesson: LessonDef; stats: TypingStats }
+  | { mode: "game" };
 
 function newRoundSeed(lessonId: string): string {
   return `${lessonId}:${Date.now()}:${Math.random()}`;
@@ -57,8 +62,18 @@ export function TastschreibenApp() {
   return (
     <div className="tastschreiben-app">
       {view.mode === "overview" && (
-        <ul className="lesson-list">
-          {LESSONS.map((lesson) => {
+        <>
+          <div className="tastschreiben-app__game-entry">
+            <div>
+              <strong>Buchstabenregen</strong>
+              <p>Wörter fallen von oben — tippe sie, bevor sie unten ankommen. Passt sich automatisch an, was du schon gelernt hast.</p>
+            </div>
+            <button className="button button--secondary" type="button" onClick={() => setView({ mode: "game" })}>
+              🎮 Spielen
+            </button>
+          </div>
+          <ul className="lesson-list">
+            {LESSONS.map((lesson) => {
             const unlocked = isLessonUnlocked(lesson.id, completedIds);
             const p = progress[lesson.id];
             return (
@@ -80,8 +95,9 @@ export function TastschreibenApp() {
                 </button>
               </li>
             );
-          })}
-        </ul>
+            })}
+          </ul>
+        </>
       )}
 
       {view.mode === "lesson" && (
@@ -129,6 +145,8 @@ export function TastschreibenApp() {
           </div>
         </div>
       )}
+
+      {view.mode === "game" && <FallingWordsGame completedLessonIds={completedIds} onExit={() => setView({ mode: "overview" })} />}
     </div>
   );
 }

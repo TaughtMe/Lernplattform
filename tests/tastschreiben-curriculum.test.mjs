@@ -4,23 +4,23 @@ import { LESSONS, availableKeysThrough, lessonById, lessonIndex, isLessonUnlocke
 import { KEYBOARD_ROWS } from "../src/tastschreiben/keyboard-layout.ts";
 
 test("lessonById / lessonIndex: find lessons by id", () => {
-  assert.equal(lessonById("grundstellung-links").title, "Grundstellung: linke Hand");
-  assert.equal(lessonIndex("grundstellung-links"), 0);
+  assert.equal(lessonById("grundstellung-zeigefinger").title, "Grundstellung: Zeigefinger");
+  assert.equal(lessonIndex("grundstellung-zeigefinger"), 0);
   assert.equal(lessonById("does-not-exist"), undefined);
   assert.equal(lessonIndex("does-not-exist"), -1);
 });
 
 test("availableKeysThrough: accumulates only up to and including the given lesson", () => {
-  const afterFirst = availableKeysThrough("grundstellung-links");
-  assert.deepEqual(afterFirst.sort(), ["a", "d", "f", "s"]);
+  const afterFirst = availableKeysThrough("grundstellung-zeigefinger");
+  assert.deepEqual(afterFirst.sort(), ["f", "j"]);
 
-  const afterSecond = availableKeysThrough("grundstellung-rechts");
-  assert.deepEqual(afterSecond.sort(), ["a", "d", "f", "j", "k", "l", "s", "ö"]);
+  const afterFourth = availableKeysThrough("grundstellung-kleinfinger");
+  assert.deepEqual(afterFourth.sort(), ["a", "d", "f", "j", "k", "l", "s", "ö"]);
 });
 
 test("availableKeysThrough: a combo lesson with no new keys does not lose earlier ones", () => {
-  const beforeCombo = availableKeysThrough("grundstellung-rechts").length;
-  const afterCombo = availableKeysThrough("grundreihe-kombiniert").length;
+  const beforeCombo = availableKeysThrough("grundstellung-kleinfinger").length;
+  const afterCombo = availableKeysThrough("grundreihe-leertaste").length;
   assert.equal(afterCombo, beforeCombo + 1, "only space is added by the combo lesson");
 });
 
