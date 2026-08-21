@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle.tsx";
+import { MirrorModeToggle } from "./mirror-mode-toggle.tsx";
 
 export function AppHeader() {
   return (
@@ -8,7 +9,10 @@ export function AppHeader() {
       <nav aria-label="Hauptnavigation">
         <Link href="/lernen">Heute lernen</Link><Link href="/#raumcode">Raum beitreten</Link><Link href="/meine-klasse">Meine Klasse</Link><Link href="/duell">Duell</Link><Link href="/haus">Mein Haus</Link>
       </nav>
-      <ThemeToggle />
+      <div className="site-header__tools">
+        <MirrorModeToggle />
+        <ThemeToggle />
+      </div>
     </header>
   );
 }
