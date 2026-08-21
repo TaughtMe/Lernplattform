@@ -18,8 +18,8 @@ const AREA_COLLECTIONS: Record<LocalDataArea, readonly string[]> = {
     "typing-attempts",
     "game-scores",
   ],
-  classes: [],
-  teacher: [],
+  classes: ["class-memberships", "class-standnr"],
+  teacher: ["teacher-auth", "teacher-classes", "teacher-students", "teacher-turnus", "teacher-submissions"],
 };
 
 /**
@@ -28,7 +28,7 @@ const AREA_COLLECTIONS: Record<LocalDataArea, readonly string[]> = {
  * higher than what's already on disk. Creation is idempotent per collection,
  * so this never needs per-version migration logic, just the version bump.
  */
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 function promisifyRequest<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {

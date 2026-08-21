@@ -405,6 +405,53 @@ code { padding: 2px 6px; border-radius: 6px; background: var(--cream-strong); fo
 .achievements-panel__badge-title { font-size: .74rem; font-weight: 700; }
 .lesson-result__points { margin: 0; color: var(--coral-dark); font-size: 1rem; font-weight: 800; }
 
+.qr-overlay__panel--ok { box-shadow: 0 0 0 3px #1f7a4d; }
+.qr-overlay__panel--fail { box-shadow: 0 0 0 3px #a12d2d; }
+.continuous-scanner__feedback { margin: 0; padding: 8px 14px; border-radius: var(--radius-md); font-weight: 800; text-align: center; }
+.continuous-scanner__feedback--ok { background: #e2f5e9; color: #1f7a4d; }
+.continuous-scanner__feedback--fail { background: #fbe6e6; color: #a12d2d; }
+
+.lehrer-gate { max-width: 360px; margin: 40px auto 0; padding: 28px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); text-align: center; box-shadow: var(--shadow); }
+.lehrer-gate h2 { margin: 0; }
+.lehrer-gate__error { margin: 0; color: #a12d2d; font-size: .9rem; }
+
+.lehrer-bereich { display: flex; flex-direction: column; gap: 8px; }
+.lehrer-bereich__divider { margin: 32px 0; border: 0; border-top: 1px solid var(--line); }
+
+.klassenbriefkasten { display: flex; flex-direction: column; gap: 20px; }
+.klassenbriefkasten__class-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.klassenbriefkasten__inline-form { display: flex; gap: 8px; }
+.klassenbriefkasten__inline-form input { min-width: 160px; }
+.klassenbriefkasten__section { padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); display: flex; flex-direction: column; gap: 12px; }
+.klassenbriefkasten__section h3 { margin: 0; }
+.klassenbriefkasten__roster { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.klassenbriefkasten__roster li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.klassenbriefkasten__roster li:last-child { border-bottom: 0; }
+.klassenbriefkasten__roster li > div { display: flex; gap: 8px; flex: 0 0 auto; }
+.klassenbriefkasten__roster li button { width: auto; flex: 0 0 auto; }
+.klassenbriefkasten__turnus-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.klassenbriefkasten__turnus-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 10px; border-radius: var(--radius-md); }
+.klassenbriefkasten__turnus-list li.is-active { background: var(--cream-strong); }
+.klassenbriefkasten__turnus-list li button { width: auto; flex: 0 0 auto; }
+.klassenbriefkasten__turnus-select { flex: 1; text-align: left; border: 0; background: transparent; font: inherit; cursor: pointer; padding: 4px 0; }
+.klassenbriefkasten__confirm { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--muted); }
+.klassenbriefkasten__confirm button { width: auto; flex: 0 0 auto; }
+.klassenbriefkasten__empty { color: var(--muted); font-style: italic; }
+.klassenbriefkasten__count { margin: 0; font-weight: 800; font-size: 1.05rem; }
+.klassenbriefkasten__missing { margin: 0; color: var(--muted); font-size: .9rem; }
+.klassenbriefkasten__actions { display: flex; gap: 10px; }
+.klassenbriefkasten__actions button { width: auto; }
+
+.meine-klasse { display: flex; flex-direction: column; gap: 16px; }
+.meine-klasse__error { margin: 0; color: #a12d2d; font-size: .9rem; }
+.meine-klasse__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.meine-klasse__membership { padding: 16px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.meine-klasse__membership-info { display: flex; flex-direction: column; gap: 2px; }
+.meine-klasse__membership-info span { color: var(--muted); font-size: .85rem; }
+.meine-klasse__turnus-form { display: flex; gap: 8px; }
+.meine-klasse__turnus-form input { width: 120px; text-transform: uppercase; }
+.meine-klasse__empty { color: var(--muted); font-style: italic; }
+
 @media (max-width: 900px) {
   .lernbox-app__layout { grid-template-columns: 1fr; }
   .site-header { grid-template-columns: 1fr auto; }

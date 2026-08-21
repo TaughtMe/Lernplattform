@@ -171,3 +171,36 @@ Siehe [[../10 - Häuser, Punkte und Motivation/Anwendung|Häuser, Punkte und Mot
 - schulrechtliche und organisatorische Freigabe vor produktivem Einsatz
 
 Die daraus abgeleiteten Umsetzungsschritte stehen in [[../18 - Aufgabenübersicht/Anwendung|Aufgabenübersicht]].
+
+## Vorgeschlagene fachliche Erweiterungen – 21. August 2026
+
+**Status: vorgeschlagen, nicht priorisiert, nicht beschlossen.** Auf Nachfrage zusammengestellte Erweiterungsideen jenseits des bisherigen Plans, jeweils mit kurzem Blick auf den aktuellen fachdidaktischen Forschungsstand, wo das ausdrücklich gewünscht war. Kein Punkt hier ist Teil des aktuellen Entwicklungsauftrags; das dient nur als Gedächtnisstütze für spätere Priorisierung.
+
+### Barrierefreiheits-Modus — mit Einschränkung bei der Schriftart
+
+Ein größerer Textmodus (größere Schrift, mehr Zeilenabstand, kein Blocksatz) wurde vorgeschlagen. Bei der naheliegenden Ergänzung „LRS-Schriftart" (z. B. OpenDyslexic) zeigt eine kurze Recherche aber ein durchwachsenes Bild: Eine aktuelle Meta-Analyse sowie mehrere kontrollierte Studien finden **keinen verlässlichen Lesegeschwindigkeits- oder Genauigkeitsvorteil** von OpenDyslexic oder vergleichbaren Spezialschriften gegenüber gewöhnlichen Schriftarten wie Arial — in einer Studie war OpenDyslexic sogar langsamer, und keine der befragten Schüler:innen bevorzugte sie. Ein einzelner Eyetracking-Befund von 2022 deutet auf einen möglichen Verständnisvorteil bei langen Texten hin, ist aber bisher nicht repliziert. Belastbarer ist dagegen der Befund, dass **größerer Buchstabenabstand** (Letter-Spacing) einen positiven Effekt auf die Lesefähigkeit bei Legasthenie hat.
+
+**Empfehlung:** Falls umgesetzt, eher ein Modus mit erhöhtem Letter-Spacing/Zeilenabstand und angepasster Absatzbreite als eine gebrandete „Legastheniker-Schriftart" — das ist die Stellschraube mit tatsächlicher Evidenz, keine kosmetische Umbenennung des gleichen Anspruchs.
+
+Quellen: [Edutopia – Do Dyslexia Fonts Actually Work?](https://www.edutopia.org/article/do-dyslexia-fonts-actually-work/), [Annals of Dyslexia – Meta-Analyse zu dyslexiefreundlichen Schriftarten](https://link.springer.com/article/10.1007/s11881-026-00389-8), [PMC – The effect of a specialized dyslexia font, OpenDyslexic, on reading rate and accuracy](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5629233/)
+
+### Leseverständnis-Modul
+
+Kurze Texte mit Verständnisfragen, um die Lücke zwischen Rechtschreibung (Lernwörter) und freiem Textverständnis zu schließen. Forschung zu Lesestrategietrainings in der Grundschule zeigt wiederholt positive Effekte auf das Leseverständnis, besonders bei Förderung ab den oberen Grundschulklassen und bei leseschwachen Kindern — etwa das Programm „Wir werden Textdetektive" mit signifikanten kurz- und mittelfristigen Transfereffekten bei Viertklässlern, sowie reziprokes Lehren (Vorhersagen, Zusammenfassen, Nachfragen, Klären) als wirksame kooperative Methode.
+
+**Empfehlung:** Kein reines Multiple-Choice-Verständnisquiz, sondern das Modul von Anfang an um die vier Kernstrategien (Vorhersagen, Zusammenfassen, Nachfragen, Klären) herum aufbauen und peergestützte Bearbeitung (leseschwächeres + lesestärkeres Kind) als Option vorsehen, statt nur Einzelarbeit.
+
+Quellen: [Deutsches Schulportal – Methoden für eine wirksame Leseförderung](https://deutsches-schulportal.de/unterricht/methoden-fuer-eine-effektive-lesefoerderung/), [Zeitschrift für Grundschulforschung – Reziproke Lesegruppen](https://link.springer.com/article/10.1007/s42278-022-00142-1)
+
+### DaZ-Unterstützung (Deutsch als Zweitsprache)
+
+Vereinfachte Textstufen und mehr Bildunterstützung für Schüler:innen mit Deutsch als Zweitsprache. Der etablierte fachdidaktische Rahmen dafür ist **Scaffolding im sprachsensiblen Unterricht**: gezielte, abgestufte Unterstützung (Wortkarten, Satzanfänge, Bildkarten), die mit wachsender Sprachkompetenz gezielt wieder abgebaut wird, sowie die getrennte Vermittlung von Fachbegriff und Fachinhalt für sprachschwächere Lernende, bevor beides verknüpft wird.
+
+**Empfehlung:** Bildunterstützung und Wort-/Satzhilfen nicht als Alles-oder-nichts-Schalter, sondern als abgestufte Hilfsstufen anlegen, die pro Übung reduziert werden können — analog zum bereits bestehenden Hilfe-Konzept bei Lernwörtern und Laufdiktat, nur sprachbezogen statt rechtschreibbezogen.
+
+Quellen: [Mercator-Institut – Basiswissen Scaffolding](https://mercator-institut.uni-koeln.de/sites/mercator/user_upload/PDF/05_Publikationen_und_Material/230206_Basiswissen__Scaffolding.pdf), [Mercator-Institut – Handreichung Sprachsensibel unterrichten](https://mercator-institut.uni-koeln.de/sites/mercator/user_upload/PDF/05_Publikationen_und_Material/200805_Handreichung_Sprachsensibel_unterrichten.pdf)
+
+### Weitere, ohne vertiefte Recherche vorgeschlagene Ideen
+
+- **Elternansicht/Fortschrittsbericht**: druckbarer oder teilbarer Überblick über den Lernstand eines Kindes, z. B. für Elterngespräche. Berührt Datenschutzfragen ähnlich der „Persönlichen Lehrerübersicht" in [[../13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]] und müsste vor Einsatz denselben Prüfschritt durchlaufen.
+- **Modulübergreifendes Gesamt-Level/XP-System**: aktuell hat nur Tastschreiben eine eigene Punktelogik; ein gemeinsames Profil über alle Module hinweg würde den Spielanreiz bündeln, statt ihn pro Modul zu isolieren.

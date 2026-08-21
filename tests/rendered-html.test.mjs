@@ -23,7 +23,7 @@ test("server-renders the Lernraum start page", async () => {
 });
 
 test("server-renders stable module entry pages", async () => {
-  for (const [path, title] of [["/lernen", "Heute lernen"], ["/lernbox", "Meine LernBox"], ["/raum", "Raum beitreten"], ["/lehrer", "Lehrer-Login"]]) {
+  for (const [path, title] of [["/lernen", "Heute lernen"], ["/lernbox", "Meine LernBox"], ["/raum", "Raum beitreten"], ["/lehrer", "Lehrerbereich"]]) {
     const response = await render(path);
     assert.equal(response.status, 200, path);
     assert.match(await response.text(), new RegExp(title), path);
