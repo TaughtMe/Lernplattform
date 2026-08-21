@@ -486,6 +486,44 @@ code { padding: 2px 6px; border-radius: 6px; background: var(--cream-strong); fo
 .meine-klasse__membership > button { width: auto; flex: 0 0 auto; }
 .meine-klasse__empty { color: var(--muted); font-style: italic; }
 
+.duell { max-width: 480px; margin: 0 auto; }
+
+.duell-start { display: flex; flex-direction: column; gap: 18px; }
+.duell-start__tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); }
+.duell-start__tab { flex: 1; padding: 10px; border: 0; background: transparent; color: var(--muted); font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; }
+.duell-start__tab--active { color: var(--coral-dark); border-bottom-color: var(--coral); }
+.duell-start__form { display: flex; flex-direction: column; gap: 10px; }
+.duell-start__form label { font-weight: 700; font-size: .85rem; }
+.duell-start__form input, .duell-start__form select { padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.duell-start__error { margin: 0; color: #a12d2d; font-size: .88rem; }
+
+.duell-lobby { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.duell-lobby__code-row { display: flex; align-items: center; gap: 12px; }
+.duell-lobby__code { padding: 10px 20px; border-radius: 10px; background: var(--cream-strong); font-size: 1.6rem; font-weight: 800; letter-spacing: .12em; }
+.duell-lobby__hint { margin: 0; color: var(--muted); font-size: .88rem; text-align: center; }
+.duell-lobby__participants { width: 100%; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.duell-lobby__participants li { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--line); border-radius: 10px; background: var(--cream-strong); }
+.duell-lobby__creator-badge { color: var(--coral-dark); font-size: .78rem; font-weight: 700; }
+
+.duell-play { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.duell-play__progress { margin: 0; color: var(--muted); font-size: .85rem; font-weight: 700; }
+.duell-play__form { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.duell-play__prompt { margin: 0; font-size: 1.6rem; font-weight: 800; text-align: center; }
+.duell-play__form input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; text-align: center; font-size: 1.15rem; }
+.duell-play__feedback { margin: 0; font-weight: 700; }
+.duell-play__feedback--correct { color: #2f7d4f; }
+.duell-play__feedback--wrong { color: #a12d2d; }
+
+.duell-results { display: flex; flex-direction: column; gap: 16px; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+.duell-results__own-score { margin: 0; font-size: 1.2rem; font-weight: 800; text-align: center; }
+.duell-results__table { width: 100%; border-collapse: collapse; }
+.duell-results__table th, .duell-results__table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.duell-results__row--own { background: var(--cream-strong); font-weight: 700; }
+.duell-results__adopt { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.duell-results__adopt-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.duell-results__adopt-list label { display: flex; align-items: center; gap: 8px; }
+.duell-results__adopt select, .duell-results__adopt input[type="text"], .duell-results__adopt > input { padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+
 @media (max-width: 900px) {
   .lernbox-app__layout { grid-template-columns: 1fr; }
   .site-header { grid-template-columns: 1fr auto; }
