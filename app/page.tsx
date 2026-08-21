@@ -30,7 +30,8 @@ export default function Home() {
           </div>
           <p className="privacy-note">Ohne Schülerkonto · Lernstände bleiben auf diesem Gerät</p>
           <p className="module-hero__alt-link">
-            Rechtschreibung üben? <Link href="/lernwoerter">Meine Lernwörter öffnen →</Link>
+            Rechtschreibung üben? <Link href="/lernwoerter">Meine Lernwörter öffnen →</Link> · Zehnfingerschreiben lernen?{" "}
+            <Link href="/tastschreiben">Tastschreiben öffnen →</Link>
           </p>
         </div>
       </section>
