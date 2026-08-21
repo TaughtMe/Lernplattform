@@ -29,8 +29,13 @@ function feedbackFor(result: ScanResult): ScanFeedback {
   }
 }
 
-export function Klassenbriefkasten({ service }: { service: TeacherService }) {
-  const [classes, setClasses] = useState<ClassV1[]>([]);
+interface Props {
+  service: TeacherService;
+  classes: ClassV1[];
+  onAddClass: (name: string) => Promise<ClassV1>;
+}
+
+export function Klassenbriefkasten({ service, classes, onAddClass }: Props) {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentV1[]>([]);
   const [turnusList, setTurnusList] = useState<TurnusV1[]>([]);
@@ -44,10 +49,6 @@ export function Klassenbriefkasten({ service }: { service: TeacherService }) {
   const [scanning, setScanning] = useState(false);
   const [scanFeedback, setScanFeedback] = useState<ScanFeedback | null>(null);
   const [confirmDeleteTurnusId, setConfirmDeleteTurnusId] = useState<string | null>(null);
-
-  useEffect(() => {
-    service.listClasses().then(setClasses);
-  }, [service]);
 
   const refreshStudents = useCallback(
     (classId: string) => {
@@ -92,8 +93,7 @@ export function Klassenbriefkasten({ service }: { service: TeacherService }) {
     event.preventDefault();
     const name = newClassName.trim();
     if (!name) return;
-    const klasse = await service.addClass(name);
-    setClasses((prev) => [...prev, klasse]);
+    const klasse = await onAddClass(name);
     setNewClassName("");
     setSelectedClassId(klasse.id);
   }

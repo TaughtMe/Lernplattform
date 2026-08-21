@@ -54,6 +54,11 @@ export function createLernwortService(factory: LocalRepositoryFactory) {
     await progressRepo.put({ ...progress, id: progress.learningObjectId });
   }
 
+  /** Fortschritt über alle Lernwörter — Grundlage für den Rankingbeitrag im Klassenranking (siehe src/klasse/ranking.ts). */
+  async function listProgress(): Promise<LernwortProgressV1[]> {
+    return progressRepo.list();
+  }
+
   async function createList(title: string): Promise<LernwortListV1> {
     const trimmed = title.trim();
     if (!trimmed) throw new Error("Listenname darf nicht leer sein");
@@ -258,6 +263,7 @@ export function createLernwortService(factory: LocalRepositoryFactory) {
     recordResult,
     recordBlockResult,
     getProgress,
+    listProgress,
     exportBundle,
     importBundle,
   };

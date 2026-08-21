@@ -140,3 +140,18 @@ test("stackStats reports due and struggling counts per stack", async () => {
   assert.equal(stats[stackB.id].dueCount, 1);
   assert.equal(stats[stackB.id].strugglingCount, 1);
 });
+
+test("listEvents/listProgress: expose the raw event and progress history for the ranking contribution", async () => {
+  const service = await freshService();
+  const stack = await service.createStack("Englisch Unit 3");
+  const item = await service.addVocabularyItem(stack.id, "the house", "das Haus");
+  await service.recordAnswer(item, "prompt-to-answer", "round-1", { knowledgeCorrect: true, writingCorrect: true });
+
+  const events = await service.listEvents();
+  assert.equal(events.length, 1);
+  assert.equal(events[0].learningObjectId, item.id);
+
+  const progress = await service.listProgress();
+  assert.equal(progress.length, 1);
+  assert.equal(progress[0].learningObjectId, item.id);
+});

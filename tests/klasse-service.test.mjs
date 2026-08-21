@@ -9,7 +9,7 @@ let factory;
 
 async function freshFactory() {
   await factory?.close();
-  for (const area of ["teacher", "classes"]) {
+  for (const area of ["teacher", "classes", "personal"]) {
     await new Promise((resolve) => {
       const request = indexedDB.deleteDatabase(LOCAL_DATA_AREAS[area]);
       request.onsuccess = resolve;
@@ -127,4 +127,106 @@ test("upgrades a v4 database (no classes/teacher stores yet) without errors, new
   await teacher.addClass("6b");
   assert.equal((await teacher.listClasses()).length, 1);
   assert.deepEqual(await student.listMemberships(), []);
+});
+
+test("houses: create + assign, students can be unassigned again", async () => {
+  const teacher = createTeacherService(await freshFactory());
+  const klasse = await teacher.addClass("6b");
+  const anna = await teacher.addStudent(klasse.id, "Anna");
+  const feuer = await teacher.addHouse(klasse.id, "Feuer");
+  const wasser = await teacher.addHouse(klasse.id, "Wasser");
+  assert.deepEqual(
+    (await teacher.listHouses(klasse.id)).map((h) => h.name).sort(),
+    ["Feuer", "Wasser"],
+  );
+
+  await teacher.assignStudentHouse(anna.id, feuer.id);
+  assert.equal((await teacher.listStudents(klasse.id)).find((s) => s.id === anna.id).houseId, feuer.id);
+
+  await teacher.assignStudentHouse(anna.id, wasser.id);
+  assert.equal((await teacher.listStudents(klasse.id)).find((s) => s.id === anna.id).houseId, wasser.id);
+
+  await teacher.assignStudentHouse(anna.id, undefined);
+  assert.equal((await teacher.listStudents(klasse.id)).find((s) => s.id === anna.id).houseId, undefined);
+});
+
+test("full ranking round-trip: student's LernBox activity becomes a ranking contribution the teacher can scan", async () => {
+  const teacher = createTeacherService(await freshFactory());
+  const student = createStudentClassService(factory);
+  const { encodeEnrollment } = await import("../src/klasse/roster.ts");
+  const { createLernBoxService } = await import("../src/domain/lernbox-service.ts");
+
+  const klasse = await teacher.addClass("6b");
+  const anna = await teacher.addStudent(klasse.id, "Anna");
+  await student.enroll(encodeEnrollment(await teacher.buildEnrollmentPayload(klasse, anna)));
+
+  const lernBox = createLernBoxService(factory);
+  const stack = await lernBox.createStack("Englisch");
+  const item = await lernBox.addVocabularyItem(stack.id, "the house", "das Haus");
+  await lernBox.recordAnswer(item, "prompt-to-answer", "round-1", { knowledgeCorrect: true, writingCorrect: true });
+
+  const code = await student.generateRankingCode(anna.id);
+  const result = await teacher.scanRanking(klasse.id, code);
+  assert.equal(result.status, "abgegeben");
+  assert.equal(result.totals.correctAnswers, 1);
+
+  const classRanking = await teacher.getClassRanking(klasse.id);
+  const annaRanking = classRanking.find((r) => r.student.id === anna.id);
+  assert.equal(annaRanking.totals.correctAnswers, 1);
+  assert.ok(annaRanking.points > 0);
+
+  // re-scanning the same contribution is a harmless duplicate
+  const rescan = await teacher.scanRanking(klasse.id, code);
+  assert.equal(rescan.status, "doppelt");
+});
+
+test("house ranking: sums member points and evaluates house missions", async () => {
+  const teacher = createTeacherService(await freshFactory());
+  const student = createStudentClassService(factory);
+  const { encodeEnrollment } = await import("../src/klasse/roster.ts");
+  const { createLernBoxService } = await import("../src/domain/lernbox-service.ts");
+
+  const klasse = await teacher.addClass("6b");
+  const anna = await teacher.addStudent(klasse.id, "Anna");
+  const ben = await teacher.addStudent(klasse.id, "Ben");
+  const feuer = await teacher.addHouse(klasse.id, "Feuer");
+  await teacher.assignStudentHouse(anna.id, feuer.id);
+  await teacher.assignStudentHouse(ben.id, feuer.id);
+
+  await student.enroll(encodeEnrollment(await teacher.buildEnrollmentPayload(klasse, anna)));
+  const lernBox = createLernBoxService(factory);
+  const stack = await lernBox.createStack("Englisch");
+  const item = await lernBox.addVocabularyItem(stack.id, "the house", "das Haus");
+  await lernBox.recordAnswer(item, "prompt-to-answer", "round-1", { knowledgeCorrect: true, writingCorrect: true });
+  await teacher.scanRanking(klasse.id, await student.generateRankingCode(anna.id));
+
+  const houseRanking = await teacher.getHouseRanking(klasse.id);
+  assert.equal(houseRanking.length, 1);
+  assert.equal(houseRanking[0].house.name, "Feuer");
+  assert.ok(houseRanking[0].points > 0);
+  assert.equal(houseRanking[0].missions.length, 4);
+});
+
+test("upgrades a v5 database (no teacher-houses/teacher-ranking stores yet) without errors, new stores work", async () => {
+  await factory?.close();
+  await new Promise((resolve) => {
+    const request = indexedDB.deleteDatabase(LOCAL_DATA_AREAS.teacher);
+    request.onsuccess = resolve;
+    request.onerror = resolve;
+    request.onblocked = resolve;
+  });
+  const legacyDb = await new Promise((resolve, reject) => {
+    const request = indexedDB.open(LOCAL_DATA_AREAS.teacher, 5);
+    request.onupgradeneeded = () => {};
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  legacyDb.close();
+
+  factory = createIndexedDbRepositoryFactory();
+  const teacher = createTeacherService(factory);
+  const klasse = await teacher.addClass("6b");
+  const haus = await teacher.addHouse(klasse.id, "Feuer");
+  assert.equal((await teacher.listHouses(klasse.id))[0].id, haus.id);
+  assert.deepEqual(await teacher.getClassRanking(klasse.id), []);
 });

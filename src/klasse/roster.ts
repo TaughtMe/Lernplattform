@@ -21,9 +21,11 @@ export interface StudentV1 {
   displayName?: string;
   secret: string;
   createdAt: string;
+  /** Optionale Hauszugehörigkeit — siehe haus.ts. Ohne Zuordnung, bis die Lehrkraft ein Haus vergibt. */
+  houseId?: string;
 }
 
-function randomId(byteLength: number): string {
+export function randomId(byteLength: number): string {
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
   return base64UrlEncode(bytes);

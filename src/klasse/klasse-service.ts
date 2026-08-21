@@ -3,6 +3,12 @@ import { hashPin, verifyPin, type StoredPin } from "./teacher-auth.ts";
 import { createClass, createStudent, decodeEnrollment, type ClassV1, type StudentV1, type EnrollmentPayloadV1 } from "./roster.ts";
 import { signSubmission } from "./leistungsbrief.ts";
 import { evaluateSubmission, summarizeRoster, type ScanResult, type RosterStatusEntry } from "./submission.ts";
+import { createHouse, type HouseV1 } from "./haus.ts";
+import { signRanking } from "./rankingbrief.ts";
+import { evaluateRankingSubmission, type RankingScanResult } from "./ranking-submission.ts";
+import { computePoints, computeEventTotals, computeGraduatedCount, computeBoxLevelSum, evaluateHouseMissions, ZERO_TOTALS, type RankingTotals, type HouseMissionProgress } from "./ranking.ts";
+import { createLernBoxService } from "../domain/lernbox-service.ts";
+import { createLernwortService } from "../domain/lernwort-service.ts";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -38,6 +44,27 @@ export interface SubmissionRecordV1 {
   receivedAt: string;
 }
 
+/** `totals` sind kumulativ seit jeher (siehe ranking.ts) — der letzte empfangene Stand ist immer der aktuell gültige. */
+export interface RankingRecordV1 {
+  id: string;
+  studentId: string;
+  standNr: number;
+  totals: RankingTotals;
+  receivedAt: string;
+}
+
+export interface ClassRankingEntry {
+  student: StudentV1;
+  totals: RankingTotals;
+  points: number;
+}
+
+export interface HouseRankingEntry {
+  house: HouseV1;
+  points: number;
+  missions: HouseMissionProgress[];
+}
+
 /** Lehrergerät: PIN-Schutz, Klassen-/Schülerverwaltung, Abgaberunden und der fortlaufende Scanmodus. */
 export function createTeacherService(factory: LocalRepositoryFactory) {
   const authRepo = factory.open<StoredPin & { id: string }>("teacher", "teacher-auth");
@@ -45,6 +72,8 @@ export function createTeacherService(factory: LocalRepositoryFactory) {
   const studentsRepo = factory.open<StudentV1>("teacher", "teacher-students");
   const turnusRepo = factory.open<TurnusV1>("teacher", "teacher-turnus");
   const submissionsRepo = factory.open<SubmissionRecordV1>("teacher", "teacher-submissions");
+  const housesRepo = factory.open<HouseV1>("teacher", "teacher-houses");
+  const rankingRepo = factory.open<RankingRecordV1>("teacher", "teacher-ranking");
 
   async function hasPinSet(): Promise<boolean> {
     return (await authRepo.get(TEACHER_PIN_RECORD_ID)) !== undefined;
@@ -145,6 +174,60 @@ export function createTeacherService(factory: LocalRepositoryFactory) {
     return result;
   }
 
+  async function addHouse(classId: string, name: string): Promise<HouseV1> {
+    const haus = createHouse(classId, name);
+    await housesRepo.put(haus);
+    return haus;
+  }
+
+  async function listHouses(classId: string): Promise<HouseV1[]> {
+    return (await housesRepo.list()).filter((h) => h.classId === classId);
+  }
+
+  async function assignStudentHouse(studentId: string, houseId: string | undefined): Promise<void> {
+    const student = await studentsRepo.get(studentId);
+    if (!student) return;
+    const updated: StudentV1 = { ...student };
+    if (houseId) updated.houseId = houseId;
+    else delete updated.houseId;
+    await studentsRepo.put(updated);
+  }
+
+  /** Ein Scan des Rankingbeitrags — persistiert nur einen frischen (höheren) Stand, siehe rankingbrief.ts. */
+  async function scanRanking(classId: string, encoded: string): Promise<RankingScanResult> {
+    const roster = await listStudents(classId);
+    const existingRecords = await Promise.all(roster.map((s) => rankingRepo.get(s.id)));
+    const existingStandNrByStudent = Object.fromEntries(
+      roster
+        .map((s, i) => [s.id, existingRecords[i]?.standNr] as const)
+        .filter((entry): entry is [string, number] => entry[1] !== undefined),
+    );
+    const result = await evaluateRankingSubmission(encoded, classId, roster, existingStandNrByStudent);
+    if (result.status === "abgegeben" && result.studentId !== undefined && result.standNr !== undefined && result.totals !== undefined) {
+      await rankingRepo.put({ id: result.studentId, studentId: result.studentId, standNr: result.standNr, totals: result.totals, receivedAt: nowIso() });
+    }
+    return result;
+  }
+
+  async function getClassRanking(classId: string): Promise<ClassRankingEntry[]> {
+    const roster = await listStudents(classId);
+    const records = await Promise.all(roster.map((s) => rankingRepo.get(s.id)));
+    return roster.map((student, i) => {
+      const totals = records[i]?.totals ?? ZERO_TOTALS;
+      return { student, totals, points: computePoints(totals) };
+    });
+  }
+
+  /** Team-/Hauswerte statt einer vollständigen Einzelrangliste — genau die im Entscheidungsprotokoll geforderte "positive" Darstellung. */
+  async function getHouseRanking(classId: string): Promise<HouseRankingEntry[]> {
+    const [houses, classRanking] = await Promise.all([listHouses(classId), getClassRanking(classId)]);
+    return houses.map((house) => {
+      const memberTotals = classRanking.filter((entry) => entry.student.houseId === house.id).map((entry) => entry.totals);
+      const points = memberTotals.reduce((sum, totals) => sum + computePoints(totals), 0);
+      return { house, points, missions: evaluateHouseMissions(memberTotals) };
+    });
+  }
+
   return {
     hasPinSet,
     setPin,
@@ -162,6 +245,12 @@ export function createTeacherService(factory: LocalRepositoryFactory) {
     getSubmissions,
     getRosterStatus,
     scanSubmission,
+    addHouse,
+    listHouses,
+    assignStudentHouse,
+    scanRanking,
+    getClassRanking,
+    getHouseRanking,
   };
 }
 
@@ -217,7 +306,37 @@ export function createStudentClassService(factory: LocalRepositoryFactory) {
     return signSubmission({ v: 1, classId: membership.classId, studentId: membershipId, turnusId, standNr }, membership.secret);
   }
 
-  return { listMemberships, enroll, generateSubmissionCode };
+  const lernBox = createLernBoxService(factory);
+  const lernwort = createLernwortService(factory);
+
+  /** Fasst die eigene Lernhistorie (LernBox + Lernwörter) zu den kumulativen Rankingwerten zusammen — siehe ranking.ts. */
+  async function computeCurrentTotals(): Promise<RankingTotals> {
+    const [events, lernboxProgress, lernwortProgress] = await Promise.all([lernBox.listEvents(), lernBox.listProgress(), lernwort.listProgress()]);
+    return {
+      ...computeEventTotals(events),
+      graduatedLernwoerter: computeGraduatedCount(lernwortProgress),
+      boxLevelSum: computeBoxLevelSum(lernboxProgress),
+    };
+  }
+
+  async function nextRankingStandNr(membershipId: string): Promise<number> {
+    const key = `ranking:${membershipId}`;
+    const existing = await standNrRepo.get(key);
+    const value = (existing?.value ?? 0) + 1;
+    await standNrRepo.put({ id: key, value });
+    return value;
+  }
+
+  /** Erzeugt einen neuen, signierten Rankingbeitrag — kumulative Werte, deshalb jederzeit gefahrlos wiederholbar (siehe rankingbrief.ts). */
+  async function generateRankingCode(membershipId: string): Promise<string | null> {
+    const membership = await membershipsRepo.get(membershipId);
+    if (!membership) return null;
+    const totals = await computeCurrentTotals();
+    const standNr = await nextRankingStandNr(membershipId);
+    return signRanking({ v: 1, classId: membership.classId, studentId: membershipId, standNr, totals }, membership.secret);
+  }
+
+  return { listMemberships, enroll, generateSubmissionCode, computeCurrentTotals, generateRankingCode };
 }
 
 export type StudentClassService = ReturnType<typeof createStudentClassService>;

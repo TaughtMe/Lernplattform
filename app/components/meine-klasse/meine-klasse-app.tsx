@@ -19,7 +19,7 @@ export function MeineKlasseApp() {
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const [turnusCodeByMembership, setTurnusCodeByMembership] = useState<Record<string, string>>({});
   const [generateError, setGenerateError] = useState<string | null>(null);
-  const [submissionCode, setSubmissionCode] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<{ code: string; title: string } | null>(null);
 
   const refresh = useCallback((svc: StudentClassService) => {
     svc.listMemberships().then(setMemberships);
@@ -58,7 +58,17 @@ export function MeineKlasseApp() {
       return;
     }
     setGenerateError(null);
-    setSubmissionCode(result);
+    setQrCode({ code: result, title: "Leistungsbrief" });
+  }
+
+  async function handleGenerateRanking(membershipId: string) {
+    const result = await service!.generateRankingCode(membershipId);
+    if (!result) {
+      setGenerateError("Konnte keinen Rankingbeitrag erzeugen — bist du in dieser Klasse eingeschrieben?");
+      return;
+    }
+    setGenerateError(null);
+    setQrCode({ code: result, title: "Rankingbeitrag" });
   }
 
   return (
@@ -85,6 +95,9 @@ export function MeineKlasseApp() {
               />
               <button className="button button--secondary" type="submit">Leistungsbrief erzeugen</button>
             </form>
+            <button className="button button--quiet" type="button" onClick={() => handleGenerateRanking(membership.id)}>
+              Rankingbeitrag erzeugen
+            </button>
           </li>
         ))}
         {memberships.length === 0 && <li className="meine-klasse__empty">Noch in keiner Klasse eingeschrieben.</li>}
@@ -92,7 +105,7 @@ export function MeineKlasseApp() {
       {generateError && <p role="alert" className="meine-klasse__error">{generateError}</p>}
 
       {scanning && <QrScannerOverlay onResult={handleScanResult} onClose={() => setScanning(false)} />}
-      {submissionCode && <SubmissionQrOverlay code={submissionCode} onClose={() => setSubmissionCode(null)} />}
+      {qrCode && <SubmissionQrOverlay code={qrCode.code} title={qrCode.title} onClose={() => setQrCode(null)} />}
     </div>
   );
 }

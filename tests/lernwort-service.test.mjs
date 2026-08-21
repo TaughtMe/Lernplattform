@@ -210,3 +210,15 @@ test("importing a vocabulary-only LernBox bundle (no lernwoerter field) is a har
   });
   assert.deepEqual(result, { importedItems: 0, importedLists: 0 });
 });
+
+test("listProgress: exposes the raw progress history for the ranking contribution", async () => {
+  const service = await freshService();
+  const list = await service.createList("Rechtschreibung");
+  const item = await service.addLernwort(list.id, "Fahrrad");
+  await service.recordResult(item, { correct: true, usedHelp: false, selfCorrected: false });
+
+  const progress = await service.listProgress();
+  assert.equal(progress.length, 1);
+  assert.equal(progress[0].learningObjectId, item.id);
+  assert.equal(progress[0].stage, 2);
+});

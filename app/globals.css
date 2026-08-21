@@ -449,6 +449,32 @@ code { padding: 2px 6px; border-radius: 6px; background: var(--cream-strong); fo
 .klassenbriefkasten__actions { display: flex; gap: 10px; }
 .klassenbriefkasten__actions button { width: auto; }
 
+.haus-punkte { display: flex; flex-direction: column; gap: 20px; }
+.haus-punkte__class-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.haus-punkte__inline-form { display: flex; gap: 8px; }
+.haus-punkte__inline-form input { min-width: 160px; }
+.haus-punkte__section { padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); display: flex; flex-direction: column; gap: 12px; }
+.haus-punkte__section h3 { margin: 0; }
+.haus-punkte__section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.haus-punkte__section-heading button { width: auto; }
+.haus-punkte__house-list { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.haus-punkte__house-list li { padding: 6px 14px; border-radius: 999px; background: var(--cream-strong); font-weight: 700; }
+.haus-punkte__roster { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.haus-punkte__roster li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.haus-punkte__roster li:last-child { border-bottom: 0; }
+.haus-punkte__total { margin: 0; color: var(--muted); font-size: .9rem; }
+.haus-punkte__ranking { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.haus-punkte__ranking-item { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--cream-strong); display: flex; flex-direction: column; gap: 10px; }
+.haus-punkte__ranking-heading { display: flex; align-items: baseline; justify-content: space-between; }
+.haus-punkte__ranking-heading strong { font-size: 1.1rem; }
+.haus-punkte__ranking-heading span { font-weight: 800; color: var(--coral-dark); }
+.haus-punkte__missions { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.haus-punkte__mission-heading { display: flex; align-items: center; justify-content: space-between; font-size: .82rem; color: var(--muted); }
+.haus-punkte__missions li.is-complete .haus-punkte__mission-heading { color: #1f7a4d; font-weight: 700; }
+.haus-punkte__mission-bar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.haus-punkte__mission-fill { height: 100%; background: var(--teal-dark); border-radius: 999px; transition: width .2s ease; }
+.haus-punkte__empty { color: var(--muted); font-style: italic; }
+
 .meine-klasse { display: flex; flex-direction: column; gap: 16px; }
 .meine-klasse__error { margin: 0; color: #a12d2d; font-size: .9rem; }
 .meine-klasse__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
@@ -457,6 +483,7 @@ code { padding: 2px 6px; border-radius: 6px; background: var(--cream-strong); fo
 .meine-klasse__membership-info span { color: var(--muted); font-size: .85rem; }
 .meine-klasse__turnus-form { display: flex; gap: 8px; }
 .meine-klasse__turnus-form input { width: 120px; text-transform: uppercase; }
+.meine-klasse__membership > button { width: auto; flex: 0 0 auto; }
 .meine-klasse__empty { color: var(--muted); font-style: italic; }
 
 @media (max-width: 900px) {

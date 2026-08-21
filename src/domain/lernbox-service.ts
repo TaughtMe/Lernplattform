@@ -59,6 +59,16 @@ export function createLernBoxService(factory: LocalRepositoryFactory) {
     await progressRepo.put({ ...progress, id: progress.learningObjectId });
   }
 
+  /** Alle Lernereignisse dieses Geräts — Grundlage für den Rankingbeitrag im Klassenranking (siehe src/klasse/ranking.ts). */
+  async function listEvents(): Promise<LearningEventV1[]> {
+    return eventsRepo.list();
+  }
+
+  /** Alle Fortschritte über alle Vokabeln hinweg, ebenfalls für den Rankingbeitrag. */
+  async function listProgress(): Promise<LearningProgressV1[]> {
+    return progressRepo.list();
+  }
+
   async function createStack(title: string): Promise<VocabularyStackV1> {
     const trimmed = title.trim();
     if (!trimmed) throw new Error("Stapelname darf nicht leer sein");
@@ -283,6 +293,8 @@ export function createLernBoxService(factory: LocalRepositoryFactory) {
     stackStats,
     recordAnswer,
     getProgress,
+    listEvents,
+    listProgress,
     exportBundle,
     importBundle,
   };
