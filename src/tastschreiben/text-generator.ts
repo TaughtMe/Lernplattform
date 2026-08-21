@@ -74,6 +74,13 @@ export function generateDrillText(opts: DrillOptions): string {
   return words.join(" ");
 }
 
+/** Drill nur aus den schwächsten Tasten (Fehlertasten-Training) — kein "neu vs. bekannt", jede Taste zählt gleich. */
+export function generateWeakKeyDrill(weakKeys: string[], length: number, seed: string): string {
+  const keys = weakKeys.filter((k) => k !== " ");
+  if (keys.length === 0) return "";
+  return generateDrillText({ newKeys: keys, availableKeys: keys, length, seed });
+}
+
 // --- Kuratierte Wort-/Satzlisten für die Lektionen ab "alle Tasten bekannt". ---
 
 const WORDS_EASY = [
@@ -165,6 +172,27 @@ export function pickFreeText(seed: string): string {
 const DRILL_LENGTH = 60;
 const WORD_COUNT = 12;
 const SENTENCE_COUNT = 4;
+
+/**
+ * Ein langer, ununterbrochener Textstrom fürs Zeitrennen — deutlich mehr
+ * Zeichen, als in 60 Sekunden auch von sehr schnellen Schreiber:innen
+ * getippt werden können, damit der Text nie vor der Zeit ausgeht.
+ */
+export function generateTimeAttackText(seed: string, minChars: number = 1200): string {
+  const rand = seededRandom(seed);
+  const parts: string[] = [];
+  let total = 0;
+  let i = 0;
+  while (total < minChars) {
+    const list = rand() < 0.5 ? SENTENCES_EASY : SENTENCES_HARD;
+    const sentence = pick(list, rand);
+    parts.push(sentence);
+    total += sentence.length + 1;
+    i += 1;
+    if (i > 200) break; // Sicherheitsnetz gegen eine Endlosschleife, sollte nie greifen.
+  }
+  return parts.join(" ");
+}
 
 export function generatePracticeText(lesson: LessonDef, seed: string): string {
   switch (lesson.kind) {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { generateDrillText, generateWords, generateSentences, pickFreeText, generatePracticeText } from "../src/tastschreiben/text-generator.ts";
+import { generateDrillText, generateWords, generateSentences, pickFreeText, generatePracticeText, generateTimeAttackText, generateWeakKeyDrill } from "../src/tastschreiben/text-generator.ts";
 import { LESSONS, lessonById } from "../src/tastschreiben/curriculum.ts";
 
 test("generateDrillText: only uses characters from the available pool", () => {
@@ -85,4 +85,31 @@ test("generatePracticeText: a drill lesson's text only contains characters avail
   const used = new Set(text.replace(/ /g, ""));
   const allowed = new Set(["a", "s", "d", "f", "j", "k", "l", "ö", "g", "h", "q", "w", "e", "r", "t"]);
   for (const ch of used) assert.ok(allowed.has(ch), `"${ch}" should not appear yet in ${lesson.id}`);
+});
+
+test("generateTimeAttackText: is at least as long as requested, even for a fast typist", () => {
+  const text = generateTimeAttackText("attack-seed", 1200);
+  assert.ok(text.length >= 1200, `expected at least 1200 characters, got ${text.length}`);
+});
+
+test("generateTimeAttackText: is deterministic for the same seed", () => {
+  assert.equal(generateTimeAttackText("same", 500), generateTimeAttackText("same", 500));
+});
+
+test("generateTimeAttackText: mixes easy and hard sentences, not just one list", () => {
+  const text = generateTimeAttackText("mix-seed", 3000);
+  const hasEasyOnly = text.includes("Die Sonne scheint über dem Garten.");
+  const hasHardOnly = text.includes("Obwohl es draußen regnete");
+  assert.ok(hasEasyOnly || hasHardOnly, "expected recognizable sentences from the curated lists");
+});
+
+test("generateWeakKeyDrill: only uses the given weak keys, at the requested length", () => {
+  const text = generateWeakKeyDrill(["q", "ü"], 30, "weak-seed");
+  const used = new Set(text.replace(/ /g, ""));
+  for (const ch of used) assert.ok(["q", "ü"].includes(ch), `unexpected character "${ch}"`);
+  assert.ok(text.replace(/ /g, "").length >= 30);
+});
+
+test("generateWeakKeyDrill: returns an empty string when there are no weak keys yet", () => {
+  assert.equal(generateWeakKeyDrill([], 30, "weak-seed"), "");
 });

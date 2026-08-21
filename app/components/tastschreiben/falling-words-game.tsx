@@ -2,26 +2,43 @@
 
 import { useEffect, useRef, useState } from "react";
 import { initGame, spawnWord, tick, typeChar, pickSpawnPool, LANES, STARTING_LIVES, type FallingWordsState } from "../../../src/tastschreiben/falling-words-game.ts";
+import { playClick, playError } from "../../../src/tastschreiben/sound.ts";
 
 type Props = {
   completedLessonIds: ReadonlySet<string>;
   onExit: () => void;
+  onGameOver?: (score: number, bestStreak: number) => void;
 };
 
 const TICK_MS = 50;
 const SPAWN_MS = 1600;
 
-export function FallingWordsGame({ completedLessonIds, onExit }: Props) {
+export function FallingWordsGame({ completedLessonIds, onExit, onGameOver }: Props) {
   const [state, setState] = useState<FallingWordsState>(initGame);
   const [focused, setFocused] = useState(false);
   const poolRef = useRef<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const prevStateRef = useRef(state);
+  const gameOverNotifiedRef = useRef(false);
 
   useEffect(() => {
     poolRef.current = pickSpawnPool(completedLessonIds, `game:${Date.now()}`);
     inputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const prev = prevStateRef.current;
+    if (state.score > prev.score) playClick();
+    if (state.lives < prev.lives) playError();
+    prevStateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    if (!state.gameOver || gameOverNotifiedRef.current) return;
+    gameOverNotifiedRef.current = true;
+    onGameOver?.(state.score, state.bestStreak);
+  }, [state.gameOver, state.score, state.bestStreak, onGameOver]);
 
   useEffect(() => {
     const tickTimer = setInterval(() => setState((s) => tick(s, TICK_MS)), TICK_MS);
@@ -46,7 +63,10 @@ export function FallingWordsGame({ completedLessonIds, onExit }: Props) {
   }
 
   function restart() {
-    setState(initGame());
+    const fresh = initGame();
+    setState(fresh);
+    prevStateRef.current = fresh;
+    gameOverNotifiedRef.current = false;
     poolRef.current = pickSpawnPool(completedLessonIds, `game:${Date.now()}`);
     inputRef.current?.focus();
   }

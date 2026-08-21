@@ -63,3 +63,14 @@ export function backspace(state: TypingSessionState): TypingSessionState {
   typed[position] = null;
   return { ...state, position, typed, corrections: state.corrections + 1 };
 }
+
+/**
+ * Beendet eine Runde vorzeitig (z. B. Zeitrennen: die Zeit ist um, auch wenn
+ * der Text noch nicht zu Ende getippt ist). Ohne begonnene Eingabe
+ * (startedAt noch leer) bleibt die Runde unverändert — es gäbe sonst eine
+ * Dauer von 0 ms und eine irreführende Statistik aus nichts.
+ */
+export function forceFinish(state: TypingSessionState, now: number): TypingSessionState {
+  if (isFinished(state) || state.startedAt === null) return state;
+  return { ...state, finishedAt: now };
+}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { initSession, typeChar, backspace, isFinished, currentExpectedChar } from "../src/tastschreiben/typing-session.ts";
+import { initSession, typeChar, backspace, isFinished, currentExpectedChar, forceFinish } from "../src/tastschreiben/typing-session.ts";
 import { computeStats } from "../src/tastschreiben/typing-stats.ts";
 
 test("initSession: starts at position 0, nothing typed, not finished", () => {
@@ -85,4 +85,28 @@ test("computeStats: an empty keystroke log reports full accuracy and zero speed,
   assert.equal(stats.accuracy, 100);
   assert.equal(stats.cpm, 0);
   assert.equal(stats.wpm, 0);
+});
+
+test("forceFinish: ends a started session early, mid-text (e.g. a time-attack timer running out)", () => {
+  let s = initSession("hallo welt, ein sehr langer text");
+  s = typeChar(s, "h", 1000);
+  s = typeChar(s, "a", 1200);
+  s = forceFinish(s, 5000);
+  assert.equal(isFinished(s), true);
+  assert.equal(s.finishedAt, 5000);
+  assert.equal(s.position, 2, "typed-so-far is preserved, the rest of the text is simply abandoned");
+});
+
+test("forceFinish: does nothing if typing never started (avoids a fake 0ms round)", () => {
+  const s = initSession("hallo");
+  const after = forceFinish(s, 5000);
+  assert.equal(after, s);
+});
+
+test("forceFinish: does nothing once the session is already finished", () => {
+  let s = initSession("ab");
+  s = typeChar(s, "a", 1000);
+  s = typeChar(s, "b", 1200);
+  const after = forceFinish(s, 5000);
+  assert.equal(after, s);
 });
