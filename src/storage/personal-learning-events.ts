@@ -6,6 +6,8 @@ import { updateLearningWordProgress } from "../domain/learning-word-progress";
 import type {
   LearningBoxCard,
   LearningBoxDeck,
+  LearningBoxDirection,
+  LearningBoxMode,
   LearningBoxSource,
 } from "../domain/learning-box";
 import {
@@ -202,6 +204,48 @@ export function createLearningBoxRepository(
       database.learningBoxCards.where("deckId").equals(deckId).toArray(),
     getCard: (id: string) => database.learningBoxCards.get(id),
     putCard: (card: LearningBoxCard) => database.learningBoxCards.put(card),
+    putCardAndEvent: async (input: {
+      card: LearningBoxCard;
+      correct: boolean;
+      direction: LearningBoxDirection;
+      mode: LearningBoxMode;
+      roundId: string;
+      now?: string;
+    }) => {
+      const occurredAt = input.now ?? new Date().toISOString();
+      await database.transaction(
+        "rw",
+        database.learningBoxCards,
+        database.learningEvents,
+        async () => {
+          await database.learningBoxCards.put(input.card);
+          await database.learningEvents.put({
+            id: crypto.randomUUID(),
+            learningObjectId: input.card.id,
+            occurredAt,
+            source: "learning-box",
+            learningArea: "vocabulary",
+            roundId: input.roundId,
+            direction:
+              input.direction === "forward"
+                ? "prompt-to-answer"
+                : "answer-to-prompt",
+            answerMode: input.mode === "writing" ? "typed" : "self-check",
+            help: input.mode === "writing" ? "none" : "solution",
+            assessment: {
+              knowledge: input.correct ? "correct" : "incorrect",
+              writing:
+                input.mode === "writing"
+                  ? input.correct
+                    ? "correct"
+                    : "incorrect"
+                  : "not-assessed",
+              selfCorrected: false,
+            },
+          });
+        },
+      );
+    },
     addCard: async (input: Parameters<typeof createLearningBoxCard>[0]) => {
       const fingerprint = learningBoxFingerprint(input.question, input.answer);
       const existing = await database.learningBoxCards
@@ -359,6 +403,7 @@ export function createLearningWordProgressRepository(
               learningObjectId: id,
               occurredAt: now,
               source: "learning-word",
+              learningArea: "german",
               roundId: input.roundId,
               direction: "prompt-to-answer",
               answerMode: "typed",
@@ -400,6 +445,7 @@ export function createTypingProgressRepository(
             learningObjectId: `typing:${lessonId}`,
             occurredAt: now,
             source: "typing",
+            learningArea: "typing",
             roundId,
             direction: "prompt-to-answer",
             answerMode: "typed",

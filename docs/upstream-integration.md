@@ -46,6 +46,7 @@ Aus dem divergierten Claude-Branch wurden bewusst nur fachlich passende Teile ü
 - Tastschreiben folgt einem linearen Curriculum von der Grundstellung bis zum zusammenhängenden Text.
 - Genauigkeit entscheidet über den Lernfortschritt; Tempo bleibt eine informative Zusatzkennzahl.
 - Unsichere Tasten, Korrekturen und Rundenfortschritt bleiben lokal und fließen in den persönlichen Fortschritt ein.
+- LernBox, Lernwörter, Kopfrechnen und Tastschreiben liefern ihre Fehler, Fälligkeiten und nächsten Schritte über denselben `LearningRecommendation`-Vertrag an **Heute üben**.
 
 Nicht übernommen wurden die abweichende Startseite und Navigation, eine zweite IndexedDB-Abstraktion, Punkte, Abzeichen, Medaillen, Zeitrennen, Buchstabenregen, Häuser, Rankings, Duelle sowie eigene App- und Theme-Hüllen. Diese Teile würden vor dem funktionierenden adaptiven Kern zusätzliche Produktwelten eröffnen.
 

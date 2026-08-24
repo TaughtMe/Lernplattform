@@ -21,6 +21,12 @@ export const eventSourceSchema = z.enum([
   "running-dictation",
   "duel",
 ]);
+export const learningAreaSchema = z.enum([
+  "vocabulary",
+  "german",
+  "mathematics",
+  "typing",
+]);
 export const helpKindSchema = z.enum(["none", "hint", "solution"]);
 export const assessmentSchema = z.enum([
   "correct",
@@ -69,10 +75,18 @@ export const learningEventV1Schema = z
     learningObjectId: entityIdSchema,
     occurredAt: isoDateTimeSchema,
     source: eventSourceSchema,
+    learningArea: learningAreaSchema.optional(),
     roundId: entityIdSchema,
     direction: learningDirectionSchema,
     answerMode: answerModeSchema,
     help: helpKindSchema,
+    practice: z
+      .object({
+        title: z.string().trim().min(1).max(200),
+        route: z.string().startsWith("/"),
+      })
+      .strict()
+      .optional(),
     classContext: z
       .object({
         classId: entityIdSchema,
@@ -193,6 +207,7 @@ export type LearningObjectKind = "vocabulary";
 export type LearningDirection = z.infer<typeof learningDirectionSchema>;
 export type AnswerMode = z.infer<typeof answerModeSchema>;
 export type EventSource = z.infer<typeof eventSourceSchema>;
+export type LearningArea = z.infer<typeof learningAreaSchema>;
 export type HelpKind = z.infer<typeof helpKindSchema>;
 export type Assessment = z.infer<typeof assessmentSchema>;
 export type VocabularyItemV1 = z.infer<typeof vocabularyItemV1Schema>;

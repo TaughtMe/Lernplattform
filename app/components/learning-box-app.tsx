@@ -190,8 +190,8 @@ export function LearningBoxApp() {
         <LearningSession
           deck={selectedDeck}
           cards={selectedCards}
-          onSave={async (card) => {
-            await repository.putCard(card);
+          onSave={async (card, result) => {
+            await repository.putCardAndEvent({ card, ...result });
             await refresh();
           }}
           onClose={() => setView("deck")}
@@ -520,7 +520,15 @@ function LearningSession({
 }: {
   deck: LearningBoxDeck;
   cards: LearningBoxCard[];
-  onSave: (card: LearningBoxCard) => Promise<void>;
+  onSave: (
+    card: LearningBoxCard,
+    result: {
+      correct: boolean;
+      direction: LearningBoxDirection;
+      mode: LearningBoxMode;
+      roundId: string;
+    },
+  ) => Promise<void>;
   onClose: () => void;
 }) {
   const [mode, setMode] = useState<LearningBoxMode>("oral");
@@ -535,6 +543,7 @@ function LearningSession({
     expected: string;
   }>();
   const [stats, setStats] = useState({ correct: 0, wrong: 0 });
+  const roundId = useRef(crypto.randomUUID());
   const current = queue[index];
   const prompt = current ? getLearningBoxPrompt(current, direction) : undefined;
 
@@ -543,6 +552,7 @@ function LearningSession({
     setQueue(due.length ? due : cards);
     setIndex(0);
     setStats({ correct: 0, wrong: 0 });
+    roundId.current = crypto.randomUUID();
     setStarted(true);
   }
 
@@ -553,7 +563,12 @@ function LearningSession({
       direction,
       mode,
     });
-    await onSave(updated);
+    await onSave(updated, {
+      correct,
+      direction,
+      mode,
+      roundId: roundId.current,
+    });
     setFeedback({ correct, expected });
     setStats((value) => ({
       correct: value.correct + (correct ? 1 : 0),

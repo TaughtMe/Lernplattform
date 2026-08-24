@@ -185,10 +185,15 @@ export function FirstLearningRound() {
       learningObjectId: currentItem.id,
       occurredAt: new Date().toISOString(),
       source: "lesson",
+      learningArea: "vocabulary",
       roundId,
       direction,
       answerMode: input.answerMode,
       help: input.answerMode === "self-check" ? "solution" : "none",
+      practice: {
+        title: "School words wiederholen",
+        route: "/klasse/7b/aufgaben/vokabeln",
+      },
       classContext: {
         classId: "klasse-7b",
         rankingEligible: true,

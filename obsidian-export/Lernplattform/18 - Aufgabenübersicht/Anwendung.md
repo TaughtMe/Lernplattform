@@ -89,7 +89,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Adaptiven Lernkreislauf als übergeordnete Produkt- und Facharchitektur dokumentieren
 - [x] Klassenansicht auf „Heute üben / Frei üben / Mein Fortschritt“ reduzieren
 - [x] Erste lokale Fortschrittsübersicht für Aktivität, aktive Tage und bewältigte frühere Fehler umsetzen
-- [ ] Alle Lernmodule über ein gemeinsames typisiertes Lernsignalmodell an den adaptiven Kern anbinden
+- [x] LernBox, Lernwörter, Kopfrechnen und Tastschreiben über ein gemeinsames typisiertes Lernsignal- und Empfehlungsmodell an den adaptiven Kern anbinden
 - [x] Digitale Hausaufgaben und Lehrerimpulse aus der Klassenansicht entfernen; Aufgaben werden klassisch mitgeteilt
 - [x] Deutsch direkt mit Lernwörtern, Vokabeln direkt mit LernBox und Mathematik direkt mit Kopfrechnen verknüpfen
 - [x] Separaten Laufdiktat-Raumcode in Klassenraum und freiem Bereich platzieren

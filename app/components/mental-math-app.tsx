@@ -190,10 +190,15 @@ export function MentalMathApp() {
       learningObjectId: `${task.skillId}:range-${maxValue}`,
       occurredAt: new Date().toISOString(),
       source: "lesson",
+      learningArea: "mathematics",
       roundId: roundId.current,
       direction: "prompt-to-answer",
       answerMode: "typed",
       help: "none",
+      practice: {
+        title: "Passende Kopfrechenaufgaben",
+        route: "/frei/mathematics",
+      },
       assessment: {
         knowledge: correct ? "correct" : "incorrect",
         writing: "not-assessed",

@@ -225,4 +225,36 @@ describe("learning box repository", () => {
     ]);
     expect(await database.learningEvents.toArray()).toHaveLength(2);
   });
+
+  it("stores a LernBox result and its shared learning signal atomically", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-events-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const deck = await repository.createDeck({ title: "Englisch" });
+    const { card } = await repository.addCard({
+      deckId: deck.id,
+      question: "library",
+      answer: "Bibliothek",
+    });
+
+    await repository.putCardAndEvent({
+      card: { ...card, box: 1 },
+      correct: false,
+      direction: "forward",
+      mode: "writing",
+      roundId: "box-round",
+      now: "2026-08-24T12:00:00.000Z",
+    });
+
+    expect(await database.learningEvents.toArray()).toMatchObject([
+      {
+        learningObjectId: card.id,
+        learningArea: "vocabulary",
+        source: "learning-box",
+        assessment: { writing: "incorrect" },
+      },
+    ]);
+  });
 });

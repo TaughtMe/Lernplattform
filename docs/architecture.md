@@ -32,8 +32,10 @@ Der verbindliche Coding-, Bibliotheks- und Teststandard steht in [engineering-qu
 
 ## Aktueller fachlicher Stand
 
-LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unter gemeinsamen Lernraum-Routen. Lernwörter speichern Merkstufe und Wiederholungsfälligkeit getrennt; Tastschreiben bewertet Genauigkeit vor Geschwindigkeit. Beide Module schreiben typisierte Ereignisse in den persönlichen Lernverlauf. Dadurch kann **Heute üben** fällige Lernwörter und noch unsichere Tipp-Lektionen als fachlich passende nächste Schritte aufnehmen.
+LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unter gemeinsamen Lernraum-Routen. Lernwörter speichern Merkstufe und Wiederholungsfälligkeit getrennt; Tastschreiben bewertet Genauigkeit vor Geschwindigkeit. LernBox, Lernwörter, Kopfrechnen und Tastschreiben schreiben typisierte Ereignisse in den persönlichen Lernverlauf oder stellen ihre nativen Fälligkeiten über einen Modul-Adapter bereit.
+
+`LearningRecommendation` ist der gemeinsame Vertrag für **Heute üben**. Der Empfehlungskern priorisiert frühere Fehler vor Fälligkeiten und Fälligkeiten vor neuen Lernschritten. Er zeigt pro aktivem Klassenmodul höchstens eine klare Empfehlung mit Begründung und passender Zielroute. Ein fest eingebauter Demo-Katalog gehört nicht mehr zur Tagesauswahl.
 
 `LearningBundleV1` bleibt das versionierte Austauschformat zwischen Modulen und transportiert beispielsweise fehlerhafte Laufdiktat-Vokabeln dublettenfrei in die persönliche LernBox. Vollständige persönliche Antworten bleiben lokal.
 
-Der nächste fachliche Schritt ist, die noch statischen Katalogeinträge der Tagesauswahl durch ein vollständig gemeinsames Lernobjekt- und Empfehlungssystem zu ersetzen. Erst danach werden Duelle, Häuser oder weitere Motivationsfunktionen priorisiert.
+Der nächste fachliche Schritt ist, Lernwortrunden direkt aus den empfohlenen individuellen Merkstufen zusammenzustellen und Tippsequenzen aus den tatsächlich unsicheren Tasten zu erzeugen. Danach werden lokale Klassenmitgliedschaften und versionierte Klassenpakete anstelle der fest eingebauten Demo-Klasse angebunden. Duelle, Häuser oder weitere Motivationsfunktionen bleiben nachgeordnet.
