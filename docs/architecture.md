@@ -30,6 +30,10 @@ Alle Module werden mobile-first und responsiv entwickelt. Gemeinsame Navigation,
 
 Der verbindliche Coding-, Bibliotheks- und Teststandard steht in [engineering-quality.md](engineering-quality.md).
 
-## Nächster fachlicher Schritt
+## Aktueller fachlicher Stand
 
-Zuerst werden die fachlichen Kerne von LernBoxV2 und Laufdiktat nativ unter Lernraum-Routen integriert. Gemeinsame Speicher- und Ergebnisadapter verbinden sie mit Klassenfreigaben und Fehlerwiederholungen. `LearningBundleV1` ist das versionierte Austauschformat zwischen den Modulen und transportiert beispielsweise fehlerhafte Laufdiktat-Wörter dublettenfrei in die persönliche LernBox.
+LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unter gemeinsamen Lernraum-Routen. Lernwörter speichern Merkstufe und Wiederholungsfälligkeit getrennt; Tastschreiben bewertet Genauigkeit vor Geschwindigkeit. Beide Module schreiben typisierte Ereignisse in den persönlichen Lernverlauf. Dadurch kann **Heute üben** fällige Lernwörter und noch unsichere Tipp-Lektionen als fachlich passende nächste Schritte aufnehmen.
+
+`LearningBundleV1` bleibt das versionierte Austauschformat zwischen Modulen und transportiert beispielsweise fehlerhafte Laufdiktat-Vokabeln dublettenfrei in die persönliche LernBox. Vollständige persönliche Antworten bleiben lokal.
+
+Der nächste fachliche Schritt ist, die noch statischen Katalogeinträge der Tagesauswahl durch ein vollständig gemeinsames Lernobjekt- und Empfehlungssystem zu ersetzen. Erst danach werden Duelle, Häuser oder weitere Motivationsfunktionen priorisiert.

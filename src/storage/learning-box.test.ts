@@ -6,7 +6,9 @@ import {
   parseLearningBundleV1,
 } from "../domain/learning-bundle";
 import {
+  createLearningWordProgressRepository,
   createLearningBoxRepository,
+  createTypingProgressRepository,
   migrateLegacyLearningBox,
   PersonalLearningDatabase,
 } from "./personal-learning-events";
@@ -179,5 +181,48 @@ describe("learning box repository", () => {
       backLocale: "de-DE",
     });
     expect(cards[0]).toMatchObject({ box: 3, reverseBox: 2 });
+  });
+
+  it("stores learning-word and typing signals in the shared personal database", async () => {
+    const database = new PersonalLearningDatabase(
+      `adaptive-modules-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const learningWords = createLearningWordProgressRepository(database);
+    const typing = createTypingProgressRepository(database);
+
+    await learningWords.recordAttempt({
+      words: ["Schlüssel"],
+      correct: false,
+      usedHelp: false,
+      selfCorrected: false,
+      stage: 2,
+      roundId: "word-round",
+      now: "2026-08-24T10:00:00.000Z",
+    });
+    await typing.recordAttempt(
+      "grundstellung-links",
+      {
+        totalChars: 20,
+        correctChars: 19,
+        errorCount: 1,
+        accuracy: 95,
+        elapsedMs: 20_000,
+        cpm: 57,
+        wpm: 11,
+        corrections: 0,
+        problemChars: [{ char: "f", errors: 1 }],
+      },
+      "typing-round",
+      "2026-08-24T11:00:00.000Z",
+    );
+
+    expect(
+      await learningWords.listDue("2026-08-24T10:00:00.000Z"),
+    ).toHaveLength(1);
+    expect(await typing.list()).toMatchObject([
+      { id: "grundstellung-links", completed: true },
+    ]);
+    expect(await database.learningEvents.toArray()).toHaveLength(2);
   });
 });

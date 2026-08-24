@@ -25,10 +25,10 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Danach: Lernwörter
 
-**Aktueller Funktionsprototyp:** Die fünf Merkstufen können im freien Deutschbereich bereits mit eigenen Wörtern vollständig durchlaufen werden. Die dauerhafte Speicherung als Lernobjekt, Leitner-Fälligkeit und Punktewertung sind bewusst noch nicht angebunden.
+**Aktueller Stand:** Die fünf Merkstufen können im freien Deutschbereich mit eigenen Wörtern vollständig durchlaufen werden. Merkstufe, Leitner-Fälligkeit und typisierte Lernereignisse werden dauerhaft im gemeinsamen persönlichen Datenbereich gespeichert. Die Punktewertung ist bewusst noch nicht angebunden.
 
 - [ ] Lernobjekttyp „Lernwort“ im gemeinsamen Datenmodell ergänzen
-- [ ] Merkstufe und Leitner-Box getrennt speichern
+- [x] Merkstufe und Leitner-Box getrennt speichern
 - [x] Stufe 1 als überprüfbaren Funktionsprototyp: vollständiges Wort fehlerfrei abschreiben
 - [x] Stufe 2 als überprüfbaren Funktionsprototyp: wenige fehlende Buchstaben ergänzen
 - [x] Stufe 3 als überprüfbaren Funktionsprototyp: Wort mit vielen Lücken rekonstruieren
@@ -38,8 +38,8 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Regeln für Aufstieg, Verbleib, Rückstufung und Hilfen im Funktionsprototyp implementieren
 - [x] Tastaturfluss mit Autofokus, Enter-Bestätigung und automatischem Weitergehen nach richtigen Antworten umsetzen
 - [x] Stufe 4 als direkte Eingabe auf den Längenstrichen statt als getrenntes Eingabefeld umsetzen
-- [ ] Lernstand und Leistungswertung technisch trennen
-- [ ] Selbstkorrekturen erfassen, aber die endgültig richtige Lösung als fachlich richtig werten
+- [x] Lernstand und Leistungswertung technisch trennen
+- [x] Selbstkorrekturen erfassen, aber die endgültig richtige Lösung als fachlich richtig werten
 - [ ] 5.000-Punkte-Wertung und Sterneanzeige prototypisch umsetzen
 - [ ] Punktabzüge und Merkbonus mit Schülern erproben und kalibrieren
 - [ ] Feste Lernwortlisten nach allen vorgesehenen Rechtschreibphänomenen anlegen
@@ -60,13 +60,13 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Später: Tastschreiben
 
-- [ ] Eigenen Bereich für Tastschreibtraining konzipieren
+- [x] Eigenen Bereich für Tastschreibtraining konzipieren
 - [ ] Physische Tastatur und Bildschirmtastatur unterscheiden
-- [ ] Grundstellung, Buchstabenreihen, Großbuchstaben, Umlaute und Satzzeichen abbilden
-- [ ] Wörter, Sätze, kurze Texte und freies Abschreiben ergänzen
-- [ ] Finger- und Tastenhinweise auf einer Bildschirmtastatur darstellen
-- [ ] Anschläge pro Minute, Genauigkeit, Korrekturen und unsichere Tasten auswerten
-- [ ] Geschwindigkeit nur informativ und Genauigkeit vorrangig behandeln
+- [x] Grundstellung, Buchstabenreihen, Großbuchstaben, Umlaute und Satzzeichen abbilden
+- [x] Wörter, Sätze, kurze Texte und freies Abschreiben ergänzen
+- [x] Finger- und Tastenhinweise auf einer Bildschirmtastatur darstellen
+- [x] Anschläge pro Minute, Genauigkeit, Korrekturen und unsichere Tasten auswerten
+- [x] Geschwindigkeit nur informativ und Genauigkeit vorrangig behandeln
 
 ## Langfristig: Mathematik
 

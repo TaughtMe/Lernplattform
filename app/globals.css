@@ -21,6 +21,15 @@
   --muted: #74665e;
   --line: #e9dfd7;
   --shadow: 0 14px 40px rgb(65 42 28 / 8%);
+  --finger-pinky: #f4b8cf;
+  --finger-ring: #f4d6a8;
+  --finger-middle: #f2eaa0;
+  --finger-index: #b9e3b0;
+  --finger-right-index: #aee0e0;
+  --finger-right-middle: #b8c8f4;
+  --finger-right-ring: #d0b8f4;
+  --finger-right-pinky: #e8b8df;
+  --finger-thumb: #d8d2c8;
   --radius-sm: 12px;
   --radius-md: 20px;
   --radius-lg: 30px;
@@ -372,6 +381,15 @@
   --muted: #b9ada3;
   --line: #39332e;
   --shadow: 0 14px 38px rgb(0 0 0 / 20%);
+  --finger-pinky: #6f374d;
+  --finger-ring: #6d552d;
+  --finger-middle: #625e2a;
+  --finger-index: #31512e;
+  --finger-right-index: #2b5050;
+  --finger-right-middle: #343e68;
+  --finger-right-ring: #47335f;
+  --finger-right-pinky: #5e3455;
+  --finger-thumb: #48433d;
 }
 
 * {
@@ -4592,6 +4610,276 @@ body,
   }
   .learning-loop-metrics article {
     min-height: 100px;
+  }
+}
+
+/* Tastschreiben: bewusst als Lernweg, nicht als Spieloberfläche. */
+.typing-shell {
+  min-height: 100svh;
+  background: var(--shell);
+}
+.typing-overview,
+.typing-round,
+.typing-result {
+  width: min(100% - 40px, 1040px);
+  margin: 0 auto;
+  padding: clamp(48px, 7vw, 84px) 0 96px;
+}
+.typing-overview .student-welcome {
+  max-width: 720px;
+  margin-bottom: 38px;
+}
+.typing-lessons {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+.typing-lessons li {
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.typing-lessons li.is-locked {
+  opacity: 0.58;
+}
+.typing-lessons__number {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-weight: 800;
+}
+.typing-lessons div {
+  display: grid;
+  gap: 4px;
+}
+.typing-lessons p,
+.typing-lessons small {
+  margin: 0;
+  color: var(--muted);
+}
+.typing-lessons button {
+  width: auto;
+}
+.typing-round,
+.typing-result {
+  max-width: 820px;
+  text-align: center;
+}
+.typing-round > h1,
+.typing-result > h1 {
+  margin: 10px 0 12px;
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+}
+.typing-round > p:not(.eyebrow),
+.typing-result > p:not(.eyebrow) {
+  color: var(--muted);
+}
+.typing-practice {
+  position: relative;
+  width: 100%;
+  margin: 30px 0 20px;
+  padding: clamp(22px, 4vw, 34px);
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  cursor: text;
+}
+.typing-practice__capture {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.typing-practice__text {
+  margin: 0;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(1.1rem, 2.4vw, 1.45rem);
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.typing-practice__text .is-pending {
+  color: var(--muted);
+}
+.typing-practice__text .is-correct {
+  color: #287448;
+}
+.typing-practice__text .is-wrong {
+  border-radius: 3px;
+  background: color-mix(in srgb, #d55252 18%, transparent);
+  color: #a12d2d;
+}
+.typing-practice__text .is-cursor {
+  border-radius: 3px;
+  outline: 2px solid var(--coral);
+}
+.typing-practice__hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.virtual-keyboard {
+  max-width: 660px;
+  margin: 28px auto 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.virtual-keyboard__row {
+  display: flex;
+  gap: 5px;
+}
+.virtual-keyboard__row.row-1 {
+  margin-left: 12px;
+}
+.virtual-keyboard__row.row-2 {
+  margin-left: 22px;
+}
+.virtual-keyboard__row.row-3 {
+  margin-left: 34px;
+}
+.virtual-keyboard__key,
+.virtual-keyboard__shift-row span {
+  width: clamp(24px, 5vw, 40px);
+  height: clamp(30px, 5vw, 40px);
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: clamp(0.68rem, 1.8vw, 0.92rem);
+  font-weight: 800;
+  transition: 120ms ease;
+}
+.virtual-keyboard__key.is-space {
+  width: min(42vw, 260px);
+}
+.virtual-keyboard__shift-row {
+  width: min(100%, 620px);
+  display: flex;
+  justify-content: space-between;
+}
+.virtual-keyboard__shift-row span {
+  background: var(--finger-pinky);
+}
+.finger-left-pinky {
+  background: var(--finger-pinky);
+}
+.finger-left-ring {
+  background: var(--finger-ring);
+}
+.finger-left-middle {
+  background: var(--finger-middle);
+}
+.finger-left-index {
+  background: var(--finger-index);
+}
+.finger-right-index {
+  background: var(--finger-right-index);
+}
+.finger-right-middle {
+  background: var(--finger-right-middle);
+}
+.finger-right-ring {
+  background: var(--finger-right-ring);
+}
+.finger-right-pinky {
+  background: var(--finger-right-pinky);
+}
+.finger-thumb {
+  background: var(--finger-thumb);
+}
+.virtual-keyboard .is-next {
+  outline: 3px solid var(--coral);
+  transform: translateY(-2px);
+}
+.virtual-keyboard .is-correct {
+  animation: typing-correct-key 220ms ease;
+}
+.virtual-keyboard .is-wrong {
+  animation: typing-wrong-key 220ms ease;
+}
+@keyframes typing-correct-key {
+  50% {
+    background: #7fd99a;
+    transform: translateY(-2px);
+  }
+}
+@keyframes typing-wrong-key {
+  50% {
+    background: #f29e9e;
+    transform: translateY(1px);
+  }
+}
+.typing-result__metrics {
+  margin: 30px 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.typing-result__metrics article {
+  min-height: 126px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.typing-result__metrics strong {
+  font-size: 2rem;
+}
+.typing-result__metrics span {
+  color: var(--muted);
+}
+.typing-result__actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 680px) {
+  .typing-overview,
+  .typing-round,
+  .typing-result {
+    width: min(100% - 28px, 1040px);
+  }
+  .typing-lessons li {
+    grid-template-columns: auto 1fr;
+  }
+  .typing-lessons button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .typing-result__metrics {
+    grid-template-columns: 1fr;
+  }
+  .typing-result__metrics article {
+    min-height: 94px;
+  }
+  .typing-result__actions {
+    flex-direction: column;
+  }
+  .virtual-keyboard {
+    margin-inline: -14px;
   }
 }
 .teacher-impulse-builder {

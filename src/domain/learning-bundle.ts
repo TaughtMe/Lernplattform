@@ -14,6 +14,8 @@ export const learningDirectionSchema = z.enum([
 export const answerModeSchema = z.enum(["typed", "choice", "self-check"]);
 export const eventSourceSchema = z.enum([
   "learning-box",
+  "learning-word",
+  "typing",
   "lesson",
   "test",
   "running-dictation",

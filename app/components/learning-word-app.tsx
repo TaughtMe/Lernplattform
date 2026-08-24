@@ -26,6 +26,7 @@ import {
   type LearningWordBlockSize,
   type LearningWordStage,
 } from "../../src/domain/learning-word";
+import { createLearningWordProgressRepository } from "../../src/storage/personal-learning-events";
 
 type Phase =
   "setup" | "memorize" | "recall" | "feedback" | "success" | "complete";
@@ -61,6 +62,7 @@ const stageCopy: Record<LearningWordStage, { title: string; detail: string }> =
   };
 
 export function LearningWordApp() {
+  const repository = useMemo(() => createLearningWordProgressRepository(), []);
   const [source, setSource] = useState(sampleWords);
   const [stage, setStage] = useState<LearningWordStage>(1);
   const [blockSize, setBlockSize] = useState<LearningWordBlockSize>(3);
@@ -73,9 +75,12 @@ export function LearningWordApp() {
   const [incorrectAttempts, setIncorrectAttempts] = useState(0);
   const [results, setResults] = useState<Result[]>([]);
   const [collectionId, setCollectionId] = useState("own");
+  const [dueCount, setDueCount] = useState(0);
+  const [storageIssue, setStorageIssue] = useState(false);
   const answerRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const actionRef = useRef<HTMLButtonElement>(null);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const roundIdRef = useRef(crypto.randomUUID());
   const interactionReady = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -83,6 +88,13 @@ export function LearningWordApp() {
   );
   const current = blocks[index] ?? [];
   const words = useMemo(() => parseLearningWords(source), [source]);
+
+  useEffect(() => {
+    repository
+      .listDue()
+      .then((entries) => setDueCount(entries.length))
+      .catch(() => setStorageIssue(true));
+  }, [repository]);
 
   useEffect(() => {
     if (phase === "recall") answerRef.current?.focus();
@@ -113,6 +125,7 @@ export function LearningWordApp() {
     setUsedHelp(false);
     setIncorrectAttempts(0);
     setResults([]);
+    roundIdRef.current = crypto.randomUUID();
     setPhase(stage >= 4 ? "memorize" : "recall");
   }
 
@@ -125,6 +138,16 @@ export function LearningWordApp() {
       : incorrectAttempts + 1;
     setIncorrectAttempts(nextIncorrectAttempts);
     if (attempt.correct) {
+      repository
+        .recordAttempt({
+          words: current,
+          correct: true,
+          usedHelp,
+          selfCorrected: nextIncorrectAttempts > 0,
+          stage,
+          roundId: roundIdRef.current,
+        })
+        .catch(() => setStorageIssue(true));
       const result: Result = {
         words: [...current],
         usedHelp,
@@ -140,6 +163,16 @@ export function LearningWordApp() {
       successTimerRef.current = setTimeout(() => advanceAfterSuccess(), 650);
       return;
     }
+    repository
+      .recordAttempt({
+        words: current,
+        correct: false,
+        usedHelp,
+        selfCorrected: false,
+        stage,
+        roundId: roundIdRef.current,
+      })
+      .catch(() => setStorageIssue(true));
     setPhase("feedback");
   }
 
@@ -192,6 +225,18 @@ export function LearningWordApp() {
               Aufstieg; nach wiederholten Fehlern wird eine leichtere Stufe
               empfohlen.
             </p>
+            {dueCount > 0 && (
+              <p className="reason-label">
+                {dueCount} {dueCount === 1 ? "Lernwort ist" : "Lernwörter sind"}{" "}
+                heute fällig.
+              </p>
+            )}
+            {storageIssue && (
+              <p role="status">
+                Dein Lernstand konnte gerade nicht vollständig gespeichert
+                werden.
+              </p>
+            )}
           </div>
 
           <ol className="learning-word-stages" aria-label="Merkstufe wählen">
@@ -494,9 +539,9 @@ export function LearningWordApp() {
             </article>
           </div>
           <p className="prototype-note">
-            In diesem Funktionsprototyp bleibt die Auswertung nur für diese
-            Runde bestehen. Die dauerhafte Trennung von Merkstufe und
-            Leitner-Fälligkeit folgt mit dem Lernwort-Datenmodell.
+            Merkstufe und Wiederholungsfälligkeit wurden lokal gespeichert.
+            Fehler machen die betroffenen Wörter sofort wieder fällig; sichere
+            Lösungen verlängern den Abstand bis zur nächsten Wiederholung.
           </p>
           <div className="running-complete-actions">
             <button className="button button--primary" onClick={reset}>

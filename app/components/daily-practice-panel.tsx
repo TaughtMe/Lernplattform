@@ -8,7 +8,12 @@ import {
   type DailyPracticeGroup,
 } from "../../src/domain/daily-practice";
 import { demoClass } from "../../src/domain/demo-class";
-import { createPersonalLearningEventRepository } from "../../src/storage/personal-learning-events";
+import { TYPING_LESSONS } from "../../src/tastschreiben/curriculum";
+import {
+  createLearningWordProgressRepository,
+  createPersonalLearningEventRepository,
+  createTypingProgressRepository,
+} from "../../src/storage/personal-learning-events";
 
 const practiceCatalog = [
   {
@@ -22,25 +27,57 @@ const practiceCatalog = [
 
 export function DailyPracticePanel() {
   const repository = useMemo(() => createPersonalLearningEventRepository(), []);
+  const learningWords = useMemo(
+    () => createLearningWordProgressRepository(),
+    [],
+  );
+  const typing = useMemo(() => createTypingProgressRepository(), []);
   const [practice, setPractice] = useState<DailyPracticeGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
-    repository
-      .list()
-      .then((events) => {
+    Promise.all([repository.list(), learningWords.listDue(), typing.list()])
+      .then(([events, dueWords, typingProgress]) => {
         if (!active) return;
-        setPractice(
-          selectDailyPractice({
-            events,
-            catalog: practiceCatalog,
-            classId: demoClass.id,
-            enabledModules: demoClass.enabledModules,
-            now: new Date().toISOString(),
-          }),
-        );
+        const selected = selectDailyPractice({
+          events,
+          catalog: practiceCatalog,
+          classId: demoClass.id,
+          enabledModules: demoClass.enabledModules,
+          now: new Date().toISOString(),
+        });
+        if (
+          demoClass.enabledModules.includes("german") &&
+          dueWords.length > 0
+        ) {
+          selected.push({
+            learningObjectId: "due-learning-words",
+            title: "Fällige Lernwörter festigen",
+            module: "german",
+            route: "/frei/german/lernwoerter",
+            availableAt: new Date().toISOString(),
+            reason: "due",
+            amount: dueWords.length,
+          });
+        }
+        const unfinishedTyping = TYPING_LESSONS.find((lesson) => {
+          const entry = typingProgress.find((item) => item.id === lesson.id);
+          return entry && entry.attempts > 0 && !entry.completed;
+        });
+        if (demoClass.enabledModules.includes("typing") && unfinishedTyping) {
+          selected.push({
+            learningObjectId: `typing:${unfinishedTyping.id}`,
+            title: `${unfinishedTyping.title} weiter üben`,
+            module: "typing",
+            route: "/frei/typing",
+            availableAt: new Date().toISOString(),
+            reason: "error",
+            amount: 1,
+          });
+        }
+        setPractice(selected);
       })
       .catch(() => {
         if (active) setFailed(true);
@@ -52,7 +89,7 @@ export function DailyPracticePanel() {
     return () => {
       active = false;
     };
-  }, [repository]);
+  }, [learningWords, repository, typing]);
 
   if (loading) {
     return <p className="today-empty">Deine heutige Auswahl wird geladen …</p>;

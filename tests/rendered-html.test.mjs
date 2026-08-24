@@ -38,6 +38,8 @@ test("server-renders stable module entry pages", async () => {
   for (const [path, title] of [
     ["/lernen", "Meine Klassen"],
     ["/frei", "Freies Üben"],
+    ["/frei/german/lernwoerter", "Vom Ansehen zum sicheren Abruf"],
+    ["/frei/typing", "Schritt für Schritt sicher tippen"],
     ["/klasse/7b", "Heute üben"],
     ["/lernbox", "Meine LernBox"],
     ["/raum", "Raum beitreten"],

@@ -1,5 +1,8 @@
 import Dexie, { type Table } from "dexie";
 import type { LearningEventV1 } from "../domain/learning-bundle";
+import type { LearningWordStage } from "../domain/learning-word";
+import type { LearningWordProgress } from "../domain/learning-word-progress";
+import { updateLearningWordProgress } from "../domain/learning-word-progress";
 import type {
   LearningBoxCard,
   LearningBoxDeck,
@@ -15,11 +18,16 @@ import {
   LOCAL_DATA_AREAS,
   type LocalRepository,
 } from "./local-data-boundaries";
+import type { TypingLessonProgress } from "../tastschreiben/typing-progress";
+import { updateTypingProgress } from "../tastschreiben/typing-progress";
+import type { TypingStats } from "../tastschreiben/typing-stats";
 
 export class PersonalLearningDatabase extends Dexie {
   learningEvents!: Table<LearningEventV1, string>;
   learningBoxDecks!: Table<LearningBoxDeck, string>;
   learningBoxCards!: Table<LearningBoxCard, string>;
+  learningWordProgress!: Table<LearningWordProgress, string>;
+  typingProgress!: Table<TypingLessonProgress, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.personal) {
     super(name);
@@ -31,6 +39,14 @@ export class PersonalLearningDatabase extends Dexie {
       learningBoxDecks: "id, title, createdAt, source.kind, source.sourceId",
       learningBoxCards:
         "id, deckId, fingerprint, [deckId+fingerprint], nextReview, reverseNextReview, createdAt, source.kind, source.sourceId",
+    });
+    this.version(3).stores({
+      learningEvents: "id, learningObjectId, occurredAt, roundId",
+      learningBoxDecks: "id, title, createdAt, source.kind, source.sourceId",
+      learningBoxCards:
+        "id, deckId, fingerprint, [deckId+fingerprint], nextReview, reverseNextReview, createdAt, source.kind, source.sourceId",
+      learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
+      typingProgress: "id, completed, lastPracticedAt",
     });
   }
 }
@@ -299,6 +315,104 @@ export function createPersonalLearningEventRepository(
     },
     remove: async (id) => {
       await database.learningEvents.delete(id);
+    },
+  };
+}
+
+export function createLearningWordProgressRepository(
+  database = new PersonalLearningDatabase(),
+) {
+  return {
+    list: () => database.learningWordProgress.toArray(),
+    listDue: (now = new Date().toISOString()) =>
+      database.learningWordProgress.where("dueAt").belowOrEqual(now).toArray(),
+    recordAttempt: async (input: {
+      words: readonly string[];
+      correct: boolean;
+      usedHelp: boolean;
+      selfCorrected: boolean;
+      stage: LearningWordStage;
+      roundId: string;
+      now?: string;
+    }) => {
+      const now = input.now ?? new Date().toISOString();
+      await database.transaction(
+        "rw",
+        database.learningWordProgress,
+        database.learningEvents,
+        async () => {
+          for (const word of input.words) {
+            const id = `learning-word:${word.normalize("NFC").trim().toLocaleLowerCase("de-DE")}`;
+            const current = await database.learningWordProgress.get(id);
+            await database.learningWordProgress.put(
+              updateLearningWordProgress(current, {
+                word,
+                correct: input.correct,
+                usedHelp: input.usedHelp,
+                selfCorrected: input.selfCorrected,
+                stage: input.stage,
+                now,
+              }),
+            );
+            await database.learningEvents.put({
+              id: crypto.randomUUID(),
+              learningObjectId: id,
+              occurredAt: now,
+              source: "learning-word",
+              roundId: input.roundId,
+              direction: "prompt-to-answer",
+              answerMode: "typed",
+              help: input.usedHelp ? "hint" : "none",
+              assessment: {
+                knowledge: input.correct ? "correct" : "incorrect",
+                writing: input.correct ? "correct" : "incorrect",
+                selfCorrected: input.selfCorrected,
+              },
+            });
+          }
+        },
+      );
+    },
+  };
+}
+
+export function createTypingProgressRepository(
+  database = new PersonalLearningDatabase(),
+) {
+  return {
+    list: () => database.typingProgress.toArray(),
+    recordAttempt: async (
+      lessonId: string,
+      stats: TypingStats,
+      roundId: string,
+      now = new Date().toISOString(),
+    ) => {
+      const current = await database.typingProgress.get(lessonId);
+      const progress = updateTypingProgress(current, lessonId, stats, now);
+      await database.transaction(
+        "rw",
+        database.typingProgress,
+        database.learningEvents,
+        async () => {
+          await database.typingProgress.put(progress);
+          await database.learningEvents.put({
+            id: crypto.randomUUID(),
+            learningObjectId: `typing:${lessonId}`,
+            occurredAt: now,
+            source: "typing",
+            roundId,
+            direction: "prompt-to-answer",
+            answerMode: "typed",
+            help: "none",
+            assessment: {
+              knowledge: "not-assessed",
+              writing: stats.accuracy >= 90 ? "correct" : "incorrect",
+              selfCorrected: stats.corrections > 0,
+            },
+          });
+        },
+      );
+      return progress;
     },
   };
 }

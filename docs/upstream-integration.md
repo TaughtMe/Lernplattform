@@ -2,10 +2,11 @@
 
 ## Verbindliche Quellen
 
-| Modul      | Repository            | abgeglichener Stand                        | Rolle                                                                                                    |
-| ---------- | --------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| LernBox    | `TaughtMe/LernBoxV2`  | `64051b6da45a9a29ce67cdecceef815718a13818` | Referenz für Decks, Karten, Leitner-Lernen, Import/Export und lokale Speicherung                         |
-| Laufdiktat | `TaughtMe/Laufdiktat` | `6c2ade41eadd2721f051df168244ed09563cea21` | vollständige Referenz für Dashboard, Räume, Spielmodi, Stationen, Battle, Importe, Feedback und Realtime |
+| Modul               | Repository               | abgeglichener Stand                           | Rolle                                                                                                                      |
+| ------------------- | ------------------------ | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| LernBox             | `TaughtMe/LernBoxV2`     | `64051b6da45a9a29ce67cdecceef815718a13818`    | Referenz für Decks, Karten, Leitner-Lernen, Import/Export und lokale Speicherung                                           |
+| Laufdiktat          | `TaughtMe/Laufdiktat`    | `6c2ade41eadd2721f051df168244ed09563cea21`    | vollständige Referenz für Dashboard, Räume, Spielmodi, Stationen, Battle, Importe, Feedback und Realtime                   |
+| Claude-Arbeitsstand | `TaughtMe/Lernplattform` | `claude/lernplattform-aktueller-stand-8g8i2x` | Prüfquelle für Lernwort-Persistenz und den fachlichen Tastschreibkern; keine übergeordnete Produkt- oder Navigationsquelle |
 
 Ein neuer Abgleich aktualisiert die Commit-IDs in diesem Dokument. Änderungen werden anschließend als Upstream-Differenz geprüft, statt Funktionen im Lernraum erneut zu entwerfen.
 
@@ -35,6 +36,18 @@ Ein neuer Abgleich aktualisiert die Commit-IDs in diesem Dokument. Änderungen w
 - gemeinsame lokale Datenbereiche, Cache und Realtime-Konfiguration
 
 Diese Ergänzungen dürfen das Verhalten des Quellmoduls nicht stillschweigend verändern. Abweichungen brauchen einen dokumentierten pädagogischen oder technischen Grund und einen Test.
+
+## Selektive Übernahme aus dem Claude-Arbeitsstand
+
+Aus dem divergierten Claude-Branch wurden bewusst nur fachlich passende Teile übernommen und an die bereits Vault-konforme Foundation angepasst:
+
+- Lernwörter speichern Merkstufe und Leitner-Fälligkeit getrennt im gemeinsamen persönlichen Datenbereich.
+- Lernwortversuche erzeugen typisierte lokale Lernereignisse; Fehler und fällige Wörter erscheinen dadurch im gemeinsamen Lernkreislauf.
+- Tastschreiben folgt einem linearen Curriculum von der Grundstellung bis zum zusammenhängenden Text.
+- Genauigkeit entscheidet über den Lernfortschritt; Tempo bleibt eine informative Zusatzkennzahl.
+- Unsichere Tasten, Korrekturen und Rundenfortschritt bleiben lokal und fließen in den persönlichen Fortschritt ein.
+
+Nicht übernommen wurden die abweichende Startseite und Navigation, eine zweite IndexedDB-Abstraktion, Punkte, Abzeichen, Medaillen, Zeitrennen, Buchstabenregen, Häuser, Rankings, Duelle sowie eigene App- und Theme-Hüllen. Diese Teile würden vor dem funktionierenden adaptiven Kern zusätzliche Produktwelten eröffnen.
 
 ## Integrationsreihenfolge
 
