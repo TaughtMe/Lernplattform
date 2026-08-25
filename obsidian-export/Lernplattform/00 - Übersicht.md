@@ -45,7 +45,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 9. [[09 - Duelle/Anwendung|Duelle]]
 10. [[10 - Häuser, Punkte und Motivation/Anwendung|Häuser, Punkte und Motivation]]
 11. [[11 - QR-Auswertung und Visualisierung/Anwendung|QR-Auswertung und Visualisierung]]
-12. [[12 - Inhaltsübertragung und Synchronisation/Anwendung|Inhaltsübertragung und Synchronisation]]
+12. [[12 - Inhaltsübertragung und Synchronisation/Anwendung|Temporäre Inhaltsübertragung und Synchronisation]]
 13. [[13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]]
 14. [[14 - Lokale Daten, Export und Cloud-Backup/Anwendung|Lokale Daten, Export und Cloud-Backup]]
 15. [[15 - Gemeinsames Datenmodell/Anwendung|Gemeinsames Datenmodell]]
@@ -56,6 +56,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 20. [[20 - Designgrundlage/Anwendung|Designgrundlage]]
 21. [[21 - Qualitätsgrundlage und Freigabe/Anwendung|Qualitätsgrundlage und Freigabe]]
 22. [[22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]]
+23. [[23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]]
 
 ## Grundprinzipien
 

@@ -4,7 +4,7 @@
 
 Lernraum ist keine Sammlung einzelner Lernprogramme. Laufdiktat, LernBox, Deutsch, Kopfrechnen und Tastschreiben sind unterschiedliche Lernwege innerhalb eines gemeinsamen lokalen Förderkreislaufs.
 
-> Übung erzeugt ein Lernsignal. Das Lernsignal aktiviert den fachlich passenden nächsten Schritt. Klassisch mitgeteilte Übungsaufträge werden vom Schüler im passenden freien Bereich geöffnet.
+> Eigene und von der Lehrkraft bereitgestellte Inhalte fließen in denselben persönlichen Lernraum. Jede Übung erzeugt ein Lernsignal, das den fachlich passenden nächsten Schritt aktiviert.
 
 ## Pädagogischer Kern
 
@@ -20,14 +20,14 @@ Es geht nicht primär um kurzfristige Vorbereitung auf einzelne Prüfungen. Sch�
 
 ## Der gemeinsame Kreislauf
 
-1. Die Lehrkraft erstellt eine Klasse und aktiviert die benötigten Module.
-2. Schüler treten per Klassen-QR oder Code bei. Persönliche Lernstände bleiben lokal auf ihrem Gerät.
-3. Die Lehrkraft kann einen Übungsbereich klassisch als Hausaufgabe oder Empfehlung mitteilen.
-4. Schüler öffnen diesen Bereich selbst oder üben in den aktivierten Modulen frei.
+1. Alle Grundfunktionen stehen im persönlichen Lernraum frei zur Verfügung; Schüler können Fächer und Inhalte selbst anlegen.
+2. Die Lehrkraft stellt konkrete Stapel oder Sammlungen über einen höchstens 24 Stunden verfügbaren Transfercode bereit.
+3. Das Schülergerät übernimmt diese Inhalte als zusätzliche Quelle in denselben lokalen Lernbestand.
+4. Der Schüler wählt **Alles fällige**, ein einzelnes Fach, einen Stapel oder freies Üben.
 5. Jede Bearbeitung erzeugt ein lokales, fachlich typisiertes Lernsignal.
-6. **Heute üben** verbindet Fälligkeiten, frühere Fehler und adaptive Empfehlungen zu einer überschaubaren Auswahl.
+6. **Heute üben** verbindet Fälligkeiten, frühere Fehler, neue Lehrkraftinhalte und adaptive Empfehlungen zu einer überschaubaren Auswahl.
 7. Persönlicher Fortschritt würdigt Aktivität, Regelmäßigkeit, Verbesserung und Fleiß getrennt.
-8. Nur ausdrücklich freigegebene, aggregierte Klassenbeiträge werden später per QR an das Lehrergerät zurückgegeben.
+8. Nur ausdrücklich freigegebene, aggregierte Klassenbeiträge werden später getrennt per QR an das Lehrergerät zurückgegeben.
 
 ## Fachlich passende Reaktion
 
@@ -49,13 +49,14 @@ Das Laufdiktat liefert kurzfristige, aussagekräftige Lernsignale: Fehlversuche,
 
 ## Wiederkehrende Oberfläche
 
-Innerhalb einer Klasse verwendet Lernraum drei feste Einstiege:
+Der gemeinsame persönliche Lernraum verwendet vier feste Einstiege:
 
-1. **Heute üben:** fachlich passende nächste Schritte aus lokalen Lernsignalen
-2. **Frei üben:** selbstbestimmtes Training grundlegender Kompetenzen; hier werden auch klassisch mitgeteilte Übungsaufträge geöffnet
-3. **Mein Fortschritt:** Aktivität, Regelmäßigkeit und bewältigte frühere Schwierigkeiten
+1. **Heute üben:** fachlich passende nächste Schritte aus allen lokalen Lernsignalen
+2. **Fächer:** Auswahl zwischen allem Fälligen und einem einzelnen Fach
+3. **Meine Inhalte:** eigene und übernommene Sammlungen mit sichtbarer Herkunft
+4. **Mein Fortschritt:** Aktivität, Regelmäßigkeit und bewältigte frühere Schwierigkeiten
 
-Das Laufdiktat steht außerhalb dieser Fachkacheln als gemeinsamer Raumcode-Einstieg. Deutsch öffnet direkt die Lernwörter, Vokabeln direkt die LernBox und Mathematik direkt das Kopfrechnen.
+**Freies Üben** ist eine Aktion innerhalb eines Fachs und kein paralleler Speicherbereich. Das Laufdiktat bleibt ein eigener kurzfristiger Raumcode-Ablauf, übergibt relevante Ergebnisse danach aber an denselben lokalen Lernkern.
 
 Module sind Werkzeuge innerhalb dieser vier Einstiege und nicht die oberste Produktstruktur. Eine aktive Lernrunde reduziert die Oberfläche auf Aufgabe, Fortschritt und unmittelbare Rückmeldung.
 
@@ -65,6 +66,7 @@ Module sind Werkzeuge innerhalb dieser vier Einstiege und nicht die oberste Prod
 - Freies Üben wird nicht automatisch mit der Klasse geteilt.
 - Rankingbeiträge bestehen nur aus begrenzten aggregierten Werten.
 - QR-Übertragung und Raumcode dürfen keine permanente Online-Synchronisation der Lernhistorie einführen.
+- Supabase-Transferpakete enthalten keine Schüleridentität und laufen nach höchstens 24 Stunden ab.
 
 ## Anerkennung und Motivation
 

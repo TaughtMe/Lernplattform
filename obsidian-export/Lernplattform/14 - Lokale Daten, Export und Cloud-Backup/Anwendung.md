@@ -16,6 +16,12 @@ Auf dem Schülergerät bleiben standardmäßig:
 
 Eine verschlüsselte Sicherungsdatei ermöglicht Gerätewechsel, Wiederherstellung und eine unabhängige Archivierung.
 
+## Lehrkraftinhalte
+
+Auch die langfristige Inhaltsbibliothek der Lehrkraft bleibt unter ihrer Kontrolle. Sie kann lokal gespeichert, als Datei exportiert oder freiwillig in einer beliebigen geeigneten Cloud gesichert werden. Supabase ist dafür nicht die verbindliche Dauerablage.
+
+Für die Verteilung wählt die Lehrkraft Inhalte aus dieser Quelle und erzeugt bewusst ein temporäres, verschlüsseltes Paket. Der Übergaberaum besteht höchstens 24 Stunden; danach muss eine neue Freigabe erzeugt werden. Die eigene Originalbibliothek bleibt davon unberührt und kann im nächsten Schuljahr wiederverwendet werden.
+
 ## Optionaler Cloud-Backup
 
 Das persönliche Cloud-Backup ist freiwillig und ausschließlich für Sicherung, Gerätewechsel und eine optionale geräteübergreifende Nutzung gedacht. Es bleibt technisch und organisatorisch von Klasseneinschreibung, QR-Leistungsbrief und Lehrer-Ranking getrennt. Die Lehrkraft erhält keinen Zugriff auf dieses Backup.

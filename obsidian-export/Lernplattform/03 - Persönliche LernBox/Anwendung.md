@@ -4,7 +4,13 @@
 
 Die LernBox ist das lokale Langzeitgedächtnis des Schülers. In Version 1 sammelt sie Unterrichtsvokabeln, eigene Inhalte und optional übernommene Wörter aus Duellen. Später kommen Lernwörter und mathematische Aufgabenfamilien als eigene Lernobjekte hinzu.
 
-Die LernBox bleibt ein eigener persönlicher Bereich und wird nicht durch „Heute üben“ ersetzt. Eine Klassen-Tagesauswahl darf Fälligkeiten und Fehlerhinweise aus dem gemeinsamen Lernkern verwenden, zeigt sie aber im Kontext der jeweiligen Klasse und ihrer aktivierten Module.
+Die LernBox ist Teil des gemeinsamen persönlichen Lernraums. **Heute üben**, ein einzelnes Fach, ein bestimmter Stapel und freies Üben sind verschiedene Auswahlen auf denselben Lernbestand; sie erzeugen keine konkurrierenden LernBoxen oder Lernstände.
+
+## Ein Lernstand, mehrere Quellen
+
+Ein Lernobjekt kann gleichzeitig zu eigenen Sammlungen, übernommenen Lehrkraftstapeln und früheren Unterrichtsrunden gehören. Es wird möglichst nur einmal gespeichert und mit mehreren Quellen verknüpft. Eine Bearbeitung verbessert denselben persönlichen Lernstand – unabhängig davon, über welchen Einstieg die Runde begonnen wurde.
+
+Fach und Sprachpaar bleiben verbindliche Grenzen. Gleich geschriebene Wörter werden nicht allein anhand ihres Textes zusammengeführt: Sprache, Grundform, Bedeutungsvariante, Abfragerichtung und gegebenenfalls Verwendungskontext entscheiden, ob derselbe Eintrag vorliegt. So bleiben beispielsweise unterschiedliche Bedeutungen eines Wortes getrennt.
 
 ## Anwendung
 
@@ -26,6 +32,17 @@ Die Startansicht zeigt zum Beispiel:
 - nach Fälligkeit
 - nach persönlicher Schwierigkeit
 - nach Lernobjekttyp: Vokabel, Lernwort oder später mathematische Aufgabenfamilie
+- nach Fach und Sprachpaar
+- nach Quelle: selbst angelegt, Lehrkraft, Laufdiktat oder andere Lernaktivität
+
+## Auswahl vor dem Lernen
+
+Der Schüler kann jederzeit wählen:
+
+- **Alles fällige:** fachübergreifende Tagesauswahl in kurzen Fachblöcken
+- **ein Fach:** nur Fälligkeiten, Fehler und neue Inhalte dieses Fachs
+- **ein Stapel:** gezielte Auswahl innerhalb eines Fachs
+- **frei üben:** selbst gewählte Inhalte ohne zweiten Lernstand
 
 ## Vokabel-Lernrunde
 
@@ -61,6 +78,7 @@ Mathematik wird später nicht als Sammlung einzelner falscher Ergebnisse gespeic
 - Persönliche Lernstände gehören dem Gerät.
 - Freies Üben und persönliche LernBox werden nicht automatisch dem Klassenranking zugerechnet.
 - Entfernte Lehrervokabeln werden nicht automatisch aus der LernBox gelöscht.
+- Ein aktualisiertes Lehrkraftpaket ergänzt oder aktualisiert anhand stabiler IDs, ohne den persönlichen Lernstand zurückzusetzen.
 - Eigene Wörter werden ohne bewusste Freigabe nicht übertragen.
 - Bei gemeinsam genutzten Geräten müssen Profile oder getrennte lokale Bereiche vorgesehen werden.
 

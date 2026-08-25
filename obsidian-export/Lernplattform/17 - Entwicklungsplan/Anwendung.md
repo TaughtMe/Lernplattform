@@ -1,8 +1,14 @@
 # Entwicklungsplan
 
+## Aktueller nächster Meilenstein
+
+Das Supabase-Projekt `Lernraum` ist seit dem 25. August 2026 in `eu-west-1` aktiv. Datenbankschema, Migration, fähigkeitsgebundene RPCs, Ablaufbereinigung und clientseitige Verschlüsselung sind umgesetzt und technisch getestet. Supabase bleibt dabei ein höchstens 24 Stunden gültiger Übergaberaum für clientseitig verschlüsseltes Chiffrat; Lehrkraftbibliothek und persönlicher Schülerlernstand bleiben lokal.
+
+Als nächstes werden Projekt-URL und Publishable Key in Entwicklung und Hosting konfiguriert. Danach werden Lehrkraftfreigabe, QR-/Codeanzeige, Schülerabruf und der vorhandene idempotente LernBox-Eingangsadapter zu einem sichtbaren Ende-zu-Ende-Weg verbunden. Netzabbruch, beschädigte Pakete, Ablauf und erneute Freigabe bleiben bis dahin ausdrücklich offen.
+
 ## Empfohlene Reihenfolge
 
-0. Minimalistischen Schülereinstieg, Klassenarbeitsraum, aktivierbare Module und freies Üben als Plattformrahmen umsetzen.
+0. Gemeinsamen persönlichen Schülereinstieg mit **Heute üben**, Fachauswahl, eigenen und übernommenen Inhalten als Plattformrahmen umsetzen.
 1. LernBoxV2 und Laufdiktat commitgenau prüfen und geeignete Fachlogik, Abläufe und Tests gezielt in den gemeinsamen Lernraum integrieren.
 2. LearningBundle v1 und stabile IDs definieren.
 3. LernBox auf Tags, Herkunft und getrennte Lernstände vorbereiten.
@@ -21,12 +27,20 @@
 16. Tastschreibtraining als getrennten Schreibbereich entwickeln.
 17. Mathematik über Kompetenz-IDs und Aufgabenfamilien integrieren.
 18. Übernommene Anwendungen dauerhaft mit ihren Upstream-Repositories abgleichen.
+19. Getrennte Einstiege für Klasse und freies Üben zu einem persönlichen Lernraum mit Fachfiltern zusammenführen.
+20. Stabile Quellenverknüpfung und Dublettenabgleich für eigene und übernommene Inhalte umsetzen.
+21. Verschlüsselten Supabase-Übergaberaum mit maximal 24 Stunden Laufzeit implementieren und sicherheitstechnisch prüfen.
+22. Lokale oder frei gewählte Lehrkraftablagen über Import und Export anbinden, ohne Supabase als Dauerbibliothek vorauszusetzen.
+23. Erst nach einem stabilen, vollständig nutzbaren Lernkern die nachhaltige Gamification als abschaltbaren Prototyp ergänzen.
+24. Persönliche Entwicklungsstufe und verzeihende Wochenziele erproben.
+25. Ramagotchi und kosmetisch gestaltbaren Lernraum ergänzen.
+26. Kooperative Haus- und Klassenquests datensparsam erproben.
 
 ## Sinnvolles erstes Minimum
 
 - Schüler sieht nach dem Einstieg seine Klasse und das freie Üben klar getrennt.
 - Innerhalb einer Klasse steht „Heute üben“ im Mittelpunkt; „Aufgaben“ erscheint nur bei tatsächlich freigeschalteten, modulspezifischen Trainingspaketen.
-- Die Lehrkraft kann je Klasse nur die benötigten Module aktivieren.
+- Die Lehrkraft kann konkrete Vokabelstapel oder andere fachliche Sammlungen temporär bereitstellen; Grundfunktionen bleiben frei zugänglich.
 - Lehrer erstellt einen Vokabelstapel.
 - Schüler tritt per Code bei.
 - Vokabeln werden lokal übernommen.
@@ -54,6 +68,11 @@
 - datensparsame Voreinstellungen
 - barrierearme, einfache Schüleroberfläche
 - gemeinsame Tests für Datenmodell und Synchronisation
+- Gamification bleibt abschaltbar, bestraft keine Pausen und belohnt ausschließlich sinnvolle Lernsignale
+
+## Späte Ausbaustufe: nachhaltige Gamification
+
+Das Ramagotchi wird ausdrücklich **nicht** in das erste produktive Minimum aufgenommen. Zuerst müssen die fachlichen Lernwege, lokale Speicherung, Rollen, Datenschutz, Barrierefreiheit und Betrieb zuverlässig funktionieren. Erst danach wird die in [[../23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]] beschriebene Motivationsschicht prototypisch getestet.
 
 Die laufende Umsetzungsübersicht mit abhakterauglichen Einzelschritten steht unter [[../18 - Aufgabenübersicht/Anwendung|Aufgabenübersicht]].
 

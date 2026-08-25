@@ -4,8 +4,9 @@ tags:
   - entscheidungsprotokoll
   - qr-synchronisation
   - klassenranking
+  - gamification
 status: beschlossen
-stand: 2026-08-12
+stand: 2026-08-25
 ---
 
 # Entscheidungsprotokoll
@@ -390,3 +391,55 @@ Text, Vokabeln und Kopfrechenaufgaben laufen danach in einer nativen Lernraum-Ob
 - Eigene Aufgaben dürfen Dezimalzahlen, Klammern, Potenzen, Brüche und Wurzeln enthalten und werden durch einen sicheren Parser ohne `eval` berechnet.
 - Fehler werden als Grundrechenfamilie mit Zahlenraum gespeichert. Eine anschließende Förderübung erzeugt neue passende Rechnungen statt bloßer Fehlerkopien.
 - Der Mathebereich bleibt auf basale Kopfrechenkompetenzen ausgerichtet. Geometrie oder prüfungsspezifische Stoffpakete gehören nicht zu diesem Kern.
+
+## 39. Ramagotchi erst nach einem stabilen Lernkern – 25. August 2026
+
+**Beschlossen:** Lernraum erhält perspektivisch eine nachhaltige, Habitica-inspirierte Motivationsschicht mit einem persönlichen **Ramagotchi-Lernbegleiter**. Die Umsetzung beginnt erst, wenn die zentralen Lernwege, lokale Datensicherheit, Rollen, Datenschutz, Barrierefreiheit und der Betrieb zuverlässig funktionieren.
+
+- Das Ramagotchi wächst ausschließlich durch sinnvolle, typisierte Lernsignale und persönliche Entwicklung.
+- Fehler, Abwesenheit und Lernpausen verursachen keine Krankheit, Traurigkeit, Lebenspunktverluste oder den Verlust erspielter Entwicklung.
+- Ziele und Serien werden verzeihend gestaltet; der Wiedereinstieg nach Pausen wird positiv unterstützt.
+- Belohnungen bleiben überwiegend kosmetisch. Lerninhalte und Hilfen werden nicht hinter Spielstufen oder Bezahlung gesperrt.
+- Klassen- und Hausquests sind kooperativ, freiwillig und verwenden nur aggregierte, gedeckelte Beiträge.
+- Die Gamification bleibt abschaltbar und wird vor breiter Einführung mit Schülern auf Motivation, Druckempfinden und unerwünschtes Punktesammeln erprobt.
+
+Die verbindliche Konzeption steht unter [[../23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]].
+
+## 40. Ein persönlicher Lernraum statt getrennter Lernwelten – 25. August 2026
+
+**Beschlossen:** Klasse und freies Üben erzeugen keine getrennten Lernbestände. Der Schüler verwendet einen gemeinsamen persönlichen Lernraum mit einem Lernstand pro fachlich identischem Lernobjekt.
+
+- Fächer können manuell angelegt oder durch Lehrkraftinhalte ergänzt werden.
+- Vor einer Runde kann **Alles fällige**, ein einzelnes Fach oder ein bestimmter Stapel gewählt werden.
+- Fachübergreifende Runden wechseln in überschaubaren Fachblöcken statt nach jeder Karte.
+- Freies Üben ist eine Aktion innerhalb eines Fachs und keine zweite LernBox.
+- Eigene, aus dem Unterricht übernommene und adaptive Inhalte tragen getrennte Quellen, greifen aber auf denselben persönlichen Lernstand zu.
+- Vokabeln werden nicht allein anhand des sichtbaren Textes zusammengeführt; Sprachpaar, Grundform, Bedeutung und Abfragerichtung werden berücksichtigt.
+
+Diese Entscheidung ersetzt die harte Trennung aus Entscheidung 17 und die klassenbezogene Modulstruktur aus Entscheidungen 16, 18 und 19, soweit diese eigene Lernwelten oder gesperrte Grundfunktionen voraussetzen.
+
+## 41. Freie Grundfunktionen und konkrete Lehrkraftinhalte – 25. August 2026
+
+**Beschlossen:** Die Grundfunktionen von Lernraum sind grundsätzlich frei zugänglich. Die Lehrkraft aktiviert nicht ganze Fächer oder Module, sondern stellt konkrete fachliche Inhalte wie Vokabelstapel oder Lernwortlisten bereit.
+
+- Der gemeinsame Lehrkraftinhalt bildet den fachlichen Ausgangspunkt.
+- Nach der lokalen Übernahme erzeugt Lernraum aus Fehlern, Hilfen und Fälligkeiten den individuellen Übungsweg jedes Schülers.
+- Ein Lehrkraftpaket ergänzt den persönlichen Lernraum, ohne private Inhalte oder Lernstände an die Lehrkraft zurückzugeben.
+- Aktualisierungen verwenden stabile IDs und Versionen; sie erzeugen keine zweite Liste und setzen keinen Lernstand zurück.
+- Entfernte Lehrkraftinhalte werden nicht ungefragt aus dem persönlichen Lernbestand gelöscht.
+
+Die bereits umgesetzte lokale Modulfreigabe bleibt ein historischer Prototyp und wird nicht als endgültiges Produktmodell weitergeführt.
+
+## 42. Supabase als verschlüsselter 24-Stunden-Übergaberaum – 25. August 2026
+
+**Beschlossen:** Supabase wird für die normale Inhaltsverteilung ausschließlich als kurzlebiger technischer Übergaberaum genutzt.
+
+- Die langfristige Lehrkraftbibliothek liegt lokal, in einer Exportdatei oder optional in einer von der Lehrkraft frei gewählten Cloud.
+- Vor der Freigabe erzeugt das Lehrergerät ein versioniertes und clientseitig verschlüsseltes `LearningBundle`.
+- QR-Code oder ausreichend starker manueller Code ermöglichen den einmaligen Abruf ohne Schülerkonto.
+- Raum und aktives Paket sind höchstens 24 Stunden abrufbar; nach Ablauf werden Zugriffe verweigert und die Daten automatisch gelöscht.
+- Im Transferraum entstehen keine Schülerliste, dauerhafte Klassenmitgliedschaft, Abrufhistorie oder persönliche Lernstände.
+- Realtime ist für wöchentliche Inhaltsübertragung nicht erforderlich. Falls es verwendet wird, sendet es nur ein inhaltsfreies Wecksignal; das Paket wird danach autorisiert abgerufen.
+- Supabase-Backups, Protokolle, konkrete EU-Region, Auftragsverarbeitung, RLS und Löschkonzept werden vor Schuleinsatz geprüft. Eine kurze Verbindung gilt nicht automatisch als DSGVO-Nachweis.
+
+Diese Inhaltsübertragung bleibt von Laufdiktat-Liveräumen, persönlichem Cloud-Backup, Klasseneinschreibung und QR-Klassenbeiträgen getrennt. Die vollständige Beschreibung steht unter [[../12 - Inhaltsübertragung und Synchronisation/Anwendung|Inhaltsübertragung und temporäre Synchronisation]].

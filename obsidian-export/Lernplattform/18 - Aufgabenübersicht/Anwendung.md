@@ -191,17 +191,25 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 ## Nächste Architekturänderung: temporäre Inhaltsübertragung
 
 - [x] Supabase als kurzlebigen Übergaberaum statt als Dauerbibliothek festlegen
+- [x] Supabase-Projekt `Lernraum` in der EU-Region `eu-west-1` anlegen und gesunden Ausgangszustand prüfen
+- [x] Leeren Ausgangszustand ohne Anwendungstabellen, Migrationen oder Edge Functions dokumentieren
+- [ ] Lokale Entwicklung und Hosting über Projekt-URL und modernen Publishable Key verbinden; keine Secret- oder `service_role`-Schlüssel im Client verwenden
+- [x] Supabase-Migrationen und lokale Projektkonfiguration nachvollziehbar im Repository anlegen
+- [x] Automatische Data-API-Standardrechte für neue Tabellen, Sequenzen und Funktionen projektweit entziehen
 - [ ] Lokale und dateibasierte Lehrkraftbibliothek mit stabilem Exportformat umsetzen
-- [ ] Unveränderliches `LearningBundle` vor dem Upload auf dem Lehrergerät verschlüsseln
-- [ ] Temporären Transferraum mit maximal 24 Stunden Ablaufzeit implementieren
-- [ ] QR-Code mit ausreichend zufälligem Abrufnachweis erzeugen
-- [ ] Sicheren manuellen Transfercode mit Rate-Limit und Fehlversuchsgrenze entwickeln
-- [ ] Paket ohne Schülerkonto oder dauerhafte Klassenmitgliedschaft einmalig abrufen
+- [x] Unveränderliches `LearningBundle` vor dem Upload auf dem Lehrergerät verschlüsseln
+- [x] Temporären Transferraum mit maximal 24 Stunden Ablaufzeit implementieren
+- [x] QR-Nutzlast mit ausreichend zufälligem Abrufnachweis erzeugen
+- [x] Sicheren manuellen Transfercode mit raumbezogener Fehlversuchsgrenze entwickeln
+- [x] Paket ohne Schülerkonto oder dauerhafte Klassenmitgliedschaft abrufen
 - [ ] Paket lokal entschlüsseln, validieren und idempotent integrieren
-- [ ] Abruf nach Ablauf technisch verweigern
-- [ ] Abgelaufene aktive Pakete automatisch löschen und Backup-Aufbewahrung dokumentieren
-- [ ] RLS, minimale API-Rechte und fehlende Schülerzuordnung automatisiert prüfen
-- [ ] Sicherstellen, dass weder Schülerliste noch Abrufhistorie oder Lernstand im Transferraum gespeichert werden
+- [x] Paket lokal entschlüsseln und als `LearningBundleV1` validieren
+- [ ] Entschlüsseltes Paket idempotent in die persönliche LernBox integrieren
+- [x] Abruf nach Ablauf technisch verweigern
+- [ ] Backup-Aufbewahrung und tatsächliche Löschfrist des Dienstes betrieblich dokumentieren
+- [x] Abgelaufene aktive Pakete über einen stündlichen Löschauftrag automatisch entfernen
+- [x] RLS, minimale API-Rechte und fehlende Schülerzuordnung automatisiert prüfen
+- [x] Sicherstellen, dass weder Schülerliste noch Abrufhistorie oder Lernstand im Transferraum gespeichert werden
 - [ ] Netzabbruch, abgelaufenen Code, beschädigtes Paket und erneute Freigabe testen
 
 ## Langfristig: Ramagotchi und nachhaltige Gamification
