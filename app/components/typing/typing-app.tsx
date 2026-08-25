@@ -231,7 +231,7 @@ export function TypingApp() {
           <TypingPractice
             key={view.roundId}
             text={generateTypingPracticeText(view.lesson, view.roundId)}
-            activeChars={view.lesson.newKeys}
+            activeChars={view.lesson.practiceKeys ?? view.lesson.newKeys}
             keyboardLayout={view.lesson.keyboard ?? "main"}
             onFinish={(stats) => finishLesson(view.lesson, view.roundId, stats)}
           />

@@ -289,7 +289,7 @@ describe("shared learning recommendations", () => {
       recommendations.find((item) => item.module === "typing"),
     ).toMatchObject({
       reason: "next-step",
-      title: "Grundstellung: Mittelfinger beginnen",
+      title: "Grundstellung: nur Mittelfinger beginnen",
     });
   });
 });

@@ -21,17 +21,19 @@ function pick<T>(items: readonly T[], random: () => number): T {
 
 function generateDrill(lesson: LessonDef, seed: string) {
   const random = seededRandom(seed);
-  const available = availableKeysThrough(lesson.id).filter(
-    (key) => key !== " ",
-  );
+  const available = (
+    lesson.practiceKeys ?? availableKeysThrough(lesson.id)
+  ).filter((key) => key !== " ");
   const newKeys = lesson.newKeys.filter((key) => key !== " ");
   const letters = available.filter((key) => /\p{L}/u.test(key));
   const basePool = lesson.introducesShift ? letters : available;
   const focusPool = lesson.introducesShift
     ? letters
-    : newKeys.length > 0
-      ? newKeys
-      : basePool;
+    : lesson.practiceKeys
+      ? available
+      : newKeys.length > 0
+        ? newKeys
+        : basePool;
   const fallback = basePool.length > 0 ? basePool : focusPool;
   const groups: string[] = [];
   let length = 0;
@@ -106,7 +108,9 @@ function chooseSeveral(list: readonly string[], count: number, seed: string) {
 export function generateTypingPracticeText(lesson: LessonDef, seed: string) {
   if (lesson.kind === "drill") return generateDrill(lesson, seed);
   if (lesson.kind === "words")
-    return chooseSeveral(words, 12, seed).join(" ").toLowerCase();
+    return chooseSeveral(lesson.wordPool ?? words, 12, seed)
+      .join(" ")
+      .toLowerCase();
   if (lesson.kind === "sentences")
     return chooseSeveral(sentences, 3, seed).join(" ");
   return pick(paragraphs, seededRandom(seed));
