@@ -15,35 +15,55 @@ afterEach(async () => {
 });
 
 describe("TeacherClassConfigurator", () => {
-  it("updates the student preview when a teacher disables a module", async () => {
+  it("creates a class locally", async () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
-
-    const mathematics = await screen.findByRole("checkbox", {
-      name: /Kopfrechnen/,
-    });
-    await waitFor(() => expect(mathematics).toBeEnabled());
-    await user.click(mathematics);
-
-    expect(mathematics).not.toBeChecked();
+    await user.type(
+      screen.getByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8a",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
     expect(
-      screen.getByRole("heading", { name: "In Klasse 7b sichtbar" }),
+      await screen.findByText("Klasse wurde lokal angelegt."),
     ).toBeVisible();
-    expect(screen.getByText("Ausgeblendet")).toBeVisible();
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Aktive Klasse",
+        }) as HTMLSelectElement
+      ).value,
+    ).not.toBe("");
   });
 
-  it("stores the selected configuration locally", async () => {
+  it("creates an individual enrollment code for a student", async () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
-
-    const saveButton = screen.getByRole("button", {
-      name: "Einstellungen speichern",
+    await user.type(
+      screen.getByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8a",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    const student = await screen.findByRole("textbox", {
+      name: "Name oder Alias",
     });
-    await waitFor(() => expect(saveButton).toBeEnabled());
-    await user.click(saveButton);
-
-    expect(
-      await screen.findByRole("button", { name: "Gespeichert" }),
-    ).toBeVisible();
+    await user.type(student, "Alex");
+    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    await waitFor(() =>
+      expect(
+        (
+          screen.getByRole("textbox", {
+            name: "Einschreibecode",
+          }) as HTMLTextAreaElement
+        ).value,
+      ).toContain("lernraum:class:"),
+    );
   });
 });

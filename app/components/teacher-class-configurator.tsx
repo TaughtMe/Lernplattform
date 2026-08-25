@@ -1,170 +1,242 @@
 "use client";
-
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import {
+  createEnrollmentCode,
+  type ClassMember,
+  type TeacherClass,
+} from "../../src/domain/class-enrollment";
 import {
   CLASS_MODULE_LABELS,
   type ClassModule,
 } from "../../src/domain/class-workspace";
-import { demoClass } from "../../src/domain/demo-class";
-import {
-  createTeacherClassSettingsRepository,
-  toggleClassModule,
-} from "../../src/storage/teacher-class-settings";
-
-const moduleDescriptions: Record<ClassModule, string> = {
-  vocabulary: "Vokabelpakete, Fälligkeiten und Wiederholungen",
-  german: "Rechtschreibung, Lernwörter und Deutschmodule",
-  mathematics: "Kopfrechnen, Aufgabenfamilien und gezielte Wiederholungen",
-  typing: "Tipptraining mit Genauigkeit vor Geschwindigkeit",
-  "running-dictation": "Laufdiktate und Unterrichtsräume",
-};
-
-const buildModules: ClassModule[] = [
+import { createTeacherClassRepository } from "../../src/storage/teacher-class-settings";
+const modules: ClassModule[] = [
   "vocabulary",
   "german",
   "mathematics",
   "typing",
+  "running-dictation",
 ];
-
+const token = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), (v) =>
+    v.toString(16).padStart(2, "0"),
+  ).join("");
 export function TeacherClassConfigurator() {
-  const repository = useMemo(() => createTeacherClassSettingsRepository(), []);
-  const [enabledModules, setEnabledModules] = useState<ClassModule[]>([
-    ...demoClass.enabledModules,
-  ]);
-  const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
+  const repository = useMemo(() => createTeacherClassRepository(), []);
+  const [classes, setClasses] = useState<TeacherClass[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [members, setMembers] = useState<ClassMember[]>([]);
+  const [name, setName] = useState("");
+  const [teacherName, setTeacherName] = useState("");
+  const [schoolYear, setSchoolYear] = useState("2026/27");
+  const [studentName, setStudentName] = useState("");
+  const [shown, setShown] = useState<ClassMember>();
   const [message, setMessage] = useState("");
-
+  const selected = classes.find((x) => x.id === selectedId);
   useEffect(() => {
-    let active = true;
     repository
-      .get(demoClass.id)
-      .then((settings) => {
-        if (active && settings) setEnabledModules(settings.enabledModules);
+      .list()
+      .then((items) => {
+        setClasses(items);
+        if (items[0]) setSelectedId(items[0].id);
       })
-      .catch(() => {
-        if (active)
-          setMessage(
-            "Die lokale Klassenkonfiguration konnte nicht geladen werden.",
-          );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+      .catch(() => setMessage("Die Klassen konnten nicht geladen werden."));
   }, [repository]);
-
-  function changeModule(module: ClassModule) {
-    setEnabledModules((current) => toggleClassModule(current, module));
-    setSaved(false);
-    setMessage("");
-  }
-
-  async function save() {
-    setMessage("");
+  useEffect(() => {
+    if (!selectedId) return;
+    repository
+      .listMembers(selectedId)
+      .then(setMembers)
+      .catch(() => setMessage("Die Schülerliste konnte nicht geladen werden."));
+  }, [repository, selectedId]);
+  async function createClass(e: FormEvent) {
+    e.preventDefault();
+    const now = new Date().toISOString();
+    const course: TeacherClass = {
+      id: crypto.randomUUID(),
+      name,
+      teacherName,
+      schoolYear,
+      enabledModules: modules,
+      createdAt: now,
+      updatedAt: now,
+    };
     try {
-      await repository.put({
-        id: demoClass.id,
-        enabledModules,
-        updatedAt: new Date().toISOString(),
-      });
-      setSaved(true);
+      await repository.put(course);
+      setClasses((x) => [...x, course]);
+      setSelectedId(course.id);
+      setName("");
+      setMessage("Klasse wurde lokal angelegt.");
     } catch {
-      setMessage(
-        "Die Einstellung konnte auf diesem Gerät nicht gespeichert werden.",
-      );
+      setMessage("Die Klasse konnte nicht gespeichert werden.");
     }
   }
-
+  async function addStudent(e: FormEvent) {
+    e.preventDefault();
+    if (!selected) return;
+    const member: ClassMember = {
+      id: crypto.randomUUID(),
+      classId: selected.id,
+      displayName: studentName,
+      enrollmentToken: token(),
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      await repository.putMember(member);
+      setMembers((x) => [...x, member]);
+      setShown(member);
+      setStudentName("");
+      setMessage(
+        "Schüler wurde lokal angelegt. Übernimm jetzt den individuellen Code am Schülergerät.",
+      );
+    } catch {
+      setMessage("Der Schüler konnte nicht gespeichert werden.");
+    }
+  }
+  const code = selected && shown ? createEnrollmentCode(selected, shown) : "";
   return (
     <section className="teacher-workspace" aria-labelledby="teacher-title">
       <div className="teacher-heading">
         <div>
           <p className="eyebrow">Klassenverwaltung</p>
-          <h1 id="teacher-title">{demoClass.name}</h1>
-          <p>Lege fest, welche Lernbereiche in dieser Klasse verfügbar sind.</p>
+          <h1 id="teacher-title">Klassen und Schüler</h1>
+          <p>
+            Namen und Zuordnungen bleiben ausschließlich auf diesem Lehrergerät.
+          </p>
         </div>
         <span className="teacher-local-note">Lokal auf diesem Lehrergerät</span>
       </div>
-
       <div className="teacher-layout">
-        <section
-          className="teacher-panel"
-          aria-labelledby="module-settings-title"
-        >
+        <section className="teacher-panel">
           <div className="teacher-panel__heading">
             <div>
-              <p className="eyebrow">Sichtbarkeit</p>
-              <h2 id="module-settings-title">Aktive Module</h2>
+              <p className="eyebrow">Schritt 1</p>
+              <h2>Neue Klasse anlegen</h2>
             </div>
-            <span>{enabledModules.length} aktiv</span>
           </div>
-          <div className="module-settings">
-            {buildModules.map((module) => {
-              const enabled = enabledModules.includes(module);
-              const inputId = `class-module-${module}`;
-              return (
-                <div className="module-setting" key={module}>
-                  <label htmlFor={inputId}>
-                    <strong>{CLASS_MODULE_LABELS[module]}</strong>
-                    <small>{moduleDescriptions[module]}</small>
-                  </label>
-                  <input
-                    id={inputId}
-                    type="checkbox"
-                    checked={enabled}
-                    onChange={() => changeModule(module)}
-                    disabled={
-                      loading || (enabled && enabledModules.length === 1)
-                    }
-                  />
-                </div>
-              );
-            })}
-          </div>
-          {message && (
-            <p className="learning-message learning-message--error">
-              {message}
-            </p>
-          )}
-          <button
-            className="button button--primary"
-            onClick={save}
-            disabled={loading}
-          >
-            {saved ? "Gespeichert" : "Einstellungen speichern"}
-          </button>
-        </section>
-
-        <aside
-          className="teacher-preview"
-          aria-labelledby="student-preview-title"
-        >
-          <span className="entry-card__label">Schülervorschau</span>
-          <h2 id="student-preview-title">In {demoClass.name} sichtbar</h2>
-          <div className="preview-module-list">
-            {buildModules.map((module) => (
-              <div
-                className={
-                  enabledModules.includes(module) ? "is-enabled" : "is-disabled"
-                }
-                key={module}
+          <form onSubmit={createClass} className="module-settings">
+            <label>
+              Klassenname
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="z. B. Klasse 7b"
+              />
+            </label>
+            <label>
+              Lehrkraft
+              <input
+                value={teacherName}
+                onChange={(e) => setTeacherName(e.target.value)}
+                required
+                placeholder="z. B. Frau Sommer"
+              />
+            </label>
+            <label>
+              Schuljahr
+              <input
+                value={schoolYear}
+                onChange={(e) => setSchoolYear(e.target.value)}
+                required
+              />
+            </label>
+            <button className="button button--primary" type="submit">
+              Klasse anlegen
+            </button>
+          </form>
+          {classes.length > 0 && (
+            <label>
+              Aktive Klasse
+              <select
+                value={selectedId}
+                onChange={(e) => {
+                  setSelectedId(e.target.value);
+                  setShown(undefined);
+                }}
               >
-                <strong>{CLASS_MODULE_LABELS[module]}</strong>
-                <span>
-                  {enabledModules.includes(module) ? "Aktiv" : "Ausgeblendet"}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p>
-            Die Veröffentlichung auf Schülergeräte wird im nächsten Schritt an
-            Klassenpakete und Codes angebunden.
-          </p>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </section>
+        <aside className="teacher-preview">
+          <span className="entry-card__label">Schritt 2</span>
+          <h2>Ersten Schüler hinzufügen</h2>
+          {!selected ? (
+            <p>Lege zuerst eine Klasse an.</p>
+          ) : (
+            <>
+              <p>
+                <strong>{selected.name}</strong> · {selected.teacherName} ·{" "}
+                {selected.schoolYear}
+              </p>
+              <form onSubmit={addStudent}>
+                <label>
+                  Name oder Alias
+                  <input
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                    required
+                    placeholder="z. B. Alex"
+                  />
+                </label>
+                <button className="button button--primary" type="submit">
+                  Schüler anlegen
+                </button>
+              </form>
+              {members.length > 0 && (
+                <div>
+                  <h3>{members.length} Schüler</h3>
+                  {members.map((m) => (
+                    <button
+                      className="button"
+                      type="button"
+                      key={m.id}
+                      onClick={() => setShown(m)}
+                    >
+                      {m.displayName}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {code && (
+                <div>
+                  <h3>Individueller Code für {shown?.displayName}</h3>
+                  <QRCodeSVG value={code} size={220} />
+                  <textarea
+                    readOnly
+                    value={code}
+                    aria-label="Einschreibecode"
+                    rows={5}
+                  />
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(code)}
+                  >
+                    Code kopieren
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </aside>
       </div>
+      {message && <p className="learning-message">{message}</p>}
+      {selected && (
+        <p>
+          Aktive Bereiche:{" "}
+          {selected.enabledModules
+            .map((m) => CLASS_MODULE_LABELS[m])
+            .join(", ")}
+        </p>
+      )}
     </section>
   );
 }

@@ -2,6 +2,12 @@ import Dexie, { type Table } from "dexie";
 import * as z from "zod";
 import { classModuleSchema, type ClassModule } from "../domain/class-workspace";
 import { LOCAL_DATA_AREAS } from "./local-data-boundaries";
+import {
+  classMemberSchema,
+  teacherClassSchema,
+  type ClassMember,
+  type TeacherClass,
+} from "../domain/class-enrollment";
 
 export const teacherClassSettingsSchema = z
   .object({
@@ -26,11 +32,32 @@ export type TeacherClassSettings = z.infer<typeof teacherClassSettingsSchema>;
 
 export class TeacherClassDatabase extends Dexie {
   classSettings!: Table<TeacherClassSettings, string>;
+  classes!: Table<TeacherClass, string>;
+  members!: Table<ClassMember, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.teacher) {
     super(name);
     this.version(1).stores({ classSettings: "id, updatedAt" });
+    this.version(2).stores({
+      classSettings: "id, updatedAt",
+      classes: "id, updatedAt",
+      members: "id, classId, createdAt",
+    });
   }
+}
+
+export function createTeacherClassRepository(
+  database = new TeacherClassDatabase(),
+) {
+  return {
+    list: () => database.classes.orderBy("createdAt").toArray(),
+    put: (value: TeacherClass) =>
+      database.classes.put(teacherClassSchema.parse(value)),
+    listMembers: (classId: string) =>
+      database.members.where("classId").equals(classId).sortBy("createdAt"),
+    putMember: (value: ClassMember) =>
+      database.members.put(classMemberSchema.parse(value)),
+  };
 }
 
 export function createTeacherClassSettingsRepository(

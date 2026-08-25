@@ -154,8 +154,8 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Gemeinsame App mit getrennten privaten, Klassen- und Lehrerarbeitsbereichen umsetzen
 - [ ] Lehrerbereich mit eigener Authentifizierung schützen
 - [ ] Sicherstellen, dass das Verlassen des Klassenmodus niemals Lehrerrechte erteilt
-- [ ] Schüler in einer Klasse lokal anlegen und individuelle Einschreibungs-QR-Codes erzeugen
-- [ ] Wiederholtes Scannen derselben Einschreibung ohne doppeltes Schülerprofil behandeln
+- [x] Schüler in einer Klasse lokal anlegen und individuelle Einschreibungs-QR-Codes erzeugen
+- [x] Wiederholtes Scannen derselben Einschreibung ohne doppeltes Schülerprofil behandeln
 - [ ] Ersatz- oder Zweitgerät nur nach ausdrücklicher Lehrerbestätigung koppeln
 - [ ] Verschlüsselten und signierten QR-Leistungsbrief definieren
 - [ ] Turnus- und Aufgabenpaket-ID sowie fortlaufende Standnummer implementieren

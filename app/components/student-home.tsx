@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { demoClass } from "../../src/domain/demo-class";
 import { PERSONAL_SUBJECTS } from "../../src/domain/personal-learning-space";
 import { AdaptiveProgressPanel } from "./adaptive-progress-panel";
 import { DailyPracticePanel } from "./daily-practice-panel";
 import { RoomCodeForm } from "./room-code-form";
+import { StudentClassEnrollment } from "./student-class-enrollment";
 
 export function StudentHome() {
   return (
@@ -144,28 +144,19 @@ export function StudentHome() {
               Inhalte übernehmen und gemeinsamen Unterrichtsräumen beitreten
             </p>
           </header>
-          <div className="personal-class-grid">
-            <Link className="personal-class-card" href="/klasse/7b">
-              <span className="entry-card__label">Aktive Klasse</span>
-              <h3>{demoClass.name}</h3>
-              <p>
-                {demoClass.teacherName} · Schuljahr {demoClass.schoolYear}
-              </p>
-              <strong>Klasse öffnen →</strong>
-            </Link>
-            <section
-              className="join-class join-class--panel"
-              aria-label="Klasse oder Raum öffnen"
-            >
-              <div>
-                <span>
-                  <strong>Klasse oder Unterrichtsraum öffnen</strong>
-                  <small>Code eintippen oder mit der Kamera scannen.</small>
-                </span>
-              </div>
-              <RoomCodeForm idPrefix="personal-learning-room" mode="auto" />
-            </section>
-          </div>
+          <StudentClassEnrollment />
+          <section
+            className="join-class join-class--panel"
+            aria-label="Unterrichtsraum öffnen"
+          >
+            <div>
+              <span>
+                <strong>Unterrichtsraum öffnen</strong>
+                <small>Vierstelligen Raumcode eingeben oder scannen.</small>
+              </span>
+            </div>
+            <RoomCodeForm idPrefix="personal-learning-room" mode="room" />
+          </section>
         </section>
       </div>
     </main>
