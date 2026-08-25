@@ -50,7 +50,7 @@ function generateDrill(lesson: LessonDef, seed: string) {
     groups.push(group);
     length += groupLength;
   }
-  return groups.join(" ");
+  return groups.join(lesson.keyboard === "numpad" ? "" : " ");
 }
 
 const words = [

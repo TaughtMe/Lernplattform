@@ -7,6 +7,7 @@ export interface LessonDef {
   kind: LessonKind;
   newKeys: string[];
   introducesShift?: boolean;
+  keyboard?: "main" | "numpad";
 }
 
 /**
@@ -200,13 +201,74 @@ export const TYPING_LESSONS: LessonDef[] = [
   },
 ];
 
-export function availableKeysThrough(lessonId: string): string[] {
+/** Freiwilliger Zusatzpfad; er sperrt keine Lektion des Hauptkurses. */
+export const NUMPAD_LESSONS: LessonDef[] = [
+  {
+    id: "numpad-grundstellung",
+    title: "Numpad: Grundstellung",
+    description: "4, 5 und 6 mit Zeige-, Mittel- und Ringfinger finden.",
+    kind: "drill",
+    newKeys: ["4", "5", "6"],
+    keyboard: "numpad",
+  },
+  {
+    id: "numpad-obere-reihe",
+    title: "Numpad: 7, 8 und 9",
+    description: "Die Grundstellung eine Reihe nach oben verschieben.",
+    kind: "drill",
+    newKeys: ["7", "8", "9"],
+    keyboard: "numpad",
+  },
+  {
+    id: "numpad-untere-reihe",
+    title: "Numpad: 1, 2 und 3",
+    description: "Die Grundstellung eine Reihe nach unten verschieben.",
+    kind: "drill",
+    newKeys: ["1", "2", "3"],
+    keyboard: "numpad",
+  },
+  {
+    id: "numpad-null-komma",
+    title: "Numpad: 0 und Komma",
+    description:
+      "Null und Dezimalkomma mit dem Daumen und kleinen Finger ergänzen.",
+    kind: "drill",
+    newKeys: ["0", ","],
+    keyboard: "numpad",
+  },
+  {
+    id: "numpad-rechenzeichen",
+    title: "Numpad: Rechenzeichen",
+    description: "Plus, Minus, Mal und Geteilt als freiwillige Erweiterung.",
+    kind: "drill",
+    newKeys: ["+", "-", "*", "/"],
+    keyboard: "numpad",
+  },
+];
+
+function keysThrough(lessons: readonly LessonDef[], lessonId: string) {
   const keys = new Set<string>();
-  for (const lesson of TYPING_LESSONS) {
+  for (const lesson of lessons) {
     lesson.newKeys.forEach((key) => keys.add(key));
     if (lesson.id === lessonId) break;
   }
   return [...keys];
+}
+
+export function availableKeysThrough(lessonId: string): string[] {
+  const lessons = NUMPAD_LESSONS.some((lesson) => lesson.id === lessonId)
+    ? NUMPAD_LESSONS
+    : TYPING_LESSONS;
+  return keysThrough(lessons, lessonId);
+}
+
+export function isNumpadLessonUnlocked(
+  lessonId: string,
+  completedLessonIds: ReadonlySet<string>,
+): boolean {
+  const index = NUMPAD_LESSONS.findIndex((lesson) => lesson.id === lessonId);
+  if (index <= 0) return index === 0;
+  return completedLessonIds.has(NUMPAD_LESSONS[index - 1]!.id);
 }
 
 export function isTypingLessonUnlocked(

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   KEYBOARD_ROWS,
+  NUMPAD_ROWS,
+  lookupNumpadCharacter,
   lookupTypingCharacter,
   oppositeShiftHand,
 } from "./keyboard-layout";
@@ -39,5 +41,24 @@ describe("German typing keyboard", () => {
     });
     expect(oppositeShiftHand("A")).toBe("right");
     expect(oppositeShiftHand("J")).toBe("left");
+  });
+
+  it("provides a complete optional number pad", () => {
+    expect(NUMPAD_ROWS).toHaveLength(5);
+    expect(NUMPAD_ROWS.flat().map((key) => key.code)).toEqual(
+      expect.arrayContaining([
+        "NumLock",
+        "NumpadDivide",
+        "NumpadMultiply",
+        "NumpadAdd",
+        "NumpadEnter",
+        "Numpad0",
+        "NumpadDecimal",
+      ]),
+    );
+    expect(lookupNumpadCharacter("5")?.key).toMatchObject({
+      code: "Numpad5",
+      home: true,
+    });
   });
 });

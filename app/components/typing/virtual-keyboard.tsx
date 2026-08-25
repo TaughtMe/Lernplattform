@@ -3,6 +3,8 @@
 import type { CSSProperties } from "react";
 import {
   KEYBOARD_ROWS,
+  NUMPAD_ROWS,
+  lookupNumpadCharacter,
   lookupTypingCharacter,
   oppositeShiftHand,
   type Finger,
@@ -31,18 +33,22 @@ export function VirtualKeyboard({
   nextChar,
   lastPress,
   activeChars = [],
+  layout = "main",
 }: {
   nextChar: string | undefined;
   lastPress?: TypingKeyPress | null;
   activeChars?: readonly string[] | undefined;
+  layout?: "main" | "numpad";
 }) {
-  const nextInfo = nextChar ? lookupTypingCharacter(nextChar) : undefined;
+  const lookup =
+    layout === "numpad" ? lookupNumpadCharacter : lookupTypingCharacter;
+  const rows = layout === "numpad" ? NUMPAD_ROWS : KEYBOARD_ROWS;
+  const nextInfo = nextChar ? lookup(nextChar) : undefined;
   const nextCode = nextInfo?.key.code;
-  const shiftHand = nextChar ? oppositeShiftHand(nextChar) : null;
+  const shiftHand =
+    layout === "main" && nextChar ? oppositeShiftHand(nextChar) : null;
   const activeCodes = new Set(
-    activeChars
-      .map((char) => lookupTypingCharacter(char)?.key.code)
-      .filter(Boolean),
+    activeChars.map((char) => lookup(char)?.key.code).filter(Boolean),
   );
   const finger = nextInfo?.key.finger;
 
@@ -58,11 +64,15 @@ export function VirtualKeyboard({
         </span>
       </div>
       <div
-        className="virtual-keyboard"
+        className={`virtual-keyboard${layout === "numpad" ? " is-numpad" : ""}`}
         role="img"
-        aria-label="Deutsche Tastatur mit Markierung für die nächste Taste"
+        aria-label={
+          layout === "numpad"
+            ? "Numerischer Tastenblock mit Markierung für die nächste Taste"
+            : "Deutsche Tastatur mit Markierung für die nächste Taste"
+        }
       >
-        {KEYBOARD_ROWS.map((row, rowIndex) => (
+        {rows.map((row, rowIndex) => (
           <div className="virtual-keyboard__row" key={rowIndex}>
             {row.map((key) => {
               const isShift =

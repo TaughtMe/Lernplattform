@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  NUMPAD_LESSONS,
   TYPING_LESSONS,
   availableKeysThrough,
+  isNumpadLessonUnlocked,
   isTypingLessonUnlocked,
 } from "./curriculum";
 
@@ -35,6 +37,22 @@ describe("typing curriculum", () => {
       "j",
       "d",
       "k",
+    ]);
+  });
+
+  it("keeps the numpad as an independent optional path", () => {
+    expect(NUMPAD_LESSONS).toHaveLength(5);
+    expect(isNumpadLessonUnlocked("numpad-grundstellung", new Set())).toBe(
+      true,
+    );
+    expect(isNumpadLessonUnlocked("numpad-obere-reihe", new Set())).toBe(false);
+    expect(availableKeysThrough("numpad-obere-reihe")).toEqual([
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
     ]);
   });
 });

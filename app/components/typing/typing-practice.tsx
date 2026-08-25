@@ -11,16 +11,21 @@ import {
   computeTypingStats,
   type TypingStats,
 } from "../../../src/tastschreiben/typing-stats";
-import { lookupTypingCharacter } from "../../../src/tastschreiben/keyboard-layout";
+import {
+  lookupNumpadCharacter,
+  lookupTypingCharacter,
+} from "../../../src/tastschreiben/keyboard-layout";
 import { VirtualKeyboard, type TypingKeyPress } from "./virtual-keyboard";
 
 export function TypingPractice({
   text,
   activeChars,
+  keyboardLayout = "main",
   onFinish,
 }: {
   text: string;
   activeChars?: readonly string[];
+  keyboardLayout?: "main" | "numpad";
   onFinish: (stats: TypingStats) => void;
 }) {
   const [session, setSession] = useState(() => createTypingSession(text));
@@ -59,7 +64,12 @@ export function TypingPractice({
     setLastPress({
       char: event.key,
       code:
-        event.code || lookupTypingCharacter(event.key)?.key.code || event.key,
+        event.code ||
+        (keyboardLayout === "numpad"
+          ? lookupNumpadCharacter(event.key)
+          : lookupTypingCharacter(event.key)
+        )?.key.code ||
+        event.key,
       correct: event.key === expected,
       nonce: nonce.current,
     });
@@ -108,6 +118,7 @@ export function TypingPractice({
         nextChar={expectedTypingCharacter(session)}
         lastPress={lastPress}
         activeChars={activeChars}
+        layout={keyboardLayout}
       />
     </label>
   );

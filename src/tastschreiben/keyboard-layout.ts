@@ -145,6 +145,38 @@ export const KEYBOARD_ROWS: KeyDef[][] = [
   bottomRow,
 ];
 
+export const NUMPAD_ROWS: KeyDef[][] = [
+  [
+    control("NumLock", "Num", 1, "system"),
+    character("NumpadDivide", "/", "right-pinky"),
+    character("NumpadMultiply", "*", "right-pinky"),
+    character("NumpadSubtract", "-", "right-pinky"),
+  ],
+  [
+    character("Numpad7", "7", "right-index"),
+    character("Numpad8", "8", "right-middle"),
+    character("Numpad9", "9", "right-ring"),
+    character("NumpadAdd", "+", "right-pinky"),
+  ],
+  [
+    character("Numpad4", "4", "right-index"),
+    character("Numpad5", "5", "right-middle", { label: "5", home: true }),
+    character("Numpad6", "6", "right-ring"),
+    control("NumpadAddLower", "+", 1),
+  ],
+  [
+    character("Numpad1", "1", "right-index"),
+    character("Numpad2", "2", "right-middle"),
+    character("Numpad3", "3", "right-ring"),
+    control("NumpadEnter", "Enter", 1, "system"),
+  ],
+  [
+    character("Numpad0", "0", "thumb", { label: "0", width: 2 }),
+    character("NumpadDecimal", ",", "right-pinky"),
+    control("NumpadEnterLower", "↵", 1, "system"),
+  ],
+];
+
 const characterLookup = new Map<string, { key: KeyDef; needsShift: boolean }>();
 for (const key of KEYBOARD_ROWS.flat()) {
   if (key.base === undefined) continue;
@@ -152,8 +184,21 @@ for (const key of KEYBOARD_ROWS.flat()) {
   if (key.shift) characterLookup.set(key.shift, { key, needsShift: true });
 }
 
+const numpadCharacterLookup = new Map<
+  string,
+  { key: KeyDef; needsShift: boolean }
+>();
+for (const key of NUMPAD_ROWS.flat()) {
+  if (key.base === undefined) continue;
+  numpadCharacterLookup.set(key.base, { key, needsShift: false });
+}
+
 export function lookupTypingCharacter(char: string) {
   return characterLookup.get(char);
+}
+
+export function lookupNumpadCharacter(char: string) {
+  return numpadCharacterLookup.get(char);
 }
 
 export function oppositeShiftHand(char: string): "left" | "right" | null {
