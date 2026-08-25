@@ -6,7 +6,7 @@ const students: LiveRoomStudent[] = [
   {
     studentName: "Mia",
     stationNumber: null,
-    appVersion: "lernraum-0.1.0",
+    appVersion: "lernraum-0.2.0",
     currentIndex: 3,
     peeks: 1,
     attempts: 4,
@@ -17,7 +17,7 @@ const students: LiveRoomStudent[] = [
   {
     studentName: "Noah",
     stationNumber: null,
-    appVersion: "lernraum-0.1.0",
+    appVersion: "lernraum-0.2.0",
     currentIndex: 1,
     peeks: 0,
     attempts: 2,

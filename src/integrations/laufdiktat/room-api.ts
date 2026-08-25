@@ -1,4 +1,5 @@
 import { getLiveRoomClient, type LiveRoomConfig } from "./live-room-client";
+import { LIVE_APP_VERSION } from "../../app-version";
 
 export type JoinedLiveRoom = {
   roomId: string;
@@ -260,7 +261,7 @@ export async function saveLiveProgress(
       p_finished: progress.finished,
       p_duration_ms: progress.durationMs ?? null,
       p_word_errors: progress.wordErrors ?? null,
-      p_app_version: "lernraum-0.1.0",
+      p_app_version: LIVE_APP_VERSION,
       p_station_number: progress.stationNumber ?? null,
     },
   );

@@ -12,6 +12,7 @@ import {
 } from "react";
 import type { VocabularyDirection } from "../../src/domain/running-dictation";
 import { MULTIPLICATION_TABLES } from "../../src/domain/mental-math";
+import { LIVE_APP_VERSION } from "../../src/app-version";
 import {
   getLiveRoomClient,
   type LiveRoomConfig,
@@ -341,7 +342,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         (await channelRef.current?.send({
           type: "broadcast",
           event: "session-start",
-          payload: { appVersion: "lernraum-0.1.0" },
+          payload: { appVersion: LIVE_APP_VERSION },
         })) !== "ok"
       )
         throw new Error();

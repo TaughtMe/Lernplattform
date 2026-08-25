@@ -10,6 +10,7 @@ import {
   parseMentalMathTask,
   type MentalMathOperation,
 } from "../../domain/mental-math";
+import { LIVE_APP_VERSION } from "../../app-version";
 
 export type TeacherContentMode = "text" | "vocabulary" | "math";
 export type TeacherGameMode = "UEBUNG" | "TEST" | "BATTLE" | "STATION";
@@ -48,7 +49,7 @@ export type TeacherRoomConfig = {
   shuffleWords: boolean;
   strictTypingMode: boolean;
   stationShuffle: boolean;
-  appVersion: "lernraum-0.1.0";
+  appVersion: typeof LIVE_APP_VERSION;
 };
 
 function parseMathLine(line: string, index: number): LiveWord | null {
@@ -140,7 +141,7 @@ export function buildTeacherRoomConfig(
       options.gameMode !== "STATION" && (options.strictTypingMode ?? false),
     stationShuffle:
       options.gameMode === "STATION" && (options.stationShuffle ?? true),
-    appVersion: "lernraum-0.1.0",
+    appVersion: LIVE_APP_VERSION,
   };
 }
 

@@ -1,13 +1,15 @@
 {
   "name": "lernraum",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "packageManager": "npm@11.9.0",
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
+    "predev": "node scripts/generate-service-worker.mjs",
     "dev": "vinext dev",
+    "prebuild": "node scripts/generate-service-worker.mjs",
     "build": "vinext build",
     "start": "vinext start",
     "format": "prettier --write app src e2e tests docs *.json *.ts *.mjs",

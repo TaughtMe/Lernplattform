@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { ThemeToggle } from "./components/theme-toggle";
+import { SiteMetaActions } from "./components/site-meta-actions";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -72,6 +73,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <SiteMetaActions />
         <ThemeToggle />
       </body>
     </html>

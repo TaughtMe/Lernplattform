@@ -26,6 +26,9 @@ test("server-renders the Lernraum start page", async () => {
   assert.match(html, /Lernraum/);
   assert.match(html, /Wie möchtest du heute lernen/);
   assert.match(html, /Mein Lernraum/);
+  assert.match(html, /href="\/impressum"/);
+  assert.match(html, /href="\/datenschutz"/);
+  assert.match(html, />v0\.2\.0</);
   assert.doesNotMatch(html, /<strong>Freies Üben<\/strong>/);
   assert.doesNotMatch(html, /Beispiel-Lerngruppen|Duell|Mein Haus/);
   assert.doesNotMatch(
@@ -45,11 +48,24 @@ test("server-renders stable module entry pages", async () => {
     ["/lernbox", "Meine LernBox"],
     ["/raum", "Raum beitreten"],
     ["/lehrer", "Klassenverwaltung"],
+    ["/impressum", "Angaben gemäß"],
+    ["/datenschutz", "Persönliche Lernstände"],
   ]) {
     const response = await render(path);
     assert.equal(response.status, 200, path);
     assert.match(await response.text(), new RegExp(title), path);
   }
+});
+
+test("ships the update-aware service worker", async () => {
+  const [worker, version] = await Promise.all([
+    readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
+    readFile(new URL("../public/version.json", import.meta.url), "utf8"),
+  ]);
+  assert.match(worker, /const APP_VERSION = "0\.2\.0"/);
+  assert.match(worker, /SKIP_WAITING/);
+  assert.match(worker, /request\.mode === "navigate"/);
+  assert.deepEqual(JSON.parse(version).version, "0.2.0");
 });
 
 test("keeps the versioned learning contract framework-independent", async () => {
