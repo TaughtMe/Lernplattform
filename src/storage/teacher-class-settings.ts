@@ -8,6 +8,10 @@ import {
   type ClassMember,
   type TeacherClass,
 } from "../domain/class-enrollment";
+import {
+  teacherContentPackageSchema,
+  type TeacherContentPackage,
+} from "../domain/teacher-content-library";
 
 export const teacherClassSettingsSchema = z
   .object({
@@ -34,6 +38,7 @@ export class TeacherClassDatabase extends Dexie {
   classSettings!: Table<TeacherClassSettings, string>;
   classes!: Table<TeacherClass, string>;
   members!: Table<ClassMember, string>;
+  contentPackages!: Table<TeacherContentPackage, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.teacher) {
     super(name);
@@ -43,7 +48,37 @@ export class TeacherClassDatabase extends Dexie {
       classes: "id, updatedAt",
       members: "id, classId, createdAt",
     });
+    this.version(3).stores({
+      classSettings: "id, updatedAt",
+      classes: "id, updatedAt",
+      members: "id, classId, createdAt",
+      contentPackages: "id, updatedAt",
+    });
   }
+}
+
+export function createTeacherContentLibraryRepository(
+  database = new TeacherClassDatabase(),
+) {
+  return {
+    get: (id: string) => database.contentPackages.get(id),
+    list: () =>
+      database.contentPackages.orderBy("updatedAt").reverse().toArray(),
+    put: async (value: TeacherContentPackage) => {
+      await database.contentPackages.put(
+        teacherContentPackageSchema.parse(value),
+      );
+    },
+    putMany: async (values: readonly TeacherContentPackage[]) => {
+      const parsed = values.map((value) =>
+        teacherContentPackageSchema.parse(value),
+      );
+      await database.contentPackages.bulkPut(parsed);
+    },
+    remove: async (id: string) => {
+      await database.contentPackages.delete(id);
+    },
+  };
 }
 
 export function createTeacherClassRepository(

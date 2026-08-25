@@ -196,7 +196,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Lokale Entwicklung und Hosting über Projekt-URL und modernen Publishable Key verbinden; keine Secret- oder `service_role`-Schlüssel im Client verwenden
 - [x] Supabase-Migrationen und lokale Projektkonfiguration nachvollziehbar im Repository anlegen
 - [x] Automatische Data-API-Standardrechte für neue Tabellen, Sequenzen und Funktionen projektweit entziehen
-- [ ] Lokale und dateibasierte Lehrkraftbibliothek mit stabilem Exportformat umsetzen
+- [x] Lokale und dateibasierte Lehrkraftbibliothek mit stabilem Exportformat umsetzen
 - [x] Unveränderliches `LearningBundle` vor dem Upload auf dem Lehrergerät verschlüsseln
 - [x] Temporären Transferraum mit maximal 24 Stunden Ablaufzeit implementieren
 - [x] QR-Nutzlast mit ausreichend zufälligem Abrufnachweis erzeugen

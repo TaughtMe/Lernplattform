@@ -6428,10 +6428,55 @@ body,
 
 .teacher-transfer__form {
   display: grid;
-  grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr) auto;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr) auto auto;
   gap: 1rem;
   align-items: end;
   margin-top: 1.25rem;
+}
+
+.teacher-library {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr);
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.teacher-library h2,
+.teacher-library p {
+  margin: 0.2rem 0 0.45rem;
+}
+
+.teacher-library p:last-child {
+  color: var(--muted);
+}
+
+.teacher-library__controls,
+.teacher-library__controls label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.teacher-library__controls label {
+  font-weight: 700;
+}
+
+.teacher-library__controls select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  color: var(--ink);
+  background: var(--field);
+  font: inherit;
+}
+
+.teacher-library__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
 }
 
 .teacher-transfer__form label,
@@ -6521,6 +6566,10 @@ body,
   }
 
   .teacher-transfer__form {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-library {
     grid-template-columns: 1fr;
   }
 

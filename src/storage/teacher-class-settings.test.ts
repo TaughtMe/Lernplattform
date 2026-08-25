@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createTeacherClassRepository,
   createTeacherClassSettingsRepository,
+  createTeacherContentLibraryRepository,
   TeacherClassDatabase,
   toggleClassModule,
   type TeacherClassSettings,
@@ -67,5 +68,30 @@ describe("teacher class settings", () => {
       "vocabulary",
       "mathematics",
     ]);
+  });
+
+  it("stores and restores the local teacher content library", async () => {
+    const name = `teacher-${crypto.randomUUID()}`;
+    const firstDatabase = new TeacherClassDatabase(name);
+    await createTeacherContentLibraryRepository(firstDatabase).put({
+      id: "package-1",
+      revision: 1,
+      title: "Englisch · Schule",
+      source: "school;Schule",
+      promptLocale: "en",
+      answerLocale: "de",
+      createdAt: "2026-08-25T10:00:00.000Z",
+      updatedAt: "2026-08-25T11:00:00.000Z",
+    });
+    firstDatabase.close();
+
+    const reopenedDatabase = new TeacherClassDatabase(name);
+    databases.push(reopenedDatabase);
+    const repository = createTeacherContentLibraryRepository(reopenedDatabase);
+    await expect(repository.list()).resolves.toMatchObject([
+      { id: "package-1", revision: 1, title: "Englisch · Schule" },
+    ]);
+    await repository.remove("package-1");
+    await expect(repository.list()).resolves.toEqual([]);
   });
 });

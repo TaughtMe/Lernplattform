@@ -2,9 +2,9 @@
 
 ## Aktueller nächster Meilenstein
 
-Das Supabase-Projekt `Lernraum` ist seit dem 25. August 2026 in `eu-west-1` aktiv. Datenbankschema, Migration, fähigkeitsgebundene RPCs, Ablaufbereinigung und clientseitige Verschlüsselung sind umgesetzt und technisch getestet. Supabase bleibt dabei ein höchstens 24 Stunden gültiger Übergaberaum für clientseitig verschlüsseltes Chiffrat; Lehrkraftbibliothek und persönlicher Schülerlernstand bleiben lokal.
+Das Supabase-Projekt `Lernraum` ist seit dem 25. August 2026 in `eu-west-1` aktiv. Datenbankschema, Migration, fähigkeitsgebundene RPCs, Ablaufbereinigung und clientseitige Verschlüsselung sind umgesetzt und technisch getestet. Projekt-URL und Publishable Key sind in Entwicklung und Hosting konfiguriert. Lehrkraftfreigabe, QR-/Codeanzeige, Schülerabruf und der idempotente LernBox-Eingangsadapter bilden einen sichtbaren Ende-zu-Ende-Weg; Netzabbruch, beschädigte Pakete, Ablauf und erneute Freigabe sind automatisiert geprüft.
 
-Als nächstes werden Projekt-URL und Publishable Key in Entwicklung und Hosting konfiguriert. Danach werden Lehrkraftfreigabe, QR-/Codeanzeige, Schülerabruf und der vorhandene idempotente LernBox-Eingangsadapter zu einem sichtbaren Ende-zu-Ende-Weg verbunden. Netzabbruch, beschädigte Pakete, Ablauf und erneute Freigabe bleiben bis dahin ausdrücklich offen.
+Die dauerhafte Lehrkraftbibliothek bleibt davon getrennt lokal. Pakete können mit stabiler ID und Revision gespeichert sowie über ein versioniertes, validiertes Dateiformat exportiert und wiederhergestellt werden. Als nächster betrieblicher Punkt werden die tatsächliche Backup-Aufbewahrung und Löschfrist des Supabase-Dienstes für den Schuleinsatz dokumentiert. Danach folgt im persönlichen Lernraum die fachübergreifende Tagesauswahl in überschaubaren Fachblöcken.
 
 ## Empfohlene Reihenfolge
 
