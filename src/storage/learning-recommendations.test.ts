@@ -51,7 +51,7 @@ describe("shared learning recommendations", () => {
       now,
     });
     await createTypingProgressRepository(database).recordAttempt(
-      "grundstellung-links",
+      "grundstellung-zeigefinger",
       {
         totalChars: 20,
         correctChars: 15,
@@ -233,7 +233,7 @@ describe("shared learning recommendations", () => {
       lastPracticedAt: old,
     });
     await createTypingProgressRepository(database).recordAttempt(
-      "grundstellung-links",
+      "grundstellung-zeigefinger",
       {
         totalChars: 20,
         correctChars: 20,
@@ -289,7 +289,7 @@ describe("shared learning recommendations", () => {
       recommendations.find((item) => item.module === "typing"),
     ).toMatchObject({
       reason: "next-step",
-      title: "Grundstellung: rechte Hand beginnen",
+      title: "Grundstellung: Mittelfinger beginnen",
     });
   });
 });

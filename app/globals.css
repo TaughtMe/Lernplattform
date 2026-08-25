@@ -4613,7 +4613,7 @@ body,
   }
 }
 
-/* Tastschreiben: bewusst als Lernweg, nicht als Spieloberfläche. */
+/* Tastschreiben: ruhiger Lernweg mit einer positiven, nicht wertenden Spielfigur. */
 .typing-shell {
   min-height: 100svh;
   background: var(--shell);
@@ -4625,9 +4625,133 @@ body,
   margin: 0 auto;
   padding: clamp(48px, 7vw, 84px) 0 96px;
 }
+.typing-overview__hero {
+  margin-bottom: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  align-items: center;
+  gap: clamp(24px, 5vw, 58px);
+}
 .typing-overview .student-welcome {
   max-width: 720px;
-  margin-bottom: 38px;
+}
+.typing-companion {
+  position: relative;
+  padding: 16px 18px 18px;
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+.typing-companion svg {
+  width: 100%;
+  overflow: visible;
+}
+.typing-companion__shadow {
+  fill: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.typing-companion__leaf {
+  fill: color-mix(in srgb, var(--teal) 78%, var(--surface));
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+.typing-companion__body {
+  fill: color-mix(in srgb, var(--teal) 74%, var(--surface));
+  stroke: color-mix(in srgb, var(--teal) 72%, var(--ink));
+  stroke-width: 2;
+}
+.typing-companion__belly {
+  fill: color-mix(in srgb, var(--surface) 76%, var(--teal));
+}
+.typing-companion__eye {
+  fill: var(--ink);
+}
+.typing-companion__mouth,
+.typing-companion__arm {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-width: 3;
+}
+.typing-companion__cheek {
+  fill: var(--coral);
+  opacity: 0.64;
+}
+.typing-companion__key rect {
+  fill: var(--surface);
+  stroke: color-mix(in srgb, var(--teal) 55%, var(--line));
+  stroke-width: 2;
+}
+.typing-companion__key text {
+  fill: var(--ink);
+  font-size: 9px;
+  font-weight: 850;
+}
+.typing-companion__copy {
+  display: grid;
+  gap: 4px;
+}
+.typing-companion__copy > span {
+  color: var(--teal);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.typing-companion__copy strong {
+  font-size: 0.98rem;
+}
+.typing-companion__copy p {
+  margin: 2px 0 7px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+.typing-companion__copy small {
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+.typing-companion__progress {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+.typing-companion__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--teal);
+}
+.typing-companion.mood-celebrate svg {
+  animation: typing-companion-celebrate 600ms ease both;
+}
+.typing-companion.is-compact {
+  width: fit-content;
+  margin: 0 auto 24px;
+  padding: 4px 14px 4px 4px;
+  grid-template-columns: 70px auto;
+  border-radius: 999px;
+}
+.typing-companion.is-compact svg {
+  width: 70px;
+}
+.typing-companion__bubble {
+  max-width: 220px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+@keyframes typing-companion-celebrate {
+  50% {
+    transform: translateY(-7px) rotate(-2deg);
+  }
 }
 .typing-lessons {
   margin: 0;
@@ -4789,6 +4913,10 @@ body,
     inset 0 1px 0 rgb(255 255 255 / 45%),
     0 16px 34px rgb(35 38 43 / 9%);
 }
+:root[data-theme="dark"] .virtual-keyboard {
+  background: color-mix(in srgb, var(--surface-muted) 74%, var(--surface));
+  box-shadow: 0 16px 34px rgb(0 0 0 / 18%);
+}
 .virtual-keyboard__row {
   width: 100%;
   display: flex;
@@ -4925,6 +5053,7 @@ body,
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .typing-companion.mood-celebrate svg,
   .virtual-keyboard .is-correct,
   .virtual-keyboard .is-wrong {
     animation: none;
@@ -4967,6 +5096,12 @@ body,
   }
   .typing-lessons li {
     grid-template-columns: auto 1fr;
+  }
+  .typing-overview__hero {
+    grid-template-columns: 1fr;
+  }
+  .typing-companion:not(.is-compact) {
+    grid-template-columns: 104px minmax(0, 1fr);
   }
   .typing-lessons button {
     grid-column: 1 / -1;

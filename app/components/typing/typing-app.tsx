@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   TYPING_LESSONS,
-  availableKeysThrough,
   isTypingLessonUnlocked,
   type LessonDef,
 } from "../../../src/tastschreiben/curriculum";
@@ -12,6 +11,7 @@ import { generateTypingPracticeText } from "../../../src/tastschreiben/text-gene
 import type { TypingLessonProgress } from "../../../src/tastschreiben/typing-progress";
 import type { TypingStats } from "../../../src/tastschreiben/typing-stats";
 import { createTypingProgressRepository } from "../../../src/storage/personal-learning-events";
+import { TypingCompanion } from "./typing-companion";
 import { TypingPractice } from "./typing-practice";
 
 type View =
@@ -60,6 +60,9 @@ export function TypingApp() {
       .filter((entry) => entry.completed)
       .map((entry) => entry.id),
   );
+  const completedCount = TYPING_LESSONS.filter((lesson) =>
+    completed.has(lesson.id),
+  ).length;
 
   return (
     <main className="typing-shell">
@@ -78,13 +81,19 @@ export function TypingApp() {
 
       {view.mode === "overview" && (
         <section className="typing-overview" aria-labelledby="typing-title">
-          <div className="student-welcome">
-            <p className="eyebrow">Tastschreiben</p>
-            <h1 id="typing-title">Schritt für Schritt sicher tippen</h1>
-            <p>
-              Beginne mit der Grundstellung. Unsichere Tasten werden nach jeder
-              Runde sichtbar; Geschwindigkeit bleibt eine Zusatzinformation.
-            </p>
+          <div className="typing-overview__hero">
+            <div className="student-welcome">
+              <p className="eyebrow">Tastschreiben</p>
+              <h1 id="typing-title">Schritt für Schritt sicher tippen</h1>
+              <p>
+                Beginne mit zwei Tasten. Ramo begleitet dich, während nach und
+                nach neue Fingerwege dazukommen.
+              </p>
+            </div>
+            <TypingCompanion
+              completed={completedCount}
+              total={TYPING_LESSONS.length}
+            />
           </div>
           {loading ? (
             <p>Dein Lernstand wird geladen …</p>
@@ -137,7 +146,7 @@ export function TypingApp() {
           <TypingPractice
             key={view.roundId}
             text={generateTypingPracticeText(view.lesson, view.roundId)}
-            activeChars={availableKeysThrough(view.lesson.id)}
+            activeChars={view.lesson.newKeys}
             onFinish={(stats) => finishLesson(view.lesson, view.roundId, stats)}
           />
           <button
@@ -151,6 +160,12 @@ export function TypingApp() {
 
       {view.mode === "result" && (
         <section className="typing-result">
+          <TypingCompanion
+            compact
+            mood={view.stats.accuracy >= 90 ? "celebrate" : "encourage"}
+            completed={completedCount}
+            total={TYPING_LESSONS.length}
+          />
           <p className="eyebrow">Runde abgeschlossen</p>
           <h1>{view.stats.accuracy}% genau</h1>
           <p>
