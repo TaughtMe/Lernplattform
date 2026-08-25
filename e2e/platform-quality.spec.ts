@@ -19,9 +19,9 @@ test("start page exposes the core learner actions", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Mein Lernraum", exact: false }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Freies Üben", exact: false }),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /Mein Lernraum/ })).toHaveCount(
+    1,
+  );
 });
 
 test("layout never scrolls horizontally", async ({ page }) => {
@@ -63,16 +63,13 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
   }
 });
 
-test("mobile learners retain direct access to the two learner entries", async ({
+test("mobile learners retain direct access to their personal learning room", async ({
   page,
 }, testInfo) => {
   test.skip(!testInfo.project.name.includes("mobile"));
   await page.goto("/");
   await expect(
     page.getByRole("link", { name: "Mein Lernraum", exact: false }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Freies Üben", exact: false }),
   ).toBeVisible();
 });
 
@@ -339,12 +336,9 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
     "background-color",
     "rgb(36, 29, 27)",
   );
-  await expect(page.locator(".main-action--free")).toHaveCSS(
-    "background-color",
-    "rgb(25, 35, 34)",
-  );
+  await expect(page.locator(".main-action")).toHaveCount(1);
 
-  await page.goto("/lernen");
+  await page.goto("/klasse/7b");
   const moduleTag = page.locator(".module-chips span").first();
   await expect(moduleTag).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(moduleTag).toHaveCSS("border-color", "rgb(85, 76, 69)");
@@ -367,35 +361,44 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
   expect(results.violations).toEqual([]);
 });
 
-test("new class content becomes due practice", async ({ page }) => {
-  await page.goto("/klasse/7b");
-  await expect(page.getByText("Heute fällig")).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /School words wiederholen/ }),
-  ).toBeVisible();
-});
-
-test("the class room presents one connected adaptive learning loop", async ({
+test("class content remains part of the personal learning room", async ({
   page,
 }) => {
   await page.goto("/klasse/7b");
+  await expect(
+    page.getByText(/Sie führt keinen zweiten Lernstand/),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Im persönlichen Lernraum üben" }),
+  ).toHaveAttribute("href", "/lernen");
+});
+
+test("the personal learning room presents one connected adaptive learning loop", async ({
+  page,
+}) => {
+  await page.goto("/lernen");
 
   await expect(
     page.getByRole("heading", { name: "Was hilft dir heute weiter?" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Frei üben" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Fächer" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Meine Inhalte" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Mein Fortschritt" }),
   ).toBeVisible();
 
   await expect(
-    page.getByRole("link", { name: /Vokabeln.*Üben/ }),
-  ).toHaveAttribute("href", "/lernbox");
+    page.getByRole("link", { name: /Vokabeln.*Fach öffnen/ }),
+  ).toHaveAttribute("href", "/lernen/faecher/vokabeln");
   await expect(
-    page.getByRole("link", { name: /Deutsch.*Üben/ }),
-  ).toHaveAttribute("href", "/frei/german/lernwoerter");
-  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
+    page.getByRole("link", { name: /Deutsch.*Fach öffnen/ }),
+  ).toHaveAttribute("href", "/lernen/faecher/deutsch");
+  await expect(
+    page.getByRole("textbox", { name: "Klassen- oder Raumcode" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
@@ -404,22 +407,14 @@ test("the class room presents one connected adaptive learning loop", async ({
   ).toBeVisible();
 });
 
-test("free practice opens the foundation modules directly", async ({
-  page,
-}) => {
-  await page.goto("/frei");
+test("free practice is selected inside a subject", async ({ page }) => {
+  await page.goto("/lernen/faecher/deutsch");
 
-  await expect(page.getByRole("link", { name: /Deutsch/ })).toHaveAttribute(
-    "href",
-    "/frei/german/lernwoerter",
-  );
-  await expect(page.getByRole("link", { name: /Vokabeln/ })).toHaveAttribute(
-    "href",
-    "/lernbox",
-  );
-  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
+    page.getByRole("link", { name: /Lernwörter frei üben/ }),
+  ).toHaveAttribute("href", "/frei/german/lernwoerter");
+  await expect(
+    page.getByRole("heading", { name: "Freies Üben" }),
   ).toBeVisible();
 });
 
@@ -513,7 +508,7 @@ test("a class error becomes practice and disappears after correction", async ({
     page.getByRole("heading", { name: "Noch nicht richtig" }),
   ).toBeVisible();
 
-  await page.goto("/klasse/7b");
+  await page.goto("/lernen");
   await expect(page.getByText("Aus deinem letzten Fehler")).toBeVisible();
   await page.getByRole("link", { name: /School words wiederholen/ }).click();
   await page.getByRole("button", { name: "Lernrunde starten" }).click();
@@ -523,6 +518,6 @@ test("a class error becomes practice and disappears after correction", async ({
     page.getByRole("heading", { name: "Richtig gelöst" }),
   ).toBeVisible();
 
-  await page.goto("/klasse/7b");
-  await expect(page.getByText("Im Moment ist nichts offen.")).toBeVisible();
+  await page.goto("/lernen");
+  await expect(page.getByText("Aus deinem letzten Fehler")).toHaveCount(0);
 });

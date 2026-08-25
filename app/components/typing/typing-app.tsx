@@ -72,8 +72,8 @@ export function TypingApp() {
   return (
     <main className="typing-shell">
       <header className="running-topbar">
-        <Link href="/frei" className="back-link">
-          ← Freies Üben
+        <Link href="/lernen/faecher/tastschreiben" className="back-link">
+          ← Fach Tastschreiben
         </Link>
         <div>
           <strong>Tipptraining</strong>

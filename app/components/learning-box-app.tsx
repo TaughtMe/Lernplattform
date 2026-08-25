@@ -98,8 +98,8 @@ export function LearningBoxApp() {
     <main className="learning-box-shell">
       <header className="learning-box-topbar">
         {view === "decks" ? (
-          <Link href="/frei" className="back-link">
-            ← Freies Üben
+          <Link href="/lernen/faecher/vokabeln" className="back-link">
+            ← Fach Vokabeln
           </Link>
         ) : (
           <button className="text-button" onClick={leaveDeck}>

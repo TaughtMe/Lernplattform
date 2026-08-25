@@ -26,7 +26,7 @@ test("server-renders the Lernraum start page", async () => {
   assert.match(html, /Lernraum/);
   assert.match(html, /Wie möchtest du heute lernen/);
   assert.match(html, /Mein Lernraum/);
-  assert.match(html, /Freies Üben/);
+  assert.doesNotMatch(html, /<strong>Freies Üben<\/strong>/);
   assert.doesNotMatch(html, /Beispiel-Lerngruppen|Duell|Mein Haus/);
   assert.doesNotMatch(
     html,
@@ -36,11 +36,12 @@ test("server-renders the Lernraum start page", async () => {
 
 test("server-renders stable module entry pages", async () => {
   for (const [path, title] of [
-    ["/lernen", "Meine Klassen"],
-    ["/frei", "Freies Üben"],
+    ["/lernen", "Heute üben"],
+    ["/lernen/faecher/deutsch", "Fach in deinem Lernraum"],
+    ["/lernen/faecher/vokabeln", "Vokabeln"],
     ["/frei/german/lernwoerter", "Vom Ansehen zum sicheren Abruf"],
     ["/frei/typing", "Schritt für Schritt sicher tippen"],
-    ["/klasse/7b", "Heute üben"],
+    ["/klasse/7b", "Inhalte aus dieser Klasse"],
     ["/lernbox", "Meine LernBox"],
     ["/raum", "Raum beitreten"],
     ["/lehrer", "Klassenverwaltung"],

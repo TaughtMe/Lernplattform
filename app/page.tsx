@@ -29,16 +29,13 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="main-entry__actions">
+        <div className="main-entry__actions main-entry__actions--single">
           <Link className="main-action main-action--class" href="/lernen">
-            <span className="main-action__label">Deine Klassen</span>
+            <span className="main-action__label">Alles an einem Ort</span>
             <strong>Mein Lernraum</strong>
-            <small>Empfehlungen, freie Übung und Fortschritt verbinden</small>
-          </Link>
-          <Link className="main-action main-action--free" href="/frei">
-            <span className="main-action__label">Selbst auswählen</span>
-            <strong>Freies Üben</strong>
-            <small>Grundfähigkeiten selbstständig und sinnvoll festigen</small>
+            <small>
+              Heute üben, Fächer, eigene Inhalte und Fortschritt verbinden
+            </small>
           </Link>
         </div>
 

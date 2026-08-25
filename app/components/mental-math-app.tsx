@@ -582,8 +582,8 @@ function MentalMathShell({ children }: { children: React.ReactNode }) {
       <header className="class-topbar">
         {/* Native anchor keeps this client component independently testable. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/frei" className="back-link">
-          ← Freies Üben
+        <a href="/lernen/faecher/mathematik" className="back-link">
+          ← Fach Mathematik
         </a>
         <span className="ranking-note">Lernstand bleibt lokal</span>
       </header>

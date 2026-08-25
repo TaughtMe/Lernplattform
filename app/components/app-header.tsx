@@ -12,9 +12,9 @@ export function AppHeader() {
         </Link>
         <nav className="desktop-navigation" aria-label="Hauptnavigation">
           <Link href="/lernen">Mein Lernraum</Link>
+          <Link href="/lernen#faecher">Fächer</Link>
+          <Link href="/lernen#fortschritt">Fortschritt</Link>
           <Link href="/#raumcode">Raum beitreten</Link>
-          <Link href="/duell">Duell</Link>
-          <Link href="/haus">Mein Haus</Link>
         </nav>
         <Link className="teacher-link" href="/lehrer">
           Lehrer-Login
@@ -22,9 +22,9 @@ export function AppHeader() {
       </header>
       <nav className="mobile-navigation" aria-label="Mobile Hauptnavigation">
         <Link href="/lernen">Lernraum</Link>
+        <Link href="/lernen#faecher">Fächer</Link>
+        <Link href="/lernen#fortschritt">Fortschritt</Link>
         <Link href="/#raumcode">Raum</Link>
-        <Link href="/duell">Duell</Link>
-        <Link href="/haus">Haus</Link>
       </nav>
     </>
   );

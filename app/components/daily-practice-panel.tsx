@@ -2,12 +2,27 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { CLASS_MODULE_LABELS } from "../../src/domain/class-workspace";
-import { demoClass } from "../../src/domain/demo-class";
+import {
+  CLASS_MODULE_LABELS,
+  type ClassModule,
+} from "../../src/domain/class-workspace";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
 
-export function DailyPracticePanel() {
+const PERSONAL_PRACTICE_MODULES: readonly ClassModule[] = [
+  "vocabulary",
+  "german",
+  "mathematics",
+  "typing",
+];
+
+type DailyPracticePanelProps = {
+  enabledModules?: readonly ClassModule[];
+};
+
+export function DailyPracticePanel({
+  enabledModules = PERSONAL_PRACTICE_MODULES,
+}: DailyPracticePanelProps = {}) {
   const repository = useMemo(
     () => createLearningRecommendationRepository(),
     [],
@@ -19,7 +34,7 @@ export function DailyPracticePanel() {
   useEffect(() => {
     let active = true;
     repository
-      .list({ enabledModules: demoClass.enabledModules })
+      .list({ enabledModules })
       .then((recommendations) => {
         if (!active) return;
         setPractice(recommendations);
@@ -34,7 +49,7 @@ export function DailyPracticePanel() {
     return () => {
       active = false;
     };
-  }, [repository]);
+  }, [enabledModules, repository]);
 
   if (loading) {
     return <p className="today-empty">Deine heutige Auswahl wird geladen …</p>;
