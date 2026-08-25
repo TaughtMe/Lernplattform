@@ -15,7 +15,9 @@ stand: 2026-08-25
 
 **Stand 25. August 2026:** Das Supabase-Projekt `Lernraum` ist in `eu-west-1` auf PostgreSQL 17 aktiv. Die Migration `create_encrypted_content_transfers` ist ausgerollt und liegt nachvollziehbar im Repository. Sie enthält die RLS-geschützte Tabelle `content_transfers`, vier fähigkeitsgebundene RPC-Funktionen und einen stündlichen Löschauftrag für abgelaufene Datensätze.
 
-Die zuvor getrennte Laufdiktat-Datenbank ist außerdem ohne historische Unterrichtsdaten in dasselbe Projekt migriert. Die Migration `migrate_laufdiktat_live_rooms` stellt tokengebundene Räume, pseudonyme Teilnehmende, Fortschritt, Heartbeat und die automatische Löschung beendeter Räume bereit. Ein vollständiger technischer Lehrer-Schüler-Roundtrip wurde direkt gegen `Lernraum` erfolgreich geprüft. Offen ist nur noch, URL und Publishable Key im Cloudflare-Build zu hinterlegen und die veröffentlichte App neu zu deployen.
+Die zuvor getrennte Laufdiktat-Datenbank ist außerdem ohne historische Unterrichtsdaten in dasselbe Projekt migriert. Die Migration `migrate_laufdiktat_live_rooms` stellt tokengebundene Räume, pseudonyme Teilnehmende, Fortschritt, Heartbeat und die automatische Löschung beendeter Räume bereit. Ein vollständiger technischer Lehrer-Schüler-Roundtrip wurde direkt gegen `Lernraum` erfolgreich geprüft. Projekt-URL und Publishable Key sind als Cloudflare-Buildvariablen hinterlegt; die veröffentlichte App konnte damit erfolgreich einen echten Unterrichtsraum öffnen und wieder beenden.
+
+Der Cloudflare-Build für Commit `6fa3ad6` ist erfolgreich veröffentlicht. Wegen wiederholt beschädigter Dependency-Cache-Wiederherstellungen ist der Cloudflare-Buildcache deaktiviert. Der Produktionscheck umfasste außerdem das Anlegen der Klasse `Testklasse 1`, das Hinzufügen und einmalige Einschreiben von `Testschüler 1`, die idempotente Wiederholung desselben Einschreibecodes sowie das Fortbestehen beider Datensätze nach Neuladen und Service-Worker-Update.
 
 Der direkte Tabellenzugriff ist für anonyme und angemeldete Clients vollständig entzogen. Reservierung, einmaliger Upload sowie Abruf über QR-Nachweis oder manuellen Code erfolgen ausschließlich über eng begrenzte Funktionen. Upload- und Abrufnachweise werden nur als SHA-256-Hash gespeichert. Der manuelle Code enthält einen zufälligen Raumfinder und ein separates Geheimnis; nach fünf Fehlversuchen innerhalb von 15 Minuten wird der Raum für weitere Codeversuche 15 Minuten gesperrt. Dabei entsteht nur ein raumbezogener Zähler ohne Schülerzuordnung oder Abrufhistorie.
 
@@ -27,7 +29,7 @@ Die Supabase-Sicherheitsprüfung weist erwartungsgemäß darauf hin, dass die vi
 
 Der nächste technische Meilenstein ist die Anbindung dieses geprüften Unterbaus an die Lehrkraft- und Schüleroberfläche:
 
-1. Supabase-Projekt-URL und Publishable Key in Entwicklung und Hosting konfigurieren
+1. ~~Supabase-Projekt-URL und Publishable Key in Entwicklung und Hosting konfigurieren~~ (erledigt am 25. August 2026)
 2. Lehrkraftauswahl mit `publishLearningBundle` verbinden und QR-/Manuellcode anzeigen
 3. Schülerabruf mit QR-Scanner und Codefeld verbinden
 4. entschlüsseltes Bundle über den vorhandenen idempotenten Eingangsadapter in die persönliche LernBox übernehmen
