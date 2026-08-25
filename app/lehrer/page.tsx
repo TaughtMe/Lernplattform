@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TeacherClassConfigurator } from "../components/teacher-class-configurator";
+import { TeacherContentTransfer } from "../components/teacher-content-transfer";
 import { TeacherLiveRoom } from "../components/teacher-live-room";
 
 export const metadata: Metadata = { title: "Lehrerbereich" };
@@ -21,6 +22,7 @@ export default function Page() {
         <span>Lehrerbereich · Prototyp</span>
       </header>
       <TeacherLiveRoom liveRoomConfig={liveRoomConfig} />
+      <TeacherContentTransfer transferConfig={liveRoomConfig} />
       <TeacherClassConfigurator />
     </main>
   );

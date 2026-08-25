@@ -15,7 +15,7 @@ stand: 2026-08-25
 
 **Stand 25. August 2026:** Das Supabase-Projekt `Lernraum` ist in `eu-west-1` auf PostgreSQL 17 aktiv. Die Migration `create_encrypted_content_transfers` ist ausgerollt und liegt nachvollziehbar im Repository. Sie enthält die RLS-geschützte Tabelle `content_transfers`, vier fähigkeitsgebundene RPC-Funktionen und einen stündlichen Löschauftrag für abgelaufene Datensätze.
 
-Die zuvor getrennte Laufdiktat-Datenbank ist außerdem ohne historische Unterrichtsdaten in dasselbe Projekt migriert. Die Migration `migrate_laufdiktat_live_rooms` stellt tokengebundene Räume, pseudonyme Teilnehmende, Fortschritt, Heartbeat und die automatische Löschung beendeter Räume bereit. Ein vollständiger technischer Lehrer-Schüler-Roundtrip wurde direkt gegen `Lernraum` erfolgreich geprüft. Projekt-URL und Publishable Key sind als Cloudflare-Buildvariablen hinterlegt; die veröffentlichte App konnte damit erfolgreich einen echten Unterrichtsraum öffnen und wieder beenden.
+Die zuvor getrennte Laufdiktat-Datenbank ist außerdem ohne historische Unterrichtsdaten in dasselbe Projekt migriert. Die Migration `migrate_laufdiktat_live_rooms` stellt tokengebundene Räume, pseudonyme Teilnehmende, Fortschritt, Heartbeat und die automatische Löschung beendeter Räume bereit. Projekt-URL und Publishable Key sind als Cloudflare-Buildvariablen hinterlegt. Am 25. August 2026 wurde der komplette Laufdiktat-Ablauf in Produktion mit getrenntem Lehrer- und Schülergerät geprüft: Beitritt, Sitzungsstart, Nummernwahl, zwei verdeckte Stationsabrufe, Fortschrittsanzeige mit 100 Prozent und sauberes Raumende waren erfolgreich.
 
 Der Cloudflare-Build für Commit `6fa3ad6` ist erfolgreich veröffentlicht. Wegen wiederholt beschädigter Dependency-Cache-Wiederherstellungen ist der Cloudflare-Buildcache deaktiviert. Der Produktionscheck umfasste außerdem das Anlegen der Klasse `Testklasse 1`, das Hinzufügen und einmalige Einschreiben von `Testschüler 1`, die idempotente Wiederholung desselben Einschreibecodes sowie das Fortbestehen beider Datensätze nach Neuladen und Service-Worker-Update.
 
@@ -23,17 +23,17 @@ Der direkte Tabellenzugriff ist für anonyme und angemeldete Clients vollständi
 
 Eine zweite Härtungsmigration entzieht zusätzlich die automatischen Standardrechte für künftig angelegte Tabellen, Sequenzen und Funktionen. Neue Data-API-Endpunkte müssen dadurch immer ausdrücklich zusammen mit ihrem Zugriffs- und RLS-Modell freigegeben werden. Die Transfer-RPCs sind ausschließlich für die anonyme Browserrolle mit Publishable Key erreichbar; die derzeit nicht benötigte angemeldete Rolle besitzt keine Ausführungsrechte.
 
-Der Anwendungskern verschlüsselt das validierte `LearningBundle` clientseitig mit AES-256-GCM. Der zufällige Inhaltsschlüssel wird getrennt für QR-Nachweis und manuellen Code umschlossen; Supabase erhält nur Chiffrat, Nonces, verschlüsselte Schlüsselumschläge und nicht personenbezogene Versionsdaten. QR- und Code-Roundtrip sowie falscher Abrufnachweis sind automatisiert getestet.
+Der Anwendungskern verschlüsselt das validierte `LearningBundle` clientseitig mit AES-256-GCM. Der zufällige Inhaltsschlüssel wird getrennt für QR-Nachweis und manuellen Code umschlossen; Supabase erhält nur Chiffrat, Nonces, verschlüsselte Schlüsselumschläge und nicht personenbezogene Versionsdaten. QR- und Code-Roundtrip sowie falscher Abrufnachweis sind automatisiert getestet. Die Lehrkraftoberfläche kann jetzt Vokabelpaare als versioniertes Paket veröffentlichen und zeigt QR- sowie 24-stelligen Manuellcode. Die Schüleroberfläche ruft das Paket per Scanner oder Code ab, entschlüsselt und validiert es lokal und übernimmt es idempotent in die persönliche LernBox; vorhandene Karten werden nicht dupliziert.
 
 Die Supabase-Sicherheitsprüfung weist erwartungsgemäß darauf hin, dass die vier anonym erreichbaren RPCs als `SECURITY DEFINER` laufen und die Tabelle keine direkte RLS-Policy besitzt. Das ist hier beabsichtigt: Die Tabelle hat keinerlei Clientrechte, während jede Funktion ihren eigenen zufälligen Fähigkeitsnachweis prüft und `EXECUTE` für `PUBLIC` ausdrücklich entzogen wurde. Dieser bewusste Ausnahmefall muss bei späteren Schemaänderungen erneut geprüft werden.
 
-Der nächste technische Meilenstein ist die Anbindung dieses geprüften Unterbaus an die Lehrkraft- und Schüleroberfläche:
+Die Anbindung des geprüften Unterbaus an die Lehrkraft- und Schüleroberfläche ist als erster vollständiger Vokabelweg umgesetzt:
 
 1. ~~Supabase-Projekt-URL und Publishable Key in Entwicklung und Hosting konfigurieren~~ (erledigt am 25. August 2026)
-2. Lehrkraftauswahl mit `publishLearningBundle` verbinden und QR-/Manuellcode anzeigen
-3. Schülerabruf mit QR-Scanner und Codefeld verbinden
-4. entschlüsseltes Bundle über den vorhandenen idempotenten Eingangsadapter in die persönliche LernBox übernehmen
-5. Netzabbruch, Ablauf, beschädigtes Chiffrat und erneute Freigabe als UI- und Ende-zu-Ende-Fälle testen
+2. ~~Lehrkraftauswahl mit `publishLearningBundle` verbinden und QR-/Manuellcode anzeigen~~ (erledigt am 25. August 2026)
+3. ~~Schülerabruf mit QR-Scanner und Codefeld verbinden~~ (erledigt am 25. August 2026)
+4. ~~Entschlüsseltes Bundle über den vorhandenen idempotenten Eingangsadapter in die persönliche LernBox übernehmen~~ (erledigt am 25. August 2026)
+5. ~~Netzabbruch, Ablauf, beschädigtes Chiffrat und erneute Freigabe als UI- und Ende-zu-Ende-Fälle testen~~ (automatisiert erledigt am 25. August 2026)
 6. Backup-Aufbewahrung und tatsächliche Löschfristen vor dem Schuleinsatz betrieblich dokumentieren
 
 Für neue Supabase-Projekte werden Tabellen nicht mehr selbstverständlich über die Data API freigegeben. Benötigte Rechte werden deshalb ausdrücklich und minimal vergeben; RLS bleibt für jede exponierte Tabelle verpflichtend. Im Browser wird nur der moderne Publishable Key verwendet. Ein Secret- oder `service_role`-Schlüssel wird weder im Client noch im Vault gespeichert.

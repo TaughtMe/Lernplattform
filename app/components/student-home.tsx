@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { PERSONAL_SUBJECTS } from "../../src/domain/personal-learning-space";
+import type { LiveRoomConfig } from "../../src/integrations/laufdiktat/live-room-client";
 import { AdaptiveProgressPanel } from "./adaptive-progress-panel";
 import { DailyPracticePanel } from "./daily-practice-panel";
 import { RoomCodeForm } from "./room-code-form";
 import { StudentClassEnrollment } from "./student-class-enrollment";
+import { StudentContentTransfer } from "./student-content-transfer";
 
-export function StudentHome() {
+export function StudentHome({
+  transferConfig,
+}: {
+  transferConfig: LiveRoomConfig | null;
+}) {
   return (
     <main className="learning-room-shell personal-learning-room">
       <header className="learning-room-topbar">
@@ -104,6 +110,7 @@ export function StudentHome() {
             </div>
             <p>Eigene und übernommene Sammlungen an einem Ort</p>
           </header>
+          <StudentContentTransfer transferConfig={transferConfig} />
           <div className="personal-content-list">
             {PERSONAL_SUBJECTS.map((subject) => (
               <Link href={subject.hubRoute} key={subject.id}>

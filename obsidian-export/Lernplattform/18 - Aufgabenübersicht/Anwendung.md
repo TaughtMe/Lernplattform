@@ -122,7 +122,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Fehlerwiederholung nach einem späteren richtigen Abruf wieder schließen
 - [x] Fälligkeiten aus Leitner-Boxen zusätzlich in „Heute üben“ aufnehmen
 - [x] Leitner-Prinzip als sichtbare Fünf-Boxen-Reihen für Bedeutung und Schreiben darstellen
-- [ ] Konkrete Lehrkraftinhalte als verschlüsseltes, versioniertes und höchstens 24 Stunden verfügbares Transferpaket veröffentlichen
+- [x] Konkrete Lehrkraftinhalte als verschlüsseltes, versioniertes und höchstens 24 Stunden verfügbares Transferpaket veröffentlichen
 - [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
 - [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen
 - [x] Strikte TypeScript- und Architekturregeln aktivieren
@@ -193,7 +193,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Supabase als kurzlebigen Übergaberaum statt als Dauerbibliothek festlegen
 - [x] Supabase-Projekt `Lernraum` in der EU-Region `eu-west-1` anlegen und gesunden Ausgangszustand prüfen
 - [x] Leeren Ausgangszustand ohne Anwendungstabellen, Migrationen oder Edge Functions dokumentieren
-- [ ] Lokale Entwicklung und Hosting über Projekt-URL und modernen Publishable Key verbinden; keine Secret- oder `service_role`-Schlüssel im Client verwenden
+- [x] Lokale Entwicklung und Hosting über Projekt-URL und modernen Publishable Key verbinden; keine Secret- oder `service_role`-Schlüssel im Client verwenden
 - [x] Supabase-Migrationen und lokale Projektkonfiguration nachvollziehbar im Repository anlegen
 - [x] Automatische Data-API-Standardrechte für neue Tabellen, Sequenzen und Funktionen projektweit entziehen
 - [ ] Lokale und dateibasierte Lehrkraftbibliothek mit stabilem Exportformat umsetzen
@@ -202,15 +202,15 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] QR-Nutzlast mit ausreichend zufälligem Abrufnachweis erzeugen
 - [x] Sicheren manuellen Transfercode mit raumbezogener Fehlversuchsgrenze entwickeln
 - [x] Paket ohne Schülerkonto oder dauerhafte Klassenmitgliedschaft abrufen
-- [ ] Paket lokal entschlüsseln, validieren und idempotent integrieren
+- [x] Paket lokal entschlüsseln, validieren und idempotent integrieren
 - [x] Paket lokal entschlüsseln und als `LearningBundleV1` validieren
-- [ ] Entschlüsseltes Paket idempotent in die persönliche LernBox integrieren
+- [x] Entschlüsseltes Paket idempotent in die persönliche LernBox integrieren
 - [x] Abruf nach Ablauf technisch verweigern
 - [ ] Backup-Aufbewahrung und tatsächliche Löschfrist des Dienstes betrieblich dokumentieren
 - [x] Abgelaufene aktive Pakete über einen stündlichen Löschauftrag automatisch entfernen
 - [x] RLS, minimale API-Rechte und fehlende Schülerzuordnung automatisiert prüfen
 - [x] Sicherstellen, dass weder Schülerliste noch Abrufhistorie oder Lernstand im Transferraum gespeichert werden
-- [ ] Netzabbruch, abgelaufenen Code, beschädigtes Paket und erneute Freigabe testen
+- [x] Netzabbruch, abgelaufenen Code, beschädigtes Paket und erneute Freigabe testen
 
 ## Langfristig: Ramagotchi und nachhaltige Gamification
 
