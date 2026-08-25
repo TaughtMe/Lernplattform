@@ -10,6 +10,12 @@ describe("TeacherLiveRoom", () => {
     expect(screen.getByText("2 Aufgaben")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Vokabeln" }));
     expect(screen.getByText("3 Aufgaben")).toBeVisible();
+    const transfer = screen.getByRole("combobox", {
+      name: "Vokabeln nach der Runde übernehmen",
+    });
+    expect(transfer).toHaveValue("errors");
+    await user.selectOptions(transfer, "all");
+    expect(transfer).toHaveValue("all");
     await user.click(screen.getByRole("button", { name: "Kopfrechnen" }));
     expect(screen.getByText("4 Aufgaben")).toBeVisible();
     expect(

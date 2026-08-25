@@ -27,6 +27,7 @@ const liveSessionConfigSchema = z
     uebungMaxAttempts: z.number().int().min(1).max(20).default(3),
     uebungAssistanceEnabled: z.boolean().default(false),
     repeatWrongAnswers: z.boolean().default(false),
+    vocabularyTransfer: z.enum(["errors", "all", "none"]).default("errors"),
     showStars: z.boolean().default(true),
     shuffleWords: z.boolean().default(false),
     strictTypingMode: z.boolean().default(false),
@@ -41,6 +42,7 @@ const liveSessionConfigSchema = z
   .passthrough();
 
 export type LiveWord = z.infer<typeof liveWordSchema>;
+export type VocabularyTransferChoice = "errors" | "all" | "none";
 export type LiveSession = z.infer<typeof liveSessionConfigSchema> & {
   sessionId: string;
 };

@@ -4,24 +4,24 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Jetzt: Vokabel-Kern und Fehlerkreislauf
 
-- [ ] Bestehendes Laufdiktat stabilisieren und automatisierte Basistests ergänzen
+- [x] Bestehendes Laufdiktat stabilisieren und automatisierte Basistests ergänzen
 - [x] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
 - [x] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
 - [x] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
 - [x] Leitner-Boxen und Fälligkeiten lokal aus Lernereignissen ableiten
 - [x] Persönlichen Vokabelmodus im Laufdiktat mit beiden und gemischten Richtungen integrieren
-- [ ] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
+- [x] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
 - [x] Dublettenfreien LernBox-Eingangsadapter für Laufdiktat-Fehler umsetzen
 - [x] Persönlichen Laufdiktat-Ergebnisfluss an den gemeinsamen LernBox-Eingangsadapter anschließen
 - [x] Falsche Vokabeln aus persönlichen Laufdiktat-Runden automatisch als fällig markieren
 - [x] Schaltfläche **„Meine Fehler jetzt üben“** nach persönlichen Vokabelrunden umsetzen
-- [ ] Nach Hilfen einen verdeckten Abruf erzwingen
+- [x] Nach Hilfen einen verdeckten Abruf erzwingen
 - [x] Tagesauswahl aus Fälligkeiten und kurzfristigen Fehlerwiederholungen ergänzen
 - [x] Fällige Mehrkarten-Lernrunde für Vokabelstapel umsetzen
 - [x] Schreib- und Karteikartenmodus mit unterschiedlicher Nachweisstärke umsetzen
 - [x] Beide Vokabelrichtungen mit getrennten Fälligkeiten anbieten
 - [x] Sitzungsfortschritt und Rundenabschluss anzeigen
-- [ ] Datei-Export und Wiederherstellung testen
+- [x] Datei-Export und Wiederherstellung testen
 
 ## Danach: Lernwörter
 
@@ -113,16 +113,16 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
   - [x] Battle in die Lernraum-Oberfläche überführen
 - [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
 - [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten
-- [x] Minimalistischen Schülereinstieg mit Klasse und freiem Üben anlegen
-- [x] Klassenansicht mit „Heute üben“ und „Aufgaben“ als Grundstruktur anlegen
-- [x] Aktivierbare Klassenmodule im Domänenmodell validieren
-- [x] Erste lokale Lehreroberfläche für Modulfreigaben mit Schülervorschau bauen
+- [x] Historischen Schülereinstieg mit getrennten Bereichen für Klasse und freies Üben anlegen; durch die neue gemeinsame Lernraumstruktur zu ersetzen
+- [x] Historische Klassenansicht mit „Heute üben“ und „Aufgaben“ als Grundstruktur anlegen; durch die neue gemeinsame Lernraumstruktur zu ersetzen
+- [x] Aktivierbare Klassenmodule prototypisch validieren; Produktmodell durch freie Grundfunktionen und konkrete Lehrkraftinhalte ersetzt
+- [x] Lokale Lehreroberfläche für Modulfreigaben prototypisch bauen; nicht als endgültigen Veröffentlichungsweg weiterführen
 - [x] Allgemeine Aufgabenplanung zugunsten des Übungs- und Wiederholungskreislaufs entfernen
 - [x] Fehlerhaften Klassenversuch automatisch in „Heute üben“ aufnehmen
 - [x] Fehlerwiederholung nach einem späteren richtigen Abruf wieder schließen
 - [x] Fälligkeiten aus Leitner-Boxen zusätzlich in „Heute üben“ aufnehmen
 - [x] Leitner-Prinzip als sichtbare Fünf-Boxen-Reihen für Bedeutung und Schreiben darstellen
-- [ ] Modulfreigaben als versioniertes Klassenpaket auf Schülergeräte veröffentlichen
+- [ ] Konkrete Lehrkraftinhalte als verschlüsseltes, versioniertes und höchstens 24 Stunden verfügbares Transferpaket veröffentlichen
 - [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
 - [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen
 - [x] Strikte TypeScript- und Architekturregeln aktivieren
@@ -174,7 +174,48 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Verschlüsselten Export und Cloud-Backup ergänzen
 - [ ] Persönliches Cloud-Backup technisch von Klasseneinschreibung und Lehrer-Ranking trennen
 - [ ] Barrierefreiheit und gemeinsame Geräteprofile testen
-- [ ] Module unter einer gemeinsamen Plattformoberfläche zusammenführen
+- [x] Module unter einer gemeinsamen Plattformoberfläche zusammenführen
+
+## Nächste Architekturänderung: ein persönlicher Lernraum
+
+- [x] Gemeinsamen persönlichen Lernraum als verbindliches Produktmodell dokumentieren
+- [x] Getrennten Haupteinstieg „Freies Üben“ entfernen und als Aktion innerhalb eines Fachs einordnen
+- [x] Auswahl **Alles fällige** oder einzelnes Fach vor der Lernrunde umsetzen
+- [ ] Fachübergreifende Tagesauswahl in überschaubaren Fachblöcken erzeugen
+- [ ] Manuell angelegte und von der Lehrkraft übernommene Fächer gemeinsam darstellen
+- [ ] Eigene und übernommene Stapel auf denselben persönlichen Lernstand abbilden
+- [ ] Quellenbeziehungen getrennt von Lernobjekt und Lernstand speichern
+- [ ] Vokabeldubletten anhand von Sprachpaar, Grundform, Bedeutung und Richtung prüfen
+- [ ] Vorhandenen Lernstand bei Paketaktualisierungen vollständig bewahren
+
+## Nächste Architekturänderung: temporäre Inhaltsübertragung
+
+- [x] Supabase als kurzlebigen Übergaberaum statt als Dauerbibliothek festlegen
+- [ ] Lokale und dateibasierte Lehrkraftbibliothek mit stabilem Exportformat umsetzen
+- [ ] Unveränderliches `LearningBundle` vor dem Upload auf dem Lehrergerät verschlüsseln
+- [ ] Temporären Transferraum mit maximal 24 Stunden Ablaufzeit implementieren
+- [ ] QR-Code mit ausreichend zufälligem Abrufnachweis erzeugen
+- [ ] Sicheren manuellen Transfercode mit Rate-Limit und Fehlversuchsgrenze entwickeln
+- [ ] Paket ohne Schülerkonto oder dauerhafte Klassenmitgliedschaft einmalig abrufen
+- [ ] Paket lokal entschlüsseln, validieren und idempotent integrieren
+- [ ] Abruf nach Ablauf technisch verweigern
+- [ ] Abgelaufene aktive Pakete automatisch löschen und Backup-Aufbewahrung dokumentieren
+- [ ] RLS, minimale API-Rechte und fehlende Schülerzuordnung automatisiert prüfen
+- [ ] Sicherstellen, dass weder Schülerliste noch Abrufhistorie oder Lernstand im Transferraum gespeichert werden
+- [ ] Netzabbruch, abgelaufenen Code, beschädigtes Paket und erneute Freigabe testen
+
+## Langfristig: Ramagotchi und nachhaltige Gamification
+
+- [x] Positive Leitidee und pädagogische Schutzregeln dokumentieren
+- [x] Gamification als spätere Ausbaustufe nach dem stabilen Lernkern einordnen
+- [ ] Messbare Reife- und Freigabekriterien für den Lernkern festlegen
+- [ ] Abschaltbaren Prototyp für persönliche Entwicklungsstufe und Wochenziel entwerfen
+- [ ] Erfahrung ausschließlich aus typisierten, sinnvollen Lernsignalen ableiten
+- [ ] Tages- und Wochenlimits gegen Punktesammeln festlegen
+- [ ] Ramagotchi ohne Krankheit, Verlust oder Bestrafung bei Pausen prototypisieren
+- [ ] Kosmetische Entwicklung und persönlichen Lernraum barrierearm gestalten
+- [ ] Aggregierte Haus- und Klassenquests mit freiwilliger Teilnahme erproben
+- [ ] Wirkung, Druckempfinden und unerwünschtes Farmverhalten mit Schülern evaluieren
 
 ## Noch zu entscheiden
 

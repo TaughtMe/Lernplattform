@@ -55,6 +55,7 @@ describe("teacher live session builder", () => {
       gameMode: "UEBUNG",
       shuffleWords: true,
       repeatWrongAnswers: true,
+      vocabularyTransfer: "none",
     });
     expect(config).toMatchObject({
       gameMode: "UEBUNG",
@@ -63,8 +64,22 @@ describe("teacher live session builder", () => {
       uebungAssistanceEnabled: true,
       shuffleWords: true,
       repeatWrongAnswers: true,
+      vocabularyTransfer: "none",
     });
     expect(config.words).toHaveLength(1);
+  });
+
+  it("carries the teacher vocabulary-transfer choice into the room", () => {
+    const config = buildTeacherRoomConfig({
+      contentMode: "vocabulary",
+      source: "house;Haus",
+      vocabularyDirection: "left-to-right",
+      vocabularyTransfer: "all",
+      gameMode: "UEBUNG",
+      shuffleWords: false,
+      repeatWrongAnswers: true,
+    });
+    expect(config.vocabularyTransfer).toBe("all");
   });
 
   it("preserves the distinct station and battle rules from Laufdiktat", () => {

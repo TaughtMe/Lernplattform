@@ -131,6 +131,40 @@ test("the native LernBox creates and opens a personal deck", async ({
   ).toBeVisible();
 });
 
+test("a downloaded LernBox backup restores a deleted deck", async ({
+  page,
+}) => {
+  await page.goto("/lernbox");
+  await page
+    .getByRole("textbox", { name: "Name der neuen Lernbox" })
+    .fill("Sicherungsprobe");
+  await page.getByRole("button", { name: "Erstellen" }).click();
+  await expect(
+    page.getByText("Sicherungsprobe", { exact: true }),
+  ).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Sicherung speichern" }).click();
+  const download = await downloadPromise;
+  const backupPath = await download.path();
+  expect(backupPath).not.toBeNull();
+
+  await page.getByRole("button", { name: "Sicherungsprobe löschen" }).click();
+  await expect(page.getByText("Sicherungsprobe", { exact: true })).toHaveCount(
+    0,
+  );
+
+  await page
+    .locator('input[type="file"][accept="application/json"]')
+    .setInputFiles(backupPath!);
+  await expect(page.getByRole("status")).toHaveText(
+    "Sicherung wurde importiert.",
+  );
+  await expect(
+    page.getByText("Sicherungsprobe", { exact: true }),
+  ).toBeVisible();
+});
+
 test("a native Laufdiktat mistake becomes due LernBox practice", async ({
   page,
 }) => {
@@ -436,6 +470,11 @@ test("teachers can prepare every native live-room content type", async ({
   await page.getByRole("button", { name: "Vokabeln" }).click();
   await expect.poll(() => runtimeErrors).toEqual([]);
   await expect(page.getByText("3 Aufgaben")).toBeVisible();
+  await expect(
+    page.getByRole("combobox", {
+      name: "Vokabeln nach der Runde übernehmen",
+    }),
+  ).toHaveValue("errors");
   await page.getByRole("button", { name: "Kopfrechnen" }).click();
   await expect(page.getByText("4 Aufgaben")).toBeVisible();
   await expect(

@@ -4,7 +4,7 @@ import {
   parseVocabularyTable,
   type VocabularyDirection,
 } from "../../domain/running-dictation";
-import type { LiveWord } from "./live-session";
+import type { LiveWord, VocabularyTransferChoice } from "./live-session";
 import {
   generateMentalMathTasks,
   parseMentalMathTask,
@@ -22,6 +22,7 @@ export type TeacherSessionOptions = {
   gameMode: TeacherGameMode;
   shuffleWords: boolean;
   repeatWrongAnswers: boolean;
+  vocabularyTransfer?: VocabularyTransferChoice;
   isTtsEnabled?: boolean;
   uebungMaxAttempts?: number;
   uebungAssistanceEnabled?: boolean;
@@ -42,6 +43,7 @@ export type TeacherRoomConfig = {
   uebungMaxAttempts: number;
   uebungAssistanceEnabled: boolean;
   repeatWrongAnswers: boolean;
+  vocabularyTransfer: VocabularyTransferChoice;
   showStars: boolean;
   shuffleWords: boolean;
   strictTypingMode: boolean;
@@ -128,6 +130,10 @@ export function buildTeacherRoomConfig(
       options.gameMode === "UEBUNG" &&
       (options.uebungAssistanceEnabled ?? true) &&
       options.repeatWrongAnswers,
+    vocabularyTransfer:
+      options.contentMode === "vocabulary"
+        ? (options.vocabularyTransfer ?? "errors")
+        : "none",
     showStars: options.gameMode !== "STATION" && (options.showStars ?? true),
     shuffleWords: options.gameMode !== "STATION" && options.shuffleWords,
     strictTypingMode:

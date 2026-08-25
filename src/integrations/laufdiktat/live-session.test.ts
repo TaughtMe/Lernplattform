@@ -19,6 +19,7 @@ describe("native Laufdiktat live sessions", () => {
       second.words.map((word) => word.id),
     );
     expect(first.sessionId).toBe("session-1");
+    expect(first.vocabularyTransfer).toBe("errors");
   });
 
   it("keeps the source answer rules for text, vocabulary and math", () => {

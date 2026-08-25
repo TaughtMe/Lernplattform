@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { computeRunningDictationStars } from "../../src/domain/running-dictation";
 import {
   checkLiveAnswer,
@@ -8,6 +8,11 @@ import {
   type LiveSession,
 } from "../../src/integrations/laufdiktat/live-session";
 import type { LiveProgress } from "../../src/integrations/laufdiktat/room-api";
+import {
+  buildLiveVocabularyTransfer,
+  liveWordErrorKey,
+} from "../../src/integrations/laufdiktat/vocabulary-transfer";
+import { createLearningBoxRepository } from "../../src/storage/personal-learning-events";
 import { LiveStationGame } from "./live-station-game";
 
 type Phase = "reveal" | "write" | "wrong" | "correct" | "complete";
@@ -38,6 +43,10 @@ export function LiveRunningDictationGame({
   incomingAttack,
   onSendAttack,
 }: LiveRunningDictationGameProps) {
+  const learningBoxRepository = useMemo(
+    () => createLearningBoxRepository(),
+    [],
+  );
   const restoredIndex = Math.min(
     initialProgress?.currentIndex ?? 0,
     session.words.length - 1,
@@ -50,15 +59,22 @@ export function LiveRunningDictationGame({
   const [attempts, setAttempts] = useState(initialProgress?.attempts ?? 0);
   const [peeks, setPeeks] = useState(initialProgress?.peeks ?? 0);
   const [errors, setErrors] = useState(initialProgress?.errors ?? 0);
-  const [wordErrors, setWordErrors] = useState<Record<string, number>>({});
+  const [wordErrors, setWordErrors] = useState<Record<string, number>>(
+    initialProgress?.wordErrors ?? {},
+  );
   const [hasWrittenCurrent, setHasWrittenCurrent] = useState(false);
   const [charge, setCharge] = useState(0);
   const [shield, setShield] = useState(false);
   const [picker, setPicker] = useState<AttackType | null>(null);
   const [activeAttack, setActiveAttack] = useState<AttackType | null>(null);
   const [battleMessage, setBattleMessage] = useState("");
+  const [transferNotice, setTransferNotice] = useState("");
+  const [transferStatus, setTransferStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const startedAt = useRef(0);
   const lastAttackId = useRef(0);
+  const transferStartedFor = useRef("");
   const answerRef = useRef<HTMLInputElement>(null);
   const current = session.words[index];
 
@@ -135,6 +151,40 @@ export function LiveRunningDictationGame({
     };
   }, [incomingAttack, session.gameMode, shield]);
 
+  useEffect(() => {
+    if (phase !== "complete" || session.stationMode) return;
+    const transfer = buildLiveVocabularyTransfer(session, wordErrors);
+    if (!transfer || transferStartedFor.current === session.sessionId) return;
+    transferStartedFor.current = session.sessionId;
+    learningBoxRepository
+      .ingestBundle({
+        bundle: transfer.bundle,
+        title: transfer.title,
+        source: {
+          kind: "running-dictation",
+          sourceId: session.sessionId,
+        },
+      })
+      .then((result) => {
+        setTransferStatus("success");
+        setTransferNotice(
+          result.added > 0
+            ? result.added === 1
+              ? "1 Vokabel wurde in deine LernBox übernommen."
+              : `${result.added} Vokabeln wurden in deine LernBox übernommen.`
+            : result.reused === 1
+              ? "1 vorhandene Vokabel wurde wieder fällig markiert."
+              : `${result.reused} vorhandene Vokabeln wurden wieder fällig markiert.`,
+        );
+      })
+      .catch(() => {
+        setTransferStatus("error");
+        setTransferNotice(
+          "Die Vokabeln konnten auf diesem Gerät nicht übernommen werden.",
+        );
+      });
+  }, [learningBoxRepository, phase, session, wordErrors]);
+
   if (session.stationMode) {
     return onLoadProgress ? (
       <LiveStationGame
@@ -167,6 +217,12 @@ export function LiveRunningDictationGame({
             {session.words.length} Aufgaben · {errors} Fehlversuche
           </p>
           <p>Dein Ergebnis wurde an diese Unterrichtsrunde zurückgegeben.</p>
+          {transferNotice ? <p role="status">{transferNotice}</p> : null}
+          {transferStatus === "success" ? (
+            <a className="button button--primary" href="/lernbox">
+              Übernommene Vokabeln üben
+            </a>
+          ) : null}
         </section>
       </main>
     );
@@ -177,6 +233,11 @@ export function LiveRunningDictationGame({
 
   const kind = liveWordKind(activeWord);
   const prompt = activeWord.prompt ?? activeWord.targetWord;
+  const errorKey = liveWordErrorKey(activeWord);
+  const assistanceVisible =
+    phase === "wrong" &&
+    session.uebungAssistanceEnabled &&
+    (wordErrors[errorKey] ?? 0) >= session.uebungMaxAttempts;
 
   function startWriting() {
     if (startedAt.current === 0) startedAt.current = Date.now();
@@ -203,10 +264,7 @@ export function LiveRunningDictationGame({
       return;
     }
 
-    const key =
-      kind === "vocabulary"
-        ? `${activeWord.prompt ?? ""} → ${activeWord.targetWord}`
-        : prompt;
+    const key = errorKey;
     const nextErrors = errors + 1;
     const nextWordErrors = {
       ...wordErrors,
@@ -379,7 +437,16 @@ export function LiveRunningDictationGame({
           <div className="live-game-feedback is-wrong">
             <span aria-hidden="true">×</span>
             <p className="eyebrow">Noch nicht richtig</p>
-            <h1>Versuch es noch einmal.</h1>
+            <h1>
+              {assistanceVisible
+                ? "Präge dir die Lösung ein."
+                : "Versuch es noch einmal."}
+            </h1>
+            {assistanceVisible ? (
+              <p className="live-game-assistance">
+                Die Lösung ist: <strong>{activeWord.targetWord}</strong>
+              </p>
+            ) : null}
             <button
               className="button button--primary"
               onClick={() => {
@@ -387,7 +454,9 @@ export function LiveRunningDictationGame({
                 setPhase("write");
               }}
             >
-              Weiter üben
+              {assistanceVisible
+                ? "Lösung verdecken und erneut abrufen"
+                : "Weiter üben"}
             </button>
           </div>
         ) : null}

@@ -4,6 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
 
+const { ingestBundle } = vi.hoisted(() => ({
+  ingestBundle: vi
+    .fn()
+    .mockResolvedValue({ deckId: "deck-1", added: 1, reused: 0 }),
+}));
+
+vi.mock("../../src/storage/personal-learning-events", () => ({
+  createLearningBoxRepository: () => ({ ingestBundle }),
+}));
+
 const session: LiveSession = {
   sessionId: "session-1",
   words: [{ id: "word-1", kind: "text", targetWord: "Schulweg" }],
@@ -14,6 +24,7 @@ const session: LiveSession = {
   uebungMaxAttempts: 3,
   uebungAssistanceEnabled: false,
   repeatWrongAnswers: false,
+  vocabularyTransfer: "none",
   showStars: true,
   shuffleWords: false,
   strictTypingMode: false,
@@ -50,5 +61,80 @@ describe("LiveRunningDictationGame", () => {
     expect(onProgress).toHaveBeenLastCalledWith(
       expect.objectContaining({ currentIndex: 1, finished: true, errors: 0 }),
     );
+  });
+
+  it("hides an assistance solution before requiring another recall", async () => {
+    const user = userEvent.setup();
+    render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          uebungMaxAttempts: 1,
+          uebungAssistanceEnabled: true,
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "falsch{Enter}",
+    );
+    expect(screen.getByText(/Die Lösung ist:/)).toHaveTextContent("Schulweg");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Lösung verdecken und erneut abrufen",
+      }),
+    );
+    expect(screen.queryByText(/Die Lösung ist:/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+    ).toHaveFocus();
+  });
+
+  it("transfers the teacher-selected vocabulary after completion", async () => {
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+            },
+          ],
+          vocabularyTransfer: "all",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "Haus{Enter}",
+    );
+    await waitFor(() => expect(ingestBundle).toHaveBeenCalledOnce());
+    expect(
+      await screen.findByText("1 Vokabel wurde in deine LernBox übernommen."),
+    ).toBeVisible();
   });
 });

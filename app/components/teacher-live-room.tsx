@@ -43,7 +43,10 @@ import {
   aggregateWordErrors,
   buildTeacherResultCsv,
 } from "../../src/integrations/laufdiktat/teacher-results";
-import { parseLiveSession } from "../../src/integrations/laufdiktat/live-session";
+import {
+  parseLiveSession,
+  type VocabularyTransferChoice,
+} from "../../src/integrations/laufdiktat/live-session";
 
 type Props = { liveRoomConfig: LiveRoomConfig | null };
 type Stage = "content" | "settings" | "lobby" | "live";
@@ -100,6 +103,8 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [sources, setSources] = useState(DEFAULT_SOURCES);
   const [direction, setDirection] =
     useState<VocabularyDirection>("left-to-right");
+  const [vocabularyTransfer, setVocabularyTransfer] =
+    useState<VocabularyTransferChoice>("errors");
   const [gameMode, setGameMode] = useState<TeacherGameMode>("UEBUNG");
   const [shuffleWords, setShuffleWords] = useState(false);
   const [stationShuffle, setStationShuffle] = useState(true);
@@ -148,6 +153,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         contentMode,
         source,
         vocabularyDirection: direction,
+        vocabularyTransfer,
         gameMode,
         shuffleWords,
         repeatWrongAnswers,
@@ -169,6 +175,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       direction,
       gameMode,
       repeatWrongAnswers,
+      vocabularyTransfer,
       showStars,
       shuffleWords,
       source,
@@ -241,6 +248,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         setShuffleWords(restored.shuffleWords);
         setStationShuffle(restored.stationShuffle);
         setRepeatWrongAnswers(restored.repeatWrongAnswers);
+        setVocabularyTransfer(restored.vocabularyTransfer);
         setAssistance(restored.uebungAssistanceEnabled);
         setAttempts(restored.uebungMaxAttempts);
         setTts(restored.isTtsEnabled);
@@ -609,19 +617,36 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                 />
               </label>
               {contentMode === "vocabulary" && (
-                <label className="teacher-live__select">
-                  Abfragerichtung
-                  <select
-                    value={direction}
-                    onChange={(e) =>
-                      setDirection(e.target.value as VocabularyDirection)
-                    }
-                  >
-                    <option value="left-to-right">Links → rechts</option>
-                    <option value="right-to-left">Rechts → links</option>
-                    <option value="mixed">Gemischt</option>
-                  </select>
-                </label>
+                <>
+                  <label className="teacher-live__select">
+                    Abfragerichtung
+                    <select
+                      value={direction}
+                      onChange={(e) =>
+                        setDirection(e.target.value as VocabularyDirection)
+                      }
+                    >
+                      <option value="left-to-right">Links → rechts</option>
+                      <option value="right-to-left">Rechts → links</option>
+                      <option value="mixed">Gemischt</option>
+                    </select>
+                  </label>
+                  <label className="teacher-live__select">
+                    Vokabeln nach der Runde übernehmen
+                    <select
+                      value={vocabularyTransfer}
+                      onChange={(event) =>
+                        setVocabularyTransfer(
+                          event.target.value as VocabularyTransferChoice,
+                        )
+                      }
+                    >
+                      <option value="errors">Nur fehlerhafte Vokabeln</option>
+                      <option value="all">Alle Vokabeln</option>
+                      <option value="none">Keine Vokabeln</option>
+                    </select>
+                  </label>
+                </>
               )}
             </div>
             <div className="teacher-live__actions">

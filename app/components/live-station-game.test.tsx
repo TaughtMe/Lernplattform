@@ -17,6 +17,7 @@ const session: LiveSession = {
   uebungMaxAttempts: 3,
   uebungAssistanceEnabled: false,
   repeatWrongAnswers: false,
+  vocabularyTransfer: "none",
   showStars: false,
   shuffleWords: false,
   strictTypingMode: false,
