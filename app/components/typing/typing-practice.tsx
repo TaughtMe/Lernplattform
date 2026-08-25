@@ -11,13 +11,16 @@ import {
   computeTypingStats,
   type TypingStats,
 } from "../../../src/tastschreiben/typing-stats";
+import { lookupTypingCharacter } from "../../../src/tastschreiben/keyboard-layout";
 import { VirtualKeyboard, type TypingKeyPress } from "./virtual-keyboard";
 
 export function TypingPractice({
   text,
+  activeChars,
   onFinish,
 }: {
   text: string;
+  activeChars?: readonly string[];
   onFinish: (stats: TypingStats) => void;
 }) {
   const [session, setSession] = useState(() => createTypingSession(text));
@@ -55,6 +58,8 @@ export function TypingPractice({
     nonce.current += 1;
     setLastPress({
       char: event.key,
+      code:
+        event.code || lookupTypingCharacter(event.key)?.key.code || event.key,
       correct: event.key === expected,
       nonce: nonce.current,
     });
@@ -102,6 +107,7 @@ export function TypingPractice({
       <VirtualKeyboard
         nextChar={expectedTypingCharacter(session)}
         lastPress={lastPress}
+        activeChars={activeChars}
       />
     </label>
   );

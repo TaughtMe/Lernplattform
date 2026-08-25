@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   TYPING_LESSONS,
+  availableKeysThrough,
   isTypingLessonUnlocked,
   type LessonDef,
 } from "../../../src/tastschreiben/curriculum";
@@ -136,6 +137,7 @@ export function TypingApp() {
           <TypingPractice
             key={view.roundId}
             text={generateTypingPracticeText(view.lesson, view.roundId)}
+            activeChars={availableKeysThrough(view.lesson.id)}
             onFinish={(stats) => finishLesson(view.lesson, view.roundId, stats)}
           />
           <button

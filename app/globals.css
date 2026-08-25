@@ -4735,78 +4735,175 @@ body,
   color: var(--muted);
   font-size: 0.86rem;
 }
-.virtual-keyboard {
-  max-width: 660px;
-  margin: 28px auto 0;
+.keyboard-guide {
+  margin-top: 28px;
+}
+.keyboard-guide__next {
+  width: fit-content;
+  min-height: 48px;
+  margin: 0 auto 14px;
+  padding: 7px 16px 7px 9px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--shell));
+  box-shadow: 0 8px 24px rgb(35 38 43 / 7%);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 850;
+  text-align: left;
+}
+.keyboard-guide__next > span:last-child {
   display: grid;
-  justify-items: center;
-  gap: 6px;
+  line-height: 1.1;
+}
+.keyboard-guide__next small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+.finger-dot {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 4px solid var(--surface);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--line);
+  background: var(--surface-muted);
+}
+.virtual-keyboard {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: clamp(8px, 1.5vw, 13px);
+  display: grid;
+  gap: clamp(3px, 0.65vw, 6px);
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: clamp(12px, 2vw, 19px);
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 24%), transparent 42%),
+    color-mix(in srgb, var(--surface-muted) 74%, var(--surface));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 45%),
+    0 16px 34px rgb(35 38 43 / 9%);
 }
 .virtual-keyboard__row {
+  width: 100%;
   display: flex;
-  gap: 5px;
+  gap: clamp(3px, 0.65vw, 6px);
 }
-.virtual-keyboard__row.row-1 {
-  margin-left: 12px;
-}
-.virtual-keyboard__row.row-2 {
-  margin-left: 22px;
-}
-.virtual-keyboard__row.row-3 {
-  margin-left: 34px;
-}
-.virtual-keyboard__key,
-.virtual-keyboard__shift-row span {
-  width: clamp(24px, 5vw, 40px);
-  height: clamp(30px, 5vw, 40px);
+.virtual-keyboard__key {
+  position: relative;
+  min-width: 0;
+  height: clamp(31px, 5vw, 47px);
+  flex: var(--key-width) 1 0;
   display: grid;
   place-items: center;
-  border-radius: 8px;
-  color: var(--ink);
-  font-size: clamp(0.68rem, 1.8vw, 0.92rem);
-  font-weight: 800;
-  transition: 120ms ease;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--line) 52%, var(--ink));
+  border-radius: clamp(5px, 1vw, 9px);
+  background: color-mix(in srgb, var(--surface) 88%, var(--shell));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 62%),
+    0 2px 0 color-mix(in srgb, var(--line) 72%, transparent);
+  color: color-mix(in srgb, var(--ink) 62%, var(--muted));
+  font-size: clamp(0.46rem, 1.35vw, 0.78rem);
+  font-weight: 760;
+  line-height: 1;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
 }
-.virtual-keyboard__key.is-space {
-  width: min(42vw, 260px);
+.virtual-keyboard__key.is-control {
+  color: var(--muted);
+  font-size: clamp(0.38rem, 1.1vw, 0.65rem);
+  font-weight: 680;
 }
-.virtual-keyboard__shift-row {
-  width: min(100%, 620px);
-  display: flex;
-  justify-content: space-between;
+.virtual-keyboard__key:not(.is-active, .is-next, .is-control) {
+  opacity: 0.58;
 }
-.virtual-keyboard__shift-row span {
+.virtual-keyboard__symbols {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+}
+.virtual-keyboard__symbols small {
+  color: inherit;
+  font-size: 0.72em;
+  font-weight: inherit;
+}
+.virtual-keyboard__key.is-home i {
+  position: absolute;
+  bottom: 4px;
+  width: min(42%, 14px);
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.5;
+}
+.virtual-keyboard__key.is-active {
+  color: color-mix(in srgb, var(--ink) 85%, black);
+  opacity: 1;
+}
+.virtual-keyboard__key.finger-left-pinky.is-active,
+.virtual-keyboard__key.finger-left-pinky.is-next,
+.finger-dot.finger-left-pinky {
   background: var(--finger-pinky);
 }
-.finger-left-pinky {
-  background: var(--finger-pinky);
-}
-.finger-left-ring {
+.virtual-keyboard__key.finger-left-ring.is-active,
+.virtual-keyboard__key.finger-left-ring.is-next,
+.finger-dot.finger-left-ring {
   background: var(--finger-ring);
 }
-.finger-left-middle {
+.virtual-keyboard__key.finger-left-middle.is-active,
+.virtual-keyboard__key.finger-left-middle.is-next,
+.finger-dot.finger-left-middle {
   background: var(--finger-middle);
 }
-.finger-left-index {
+.virtual-keyboard__key.finger-left-index.is-active,
+.virtual-keyboard__key.finger-left-index.is-next,
+.finger-dot.finger-left-index {
   background: var(--finger-index);
 }
-.finger-right-index {
+.virtual-keyboard__key.finger-right-index.is-active,
+.virtual-keyboard__key.finger-right-index.is-next,
+.finger-dot.finger-right-index {
   background: var(--finger-right-index);
 }
-.finger-right-middle {
+.virtual-keyboard__key.finger-right-middle.is-active,
+.virtual-keyboard__key.finger-right-middle.is-next,
+.finger-dot.finger-right-middle {
   background: var(--finger-right-middle);
 }
-.finger-right-ring {
+.virtual-keyboard__key.finger-right-ring.is-active,
+.virtual-keyboard__key.finger-right-ring.is-next,
+.finger-dot.finger-right-ring {
   background: var(--finger-right-ring);
 }
-.finger-right-pinky {
+.virtual-keyboard__key.finger-right-pinky.is-active,
+.virtual-keyboard__key.finger-right-pinky.is-next,
+.finger-dot.finger-right-pinky {
   background: var(--finger-right-pinky);
 }
-.finger-thumb {
+.virtual-keyboard__key.finger-thumb.is-active,
+.virtual-keyboard__key.finger-thumb.is-next,
+.finger-dot.finger-thumb {
   background: var(--finger-thumb);
 }
 .virtual-keyboard .is-next {
+  z-index: 1;
   outline: 3px solid var(--coral);
+  outline-offset: 1px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 62%),
+    0 5px 12px color-mix(in srgb, var(--coral) 22%, transparent);
+  color: var(--ink);
+  opacity: 1;
   transform: translateY(-2px);
 }
 .virtual-keyboard .is-correct {
@@ -4825,6 +4922,12 @@ body,
   50% {
     background: #f29e9e;
     transform: translateY(1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .virtual-keyboard .is-correct,
+  .virtual-keyboard .is-wrong {
+    animation: none;
   }
 }
 .typing-result__metrics {
