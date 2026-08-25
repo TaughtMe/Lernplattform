@@ -50,7 +50,10 @@ export function createTeacherClassRepository(
   database = new TeacherClassDatabase(),
 ) {
   return {
-    list: () => database.classes.orderBy("createdAt").toArray(),
+    list: async () =>
+      (await database.classes.toArray()).sort((left, right) =>
+        left.createdAt.localeCompare(right.createdAt),
+      ),
     put: (value: TeacherClass) =>
       database.classes.put(teacherClassSchema.parse(value)),
     listMembers: (classId: string) =>
