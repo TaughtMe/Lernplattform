@@ -34,7 +34,7 @@ Klassen können unabhängig voneinander angelegt, ausgewählt und samt zugehöri
 
 Die Materialverwaltung speichert, bearbeitet, löscht, importiert und exportiert zunächst versionierte Vokabelpakete. Die bestehenden Werkzeuge für Texte, Vokabeln und Kopfrechenaufgaben im Live-Raum bleiben zusätzlich verfügbar. Weitere fachliche Materialtypen verwenden später denselben lokalen Bibliotheksvertrag.
 
-Arbeitsaufträge enthalten Titel, Anleitung, Fach, optionale Materialverknüpfung und Fälligkeit. Eine Aufgabe wird einer oder mehreren Klassen zugeteilt, bleibt lokal bearbeitbar und kann gelöscht werden. Der statische Aufgaben-QR enthält keine Schülernamen oder persönlichen Lernstände. Der Lehrerbereich erzeugt, kopiert und liest diesen Code per Kamera oder manueller Eingabe und zeigt den validierten Auftrag an. Die tatsächliche Übernahme eines solchen Auftrags in den persönlichen Schülerlernraum bleibt ein getrennter nächster Integrationsschritt.
+Arbeitsaufträge enthalten Titel, Anleitung, Fach, optionale Materialverknüpfung und Fälligkeit. Eine Aufgabe wird einer oder mehreren Klassen oder optional gezielt einzelnen Schülern zugeteilt, bleibt lokal bearbeitbar und kann gelöscht werden. Der statische Aufgaben-QR enthält keine Schülernamen oder persönlichen Lernstände. Der Lehrerbereich erzeugt, kopiert und liest diesen Code per Kamera oder manueller Eingabe und zeigt den validierten Auftrag an. Das Schülergerät prüft die lokale Klasseneinschreibung, übernimmt passende Aufgaben dublettenfrei in **Meine Aufgaben** und behält einen bereits erreichten Abschlussstatus auch bei einer erneuten Übernahme.
 
 Die Lehrkraft entscheidet vor einer Aktivität, welche Inhalte, Hilfen, Sozialform und Auswertung verwendet werden. Persönliche Zuordnungen müssen ausdrücklich aktiviert und lokal geschützt werden.
 
@@ -61,6 +61,8 @@ Für einen Turnus oder ein Aufgabenpaket startet die Lehrkraft eine Abgaberunde.
 - **ungültig:** falsche Klasse, Signatur oder beschädigter Code
 
 Nach einem erfolgreichen Scan erscheinen ein kurzer Ton oder eine Vibration, ein grüner Rahmen und der lokale Schülername beziehungsweise Alias. Die Lehrkraft sieht jederzeit beispielsweise **„18 von 26 abgegeben“** und eine Liste der noch fehlenden Schüler.
+
+Für zugeteilte Arbeitsaufträge ist der erste lokale Briefkasten umgesetzt: Das Schülergerät erzeugt nach dem bewussten Abschluss einen statischen, mit dem Einschreibungstoken HMAC-signierten Abgabenachweis. Der Lehrer-QR-Leser prüft Signatur, Klasse und Zuteilung, speichert je Aufgabe und Mitgliedschaft nur den höchsten Stand und zeigt **„x von y abgegeben“** sowie ausstehende Schüler. Doppelte und ältere Nachweise werden erkannt. Ton, Vibration, grüner Scanrahmen, Filter, Löschfrist und der umfangreichere verschlüsselte Ranking-Leistungsbrief bleiben getrennte Ausbauschritte.
 
 ## Datenschutz
 

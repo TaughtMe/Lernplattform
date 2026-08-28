@@ -471,3 +471,14 @@ Diese Entscheidung ersetzt die Authentifizierungsannahme aus Entscheidung 1 für
 - Die Übernahme der Aufgabe auf Schülergeräten, individuelle Schülerzuteilungen sowie QR-Leistungsbriefe und Abgabeprotokolle bleiben eigene nächste Schritte.
 
 Diese Entscheidung ersetzt Entscheidung 19 insoweit, wie sie einen allgemeinen Aufgabenplaner vollständig ausgeschlossen hat. Aufgaben bleiben fachlich strukturiert und dienen nicht als zentrale Überwachung vollständiger persönlicher Lernhistorien.
+
+## 45. Lokaler Aufgabenrückweg mit signiertem Abgabenachweis – 28. August 2026
+
+**Beschlossen und umgesetzt:** Strukturierte Aufgaben werden ohne Schülerkonto per statischem QR an passende lokale Klasseneinschreibungen verteilt. Eine Zuteilung kann ganze Klassen oder ausgewählte Mitgliedschaften adressieren.
+
+- Das Schülergerät übernimmt nur Aufgaben, deren Klassen- und optionale Mitgliedschafts-ID zu einer lokalen Einschreibung passen, und speichert sie dublettenfrei unter **Meine Aufgaben**.
+- Nach dem bewussten Markieren als erledigt erzeugt es einen kleinen Abgabenachweis mit Aufgaben-, Klassen- und Mitgliedschafts-ID, Abschlusszeit, Ergebnis und fortlaufender Standnummer.
+- Der Nachweis wird mit dem zufälligen Einschreibungstoken per HMAC-SHA-256 signiert. Er enthält weder Klarnamen noch Antworten oder eine vollständige Lernhistorie.
+- Das Lehrergerät prüft lokale Mitgliedschaft, Zuteilung und Signatur. Je Aufgabe und Mitgliedschaft wird nur der höchste Stand gespeichert; gleiche oder ältere Codes sind idempotent.
+- Das lokale Protokoll und sein Export gehören zur Lehrerdatenbank. Es zeigt abgegebene und ausstehende Schüler.
+- Dieser Aufgaben-Abgabenachweis ist bewusst nicht mit dem späteren verschlüsselten Ranking-Leistungsbrief gleichzusetzen. Aggregierte Lernwerte, Löschfristen, Filter, Scanfeedback und animierte QR-Codes bleiben separat offen.

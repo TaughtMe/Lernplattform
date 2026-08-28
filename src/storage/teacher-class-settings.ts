@@ -15,9 +15,13 @@ import {
 import {
   teacherAssignmentSchema,
   teacherProfileSchema,
+  teacherSubmissionSchema,
   teacherWorkspaceBackupSchema,
+  parseStudentPerformanceCode,
+  verifyStudentPerformance,
   type TeacherAssignment,
   type TeacherProfile,
+  type TeacherSubmission,
 } from "../domain/teacher-workspace";
 
 export const teacherClassSettingsSchema = z
@@ -48,6 +52,7 @@ export class TeacherClassDatabase extends Dexie {
   contentPackages!: Table<TeacherContentPackage, string>;
   profiles!: Table<TeacherProfile, string>;
   assignments!: Table<TeacherAssignment, string>;
+  submissions!: Table<TeacherSubmission, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.teacher) {
     super(name);
@@ -71,7 +76,76 @@ export class TeacherClassDatabase extends Dexie {
       profiles: "id, updatedAt",
       assignments: "id, status, dueDate, updatedAt, *classIds",
     });
+    this.version(5)
+      .stores({
+        classSettings: "id, updatedAt",
+        classes: "id, updatedAt",
+        members: "id, classId, createdAt",
+        contentPackages: "id, updatedAt",
+        profiles: "id, updatedAt",
+        assignments: "id, status, dueDate, updatedAt, *classIds, *memberIds",
+        submissions: "id, assignmentId, classId, membershipId, receivedAt",
+      })
+      .upgrade((transaction) =>
+        transaction
+          .table<TeacherAssignment, string>("assignments")
+          .toCollection()
+          .modify((assignment) => {
+            assignment.memberIds ??= [];
+          }),
+      );
   }
+}
+
+export function createTeacherSubmissionRepository(
+  database = new TeacherClassDatabase(),
+) {
+  return {
+    listByAssignment: (assignmentId: string) =>
+      database.submissions
+        .where("assignmentId")
+        .equals(assignmentId)
+        .sortBy("receivedAt"),
+    recordCode: async (code: string) => {
+      const value = parseStudentPerformanceCode(code);
+      const [member, assignment] = await Promise.all([
+        database.members.get(value.membershipId),
+        database.assignments.get(value.assignmentId),
+      ]);
+      if (!member || member.classId !== value.classId) {
+        throw new Error(
+          "Der Leistungsbrief gehört zu keinem bekannten Schüler.",
+        );
+      }
+      if (!assignment || !assignment.classIds.includes(value.classId)) {
+        throw new Error("Die Aufgabe ist dieser Klasse nicht zugeteilt.");
+      }
+      if (
+        (assignment.memberIds ?? []).length > 0 &&
+        !assignment.memberIds.includes(value.membershipId)
+      ) {
+        throw new Error("Die Aufgabe ist diesem Schüler nicht zugeteilt.");
+      }
+      if (!(await verifyStudentPerformance(value, member.enrollmentToken))) {
+        throw new Error("Die Signatur des Leistungsbriefs ist ungültig.");
+      }
+      const id = `${value.assignmentId}:${value.membershipId}`;
+      const existing = await database.submissions.get(id);
+      if (existing?.sequence === value.sequence) {
+        return { status: "duplicate" as const, submission: existing };
+      }
+      if (existing && existing.sequence > value.sequence) {
+        return { status: "stale" as const, submission: existing };
+      }
+      const submission = teacherSubmissionSchema.parse({
+        ...value,
+        id,
+        receivedAt: new Date().toISOString(),
+      });
+      await database.submissions.put(submission);
+      return { status: "accepted" as const, submission };
+    },
+  };
 }
 
 export function createTeacherProfileRepository(
@@ -93,9 +167,16 @@ export function createTeacherAssignmentRepository(
     put: async (value: TeacherAssignment) => {
       await database.assignments.put(teacherAssignmentSchema.parse(value));
     },
-    remove: async (id: string) => {
-      await database.assignments.delete(id);
-    },
+    remove: async (id: string) =>
+      database.transaction(
+        "rw",
+        database.assignments,
+        database.submissions,
+        async () => {
+          await database.assignments.delete(id);
+          await database.submissions.where("assignmentId").equals(id).delete();
+        },
+      ),
   };
 }
 
@@ -112,22 +193,27 @@ export function createTeacherWorkspaceRepository(
         members: await database.members.toArray(),
         materials: await database.contentPackages.toArray(),
         assignments: await database.assignments.toArray(),
+        submissions: await database.submissions.toArray(),
       }),
     importData: async (value: unknown) => {
       const backup = teacherWorkspaceBackupSchema.parse(value);
       await database.transaction(
         "rw",
-        database.profiles,
-        database.classes,
-        database.members,
-        database.contentPackages,
-        database.assignments,
+        [
+          database.profiles,
+          database.classes,
+          database.members,
+          database.contentPackages,
+          database.assignments,
+          database.submissions,
+        ],
         async () => {
           if (backup.profile) await database.profiles.put(backup.profile);
           await database.classes.bulkPut(backup.classes);
           await database.members.bulkPut(backup.members);
           await database.contentPackages.bulkPut(backup.materials);
           await database.assignments.bulkPut(backup.assignments);
+          await database.submissions.bulkPut(backup.submissions);
         },
       );
       return backup;
@@ -173,16 +259,46 @@ export function createTeacherClassRepository(
       database.members.where("classId").equals(classId).sortBy("createdAt"),
     putMember: (value: ClassMember) =>
       database.members.put(classMemberSchema.parse(value)),
-    removeMember: (id: string) => database.members.delete(id),
+    removeMember: (id: string) =>
+      database.transaction(
+        "rw",
+        database.members,
+        database.assignments,
+        database.submissions,
+        async () => {
+          await database.members.delete(id);
+          await database.submissions.where("membershipId").equals(id).delete();
+          const affected = await database.assignments
+            .where("memberIds")
+            .equals(id)
+            .toArray();
+          for (const assignment of affected) {
+            const memberIds = assignment.memberIds.filter(
+              (memberId) => memberId !== id,
+            );
+            if (memberIds.length === 0) {
+              await database.assignments.delete(assignment.id);
+            } else {
+              await database.assignments.put({
+                ...assignment,
+                memberIds,
+                updatedAt: new Date().toISOString(),
+              });
+            }
+          }
+        },
+      ),
     removeClass: async (id: string) => {
       await database.transaction(
         "rw",
         database.classes,
         database.members,
         database.assignments,
+        database.submissions,
         async () => {
           await database.classes.delete(id);
           await database.members.where("classId").equals(id).delete();
+          await database.submissions.where("classId").equals(id).delete();
           const affected = await database.assignments
             .where("classIds")
             .equals(id)

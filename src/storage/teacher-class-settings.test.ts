@@ -6,10 +6,12 @@ import {
   createTeacherContentLibraryRepository,
   createTeacherAssignmentRepository,
   createTeacherProfileRepository,
+  createTeacherSubmissionRepository,
   TeacherClassDatabase,
   toggleClassModule,
   type TeacherClassSettings,
 } from "./teacher-class-settings";
+import { createStudentPerformanceCode } from "../domain/teacher-workspace";
 
 const databases: TeacherClassDatabase[] = [];
 
@@ -23,6 +25,73 @@ afterEach(async () => {
 });
 
 describe("teacher class settings", () => {
+  it("stores a signed submission idempotently and rejects older letters", async () => {
+    const database = new TeacherClassDatabase(`teacher-${crypto.randomUUID()}`);
+    databases.push(database);
+    const classId = "123e4567-e89b-42d3-a456-426614174001";
+    const membershipId = "123e4567-e89b-42d3-a456-426614174002";
+    const assignmentId = "123e4567-e89b-42d3-a456-426614174000";
+    const enrollmentToken = "0123456789abcdef0123456789abcdef";
+    const classes = createTeacherClassRepository(database);
+    await classes.put({
+      id: classId,
+      name: "7b",
+      teacherName: "Frau Test",
+      schoolYear: "2026/27",
+      enabledModules: ["vocabulary"],
+      createdAt: "2026-08-28T09:00:00.000Z",
+      updatedAt: "2026-08-28T09:00:00.000Z",
+    });
+    await classes.putMember({
+      id: membershipId,
+      classId,
+      displayName: "Alex",
+      enrollmentToken,
+      createdAt: "2026-08-28T09:00:00.000Z",
+    });
+    await createTeacherAssignmentRepository(database).put({
+      id: assignmentId,
+      title: "Lernwörter",
+      instructions: "Runde bearbeiten.",
+      subject: "vocabulary",
+      materialId: null,
+      classIds: [classId],
+      memberIds: [membershipId],
+      dueDate: "",
+      status: "assigned",
+      createdAt: "2026-08-28T10:00:00.000Z",
+      updatedAt: "2026-08-28T10:00:00.000Z",
+    });
+    const repository = createTeacherSubmissionRepository(database);
+    const makeCode = (sequence: number) =>
+      createStudentPerformanceCode(
+        {
+          version: 1,
+          assignmentId,
+          classId,
+          membershipId,
+          sequence,
+          completedAt: `2026-08-28T1${sequence}:00:00.000Z`,
+          result: "completed",
+        },
+        enrollmentToken,
+      );
+    const newer = await makeCode(2);
+
+    await expect(repository.recordCode(newer)).resolves.toMatchObject({
+      status: "accepted",
+    });
+    await expect(repository.recordCode(newer)).resolves.toMatchObject({
+      status: "duplicate",
+    });
+    await expect(
+      repository.recordCode(await makeCode(1)),
+    ).resolves.toMatchObject({ status: "stale" });
+    await expect(
+      repository.listByAssignment(assignmentId),
+    ).resolves.toHaveLength(1);
+  });
+
   it("lists persisted classes after reopening the teacher area", async () => {
     const name = `teacher-${crypto.randomUUID()}`;
     const firstDatabase = new TeacherClassDatabase(name);
@@ -115,6 +184,7 @@ describe("teacher class settings", () => {
       subject: "german",
       materialId: null,
       classIds: ["123e4567-e89b-42d3-a456-426614174001"],
+      memberIds: [],
       dueDate: "",
       status: "assigned",
       createdAt: "2026-08-28T10:00:00.000Z",

@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { LOCAL_DATA_AREAS } from "../../src/storage/local-data-boundaries";
@@ -22,6 +22,11 @@ describe("teacher workspace manager", () => {
   it("stores personal teacher information locally", async () => {
     const user = userEvent.setup();
     render(<TeacherProfilePanel />);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("textbox", { name: "Anzeigename" }),
+      ).toBeEnabled(),
+    );
     await user.type(
       screen.getByRole("textbox", { name: "Anzeigename" }),
       "Frau Beispiel",
@@ -80,6 +85,6 @@ describe("teacher workspace manager", () => {
       target: { value: code.value },
     });
     await user.click(screen.getByRole("button", { name: "Code prüfen" }));
-    expect(screen.getAllByText("Lernwörter üben")).toHaveLength(3);
+    expect(screen.getAllByText("Lernwörter üben")).toHaveLength(4);
   });
 });

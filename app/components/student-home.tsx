@@ -6,6 +6,7 @@ import { DailyPracticePanel } from "./daily-practice-panel";
 import { RoomCodeForm } from "./room-code-form";
 import { StudentClassEnrollment } from "./student-class-enrollment";
 import { StudentContentTransfer } from "./student-content-transfer";
+import { StudentAssignments } from "./student-assignments";
 
 export function StudentHome({
   transferConfig,
@@ -50,6 +51,7 @@ export function StudentHome({
         <a href="#heute">Heute üben</a>
         <a href="#faecher">Fächer</a>
         <a href="#inhalte">Meine Inhalte</a>
+        <a href="#aufgaben">Aufgaben</a>
         <a href="#fortschritt">Mein Fortschritt</a>
         <a href="#klasse">Meine Klasse</a>
       </nav>
@@ -139,6 +141,17 @@ export function StudentHome({
             <p>Aktivität, Regelmäßigkeit und persönliche Verbesserung</p>
           </header>
           <AdaptiveProgressPanel />
+        </section>
+
+        <section className="learning-loop-section" id="aufgaben">
+          <header>
+            <div>
+              <p className="eyebrow">Von deiner Lehrkraft</p>
+              <h2>Meine Aufgaben</h2>
+            </div>
+            <p>Aufträge übernehmen, bearbeiten und datensparsam zurückgeben</p>
+          </header>
+          <StudentAssignments />
         </section>
 
         <section className="learning-loop-section" id="klasse">

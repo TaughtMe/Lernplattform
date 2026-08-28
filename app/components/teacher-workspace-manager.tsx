@@ -18,14 +18,19 @@ import {
   type TeacherAssignmentQr,
   type TeacherAssignmentSubject,
   type TeacherProfile,
+  type TeacherSubmission,
 } from "../../src/domain/teacher-workspace";
-import type { TeacherClass } from "../../src/domain/class-enrollment";
+import type {
+  ClassMember,
+  TeacherClass,
+} from "../../src/domain/class-enrollment";
 import type { TeacherContentPackage } from "../../src/domain/teacher-content-library";
 import {
   createTeacherAssignmentRepository,
   createTeacherClassRepository,
   createTeacherContentLibraryRepository,
   createTeacherProfileRepository,
+  createTeacherSubmissionRepository,
   createTeacherWorkspaceRepository,
 } from "../../src/storage/teacher-class-settings";
 import { QrCodeScanner } from "./qr-code-scanner";
@@ -318,6 +323,7 @@ function emptyAssignmentForm() {
     subject: "german" as TeacherAssignmentSubject,
     materialId: "",
     classIds: [] as string[],
+    memberIds: [] as string[],
     dueDate: "",
   };
 }
@@ -332,7 +338,12 @@ export function TeacherAssignmentManager() {
     () => createTeacherContentLibraryRepository(),
     [],
   );
+  const submissionRepository = useMemo(
+    () => createTeacherSubmissionRepository(),
+    [],
+  );
   const [classes, setClasses] = useState<TeacherClass[]>([]);
+  const [members, setMembers] = useState<ClassMember[]>([]);
   const [materials, setMaterials] = useState<TeacherContentPackage[]>([]);
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [form, setForm] = useState(emptyAssignmentForm);
@@ -340,6 +351,7 @@ export function TeacherAssignmentManager() {
   const [qrAssignment, setQrAssignment] = useState<TeacherAssignment>();
   const [manualCode, setManualCode] = useState("");
   const [scanned, setScanned] = useState<TeacherAssignmentQr>();
+  const [submissions, setSubmissions] = useState<TeacherSubmission[]>([]);
   const [message, setMessage] = useState("");
   const [scanError, setScanError] = useState("");
 
@@ -351,6 +363,13 @@ export function TeacherAssignmentManager() {
         assignmentRepository.list(),
       ]);
     setClasses(storedClasses);
+    setMembers(
+      (
+        await Promise.all(
+          storedClasses.map(({ id }) => classRepository.listMembers(id)),
+        )
+      ).flat(),
+    );
     setMaterials(storedMaterials);
     setAssignments(storedAssignments);
   }, [assignmentRepository, classRepository, materialRepository]);
@@ -381,6 +400,7 @@ export function TeacherAssignmentManager() {
       subject: form.subject,
       materialId: form.materialId || null,
       classIds: form.classIds,
+      memberIds: form.memberIds,
       dueDate: form.dueDate,
       status: "assigned",
       createdAt: existing?.createdAt ?? now,
@@ -411,6 +431,7 @@ export function TeacherAssignmentManager() {
       subject: assignment.subject,
       materialId: assignment.materialId ?? "",
       classIds: assignment.classIds,
+      memberIds: assignment.memberIds ?? [],
       dueDate: assignment.dueDate,
     });
     setMessage(`„${assignment.title}“ ist zur Bearbeitung geöffnet.`);
@@ -428,19 +449,62 @@ export function TeacherAssignmentManager() {
     window.dispatchEvent(new Event("teacher-data-changed"));
   }
 
-  const inspectCode = useCallback((value: string) => {
-    setScanError("");
-    try {
-      const result = parseTeacherAssignmentCode(value);
-      setScanned(result);
+  const selectQrAssignment = useCallback(
+    async (assignment: TeacherAssignment) => {
+      setQrAssignment(assignment);
+      setSubmissions(
+        await submissionRepository.listByAssignment(assignment.id),
+      );
+    },
+    [submissionRepository],
+  );
+
+  const inspectCode = useCallback(
+    async (value: string) => {
+      setScanError("");
       setManualCode(value);
-    } catch {
-      setScanned(undefined);
-      setScanError("Der eingelesene Code ist keine gültige Lernraum-Aufgabe.");
-    }
-  }, []);
+      try {
+        if (value.trim().startsWith("lernraum:performance:")) {
+          const result = await submissionRepository.recordCode(value);
+          const assignment = assignments.find(
+            ({ id }) => id === result.submission.assignmentId,
+          );
+          if (assignment) await selectQrAssignment(assignment);
+          setMessage(
+            result.status === "accepted"
+              ? "Leistungsbrief geprüft und als Abgabe gespeichert."
+              : result.status === "duplicate"
+                ? "Diese Abgabe wurde bereits erfasst."
+                : "Dieser Leistungsbrief ist älter als die bereits erfasste Abgabe.",
+          );
+          return;
+        }
+        const result = parseTeacherAssignmentCode(value);
+        setScanned(result);
+      } catch (error) {
+        setScanned(undefined);
+        setScanError(
+          error instanceof Error
+            ? error.message
+            : "Der eingelesene Code ist kein gültiger Lernraum-Code.",
+        );
+      }
+    },
+    [assignments, selectQrAssignment, submissionRepository],
+  );
 
   const qrCode = qrAssignment ? createTeacherAssignmentCode(qrAssignment) : "";
+  const expectedMembers = qrAssignment
+    ? members.filter(
+        (member) =>
+          qrAssignment.classIds.includes(member.classId) &&
+          ((qrAssignment.memberIds ?? []).length === 0 ||
+            qrAssignment.memberIds.includes(member.id)),
+      )
+    : [];
+  const submittedMemberIds = new Set(
+    submissions.map(({ membershipId }) => membershipId),
+  );
 
   return (
     <section
@@ -562,22 +626,74 @@ export function TeacherAssignmentManager() {
                   <input
                     type="checkbox"
                     checked={form.classIds.includes(teacherClass.id)}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const checked = event.target.checked;
                       setForm((current) => ({
                         ...current,
-                        classIds: event.target.checked
+                        classIds: checked
                           ? [...current.classIds, teacherClass.id]
                           : current.classIds.filter(
                               (classId) => classId !== teacherClass.id,
                             ),
-                      }))
-                    }
+                        memberIds: checked
+                          ? current.memberIds
+                          : current.memberIds.filter(
+                              (memberId) =>
+                                !members.some(
+                                  (member) =>
+                                    member.id === memberId &&
+                                    member.classId === teacherClass.id,
+                                ),
+                            ),
+                      }));
+                    }}
                   />
                   <span>{teacherClass.name}</span>
                 </label>
               ))
             )}
           </fieldset>
+          {form.classIds.length > 0 ? (
+            <fieldset className="teacher-assignment-classes">
+              <legend>Einzelne Schüler (optional)</legend>
+              <p>
+                Ohne Auswahl gilt die Aufgabe für alle Schüler der gewählten
+                Klassen.
+              </p>
+              {members.filter((member) =>
+                form.classIds.includes(member.classId),
+              ).length === 0 ? (
+                <p>
+                  In den gewählten Klassen sind noch keine Schüler angelegt.
+                </p>
+              ) : (
+                members
+                  .filter((member) => form.classIds.includes(member.classId))
+                  .map((member) => (
+                    <label key={member.id}>
+                      <input
+                        type="checkbox"
+                        checked={form.memberIds.includes(member.id)}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            memberIds: event.target.checked
+                              ? [...current.memberIds, member.id]
+                              : current.memberIds.filter(
+                                  (memberId) => memberId !== member.id,
+                                ),
+                          }))
+                        }
+                      />
+                      <span>
+                        {member.displayName} ·{" "}
+                        {classes.find(({ id }) => id === member.classId)?.name}
+                      </span>
+                    </label>
+                  ))
+              )}
+            </fieldset>
+          ) : null}
           <div className="teacher-library__actions">
             <button
               className="button button--primary"
@@ -630,13 +746,16 @@ export function TeacherAssignmentManager() {
                     {assignment.dueDate
                       ? ` · fällig ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`
                       : " · ohne Frist"}
+                    {(assignment.memberIds ?? []).length > 0
+                      ? ` · ${(assignment.memberIds ?? []).length} Schüler individuell`
+                      : " · gesamte Klasse(n)"}
                   </small>
                 </div>
                 <div className="teacher-assignment-list__actions">
                   <button
                     className="button"
                     type="button"
-                    onClick={() => setQrAssignment(assignment)}
+                    onClick={() => void selectQrAssignment(assignment)}
                   >
                     QR-Code
                   </button>
@@ -707,7 +826,7 @@ export function TeacherAssignmentManager() {
           aria-labelledby="qr-reader-title"
         >
           <p className="eyebrow">QR-Code Leser</p>
-          <h3 id="qr-reader-title">Aufgabencode prüfen</h3>
+          <h3 id="qr-reader-title">Aufgabe oder Abgabe prüfen</h3>
           <div className="teacher-qr-reader__controls">
             <label>
               Code einfügen
@@ -715,14 +834,14 @@ export function TeacherAssignmentManager() {
                 rows={5}
                 value={manualCode}
                 onChange={(event) => setManualCode(event.target.value)}
-                placeholder="lernraum:assignment:…"
+                placeholder="lernraum:assignment:… oder lernraum:performance:…"
               />
             </label>
-            <QrCodeScanner onResult={inspectCode} />
+            <QrCodeScanner onResult={(value) => void inspectCode(value)} />
             <button
               className="button"
               type="button"
-              onClick={() => inspectCode(manualCode)}
+              onClick={() => void inspectCode(manualCode)}
             >
               Code prüfen
             </button>
@@ -739,6 +858,42 @@ export function TeacherAssignmentManager() {
                 {scanned.dueDate ? ` · fällig ${scanned.dueDate}` : ""}
               </small>
             </article>
+          ) : null}
+          {qrAssignment ? (
+            <section
+              className="teacher-submission-log"
+              aria-labelledby="submission-log-title"
+            >
+              <div>
+                <p className="eyebrow">Lokales Abgabelog</p>
+                <h4 id="submission-log-title">{qrAssignment.title}</h4>
+                <strong>
+                  {submissions.length} / {expectedMembers.length} abgegeben
+                </strong>
+              </div>
+              {expectedMembers.length === 0 ? (
+                <p>Für diese Zuteilung sind noch keine Schüler vorhanden.</p>
+              ) : (
+                <ul>
+                  {expectedMembers.map((member) => (
+                    <li key={member.id}>
+                      <span>{member.displayName}</span>
+                      <span
+                        className={
+                          submittedMemberIds.has(member.id)
+                            ? "teacher-submission-log__done"
+                            : "teacher-submission-log__open"
+                        }
+                      >
+                        {submittedMemberIds.has(member.id)
+                          ? "abgegeben"
+                          : "ausstehend"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           ) : null}
         </section>
       </div>

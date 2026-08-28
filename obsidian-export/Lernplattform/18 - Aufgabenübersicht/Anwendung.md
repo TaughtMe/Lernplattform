@@ -25,11 +25,13 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Aufgaben einer oder mehreren Klassen zuteilen und wieder löschen
 - [x] Datenschutzarmen Aufgaben-QR-Code ohne Schülernamen erzeugen und kopieren
 - [x] Aufgaben-QR-Codes per Kamera oder manueller Eingabe lesen und validieren
-- [x] Lehrerdatenbank auf IndexedDB-Schema 4 für Profil, Klassen, Schüler, Materialien und Aufgaben erweitern
+- [x] Lehrerdatenbank auf IndexedDB-Schema 5 für Profil, Klassen, Schüler, Materialien, Aufgaben und Abgaben erweitern
 - [x] Gesamte lokale Lehrerdatenbank als geprüfte JSON-Datei exportieren und importieren
-- [ ] Zugewiesene Aufgabe auf dem Schülergerät übernehmen und in den persönlichen Lernraum einordnen
-- [ ] Einzelne Schüler zusätzlich zu ganzen Klassen als optionale Zuteilungsziele unterstützen
-- [ ] QR-Leistungsbrief, kontinuierlichen Abgabescan und lokales Abgabeprotokoll als getrennten Ergebnisweg umsetzen
+- [x] Zugewiesene Aufgabe auf dem Schülergerät übernehmen und in den persönlichen Lernraum einordnen
+- [x] Einzelne Schüler zusätzlich zu ganzen Klassen als optionale Zuteilungsziele unterstützen
+- [x] Signierten QR-Abgabenachweis und lokales Abgabeprotokoll als getrennten Ergebnisweg umsetzen
+- [ ] Kontinuierlichen Scanmodus mit unmittelbarer Ton-, Vibrations- und Rahmenbestätigung ergänzen
+- [ ] Verschlüsselten Ranking-Leistungsbrief mit auswählbaren aggregierten Statistiken ergänzen
 
 ## Jetzt: Vokabel-Kern und Fehlerkreislauf
 
@@ -190,13 +192,13 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Wiederholtes Scannen derselben Einschreibung ohne doppeltes Schülerprofil behandeln
 - [ ] Ersatz- oder Zweitgerät nur nach ausdrücklicher Lehrerbestätigung koppeln
 - [ ] Verschlüsselten und signierten QR-Leistungsbrief definieren
-- [ ] Turnus- und Aufgabenpaket-ID sowie fortlaufende Standnummer implementieren
+- [x] Aufgaben-ID und fortlaufende Standnummer für Aufgabenabgaben implementieren
 - [ ] Kontinuierlichen Klassen-Scanmodus ohne einzelnen Bestätigungsdialog entwickeln
 - [ ] Erfolgreichen Scan mit Ton oder Vibration, grünem Rahmen und lokalem Namen bestätigen
-- [ ] Doppelte, veraltete, ungültige und klassenfremde Codes unterscheiden
-- [ ] Lokales Abgabeprotokoll „abgegeben / ausstehend“ je Turnus führen
-- [ ] Fortschritt „x von y abgegeben“ und Liste fehlender Schüler anzeigen
-- [ ] Erneutes Einlesen desselben QR-Codes ohne doppelte Wertung erlauben
+- [x] Doppelte, veraltete, ungültige und klassenfremde Aufgaben-Abgabecodes unterscheiden
+- [x] Lokales Abgabeprotokoll „abgegeben / ausstehend“ je Aufgabe führen
+- [x] Fortschritt „x von y abgegeben“ und Liste fehlender Schüler anzeigen
+- [x] Erneutes Einlesen desselben Aufgaben-Abgabecodes ohne doppelte Wertung erlauben
 - [ ] Löschfrist und manuelles Löschen von Abgabeprotokollen umsetzen
 - [ ] Statischen QR als Standard und animierten QR nur für größere Lernhistorien vorsehen
 - [ ] Lokales Klassenranking aus aggregierten Wochenwerten berechnen
