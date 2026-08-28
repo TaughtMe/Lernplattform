@@ -30,13 +30,14 @@ Lehrer und Schüler verwenden dieselbe App. Der persönliche Lernraum bleibt lok
 
 - Schülerfunktionen bleiben einfach und selbsterklärend.
 - Komplexe Datenverwaltung und Auswertungen liegen im Lehrerbereich.
-- Rollen bestimmen, welche Navigation und Funktionen sichtbar sind.
+- Schüler- und Lehrerarbeitsbereich bleiben als klar bezeichnete Oberflächen getrennt, sind auf demselben Gerät aber frei erreichbar.
 - Grundfunktionen sind frei zugänglich; Lehrkräfte stellen konkrete Inhalte statt allgemeiner Modulberechtigungen bereit.
 - Eigene und von der Lehrkraft bereitgestellte Inhalte verwenden denselben persönlichen Lernstand.
 - Fach, Stapel und Herkunft bleiben als Filter und Kontext erhalten.
 - Leistungen aus „Heute üben“ und freiem Üben bleiben persönlich und werden nicht automatisch geteilt.
-- Das Verlassen eines Klassenmodus gewährt keine Lehrerrechte.
-- Der Lehrerbereich erfordert eine eigene Lehrer-Authentifizierung und wird auf Schülergeräten nicht als freier Moduswechsel angeboten.
+- Der Lehrerbereich benötigt in der lokalen Einzelplatzphase keinen eigenen Login. Das entsperrte Gerät beziehungsweise Browserprofil bildet die Zugriffsschranke.
+- Die Oberfläche weist darauf hin, dass jeder Nutzer dieses Geräteprofils lokale Lehrkraftdaten sehen und bearbeiten kann.
+- Lehreraktionen in einem Live-Raum verwenden weiterhin getrennte, flüchtige Raumtoken; der frei erreichbare Lehrerbereich veröffentlicht keine geheimen Raumzugänge.
 - Persönlicher Lernstand, übernommene Inhaltskopien und Lehrerdaten bleiben technisch sauber getrennt.
 - Alle Bereiche greifen auf einen gemeinsamen lokalen Kern zu.
 

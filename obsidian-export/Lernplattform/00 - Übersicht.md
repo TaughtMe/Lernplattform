@@ -3,7 +3,7 @@ tags:
   - lernplattform
   - projektübersicht
   - bildung
-status: konzept
+status: prototyp
 ---
 
 # Lernplattform – Gesamtübersicht
@@ -74,7 +74,11 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 
 ## Offene Entscheidungen
 
-- Welche Daten darf das Lehrergerät dauerhaft speichern?
-- Welcher erste Cloudanbieter soll für verschlüsselte Backups unterstützt werden?
+- Welche Daten darf das Lehrergerät dauerhaft speichern? Diese Entscheidung wird erst vor einer Nutzung durch weitere Lehrkräfte produktkritisch; der aktuelle Hauptnutzer arbeitet lokal auf dem eigenen Lehrergerät.
+- In welcher Reihenfolge sollen Google Drive, Microsoft OneDrive und ein frei konfigurierbares WebDAV-Ziel umgesetzt werden? Eine lokale Verzeichnissicherung bildet den ersten, anbieterunabhängigen Weg. Die Sicherung persönlicher Lernstände hat Vorrang vor einer Mehrbenutzer-Lehrerarchitektur.
 - Welche Lernstandsregeln werden in Version 1 verbindlich umgesetzt?
 - Welche Funktionen gehören ins erste produktive Minimum?
+
+## Aktuelle Priorität
+
+Vor ersten Live-Tests werden Vault, Browser-Tests und aktuelle Oberflächenverträge synchronisiert. Danach folgt die freiwillige Sicherung persönlicher Schülerdaten in ein lokales Verzeichnis oder wahlweise zu Google Drive, Microsoft OneDrive beziehungsweise einem WebDAV-kompatiblen Speicher wie Nextcloud. Eine zusätzliche anwendungsseitige Verschlüsselung ist keine Voraussetzung; die Sicherheitsmechanismen des gewählten Geräts oder Anbieters gelten. Lehrer-Mehrbenutzerbetrieb und eine vollständige Lehrer-Authentifizierung bleiben wichtig, sind für die derzeitige Nutzung durch einen Hauptnutzer aber nachgeordnet.

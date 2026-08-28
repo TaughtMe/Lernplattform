@@ -4,6 +4,8 @@ import {
   createTeacherClassRepository,
   createTeacherClassSettingsRepository,
   createTeacherContentLibraryRepository,
+  createTeacherAssignmentRepository,
+  createTeacherProfileRepository,
   TeacherClassDatabase,
   toggleClassModule,
   type TeacherClassSettings,
@@ -93,5 +95,44 @@ describe("teacher class settings", () => {
     ]);
     await repository.remove("package-1");
     await expect(repository.list()).resolves.toEqual([]);
+  });
+
+  it("stores teacher profiles and assignments in the versioned database", async () => {
+    const database = new TeacherClassDatabase(`teacher-${crypto.randomUUID()}`);
+    databases.push(database);
+    await createTeacherProfileRepository(database).put({
+      id: "local-teacher",
+      displayName: "Frau Test",
+      school: "Testschule",
+      email: "",
+      subjects: ["Deutsch"],
+      updatedAt: "2026-08-28T10:00:00.000Z",
+    });
+    await createTeacherAssignmentRepository(database).put({
+      id: "123e4567-e89b-42d3-a456-426614174000",
+      title: "Lernwörter",
+      instructions: "Runde vollständig bearbeiten.",
+      subject: "german",
+      materialId: null,
+      classIds: ["123e4567-e89b-42d3-a456-426614174001"],
+      dueDate: "",
+      status: "assigned",
+      createdAt: "2026-08-28T10:00:00.000Z",
+      updatedAt: "2026-08-28T10:00:00.000Z",
+    });
+
+    await expect(
+      createTeacherProfileRepository(database).get(),
+    ).resolves.toMatchObject({
+      displayName: "Frau Test",
+    });
+    await expect(
+      createTeacherAssignmentRepository(database).list(),
+    ).resolves.toMatchObject([
+      {
+        title: "Lernwörter",
+        classIds: ["123e4567-e89b-42d3-a456-426614174001"],
+      },
+    ]);
   });
 });

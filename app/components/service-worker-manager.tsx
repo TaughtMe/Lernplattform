@@ -10,6 +10,7 @@ const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 export function ServiceWorkerManager() {
   const registration = useRef<ServiceWorkerRegistration | null>(null);
   const reloading = useRef(false);
+  const reloadOnControllerChange = useRef(false);
   const [state, setState] = useState<UpdateState>("idle");
 
   const markReady = useCallback(() => setState("ready"), []);
@@ -68,6 +69,7 @@ export function ServiceWorkerManager() {
     let stopWatchingRegistration = () => {};
 
     const handleControllerChange = () => {
+      if (!reloadOnControllerChange.current) return;
       if (reloading.current) return;
       reloading.current = true;
       window.location.reload();
@@ -112,6 +114,7 @@ export function ServiceWorkerManager() {
 
   function handleClick() {
     if (state === "ready") {
+      reloadOnControllerChange.current = true;
       registration.current?.waiting?.postMessage({ type: "SKIP_WAITING" });
       return;
     }

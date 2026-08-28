@@ -17,7 +17,7 @@ export function AppHeader() {
           <Link href="/#raumcode">Raum beitreten</Link>
         </nav>
         <Link className="teacher-link" href="/lehrer">
-          Lehrer-Login
+          Lehrerbereich
         </Link>
       </header>
       <nav className="mobile-navigation" aria-label="Mobile Hauptnavigation">

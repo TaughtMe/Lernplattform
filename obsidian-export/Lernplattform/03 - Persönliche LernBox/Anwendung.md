@@ -84,4 +84,4 @@ Mathematik wird später nicht als Sammlung einzelner falscher Ergebnisse gespeic
 
 ## Risiko
 
-Gelöschte Browserdaten oder ein Gerätewechsel können lokale Lernstände entfernen. Deshalb sind Export und verschlüsseltes Backup wichtig.
+Gelöschte Browserdaten oder ein Gerätewechsel können lokale Lernstände entfernen. Deshalb sind Export und eine freiwillige Sicherung in ein lokales Verzeichnis oder einen selbst gewählten Cloudspeicher wichtig.

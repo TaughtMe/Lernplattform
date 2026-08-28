@@ -24,6 +24,18 @@ Das Lehrer-Cockpit bündelt Planung, Durchführung und datensparsame Auswertung 
 
 ## Anwendung
 
+Der Lehrerbereich ist in der aktuellen lokalen Einzelplatzphase ohne eigenes Lernraum-Konto und ohne vorgelagerten Login erreichbar. Die Startseite bezeichnet ihn deshalb als **Lehrerbereich** und nicht als **Lehrer-Login**. Das entsperrte Gerät beziehungsweise ein ausschließlich von der Lehrkraft verwendetes Browserprofil bildet die Schutzgrenze. Diese Entscheidung vermeidet lokale Anmeldedaten und eine nur scheinbar sichere Prototyp-PIN.
+
+Wer dasselbe entsperrte Geräteprofil verwenden kann, kann jedoch auch Klassen, lokale Namen, Inhaltsbibliotheken und Einstellungen sehen, verändern, exportieren oder löschen. Vor dem Speichern persönlicher Zuordnungen weist die Oberfläche deshalb auf ein geschütztes, nicht gemeinsam genutztes Geräteprofil hin. Ein Lehrerlogin oder eine echte Kontotrennung bleibt als späteres To-do bestehen und wird erst dann neu bewertet, wenn Schüler und Lehrkräfte dasselbe Gerät beziehungsweise Browserprofil verwenden oder mehrere Lehrkräfte getrennte Arbeitsstände benötigen. Vor einer Umsetzung müssen Authentifizierungsanbieter, Kontowiederherstellung, Datenschutz, Betriebsaufwand und laufende Kosten geklärt sein. Lernraum baut und betreibt keine eigene Login-Infrastruktur, solange dieser zusätzliche Aufwand für die tatsächliche Nutzung nicht gerechtfertigt ist.
+
+Der Lehrerbereich ist kein Prototyp-Einstieg mehr, sondern ein zusammenhängender lokaler Arbeitsplatz. Er speichert ein persönliches Lehrkraftprofil, mehrere Klassen, Schüler beziehungsweise Aliasse, Materialpakete und Arbeitsaufträge in einer versionierten IndexedDB. Eine Datenübersicht zeigt die vorhandenen Datensätze. Die gesamte geprüfte Lehrerdatenbank kann als JSON-Datei exportiert und später wieder zusammengeführt werden.
+
+Klassen können unabhängig voneinander angelegt, ausgewählt und samt zugehörigen Schülern gelöscht werden. Schüler werden je Klasse lokal verwaltet, können entfernt werden und erhalten weiterhin ihren individuellen Einschreibungs-QR-Code. Namen und Zuordnungen verlassen das Lehrergerät nicht durch die Aufgaben- oder Materialfreigabe.
+
+Die Materialverwaltung speichert, bearbeitet, löscht, importiert und exportiert zunächst versionierte Vokabelpakete. Die bestehenden Werkzeuge für Texte, Vokabeln und Kopfrechenaufgaben im Live-Raum bleiben zusätzlich verfügbar. Weitere fachliche Materialtypen verwenden später denselben lokalen Bibliotheksvertrag.
+
+Arbeitsaufträge enthalten Titel, Anleitung, Fach, optionale Materialverknüpfung und Fälligkeit. Eine Aufgabe wird einer oder mehreren Klassen zugeteilt, bleibt lokal bearbeitbar und kann gelöscht werden. Der statische Aufgaben-QR enthält keine Schülernamen oder persönlichen Lernstände. Der Lehrerbereich erzeugt, kopiert und liest diesen Code per Kamera oder manueller Eingabe und zeigt den validierten Auftrag an. Die tatsächliche Übernahme eines solchen Auftrags in den persönlichen Schülerlernraum bleibt ein getrennter nächster Integrationsschritt.
+
 Die Lehrkraft entscheidet vor einer Aktivität, welche Inhalte, Hilfen, Sozialform und Auswertung verwendet werden. Persönliche Zuordnungen müssen ausdrücklich aktiviert und lokal geschützt werden.
 
 Die frühere Modulfreigabe ist als Produktmodell überholt. Grundfunktionen stehen Schülern frei zur Verfügung. Die Lehrkraft wählt stattdessen konkrete Stapel oder Sammlungen aus ihrer lokalen beziehungsweise selbst gewählten Ablage und veröffentlicht daraus bewusst ein unveränderliches, versioniertes Inhaltspaket. Supabase dient dabei ausschließlich als kurzlebiger Übergaberaum; es ist weder dauerhafte Lehrerbibliothek noch Schüler-Lernspeicher.

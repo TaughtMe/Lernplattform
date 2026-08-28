@@ -2,6 +2,35 @@
 
 Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidungen stehen in den verlinkten Kapiteln.
 
+## Jetzt: Stabilisierung vor Live-Tests
+
+- [x] Vault-Status, Produktprioritäten und aktuellen Code-Stand abgleichen
+- [x] Vinext innerhalb des unterstützten Beta-Kanals kontrolliert aktualisieren; Alpha nicht als Stabilitätsgewinn behandeln
+- [x] E2E-Suite auf Desktop, Mobilgeräten und 320 CSS-Pixeln vollständig stabilisieren
+- [x] Veraltete Browser-Erwartungen an Einschreibecode und vierstelligen Raumcode anpassen
+- [x] Feste globale Bedienelemente auf kleinen Displays ohne Überlagerung nutzbar machen
+- [x] Vollständiges Quality Gate nach Toolchain- und E2E-Anpassungen ausführen
+- [ ] Erste begleitete Live-Tests mit realistischen Schülergeräten vorbereiten
+- [x] Freiwillige Sicherung in ein lokales Verzeichnis, Google Drive, OneDrive oder ein freies WebDAV-Ziel als nächsten Produktmeilenstein festlegen
+
+## Jetzt: Vollständiger lokaler Lehrerarbeitsplatz
+
+- [x] Lehrerbereich ohne Prototyp- oder Login-Hürde als zusammenhängendes Cockpit strukturieren
+- [x] Persönliche Lehrkraftinformationen lokal speichern und bearbeiten
+- [x] Mehrere Klassen anlegen, auswählen und mit ihren lokalen Daten löschen
+- [x] Schüler beziehungsweise Aliasse je Klasse anlegen, anzeigen und entfernen
+- [x] Individuelle Einschreibungs-QR-Codes pro Schüler erzeugen
+- [x] Lokale Materialbibliothek speichern, bearbeiten, importieren, exportieren und löschen
+- [x] Aufgaben mit Titel, Anleitung, Fach, Material und Fälligkeit erstellen und bearbeiten
+- [x] Aufgaben einer oder mehreren Klassen zuteilen und wieder löschen
+- [x] Datenschutzarmen Aufgaben-QR-Code ohne Schülernamen erzeugen und kopieren
+- [x] Aufgaben-QR-Codes per Kamera oder manueller Eingabe lesen und validieren
+- [x] Lehrerdatenbank auf IndexedDB-Schema 4 für Profil, Klassen, Schüler, Materialien und Aufgaben erweitern
+- [x] Gesamte lokale Lehrerdatenbank als geprüfte JSON-Datei exportieren und importieren
+- [ ] Zugewiesene Aufgabe auf dem Schülergerät übernehmen und in den persönlichen Lernraum einordnen
+- [ ] Einzelne Schüler zusätzlich zu ganzen Klassen als optionale Zuteilungsziele unterstützen
+- [ ] QR-Leistungsbrief, kontinuierlichen Abgabescan und lokales Abgabeprotokoll als getrennten Ergebnisweg umsetzen
+
 ## Jetzt: Vokabel-Kern und Fehlerkreislauf
 
 - [x] Bestehendes Laufdiktat stabilisieren und automatisierte Basistests ergänzen
@@ -27,7 +56,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 **Aktueller Stand:** Die fünf Merkstufen können im freien Deutschbereich mit eigenen Wörtern vollständig durchlaufen werden. Merkstufe, Leitner-Fälligkeit und typisierte Lernereignisse werden dauerhaft im gemeinsamen persönlichen Datenbereich gespeichert. Die Punktewertung ist bewusst noch nicht angebunden.
 
-- [ ] Lernobjekttyp „Lernwort“ im gemeinsamen Datenmodell ergänzen
+- [x] Lernobjekttyp „Lernwort“ im gemeinsamen Datenmodell ergänzen
 - [x] Merkstufe und Leitner-Box getrennt speichern
 - [x] Stufe 1 als überprüfbaren Funktionsprototyp: vollständiges Wort fehlerfrei abschreiben
 - [x] Stufe 2 als überprüfbaren Funktionsprototyp: wenige fehlende Buchstaben ergänzen
@@ -150,10 +179,13 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Jede neue Ansicht ab 320 CSS-Pixel Breite und ohne horizontales Scrollen prüfen
 - [ ] Hochformat, Querformat und eingeblendete Bildschirmtastatur pro Lernmodus testen
 - [ ] Geräte- und Browsermatrix vor jedem größeren Meilenstein vollständig durchlaufen
-- [ ] Lehrer-Cockpit und Rollenmodell entwickeln
-- [ ] Gemeinsame App mit getrennten privaten, Klassen- und Lehrerarbeitsbereichen umsetzen
-- [ ] Lehrerbereich mit eigener Authentifizierung schützen
-- [ ] Sicherstellen, dass das Verlassen des Klassenmodus niemals Lehrerrechte erteilt
+- [x] Lehrer-Cockpit und lokales Rollenmodell entwickeln
+- [x] Gemeinsame App mit getrennten privaten, Klassen- und Lehrerarbeitsbereichen umsetzen
+- [x] Lehrerbereich in der lokalen Einzelplatzphase ohne eigenen Login zugänglich machen
+- [x] Entsperrtes Gerät beziehungsweise getrenntes Browserprofil als Schutzgrenze sichtbar erklären
+- [ ] Später: Lehrerlogin beziehungsweise Kontotrennung für gemeinsam genutzte Geräte oder mehrere Lehrkräfte neu bewerten
+- [ ] Vor einem Lehrerlogin Nutzen, Authentifizierungsanbieter, Wiederherstellung, Datenschutz, Betriebsaufwand und laufende Kosten verbindlich klären
+- [ ] Keine eigene Login-Infrastruktur betreiben, solange der Mehrwert die zusätzlichen Betriebs- und Anbieterkosten nicht rechtfertigt
 - [x] Schüler in einer Klasse lokal anlegen und individuelle Einschreibungs-QR-Codes erzeugen
 - [x] Wiederholtes Scannen derselben Einschreibung ohne doppeltes Schülerprofil behandeln
 - [ ] Ersatz- oder Zweitgerät nur nach ausdrücklicher Lehrerbestätigung koppeln
@@ -171,7 +203,14 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Tageslimits, Aliasdarstellung und motivierende Ranggruppen erproben
 - [ ] Häuser und datensparsame Gruppenpunkte ergänzen
 - [ ] Duelle und QR-Auswertung entwickeln
-- [ ] Verschlüsselten Export und Cloud-Backup ergänzen
+- [ ] Lokale Verzeichnissicherung und manuellen Datei-Export ergänzen
+- [ ] Google Drive und Microsoft OneDrive als optionale Sicherungsziele anbinden
+- [ ] Frei konfigurierbares WebDAV-Ziel für Nextcloud, ownCloud und schulische Speicher anbinden
+- [ ] Zusätzliche Dateiverschlüsselung nur als optionale Schutzstufe vorsehen
+- [ ] Hinweis und bewusste Bestätigung zur Nutzerverantwortung für Anbieterwahl, Freigaben und sensible Daten gestalten
+- [ ] Später: Google-Cloud-Projekte für Test und Produktion anlegen, Drive API aktivieren und OAuth-Anwendung konfigurieren
+- [ ] Später: Microsoft-Entra-Anwendung registrieren, Kontotypen, Weiterleitungsadressen und minimale Graph-Berechtigung festlegen
+- [ ] OAuth-Verbindungen widerrufbar machen und WebDAV-Zugangsdaten sicher behandeln
 - [ ] Persönliches Cloud-Backup technisch von Klasseneinschreibung und Lehrer-Ranking trennen
 - [ ] Barrierefreiheit und gemeinsame Geräteprofile testen
 - [x] Module unter einer gemeinsamen Plattformoberfläche zusammenführen

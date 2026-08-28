@@ -5,15 +5,21 @@ const isCI = Boolean(process.env["CI"]);
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
+  // Vinext compiles routes on demand. Serial browser runs avoid navigation
+  // aborts while several projects request new RSC routes at the same time.
+  workers: 1,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  ...(isCI ? { workers: 2 } : {}),
   reporter: isCI ? [["html", { open: "never" }], ["github"]] : "list",
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    // The service worker has its own render contract test. Blocking it here
+    // keeps browser runs focused on the current development build instead of
+    // mixing cached assets into WebKit and Safari test contexts.
+    serviceWorkers: "block",
     locale: "de-DE",
     timezoneId: "Europe/Berlin",
   },

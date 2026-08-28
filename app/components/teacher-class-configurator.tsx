@@ -68,6 +68,7 @@ export function TeacherClassConfigurator() {
       setSelectedId(course.id);
       setName("");
       setMessage("Klasse wurde lokal angelegt.");
+      window.dispatchEvent(new Event("teacher-data-changed"));
     } catch {
       setMessage("Die Klasse konnte nicht gespeichert werden.");
     }
@@ -90,11 +91,30 @@ export function TeacherClassConfigurator() {
       setMessage(
         "Schüler wurde lokal angelegt. Übernimm jetzt den individuellen Code am Schülergerät.",
       );
+      window.dispatchEvent(new Event("teacher-data-changed"));
     } catch {
       setMessage("Der Schüler konnte nicht gespeichert werden.");
     }
   }
   const code = selected && shown ? createEnrollmentCode(selected, shown) : "";
+  async function removeStudent(member: ClassMember) {
+    await repository.removeMember(member.id);
+    setMembers((current) => current.filter(({ id }) => id !== member.id));
+    if (shown?.id === member.id) setShown(undefined);
+    setMessage(`„${member.displayName}“ wurde aus der Klasse entfernt.`);
+    window.dispatchEvent(new Event("teacher-data-changed"));
+  }
+  async function removeSelectedClass() {
+    if (!selected) return;
+    await repository.removeClass(selected.id);
+    const remaining = classes.filter(({ id }) => id !== selected.id);
+    setClasses(remaining);
+    setSelectedId(remaining[0]?.id ?? "");
+    setMembers([]);
+    setShown(undefined);
+    setMessage(`„${selected.name}“ und ihre Schüler wurden lokal gelöscht.`);
+    window.dispatchEvent(new Event("teacher-data-changed"));
+  }
   return (
     <section className="teacher-workspace" aria-labelledby="teacher-title">
       <div className="teacher-heading">
@@ -147,22 +167,31 @@ export function TeacherClassConfigurator() {
             </button>
           </form>
           {classes.length > 0 && (
-            <label>
-              Aktive Klasse
-              <select
-                value={selectedId}
-                onChange={(e) => {
-                  setSelectedId(e.target.value);
-                  setShown(undefined);
-                }}
+            <div className="teacher-class-selection">
+              <label>
+                Aktive Klasse
+                <select
+                  value={selectedId}
+                  onChange={(e) => {
+                    setSelectedId(e.target.value);
+                    setShown(undefined);
+                  }}
+                >
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="button button--quiet"
+                type="button"
+                onClick={() => void removeSelectedClass()}
               >
-                {classes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                Aktive Klasse löschen
+              </button>
+            </div>
           )}
         </section>
         <aside className="teacher-preview">
@@ -193,16 +222,27 @@ export function TeacherClassConfigurator() {
               {members.length > 0 && (
                 <div>
                   <h3>{members.length} Schüler</h3>
-                  {members.map((m) => (
-                    <button
-                      className="button"
-                      type="button"
-                      key={m.id}
-                      onClick={() => setShown(m)}
-                    >
-                      {m.displayName}
-                    </button>
-                  ))}
+                  <ul className="teacher-member-list">
+                    {members.map((m) => (
+                      <li key={m.id}>
+                        <button
+                          className="button"
+                          type="button"
+                          onClick={() => setShown(m)}
+                        >
+                          {m.displayName}
+                        </button>
+                        <button
+                          className="button button--quiet"
+                          type="button"
+                          aria-label={`${m.displayName} entfernen`}
+                          onClick={() => void removeStudent(m)}
+                        >
+                          Entfernen
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               {code && (

@@ -104,6 +104,7 @@ export function TeacherContentTransfer({
       await refreshLibrary();
       setSelectedPackageId(entry.id);
       setLibraryNotice(`„${entry.title}“ wurde lokal gespeichert.`);
+      window.dispatchEvent(new Event("teacher-data-changed"));
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -147,6 +148,7 @@ export function TeacherContentTransfer({
         ? `„${selected.title}“ wurde aus der lokalen Bibliothek gelöscht.`
         : `Paket gelöscht. ${remaining.length} Pakete verbleiben.`,
     );
+    window.dispatchEvent(new Event("teacher-data-changed"));
   }
 
   function exportLibrary() {
@@ -177,6 +179,7 @@ export function TeacherContentTransfer({
       setLibraryNotice(
         `${imported.packages.length} Pakete wurden geprüft und lokal übernommen.`,
       );
+      window.dispatchEvent(new Event("teacher-data-changed"));
     } catch {
       setError(
         "Die Datei ist keine gültige Lernraum-Lehrkraftbibliothek der Version 1.",

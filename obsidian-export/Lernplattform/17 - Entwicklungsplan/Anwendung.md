@@ -2,9 +2,19 @@
 
 ## Aktueller nächster Meilenstein
 
-Das Supabase-Projekt `Lernraum` ist seit dem 25. August 2026 in `eu-west-1` aktiv. Datenbankschema, Migration, fähigkeitsgebundene RPCs, Ablaufbereinigung und clientseitige Verschlüsselung sind umgesetzt und technisch getestet. Projekt-URL und Publishable Key sind in Entwicklung und Hosting konfiguriert. Lehrkraftfreigabe, QR-/Codeanzeige, Schülerabruf und der idempotente LernBox-Eingangsadapter bilden einen sichtbaren Ende-zu-Ende-Weg; Netzabbruch, beschädigte Pakete, Ablauf und erneute Freigabe sind automatisiert geprüft.
+Vor den ersten Live-Tests wird der bestehende Lernkern stabilisiert. Die E2E-Suite muss auf Desktop, Mobilgeräten und bei 320 CSS-Pixeln wieder zuverlässig grün laufen; veraltete Erwartungen werden an den persönlichen Lernraum angepasst und echte mobile Überlagerungen behoben. Der Vault wird bei diesem Stabilisierungsschritt gegen den Code abgeglichen.
 
-Die dauerhafte Lehrkraftbibliothek bleibt davon getrennt lokal. Pakete können mit stabiler ID und Revision gespeichert sowie über ein versioniertes, validiertes Dateiformat exportiert und wiederhergestellt werden. Als nächster betrieblicher Punkt werden die tatsächliche Backup-Aufbewahrung und Löschfrist des Supabase-Dienstes für den Schuleinsatz dokumentiert. Danach folgt im persönlichen Lernraum die fachübergreifende Tagesauswahl in überschaubaren Fachblöcken.
+Der lokale Lehrerbereich wurde am 28. August 2026 vom Prototyp-Einstieg zu einem vollständigen ersten Arbeitsstand ausgebaut: persönliches Profil, mehrere Klassen, Schülerverwaltung, Materialbibliothek, Aufgaben mit Mehrklassenzuteilung, QR-Generator und -Leser sowie eine auf Schema-Version 4 migrierte IndexedDB mit Gesamt-Export und geprüftem Import. Als nächste Lehrer-Integration folgt die Übernahme zugeteilter Aufgaben auf Schülergeräten; QR-Leistungsbriefe und Abgabeprotokolle bleiben davon getrennte spätere Funktionen.
+
+Vinext bleibt mangels stabiler 1.0-Version vorerst eine bewusst gewählte Beta-Abhängigkeit. Am 28. August 2026 wurde kontrolliert auf `vinext@1.0.0-beta.8`, `@vitejs/plugin-rsc@0.5.34` und `vite@8.2.2` aktualisiert. Die vorherige transitive `image-size`-Warnung entfällt damit; `npm audit` meldet keine bekannte Schwachstelle. Vorabstände werden weiterhin nur zusammen mit passender RSC-/Vite-Version und nach vollständigem Quality Gate aktualisiert. Eine Alpha-Version gilt nicht als sicherere Alternative, sondern als experimenteller als eine Beta-Version.
+
+Die E2E-Ausfälle vor diesem Update hatten zwei voneinander getrennte Ursachen: veraltete Erwartungen an die neue Klassen-/Raumcode-Struktur und ein Service Worker, der bereits beim erstmaligen Übernehmen der Seite neu lud. Ein automatisches Neuladen erfolgt nun nur noch nach der ausdrücklichen Aktion **„Update laden“**. Browserläufe arbeiten seriell, weil Vinext RSC-Routen im Entwicklungsbetrieb bei Bedarf kompiliert und parallele Erstaufrufe Navigationen abbrechen konnten.
+
+Das abschließende Quality Gate am 28. August 2026 ist vollständig grün: Formatierung, Lint, Typprüfung, 148 Unit-/Integrationstests, Produktions-Build und Renderprüfungen bestanden. In der vollständigen E2E-Matrix über Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari, Tablet Safari und 320 CSS-Pixel bestanden nach dem Ausbau des Lehrerarbeitsplatzes 142 Tests; 5 nicht passende Geräteszenarien wurden planmäßig übersprungen, kein Test schlug fehl.
+
+Danach hat die freiwillige Sicherung persönlicher Schülerdaten Vorrang. Vorgesehen sind ein lokales Verzeichnis, Google Drive, Microsoft OneDrive und ein frei konfigurierbares WebDAV-Ziel für Dienste wie Nextcloud oder ownCloud. Eine zusätzliche anwendungsseitige Verschlüsselung ist optional und keine Voraussetzung. Die Sicherung muss von Klasseneinschreibung, Lehrer-Ranking und dem kurzlebigen Supabase-Übergaberaum technisch getrennt bleiben. Die OAuth-Registrierung bei Google und Microsoft bleibt ein späteres Konfigurations-To-do. Der lokale Lehrerbereich kommt ohne eigenen Login aus. Ein Lehrerlogin bleibt ebenfalls im späteren Backlog, wird aber erst für gemeinsam genutzte Geräte oder mehrere Lehrkräfte neu bewertet und nur umgesetzt, wenn Anbieter-, Wiederherstellungs-, Betriebs- und Kostenfragen tragfähig gelöst sind; eine eigene Login-Infrastruktur ist derzeit nicht vorgesehen.
+
+Das Supabase-Projekt `Lernraum` ist seit dem 25. August 2026 in `eu-west-1` aktiv. Der vorhandene Dienst bleibt ein kurzlebiger Übergaberaum und wird nicht stillschweigend zum dauerhaften Schüler-Backup umgewidmet. Seine tatsächliche Backup-Aufbewahrung und Löschfrist werden weiterhin betrieblich dokumentiert.
 
 ## Empfohlene Reihenfolge
 
@@ -23,7 +33,7 @@ Die dauerhafte Lehrkraftbibliothek bleibt davon getrennt lokal. Pakete können m
 12. Häuser und Gruppenpunkte ergänzen.
 13. Duelle einbauen.
 14. Individuelle Klasseneinschreibung und QR-Auswertung mit lokalem Abgabeprotokoll entwickeln.
-15. Verschlüsselten Export und Cloud-Backup ergänzen.
+15. Lokale Verzeichnissicherung sowie Google-Drive-, OneDrive- und WebDAV-Backup ergänzen; zusätzliche Dateiverschlüsselung optional halten.
 16. Tastschreibtraining als getrennten Schreibbereich entwickeln.
 17. Mathematik über Kompetenz-IDs und Aufgabenfamilien integrieren.
 18. Übernommene Anwendungen dauerhaft mit ihren Upstream-Repositories abgleichen.

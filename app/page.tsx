@@ -12,7 +12,7 @@ export default function Home() {
           <span>Lernraum</span>
         </Link>
         <Link className="teacher-link" href="/lehrer">
-          Lehrer-Login
+          Lehrerbereich
         </Link>
       </header>
 

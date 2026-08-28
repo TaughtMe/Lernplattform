@@ -22,8 +22,8 @@ Dieses Protokoll hält die gemeinsam beschlossenen Architekturentscheidungen fes
 - Ein Schülergerät kann einen privaten Lernbereich und eine oder mehrere Klassenmitgliedschaften anzeigen.
 - Ein Klassen-QR schaltet nur die von der Lehrkraft freigegebenen Schülerfunktionen, Inhalte und Übungen frei.
 - Das Verlassen eines Klassenmodus erteilt niemals Lehrerrechte.
-- Der Lehrerbereich benötigt eine eigene Authentifizierung, beispielsweise Lehrerlogin, Passkey oder lokale Lehrer-PIN.
-- Schülergeräte zeigen den Lehrerbereich nicht als frei zugänglichen Moduswechsel an.
+- Der Lehrerbereich benötigt eine eigene Authentifizierung, beispielsweise Lehrerlogin, Passkey oder lokale Lehrer-PIN. Diese Annahme wird durch Entscheidung 43 für die lokale Einzelplatzphase ersetzt.
+- Schülergeräte zeigen den Lehrerbereich nicht als frei zugänglichen Moduswechsel an. Diese Annahme wird durch Entscheidung 43 für die lokale Einzelplatzphase ersetzt.
 - Persönliche Schülerdaten, Klasseninhalte und Lehrerdaten werden lokal getrennt gespeichert.
 
 Siehe [[../01 - Plattform und Navigation/Anwendung|Plattform und Navigation]] und [[../13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]].
@@ -35,7 +35,7 @@ Siehe [[../01 - Plattform und Navigation/Anwendung|Plattform und Navigation]] un
 Es werden drei voneinander getrennte Datenflüsse verwendet:
 
 1. **Persönlicher Lernstand:** lokal auf dem Schülergerät; enthält Vokabeln, Antworten, Fehler, Boxstände, Fälligkeiten und Lernhistorie.
-2. **Optionales persönliches Cloud-Backup:** freiwillige, verschlüsselte Sicherung für Gerätewechsel und geräteübergreifende Nutzung; die Lehrkraft erhält keinen Zugriff.
+2. **Optionale persönliche Sicherung:** freiwillige Sicherung für Gerätewechsel und geräteübergreifende Nutzung in ein lokales Verzeichnis, zu Google Drive oder Microsoft OneDrive sowie in ein frei konfigurierbares WebDAV-Ziel wie Nextcloud oder ownCloud; zusätzliche Dateiverschlüsselung bleibt optional und die Lehrkraft erhält keinen Zugriff. Die Plattform stellt nur die Schnittstelle bereit. Der Nutzer beziehungsweise die zuständige Schule verantwortet Anbieterwahl, Kontoschutz, Aufbewahrung und das bewusste Teilen sensibler Daten; die Plattform verantwortet weiterhin die sichere, transparente und auf minimale Berechtigungen begrenzte technische Anbindung.
 3. **Klassenbeitrag:** bewusst erzeugter, stark reduzierter QR-Leistungsbrief für Ranking und Abgabeprotokoll.
 
 Eine permanente Schüler-Lehrer-Synchronisation über Supabase oder ein anderes Backend ist für Version 1 nicht vorgesehen. Das Lehrergerät speichert keine vollständige Kopie der Schüler-Lernstände.
@@ -52,7 +52,7 @@ Siehe [[../12 - Inhaltsübertragung und Synchronisation/Anwendung|Inhaltsübertr
 - Wiederholtes Scannen desselben Einschreibungs-QR-Codes erzeugt kein neues Schülerprofil.
 - Beim ersten gültigen Leistungsbrief wird die Mitgliedschaft an den Schlüssel des Schülergeräts gebunden.
 - Ein Ersatz- oder Zweitgerät erfordert eine ausdrückliche Bestätigung durch die Lehrkraft.
-- Ein Gerätewechsel kann später über ein persönliches verschlüsseltes Backup oder einen geregelten Übertragungsprozess erfolgen.
+- Ein Gerätewechsel kann später über eine persönliche Sicherung oder einen geregelten Übertragungsprozess erfolgen.
 
 Damit werden doppelte Schülerprofile vermieden, ohne Geräte dauerhaft technisch identifizieren zu müssen.
 
@@ -156,14 +156,14 @@ Siehe [[../10 - Häuser, Punkte und Motivation/Anwendung|Häuser, Punkte und Mot
 - permanente Echtzeit-Synchronisation aller Schüleraktivitäten mit einem Backend
 - vollständige Lernhistorie auf dem Lehrergerät
 - allgemeiner Klassen-QR als Erzeuger beliebig vieler unkontrollierter Schülerprofile
-- automatisch zugänglicher Lehrerbereich auf Schülergeräten
+- automatisch zugänglicher Lehrerbereich auf gemeinsam genutzten, ungeschützten Geräteprofilen
 - verpflichtender Rückbestätigungs-QR nach jeder Abgabe
 - eigener Partikel-, Farb- oder 3D-Code für Version 1
 - öffentliche vollständige Rangliste aller Schüler nach absoluter Leistung
 
 ## 11. Noch offen
 
-- genaue Lehrer-Authentifizierung und Wiederherstellung
+- optionale lokale Sperre oder Kontotrennung bei späterer Mehrbenutzer- beziehungsweise Gemeinschaftsgerätenutzung
 - konkrete Löschfristen für Klassenlisten, Ranking und Abgabeprotokolle
 - verbindliche Zusammensetzung und Begrenzung der Rankingpunkte
 - Verfahren für freiwillige Nichtteilnahme ohne Nachteil
@@ -443,3 +443,31 @@ Die bereits umgesetzte lokale Modulfreigabe bleibt ein historischer Prototyp und
 - Supabase-Backups, Protokolle, konkrete EU-Region, Auftragsverarbeitung, RLS und Löschkonzept werden vor Schuleinsatz geprüft. Eine kurze Verbindung gilt nicht automatisch als DSGVO-Nachweis.
 
 Diese Inhaltsübertragung bleibt von Laufdiktat-Liveräumen, persönlichem Cloud-Backup, Klasseneinschreibung und QR-Klassenbeiträgen getrennt. Die vollständige Beschreibung steht unter [[../12 - Inhaltsübertragung und Synchronisation/Anwendung|Inhaltsübertragung und temporäre Synchronisation]].
+
+## 43. Lokaler Lehrerbereich ohne eigenen Login – 28. August 2026
+
+**Beschlossen:** Solange Lernraum lokal von einer Hauptlehrkraft auf ihrem eigenen geschützten Gerät beziehungsweise Browserprofil genutzt wird, ist der Lehrerbereich ohne zusätzliches Lernraum-Konto und ohne Login erreichbar.
+
+- Die Navigation heißt **Lehrerbereich** statt **Lehrer-Login**.
+- Lehrkraftdaten, Klassen und Inhaltsbibliotheken bleiben lokal; für diese Phase werden keine Anmeldedaten angelegt oder gespeichert.
+- Das entsperrte Gerät beziehungsweise Browserprofil ist die Zugriffsschranke. Wer darauf zugreifen kann, kann lokale Lehrkraftdaten sehen, verändern, exportieren oder löschen.
+- Die Oberfläche weist deshalb auf ein geschütztes, nicht gemeinsam mit Schülern verwendetes Geräteprofil hin.
+- Geheime Lehrkrafttoken für laufende Unterrichtsräume bleiben davon getrennt, flüchtig und werden weder in URL noch QR-Code veröffentlicht.
+- Ein Lehrerlogin beziehungsweise eine echte Kontotrennung bleibt als späteres To-do erhalten und wird neu bewertet, sobald Schüler dasselbe Geräteprofil verwenden oder mehrere Lehrkräfte getrennte Arbeitsstände benötigen.
+- Vor einer Umsetzung werden Authentifizierungsanbieter, Kontowiederherstellung, Datenschutz, Betriebsaufwand und laufende Kosten geklärt. Eine eigene Login-Infrastruktur wird nicht aufgebaut, solange ihr Mehrwert diese dauerhafte Verantwortung und die Kosten nicht rechtfertigt.
+
+Diese Entscheidung ersetzt die Authentifizierungsannahme aus Entscheidung 1 für die aktuelle lokale Einzelplatzphase. Sie hebt weder Datenschutzpflichten für lokal gespeicherte Namen noch die Autorisierung aktiver Unterrichtsräume auf.
+
+## 44. Vollständiger lokaler Lehrerarbeitsplatz und strukturierte Aufgaben – 28. August 2026
+
+**Beschlossen und umgesetzt:** Der Lehrerbereich bündelt Profil, Klassen, Schüler, Material, Aufgaben, QR-Werkzeuge und Datenübersicht in einem lokalen Arbeitsbereich. IndexedDB ist in dieser Einzelplatzphase die verbindliche Datenbank; Lehrerdaten benötigen keinen zentralen Plattformdienst.
+
+- Ein persönliches Lehrkraftprofil, mehrere Klassen, Schüler beziehungsweise Aliasse, Materialien und Aufgaben werden getrennt typisiert und gemeinsam versioniert gespeichert.
+- Klassen und Schüler können angelegt und gelöscht werden. Beim Löschen einer Klasse werden lokale Mitglieder entfernt und ihre Zuteilungen aus Aufgaben bereinigt.
+- Die Lehrkraft erstellt strukturierte Arbeitsaufträge mit Fach, Anleitung, optionalem Material und Fälligkeit und teilt sie einer oder mehreren Klassen zu.
+- Ein statischer Aufgaben-QR enthält den validierten Auftrag und technische Klassen-IDs, aber keine Schülernamen oder persönlichen Lernstände.
+- Der Lehrerbereich erzeugt und liest Aufgaben-QR-Codes. Kamera und manuelle Eingabe verwenden denselben validierten Datenvertrag.
+- Die gesamte lokale Lehrerdatenbank lässt sich als versionierte JSON-Datei exportieren und geprüft wieder importieren.
+- Die Übernahme der Aufgabe auf Schülergeräten, individuelle Schülerzuteilungen sowie QR-Leistungsbriefe und Abgabeprotokolle bleiben eigene nächste Schritte.
+
+Diese Entscheidung ersetzt Entscheidung 19 insoweit, wie sie einen allgemeinen Aufgabenplaner vollständig ausgeschlossen hat. Aufgaben bleiben fachlich strukturiert und dienen nicht als zentrale Überwachung vollständiger persönlicher Lernhistorien.

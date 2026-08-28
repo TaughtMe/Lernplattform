@@ -1,6 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+function isKnownFrameworkDiagnostic(message: string) {
+  return message.includes("<link rel=preload> must have a valid `as` value");
+}
+
 test("start page exposes the core learner actions", async ({ page }) => {
   await page.goto("/");
 
@@ -79,7 +83,12 @@ test("the native LernBox creates and opens a personal deck", async ({
   const runtimeErrors: string[] = [];
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   page.on("console", (message) => {
-    if (message.type() === "error") runtimeErrors.push(message.text());
+    if (
+      message.type() === "error" &&
+      !isKnownFrameworkDiagnostic(message.text())
+    ) {
+      runtimeErrors.push(message.text());
+    }
   });
   await page.goto("/lernbox");
   await expect(page.locator("iframe")).toHaveCount(0);
@@ -170,7 +179,9 @@ test("a native Laufdiktat mistake becomes due LernBox practice", async ({
 }) => {
   await page.goto("/frei/german/laufdiktat");
   await expect(page.locator("iframe")).toHaveCount(0);
-  await page.getByRole("button", { name: "Vokabeln" }).click();
+  const vocabularyMode = page.getByRole("button", { name: "Vokabeln" });
+  await vocabularyMode.click();
+  await expect(vocabularyMode).toHaveAttribute("aria-pressed", "true");
   const source = page.getByRole("textbox", {
     name: /Vokabeln – eine Zeile pro Paar/,
   });
@@ -208,7 +219,11 @@ test("the five-stage learning-word path can be tried without an account", async 
   page,
 }) => {
   await page.goto("/frei/german/lernwoerter");
-  await page.getByRole("button", { name: /4 Ansehen & verdecken/ }).click();
+  const stageFour = page.getByRole("button", {
+    name: /4 Ansehen & verdecken/,
+  });
+  await stageFour.click();
+  await expect(stageFour).toHaveAttribute("aria-pressed", "true");
   await page
     .getByRole("textbox", { name: "Deine Lernwörter" })
     .fill("Schulweg");
@@ -241,7 +256,9 @@ test("the five-stage learning-word path can be tried without an account", async 
   ).toBeVisible({ timeout: 3_000 });
 
   await page.getByRole("button", { name: "Andere Stufe testen" }).click();
-  await page.getByRole("button", { name: /2 Wenige Lücken/ }).click();
+  const stageTwo = page.getByRole("button", { name: /2 Wenige Lücken/ });
+  await stageTwo.click();
+  await expect(stageTwo).toHaveAttribute("aria-pressed", "true");
   await page
     .getByRole("textbox", { name: "Deine Lernwörter" })
     .fill("Sonne\nMutter");
@@ -431,10 +448,14 @@ test("the personal learning room presents one connected adaptive learning loop",
     page.getByRole("link", { name: /Deutsch.*Fach öffnen/ }),
   ).toHaveAttribute("href", "/lernen/faecher/deutsch");
   await expect(
-    page.getByRole("textbox", { name: "Klassen- oder Raumcode" }),
+    page.getByRole("textbox", { name: "Einschreibecode" }),
   ).toBeVisible();
+  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
+  const classroom = page.getByRole("region", {
+    name: "Unterrichtsraum öffnen",
+  });
   await expect(
-    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
+    classroom.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
   await expect(
     page.getByText(/Vollständige Antworten werden nicht übertragen/),
@@ -458,10 +479,23 @@ test("teachers can prepare every native live-room content type", async ({
   const runtimeErrors: string[] = [];
   page.on("pageerror", (error) => runtimeErrors.push(error.message));
   page.on("console", (message) => {
-    if (message.type() === "error") runtimeErrors.push(message.text());
+    if (
+      message.type() === "error" &&
+      !isKnownFrameworkDiagnostic(message.text())
+    ) {
+      runtimeErrors.push(message.text());
+    }
   });
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Unterricht lokal organisieren" }),
+  ).toBeVisible();
+  await expect(page.getByText("Kein Login erforderlich")).toBeVisible();
+  await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Lehrerwerkzeuge" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Unterrichtsrunde" }),
   ).toBeVisible();
@@ -506,12 +540,83 @@ test("teachers can prepare every native live-room content type", async ({
   await expect(page.getByText("Noch nicht geöffnet")).toBeVisible();
 });
 
+test("the local teacher workspace manages classes, students, assignments and QR codes", async ({
+  page,
+}) => {
+  await page.goto("/lehrer");
+
+  const profile = page.locator(".teacher-profile__form");
+  await profile.getByLabel("Anzeigename").fill("Frau Beispiel");
+  await profile.getByLabel("Schule").fill("Lernschule");
+  await profile.getByLabel("Fächer").fill("Deutsch, Mathematik");
+  await profile
+    .getByRole("button", { name: "Informationen speichern" })
+    .click();
+  await expect(
+    page.getByText("Persönliche Informationen wurden lokal gespeichert."),
+  ).toBeVisible();
+
+  const classForm = page.locator(".teacher-panel").filter({
+    has: page.getByRole("heading", { name: "Neue Klasse anlegen" }),
+  });
+  await classForm.getByLabel("Klassenname").fill("Klasse 7a");
+  await classForm.getByLabel("Lehrkraft").fill("Frau Beispiel");
+  await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
+  await expect(page.getByText("Klasse wurde lokal angelegt.")).toBeVisible();
+
+  await classForm.getByLabel("Klassenname").fill("Klasse 8b");
+  await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
+  await expect(
+    classForm.getByLabel("Aktive Klasse").locator("option"),
+  ).toHaveCount(2);
+
+  const studentPanel = page.locator(".teacher-preview");
+  await studentPanel.getByLabel("Name oder Alias").fill("Alex");
+  await studentPanel.getByRole("button", { name: "Schüler anlegen" }).click();
+  await expect(studentPanel.getByText("1 Schüler")).toBeVisible();
+  await expect(studentPanel.getByLabel("Einschreibecode")).toHaveValue(
+    /lernraum:class:/,
+  );
+
+  const assignmentForm = page.locator(".teacher-assignment-form");
+  await assignmentForm.getByLabel("Titel").fill("Lernwörter üben");
+  await assignmentForm
+    .getByLabel("Arbeitsauftrag")
+    .fill("Bearbeitet die Lernwort-Runde bis Freitag.");
+  await assignmentForm.getByLabel("Klasse 7a").check();
+  await assignmentForm.getByLabel("Klasse 8b").check();
+  await assignmentForm
+    .getByRole("button", { name: "Aufgabe zuteilen" })
+    .click();
+  await expect(
+    page.getByText("Aufgabe wurde erstellt und den Klassen zugeteilt."),
+  ).toBeVisible();
+
+  const assignmentCode = await page
+    .getByRole("textbox", { name: "Aufgabencode", exact: true })
+    .inputValue();
+  expect(assignmentCode).toContain("lernraum:assignment:");
+  await page.getByLabel("Code einfügen").fill(assignmentCode);
+  await page.getByRole("button", { name: "Code prüfen" }).click();
+  await expect(page.locator(".teacher-qr-reader__result")).toContainText(
+    "Lernwörter üben",
+  );
+
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+});
+
 test("mental math advances automatically after Enter", async ({ page }) => {
   await page.goto("/frei/mathematics");
   await expect(
     page.getByRole("checkbox", { name: "Lückenaufgaben" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /Mal/ }).click();
+  const multiplication = page.getByRole("button", { name: /Mal/ });
+  await multiplication.click();
+  await expect(multiplication).toHaveAttribute("aria-pressed", "true");
   await expect(
     page.getByRole("group", { name: /Einmaleins-Reihen/ }),
   ).toBeVisible();
