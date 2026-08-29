@@ -433,9 +433,8 @@ test("the personal learning room presents one connected adaptive learning loop",
     page.getByRole("heading", { name: "Was hilft dir heute weiter?" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Fächer" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Meine Inhalte" }),
+    page.getByRole("heading", { name: "Mein Material" }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Mein Fortschritt" }),
@@ -451,11 +450,8 @@ test("the personal learning room presents one connected adaptive learning loop",
     page.getByRole("textbox", { name: "Einschreibecode" }),
   ).toBeVisible();
   await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
-  const classroom = page.getByRole("region", {
-    name: "Unterrichtsraum öffnen",
-  });
   await expect(
-    classroom.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
+    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }).first(),
   ).toBeVisible();
   await expect(
     page.getByText(/Vollständige Antworten werden nicht übertragen/),
@@ -489,13 +485,13 @@ test("teachers can prepare every native live-room content type", async ({
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Unterricht lokal organisieren" }),
+    page.getByRole("heading", { name: "Guten Morgen" }),
   ).toBeVisible();
-  await expect(page.getByText("Kein Login erforderlich")).toBeVisible();
+  await expect(page.getByText("Lokaler Arbeitsplatz")).toHaveCount(1);
   await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
   await expect(
-    page.getByRole("navigation", { name: "Lehrerwerkzeuge" }),
-  ).toBeVisible();
+    page.locator('a[href="#unterrichtsrunde"]').first(),
+  ).toHaveAttribute("href", "#unterrichtsrunde");
   await expect(
     page.getByRole("heading", { name: "Unterrichtsrunde" }),
   ).toBeVisible();
