@@ -168,7 +168,11 @@ export function StudentHome() {
           <span className="student-dashboard__streak">
             {snapshot.streak} {snapshot.streak === 1 ? "Tag" : "Tage"} in Folge
           </span>
-          <span className="student-dashboard__avatar" aria-label="Mein Profil">
+          <span
+            className="student-dashboard__avatar"
+            role="img"
+            aria-label="Mein Profil"
+          >
             L
           </span>
         </div>
@@ -190,7 +194,6 @@ export function StudentHome() {
         <section
           className="student-overview__daily"
           aria-labelledby="today-title"
-          aria-label="Heute üben"
         >
           <div className="student-overview__daily-copy">
             <p className="eyebrow">Tagesaufgabe</p>
@@ -209,18 +212,25 @@ export function StudentHome() {
             {primary ? (
               <div
                 className="student-overview__tags"
+                role="list"
                 aria-label="Zusammensetzung der Runde"
               >
-                <span>{CLASS_MODULE_LABELS[primary.module]}</span>
+                <span role="listitem">
+                  {CLASS_MODULE_LABELS[primary.module]}
+                </span>
                 {primary.reason === "error" ? (
-                  <span>Aus deinem letzten Fehler</span>
+                  <span role="listitem">Aus deinem letzten Fehler</span>
                 ) : null}
                 {snapshot.recentErrors > 0 ? (
-                  <span>{snapshot.recentErrors} aus früheren Fehlern</span>
+                  <span role="listitem">
+                    {snapshot.recentErrors} aus früheren Fehlern
+                  </span>
                 ) : null}
-                {dueCount > 0 ? <span>{dueCount} fällig</span> : null}
+                {dueCount > 0 ? (
+                  <span role="listitem">{dueCount} fällig</span>
+                ) : null}
                 {difficultCount > 0 ? (
-                  <span>{difficultCount} schwierig</span>
+                  <span role="listitem">{difficultCount} schwierig</span>
                 ) : null}
               </div>
             ) : null}
@@ -251,6 +261,10 @@ export function StudentHome() {
             <div
               className="student-overview__progress"
               aria-label={`${targetProgress} Prozent des Tagesziels`}
+              aria-valuemax={100}
+              aria-valuemin={0}
+              aria-valuenow={targetProgress}
+              role="progressbar"
             >
               <span style={{ width: `${targetProgress}%` }} />
             </div>
@@ -275,6 +289,7 @@ export function StudentHome() {
           <div
             className="student-overview__calendar"
             aria-label="Aktive Lerntage der letzten zwei Wochen"
+            role="list"
           >
             {calendarDays.map((day) => (
               <span
@@ -282,6 +297,7 @@ export function StudentHome() {
                   snapshot.activeDays.includes(day.key) ? "is-active" : ""
                 }
                 key={day.key}
+                role="listitem"
               >
                 {day.day}
               </span>
@@ -335,6 +351,7 @@ export function StudentHome() {
           <div
             className="student-overview__bars"
             aria-label="Karten nach LernBox-Stufe"
+            role="img"
           >
             {snapshot.boxCounts.map((count, index) => (
               <div key={BOXES[index]}>
@@ -364,6 +381,7 @@ export function StudentHome() {
             <div
               className="student-overview__stages"
               aria-label={`Merkstufe ${snapshot.memoryStage} von 5`}
+              role="img"
             >
               {BOXES.map((stage) => (
                 <span
