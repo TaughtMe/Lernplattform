@@ -11,9 +11,11 @@ const primaryNavigation = [
 export function StudentDashboardShell({
   activePath,
   children,
+  summary,
 }: {
   activePath: string;
   children: ReactNode;
+  summary?: ReactNode;
 }) {
   return (
     <main className="learning-room-shell student-dashboard">
@@ -36,7 +38,11 @@ export function StudentDashboardShell({
             </Link>
           ))}
         </nav>
-        <span className="student-dashboard__local">Lernstand bleibt lokal</span>
+        {summary ?? (
+          <span className="student-dashboard__local">
+            Lernstand bleibt lokal
+          </span>
+        )}
       </header>
 
       {children}
