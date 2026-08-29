@@ -18,10 +18,12 @@ const PERSONAL_PRACTICE_MODULES: readonly ClassModule[] = [
 
 type DailyPracticePanelProps = {
   enabledModules?: readonly ClassModule[];
+  maxItems?: number;
 };
 
 export function DailyPracticePanel({
   enabledModules = PERSONAL_PRACTICE_MODULES,
+  maxItems,
 }: DailyPracticePanelProps = {}) {
   const repository = useMemo(
     () => createLearningRecommendationRepository(),
@@ -76,7 +78,7 @@ export function DailyPracticePanel({
 
   return (
     <div className="today-grid">
-      {practice.map((item) => (
+      {practice.slice(0, maxItems).map((item) => (
         <Link className="today-card" href={item.route} key={item.id}>
           <div>
             <span className="content-type">

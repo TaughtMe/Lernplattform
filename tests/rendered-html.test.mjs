@@ -40,6 +40,10 @@ test("server-renders the Lernraum start page", async () => {
 test("server-renders stable module entry pages", async () => {
   for (const [path, title] of [
     ["/lernen", "Heute üben"],
+    ["/lernen/material", "Mein Material"],
+    ["/lernen/fortschritt", "Mein Fortschritt"],
+    ["/lernen/aufgaben", "Meine Aufgaben"],
+    ["/lernen/klasse", "Meine Klasse"],
     ["/lernen/faecher/deutsch", "Fach in deinem Lernraum"],
     ["/lernen/faecher/vokabeln", "Vokabeln"],
     ["/frei/german/lernwoerter", "Vom Ansehen zum sicheren Abruf"],

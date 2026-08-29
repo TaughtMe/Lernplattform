@@ -46,6 +46,10 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
   for (const path of [
     "/",
     "/lernen",
+    "/lernen/material",
+    "/lernen/fortschritt",
+    "/lernen/aufgaben",
+    "/lernen/klasse",
     "/frei",
     "/frei/german",
     "/frei/german/laufdiktat",
@@ -429,20 +433,26 @@ test("class content remains part of the personal learning room", async ({
   ).toHaveAttribute("href", "/lernen");
 });
 
-test("the personal learning room presents one connected adaptive learning loop", async ({
+test("the personal learning room keeps today's task focused and separates supporting areas", async ({
   page,
 }) => {
   await page.goto("/lernen");
 
   await expect(
-    page.getByRole("heading", { name: "Was hilft dir heute weiter?" }),
+    page.getByRole("heading", { name: "Meine Startseite" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Mein Material" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "Mein Fortschritt" }),
+  ).toHaveCount(0);
+
+  await page.getByRole("link", { name: "Material", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Mein Material" }),
   ).toBeVisible();
 
   await expect(
@@ -451,13 +461,13 @@ test("the personal learning room presents one connected adaptive learning loop",
   await expect(
     page.getByRole("link", { name: /Deutsch.*Fach öffnen/ }),
   ).toHaveAttribute("href", "/lernen/faecher/deutsch");
+
+  await page.goto("/lernen/klasse");
   await expect(
     page.getByRole("textbox", { name: "Einschreibecode" }),
   ).toBeVisible();
-  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }).first(),
-  ).toBeVisible();
+
+  await page.goto("/lernen/fortschritt");
   await expect(
     page.getByText(/Vollständige Antworten werden nicht übertragen/),
   ).toBeVisible();
