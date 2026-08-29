@@ -1272,6 +1272,10 @@ h2 {
   min-height: 100dvh;
 }
 
+.teacher-cockpit__page {
+  min-height: calc(100dvh - 64px);
+}
+
 .teacher-cockpit__topbar {
   min-height: 64px;
   padding: 10px max(24px, calc((100vw - 1368px) / 2));
@@ -1876,6 +1880,22 @@ h2 {
   .teacher-cockpit__mobile-nav a.is-active > span,
   .student-dashboard__mobile-nav a.is-active > span {
     background: var(--coral);
+  }
+
+  .teacher-cockpit__mobile-nav {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .teacher-cockpit__mobile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .teacher-cockpit__mobile-nav a {
+    min-width: 84px;
+    flex: 1 0 84px;
   }
 
   .student-dashboard {

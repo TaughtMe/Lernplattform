@@ -55,6 +55,11 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/lernbox",
     "/raum",
     "/lehrer",
+    "/lehrer/live",
+    "/lehrer/klassen",
+    "/lehrer/material",
+    "/lehrer/aufgaben",
+    "/lehrer/einstellungen",
   ]) {
     await page.goto(path);
     const results = await new AxeBuilder({ page })
@@ -490,11 +495,19 @@ test("teachers can prepare every native live-room content type", async ({
   await expect(page.getByText("Lokaler Arbeitsplatz")).toHaveCount(1);
   await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
   await expect(
-    page.locator('a[href="#unterrichtsrunde"]').first(),
-  ).toHaveAttribute("href", "#unterrichtsrunde");
+    page.getByRole("link", { name: "Unterrichtsrunde starten" }),
+  ).toHaveAttribute("href", "/lehrer/live");
+  await expect(
+    page.getByRole("heading", { name: "Unterrichtsrunde" }),
+  ).toHaveCount(0);
+
+  await page.goto("/lehrer/live");
   await expect(
     page.getByRole("heading", { name: "Unterrichtsrunde" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Klassen und Schüler" }),
+  ).toHaveCount(0);
   await expect(page.getByText("2 Aufgaben")).toBeVisible();
 
   await page.getByRole("button", { name: "Vokabeln" }).click();
@@ -539,7 +552,7 @@ test("teachers can prepare every native live-room content type", async ({
 test("the local teacher workspace manages classes, students, assignments and QR codes", async ({
   page,
 }) => {
-  await page.goto("/lehrer");
+  await page.goto("/lehrer/einstellungen", { waitUntil: "networkidle" });
 
   const profile = page.locator(".teacher-profile__form");
   await profile.getByLabel("Anzeigename").fill("Frau Beispiel");
@@ -552,6 +565,7 @@ test("the local teacher workspace manages classes, students, assignments and QR 
     page.getByText("Persönliche Informationen wurden lokal gespeichert."),
   ).toBeVisible();
 
+  await page.goto("/lehrer/klassen", { waitUntil: "networkidle" });
   const classForm = page.locator(".teacher-panel").filter({
     has: page.getByRole("heading", { name: "Neue Klasse anlegen" }),
   });
@@ -574,6 +588,7 @@ test("the local teacher workspace manages classes, students, assignments and QR 
     /lernraum:class:/,
   );
 
+  await page.goto("/lehrer/aufgaben", { waitUntil: "networkidle" });
   const assignmentForm = page.locator(".teacher-assignment-form");
   await assignmentForm.getByLabel("Titel").fill("Lernwörter üben");
   await assignmentForm

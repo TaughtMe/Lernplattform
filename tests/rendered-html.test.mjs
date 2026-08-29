@@ -48,6 +48,11 @@ test("server-renders stable module entry pages", async () => {
     ["/lernbox", "Meine LernBox"],
     ["/raum", "Raum beitreten"],
     ["/lehrer", "Unterricht lokal organisieren"],
+    ["/lehrer/live", "Unterrichtsrunde"],
+    ["/lehrer/klassen", "Klassen und Schüler"],
+    ["/lehrer/material", "Vokabelpaket freigeben"],
+    ["/lehrer/aufgaben", "Arbeitsaufträge planen"],
+    ["/lehrer/einstellungen", "Mein Lehrerarbeitsplatz"],
     ["/impressum", "Angaben gemäß"],
     ["/datenschutz", "Persönliche Lernstände"],
   ]) {
