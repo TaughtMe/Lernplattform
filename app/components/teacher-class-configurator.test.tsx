@@ -31,12 +31,8 @@ describe("TeacherClassConfigurator", () => {
       await screen.findByText("Klasse wurde lokal angelegt."),
     ).toBeVisible();
     expect(
-      (
-        screen.getByRole("combobox", {
-          name: "Aktive Klasse",
-        }) as HTMLSelectElement
-      ).value,
-    ).not.toBe("");
+      screen.getByRole("button", { name: "Klasse 8a, 2026/27" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("creates an individual enrollment code for a student", async () => {
@@ -56,14 +52,59 @@ describe("TeacherClassConfigurator", () => {
     });
     await user.type(student, "Alex");
     await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    const studentButton = await screen.findByRole("button", {
+      name: "Alex: QR-Code anzeigen",
+    });
+    await user.click(studentButton);
+    expect(
+      await screen.findByRole("img", {
+        name: "Einschreibungs-QR-Code für Alex",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("textbox", { name: "Einschreibecode" }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Alex: QR-Code schließen" }),
+    );
     await waitFor(() =>
       expect(
-        (
-          screen.getByRole("textbox", {
-            name: "Einschreibecode",
-          }) as HTMLTextAreaElement
-        ).value,
-      ).toContain("lernraum:class:"),
+        screen.queryByRole("img", {
+          name: "Einschreibungs-QR-Code für Alex",
+        }),
+      ).not.toBeInTheDocument(),
     );
+  });
+
+  it("creates a printable QR sheet for the whole class", async () => {
+    const user = userEvent.setup();
+    render(<TeacherClassConfigurator />);
+    await user.type(
+      screen.getByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8a",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    const student = await screen.findByRole("textbox", {
+      name: "Name oder Alias",
+    });
+    await user.type(student, "Alex");
+    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    await user.type(student, "Sam");
+    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    await user.click(
+      screen.getByRole("button", { name: "QR-Bogen für die Klasse" }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "QR-Bogen für Klasse 8a" }),
+    ).toBeVisible();
+    expect(
+      screen.getAllByRole("img", { name: /Einschreibungs-QR-Code/ }),
+    ).toHaveLength(2);
+    expect(screen.getByText("Alex")).toBeVisible();
+    expect(screen.getByText("Sam")).toBeVisible();
   });
 });

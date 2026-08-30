@@ -579,24 +579,57 @@ test("the local teacher workspace manages classes, students, assignments and QR 
   const classForm = page.locator(".teacher-panel").filter({
     has: page.getByRole("heading", { name: "Neue Klasse anlegen" }),
   });
+  await expect(classForm.getByLabel("Lehrkraft")).toHaveValue("Frau Beispiel");
   await classForm.getByLabel("Klassenname").fill("Klasse 7a");
-  await classForm.getByLabel("Lehrkraft").fill("Frau Beispiel");
   await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
   await expect(page.getByText("Klasse wurde lokal angelegt.")).toBeVisible();
 
   await classForm.getByLabel("Klassenname").fill("Klasse 8b");
   await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
   await expect(
-    classForm.getByLabel("Aktive Klasse").locator("option"),
+    page.getByRole("navigation", { name: "Klassen" }).getByRole("button"),
   ).toHaveCount(2);
 
-  const studentPanel = page.locator(".teacher-preview");
+  const studentPanel = page.locator(".teacher-class-detail");
   await studentPanel.getByLabel("Name oder Alias").fill("Alex");
   await studentPanel.getByRole("button", { name: "Schüler anlegen" }).click();
-  await expect(studentPanel.getByText("1 Schüler")).toBeVisible();
-  await expect(studentPanel.getByLabel("Einschreibecode")).toHaveValue(
-    /lernraum:class:/,
-  );
+  await expect(studentPanel.getByText("Alex")).toBeVisible();
+  await studentPanel
+    .getByRole("button", { name: "Alex: QR-Code anzeigen" })
+    .click();
+  await expect(
+    studentPanel.getByRole("img", {
+      name: "Einschreibungs-QR-Code für Alex",
+    }),
+  ).toBeVisible();
+  await expect(
+    studentPanel.getByRole("textbox", { name: "Einschreibecode" }),
+  ).toHaveCount(0);
+  await studentPanel
+    .getByRole("button", { name: "Alex: QR-Code schließen" })
+    .click();
+  await studentPanel
+    .getByRole("button", { name: "QR-Bogen für die Klasse" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "QR-Bogen für Klasse 8b" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "Einschreibungs-QR-Code für Alex" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Zurück zur Klasse" }).click();
+  const classNavigation = page.getByRole("navigation", { name: "Klassen" });
+  await classNavigation
+    .getByRole("button", { name: "Klasse 7a, 2026/27" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Klasse 7a", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Alex")).toHaveCount(0);
+  await classNavigation
+    .getByRole("button", { name: "Klasse 8b, 2026/27" })
+    .click();
+  await expect(studentPanel.getByText("Alex")).toBeVisible();
 
   await page.goto("/lehrer/aufgaben", { waitUntil: "networkidle" });
   const assignmentForm = page.locator(".teacher-assignment-form");
