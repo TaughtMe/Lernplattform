@@ -5,7 +5,7 @@ tags:
   - testing
   - freigabe
 status: qualitätsgrundlage
-stand: 2026-08-12
+stand: 2026-08-30
 ---
 
 # Qualitätsgrundlage und Freigabe
@@ -60,6 +60,14 @@ Der genaue technische Standard und die Quality-Gate-Kommandos stehen zusätzlich
 Bei jeder Änderung müssen mindestens Formatierung, Linting, strikte Typprüfung, Unit- und Eigenschaftstests, Testabdeckung, Produktions-Build und Server-Rendering erfolgreich sein. Änderungen an Oberfläche oder Abläufen benötigen zusätzlich Browser- und Barrierefreiheitstests.
 
 Für den fachlichen Kern gelten zunächst mindestens 90 Prozent Zeilen-, Statement- und Funktionsabdeckung sowie 85 Prozent Zweigabdeckung. Parser, Rollenentscheidungen und Migrationen erhalten bei ihrer Einführung strengere modulspezifische Anforderungen. Die Prozentzahl ersetzt niemals fachliche oder reale Nutzertests.
+
+### Token-effizienter Prüf- und Freigabeablauf
+
+Die Tiefe lokaler Prüfungen richtet sich nach Risiko und Umfang der Änderung. Während der Umsetzung werden gezielte Tests für die betroffenen Funktionen ausgeführt. Vor einem Push folgen die für die Änderung relevanten statischen Prüfungen, der Produktions-Build sowie bei Oberflächenänderungen fokussierte Browser- und Barrierefreiheitstests.
+
+Nach dem Push laufen die vollständigen GitHub-Actions- und Cloudflare-Prüfungen selbstständig weiter. Codex fragt ihren Status nicht fortlaufend ab und richtet dafür keine Automation oder Heartbeat-Aufgabe ein. Ein erneuter Abruf erfolgt nur auf ausdrücklichen Wunsch oder sobald ein konkreter Fehlschlag gemeldet wurde. Dann wird zunächst ausschließlich der fehlgeschlagene Job samt Log untersucht und die Ursache gezielt behoben.
+
+Die vollständige Browsermatrix in Chromium, Firefox und WebKit bleibt Bestandteil der automatischen Quality Gates und ist weiterhin für Zusammenführung und Freigabe maßgeblich. Der Verzicht auf aktives Polling reduziert ausschließlich den Tokenverbrauch; er schwächt keine Qualitätsanforderung ab.
 
 ## Definition of Done für jede Funktion
 
