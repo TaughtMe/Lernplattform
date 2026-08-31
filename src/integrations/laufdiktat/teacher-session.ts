@@ -13,7 +13,7 @@ import {
 import { LIVE_APP_VERSION } from "../../app-version";
 
 export type TeacherContentMode = "text" | "vocabulary" | "math";
-export type TeacherGameMode = "UEBUNG" | "TEST" | "BATTLE" | "STATION";
+export type TeacherGameMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
 export type TeacherBattleOptions = { ink: boolean; flicker: boolean };
 
 export type TeacherSessionOptions = {
@@ -36,7 +36,7 @@ export type TeacherSessionOptions = {
 
 export type TeacherRoomConfig = {
   words: LiveWord[];
-  gameMode: "UEBUNG" | "TEST" | "BATTLE";
+  gameMode: "LAUFDIKTAT" | "UEBUNG" | "BATTLE";
   battleOptions: TeacherBattleOptions;
   stationMode: boolean;
   stationCount: number;
@@ -123,7 +123,7 @@ export function buildTeacherRoomConfig(
     stationCount: options.stationCount ?? 20,
     isTtsEnabled: options.isTtsEnabled ?? false,
     uebungMaxAttempts:
-      options.gameMode === "TEST" ? 1 : (options.uebungMaxAttempts ?? 3),
+      options.gameMode === "LAUFDIKTAT" ? 1 : (options.uebungMaxAttempts ?? 3),
     uebungAssistanceEnabled:
       options.gameMode === "UEBUNG" &&
       (options.uebungAssistanceEnabled ?? true),

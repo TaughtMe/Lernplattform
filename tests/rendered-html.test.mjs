@@ -24,8 +24,9 @@ test("server-renders the Lernraum start page", async () => {
   const html = await response.text();
   assert.match(html, /<html[^>]+lang="de"/i);
   assert.match(html, /Lernraum/);
-  assert.match(html, /Wie möchtest du heute lernen/);
-  assert.match(html, /Mein Lernraum/);
+  assert.match(html, /Bereit für dein Laufdiktat/);
+  assert.match(html, /Raumcode/);
+  assert.match(html, /Lehrerbereich/);
   assert.match(html, /href="\/impressum"/);
   assert.match(html, /href="\/datenschutz"/);
   assert.match(html, />v0\.2\.0</);
@@ -37,32 +38,50 @@ test("server-renders the Lernraum start page", async () => {
   );
 });
 
-test("server-renders stable module entry pages", async () => {
+test("server-renders the released pilot entry pages", async () => {
   for (const [path, title] of [
-    ["/lernen", "Heute üben"],
-    ["/lernen/material", "Mein Material"],
-    ["/lernen/fortschritt", "Mein Fortschritt"],
-    ["/lernen/aufgaben", "Meine Aufgaben"],
-    ["/lernen/klasse", "Meine Klasse"],
-    ["/lernen/faecher/deutsch", "Fach in deinem Lernraum"],
-    ["/lernen/faecher/vokabeln", "Vokabeln"],
-    ["/frei/german/lernwoerter", "Vom Ansehen zum sicheren Abruf"],
-    ["/frei/typing", "Schritt für Schritt sicher tippen"],
-    ["/klasse/7b", "Inhalte aus dieser Klasse"],
-    ["/lernbox", "Meine LernBox"],
     ["/raum", "Raum beitreten"],
-    ["/lehrer", "Unterricht lokal organisieren"],
     ["/lehrer/live", "Unterrichtsrunde"],
-    ["/lehrer/klassen", "Klassen und Schüler"],
-    ["/lehrer/material", "Vokabelpaket freigeben"],
-    ["/lehrer/aufgaben", "Arbeitsaufträge planen"],
-    ["/lehrer/einstellungen", "Mein Lehrerarbeitsplatz"],
     ["/impressum", "Angaben gemäß"],
     ["/datenschutz", "Persönliche Lernstände"],
   ]) {
     const response = await render(path);
     assert.equal(response.status, 200, path);
     assert.match(await response.text(), new RegExp(title), path);
+  }
+});
+
+test("redirects preserved pre-pilot routes at the server boundary", async () => {
+  for (const path of [
+    "/lernen",
+    "/lernen/material",
+    "/frei/german/lernwoerter",
+    "/klasse/7b",
+    "/lernbox",
+  ]) {
+    const response = await render(path);
+    assert.equal(response.status, 307, path);
+    assert.equal(
+      new URL(response.headers.get("location"), "http://localhost").pathname,
+      "/",
+      path,
+    );
+  }
+
+  for (const path of [
+    "/lehrer",
+    "/lehrer/klassen",
+    "/lehrer/material",
+    "/lehrer/aufgaben",
+    "/lehrer/einstellungen",
+  ]) {
+    const response = await render(path);
+    assert.equal(response.status, 307, path);
+    assert.equal(
+      new URL(response.headers.get("location"), "http://localhost").pathname,
+      "/lehrer/live",
+      path,
+    );
   }
 });
 

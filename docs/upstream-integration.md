@@ -61,6 +61,8 @@ Nicht übernommen wurden die abweichende Startseite und Navigation, eine zweite 
 
 ## Aktueller Laufdiktat-Port
 
+Der erneute Abgleich für den Laufdiktat-Pilot am 31. August 2026 bestätigt weiterhin Commit `6c2ade41eadd2721f051df168244ed09563cea21`; das Upstream-Repository enthält keinen neueren Stand. Der Pilot verwendet den echten klassischen Modusnamen `LAUFDIKTAT`. Der frühere Lernraum-Alias `TEST` wird an der Sessiongrenze rückwärtskompatibel eingelesen und auf `LAUFDIKTAT` normalisiert.
+
 Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests geschützt:
 
 - typabhängige Antwortprüfung für Text und Vokabeln

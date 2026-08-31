@@ -3483,6 +3483,23 @@ h2 {
   max-width: none;
   margin: 24px auto 0;
 }
+
+.pilot-status {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--success, #2f7d4a) 35%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--success, #2f7d4a) 9%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.pilot-status.is-offline,
+.pilot-status.is-limited {
+  border-color: color-mix(in srgb, var(--warning, #a85d00) 40%, transparent);
+  background: color-mix(in srgb, var(--warning, #a85d00) 10%, transparent);
+}
 .class-list {
   max-width: 620px;
   margin-top: 42px;

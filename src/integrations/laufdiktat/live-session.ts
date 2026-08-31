@@ -20,7 +20,8 @@ const liveSessionConfigSchema = z
     words: z.array(liveWordSchema).min(1).max(1_000),
     gameMode: z
       .enum(["LAUFDIKTAT", "UEBUNG", "BATTLE", "TEST"])
-      .default("UEBUNG"),
+      .default("UEBUNG")
+      .transform((mode) => (mode === "TEST" ? "LAUFDIKTAT" : mode)),
     stationMode: z.boolean().default(false),
     stationCount: z.number().int().min(1).max(100).default(1),
     isTtsEnabled: z.boolean().default(false),

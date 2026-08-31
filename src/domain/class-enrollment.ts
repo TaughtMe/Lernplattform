@@ -55,7 +55,9 @@ function encodeCompactPayload(value: unknown) {
 
 function decodeCompactPayload(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
-  const binary = atob(value.replaceAll("-", "+").replaceAll("_", "/") + padding);
+  const binary = atob(
+    value.replaceAll("-", "+").replaceAll("_", "/") + padding,
+  );
   return JSON.parse(
     new TextDecoder().decode(
       Uint8Array.from(binary, (character) => character.charCodeAt(0)),

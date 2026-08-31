@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { ClassEnrollment } from "../../src/domain/class-enrollment";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
 

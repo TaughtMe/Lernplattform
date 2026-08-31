@@ -8,14 +8,7 @@ const navigation: readonly {
   area: TeacherArea;
   href: string;
   label: string;
-}[] = [
-  { area: "overview", href: "/lehrer", label: "Übersicht" },
-  { area: "live", href: "/lehrer/live", label: "Live-Unterricht" },
-  { area: "classes", href: "/lehrer/klassen", label: "Klassen" },
-  { area: "material", href: "/lehrer/material", label: "Material" },
-  { area: "assignments", href: "/lehrer/aufgaben", label: "Aufgaben" },
-  { area: "settings", href: "/lehrer/einstellungen", label: "Einstellungen" },
-] as const;
+}[] = [{ area: "live", href: "/lehrer/live", label: "Laufdiktat" }] as const;
 
 export function TeacherCockpitShell({
   active,
@@ -53,8 +46,8 @@ export function TeacherCockpitShell({
 
         <div className="teacher-cockpit__device">
           <strong>Lokaler Arbeitsplatz</strong>
-          <small>Offline nutzbar</small>
-          <span>● Daten bleiben auf diesem Gerät</span>
+          <small>Begleiteter Pilot</small>
+          <span>● Live-Räume werden automatisch gelöscht</span>
         </div>
       </aside>
 
@@ -66,7 +59,7 @@ export function TeacherCockpitShell({
             </span>
             <strong>Lehrer-Cockpit</strong>
           </div>
-          <Link href="/lernen">Zum persönlichen Lernraum</Link>
+          <Link href="/">Zur Schülerstartseite</Link>
         </header>
 
         <div className="teacher-cockpit__page">{children}</div>

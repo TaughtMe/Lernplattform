@@ -51,4 +51,17 @@ describe("native Laufdiktat live sessions", () => {
       parseLiveSession({ words: [] }, "session-1", "seed"),
     ).toThrow();
   });
+
+  it("migrates the former TEST alias to the upstream classic mode", () => {
+    const session = parseLiveSession(
+      {
+        words: [{ id: "1", kind: "text", targetWord: "Schule" }],
+        gameMode: "TEST",
+      },
+      "session-1",
+      "seed",
+    );
+
+    expect(session.gameMode).toBe("LAUFDIKTAT");
+  });
 });

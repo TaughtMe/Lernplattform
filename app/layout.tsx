@@ -32,14 +32,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: siteUrl,
     title: {
-      default: "Lernraum – gemeinsam lernen",
+      default: "Lernraum – Laufdiktat",
       template: "%s | Lernraum",
     },
-    description:
-      "Lernraum verbindet Unterricht und selbstständiges Wiederholen in einer datensparsamen, local-first Lernplattform.",
+    description: "Datensparsames Laufdiktat für kurzlebige Unterrichtsräume.",
     openGraph: {
-      title: "Lernraum – gemeinsam lernen",
-      description: "Gemeinsam lernen, im Unterricht und zu Hause.",
+      title: "Lernraum – Laufdiktat",
+      description: "Laufdiktat gemeinsam im Unterricht durchführen.",
       type: "website",
       locale: "de_DE",
       images: [
@@ -47,14 +46,14 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1536,
           height: 1024,
-          alt: "Lernraum – gemeinsam lernen, im Unterricht und zu Hause.",
+          alt: "Lernraum – Laufdiktat im Unterricht.",
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Lernraum – gemeinsam lernen",
-      description: "Gemeinsam lernen, im Unterricht und zu Hause.",
+      title: "Lernraum – Laufdiktat",
+      description: "Laufdiktat gemeinsam im Unterricht durchführen.",
       images: [socialImage],
     },
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },

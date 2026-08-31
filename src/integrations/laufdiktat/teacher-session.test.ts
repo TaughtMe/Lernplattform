@@ -69,6 +69,25 @@ describe("teacher live session builder", () => {
     expect(config.words).toHaveLength(1);
   });
 
+  it("builds the upstream classic Laufdiktat without assistance", () => {
+    const config = buildTeacherRoomConfig({
+      contentMode: "text",
+      source: "Der Schulweg ist kurz.",
+      vocabularyDirection: "left-to-right",
+      gameMode: "LAUFDIKTAT",
+      shuffleWords: false,
+      repeatWrongAnswers: true,
+    });
+
+    expect(config).toMatchObject({
+      gameMode: "LAUFDIKTAT",
+      stationMode: false,
+      uebungMaxAttempts: 1,
+      uebungAssistanceEnabled: false,
+      repeatWrongAnswers: false,
+    });
+  });
+
   it("carries the teacher vocabulary-transfer choice into the room", () => {
     const config = buildTeacherRoomConfig({
       contentMode: "vocabulary",

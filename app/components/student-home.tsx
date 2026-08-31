@@ -218,9 +218,10 @@ export function StudentHome() {
       summary={
         <StudentIdentitySummary
           status={
-          <span className="student-dashboard__streak">
-            {snapshot.streak} {snapshot.streak === 1 ? "Tag" : "Tage"} in Folge
-          </span>
+            <span className="student-dashboard__streak">
+              {snapshot.streak} {snapshot.streak === 1 ? "Tag" : "Tage"} in
+              Folge
+            </span>
           }
         />
       }

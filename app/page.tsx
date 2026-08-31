@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { PilotConnectionNotice } from "./components/pilot-connection-notice";
 import { RoomCodeForm } from "./components/room-code-form";
 
 export default function Home() {
+  const configured = Boolean(
+    process.env["NEXT_PUBLIC_SUPABASE_URL"] &&
+    process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
+  );
   return (
     <main className="main-entry">
       <header className="main-entry__header">
@@ -21,29 +26,22 @@ export default function Home() {
         aria-labelledby="main-entry-title"
       >
         <div className="main-entry__intro">
-          <p className="eyebrow">Dein Lernraum</p>
-          <h1 id="main-entry-title">Wie möchtest du heute lernen?</h1>
+          <p className="eyebrow">Laufdiktat-Pilot</p>
+          <h1 id="main-entry-title">Bereit für dein Laufdiktat?</h1>
           <p>
-            Öffne deinen Lernraum. Er verbindet deine bisherigen Übungen mit
-            dem, was dir als Nächstes beim Lernen hilft.
+            Gib den vierstelligen Raumcode deiner Lehrkraft ein oder scanne den
+            QR-Code. Danach wählst du deinen Namen oder ein Pseudonym und
+            wartest gemeinsam in der Lobby.
           </p>
         </div>
 
-        <div className="main-entry__actions main-entry__actions--single">
-          <Link className="main-action main-action--class" href="/lernen">
-            <span className="main-action__label">Alles an einem Ort</span>
-            <strong>Mein Lernraum</strong>
-            <small>
-              Heute üben, Fächer, eigene Inhalte und Fortschritt verbinden
-            </small>
-          </Link>
-        </div>
-
         <div className="main-entry__code">
-          <RoomCodeForm idPrefix="main-join" mode="auto" />
+          <RoomCodeForm idPrefix="main-join" mode="room" />
         </div>
+        <PilotConnectionNotice configured={configured} />
         <p className="privacy-note">
-          Persönliche Lernstände bleiben auf diesem Gerät.
+          Keine Konten, keine dauerhafte Schülerhistorie. Live-Räume benötigen
+          Internet.
         </p>
       </section>
     </main>

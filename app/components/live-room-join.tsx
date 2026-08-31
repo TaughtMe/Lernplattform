@@ -1,14 +1,8 @@
 "use client";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import Link from "next/link";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import {
   getLiveRoomClient,
@@ -32,9 +26,9 @@ import {
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
 import { QrCodeScanner } from "./qr-code-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
-import { createStudentClassesRepository } from "../../src/storage/student-classes";
+import { useHydrated } from "./use-hydrated";
 
-type View = "join" | "connecting" | "lobby" | "starting" | "game";
+type View = "join" | "connecting" | "lobby" | "starting" | "game" | "ended";
 type AttackType = "ink" | "flicker";
 
 type LiveRoomJoinProps = {
@@ -46,6 +40,7 @@ export function LiveRoomJoin({
   initialCode = "",
   liveRoomConfig,
 }: LiveRoomJoinProps) {
+  const hydrated = useHydrated();
   const [code, setCode] = useState(() =>
     normalizeJoinCode(initialCode).replace(/\D/g, "").slice(0, 4),
   );
@@ -65,20 +60,6 @@ export function LiveRoomJoin({
     from: string;
   } | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const classRepository = useMemo(() => createStudentClassesRepository(), []);
-
-  useEffect(() => {
-    let current = true;
-    void classRepository.list().then(([membership]) => {
-      if (current && membership) {
-        setName((value) => value || membership.displayName);
-      }
-    });
-    return () => {
-      current = false;
-    };
-  }, [classRepository]);
-
   useEffect(() => {
     if (!room || !liveRoomConfig) return;
     const activeRoom = room;
@@ -96,7 +77,8 @@ export function LiveRoomJoin({
           participantToken: activeRoom.participantToken,
         });
         if (!state || state.status === "ended") {
-          window.location.assign("/lernen");
+          setSession(null);
+          setView("ended");
           return;
         }
         if (state.status === "live" && state.sessionId) {
@@ -293,7 +275,7 @@ export function LiveRoomJoin({
       return;
     }
     if (normalizedName.length < 2) {
-      setError("Bitte gib deinen Namen ein.");
+      setError("Bitte gib einen Namen oder ein Pseudonym ein.");
       return;
     }
     if (!liveRoomConfig) {
@@ -379,9 +361,31 @@ export function LiveRoomJoin({
     );
   }
 
+  if (view === "ended") {
+    return (
+      <div className="live-room-page">
+        <section className="live-room-state" aria-live="polite">
+          <span className="live-room-state__mark" aria-hidden="true">
+            ×
+          </span>
+          <p className="eyebrow">Raum {code}</p>
+          <h1>Diese Runde ist beendet.</h1>
+          <p>Dein erreichbarer Fortschritt wurde an die Lehrkraft gesendet.</p>
+          <Link className="button button--primary" href="/">
+            Zur Startseite
+          </Link>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="live-room-page">
-      <section className="live-room-join" aria-labelledby="live-room-title">
+      <section
+        className="live-room-join"
+        aria-labelledby="live-room-title"
+        data-hydrated={hydrated ? "true" : "false"}
+      >
         <p className="eyebrow">Laufdiktat</p>
         <h1 id="live-room-title">Raum beitreten</h1>
         <p className="live-room-join__intro">
@@ -405,7 +409,7 @@ export function LiveRoomJoin({
             />
             <QrCodeScanner onResult={useScan} />
           </div>
-          <label htmlFor="live-room-name">Dein Name</label>
+          <label htmlFor="live-room-name">Name oder Pseudonym</label>
           <input
             id="live-room-name"
             className="live-room-name-input"
@@ -423,7 +427,11 @@ export function LiveRoomJoin({
               {error}
             </p>
           ) : null}
-          <button className="button button--primary" type="submit">
+          <button
+            className="button button--primary"
+            type="submit"
+            disabled={!hydrated || view === "connecting"}
+          >
             {view === "connecting"
               ? "Verbindung wird aufgebaut …"
               : "Beitreten"}

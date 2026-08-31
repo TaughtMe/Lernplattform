@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import { QrCodeScanner } from "./qr-code-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
+import { useHydrated } from "./use-hydrated";
 
 type RoomCodeFormProps = {
   idPrefix?: string;
@@ -14,6 +15,7 @@ export function RoomCodeForm({
   idPrefix = "room",
   mode = "room",
 }: RoomCodeFormProps) {
+  const hydrated = useHydrated();
   const [error, setError] = useState("");
   const [code, setCode] = useState("");
   const inputId = `${idPrefix}-code-input`;
@@ -101,7 +103,11 @@ export function RoomCodeForm({
             />
           )}
           <QrCodeScanner onResult={useScan} />
-          <button className="button button--secondary" type="submit">
+          <button
+            className="button button--secondary"
+            type="submit"
+            disabled={!hydrated}
+          >
             Beitreten
           </button>
         </div>

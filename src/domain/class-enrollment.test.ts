@@ -5,6 +5,9 @@ import {
   createClassRemovalLink,
   createEnrollmentCode,
   createEnrollmentLink,
+  parseClassRemovalCode,
+  parseClassRemovalLink,
+  parseEnrollmentCode,
   parseEnrollmentLink,
   type ClassMember,
   type TeacherClass,
@@ -66,6 +69,39 @@ describe("class enrollment links", () => {
     expect(parseClassRemovalCode(code)).toBe(course.id);
     expect(parseClassRemovalLink(link)).toEqual({ code, classId: course.id });
   });
+
+  it("still accepts the versioned legacy class payload", () => {
+    const legacy = `lernraum:class:${JSON.stringify({
+      version: 1,
+      classId: course.id,
+      membershipId: member.id,
+      className: course.name,
+      teacherName: course.teacherName,
+      schoolYear: course.schoolYear,
+      displayName: member.displayName,
+      enrollmentToken: member.enrollmentToken,
+      issuedAt: member.createdAt,
+    })}`;
+
+    expect(parseEnrollmentCode(legacy)).toMatchObject({
+      classId: course.id,
+      membershipId: member.id,
+      displayName: "Léa",
+    });
+  });
+
+  it("rejects malformed class-removal codes and links", () => {
+    expect(() => parseClassRemovalCode("kein-code")).toThrow(
+      "Kein gültiger Lernraum-Entfernungscode",
+    );
+    expect(() =>
+      createClassRemovalLink("ftp://lernraum.example", course.id),
+    ).toThrow("Entfernungscode");
+    expect(() =>
+      parseClassRemovalLink("https://lernraum.example/falsch"),
+    ).toThrow("Kein gültiger Lernraum-Entfernungslink");
+    expect(() =>
+      parseClassRemovalLink("https://lernraum.example/lernen/klasse"),
+    ).toThrow("enthält keinen Code");
+  });
 });
-  parseClassRemovalCode,
-  parseClassRemovalLink,

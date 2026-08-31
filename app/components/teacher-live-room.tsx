@@ -2,14 +2,7 @@
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { QRCodeCanvas } from "qrcode.react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { VocabularyDirection } from "../../src/domain/running-dictation";
 import { MULTIPLICATION_TABLES } from "../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../src/app-version";
@@ -48,6 +41,7 @@ import {
   parseLiveSession,
   type VocabularyTransferChoice,
 } from "../../src/integrations/laufdiktat/live-session";
+import { useHydrated } from "./use-hydrated";
 
 type Props = { liveRoomConfig: LiveRoomConfig | null };
 type Stage = "content" | "settings" | "lobby" | "live";
@@ -57,16 +51,21 @@ const LABELS: Record<TeacherContentMode, string> = {
   vocabulary: "Vokabeln",
   math: "Kopfrechnen",
 };
-const MODES: Array<{ id: TeacherGameMode; title: string; text: string }> = [
+const PILOT_CONTENT_MODES: TeacherContentMode[] = ["text"];
+const ALL_MODES: Array<{
+  id: TeacherGameMode;
+  title: string;
+  text: string;
+}> = [
+  {
+    id: "LAUFDIKTAT",
+    title: "Laufdiktat",
+    text: "Abschnitt ansehen, verdecken, aus dem Gedächtnis schreiben und prüfen.",
+  },
   {
     id: "UEBUNG",
     title: "Freies Üben",
     text: "Einprägen, schreiben und mit optionalen Hilfen verbessern.",
-  },
-  {
-    id: "TEST",
-    title: "Lernstandscheck",
-    text: "Jede Aufgabe einmal lösen; Ergebnisse erst in der Auswertung.",
   },
   {
     id: "BATTLE",
@@ -79,13 +78,12 @@ const MODES: Array<{ id: TeacherGameMode; title: string; text: string }> = [
     text: "Geteilte Stationsgeräte: Nummer wählen, merken und auf Papier schreiben.",
   },
 ];
+const MODES = ALL_MODES.filter((mode) => mode.id === "LAUFDIKTAT");
 const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
   text: "Der Morgen ist kühl. Die Klasse arbeitet konzentriert.",
   vocabulary: "school;Schule\nclassroom;Klassenzimmer\nlibrary;Bibliothek",
   math: "7 + 8\n16 - 9\n6 · 7\n36 : 4",
 };
-const subscribeHydration = () => () => undefined;
-
 function isOnline(participant: LiveRoomParticipant) {
   return Boolean(
     participant.lastSeenAt &&
@@ -94,11 +92,7 @@ function isOnline(participant: LiveRoomParticipant) {
 }
 
 export function TeacherLiveRoom({ liveRoomConfig }: Props) {
-  const hydrated = useSyncExternalStore(
-    subscribeHydration,
-    () => true,
-    () => false,
-  );
+  const hydrated = useHydrated();
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sources, setSources] = useState(DEFAULT_SOURCES);
@@ -106,7 +100,8 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     useState<VocabularyDirection>("left-to-right");
   const [vocabularyTransfer, setVocabularyTransfer] =
     useState<VocabularyTransferChoice>("errors");
-  const [gameMode, setGameMode] = useState<TeacherGameMode>("UEBUNG");
+  const [gameMode, setGameMode] = useState<TeacherGameMode>("LAUFDIKTAT");
+  const [teacherAccessCode, setTeacherAccessCode] = useState("");
   const [shuffleWords, setShuffleWords] = useState(false);
   const [stationShuffle, setStationShuffle] = useState(true);
   const [repeatWrongAnswers, setRepeatWrongAnswers] = useState(true);
@@ -237,15 +232,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
           ...current,
           [nextContentMode]: restoredSource,
         }));
-        setGameMode(
-          restored.stationMode
-            ? "STATION"
-            : restored.gameMode === "BATTLE"
-              ? "BATTLE"
-              : restored.gameMode === "TEST"
-                ? "TEST"
-                : "UEBUNG",
-        );
+        setGameMode("LAUFDIKTAT");
         setShuffleWords(restored.shuffleWords);
         setStationShuffle(restored.stationShuffle);
         setRepeatWrongAnswers(restored.repeatWrongAnswers);
@@ -313,15 +300,25 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     }
     if (!words.length)
       return setError("Bitte gib mindestens eine gültige Aufgabe ein.");
+    if (teacherAccessCode.trim().length < 12) {
+      setError("Bitte gib deine Lehrkraftfreigabe ein.");
+      return;
+    }
     setBusy(true);
     try {
-      const opened = await openLiveRoom(liveRoomConfig, roomConfig);
+      const opened = await openLiveRoom(
+        liveRoomConfig,
+        roomConfig,
+        teacherAccessCode,
+      );
       saveTeacherLiveRoom(opened);
       setRoom(opened);
       setStage("lobby");
-    } catch {
+    } catch (cause) {
       setError(
-        "Der Raum konnte nicht geöffnet werden. Bitte prüfe die Verbindung.",
+        cause instanceof Error && /Lehrkraftfreigabe/i.test(cause.message)
+          ? "Die Lehrkraftfreigabe ist ungültig oder nicht mehr aktiv."
+          : "Der Raum konnte nicht geöffnet werden. Bitte prüfe die Verbindung.",
       );
     } finally {
       setBusy(false);
@@ -405,17 +402,21 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     ["content", "Inhalte"],
     ["settings", "Einstellungen"],
     ["lobby", "Lobby"],
-    ["live", "Live"],
+    ["live", "Durchführung & Auswertung"],
   ];
   return (
-    <section className="teacher-live" aria-labelledby="teacher-live-title">
+    <section
+      className="teacher-live"
+      aria-labelledby="teacher-live-title"
+      data-hydrated={hydrated ? "true" : "false"}
+    >
       <div className="teacher-live__heading">
         <div>
           <p className="eyebrow">Laufdiktat · Lehrerdashboard</p>
           <h1 id="teacher-live-title">Unterrichtsrunde</h1>
           <p>
-            Inhalte vorbereiten, Spiel konfigurieren, Geräte verbinden und den
-            Lernfortschritt live begleiten.
+            Text vorbereiten, Laufdiktat konfigurieren, Geräte verbinden und den
+            Fortschritt live begleiten.
           </p>
         </div>
         <span className="teacher-local-note">
@@ -451,7 +452,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             </div>
             <fieldset className="teacher-live__choices">
               <legend>Aufgabenformat</legend>
-              {(["text", "vocabulary", "math"] as const).map((mode) => (
+              {PILOT_CONTENT_MODES.map((mode) => (
                 <button
                   type="button"
                   key={mode}
@@ -686,6 +687,10 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
           <aside className="teacher-live__options">
             <p className="eyebrow">2 · Einstellungen</p>
             <h2>{MODES.find((mode) => mode.id === gameMode)?.title}</h2>
+            <p>
+              Klassischer Ablauf: ansehen, verdecken, schreiben und eine klare
+              Rückmeldung erhalten.
+            </p>
             {gameMode === "UEBUNG" && (
               <>
                 <Option
@@ -771,6 +776,21 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                 />
               </>
             )}
+            <label className="teacher-live__source">
+              <span id="teacher-access-label">Lehrkraftfreigabe</span>
+              <input
+                aria-labelledby="teacher-access-label"
+                type="password"
+                autoComplete="current-password"
+                value={teacherAccessCode}
+                onChange={(event) => setTeacherAccessCode(event.target.value)}
+                aria-describedby="teacher-access-help"
+              />
+              <small id="teacher-access-help">
+                Die Freigabe wird nur zum Öffnen der Lobby übertragen und nie im
+                QR-Code oder Link gespeichert.
+              </small>
+            </label>
             <div className="teacher-live__actions">
               <button
                 type="button"

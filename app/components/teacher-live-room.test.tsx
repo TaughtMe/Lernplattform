@@ -4,26 +4,12 @@ import { describe, expect, it } from "vitest";
 import { TeacherLiveRoom } from "./teacher-live-room";
 
 describe("TeacherLiveRoom", () => {
-  it("previews valid tasks for every supported content type", async () => {
-    const user = userEvent.setup();
+  it("focuses the pilot content builder on text", () => {
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     expect(screen.getByText("2 Aufgaben")).toBeVisible();
-    await user.click(screen.getByRole("button", { name: "Vokabeln" }));
-    expect(screen.getByText("3 Aufgaben")).toBeVisible();
-    const transfer = screen.getByRole("combobox", {
-      name: "Vokabeln nach der Runde übernehmen",
-    });
-    expect(transfer).toHaveValue("errors");
-    await user.selectOptions(transfer, "all");
-    expect(transfer).toHaveValue("all");
-    await user.click(screen.getByRole("button", { name: "Kopfrechnen" }));
-    expect(screen.getByText("4 Aufgaben")).toBeVisible();
-    expect(
-      screen.getByRole("checkbox", { name: "Negative Ergebnisse" }),
-    ).toBeVisible();
-    expect(
-      screen.getByRole("checkbox", { name: "Lückenaufgaben" }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Text" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Vokabeln" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Kopfrechnen" })).toBeNull();
   });
 
   it("does not pretend to open an unconfigured live lobby", async () => {
@@ -39,17 +25,17 @@ describe("TeacherLiveRoom", () => {
     expect(screen.queryByText("Lobby geöffnet")).not.toBeInTheDocument();
   });
 
-  it("offers every native Laufdiktat mode in the Lernraum dashboard", async () => {
+  it("offers only classic Laufdiktat and requires a teacher gate", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     await user.click(
       screen.getByRole("button", { name: "Weiter zu den Einstellungen" }),
     );
-    expect(screen.getByRole("button", { name: /Freies Üben/ })).toBeVisible();
-    expect(screen.getByRole("button", { name: /Battle/ })).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: /Lernstandscheck/ }),
-    ).toBeVisible();
     expect(screen.getByRole("button", { name: /Laufdiktat/ })).toBeVisible();
+    expect(screen.getByLabelText("Lehrkraftfreigabe")).toHaveAttribute(
+      "type",
+      "password",
+    );
+    expect(screen.queryByRole("button", { name: /Battle/ })).toBeNull();
   });
 });

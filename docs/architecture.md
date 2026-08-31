@@ -32,6 +32,8 @@ Der verbindliche Coding-, Bibliotheks- und Teststandard steht in [engineering-qu
 
 ## Aktueller fachlicher Stand
 
+Der sichtbare Produktumfang ist vorübergehend durch den zentralen Laufdiktat-Pilotmodus begrenzt. Öffentlich sind nur Start, Raumbeitritt, klassisches Lehrkraft-Laufdiktat sowie Datenschutz und Impressum. Alle übrigen Routen werden kontrolliert umgeleitet; ihre Komponenten, Fachlogik, Tests und lokalen Daten bleiben unverändert im Repository. Der Produktvertrag steht in [laufdiktat-pilot-product-contract.md](laufdiktat-pilot-product-contract.md).
+
 LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unter gemeinsamen Lernraum-Routen. Lernwörter speichern Merkstufe und Wiederholungsfälligkeit getrennt; Tastschreiben bewertet Genauigkeit vor Geschwindigkeit. LernBox, Lernwörter, Kopfrechnen und Tastschreiben schreiben typisierte Ereignisse in den persönlichen Lernverlauf oder stellen ihre nativen Fälligkeiten über einen Modul-Adapter bereit.
 
 `LearningRecommendation` ist der gemeinsame Vertrag für **Heute üben**. Der Empfehlungskern priorisiert frühere Fehler vor Fälligkeiten und Fälligkeiten vor neuen Lernschritten. Er zeigt pro aktivem Klassenmodul höchstens eine klare Empfehlung mit Begründung und passender Zielroute. Ein fest eingebauter Demo-Katalog gehört nicht mehr zur Tagesauswahl.

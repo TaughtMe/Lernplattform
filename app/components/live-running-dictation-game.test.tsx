@@ -63,16 +63,35 @@ describe("LiveRunningDictationGame", () => {
     expect(onProgress).toHaveBeenLastCalledWith(
       expect.objectContaining({ currentIndex: 1, finished: true, errors: 0 }),
     );
-    expect(putLearningEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: "running-dictation",
-        learningArea: "german",
-        assessment: expect.objectContaining({ knowledge: "correct" }),
-      }),
-    );
+    expect(putLearningEvent).not.toHaveBeenCalled();
     expect(
-      screen.getByRole("link", { name: "Zurück zu meinem Lernraum" }),
-    ).toHaveAttribute("href", "/lernen");
+      screen.getByRole("link", { name: "Zurück zur Startseite" }),
+    ).toHaveAttribute("href", "/");
+  });
+
+  it("shows incorrect feedback as an error in classic Laufdiktat", async () => {
+    const user = userEvent.setup();
+    render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{ ...session, gameMode: "LAUFDIKTAT" }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "falsch{Enter}",
+    );
+
+    expect(screen.getByText("Nicht richtig")).toBeVisible();
+    expect(screen.queryByText("Richtig")).not.toBeInTheDocument();
   });
 
   it("hides an assistance solution before requiring another recall", async () => {
@@ -112,7 +131,7 @@ describe("LiveRunningDictationGame", () => {
     ).toHaveFocus();
   });
 
-  it("transfers the teacher-selected vocabulary after completion", async () => {
+  it("does not transfer vocabulary before the pilot expansion gate", async () => {
     const user = userEvent.setup();
     ingestBundle.mockClear();
     render(
@@ -144,9 +163,12 @@ describe("LiveRunningDictationGame", () => {
       screen.getByRole("textbox", { name: "Deine Antwort" }),
       "Haus{Enter}",
     );
-    await waitFor(() => expect(ingestBundle).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.getByText("Geschafft, Mia!")).toBeVisible(),
+    );
+    expect(ingestBundle).not.toHaveBeenCalled();
     expect(
-      await screen.findByText("1 Vokabel wurde in deine LernBox übernommen."),
-    ).toBeVisible();
+      screen.queryByText("1 Vokabel wurde in deine LernBox übernommen."),
+    ).not.toBeInTheDocument();
   });
 });

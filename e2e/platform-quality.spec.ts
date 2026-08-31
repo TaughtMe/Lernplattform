@@ -5,6 +5,11 @@ import {
   createEnrollmentLink,
 } from "../src/domain/class-enrollment";
 
+test.skip(
+  process.env["ENABLE_PRE_PILOT_E2E"] !== "1",
+  "Vor-Pilot-Oberflächen bleiben im Repository, sind im Laufdiktat-Pilot aber nicht freigeschaltet.",
+);
+
 function isKnownFrameworkDiagnostic(message: string) {
   return message.includes("<link rel=preload> must have a valid `as` value");
 }

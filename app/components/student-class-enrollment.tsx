@@ -45,7 +45,9 @@ export function StudentClassEnrollment() {
     window.queueMicrotask(() => {
       if (!isCurrent) return;
       try {
-        if (new URLSearchParams(window.location.hash.slice(1)).has("entfernen")) {
+        if (
+          new URLSearchParams(window.location.hash.slice(1)).has("entfernen")
+        ) {
           const linked = parseClassRemovalLink(window.location.href);
           setCode(linked.code);
           setRemovalClassId(linked.classId);
