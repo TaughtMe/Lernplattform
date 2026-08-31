@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   createEnrollmentCode,
+  createEnrollmentLink,
   type ClassMember,
   type TeacherClass,
 } from "../../src/domain/class-enrollment";
@@ -43,6 +44,7 @@ export function TeacherClassConfigurator() {
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [message, setMessage] = useState("");
   const selected = classes.find((course) => course.id === selectedId);
+  const appOrigin = typeof window === "undefined" ? "" : window.location.origin;
 
   useEffect(() => {
     profileRepository
@@ -134,6 +136,8 @@ export function TeacherClassConfigurator() {
   }
 
   const code = selected && shown ? createEnrollmentCode(selected, shown) : "";
+  const qrValue =
+    code && appOrigin ? createEnrollmentLink(appOrigin, code) : "";
 
   async function removeStudent(member: ClassMember) {
     await repository.removeMember(member.id);
@@ -190,7 +194,10 @@ export function TeacherClassConfigurator() {
           {members.map((member) => (
             <figure key={member.id} className="teacher-qr-sheet__card">
               <QRCodeSVG
-                value={createEnrollmentCode(selected, member)}
+                value={createEnrollmentLink(
+                  appOrigin,
+                  createEnrollmentCode(selected, member),
+                )}
                 size={220}
                 role="img"
                 aria-label={`Einschreibungs-QR-Code für ${member.displayName}`}
@@ -384,7 +391,7 @@ export function TeacherClassConfigurator() {
                               Entfernen
                             </button>
                           </div>
-                          {isShown && code && (
+                          {isShown && qrValue && (
                             <div
                               className="teacher-member-code"
                               id={`member-code-${member.id}`}
@@ -393,7 +400,7 @@ export function TeacherClassConfigurator() {
                                 Einschreibungs-QR für {member.displayName}
                               </h4>
                               <QRCodeSVG
-                                value={code}
+                                value={qrValue}
                                 size={240}
                                 role="img"
                                 aria-label={`Einschreibungs-QR-Code für ${member.displayName}`}

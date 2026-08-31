@@ -38,6 +38,9 @@ export type TeacherClass = z.infer<typeof teacherClassSchema>;
 export type ClassMember = z.infer<typeof classMemberSchema>;
 export type ClassEnrollment = z.infer<typeof classEnrollmentSchema>;
 
+export const CLASS_ENROLLMENT_PATH = "/lernen/klasse";
+const CLASS_ENROLLMENT_FRAGMENT_KEY = "beitreten";
+
 export function createEnrollmentCode(
   course: TeacherClass,
   member: ClassMember,
@@ -51,4 +54,29 @@ export function parseEnrollmentCode(value: string) {
   return classEnrollmentSchema.parse(
     JSON.parse(value.trim().slice(prefix.length)),
   );
+}
+
+export function createEnrollmentLink(origin: string, code: string) {
+  parseEnrollmentCode(code);
+  const url = new URL(CLASS_ENROLLMENT_PATH, origin);
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("Der Klassencode benötigt eine Lernraum-Webadresse.");
+  }
+  url.search = "";
+  url.hash = new URLSearchParams([
+    [CLASS_ENROLLMENT_FRAGMENT_KEY, code.trim()],
+  ]).toString();
+  return url.toString();
+}
+
+export function parseEnrollmentLink(value: string) {
+  const url = new URL(value);
+  if (url.pathname.replace(/\/$/, "") !== CLASS_ENROLLMENT_PATH) {
+    throw new Error("Kein gültiger Lernraum-Einschreibungslink.");
+  }
+  const code = new URLSearchParams(url.hash.slice(1)).get(
+    CLASS_ENROLLMENT_FRAGMENT_KEY,
+  );
+  if (!code) throw new Error("Der Einschreibungslink enthält keinen Code.");
+  return { code, enrollment: parseEnrollmentCode(code) };
 }

@@ -30,7 +30,7 @@ Wer dasselbe entsperrte Geräteprofil verwenden kann, kann jedoch auch Klassen, 
 
 Der Lehrerbereich ist kein Prototyp-Einstieg mehr, sondern ein zusammenhängender lokaler Arbeitsplatz. Er speichert ein persönliches Lehrkraftprofil, mehrere Klassen, Schüler beziehungsweise Aliasse, Materialpakete und Arbeitsaufträge in einer versionierten IndexedDB. Eine Datenübersicht zeigt die vorhandenen Datensätze. Die gesamte geprüfte Lehrerdatenbank kann als JSON-Datei exportiert und später wieder zusammengeführt werden.
 
-Klassen können unabhängig voneinander angelegt, ausgewählt und samt zugehörigen Schülern gelöscht werden. Schüler werden je Klasse lokal verwaltet, können entfernt werden und erhalten weiterhin ihren individuellen Einschreibungs-QR-Code. Namen und Zuordnungen verlassen das Lehrergerät nicht durch die Aufgaben- oder Materialfreigabe.
+Klassen können unabhängig voneinander angelegt, ausgewählt und samt zugehörigen Schülern gelöscht werden. Schüler werden je Klasse lokal verwaltet, können entfernt werden und erhalten weiterhin ihren individuellen Einschreibungs-QR-Code. Der QR-Code öffnet die Lernraum-Klassenseite, übernimmt den persönlichen Einschreibecode lokal und verlangt vor der Speicherung die ausdrückliche Bestätigung des angezeigten Schülernamens. Namen und Zuordnungen verlassen das Lehrergerät nicht durch die Aufgaben- oder Materialfreigabe; der Einschreibecode wird als URL-Fragment nicht an den Webserver gesendet.
 
 Die Materialverwaltung speichert, bearbeitet, löscht, importiert und exportiert zunächst versionierte Vokabelpakete. Die bestehenden Werkzeuge für Texte, Vokabeln und Kopfrechenaufgaben im Live-Raum bleiben zusätzlich verfügbar. Weitere fachliche Materialtypen verwenden später denselben lokalen Bibliotheksvertrag.
 

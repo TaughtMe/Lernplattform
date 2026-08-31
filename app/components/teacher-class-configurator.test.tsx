@@ -1,9 +1,19 @@
 import "fake-indexeddb/auto";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { LOCAL_DATA_AREAS } from "../../src/storage/local-data-boundaries";
 import { TeacherClassConfigurator } from "./teacher-class-configurator";
+
+vi.mock("qrcode.react", () => ({
+  QRCodeSVG: ({
+    value,
+    "aria-label": ariaLabel,
+  }: {
+    value: string;
+    "aria-label"?: string;
+  }) => <svg aria-label={ariaLabel} data-qr-value={value} role="img" />,
+}));
 
 afterEach(async () => {
   await new Promise<void>((resolve) => {
@@ -60,7 +70,12 @@ describe("TeacherClassConfigurator", () => {
       await screen.findByRole("img", {
         name: "Einschreibungs-QR-Code für Alex",
       }),
-    ).toBeVisible();
+    ).toHaveAttribute(
+      "data-qr-value",
+      expect.stringMatching(
+        /^https?:\/\/localhost(?::\d+)?\/lernen\/klasse#beitreten=/,
+      ),
+    );
     expect(
       screen.queryByRole("textbox", { name: "Einschreibecode" }),
     ).not.toBeInTheDocument();

@@ -11,7 +11,10 @@ export default function Page() {
         <header>
           <p className="eyebrow">Gemeinsam lernen</p>
           <h1>Meine Klasse</h1>
-          <p>Übernimm den persönlichen Klassencode deiner Lehrkraft.</p>
+          <p>
+            Scanne deinen persönlichen QR-Code oder gib den Klassencode deiner
+            Lehrkraft ein.
+          </p>
         </header>
         <StudentClassEnrollment />
       </div>

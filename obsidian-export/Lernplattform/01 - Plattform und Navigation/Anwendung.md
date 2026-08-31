@@ -22,7 +22,7 @@ Vor einer Lernrunde wählt der Schüler **Alles fällige** oder ein einzelnes vo
 
 Deutsch führt direkt zu den Lernwörtern, Vokabeln direkt zur LernBox und Mathematik direkt zum Kopfrechnen. Das klassische Laufdiktat ist kein Deutsch-Untermodul. Es wird über ein separates Raumcodefeld im Klassenraum und im freien Bereich betreten.
 
-Jede Code-Eingabe bietet neben der Tastatureingabe eine Kameraaktion für QR-Codes. Das gilt auch auf der öffentlichen Startseite und in **Meine Klassen**, damit Klassenbeitritt und Laufdiktat auf Mobilgeräten ohne Abtippen möglich sind. Externe Ziele aus einem QR-Code werden nicht geöffnet; Lernraum liest ausschließlich den vorgesehenen Klassen- oder Raumcode aus.
+Jede Code-Eingabe bietet neben der Tastatureingabe eine Kameraaktion für QR-Codes. Das gilt auch auf der öffentlichen Startseite und in **Meine Klassen**, damit Klassenbeitritt und Laufdiktat auf Mobilgeräten ohne Abtippen möglich sind. Ein individueller Einschreibungs-QR enthält eine Lernraum-Webadresse und öffnet direkt **Meine Klasse**. Der eigentliche Einschreibecode bleibt im URL-Fragment, wird nicht an den Webserver übertragen und wird nach dem Öffnen aus der Adresszeile entfernt. Vor der lokalen Speicherung bestätigt der Schüler ausdrücklich seinen angezeigten Namen. Der interne Scanner akzeptiert ausschließlich vorgesehene Klassen- oder Raumcodes und öffnet keine fremden Ziele.
 
 Lehrer und Schüler verwenden dieselbe App. Der persönliche Lernraum bleibt lokal; eine Klasse ergänzt organisatorischen Kontext und von der Lehrkraft bereitgestellte Inhalte. Ein Transfercode überträgt ausschließlich das ausdrücklich veröffentlichte Inhaltspaket und verleiht keine Lehrerrechte.
 

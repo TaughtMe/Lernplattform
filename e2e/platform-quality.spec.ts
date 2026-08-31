@@ -1,5 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import {
+  createEnrollmentCode,
+  createEnrollmentLink,
+} from "../src/domain/class-enrollment";
 
 function isKnownFrameworkDiagnostic(message: string) {
   return message.includes("<link rel=preload> must have a valid `as` value");
@@ -656,6 +660,49 @@ test("the local teacher workspace manages classes, students, assignments and QR 
     "Lernwörter üben",
   );
 
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+});
+
+test("an enrollment QR link opens Lernraum and adds the class only after identity confirmation", async ({
+  page,
+}) => {
+  const now = "2026-08-30T10:00:00.000Z";
+  const code = createEnrollmentCode(
+    {
+      id: "123e4567-e89b-42d3-a456-426614174001",
+      name: "Klasse 7b",
+      teacherName: "Frau Beispiel",
+      schoolYear: "2026/27",
+      enabledModules: ["vocabulary"],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: "123e4567-e89b-42d3-a456-426614174002",
+      classId: "123e4567-e89b-42d3-a456-426614174001",
+      displayName: "Léa",
+      enrollmentToken: "0123456789abcdef0123456789abcdef",
+      createdAt: now,
+    },
+  );
+
+  await page.goto(createEnrollmentLink("http://localhost:3000", code));
+
+  await expect(
+    page.getByRole("heading", { name: "Bist du Léa?" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /Klasse 7b/ })).toHaveCount(0);
+  await expect(page).not.toHaveURL(/beitreten=/);
+
+  await page.getByRole("button", { name: "Ja, ich bin Léa" }).click();
+
+  await expect(page.getByRole("link", { name: /Klasse 7b/ })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("link", { name: /Klasse 7b/ })).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     content: document.documentElement.scrollWidth,
