@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { computeRunningDictationStars } from "../../src/domain/running-dictation";
 import {
@@ -12,7 +13,10 @@ import {
   buildLiveVocabularyTransfer,
   liveWordErrorKey,
 } from "../../src/integrations/laufdiktat/vocabulary-transfer";
-import { createLearningBoxRepository } from "../../src/storage/personal-learning-events";
+import {
+  createLearningBoxRepository,
+  createPersonalLearningEventRepository,
+} from "../../src/storage/personal-learning-events";
 import { LiveStationGame } from "./live-station-game";
 
 type Phase = "reveal" | "write" | "wrong" | "correct" | "complete";
@@ -47,6 +51,10 @@ export function LiveRunningDictationGame({
     () => createLearningBoxRepository(),
     [],
   );
+  const learningEventRepository = useMemo(
+    () => createPersonalLearningEventRepository(),
+    [],
+  );
   const restoredIndex = Math.min(
     initialProgress?.currentIndex ?? 0,
     session.words.length - 1,
@@ -69,6 +77,7 @@ export function LiveRunningDictationGame({
   const [activeAttack, setActiveAttack] = useState<AttackType | null>(null);
   const [battleMessage, setBattleMessage] = useState("");
   const [transferNotice, setTransferNotice] = useState("");
+  const [localSaveWarning, setLocalSaveWarning] = useState("");
   const [transferStatus, setTransferStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
@@ -200,7 +209,7 @@ export function LiveRunningDictationGame({
   if (phase === "complete") {
     const stars = computeRunningDictationStars(errors, session.words.length);
     return (
-      <main className="live-game-page">
+      <div className="live-game-page">
         <section className="live-game-complete" aria-live="polite">
           <p className="eyebrow">Raum {code} · Runde abgeschlossen</p>
           <h1>Geschafft, {studentName}!</h1>
@@ -216,15 +225,28 @@ export function LiveRunningDictationGame({
           <p>
             {session.words.length} Aufgaben · {errors} Fehlversuche
           </p>
-          <p>Dein Ergebnis wurde an diese Unterrichtsrunde zurückgegeben.</p>
-          {transferNotice ? <p role="status">{transferNotice}</p> : null}
-          {transferStatus === "success" ? (
-            <a className="button button--primary" href="/lernbox">
-              Übernommene Vokabeln üben
-            </a>
+          <p>
+            Dein Ergebnis wurde an diese Unterrichtsrunde zurückgegeben und
+            dein Lernverlauf auf diesem Gerät gespeichert.
+          </p>
+          {localSaveWarning ? (
+            <p className="live-game-warning" role="alert">
+              {localSaveWarning}
+            </p>
           ) : null}
+          {transferNotice ? <p role="status">{transferNotice}</p> : null}
+          <div className="live-game-complete__actions">
+            <Link className="button button--primary" href="/lernen">
+              Zurück zu meinem Lernraum
+            </Link>
+            {transferStatus === "success" ? (
+              <Link className="button" href="/lernbox">
+                Übernommene Vokabeln üben
+              </Link>
+            ) : null}
+          </div>
         </section>
-      </main>
+      </div>
     );
   }
 
@@ -251,7 +273,39 @@ export function LiveRunningDictationGame({
     if (!answer.trim()) return;
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
-    if (checkLiveAnswer(activeWord, answer)) {
+    const isCorrect = checkLiveAnswer(activeWord, answer);
+    void learningEventRepository
+      .put({
+        id: crypto.randomUUID(),
+        learningObjectId: `live:${liveWordErrorKey(activeWord)}`.slice(0, 200),
+        occurredAt: new Date().toISOString(),
+        source: "running-dictation",
+        learningArea:
+          kind === "vocabulary"
+            ? "vocabulary"
+            : kind === "math"
+              ? "mathematics"
+              : "german",
+        roundId: session.sessionId,
+        direction: "prompt-to-answer",
+        answerMode: "typed",
+        help: "none",
+        practice: {
+          title: "Unterrichtsrunde wiederholen",
+          route: "/lernen",
+        },
+        assessment: {
+          knowledge: isCorrect ? "correct" : "incorrect",
+          writing: isCorrect ? "correct" : "incorrect",
+          selfCorrected: false,
+        },
+      })
+      .catch(() =>
+        setLocalSaveWarning(
+          "Dieser Versuch konnte nicht im lokalen Lernverlauf gespeichert werden.",
+        ),
+      );
+    if (isCorrect) {
       if (session.gameMode === "BATTLE") {
         const othersAhead = Object.entries(roster).filter(
           ([name, otherIndex]) => name !== studentName && otherIndex > index,
@@ -289,7 +343,7 @@ export function LiveRunningDictationGame({
   }
 
   return (
-    <main
+    <div
       className={`live-game-page${activeAttack === "flicker" ? " is-flickering" : ""}`}
     >
       <header className="live-game-topbar">
@@ -468,6 +522,6 @@ export function LiveRunningDictationGame({
           </div>
         ) : null}
       </section>
-    </main>
+    </div>
   );
 }

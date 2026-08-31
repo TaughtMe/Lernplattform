@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CLASS_ENROLLMENT_PATH,
+  createClassRemovalCode,
+  createClassRemovalLink,
   createEnrollmentCode,
   createEnrollmentLink,
   parseEnrollmentLink,
@@ -42,6 +44,7 @@ describe("class enrollment links", () => {
         displayName: "Léa",
       }),
     });
+    expect(code.length).toBeLessThan(300);
   });
 
   it("rejects links outside the enrollment page and non-web origins", () => {
@@ -55,4 +58,14 @@ describe("class enrollment links", () => {
       "Lernraum-Webadresse",
     );
   });
+
+  it("creates a compact class-removal link", () => {
+    const code = createClassRemovalCode(course.id);
+    const link = createClassRemovalLink("https://lernraum.example", course.id);
+
+    expect(parseClassRemovalCode(code)).toBe(course.id);
+    expect(parseClassRemovalLink(link)).toEqual({ code, classId: course.id });
+  });
 });
+  parseClassRemovalCode,
+  parseClassRemovalLink,

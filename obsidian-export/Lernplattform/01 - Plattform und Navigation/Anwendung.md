@@ -18,6 +18,8 @@ Die verbindliche persönliche Oberfläche verwendet:
 4. **Mein Fortschritt:** persönlicher fachübergreifender und fachbezogener Fortschritt
 5. **Meine Klasse:** organisatorischer Kontext, Unterrichtsräume, Haus und gemeinsame Aktivitäten
 
+Die persönliche Startseite zeigt die Lernserie in einem vollständigen Monatskalender mit Wochentagen, Monat und Jahr. Der heutige Tag und lokale Lerntage sind unterscheidbar; angrenzende Monate bleiben zur zeitlichen Orientierung sichtbar. Schüler können zwischen Monaten wechseln, ohne dass daraus ein öffentlicher oder geteilter Lernverlauf entsteht.
+
 Vor einer Lernrunde wählt der Schüler **Alles fällige** oder ein einzelnes vorhandenes Fach, beispielsweise Englisch, Französisch oder Latein. Bei **Alles fällige** werden Inhalte in überschaubaren Fachblöcken kombiniert, statt nach jeder Karte unvorhersehbar die Sprache zu wechseln. Innerhalb eines Fachs kann zusätzlich ein bestimmter Stapel oder freies Üben gewählt werden.
 
 Deutsch führt direkt zu den Lernwörtern, Vokabeln direkt zur LernBox und Mathematik direkt zum Kopfrechnen. Das klassische Laufdiktat ist kein Deutsch-Untermodul. Es wird über ein separates Raumcodefeld im Klassenraum und im freien Bereich betreten.

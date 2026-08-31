@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LiveRoomJoin } from "../components/live-room-join";
+import { StudentDashboardShell } from "../components/student-dashboard-shell";
 export const metadata: Metadata = { title: "Raum beitreten" };
 type PageProps = {
   searchParams: Promise<{ code?: string | string[] }>;
@@ -12,6 +13,8 @@ export default async function Page({ searchParams }: PageProps) {
   const publishableKey = process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"];
   const liveRoomConfig = url && publishableKey ? { url, publishableKey } : null;
   return (
-    <LiveRoomJoin initialCode={code ?? ""} liveRoomConfig={liveRoomConfig} />
+    <StudentDashboardShell activePath="/lernen">
+      <LiveRoomJoin initialCode={code ?? ""} liveRoomConfig={liveRoomConfig} />
+    </StudentDashboardShell>
   );
 }

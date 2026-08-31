@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ClassEnrollment } from "../../src/domain/class-enrollment";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
 import { RoomCodeForm } from "./room-code-form";
+import { StudentDashboardShell } from "./student-dashboard-shell";
 export function StudentClassPage({ classId }: { classId: string }) {
   const repository = useMemo(() => createStudentClassesRepository(), []);
   const [value, setValue] = useState<ClassEnrollment>();
@@ -16,26 +17,23 @@ export function StudentClassPage({ classId }: { classId: string }) {
   }, [classId, repository]);
   if (!loaded)
     return (
-      <main className="class-shell">
-        <p>Klasse wird geladen …</p>
-      </main>
+      <StudentDashboardShell activePath="/lernen/klasse">
+        <section className="class-shell">
+          <p>Klasse wird geladen …</p>
+        </section>
+      </StudentDashboardShell>
     );
   if (!value)
     return (
-      <main className="class-shell">
-        <h1>Klasse nicht auf diesem Gerät</h1>
-        <Link href="/lernen#klasse">Einschreibecode übernehmen</Link>
-      </main>
+      <StudentDashboardShell activePath="/lernen/klasse">
+        <section className="class-shell">
+          <h1>Klasse nicht auf diesem Gerät</h1>
+          <Link href="/lernen/klasse">Einschreibecode übernehmen</Link>
+        </section>
+      </StudentDashboardShell>
     );
   return (
-    <main className="learning-room-shell class-context-shell">
-      <header className="learning-room-topbar">
-        <Link href="/lernen#klasse" className="back-link">
-          ← Mein Lernraum
-        </Link>
-        <strong>{value.className}</strong>
-        <span>Angemeldet als {value.displayName}</span>
-      </header>
+    <StudentDashboardShell activePath="/lernen/klasse">
       <section className="class-context">
         <div className="class-context__heading">
           <p className="eyebrow">Meine Klasse · {value.teacherName}</p>
@@ -57,6 +55,6 @@ export function StudentClassPage({ classId }: { classId: string }) {
           <RoomCodeForm idPrefix="class-running-room" mode="room" />
         </section>
       </section>
-    </main>
+    </StudentDashboardShell>
   );
 }

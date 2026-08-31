@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { StudentIdentitySummary } from "./student-identity-summary";
 
 const primaryNavigation = [
   { href: "/lernen", label: "Heute" },
@@ -38,11 +39,7 @@ export function StudentDashboardShell({
             </Link>
           ))}
         </nav>
-        {summary ?? (
-          <span className="student-dashboard__local">
-            Lernstand bleibt lokal
-          </span>
-        )}
+        {summary ?? <StudentIdentitySummary />}
       </header>
 
       {children}

@@ -1,7 +1,14 @@
 "use client";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import {
   getLiveRoomClient,
@@ -25,6 +32,7 @@ import {
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
 import { QrCodeScanner } from "./qr-code-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
+import { createStudentClassesRepository } from "../../src/storage/student-classes";
 
 type View = "join" | "connecting" | "lobby" | "starting" | "game";
 type AttackType = "ink" | "flicker";
@@ -57,6 +65,19 @@ export function LiveRoomJoin({
     from: string;
   } | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const classRepository = useMemo(() => createStudentClassesRepository(), []);
+
+  useEffect(() => {
+    let current = true;
+    void classRepository.list().then(([membership]) => {
+      if (current && membership) {
+        setName((value) => value || membership.displayName);
+      }
+    });
+    return () => {
+      current = false;
+    };
+  }, [classRepository]);
 
   useEffect(() => {
     if (!room || !liveRoomConfig) return;
@@ -75,10 +96,7 @@ export function LiveRoomJoin({
           participantToken: activeRoom.participantToken,
         });
         if (!state || state.status === "ended") {
-          setSession(null);
-          setRoom(null);
-          setView("join");
-          setError("Der Raum wurde beendet.");
+          window.location.assign("/lernen");
           return;
         }
         if (state.status === "live" && state.sessionId) {
@@ -335,7 +353,7 @@ export function LiveRoomJoin({
 
   if (view === "lobby" || view === "starting") {
     return (
-      <main className="live-room-page">
+      <div className="live-room-page">
         <section className="live-room-state" aria-live="polite">
           <span className="live-room-state__mark" aria-hidden="true">
             {view === "lobby" ? "✓" : "→"}
@@ -357,12 +375,12 @@ export function LiveRoomJoin({
             </p>
           ) : null}
         </section>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="live-room-page">
+    <div className="live-room-page">
       <section className="live-room-join" aria-labelledby="live-room-title">
         <p className="eyebrow">Laufdiktat</p>
         <h1 id="live-room-title">Raum beitreten</h1>
@@ -412,6 +430,6 @@ export function LiveRoomJoin({
           </button>
         </form>
       </section>
-    </main>
+    </div>
   );
 }

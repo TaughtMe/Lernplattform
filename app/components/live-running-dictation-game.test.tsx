@@ -4,14 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
 
-const { ingestBundle } = vi.hoisted(() => ({
+const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
   ingestBundle: vi
     .fn()
     .mockResolvedValue({ deckId: "deck-1", added: 1, reused: 0 }),
+  putLearningEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../../src/storage/personal-learning-events", () => ({
   createLearningBoxRepository: () => ({ ingestBundle }),
+  createPersonalLearningEventRepository: () => ({ put: putLearningEvent }),
 }));
 
 const session: LiveSession = {
@@ -61,6 +63,16 @@ describe("LiveRunningDictationGame", () => {
     expect(onProgress).toHaveBeenLastCalledWith(
       expect.objectContaining({ currentIndex: 1, finished: true, errors: 0 }),
     );
+    expect(putLearningEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "running-dictation",
+        learningArea: "german",
+        assessment: expect.objectContaining({ knowledge: "correct" }),
+      }),
+    );
+    expect(
+      screen.getByRole("link", { name: "Zurück zu meinem Lernraum" }),
+    ).toHaveAttribute("href", "/lernen");
   });
 
   it("hides an assistance solution before requiring another recall", async () => {

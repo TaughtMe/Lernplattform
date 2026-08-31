@@ -1,16 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { CLASS_MODULE_LABELS } from "../../src/domain/class-workspace";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
 import { RoomCodeForm } from "./room-code-form";
 import { StudentDashboardShell } from "./student-dashboard-shell";
+import { StudentIdentitySummary } from "./student-identity-summary";
 
 const DAILY_TARGET = 20;
 const BOXES = [1, 2, 3, 4, 5] as const;
+const WEEKDAYS = [
+  ["Mo", "Montag"],
+  ["Di", "Dienstag"],
+  ["Mi", "Mittwoch"],
+  ["Do", "Donnerstag"],
+  ["Fr", "Freitag"],
+  ["Sa", "Samstag"],
+  ["So", "Sonntag"],
+] as const;
+const subscribeToHydration = () => () => undefined;
 
 type DashboardSnapshot = {
   recommendations: LearningRecommendation[];
@@ -56,6 +67,31 @@ function countStreak(activeDays: readonly string[], now = new Date()) {
   return streak;
 }
 
+export function createCalendarMonth(month: Date, today = new Date()) {
+  const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+  const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
+  const daysInMonth = new Date(
+    month.getFullYear(),
+    month.getMonth() + 1,
+    0,
+  ).getDate();
+  const cellCount = Math.ceil((mondayOffset + daysInMonth) / 7) * 7;
+
+  return Array.from({ length: cellCount }, (_, index) => {
+    const date = new Date(
+      month.getFullYear(),
+      month.getMonth(),
+      index - mondayOffset + 1,
+    );
+    return {
+      key: localDayKey(date),
+      day: date.getDate(),
+      isCurrentMonth: date.getMonth() === month.getMonth(),
+      isToday: localDayKey(date) === localDayKey(today),
+    };
+  });
+}
+
 function recommendationAction(recommendation: LearningRecommendation) {
   if (recommendation.reason === "error") return "Fehler jetzt üben";
   if (recommendation.reason === "due") return "Runde starten";
@@ -63,6 +99,11 @@ function recommendationAction(recommendation: LearningRecommendation) {
 }
 
 export function StudentHome() {
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
   const database = useMemo(() => new PersonalLearningDatabase(), []);
   const recommendations = useMemo(
     () => createLearningRecommendationRepository(database),
@@ -70,6 +111,9 @@ export function StudentHome() {
   );
   const [snapshot, setSnapshot] = useState(EMPTY_SNAPSHOT);
   const [loading, setLoading] = useState(true);
+  const [visibleMonth, setVisibleMonth] = useState(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
 
   useEffect(() => {
     let active = true;
@@ -151,31 +195,34 @@ export function StudentHome() {
     Math.round((snapshot.completedToday / DAILY_TARGET) * 100),
   );
   const maxBoxCount = Math.max(1, ...snapshot.boxCounts);
-  const calendarDays = Array.from({ length: 14 }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (13 - index));
-    return {
-      key: localDayKey(date),
-      day: date.getDate(),
-    };
-  });
+  const calendarDays = createCalendarMonth(visibleMonth);
+  const calendarWeeks = Array.from(
+    { length: calendarDays.length / 7 },
+    (_, index) => calendarDays.slice(index * 7, index * 7 + 7),
+  );
+  const monthLabel = new Intl.DateTimeFormat("de-DE", {
+    month: "long",
+    year: "numeric",
+  }).format(visibleMonth);
+
+  const changeVisibleMonth = (offset: number) => {
+    setVisibleMonth(
+      (current) =>
+        new Date(current.getFullYear(), current.getMonth() + offset, 1),
+    );
+  };
 
   return (
     <StudentDashboardShell
       activePath="/lernen"
       summary={
-        <div className="student-dashboard__identity">
+        <StudentIdentitySummary
+          status={
           <span className="student-dashboard__streak">
             {snapshot.streak} {snapshot.streak === 1 ? "Tag" : "Tage"} in Folge
           </span>
-          <span
-            className="student-dashboard__avatar"
-            role="img"
-            aria-label="Mein Profil"
-          >
-            L
-          </span>
-        </div>
+          }
+        />
       }
     >
       <section className="student-dashboard__intro student-dashboard__intro--home">
@@ -286,22 +333,72 @@ export function StudentHome() {
               {snapshot.streak} {snapshot.streak === 1 ? "Tag" : "Tage"}
             </h2>
           </div>
-          <div
-            className="student-overview__calendar"
-            aria-label="Aktive Lerntage der letzten zwei Wochen"
-            role="list"
-          >
-            {calendarDays.map((day) => (
-              <span
-                className={
-                  snapshot.activeDays.includes(day.key) ? "is-active" : ""
-                }
-                key={day.key}
-                role="listitem"
-              >
-                {day.day}
-              </span>
-            ))}
+          <div className="student-overview__calendar">
+            <div className="student-overview__calendar-heading">
+              <h3 aria-live="polite">{monthLabel}</h3>
+              <div>
+                <button
+                  aria-label="Vorheriger Monat"
+                  disabled={!hydrated}
+                  onClick={() => changeVisibleMonth(-1)}
+                  type="button"
+                >
+                  ‹
+                </button>
+                <button
+                  aria-label="Nächster Monat"
+                  disabled={!hydrated}
+                  onClick={() => changeVisibleMonth(1)}
+                  type="button"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+            <table aria-label={`Lernkalender für ${monthLabel}`}>
+              <thead>
+                <tr>
+                  {WEEKDAYS.map(([shortLabel, fullLabel]) => (
+                    <th abbr={fullLabel} key={shortLabel} scope="col">
+                      {shortLabel}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {calendarWeeks.map((week) => (
+                  <tr key={week[0]?.key}>
+                    {week.map((day) => {
+                      const isActive = snapshot.activeDays.includes(day.key);
+                      return (
+                        <td
+                          className={[
+                            isActive ? "is-active" : "",
+                            day.isToday ? "is-today" : "",
+                            day.isCurrentMonth ? "" : "is-outside",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          key={day.key}
+                        >
+                          <time
+                            aria-label={`${day.day}. ${new Intl.DateTimeFormat(
+                              "de-DE",
+                              { month: "long", year: "numeric" },
+                            ).format(new Date(`${day.key}T12:00:00`))}${
+                              isActive ? ", gelernt" : ""
+                            }${day.isToday ? ", heute" : ""}`}
+                            dateTime={day.key}
+                          >
+                            {day.day}
+                          </time>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <small>Dein Lernstand bleibt ausschließlich auf diesem Gerät.</small>
         </aside>

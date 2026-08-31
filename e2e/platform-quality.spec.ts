@@ -446,6 +446,32 @@ test("the personal learning room keeps today's task focused and separates suppor
     page.getByRole("heading", { name: "Meine Startseite" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
+  const monthFormatter = new Intl.DateTimeFormat("de-DE", {
+    month: "long",
+    year: "numeric",
+  });
+  await expect(
+    page.getByRole("table", {
+      name: `Lernkalender für ${monthFormatter.format(new Date())}`,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole("columnheader")).toHaveCount(7);
+
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1, 1);
+  await page.getByRole("button", { name: "Nächster Monat" }).click();
+  await expect(
+    page.getByRole("table", {
+      name: `Lernkalender für ${monthFormatter.format(nextMonth)}`,
+    }),
+  ).toBeVisible();
+  const calendarLayout = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(calendarLayout.content).toBeLessThanOrEqual(
+    calendarLayout.viewport + 1,
+  );
   await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Mein Material" }),

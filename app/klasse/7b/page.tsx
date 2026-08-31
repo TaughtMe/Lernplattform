@@ -3,20 +3,13 @@ import Link from "next/link";
 import { CLASS_MODULE_LABELS } from "../../../src/domain/class-workspace";
 import { demoClass } from "../../../src/domain/demo-class";
 import { RoomCodeForm } from "../../components/room-code-form";
+import { StudentDashboardShell } from "../../components/student-dashboard-shell";
 
 export const metadata: Metadata = { title: demoClass.name };
 
 export default function ClassPage() {
   return (
-    <main className="learning-room-shell class-context-shell">
-      <header className="learning-room-topbar">
-        <Link href="/lernen#klasse" className="back-link">
-          ← Mein Lernraum
-        </Link>
-        <strong>{demoClass.name}</strong>
-        <span>Organisatorischer Kontext</span>
-      </header>
-
+    <StudentDashboardShell activePath="/lernen/klasse">
       <section className="class-context">
         <div className="class-context__heading">
           <p className="eyebrow">Meine Klasse · {demoClass.teacherName}</p>
@@ -65,6 +58,6 @@ export default function ClassPage() {
           <RoomCodeForm idPrefix="class-running-room" mode="auto" />
         </section>
       </section>
-    </main>
+    </StudentDashboardShell>
   );
 }

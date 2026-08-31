@@ -82,7 +82,7 @@ export function LiveStationGame({
 
   if (stationNumber === null) {
     return (
-      <main className="live-game-page">
+      <div className="live-game-page">
         <section className="live-station" aria-labelledby="station-title">
           <p className="eyebrow">Raum {code} · Laufdiktat</p>
           <h1 id="station-title">Wähle deine Nummer</h1>
@@ -105,14 +105,14 @@ export function LiveStationGame({
             </p>
           ) : null}
         </section>
-      </main>
+      </div>
     );
   }
 
   const current = words[index];
   if (!current) return null;
   return (
-    <main className="live-game-page">
+    <div className="live-game-page">
       <header className="live-game-topbar">
         <div>
           <span>Nummer</span>
@@ -190,6 +190,6 @@ export function LiveStationGame({
           Erstes Ansehen ist frei. Erneutes Öffnen zählt als Spicker.
         </p>
       </section>
-    </main>
+    </div>
   );
 }

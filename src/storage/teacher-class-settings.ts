@@ -250,15 +250,33 @@ export function createTeacherClassRepository(
 ) {
   return {
     list: async () =>
-      (await database.classes.toArray()).sort((left, right) =>
-        left.createdAt.localeCompare(right.createdAt),
-      ),
+      (await database.classes.toArray())
+        .filter(({ archivedAt }) => !archivedAt)
+        .sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
+    listArchived: async () =>
+      (await database.classes.toArray())
+        .filter(({ archivedAt }) => Boolean(archivedAt))
+        .sort((left, right) =>
+          (right.archivedAt ?? "").localeCompare(left.archivedAt ?? ""),
+        ),
     put: (value: TeacherClass) =>
       database.classes.put(teacherClassSchema.parse(value)),
     listMembers: (classId: string) =>
       database.members.where("classId").equals(classId).sortBy("createdAt"),
     putMember: (value: ClassMember) =>
       database.members.put(classMemberSchema.parse(value)),
+    archiveClass: async (id: string) => {
+      await database.classes.update(id, {
+        archivedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    restoreClass: async (id: string) => {
+      await database.classes.update(id, {
+        archivedAt: null,
+        updatedAt: new Date().toISOString(),
+      });
+    },
     removeMember: (id: string) =>
       database.transaction(
         "rw",

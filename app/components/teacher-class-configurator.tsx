@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
+  createClassRemovalCode,
+  createClassRemovalLink,
   createEnrollmentCode,
   createEnrollmentLink,
   type ClassMember,
@@ -34,6 +36,7 @@ export function TeacherClassConfigurator() {
   const repository = useMemo(() => createTeacherClassRepository(), []);
   const profileRepository = useMemo(() => createTeacherProfileRepository(), []);
   const [classes, setClasses] = useState<TeacherClass[]>([]);
+  const [archivedClasses, setArchivedClasses] = useState<TeacherClass[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [members, setMembers] = useState<ClassMember[]>([]);
   const [name, setName] = useState("");
@@ -42,6 +45,7 @@ export function TeacherClassConfigurator() {
   const [studentName, setStudentName] = useState("");
   const [shown, setShown] = useState<ClassMember>();
   const [showQrSheet, setShowQrSheet] = useState(false);
+  const [removalShown, setRemovalShown] = useState<TeacherClass>();
   const [message, setMessage] = useState("");
   const selected = classes.find((course) => course.id === selectedId);
   const appOrigin = typeof window === "undefined" ? "" : window.location.origin;
@@ -60,10 +64,10 @@ export function TeacherClassConfigurator() {
   }, [profileRepository]);
 
   useEffect(() => {
-    repository
-      .list()
-      .then((items) => {
+    Promise.all([repository.list(), repository.listArchived()])
+      .then(([items, archived]) => {
         setClasses(items);
+        setArchivedClasses(archived);
         if (items[0]) setSelectedId(items[0].id);
       })
       .catch(() => setMessage("Die Klassen konnten nicht geladen werden."));
@@ -147,15 +151,34 @@ export function TeacherClassConfigurator() {
     window.dispatchEvent(new Event("teacher-data-changed"));
   }
 
-  async function removeSelectedClass() {
+  async function archiveSelectedClass() {
     if (!selected) return;
-    await repository.removeClass(selected.id);
+    await repository.archiveClass(selected.id);
     const remaining = classes.filter(({ id }) => id !== selected.id);
     setClasses(remaining);
+    setArchivedClasses((current) => [
+      { ...selected, archivedAt: new Date().toISOString() },
+      ...current,
+    ]);
     setSelectedId(remaining[0]?.id ?? "");
     setMembers([]);
     setShown(undefined);
-    setMessage(`„${selected.name}“ und ihre Schüler wurden lokal gelöscht.`);
+    setMessage(
+      `„${selected.name}“ wurde archiviert. Schüler und Zuteilungen bleiben für eine Reaktivierung erhalten.`,
+    );
+    window.dispatchEvent(new Event("teacher-data-changed"));
+  }
+
+  async function restoreClass(course: TeacherClass) {
+    await repository.restoreClass(course.id);
+    const restored = { ...course, archivedAt: null };
+    setArchivedClasses((current) =>
+      current.filter(({ id }) => id !== course.id),
+    );
+    setClasses((current) => [...current, restored]);
+    setSelectedId(course.id);
+    setRemovalShown(undefined);
+    setMessage(`„${course.name}“ wurde wieder aktiviert.`);
     window.dispatchEvent(new Event("teacher-data-changed"));
   }
 
@@ -324,9 +347,9 @@ export function TeacherClassConfigurator() {
                     <button
                       className="button button--quiet"
                       type="button"
-                      onClick={() => void removeSelectedClass()}
+                      onClick={() => void archiveSelectedClass()}
                     >
-                      Klasse löschen
+                      Klasse archivieren
                     </button>
                   </div>
                 </header>
@@ -419,6 +442,76 @@ export function TeacherClassConfigurator() {
       </div>
 
       {message && <p className="learning-message">{message}</p>}
+      <section
+        className="teacher-class-archive"
+        aria-labelledby="teacher-class-archive-title"
+      >
+        <div className="teacher-members-heading">
+          <h2 id="teacher-class-archive-title">Klassenarchiv</h2>
+          <span>{archivedClasses.length}</span>
+        </div>
+        {archivedClasses.length === 0 ? (
+          <p>Noch keine archivierte Klasse.</p>
+        ) : (
+          <ul className="teacher-class-archive__list">
+            {archivedClasses.map((course) => {
+              const isRemovalShown = removalShown?.id === course.id;
+              const removalCode = createClassRemovalCode(course.id);
+              const removalQrValue = appOrigin
+                ? createClassRemovalLink(appOrigin, course.id)
+                : "";
+              return (
+                <li key={course.id}>
+                  <div>
+                    <strong>{course.name}</strong>
+                    <span>
+                      {course.teacherName} · {course.schoolYear}
+                    </span>
+                  </div>
+                  <div className="teacher-class-archive__actions">
+                    <button
+                      className="button button--secondary"
+                      type="button"
+                      onClick={() => void restoreClass(course)}
+                    >
+                      Reaktivieren
+                    </button>
+                    <button
+                      className="button button--quiet"
+                      type="button"
+                      aria-expanded={isRemovalShown}
+                      onClick={() =>
+                        setRemovalShown(isRemovalShown ? undefined : course)
+                      }
+                    >
+                      Entfernungscode
+                    </button>
+                  </div>
+                  {isRemovalShown && removalQrValue ? (
+                    <div className="teacher-class-archive__removal">
+                      <QRCodeSVG
+                        value={removalQrValue}
+                        size={180}
+                        role="img"
+                        aria-label={`Entfernungs-QR-Code für ${course.name}`}
+                      />
+                      <div>
+                        <strong>Auf Schülergeräten entfernen</strong>
+                        <p>
+                          Schüler scannen diesen QR-Code oder fügen den Code
+                          unter „Klasse“ ein. Der persönliche Lernstand bleibt
+                          erhalten.
+                        </p>
+                        <code>{removalCode}</code>
+                      </div>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
       {selected && (
         <p className="teacher-class-modules">
           Aktive Bereiche:{" "}

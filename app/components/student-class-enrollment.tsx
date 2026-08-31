@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
+  parseClassRemovalCode,
+  parseClassRemovalLink,
   parseEnrollmentCode,
   parseEnrollmentLink,
   type ClassEnrollment,
@@ -15,6 +17,7 @@ export function StudentClassEnrollment() {
   const [items, setItems] = useState<ClassEnrollment[]>([]);
   const [code, setCode] = useState("");
   const [candidate, setCandidate] = useState<ClassEnrollment>();
+  const [removalClassId, setRemovalClassId] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -42,9 +45,15 @@ export function StudentClassEnrollment() {
     window.queueMicrotask(() => {
       if (!isCurrent) return;
       try {
-        const linked = parseEnrollmentLink(window.location.href);
-        setCode(linked.code);
-        setCandidate(linked.enrollment);
+        if (new URLSearchParams(window.location.hash.slice(1)).has("entfernen")) {
+          const linked = parseClassRemovalLink(window.location.href);
+          setCode(linked.code);
+          setRemovalClassId(linked.classId);
+        } else {
+          const linked = parseEnrollmentLink(window.location.href);
+          setCode(linked.code);
+          setCandidate(linked.enrollment);
+        }
         setMessage("");
       } catch {
         setMessage(
@@ -66,7 +75,14 @@ export function StudentClassEnrollment() {
   function inspectCode(event: FormEvent) {
     event.preventDefault();
     try {
+      if (code.trim().startsWith("lernraum:remove:")) {
+        setRemovalClassId(parseClassRemovalCode(code));
+        setCandidate(undefined);
+        setMessage("");
+        return;
+      }
       setCandidate(parseEnrollmentCode(code));
+      setRemovalClassId("");
       setMessage("");
     } catch {
       setMessage("Der Einschreibecode ist ungültig oder unvollständig.");
@@ -88,6 +104,7 @@ export function StudentClassEnrollment() {
           ? `${candidate.className} ist bereits in deinem Lernraum.`
           : `${candidate.className} wurde deinem Lernraum hinzugefügt.`,
       );
+      window.dispatchEvent(new Event("student-classes-changed"));
     } catch {
       setMessage(
         "Die Klasse konnte auf diesem Gerät nicht gespeichert werden. Bitte versuche es erneut.",
@@ -97,10 +114,39 @@ export function StudentClassEnrollment() {
 
   function changeCode() {
     setCandidate(undefined);
+    setRemovalClassId("");
     setCode("");
     setMessage("");
     window.setTimeout(() => codeInput.current?.focus(), 0);
   }
+
+  async function confirmRemoval() {
+    const membership = items.find(({ classId }) => classId === removalClassId);
+    if (!membership) {
+      setRemovalClassId("");
+      setCode("");
+      setMessage("Diese Klasse ist auf diesem Gerät nicht gespeichert.");
+      return;
+    }
+    try {
+      await repository.removeClass(removalClassId);
+      setItems(await repository.list());
+      setRemovalClassId("");
+      setCode("");
+      setMessage(
+        `${membership.className} und ihre lokalen Aufgaben wurden aus deinem Lernraum entfernt. Dein persönlicher Lernstand bleibt erhalten.`,
+      );
+      window.dispatchEvent(new Event("student-classes-changed"));
+    } catch {
+      setMessage(
+        "Die Klasse konnte auf diesem Gerät nicht entfernt werden. Bitte versuche es erneut.",
+      );
+    }
+  }
+
+  const removalMembership = items.find(
+    ({ classId }) => classId === removalClassId,
+  );
 
   return (
     <div className="personal-class-grid">
@@ -131,7 +177,37 @@ export function StudentClassEnrollment() {
         className="join-class join-class--panel student-enrollment"
         aria-label="In Klasse einschreiben"
       >
-        {candidate ? (
+        {removalClassId ? (
+          <div className="student-enrollment__confirmation">
+            <p className="eyebrow">Klasse archiviert</p>
+            <h2>
+              {removalMembership
+                ? `${removalMembership.className} entfernen?`
+                : "Klasse entfernen?"}
+            </h2>
+            <p>
+              Die Mitgliedschaft und zugehörige lokale Aufgaben werden von
+              diesem Gerät entfernt. Dein persönlicher Lernstand bleibt
+              erhalten.
+            </p>
+            <div className="student-enrollment__actions">
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={() => void confirmRemoval()}
+              >
+                Klasse jetzt entfernen
+              </button>
+              <button
+                className="button button--quiet"
+                type="button"
+                onClick={changeCode}
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        ) : candidate ? (
           <div className="student-enrollment__confirmation">
             <p className="eyebrow">Bitte bestätigen</p>
             <h2>Bist du {candidate.displayName}?</h2>
@@ -166,8 +242,8 @@ export function StudentClassEnrollment() {
               <span>
                 <strong>Individuellen Klassencode eingeben</strong>
                 <small>
-                  Ein QR-Code trägt den Code automatisch ein. Du kannst ihn
-                  alternativ hier einfügen.
+                  Ein QR-Code trägt den Code automatisch ein. Hier kannst du
+                  auch einen Entfernungscode deiner Lehrkraft einfügen.
                 </small>
               </span>
             </div>

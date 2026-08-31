@@ -42,3 +42,6 @@ yarn-error.log*
 /outputs/
 /work/
 .sites-dev.*.log
+
+# Codex task-local attachments are workspace inputs, not product source.
+/.codex-remote-attachments/

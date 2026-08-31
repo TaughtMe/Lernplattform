@@ -8574,26 +8574,98 @@ body,
 
 .student-overview__calendar {
   margin: 24px 0 20px;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+}
+
+.student-overview__calendar-heading {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.student-overview__calendar-heading h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+}
+
+.student-overview__calendar-heading > div {
+  display: flex;
   gap: 6px;
 }
 
-.student-overview__calendar span {
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
+.student-overview__calendar-heading button {
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--muted);
-  font-size: 0.65rem;
-  font-weight: 800;
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 1.35rem;
+  cursor: pointer;
 }
 
-.student-overview__calendar span.is-active {
+.student-overview__calendar-heading button:hover {
+  background: var(--surface-hover);
+}
+
+.student-overview__calendar-heading button:disabled {
+  cursor: wait;
+}
+
+.student-overview__calendar-heading button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--teal) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.student-overview__calendar table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 5px;
+}
+
+.student-overview__calendar th {
+  padding-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.student-overview__calendar td {
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.student-overview__calendar time {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.student-overview__calendar td.is-outside {
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.student-overview__calendar td.is-active {
   border-color: var(--teal);
   background: var(--teal);
   color: white;
+}
+
+.student-overview__calendar td.is-today {
+  box-shadow: 0 0 0 2px var(--coral);
 }
 
 .student-overview__streak-card small {

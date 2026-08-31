@@ -39,5 +39,15 @@ export function createStudentClassesRepository(
     list: () => database.memberships.orderBy("issuedAt").reverse().toArray(),
     put: (value: ClassEnrollment) =>
       database.memberships.put(classEnrollmentSchema.parse(value)),
+    removeClass: (classId: string) =>
+      database.transaction(
+        "rw",
+        database.memberships,
+        database.assignments,
+        async () => {
+          await database.memberships.where("classId").equals(classId).delete();
+          await database.assignments.where("classId").equals(classId).delete();
+        },
+      ),
   };
 }
