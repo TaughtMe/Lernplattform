@@ -4,6 +4,13 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { computeRunningDictationStars } from "../../src/domain/running-dictation";
 import {
+  isBlockedRunningDictationInput,
+  isSuspiciousRunningDictationInsert,
+  pickRunningDictationBattleCandidates,
+  sanitizeStrictMathAnswer,
+  STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES,
+} from "../../src/domain/running-dictation-input";
+import {
   checkLiveAnswer,
   liveWordKind,
   type LiveSession,
@@ -19,6 +26,7 @@ import {
 } from "../../src/storage/personal-learning-events";
 import { LiveStationGame } from "./live-station-game";
 import { LAUFDIKTAT_PILOT } from "../../src/pilot-mode";
+import { useLiveSessionGuards } from "./use-live-session-guards";
 
 type Phase = "reveal" | "write" | "wrong" | "correct" | "complete";
 type AttackType = "ink" | "flicker";
@@ -88,6 +96,7 @@ export function LiveRunningDictationGame({
   const transferStartedFor = useRef("");
   const answerRef = useRef<HTMLInputElement>(null);
   const current = session.words[index];
+  useLiveSessionGuards(phase !== "complete");
 
   useEffect(() => {
     if (phase !== "correct") return;
@@ -262,12 +271,25 @@ export function LiveRunningDictationGame({
     phase === "wrong" &&
     session.uebungAssistanceEnabled &&
     (wordErrors[errorKey] ?? 0) >= session.uebungMaxAttempts;
+  const battleCandidates = pickRunningDictationBattleCandidates(
+    roster,
+    studentName,
+    index,
+  );
 
   function startWriting() {
     if (startedAt.current === 0) startedAt.current = Date.now();
     if (hasWrittenCurrent) setPeeks((value) => value + 1);
     setHasWrittenCurrent(true);
     setPhase("write");
+  }
+
+  function readPromptAloud() {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(prompt);
+    utterance.lang = activeWord.promptLang ?? "de-DE";
+    window.speechSynthesis.speak(utterance);
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -413,27 +435,20 @@ export function LiveRunningDictationGame({
           {picker ? (
             <div className="live-battle__targets">
               <strong>Wen möchtest du treffen?</strong>
-              {Object.entries(roster)
-                .filter(([name]) => name !== studentName)
-                .sort(
-                  ([, left], [, right]) =>
-                    Math.abs(left - index) - Math.abs(right - index),
-                )
-                .slice(0, 3)
-                .map(([name]) => (
-                  <button
-                    key={name}
-                    onClick={() => {
-                      if (onSendAttack?.(name, picker)) {
-                        setCharge(0);
-                        setPicker(null);
-                        setBattleMessage(`Angriff auf ${name} gestartet.`);
-                      }
-                    }}
-                  >
-                    {name}
-                  </button>
-                ))}
+              {battleCandidates.map(({ name }) => (
+                <button
+                  key={name}
+                  onClick={() => {
+                    if (onSendAttack?.(name, picker)) {
+                      setCharge(0);
+                      setPicker(null);
+                      setBattleMessage(`Angriff auf ${name} gestartet.`);
+                    }
+                  }}
+                >
+                  {name}
+                </button>
+              ))}
               {!Object.keys(roster).some((name) => name !== studentName) ? (
                 <p>Noch kein Mitspieler als Ziel sichtbar.</p>
               ) : null}
@@ -459,6 +474,14 @@ export function LiveRunningDictationGame({
           <>
             <p className="eyebrow">Ansehen und merken</p>
             <h1>{prompt}</h1>
+            {session.isTtsEnabled ? (
+              <button
+                className="button button--quiet"
+                onClick={readPromptAloud}
+              >
+                Vorlesen
+              </button>
+            ) : null}
             <button className="button button--primary" onClick={startWriting}>
               Verstanden – jetzt schreiben
             </button>
@@ -481,7 +504,43 @@ export function LiveRunningDictationGame({
               autoComplete="off"
               spellCheck={false}
               value={answer}
-              onChange={(event) => setAnswer(event.target.value)}
+              {...(session.strictTypingMode
+                ? {
+                    autoCorrect:
+                      STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCorrect,
+                    autoCapitalize:
+                      STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCapitalize,
+                  }
+                : {})}
+              onBeforeInput={(event) => {
+                if (
+                  session.strictTypingMode &&
+                  isBlockedRunningDictationInput(
+                    (event.nativeEvent as InputEvent).inputType,
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+              onPaste={(event) => {
+                if (session.strictTypingMode) event.preventDefault();
+              }}
+              onDrop={(event) => {
+                if (session.strictTypingMode) event.preventDefault();
+              }}
+              onChange={(event) => {
+                let next = event.target.value;
+                if (session.strictTypingMode && kind === "math") {
+                  next = sanitizeStrictMathAnswer(next);
+                }
+                if (
+                  session.strictTypingMode &&
+                  isSuspiciousRunningDictationInsert(answer, next)
+                ) {
+                  return;
+                }
+                setAnswer(next);
+              }}
             />
             <div className="live-game-actions">
               <button

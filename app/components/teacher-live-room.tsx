@@ -4,6 +4,14 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { QRCodeCanvas } from "qrcode.react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { VocabularyDirection } from "../../src/domain/running-dictation";
+import {
+  applyRunningDictationSectionEdits,
+  buildRunningDictationSections,
+  DEFAULT_TEXT_SPLIT_CONFIG,
+  moveRunningDictationSection,
+  type ManualRange,
+  type TextSplitConfig,
+} from "../../src/domain/running-dictation-sections";
 import { MULTIPLICATION_TABLES } from "../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import {
@@ -41,6 +49,7 @@ import {
   parseLiveSession,
   type VocabularyTransferChoice,
 } from "../../src/integrations/laufdiktat/live-session";
+import { createLiveRoomDebounce } from "../../src/integrations/laufdiktat/debounce";
 import { useHydrated } from "./use-hydrated";
 
 type Props = { liveRoomConfig: LiveRoomConfig | null };
@@ -51,7 +60,7 @@ const LABELS: Record<TeacherContentMode, string> = {
   vocabulary: "Vokabeln",
   math: "Kopfrechnen",
 };
-const PILOT_CONTENT_MODES: TeacherContentMode[] = ["text"];
+const CONTENT_MODES: TeacherContentMode[] = ["text", "math", "vocabulary"];
 const ALL_MODES: Array<{
   id: TeacherGameMode;
   title: string;
@@ -74,11 +83,11 @@ const ALL_MODES: Array<{
   },
   {
     id: "STATION",
-    title: "Laufdiktat",
+    title: "Stationen",
     text: "Geteilte Stationsgeräte: Nummer wählen, merken und auf Papier schreiben.",
   },
 ];
-const MODES = ALL_MODES.filter((mode) => mode.id === "LAUFDIKTAT");
+const MODES = ALL_MODES;
 const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
   text: "Der Morgen ist kühl. Die Klasse arbeitet konzentriert.",
   vocabulary: "school;Schule\nclassroom;Klassenzimmer\nlibrary;Bibliothek",
@@ -96,6 +105,13 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sources, setSources] = useState(DEFAULT_SOURCES);
+  const [splitConfig, setSplitConfig] = useState<TextSplitConfig>(
+    DEFAULT_TEXT_SPLIT_CONFIG,
+  );
+  const [manualRanges, setManualRanges] = useState<ManualRange[]>([]);
+  const [excludedSectionIds, setExcludedSectionIds] = useState<string[]>([]);
+  const [sectionOrder, setSectionOrder] = useState<string[]>([]);
+  const [customDelimiter, setCustomDelimiter] = useState("");
   const [direction, setDirection] =
     useState<VocabularyDirection>("left-to-right");
   const [vocabularyTransfer, setVocabularyTransfer] =
@@ -129,11 +145,44 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const sourceRef = useRef<HTMLTextAreaElement>(null);
 
   const source = sources[contentMode];
+  const textSections = useMemo(
+    () =>
+      buildRunningDictationSections(sources.text, splitConfig, manualRanges),
+    [manualRanges, sources.text, splitConfig],
+  );
+  const orderedTextSections = useMemo(
+    () =>
+      applyRunningDictationSectionEdits(
+        textSections,
+        excludedSectionIds,
+        sectionOrder,
+      ),
+    [excludedSectionIds, sectionOrder, textSections],
+  );
+  const displayedTextSections = useMemo(() => {
+    const rank = new Map(sectionOrder.map((id, index) => [id, index]));
+    return [...textSections].sort((left, right) => {
+      const leftRank = rank.get(left.id);
+      const rightRank = rank.get(right.id);
+      if (leftRank === undefined && rightRank === undefined) return 0;
+      if (leftRank === undefined) return 1;
+      if (rightRank === undefined) return -1;
+      return leftRank - rightRank;
+    });
+  }, [sectionOrder, textSections]);
   const words = useMemo(
-    () => buildTeacherWords(contentMode, source, direction),
-    [contentMode, direction, source],
+    () =>
+      contentMode === "text"
+        ? orderedTextSections.map((section) => ({
+            id: section.id,
+            kind: "text" as const,
+            targetWord: section.text,
+          }))
+        : buildTeacherWords(contentMode, source, direction),
+    [contentMode, direction, orderedTextSections, source],
   );
   const registeredNames = participants.map(({ studentName }) => studentName);
   const connectedNames = Array.from(
@@ -161,6 +210,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         stationCount,
         stationShuffle,
         battleOptions: { ink: battleInk, flicker: battleFlicker },
+        wordsOverride: words,
       }),
     [
       assistance,
@@ -179,6 +229,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       stationShuffle,
       strictTyping,
       tts,
+      words,
     ],
   );
 
@@ -232,7 +283,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
           ...current,
           [nextContentMode]: restoredSource,
         }));
-        setGameMode("LAUFDIKTAT");
+        setGameMode(restored.stationMode ? "STATION" : restored.gameMode);
         setShuffleWords(restored.shuffleWords);
         setStationShuffle(restored.stationShuffle);
         setRepeatWrongAnswers(restored.repeatWrongAnswers);
@@ -255,6 +306,10 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     if (!liveRoomConfig || !room) return;
     const client = getLiveRoomClient(liveRoomConfig);
     const channel = client.channel(`room-${room.code}`);
+    const refreshSoon = createLiveRoomDebounce(() => void refresh(), {
+      delayMs: 200,
+      maxWaitMs: 1_000,
+    });
     channelRef.current = channel;
     const syncPresence = () =>
       setPresenceNames(Object.keys(channel.presenceState()));
@@ -262,9 +317,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       .on("presence", { event: "sync" }, syncPresence)
       .on("presence", { event: "join" }, syncPresence)
       .on("presence", { event: "leave" }, syncPresence)
-      .on("broadcast", { event: "student-progress" }, () => void refresh())
-      .on("broadcast", { event: "student-finished" }, () => void refresh())
-      .on("broadcast", { event: "update-station-state" }, () => void refresh())
+      .on("broadcast", { event: "student-progress" }, refreshSoon.schedule)
+      .on("broadcast", { event: "student-finished" }, refreshSoon.schedule)
+      .on("broadcast", { event: "update-station-state" }, refreshSoon.schedule)
       .subscribe();
     const first = window.setTimeout(() => void refresh(), 0);
     const interval = window.setInterval(
@@ -274,6 +329,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     return () => {
       window.clearTimeout(first);
       window.clearInterval(interval);
+      refreshSoon.cancel();
       if (channelRef.current === channel) channelRef.current = null;
       void client.removeChannel(channel);
     };
@@ -429,6 +485,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             type="button"
             key={id}
             className={stage === id ? "is-active" : ""}
+            aria-current={stage === id ? "step" : undefined}
             disabled={(index > 0 && !words.length) || (index > 1 && !room)}
             onClick={() =>
               id === "lobby" && !room ? void openLobby() : setStage(id)
@@ -452,7 +509,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             </div>
             <fieldset className="teacher-live__choices">
               <legend>Aufgabenformat</legend>
-              {PILOT_CONTENT_MODES.map((mode) => (
+              {CONTENT_MODES.map((mode) => (
                 <button
                   type="button"
                   key={mode}
@@ -589,6 +646,154 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                 ) : null}
               </div>
             )}
+            {contentMode === "text" && (
+              <section
+                className="teacher-live__split-workbench"
+                aria-labelledby="split-title"
+              >
+                <div className="teacher-panel__heading">
+                  <div>
+                    <p className="eyebrow">Text aufteilen</p>
+                    <h3 id="split-title">Trennregeln</h3>
+                  </div>
+                  <span>{orderedTextSections.length} Abschnitte aktiv</span>
+                </div>
+                <div className="teacher-live__split-toggles">
+                  <Option
+                    label="Nach Zeichen trennen"
+                    checked={splitConfig.punctuationEnabled}
+                    set={(value) =>
+                      setSplitConfig((current) => ({
+                        ...current,
+                        punctuationEnabled: value,
+                      }))
+                    }
+                  />
+                  <Option
+                    label="Nach Enter trennen"
+                    checked={splitConfig.newlineEnabled}
+                    set={(value) =>
+                      setSplitConfig((current) => ({
+                        ...current,
+                        newlineEnabled: value,
+                      }))
+                    }
+                  />
+                </div>
+                {splitConfig.punctuationEnabled ? (
+                  <div
+                    className="teacher-live__punctuation"
+                    aria-label="Trennzeichen"
+                  >
+                    {[".", ",", "!", "?", ";", ":"].map((character) => (
+                      <button
+                        type="button"
+                        key={character}
+                        aria-pressed={splitConfig.punctuation.includes(
+                          character,
+                        )}
+                        onClick={() =>
+                          setSplitConfig((current) => ({
+                            ...current,
+                            punctuation: current.punctuation.includes(character)
+                              ? current.punctuation.filter(
+                                  (item) => item !== character,
+                                )
+                              : [...current.punctuation, character],
+                          }))
+                        }
+                      >
+                        {character}
+                      </button>
+                    ))}
+                    <div className="teacher-live__custom-delimiter">
+                      <label htmlFor="custom-delimiter">Eigener Trenner</label>
+                      <input
+                        id="custom-delimiter"
+                        value={customDelimiter}
+                        maxLength={20}
+                        onChange={(event) =>
+                          setCustomDelimiter(event.target.value)
+                        }
+                      />
+                      <button
+                        type="button"
+                        disabled={!customDelimiter}
+                        onClick={() => {
+                          const value = customDelimiter;
+                          setSplitConfig((current) => ({
+                            ...current,
+                            customDelimiters: [
+                              ...current.customDelimiters,
+                              { id: crypto.randomUUID(), value },
+                            ],
+                          }));
+                          setCustomDelimiter("");
+                        }}
+                      >
+                        Hinzufügen
+                      </button>
+                    </div>
+                    {splitConfig.customDelimiters.length ? (
+                      <div
+                        className="teacher-live__delimiter-list"
+                        aria-label="Eigene Trenner"
+                      >
+                        {splitConfig.customDelimiters.map((delimiter) => (
+                          <button
+                            key={delimiter.id}
+                            type="button"
+                            aria-label={`Trenner ${delimiter.value} entfernen`}
+                            onClick={() =>
+                              setSplitConfig((current) => ({
+                                ...current,
+                                customDelimiters:
+                                  current.customDelimiters.filter(
+                                    ({ id }) => id !== delimiter.id,
+                                  ),
+                              }))
+                            }
+                          >
+                            {delimiter.value} <span aria-hidden="true">×</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {splitConfig.newlineEnabled ? (
+                  <fieldset className="teacher-live__newline-mode">
+                    <legend>Trennen bei</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        checked={splitConfig.newlineMode === "line"}
+                        onChange={() =>
+                          setSplitConfig((current) => ({
+                            ...current,
+                            newlineMode: "line",
+                          }))
+                        }
+                      />
+                      jeder neuen Zeile
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        checked={splitConfig.newlineMode === "paragraph"}
+                        onChange={() =>
+                          setSplitConfig((current) => ({
+                            ...current,
+                            newlineMode: "paragraph",
+                          }))
+                        }
+                      />
+                      nur Leerzeilen
+                    </label>
+                  </fieldset>
+                ) : null}
+              </section>
+            )}
             <label className="teacher-live__source">
               <span>
                 {contentMode === "text"
@@ -598,6 +803,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     : "Eine Rechnung pro Zeile"}
               </span>
               <textarea
+                ref={sourceRef}
                 value={source}
                 disabled={!hydrated}
                 onChange={(e) =>
@@ -608,6 +814,124 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                 }
               />
             </label>
+            {contentMode === "text" && source ? (
+              <>
+                <div className="teacher-live__marker-actions">
+                  <button
+                    type="button"
+                    className="button button--quiet"
+                    onClick={() => {
+                      const control = sourceRef.current;
+                      if (
+                        !control ||
+                        control.selectionEnd <= control.selectionStart
+                      )
+                        return;
+                      setManualRanges((current) => [
+                        ...current,
+                        {
+                          id: crypto.randomUUID(),
+                          type: "section",
+                          start: control.selectionStart,
+                          end: control.selectionEnd,
+                        },
+                      ]);
+                    }}
+                  >
+                    Markierung als Abschnitt
+                  </button>
+                  <button
+                    type="button"
+                    className="button button--quiet"
+                    onClick={() => {
+                      const position = sourceRef.current?.selectionStart ?? 0;
+                      setManualRanges((current) => [
+                        ...current,
+                        {
+                          id: crypto.randomUUID(),
+                          type: "split",
+                          start: position,
+                          end: position,
+                        },
+                      ]);
+                    }}
+                  >
+                    Hier trennen
+                  </button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={!manualRanges.length}
+                    onClick={() => setManualRanges([])}
+                  >
+                    Manuelle Marken entfernen
+                  </button>
+                </div>
+                <ol
+                  className="teacher-live__section-manager"
+                  aria-label="Abschnitte verwalten"
+                >
+                  {displayedTextSections.map((section, index) => (
+                    <li key={section.id}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!excludedSectionIds.includes(section.id)}
+                          onChange={() =>
+                            setExcludedSectionIds((current) =>
+                              current.includes(section.id)
+                                ? current.filter((id) => id !== section.id)
+                                : [...current, section.id],
+                            )
+                          }
+                        />
+                        <span>{section.text}</span>
+                      </label>
+                      <div>
+                        <button
+                          type="button"
+                          aria-label={`Abschnitt ${index + 1} nach oben`}
+                          disabled={index === 0}
+                          onClick={() => {
+                            const ids = displayedTextSections.map(
+                              ({ id }) => id,
+                            );
+                            setSectionOrder(
+                              moveRunningDictationSection(
+                                ids,
+                                index,
+                                index - 1,
+                              ),
+                            );
+                          }}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Abschnitt ${index + 1} nach unten`}
+                          disabled={index === displayedTextSections.length - 1}
+                          onClick={() => {
+                            const ids = displayedTextSections.map(
+                              ({ id }) => id,
+                            );
+                            setSectionOrder(
+                              moveRunningDictationSection(
+                                ids,
+                                index,
+                                index + 1,
+                              ),
+                            );
+                          }}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </>
+            ) : null}
             <div className="teacher-live__import-row">
               <label className="button button--quiet">
                 Datei importieren
@@ -687,10 +1011,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
           <aside className="teacher-live__options">
             <p className="eyebrow">2 · Einstellungen</p>
             <h2>{MODES.find((mode) => mode.id === gameMode)?.title}</h2>
-            <p>
-              Klassischer Ablauf: ansehen, verdecken, schreiben und eine klare
-              Rückmeldung erhalten.
-            </p>
+            <p>{MODES.find((mode) => mode.id === gameMode)?.text}</p>
             {gameMode === "UEBUNG" && (
               <>
                 <Option

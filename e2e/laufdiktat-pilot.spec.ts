@@ -53,7 +53,7 @@ test("room code entry works with the keyboard", async ({ page }) => {
   await expect(page).toHaveURL(/\/raum\?code=4829$/);
 });
 
-test("teacher pilot offers text and classic Laufdiktat only", async ({
+test("teacher pilot offers the complete Laufdiktat content and mode set", async ({
   page,
 }) => {
   await page.goto("/lehrer/live");
@@ -66,16 +66,37 @@ test("teacher pilot offers text and classic Laufdiktat only", async ({
     "true",
   );
   await expect(page.getByRole("button", { name: "Text" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Vokabeln" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Vokabeln" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Kopfrechnen" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Trennregeln" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Markierung als Abschnitt" }),
+  ).toBeVisible();
   await page
     .getByRole("button", { name: "Weiter zu den Einstellungen" })
     .click();
-  await expect(page.getByRole("button", { name: /Laufdiktat/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Battle/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Laufdiktat/ })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^Freies Üben/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Battle/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Stationen/ })).toBeVisible();
   await expect(page.getByLabel("Lehrkraftfreigabe")).toHaveAttribute(
     "type",
     "password",
   );
+
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test("room join keeps invalid input and shows an explicit unavailable state", async ({

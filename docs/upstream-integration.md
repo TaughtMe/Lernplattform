@@ -83,6 +83,11 @@ Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests
 - Battle mit fairer Ladung, Tinte, Flimmern, Schild und zielgerichteten Realtime-Ereignissen
 - detaillierte Live-Auswertung mit Aktiv-/Fertig-Status, Fortschritt, Sternen, Fehlerhäufigkeiten und CSV-Export
 - vollständiger gemeinsamer Kopfrechenkern mit Zahlenraum, Null-/Negativregeln, Einmaleinsreihen, Lückenaufgaben und sicherem Ausdrucksparser für Dezimalzahlen, Klammern, Potenzen, Brüche und Wurzeln
+- vollständiger Texteditor mit Zeichen-, Zeilen- und eigenen Trennern, manuellen Bereichen, Ausschluss und Reihenfolge
+- strenger Eingabemodus mit Paste-/Drop-/Autokorrektur-Schutz und mobilem Fallback gegen Masseneinfügungen
+- faire Battle-Zielauswahl, Schild, Tinte und Flimmern mit den ursprünglichen Aufholregeln
+- kurzer Retry für kritischen Beitritt und Sitzungsstart sowie ein Live-Debounce mit Maximalwartezeit
+- Exit-Warnung, Bildschirm-Wake-Lock und sprachgerechtes Vorlesen während aktiver Runden
 
 Die App-Hülle, ihr Router, Service Worker, eigenes Theme und allgemeine Einstellungen wurden bewusst nicht übernommen. Laufdiktat läuft als fester Bestandteil des Lernraums und verwendet dessen Theme, Navigation und responsive Qualitätsgrundlage. Noch offen bleibt die vollständige lokale Übergabe aller Live-Fehler an die jeweiligen persönlichen Fördermodule; dafür ist weiterhin ein ausdrücklicher, datensparsamer Rückgabeweg nötig.
 

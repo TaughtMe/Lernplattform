@@ -1,6 +1,25 @@
 import { getLiveRoomClient, type LiveRoomConfig } from "./live-room-client";
 import { LIVE_APP_VERSION } from "../../app-version";
 
+async function withLiveRoomRetry<T>(
+  operation: () => Promise<T>,
+  attempts = 2,
+  delayMs = 400,
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export type JoinedLiveRoom = {
   roomId: string;
   stationMode: boolean;
@@ -71,16 +90,18 @@ export async function updateLiveSession(
   sessionId: string,
   roomConfig: Record<string, unknown>,
 ) {
-  const { error } = await getLiveRoomClient(config).rpc(
-    "update_session_secure",
-    {
-      p_room_id: room.roomId,
-      p_access_token: room.accessToken,
-      p_session_id: sessionId,
-      p_config: roomConfig,
-    },
-  );
-  if (error) throw new Error(error.message);
+  return withLiveRoomRetry(async () => {
+    const { error } = await getLiveRoomClient(config).rpc(
+      "update_session_secure",
+      {
+        p_room_id: room.roomId,
+        p_access_token: room.accessToken,
+        p_session_id: sessionId,
+        p_config: roomConfig,
+      },
+    );
+    if (error) throw new Error(error.message);
+  });
 }
 
 export async function endLiveRoom(
@@ -194,26 +215,26 @@ export async function joinLiveRoom(
   studentName: string,
   participantToken?: string,
 ): Promise<JoinedLiveRoom | null> {
-  const { data, error } = await getLiveRoomClient(config).rpc(
-    "join_room_secure",
-    {
-      p_code: code,
-      p_student_key: studentName,
-      p_participant_token: participantToken ?? null,
-    },
-  );
-
-  if (error) throw new Error(error.message);
-  const row = data?.[0];
-  if (!row) return null;
-
-  return {
-    roomId: row.room_id,
-    stationMode: row.station_mode,
-    status: row.status,
-    studentName: row.assigned_student_key,
-    participantToken: row.participant_token,
-  };
+  return withLiveRoomRetry(async () => {
+    const { data, error } = await getLiveRoomClient(config).rpc(
+      "join_room_secure",
+      {
+        p_code: code,
+        p_student_key: studentName,
+        p_participant_token: participantToken ?? null,
+      },
+    );
+    if (error) throw new Error(error.message);
+    const row = data?.[0];
+    if (!row) return null;
+    return {
+      roomId: row.room_id,
+      stationMode: row.station_mode,
+      status: row.status,
+      studentName: row.assigned_student_key,
+      participantToken: row.participant_token,
+    };
+  });
 }
 
 export async function getLiveRoomState(

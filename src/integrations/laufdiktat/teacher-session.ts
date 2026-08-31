@@ -32,6 +32,7 @@ export type TeacherSessionOptions = {
   stationCount?: number;
   stationShuffle?: boolean;
   battleOptions?: TeacherBattleOptions;
+  wordsOverride?: LiveWord[];
 };
 
 export type TeacherRoomConfig = {
@@ -112,11 +113,13 @@ export function buildTeacherRoomConfig(
   options: TeacherSessionOptions,
 ): TeacherRoomConfig {
   return {
-    words: buildTeacherWords(
-      options.contentMode,
-      options.source,
-      options.vocabularyDirection,
-    ),
+    words:
+      options.wordsOverride ??
+      buildTeacherWords(
+        options.contentMode,
+        options.source,
+        options.vocabularyDirection,
+      ),
     gameMode: options.gameMode === "STATION" ? "UEBUNG" : options.gameMode,
     battleOptions: options.battleOptions ?? { ink: true, flicker: true },
     stationMode: options.gameMode === "STATION",
