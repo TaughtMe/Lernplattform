@@ -112,13 +112,13 @@ export function LiveStationGame({
   const current = words[index];
   if (!current) return null;
   return (
-    <div className="live-game-page">
-      <header className="live-game-topbar">
-        <div>
+    <div className="live-game-page is-active-round">
+      <header className="live-game-page__header">
+        <div className="live-game-page__meta">
           <span>Nummer</span>
           <strong>{stationNumber}</strong>
         </div>
-        <div>
+        <div className="live-game-page__meta">
           <span>Aufgabe</span>
           <strong>
             {index + 1} / {words.length}

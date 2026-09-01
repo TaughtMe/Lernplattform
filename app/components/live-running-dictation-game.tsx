@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  TouchEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { computeRunningDictationStars } from "../../src/domain/running-dictation";
 import {
   isBlockedRunningDictationInput,
@@ -27,8 +34,9 @@ import {
 import { LiveStationGame } from "./live-station-game";
 import { LAUFDIKTAT_PILOT } from "../../src/pilot-mode";
 import { useLiveSessionGuards } from "./use-live-session-guards";
+import { useAutoFitFontSize } from "./use-auto-fit-font-size";
 
-type Phase = "reveal" | "write" | "wrong" | "correct" | "complete";
+type Phase = "idle" | "revealed" | "write" | "wrong" | "correct" | "complete";
 type AttackType = "ink" | "flicker";
 
 type LiveRunningDictationGameProps = {
@@ -70,7 +78,7 @@ export function LiveRunningDictationGame({
   );
   const [index, setIndex] = useState(restoredIndex);
   const [phase, setPhase] = useState<Phase>(
-    initialProgress?.finished ? "complete" : "reveal",
+    initialProgress?.finished ? "complete" : "idle",
   );
   const [answer, setAnswer] = useState("");
   const [attempts, setAttempts] = useState(initialProgress?.attempts ?? 0);
@@ -79,7 +87,8 @@ export function LiveRunningDictationGame({
   const [wordErrors, setWordErrors] = useState<Record<string, number>>(
     initialProgress?.wordErrors ?? {},
   );
-  const [hasWrittenCurrent, setHasWrittenCurrent] = useState(false);
+  const [revealedCurrentWord, setRevealedCurrentWord] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [charge, setCharge] = useState(0);
   const [shield, setShield] = useState(false);
   const [picker, setPicker] = useState<AttackType | null>(null);
@@ -97,6 +106,14 @@ export function LiveRunningDictationGame({
   const answerRef = useRef<HTMLInputElement>(null);
   const current = session.words[index];
   useLiveSessionGuards(phase !== "complete");
+
+  const kind = current ? liveWordKind(current) : "text";
+  const prompt = current ? (current.prompt ?? current.targetWord) : "";
+  const {
+    containerRef: revealContainerRef,
+    textRef: revealTextRef,
+    fontSize: revealFontSize,
+  } = useAutoFitFontSize(prompt, { min: 28, max: 88 });
 
   useEffect(() => {
     if (phase !== "correct") return;
@@ -116,8 +133,8 @@ export function LiveRunningDictationGame({
       }
       setIndex((value) => value + 1);
       setAnswer("");
-      setHasWrittenCurrent(false);
-      setPhase("reveal");
+      setRevealedCurrentWord(false);
+      setPhase("idle");
       onProgress({
         currentIndex: index + 1,
         peeks,
@@ -140,7 +157,9 @@ export function LiveRunningDictationGame({
   ]);
 
   useEffect(() => {
-    if (phase === "write") answerRef.current?.focus();
+    if (phase !== "write") return;
+    const timer = window.setTimeout(() => answerRef.current?.focus(), 10);
+    return () => window.clearTimeout(timer);
   }, [phase]);
 
   useEffect(() => {
@@ -222,6 +241,9 @@ export function LiveRunningDictationGame({
     return (
       <div className="live-game-page">
         <section className="live-game-complete" aria-live="polite">
+          <span aria-hidden="true" className="live-game-complete__trophy">
+            🏆
+          </span>
           <p className="eyebrow">Raum {code} · Runde abgeschlossen</p>
           <h1>Geschafft, {studentName}!</h1>
           {session.showStars ? (
@@ -263,9 +285,6 @@ export function LiveRunningDictationGame({
 
   if (!current) return null;
   const activeWord = current;
-
-  const kind = liveWordKind(activeWord);
-  const prompt = activeWord.prompt ?? activeWord.targetWord;
   const errorKey = liveWordErrorKey(activeWord);
   const assistanceVisible =
     phase === "wrong" &&
@@ -276,20 +295,43 @@ export function LiveRunningDictationGame({
     studentName,
     index,
   );
+  const objectLabel = kind === "math" ? "die Aufgabe" : "das Wort";
 
-  function startWriting() {
+  function revealWord() {
     if (startedAt.current === 0) startedAt.current = Date.now();
-    if (hasWrittenCurrent) setPeeks((value) => value + 1);
-    setHasWrittenCurrent(true);
-    setPhase("write");
+    if (revealedCurrentWord) {
+      setPeeks((value) => value + 1);
+    } else {
+      setRevealedCurrentWord(true);
+    }
+    setPhase("revealed");
+  }
+
+  function onTouchStart(event: TouchEvent<HTMLDivElement>) {
+    if (phase === "complete") return;
+    if (event.touches.length >= 2 && phase === "idle") revealWord();
+  }
+
+  function onTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    if (phase === "complete") return;
+    if (event.touches.length < 2 && phase === "revealed") setPhase("write");
   }
 
   function readPromptAloud() {
-    if (!("speechSynthesis" in window)) return;
+    if (!("speechSynthesis" in window) || !prompt) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(prompt);
+    const spoken =
+      kind === "math"
+        ? prompt
+            .replace(/\+/g, " plus ")
+            .replace(/[−-]/g, " minus ")
+            .replace(/[·*×]/g, " mal ")
+            .replace(/[:/÷]/g, " geteilt durch ")
+        : prompt;
+    const utterance = new SpeechSynthesisUtterance(spoken);
     utterance.lang = activeWord.promptLang ?? "de-DE";
     window.speechSynthesis.speak(utterance);
+    setPeeks((value) => value + 1);
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -375,18 +417,41 @@ export function LiveRunningDictationGame({
 
   return (
     <div
-      className={`live-game-page${activeAttack === "flicker" ? " is-flickering" : ""}`}
+      className={`live-game-page is-active-round${activeAttack === "flicker" ? " is-flickering" : ""}`}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
     >
-      <header className="live-game-topbar">
-        <div>
+      <header className="live-game-page__header">
+        <button
+          type="button"
+          className="live-game-page__icon-button"
+          onClick={() => setShowExitConfirm(true)}
+          aria-label="Spiel verlassen"
+          title="Spiel verlassen"
+        >
+          ←
+        </button>
+        <div className="live-game-page__meta">
           <span>Raum {code}</span>
-          <strong>{studentName}</strong>
-        </div>
-        <div aria-label={`Aufgabe ${index + 1} von ${session.words.length}`}>
-          <span>Aufgabe</span>
           <strong>
             {index + 1} / {session.words.length}
           </strong>
+        </div>
+        <div className="live-game-page__stats">
+          {session.isTtsEnabled ? (
+            <button
+              type="button"
+              className="live-game-page__icon-button"
+              onClick={readPromptAloud}
+              title="Vorlesen (zählt als Spicker)"
+              aria-label="Vorlesen"
+            >
+              🔊
+            </button>
+          ) : null}
+          <span>Spicker {peeks}</span>
+          <span>Fehler {errors}</span>
         </div>
       </header>
 
@@ -469,89 +534,105 @@ export function LiveRunningDictationGame({
         </div>
       ) : null}
 
-      <section className="live-game-task" aria-live="polite">
-        {phase === "reveal" ? (
-          <>
-            <p className="eyebrow">Ansehen und merken</p>
-            <h1>{prompt}</h1>
-            {session.isTtsEnabled ? (
-              <button
-                className="button button--quiet"
-                onClick={readPromptAloud}
-              >
-                Vorlesen
-              </button>
-            ) : null}
-            <button className="button button--primary" onClick={startWriting}>
-              Verstanden – jetzt schreiben
-            </button>
-          </>
+      <main className="live-game-page__stage">
+        <div
+          className={`live-game-page__edge live-game-page__edge--left${phase === "idle" ? " is-waiting" : ""}`}
+          aria-hidden="true"
+        />
+        <div
+          className={`live-game-page__edge live-game-page__edge--right${phase === "idle" ? " is-waiting" : ""}`}
+          aria-hidden="true"
+        />
+
+        {phase === "idle" ? (
+          <p className="live-game-idle-hint">
+            Mit zwei Fingern an den Bildschirmrändern halten, um {objectLabel}{" "}
+            zu sehen.
+          </p>
+        ) : null}
+
+        {phase === "revealed" ? (
+          <div ref={revealContainerRef} className="live-game-reveal">
+            <h1
+              ref={revealTextRef}
+              style={{ fontSize: `${revealFontSize}px` }}
+            >
+              {prompt}
+            </h1>
+          </div>
         ) : null}
 
         {phase === "write" ? (
-          <form onSubmit={submit}>
+          <form className="live-game-write" onSubmit={submit}>
             <p className="eyebrow">Aus dem Gedächtnis</p>
-            <h1>
+            <h2>
               {kind === "vocabulary" || kind === "math"
                 ? prompt
                 : "Was hast du dir gemerkt?"}
-            </h1>
-            <label htmlFor="live-game-answer">Deine Antwort</label>
-            <input
-              ref={answerRef}
-              id="live-game-answer"
-              inputMode={kind === "math" ? "decimal" : "text"}
-              autoComplete="off"
-              spellCheck={false}
-              value={answer}
-              {...(session.strictTypingMode
-                ? {
-                    autoCorrect:
-                      STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCorrect,
-                    autoCapitalize:
-                      STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCapitalize,
+            </h2>
+            <div className="live-game-write__field">
+              <input
+                ref={answerRef}
+                id="live-game-answer"
+                aria-label="Deine Antwort"
+                inputMode={kind === "math" ? "decimal" : "text"}
+                autoComplete="off"
+                spellCheck={false}
+                value={answer}
+                {...(session.strictTypingMode
+                  ? {
+                      autoCorrect:
+                        STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCorrect,
+                      autoCapitalize:
+                        STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCapitalize,
+                    }
+                  : {})}
+                onBeforeInput={(event) => {
+                  if (
+                    session.strictTypingMode &&
+                    isBlockedRunningDictationInput(
+                      (event.nativeEvent as InputEvent).inputType,
+                    )
+                  ) {
+                    event.preventDefault();
                   }
-                : {})}
-              onBeforeInput={(event) => {
-                if (
-                  session.strictTypingMode &&
-                  isBlockedRunningDictationInput(
-                    (event.nativeEvent as InputEvent).inputType,
-                  )
-                ) {
-                  event.preventDefault();
-                }
-              }}
-              onPaste={(event) => {
-                if (session.strictTypingMode) event.preventDefault();
-              }}
-              onDrop={(event) => {
-                if (session.strictTypingMode) event.preventDefault();
-              }}
-              onChange={(event) => {
-                let next = event.target.value;
-                if (session.strictTypingMode && kind === "math") {
-                  next = sanitizeStrictMathAnswer(next);
-                }
-                if (
-                  session.strictTypingMode &&
-                  isSuspiciousRunningDictationInsert(answer, next)
-                ) {
-                  return;
-                }
-                setAnswer(next);
-              }}
-            />
-            <div className="live-game-actions">
+                }}
+                onPaste={(event) => {
+                  if (session.strictTypingMode) event.preventDefault();
+                }}
+                onDrop={(event) => {
+                  if (session.strictTypingMode) event.preventDefault();
+                }}
+                onChange={(event) => {
+                  let next = event.target.value;
+                  if (session.strictTypingMode && kind === "math") {
+                    next = sanitizeStrictMathAnswer(next);
+                  }
+                  if (
+                    session.strictTypingMode &&
+                    isSuspiciousRunningDictationInsert(answer, next)
+                  ) {
+                    return;
+                  }
+                  setAnswer(next);
+                }}
+              />
               <button
-                type="button"
-                className="text-button"
-                onClick={() => setPhase("reveal")}
+                type="submit"
+                className="live-game-write__submit"
+                aria-label="Bestätigen"
               >
-                Noch einmal ansehen
+                ✓
               </button>
-              <button className="button button--primary">Prüfen</button>
             </div>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setPhase("idle")}
+            >
+              {objectLabel === "die Aufgabe" ? "Aufgabe" : "Wort"} nochmal
+              ansehen
+            </button>
           </form>
         ) : null}
 
@@ -591,7 +672,28 @@ export function LiveRunningDictationGame({
             <p>{lastAnswerCorrect ? "Richtig" : "Nicht richtig"}</p>
           </div>
         ) : null}
-      </section>
+      </main>
+
+      {showExitConfirm ? (
+        <div className="live-game-exit-confirm" role="alertdialog" aria-modal="true">
+          <div className="live-game-exit-confirm__card">
+            <h2>Spiel verlassen?</h2>
+            <p>Dein bisheriger Fortschritt in dieser Runde bleibt erhalten.</p>
+            <div className="live-game-exit-confirm__actions">
+              <button
+                type="button"
+                className="button button--quiet"
+                onClick={() => setShowExitConfirm(false)}
+              >
+                Weiter üben
+              </button>
+              <Link className="button button--primary" href="/">
+                Zur Startseite
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

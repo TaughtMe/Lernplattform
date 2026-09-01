@@ -1,8 +1,16 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
+
+// Ersetzt den Button-Klick aus der alten Oberfläche: das Original-Laufdiktat
+// deckt die Aufgabe per Zwei-Finger-Rand-Geste auf, die hier simuliert wird.
+function revealWithTwoFingers(container: HTMLElement) {
+  const stage = container.querySelector(".live-game-page") as HTMLElement;
+  fireEvent.touchStart(stage, { touches: [{}, {}] });
+  fireEvent.touchEnd(stage, { touches: [] });
+}
 
 const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
   ingestBundle: vi
@@ -38,7 +46,7 @@ describe("LiveRunningDictationGame", () => {
   it("runs an authorized room task natively through to completion", async () => {
     const user = userEvent.setup();
     const onProgress = vi.fn();
-    render(
+    const { container } = render(
       <LiveRunningDictationGame
         code="4829"
         studentName="Mia"
@@ -49,11 +57,9 @@ describe("LiveRunningDictationGame", () => {
       />,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
-    );
+    revealWithTwoFingers(container);
     const answer = screen.getByRole("textbox", { name: "Deine Antwort" });
-    expect(answer).toHaveFocus();
+    await waitFor(() => expect(answer).toHaveFocus());
     await user.type(answer, "Schulweg{Enter}");
 
     expect(screen.getByText("Richtig")).toBeVisible();
@@ -71,7 +77,7 @@ describe("LiveRunningDictationGame", () => {
 
   it("shows incorrect feedback as an error in classic Laufdiktat", async () => {
     const user = userEvent.setup();
-    render(
+    const { container } = render(
       <LiveRunningDictationGame
         code="4829"
         studentName="Mia"
@@ -82,9 +88,7 @@ describe("LiveRunningDictationGame", () => {
       />,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
-    );
+    revealWithTwoFingers(container);
     await user.type(
       screen.getByRole("textbox", { name: "Deine Antwort" }),
       "falsch{Enter}",
@@ -96,7 +100,7 @@ describe("LiveRunningDictationGame", () => {
 
   it("hides an assistance solution before requiring another recall", async () => {
     const user = userEvent.setup();
-    render(
+    const { container } = render(
       <LiveRunningDictationGame
         code="4829"
         studentName="Mia"
@@ -111,9 +115,7 @@ describe("LiveRunningDictationGame", () => {
       />,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
-    );
+    revealWithTwoFingers(container);
     await user.type(
       screen.getByRole("textbox", { name: "Deine Antwort" }),
       "falsch{Enter}",
@@ -126,15 +128,15 @@ describe("LiveRunningDictationGame", () => {
       }),
     );
     expect(screen.queryByText(/Die Lösung ist:/)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("textbox", { name: "Deine Antwort" }),
-    ).toHaveFocus();
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Deine Antwort" })).toHaveFocus(),
+    );
   });
 
   it("does not transfer vocabulary before the pilot expansion gate", async () => {
     const user = userEvent.setup();
     ingestBundle.mockClear();
-    render(
+    const { container } = render(
       <LiveRunningDictationGame
         code="4829"
         studentName="Mia"
@@ -156,9 +158,7 @@ describe("LiveRunningDictationGame", () => {
       />,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
-    );
+    revealWithTwoFingers(container);
     await user.type(
       screen.getByRole("textbox", { name: "Deine Antwort" }),
       "Haus{Enter}",
