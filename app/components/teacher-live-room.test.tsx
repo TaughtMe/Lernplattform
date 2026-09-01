@@ -119,27 +119,62 @@ describe("TeacherLiveRoom", () => {
     expect(within(preview).getByRole("button", { name: "_" })).toBeVisible();
   });
 
+  it("starts vocabulary mode with one empty pair ready to fill in", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const vokabelnTab = screen.getByRole("tab", { name: "Vokabeln" });
+    await waitFor(() => expect(vokabelnTab).toBeEnabled());
+    await user.click(vokabelnTab);
+    expect(screen.getByText("1 Vokabeln")).toBeVisible();
+    expect(screen.getByPlaceholderText("Vokabel 1")).toBeVisible();
+  });
+
   it("keeps a freshly added vocabulary pair visible while it is still empty", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     const vokabelnTab = screen.getByRole("tab", { name: "Vokabeln" });
     await waitFor(() => expect(vokabelnTab).toBeEnabled());
     await user.click(vokabelnTab);
-    expect(screen.getByText("0 Vokabeln")).toBeVisible();
+    expect(screen.getByText("1 Vokabeln")).toBeVisible();
 
     await user.click(
       screen.getByRole("button", { name: "+ Vokabel hinzufügen" }),
     );
-    const newPrimary = screen.getByPlaceholderText("Vokabel 1");
+    const newPrimary = screen.getByPlaceholderText("Vokabel 2");
     expect(newPrimary).toBeVisible();
     const newRow = newPrimary.closest<HTMLElement>(
       ".teacher-live__vocabulary-row",
     )!;
     await user.type(newPrimary, "tree");
     await user.type(within(newRow).getByPlaceholderText("Übersetzung"), "Baum");
-    expect(screen.getByText("1 Vokabeln")).toBeVisible();
+    expect(screen.getByText("2 Vokabeln")).toBeVisible();
 
+    await user.click(screen.getByRole("button", { name: "Vokabel 2 löschen" }));
+    expect(screen.getByText("1 Vokabeln")).toBeVisible();
+  });
+
+  it("always leaves one empty vocabulary pair after deleting the last one", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const vokabelnTab = screen.getByRole("tab", { name: "Vokabeln" });
+    await waitFor(() => expect(vokabelnTab).toBeEnabled());
+    await user.click(vokabelnTab);
     await user.click(screen.getByRole("button", { name: "Vokabel 1 löschen" }));
-    expect(screen.getByText("0 Vokabeln")).toBeVisible();
+    expect(screen.getByText("1 Vokabeln")).toBeVisible();
+    expect(screen.getByPlaceholderText("Vokabel 1")).toBeVisible();
+  });
+
+  it("lets a teacher require exact case matching for vocabulary answers", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const vokabelnTab = screen.getByRole("tab", { name: "Vokabeln" });
+    await waitFor(() => expect(vokabelnTab).toBeEnabled());
+    await user.click(vokabelnTab);
+    const checkbox = screen.getByRole("checkbox", {
+      name: "Groß-/Kleinschreibung prüfen",
+    });
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
   });
 });

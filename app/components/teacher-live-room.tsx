@@ -135,6 +135,13 @@ function isOnline(participant: LiveRoomParticipant) {
   );
 }
 
+const emptyVocabularySide = () => ({ primary: "", alternatives: [] });
+const emptyVocabularyPair = (): VocabularyPair => ({
+  id: crypto.randomUUID(),
+  left: emptyVocabularySide(),
+  right: emptyVocabularySide(),
+});
+
 export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const hydrated = useHydrated();
   const [stage, setStage] = useState<Stage>("content");
@@ -152,9 +159,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   useEffect(() => {
     if (mathEditIndex !== null) mathEditInputRef.current?.focus();
   }, [mathEditIndex]);
-  const [vocabularyPairs, setVocabularyPairs] = useState<VocabularyPair[]>([]);
+  const [vocabularyPairs, setVocabularyPairs] = useState<VocabularyPair[]>([
+    emptyVocabularyPair(),
+  ]);
+  const [vocabularyCaseSensitive, setVocabularyCaseSensitive] = useState(false);
   const [vocabularyTableInput, setVocabularyTableInput] = useState("");
-  const emptyVocabularySide = () => ({ primary: "", alternatives: [] });
   const serializeVocabularyPairs = (pairs: VocabularyPair[]) =>
     pairs
       .map((pair) => {
@@ -315,8 +324,19 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             kind: "text" as const,
             targetWord: section.text,
           }))
-        : buildTeacherWords(contentMode, source, direction),
-    [contentMode, direction, orderedTextSections, source],
+        : buildTeacherWords(
+            contentMode,
+            source,
+            direction,
+            vocabularyCaseSensitive,
+          ),
+    [
+      contentMode,
+      direction,
+      orderedTextSections,
+      source,
+      vocabularyCaseSensitive,
+    ],
   );
   const mathLines = useMemo(
     () =>
@@ -568,8 +588,12 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
           ...current,
           [nextContentMode]: restoredSource,
         }));
-        if (nextContentMode === "vocabulary")
-          setVocabularyPairs(parseVocabularyTable(restoredSource));
+        if (nextContentMode === "vocabulary") {
+          const parsed = parseVocabularyTable(restoredSource);
+          setVocabularyPairs(
+            parsed.length > 0 ? parsed : [emptyVocabularyPair()],
+          );
+        }
         setGameMode(restored.stationMode ? "STATION" : restored.gameMode);
         setShuffleWords(restored.shuffleWords);
         setStationShuffle(restored.stationShuffle);
@@ -628,8 +652,12 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     reader.onload = () => {
       const text = String(reader.result ?? "");
       setSources((current) => ({ ...current, [contentMode]: text }));
-      if (contentMode === "vocabulary")
-        setVocabularyPairs(parseVocabularyTable(text));
+      if (contentMode === "vocabulary") {
+        const parsed = parseVocabularyTable(text);
+        setVocabularyPairs(
+          parsed.length > 0 ? parsed : [emptyVocabularyPair()],
+        );
+      }
     };
     reader.readAsText(file);
   }
@@ -859,8 +887,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       setContentMode(mode);
                       if (mode === "vocabulary") {
                         setShuffleWords(true);
+                        const parsed = parseVocabularyTable(sources.vocabulary);
                         setVocabularyPairs(
-                          parseVocabularyTable(sources.vocabulary),
+                          parsed.length > 0 ? parsed : [emptyVocabularyPair()],
                         );
                       }
                     }}
@@ -1654,13 +1683,16 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                           <button
                             type="button"
                             aria-label={`Vokabel ${index + 1} löschen`}
-                            onClick={() =>
+                            onClick={() => {
+                              const next = vocabularyPairs.filter(
+                                (entry) => entry.id !== pair.id,
+                              );
                               applyVocabularyPairs(
-                                vocabularyPairs.filter(
-                                  (entry) => entry.id !== pair.id,
-                                ),
-                              )
-                            }
+                                next.length > 0
+                                  ? next
+                                  : [emptyVocabularyPair()],
+                              );
+                            }}
                           >
                             ×
                           </button>
@@ -1705,6 +1737,16 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         </label>
                       ))}
                     </div>
+                    <label className="teacher-live__vocabulary-case">
+                      <input
+                        type="checkbox"
+                        checked={vocabularyCaseSensitive}
+                        onChange={(event) =>
+                          setVocabularyCaseSensitive(event.target.checked)
+                        }
+                      />
+                      Groß-/Kleinschreibung prüfen
+                    </label>
                     <label className="teacher-live__vocabulary-transfer">
                       Vokabeln nach der Runde übernehmen
                       <select

@@ -5798,6 +5798,9 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   background: var(--coral);
   content: "";
 }
+.teacher-live__vocabulary-sidebar .teacher-live__vocabulary-case {
+  accent-color: var(--coral);
+}
 .teacher-live__vocabulary-sidebar .teacher-live__vocabulary-transfer {
   display: grid;
   gap: 8px;

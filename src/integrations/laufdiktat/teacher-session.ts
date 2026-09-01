@@ -80,6 +80,7 @@ export function buildTeacherWords(
   mode: TeacherContentMode,
   source: string,
   vocabularyDirection: VocabularyDirection,
+  vocabularyCaseSensitive = false,
 ): LiveWord[] {
   if (mode === "text") {
     return parseRunningDictationText(source).map((item) => ({
@@ -92,6 +93,7 @@ export function buildTeacherWords(
     return buildVocabularyItems(
       parseVocabularyTable(source),
       vocabularyDirection,
+      vocabularyCaseSensitive,
     ).map((item) => ({
       id: item.id,
       kind: "vocabulary",
@@ -100,6 +102,7 @@ export function buildTeacherWords(
       acceptedAnswers: item.acceptedAnswers,
       promptLang: item.promptLocale,
       answerLang: item.answerLocale,
+      caseSensitive: item.caseSensitive,
     }));
   }
   return source
