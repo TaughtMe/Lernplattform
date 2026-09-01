@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { TeacherLiveRoom } from "./teacher-live-room";
@@ -45,13 +45,67 @@ describe("TeacherLiveRoom", () => {
     await user.clear(source);
     await user.type(source, "Eins, zwei. Drei.");
     await user.click(screen.getByRole("button", { name: "," }));
-    expect(screen.getByText("3 Abschnitte aktiv")).toBeVisible();
+    expect(screen.getByText("3 Aufgaben")).toBeVisible();
     await user.click(
       screen.getByRole("button", { name: "Abschnitte verwalten" }),
     );
     const sections = screen.getAllByRole("checkbox");
     await user.click(sections.at(-1)!);
     await user.click(screen.getByRole("button", { name: "Schließen" }));
-    expect(screen.getByText("2 Abschnitte aktiv")).toBeVisible();
+    expect(screen.getByText("2 Aufgaben")).toBeVisible();
+  });
+
+  it("supports adding, editing and deleting individual math tasks", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
+    await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
+    await user.click(kopfrechnenTab);
+    expect(screen.getAllByText("4 Aufgaben")[0]).toBeVisible();
+
+    await user.click(
+      screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
+    );
+    await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3 + 4{Enter}");
+    expect(screen.getByText("3 + 4")).toBeVisible();
+    expect(screen.getAllByText("5 Aufgaben")[0]).toBeVisible();
+
+    await user.click(screen.getByText("3 + 4"));
+    const editField = screen.getByDisplayValue("3 + 4");
+    await user.clear(editField);
+    await user.type(editField, "5 + 5{Enter}");
+    expect(screen.getByText("5 + 5")).toBeVisible();
+
+    const editedRow = screen
+      .getByText("5 + 5")
+      .closest<HTMLElement>(".teacher-live__math-row")!;
+    await user.click(
+      within(editedRow).getByRole("button", { name: "Löschen" }),
+    );
+    expect(screen.getAllByText("4 Aufgaben")[0]).toBeVisible();
+  });
+
+  it("keeps a freshly added vocabulary pair visible while it is still empty", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const vokabelnTab = screen.getByRole("tab", { name: "Vokabeln" });
+    await waitFor(() => expect(vokabelnTab).toBeEnabled());
+    await user.click(vokabelnTab);
+    expect(screen.getByText("3 Vokabeln")).toBeVisible();
+
+    await user.click(
+      screen.getByRole("button", { name: "+ Vokabel hinzufügen" }),
+    );
+    const newPrimary = screen.getByPlaceholderText("Vokabel 4");
+    expect(newPrimary).toBeVisible();
+    const newRow = newPrimary.closest<HTMLElement>(
+      ".teacher-live__vocabulary-row",
+    )!;
+    await user.type(newPrimary, "tree");
+    await user.type(within(newRow).getByPlaceholderText("Übersetzung"), "Baum");
+    expect(screen.getByText("4 Vokabeln")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Vokabel 4 löschen" }));
+    expect(screen.getByText("3 Vokabeln")).toBeVisible();
   });
 });

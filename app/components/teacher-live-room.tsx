@@ -4,7 +4,11 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { VocabularyDirection } from "../../src/domain/running-dictation";
+import {
+  parseVocabularyTable,
+  type VocabularyDirection,
+  type VocabularyPair,
+} from "../../src/domain/running-dictation";
 import {
   applyRunningDictationSectionEdits,
   buildRunningDictationSections,
@@ -128,6 +132,30 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sectionManagerOpen, setSectionManagerOpen] = useState(false);
+  const [mathSettingsOpen, setMathSettingsOpen] = useState(false);
+  const [mathEditIndex, setMathEditIndex] = useState<number | null>(null);
+  const [mathDraft, setMathDraft] = useState("");
+  const mathEditInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (mathEditIndex !== null) mathEditInputRef.current?.focus();
+  }, [mathEditIndex]);
+  const [vocabularyPairs, setVocabularyPairs] = useState<VocabularyPair[]>([]);
+  const emptyVocabularySide = () => ({ primary: "", alternatives: [] });
+  const serializeVocabularyPairs = (pairs: VocabularyPair[]) =>
+    pairs
+      .map((pair) => {
+        const side = (value: VocabularyPair["left"]) =>
+          [value.primary, ...value.alternatives].filter(Boolean).join("|");
+        return `${side(pair.left)};${side(pair.right)}`;
+      })
+      .join("\n");
+  const applyVocabularyPairs = (pairs: VocabularyPair[]) => {
+    setVocabularyPairs(pairs);
+    setSources((current) => ({
+      ...current,
+      vocabulary: serializeVocabularyPairs(pairs),
+    }));
+  };
   const [sources, setSources] = useState(DEFAULT_SOURCES);
   const [splitConfig, setSplitConfig] = useState<TextSplitConfig>(
     DEFAULT_TEXT_SPLIT_CONFIG,
@@ -215,6 +243,57 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         : buildTeacherWords(contentMode, source, direction),
     [contentMode, direction, orderedTextSections, source],
   );
+  const mathLines = useMemo(
+    () =>
+      sources.math
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0),
+    [sources.math],
+  );
+
+  function generateSingleMathLine() {
+    return generateMentalMathSource({
+      count: 1,
+      min: mathMin,
+      max: mathMax,
+      operations: mathOps.length ? mathOps : ["+"],
+      allowNegativeResults: mathAllowNegative,
+      excludeZeroOperand: mathExcludeZeroOperand,
+      excludeZeroResult: mathExcludeZeroResult,
+      multiplicationTables: mathTables,
+      gapMode: mathGap,
+    }).trim();
+  }
+
+  function commitMathLines(lines: string[]) {
+    setSources((current) => ({ ...current, math: lines.join("\n") }));
+  }
+
+  function startEditMathRow(index: number) {
+    setMathEditIndex(index);
+    setMathDraft(mathLines[index] ?? "");
+  }
+
+  function commitMathEdit(continueEditing: boolean) {
+    if (mathEditIndex === null) return;
+    const wasAppending = mathEditIndex >= mathLines.length;
+    const lines = [...mathLines];
+    const value = mathDraft.trim();
+    if (wasAppending) {
+      if (value) lines.push(value);
+    } else if (value) {
+      lines[mathEditIndex] = value;
+    } else {
+      lines.splice(mathEditIndex, 1);
+    }
+    commitMathLines(lines);
+    setMathDraft("");
+    setMathEditIndex(
+      continueEditing && wasAppending && value ? lines.length : null,
+    );
+  }
+
   const registeredNames = participants.map(({ studentName }) => studentName);
   const connectedNames = Array.from(
     new Set([
@@ -314,6 +393,8 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
           ...current,
           [nextContentMode]: restoredSource,
         }));
+        if (nextContentMode === "vocabulary")
+          setVocabularyPairs(parseVocabularyTable(restoredSource));
         setGameMode(restored.stationMode ? "STATION" : restored.gameMode);
         setShuffleWords(restored.shuffleWords);
         setStationShuffle(restored.stationShuffle);
@@ -369,11 +450,12 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   function importFile(file: File | undefined) {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () =>
-      setSources((current) => ({
-        ...current,
-        [contentMode]: String(reader.result ?? ""),
-      }));
+    reader.onload = () => {
+      const text = String(reader.result ?? "");
+      setSources((current) => ({ ...current, [contentMode]: text }));
+      if (contentMode === "vocabulary")
+        setVocabularyPairs(parseVocabularyTable(text));
+    };
     reader.readAsText(file);
   }
 
@@ -600,7 +682,12 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     disabled={!hydrated}
                     onClick={() => {
                       setContentMode(mode);
-                      if (mode === "vocabulary") setShuffleWords(true);
+                      if (mode === "vocabulary") {
+                        setShuffleWords(true);
+                        setVocabularyPairs(
+                          parseVocabularyTable(sources.vocabulary),
+                        );
+                      }
                     }}
                   >
                     {LABELS[mode]}
@@ -643,55 +730,58 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
               </div>
               {contentMode === "math" && (
                 <div className="teacher-live__math-workbench">
-                  <div className="teacher-live__math-generator">
-                    <label>
-                      Anzahl
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={mathCount}
-                        onChange={(e) => setMathCount(Number(e.target.value))}
-                      />
-                    </label>
-                    <label>
-                      Von
-                      <input
-                        type="number"
-                        value={mathMin}
-                        onChange={(e) => setMathMin(Number(e.target.value))}
-                      />
-                    </label>
-                    <label>
-                      Bis
-                      <input
-                        type="number"
-                        value={mathMax}
-                        onChange={(e) => setMathMax(Number(e.target.value))}
-                      />
-                    </label>
-                    <fieldset>
-                      <legend>Rechenarten</legend>
+                  <div className="teacher-live__math-quickbar">
+                    <div className="teacher-live__math-oppills">
                       {(["+", "-", "*", "/"] as const).map((op) => (
-                        <label key={op}>
-                          <input
-                            type="checkbox"
-                            checked={mathOps.includes(op)}
-                            onChange={() =>
-                              setMathOps((current) =>
-                                current.includes(op)
-                                  ? current.filter((item) => item !== op)
-                                  : [...current, op],
-                              )
-                            }
-                          />
+                        <button
+                          type="button"
+                          key={op}
+                          title={
+                            op === "+"
+                              ? "Plus-Aufgaben"
+                              : op === "-"
+                                ? "Minus-Aufgaben"
+                                : op === "*"
+                                  ? "Mal-Aufgaben"
+                                  : "Geteilt-Aufgaben"
+                          }
+                          aria-pressed={mathOps.includes(op)}
+                          onClick={() =>
+                            setMathOps((current) =>
+                              current.includes(op)
+                                ? current.filter((item) => item !== op)
+                                : [...current, op],
+                            )
+                          }
+                        >
                           {op === "*" ? "·" : op === "/" ? ":" : op}
-                        </label>
+                        </button>
                       ))}
-                    </fieldset>
+                    </div>
+                    <div
+                      className="teacher-live__stepper-row"
+                      title="Höchster Wert in jeder Aufgabe"
+                    >
+                      <span>Bis:</span>
+                      <Stepper
+                        value={mathMax}
+                        onChange={setMathMax}
+                        min={-999}
+                        max={1000}
+                      />
+                    </div>
+                    <div className="teacher-live__stepper-row">
+                      <span>Anzahl:</span>
+                      <Stepper
+                        value={mathCount}
+                        onChange={setMathCount}
+                        min={1}
+                        max={50}
+                      />
+                    </div>
                     <button
                       type="button"
-                      className="button button--quiet"
+                      className="teacher-live__math-generate"
                       onClick={() =>
                         setSources((current) => ({
                           ...current,
@@ -709,133 +799,319 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         }))
                       }
                     >
-                      Aufgaben erzeugen
+                      ✨ Aufgaben erzeugen
+                    </button>
+                    <button
+                      type="button"
+                      className="teacher-live__math-settings-toggle"
+                      aria-label="Weitere Regeln"
+                      title="Weitere Regeln"
+                      onClick={() => setMathSettingsOpen(true)}
+                    >
+                      ⚙
                     </button>
                   </div>
-                  <div className="teacher-live__math-rules">
-                    <Option
-                      label="Negative Ergebnisse"
-                      checked={mathAllowNegative}
-                      set={setMathAllowNegative}
-                    />
-                    <Option
-                      label="0 als Rechenzahl vermeiden"
-                      checked={mathExcludeZeroOperand}
-                      set={setMathExcludeZeroOperand}
-                    />
-                    <Option
-                      label="Ergebnis 0 vermeiden"
-                      checked={mathExcludeZeroResult}
-                      set={setMathExcludeZeroResult}
-                    />
-                    <Option
-                      label="Lückenaufgaben"
-                      checked={mathGap}
-                      set={setMathGap}
-                    />
+                  <div className="teacher-live__math-tasklist">
+                    <span>{mathLines.length} Aufgaben</span>
+                    <div className="teacher-live__math-rows">
+                      {mathLines.length === 0 && mathEditIndex === null ? (
+                        <p className="teacher-live__math-empty">
+                          Noch keine Aufgaben.
+                          <br />
+                          Oben erzeugen oder unten selbst hinzufügen.
+                        </p>
+                      ) : (
+                        mathLines.map((line, index) =>
+                          mathEditIndex === index ? (
+                            <input
+                              key={`edit-${index}`}
+                              ref={mathEditInputRef}
+                              className="teacher-live__math-edit"
+                              value={mathDraft}
+                              onChange={(event) =>
+                                setMathDraft(event.target.value)
+                              }
+                              onBlur={() => commitMathEdit(false)}
+                              onKeyDown={(event) => {
+                                if (
+                                  event.key === "Enter" ||
+                                  event.key === "Tab"
+                                ) {
+                                  event.preventDefault();
+                                  commitMathEdit(true);
+                                }
+                                if (event.key === "Escape") {
+                                  setMathDraft("");
+                                  setMathEditIndex(null);
+                                }
+                              }}
+                              placeholder="z. B. 4 + 4"
+                            />
+                          ) : (
+                            <div
+                              key={`${line}-${index}`}
+                              className="teacher-live__math-row"
+                            >
+                              <button
+                                type="button"
+                                className="teacher-live__math-row-text"
+                                title="Zum Bearbeiten klicken"
+                                onClick={() => startEditMathRow(index)}
+                              >
+                                {line}
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="Neu würfeln"
+                                title="Neu würfeln"
+                                onClick={() => {
+                                  const lines = [...mathLines];
+                                  lines[index] = generateSingleMathLine();
+                                  commitMathLines(lines);
+                                }}
+                              >
+                                ↻
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="Löschen"
+                                title="Löschen"
+                                onClick={() => {
+                                  const lines = [...mathLines];
+                                  lines.splice(index, 1);
+                                  commitMathLines(lines);
+                                  if (mathEditIndex !== null)
+                                    setMathEditIndex(null);
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ),
+                        )
+                      )}
+                      {mathEditIndex === mathLines.length ? (
+                        <input
+                          ref={mathEditInputRef}
+                          className="teacher-live__math-edit"
+                          value={mathDraft}
+                          onChange={(event) => setMathDraft(event.target.value)}
+                          onBlur={() => commitMathEdit(false)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === "Tab") {
+                              event.preventDefault();
+                              commitMathEdit(true);
+                            }
+                            if (event.key === "Escape") {
+                              setMathDraft("");
+                              setMathEditIndex(null);
+                            }
+                          }}
+                          placeholder="z. B. 4 + 4"
+                        />
+                      ) : null}
+                    </div>
+                    {mathEditIndex !== mathLines.length ? (
+                      <button
+                        type="button"
+                        className="teacher-live__math-add"
+                        onClick={() => {
+                          setMathEditIndex(mathLines.length);
+                          setMathDraft("");
+                        }}
+                      >
+                        + Aufgabe hinzufügen
+                      </button>
+                    ) : null}
                   </div>
-                  {mathOps.some(
-                    (operation) => operation === "*" || operation === "/",
-                  ) ? (
-                    <fieldset className="teacher-live__math-tables">
-                      <legend>
-                        Einmaleins-Reihen · nichts gewählt bedeutet alle
-                      </legend>
-                      {MULTIPLICATION_TABLES.map((table) => (
-                        <button
-                          type="button"
-                          key={table}
-                          aria-pressed={mathTables.includes(table)}
-                          onClick={() =>
-                            setMathTables((active) =>
-                              active.includes(table)
-                                ? active.filter((entry) => entry !== table)
-                                : [...active, table].sort(
-                                    (left, right) => left - right,
-                                  ),
-                            )
-                          }
-                        >
-                          {table}
-                        </button>
-                      ))}
-                    </fieldset>
-                  ) : null}
                 </div>
               )}
+              {mathSettingsOpen ? (
+                <div className="teacher-live__section-dialog-backdrop">
+                  <div
+                    className="teacher-live__section-dialog"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Weitere Regeln"
+                  >
+                    <div className="teacher-live__section-dialog-heading">
+                      <h3>Weitere Regeln</h3>
+                      <button
+                        type="button"
+                        aria-label="Schließen"
+                        onClick={() => setMathSettingsOpen(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <label className="teacher-live__number">
+                      Von
+                      <input
+                        type="number"
+                        value={mathMin}
+                        onChange={(e) => setMathMin(Number(e.target.value))}
+                      />
+                    </label>
+                    <div className="teacher-live__math-rules">
+                      <Option
+                        label="Negative Ergebnisse"
+                        checked={mathAllowNegative}
+                        set={setMathAllowNegative}
+                      />
+                      <Option
+                        label="0 als Rechenzahl vermeiden"
+                        checked={mathExcludeZeroOperand}
+                        set={setMathExcludeZeroOperand}
+                      />
+                      <Option
+                        label="Ergebnis 0 vermeiden"
+                        checked={mathExcludeZeroResult}
+                        set={setMathExcludeZeroResult}
+                      />
+                      <Option
+                        label="Lückenaufgaben"
+                        checked={mathGap}
+                        set={setMathGap}
+                      />
+                    </div>
+                    {mathOps.some(
+                      (operation) => operation === "*" || operation === "/",
+                    ) ? (
+                      <fieldset className="teacher-live__math-tables">
+                        <legend>
+                          Einmaleins-Reihen · nichts gewählt bedeutet alle
+                        </legend>
+                        {MULTIPLICATION_TABLES.map((table) => (
+                          <button
+                            type="button"
+                            key={table}
+                            aria-pressed={mathTables.includes(table)}
+                            onClick={() =>
+                              setMathTables((active) =>
+                                active.includes(table)
+                                  ? active.filter((entry) => entry !== table)
+                                  : [...active, table].sort(
+                                      (left, right) => left - right,
+                                    ),
+                              )
+                            }
+                          >
+                            {table}
+                          </button>
+                        ))}
+                      </fieldset>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
               {contentMode === "text" && (
                 <section
                   className="teacher-live__split-workbench"
-                  aria-labelledby="split-title"
+                  aria-label="Trennregeln"
                 >
-                  <div className="teacher-panel__heading">
-                    <div>
-                      <p className="eyebrow">Text aufteilen</p>
-                      <h3 id="split-title">Trennregeln</h3>
-                    </div>
-                    <span>{orderedTextSections.length} Abschnitte aktiv</span>
-                  </div>
                   <div className="teacher-live__split-toggles">
-                    <Option
-                      label="Nach Zeichen trennen"
-                      checked={splitConfig.punctuationEnabled}
-                      set={(value) =>
+                    <button
+                      type="button"
+                      className="teacher-live__rule-toggle"
+                      aria-pressed={splitConfig.punctuationEnabled}
+                      onClick={() =>
                         setSplitConfig((current) => ({
                           ...current,
-                          punctuationEnabled: value,
+                          punctuationEnabled: !current.punctuationEnabled,
                         }))
                       }
-                    />
-                    <Option
-                      label="Nach Enter trennen"
-                      checked={splitConfig.newlineEnabled}
-                      set={(value) =>
-                        setSplitConfig((current) => ({
-                          ...current,
-                          newlineEnabled: value,
-                        }))
-                      }
-                    />
-                  </div>
-                  {splitConfig.punctuationEnabled ? (
-                    <div
-                      className="teacher-live__punctuation"
-                      aria-label="Trennzeichen"
                     >
-                      {[".", ",", "!", "?", ";", ":"].map((character) => (
-                        <button
-                          type="button"
-                          key={character}
-                          aria-pressed={splitConfig.punctuation.includes(
-                            character,
-                          )}
-                          onClick={() =>
-                            setSplitConfig((current) => ({
-                              ...current,
-                              punctuation: current.punctuation.includes(
-                                character,
-                              )
-                                ? current.punctuation.filter(
-                                    (item) => item !== character,
-                                  )
-                                : [...current.punctuation, character],
-                            }))
-                          }
-                        >
-                          {character}
-                        </button>
-                      ))}
+                      {splitConfig.punctuationEnabled ? (
+                        <span aria-hidden="true">✓</span>
+                      ) : null}
+                      Zeichen
+                    </button>
+                    <button
+                      type="button"
+                      className="teacher-live__rule-toggle"
+                      aria-pressed={splitConfig.newlineEnabled}
+                      onClick={() =>
+                        setSplitConfig((current) => ({
+                          ...current,
+                          newlineEnabled: !current.newlineEnabled,
+                        }))
+                      }
+                    >
+                      {splitConfig.newlineEnabled ? (
+                        <span aria-hidden="true">✓</span>
+                      ) : null}
+                      Enter
+                    </button>
+                  </div>
+                  <div className="teacher-live__split-panels">
+                    <fieldset
+                      disabled={!splitConfig.punctuationEnabled}
+                      className="teacher-live__character-panel"
+                    >
+                      <legend>Trennen nach Zeichen</legend>
+                      <div
+                        className="teacher-live__punctuation"
+                        aria-label="Trennzeichen"
+                      >
+                        {[
+                          ".",
+                          ",",
+                          "!",
+                          "?",
+                          ...splitConfig.punctuation.filter(
+                            (character) =>
+                              ![".", ",", "!", "?"].includes(character),
+                          ),
+                        ].map((character) => (
+                          <button
+                            type="button"
+                            key={character}
+                            aria-pressed={splitConfig.punctuation.includes(
+                              character,
+                            )}
+                            onClick={() =>
+                              setSplitConfig((current) => ({
+                                ...current,
+                                punctuation: current.punctuation.includes(
+                                  character,
+                                )
+                                  ? current.punctuation.filter(
+                                      (item) => item !== character,
+                                    )
+                                  : [...current.punctuation, character],
+                              }))
+                            }
+                          >
+                            {character}
+                          </button>
+                        ))}
+                      </div>
                       <div className="teacher-live__custom-delimiter">
-                        <label htmlFor="custom-delimiter">
-                          Eigener Trenner
-                        </label>
                         <input
                           id="custom-delimiter"
+                          aria-label="Eigener Trenner"
+                          placeholder="Eigener Trenner …"
                           value={customDelimiter}
                           maxLength={20}
                           onChange={(event) =>
                             setCustomDelimiter(event.target.value)
                           }
+                          onKeyDown={(event) => {
+                            if (event.key !== "Enter" || !customDelimiter)
+                              return;
+                            event.preventDefault();
+                            setSplitConfig((current) => ({
+                              ...current,
+                              customDelimiters: [
+                                ...current.customDelimiters,
+                                {
+                                  id: crypto.randomUUID(),
+                                  value: customDelimiter,
+                                },
+                              ],
+                            }));
+                            setCustomDelimiter("");
+                          }}
                         />
                         <button
                           type="button"
@@ -881,10 +1157,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                           ))}
                         </div>
                       ) : null}
-                    </div>
-                  ) : null}
-                  {splitConfig.newlineEnabled ? (
-                    <fieldset className="teacher-live__newline-mode">
+                    </fieldset>
+                    <fieldset
+                      disabled={!splitConfig.newlineEnabled}
+                      className="teacher-live__newline-mode"
+                    >
                       <legend>Trennen bei</legend>
                       <label>
                         <input
@@ -913,29 +1190,178 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         nur Leerzeilen
                       </label>
                     </fieldset>
-                  ) : null}
+                  </div>
                 </section>
               )}
-              <label className="teacher-live__source">
-                <span>
-                  {contentMode === "text"
-                    ? "Text – Sätze werden automatisch getrennt"
-                    : contentMode === "vocabulary"
-                      ? "Vokabelpaare – Semikolon oder Tab, Alternativen mit |"
+              {contentMode !== "vocabulary" ? (
+                <label className="teacher-live__source">
+                  <span>
+                    {contentMode === "text"
+                      ? "Text – Sätze werden automatisch getrennt"
                       : "Eine Rechnung pro Zeile"}
-                </span>
-                <textarea
-                  ref={sourceRef}
-                  value={source}
-                  disabled={!hydrated}
-                  onChange={(e) =>
-                    setSources((current) => ({
-                      ...current,
-                      [contentMode]: e.target.value,
-                    }))
-                  }
-                />
-              </label>
+                  </span>
+                  <textarea
+                    ref={sourceRef}
+                    value={source}
+                    disabled={!hydrated}
+                    onChange={(e) =>
+                      setSources((current) => ({
+                        ...current,
+                        [contentMode]: e.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              ) : (
+                <div className="teacher-live__vocabulary-workbench">
+                  <section className="teacher-live__vocabulary-list">
+                    <div className="teacher-live__vocabulary-list-heading">
+                      <div>
+                        <h3>Vokabelheft</h3>
+                        <p>Weitere richtige Antworten mit | trennen.</p>
+                      </div>
+                      <div className="teacher-live__vocabulary-list-actions">
+                        <span>{vocabularyPairs.length} Vokabeln</span>
+                        <label className="teacher-live__vocabulary-import">
+                          Datei importieren
+                          <input
+                            className="sr-only"
+                            type="file"
+                            accept=".txt,.csv,text/plain,text/csv"
+                            onChange={(e) => importFile(e.target.files?.[0])}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="teacher-live__vocabulary-rows">
+                      {vocabularyPairs.map((pair, index) => (
+                        <div
+                          key={pair.id}
+                          className="teacher-live__vocabulary-row"
+                        >
+                          {(["left", "right"] as const).map((side) => (
+                            <div key={side}>
+                              <input
+                                value={pair[side].primary}
+                                placeholder={
+                                  side === "left"
+                                    ? `Vokabel ${index + 1}`
+                                    : "Übersetzung"
+                                }
+                                onChange={(event) =>
+                                  applyVocabularyPairs(
+                                    vocabularyPairs.map((entry) =>
+                                      entry.id === pair.id
+                                        ? {
+                                            ...entry,
+                                            [side]: {
+                                              ...entry[side],
+                                              primary: event.target.value,
+                                            },
+                                          }
+                                        : entry,
+                                    ),
+                                  )
+                                }
+                              />
+                              <input
+                                defaultValue={pair[side].alternatives.join(
+                                  " | ",
+                                )}
+                                placeholder="Weitere Antworten: … | …"
+                                onBlur={(event) =>
+                                  applyVocabularyPairs(
+                                    vocabularyPairs.map((entry) =>
+                                      entry.id === pair.id
+                                        ? {
+                                            ...entry,
+                                            [side]: {
+                                              ...entry[side],
+                                              alternatives: event.target.value
+                                                .split("|")
+                                                .map((part) => part.trim())
+                                                .filter(Boolean),
+                                            },
+                                          }
+                                        : entry,
+                                    ),
+                                  )
+                                }
+                              />
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            aria-label={`Vokabel ${index + 1} löschen`}
+                            onClick={() =>
+                              applyVocabularyPairs(
+                                vocabularyPairs.filter(
+                                  (entry) => entry.id !== pair.id,
+                                ),
+                              )
+                            }
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="teacher-live__vocabulary-add"
+                      onClick={() =>
+                        applyVocabularyPairs([
+                          ...vocabularyPairs,
+                          {
+                            id: crypto.randomUUID(),
+                            left: emptyVocabularySide(),
+                            right: emptyVocabularySide(),
+                          },
+                        ])
+                      }
+                    >
+                      + Vokabel hinzufügen
+                    </button>
+                  </section>
+                  <aside className="teacher-live__vocabulary-sidebar">
+                    <div>
+                      <h4>⇄ Abfragerichtung</h4>
+                      {(
+                        [
+                          ["left-to-right", "Links → rechts"],
+                          ["right-to-left", "Rechts → links"],
+                          ["mixed", "Beide Richtungen gemischt"],
+                        ] as const
+                      ).map(([value, label]) => (
+                        <label key={value}>
+                          <input
+                            type="radio"
+                            name="vocabulary-direction"
+                            checked={direction === value}
+                            onChange={() => setDirection(value)}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <label className="teacher-live__vocabulary-transfer">
+                      Vokabeln nach der Runde übernehmen
+                      <select
+                        value={vocabularyTransfer}
+                        onChange={(event) =>
+                          setVocabularyTransfer(
+                            event.target.value as VocabularyTransferChoice,
+                          )
+                        }
+                      >
+                        <option value="errors">Nur fehlerhafte Vokabeln</option>
+                        <option value="all">Alle Vokabeln</option>
+                        <option value="none">Keine Vokabeln</option>
+                      </select>
+                    </label>
+                  </aside>
+                </div>
+              )}
               {contentMode === "text" && source ? (
                 <>
                   <div className="teacher-live__marker-actions">
@@ -1081,51 +1507,21 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                   </div>
                 </div>
               ) : null}
-              <div className="teacher-live__import-row">
-                {contentMode !== "text" ? (
-                  <label className="button button--quiet">
-                    Datei importieren
-                    <input
-                      className="sr-only"
-                      type="file"
-                      accept=".txt,.csv,text/plain,text/csv"
-                      onChange={(e) => importFile(e.target.files?.[0])}
-                    />
-                  </label>
-                ) : null}
-                {contentMode === "vocabulary" && (
-                  <>
-                    <label className="teacher-live__select">
-                      Abfragerichtung
-                      <select
-                        value={direction}
-                        onChange={(e) =>
-                          setDirection(e.target.value as VocabularyDirection)
-                        }
-                      >
-                        <option value="left-to-right">Links → rechts</option>
-                        <option value="right-to-left">Rechts → links</option>
-                        <option value="mixed">Gemischt</option>
-                      </select>
+              {contentMode !== "vocabulary" ? (
+                <div className="teacher-live__import-row">
+                  {contentMode !== "text" ? (
+                    <label className="button button--quiet">
+                      Datei importieren
+                      <input
+                        className="sr-only"
+                        type="file"
+                        accept=".txt,.csv,text/plain,text/csv"
+                        onChange={(e) => importFile(e.target.files?.[0])}
+                      />
                     </label>
-                    <label className="teacher-live__select">
-                      Vokabeln nach der Runde übernehmen
-                      <select
-                        value={vocabularyTransfer}
-                        onChange={(event) =>
-                          setVocabularyTransfer(
-                            event.target.value as VocabularyTransferChoice,
-                          )
-                        }
-                      >
-                        <option value="errors">Nur fehlerhafte Vokabeln</option>
-                        <option value="all">Alle Vokabeln</option>
-                        <option value="none">Keine Vokabeln</option>
-                      </select>
-                    </label>
-                  </>
-                )}
-              </div>
+                  ) : null}
+                </div>
+              ) : null}
             </section>
           </div>
         )}
