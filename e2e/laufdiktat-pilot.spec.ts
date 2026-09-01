@@ -121,11 +121,10 @@ test("room join keeps invalid input and shows an explicit unavailable state", as
     "data-hydrated",
     "true",
   );
-  await page.getByLabel("Name oder Pseudonym").fill("Mia");
   await page.getByRole("button", { name: "Beitreten" }).click();
 
   await expect(page.getByRole("alert")).toBeVisible();
-  await expect(page.getByLabel("Name oder Pseudonym")).toHaveValue("Mia");
+  await page.getByRole("button", { name: /Zur Code-Eingabe/ }).click();
   await expect(page.getByRole("textbox", { name: "Ziffer 1" })).toHaveValue(
     "4",
   );
@@ -151,7 +150,6 @@ test("a configured teacher and student can complete one live round", async ({
   const roomCode = await teacher.locator(".teacher-live__code").innerText();
 
   await student.goto(`/raum?code=${roomCode}`);
-  await student.getByLabel("Name oder Pseudonym").fill("Schneller Igel");
   await student.getByRole("button", { name: "Beitreten" }).click();
   await expect(student.getByText(/Du bist dabei/)).toBeVisible();
 

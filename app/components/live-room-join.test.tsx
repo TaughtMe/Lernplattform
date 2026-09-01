@@ -19,10 +19,6 @@ describe("LiveRoomJoin", () => {
     const user = userEvent.setup();
     render(<LiveRoomJoin initialCode="4829" liveRoomConfig={null} />);
 
-    await user.type(
-      screen.getByRole("textbox", { name: "Name oder Pseudonym" }),
-      "Mia",
-    );
     await user.click(screen.getByRole("button", { name: "Beitreten" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
