@@ -50,8 +50,12 @@ describe("TeacherLiveRoom", () => {
     await user.type(source, "Eins, zwei. Drei.");
     await user.click(screen.getByRole("button", { name: "," }));
     expect(screen.getByText("3 Abschnitte aktiv")).toBeVisible();
+    await user.click(
+      screen.getByRole("button", { name: "Abschnitte verwalten" }),
+    );
     const sections = screen.getAllByRole("checkbox");
     await user.click(sections.at(-1)!);
+    await user.click(screen.getByRole("button", { name: "Schließen" }));
     expect(screen.getByText("2 Abschnitte aktiv")).toBeVisible();
   });
 });

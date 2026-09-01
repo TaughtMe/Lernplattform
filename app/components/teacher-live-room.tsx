@@ -127,6 +127,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const hydrated = useHydrated();
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
+  const [sectionManagerOpen, setSectionManagerOpen] = useState(false);
   const [sources, setSources] = useState(DEFAULT_SOURCES);
   const [splitConfig, setSplitConfig] = useState<TextSplitConfig>(
     DEFAULT_TEXT_SPLIT_CONFIG,
@@ -637,7 +638,19 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             >
               <div className="teacher-live__content-summary">
                 <span>{LABELS[contentMode]}</span>
-                <strong>{words.length} Aufgaben</strong>
+                <div className="teacher-live__content-summary-end">
+                  <strong>{words.length} Aufgaben</strong>
+                  {contentMode === "text" ? (
+                    <button
+                      type="button"
+                      className="teacher-live__section-toggle"
+                      disabled={!displayedTextSections.length}
+                      onClick={() => setSectionManagerOpen(true)}
+                    >
+                      Abschnitte verwalten
+                    </button>
+                  ) : null}
+                </div>
               </div>
               {contentMode === "math" && (
                 <div className="teacher-live__math-workbench">
@@ -987,72 +1000,101 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       Manuelle Marken entfernen
                     </button>
                   </div>
-                  <ol
-                    className="teacher-live__section-manager"
+                </>
+              ) : null}
+              {sectionManagerOpen && contentMode === "text" ? (
+                <div className="teacher-live__section-dialog-backdrop">
+                  <div
+                    className="teacher-live__section-dialog"
+                    role="dialog"
+                    aria-modal="true"
                     aria-label="Abschnitte verwalten"
                   >
-                    {displayedTextSections.map((section, index) => (
-                      <li key={section.id}>
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={!excludedSectionIds.includes(section.id)}
-                            onChange={() =>
-                              setExcludedSectionIds((current) =>
-                                current.includes(section.id)
-                                  ? current.filter((id) => id !== section.id)
-                                  : [...current, section.id],
-                              )
-                            }
-                          />
-                          <span>{section.text}</span>
-                        </label>
-                        <div>
-                          <button
-                            type="button"
-                            aria-label={`Abschnitt ${index + 1} nach oben`}
-                            disabled={index === 0}
-                            onClick={() => {
-                              const ids = displayedTextSections.map(
-                                ({ id }) => id,
-                              );
-                              setSectionOrder(
-                                moveRunningDictationSection(
-                                  ids,
-                                  index,
-                                  index - 1,
-                                ),
-                              );
-                            }}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`Abschnitt ${index + 1} nach unten`}
-                            disabled={
-                              index === displayedTextSections.length - 1
-                            }
-                            onClick={() => {
-                              const ids = displayedTextSections.map(
-                                ({ id }) => id,
-                              );
-                              setSectionOrder(
-                                moveRunningDictationSection(
-                                  ids,
-                                  index,
-                                  index + 1,
-                                ),
-                              );
-                            }}
-                          >
-                            ↓
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </>
+                    <div className="teacher-live__section-dialog-heading">
+                      <h3>Abschnitte verwalten</h3>
+                      <button
+                        type="button"
+                        aria-label="Schließen"
+                        onClick={() => setSectionManagerOpen(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <p>
+                      Ausschließen oder umsortieren – der Text selbst bleibt
+                      unverändert.
+                    </p>
+                    <ol
+                      className="teacher-live__section-manager"
+                      aria-label="Abschnittsliste"
+                    >
+                      {displayedTextSections.map((section, index) => (
+                        <li key={section.id}>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={
+                                !excludedSectionIds.includes(section.id)
+                              }
+                              onChange={() =>
+                                setExcludedSectionIds((current) =>
+                                  current.includes(section.id)
+                                    ? current.filter(
+                                        (id) => id !== section.id,
+                                      )
+                                    : [...current, section.id],
+                                )
+                              }
+                            />
+                            <span>{section.text}</span>
+                          </label>
+                          <div>
+                            <button
+                              type="button"
+                              aria-label={`Abschnitt ${index + 1} nach oben`}
+                              disabled={index === 0}
+                              onClick={() => {
+                                const ids = displayedTextSections.map(
+                                  ({ id }) => id,
+                                );
+                                setSectionOrder(
+                                  moveRunningDictationSection(
+                                    ids,
+                                    index,
+                                    index - 1,
+                                  ),
+                                );
+                              }}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Abschnitt ${index + 1} nach unten`}
+                              disabled={
+                                index === displayedTextSections.length - 1
+                              }
+                              onClick={() => {
+                                const ids = displayedTextSections.map(
+                                  ({ id }) => id,
+                                );
+                                setSectionOrder(
+                                  moveRunningDictationSection(
+                                    ids,
+                                    index,
+                                    index + 1,
+                                  ),
+                                );
+                              }}
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
               ) : null}
               <div className="teacher-live__import-row">
                 {contentMode !== "text" ? (

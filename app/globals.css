@@ -8939,6 +8939,22 @@ body:has(.teacher-live) .theme-toggle__label,
   overflow: hidden;
 }
 
+/* Der Inhalt jeder Stufe füllt .teacher-live__main exakt aus (siehe Regel
+   oben, overflow: hidden) – eine als normales Flusselement angehängte
+   Fehlermeldung würde dadurch lautlos abgeschnitten und die Lehrkraft sähe
+   nach einem Klick scheinbar gar keine Reaktion. Als fixierter Hinweis über
+   der Fußleiste bleibt sie immer sichtbar. */
+.teacher-live__error {
+  position: fixed;
+  left: 50%;
+  bottom: 96px;
+  z-index: 45;
+  width: min(560px, calc(100vw - 40px));
+  margin: 0;
+  transform: translateX(-50%);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 25%);
+}
+
 .teacher-live__main
   > :is(
     .teacher-live__import-step,
@@ -9041,6 +9057,99 @@ body:has(.teacher-live) .theme-toggle__label,
 
 .teacher-live__content-summary strong {
   color: var(--ink);
+}
+
+.teacher-live__content-summary-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.teacher-live__section-toggle {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 820;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.teacher-live__section-toggle:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--surface-hover);
+}
+
+.teacher-live__section-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Abschnittsverwaltung als optionaler Dialog statt Dauerliste: die eigentliche
+   Texteingabe bleibt so sofort erreichbar, ohne erst daran vorbeizuscrollen –
+   analog zur bewussten Laufdiktat-Entscheidung, die Verwaltung standardmäßig
+   geschlossen zu halten. */
+.teacher-live__section-dialog-backdrop {
+  padding: 20px;
+  display: grid;
+  place-items: center;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(23 21 19 / 55%);
+  backdrop-filter: blur(4px);
+}
+
+.teacher-live__section-dialog {
+  width: min(100%, 560px);
+  max-height: min(72vh, 640px);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 30%);
+}
+
+.teacher-live__section-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.teacher-live__section-dialog-heading h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.teacher-live__section-dialog-heading button {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.teacher-live__section-dialog > p {
+  margin: 6px 0 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.teacher-live__section-dialog .teacher-live__section-manager {
+  overflow-y: auto;
 }
 
 .teacher-live__split-workbench {
