@@ -2,6 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+// Aus package.json gelesen statt hart codiert: verhindert, dass diese Tests
+// bei jedem Versions-Bump erneut manuell nachgezogen werden müssen.
+const { version: APP_VERSION } = JSON.parse(
+  await readFile(new URL("../package.json", import.meta.url), "utf8"),
+);
+
 async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${path}`);
@@ -29,7 +35,7 @@ test("server-renders the Lernraum start page", async () => {
   assert.match(html, /Lehrerbereich/);
   assert.match(html, /href="\/impressum"/);
   assert.match(html, /href="\/datenschutz"/);
-  assert.match(html, />v0\.2\.0</);
+  assert.match(html, new RegExp(`>v${APP_VERSION.replace(/\./g, "\\.")}<`));
   assert.doesNotMatch(html, /<strong>Freies Üben<\/strong>/);
   assert.doesNotMatch(html, /Beispiel-Lerngruppen|Duell|Mein Haus/);
   assert.doesNotMatch(
@@ -90,10 +96,11 @@ test("ships the update-aware service worker", async () => {
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
     readFile(new URL("../public/version.json", import.meta.url), "utf8"),
   ]);
-  assert.match(worker, /const APP_VERSION = "0\.2\.0"/);
+  const escapedVersion = APP_VERSION.replace(/\./g, "\\.");
+  assert.match(worker, new RegExp(`const APP_VERSION = "${escapedVersion}"`));
   assert.match(worker, /SKIP_WAITING/);
   assert.match(worker, /request\.mode === "navigate"/);
-  assert.deepEqual(JSON.parse(version).version, "0.2.0");
+  assert.deepEqual(JSON.parse(version).version, APP_VERSION);
 });
 
 test("keeps the versioned learning contract framework-independent", async () => {
