@@ -135,6 +135,40 @@ describe("TeacherLiveRoom", () => {
     ).toBeVisible();
   });
 
+  it("re-editing a gap task shows a clean equation and keeps its gap slot", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
+    await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
+    await user.click(kopfrechnenTab);
+
+    await user.click(screen.getByRole("button", { name: "Weitere Regeln" }));
+    await user.click(screen.getByLabelText("Lückenaufgaben"));
+    await user.click(screen.getByRole("button", { name: "Schließen" }));
+
+    // Switch the first task's gap to the left number (7 + _ = 15 -> _ + 8 = 15).
+    const firstRow = document.querySelector<HTMLElement>(
+      ".teacher-live__math-preview-row",
+    )!;
+    await user.click(within(firstRow).getByRole("button", { name: "7" }));
+
+    const taskList = document.querySelector<HTMLElement>(
+      ".teacher-live__math-tasklist",
+    )!;
+    expect(within(taskList).getByText("_ + 8 = 15")).toBeVisible();
+
+    // Re-opening the row for editing must show a plain, editable equation —
+    // never the internal "=> answer" storage format.
+    await user.click(within(taskList).getByText("_ + 8 = 15"));
+    const editField = screen.getByDisplayValue("7 + 8");
+    await user.clear(editField);
+    await user.type(editField, "10 + 8{Enter}");
+
+    // The edited numbers take effect and the previously chosen gap slot
+    // (left) is preserved instead of resetting to the default.
+    expect(within(taskList).getByText("_ + 8 = 18")).toBeVisible();
+  });
+
   it("supports manually chained expressions with more than two numbers", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);

@@ -21,6 +21,7 @@ import {
   buildMentalMathTask,
   displayMathNumber,
   evaluateMentalMathExpression,
+  mathOperatorSymbol,
   MULTIPLICATION_TABLES,
   parseMentalMathExpression,
   type MathGapSlot,
@@ -156,6 +157,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [mathSettingsOpen, setMathSettingsOpen] = useState(false);
   const [mathEditIndex, setMathEditIndex] = useState<number | null>(null);
   const [mathDraft, setMathDraft] = useState("");
+  const [mathEditGapSlot, setMathEditGapSlot] = useState<MathGapSlot | null>(
+    null,
+  );
   const mathEditInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (mathEditIndex !== null) mathEditInputRef.current?.focus();
@@ -367,8 +371,15 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   }
 
   function startEditMathRow(index: number) {
+    const line = mathLines[index] ?? "";
+    const parsed = parseMathLineForGapPicker(line);
     setMathEditIndex(index);
-    setMathDraft(mathLines[index] ?? "");
+    setMathEditGapSlot(parsed?.gap ?? null);
+    setMathDraft(
+      parsed
+        ? `${displayMathNumber(parsed.a)} ${mathOperatorSymbol(parsed.op)} ${displayMathNumber(parsed.b)}`
+        : line,
+    );
   }
 
   function displayMathLine(line: string) {
@@ -436,9 +447,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     };
   }
 
-  function setMathLineGap(index: number, slot: MathGapSlot) {
-    const parsed = parseMathLineForGapPicker(mathLines[index] ?? "");
-    if (!parsed) return;
+  const DEFAULT_MATH_GAP_SLOT: MathGapSlot = "right";
+
+  function applyMathGapSlot(line: string, index: number, slot: MathGapSlot) {
+    const parsed = parseMathLineForGapPicker(line);
+    if (!parsed) return line;
     const task = buildMentalMathTask(
       {
         left: parsed.a,
@@ -449,27 +462,19 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       index,
       slot,
     );
-    const lines = [...mathLines];
-    lines[index] = `${task.prompt} => ${task.answer}`;
-    commitMathLines(lines);
+    return `${task.prompt} => ${task.answer}`;
   }
 
-  const DEFAULT_MATH_GAP_SLOT: MathGapSlot = "right";
+  function setMathLineGap(index: number, slot: MathGapSlot) {
+    const lines = [...mathLines];
+    lines[index] = applyMathGapSlot(lines[index] ?? "", index, slot);
+    commitMathLines(lines);
+  }
 
   function applyDefaultMathGap(line: string, index: number) {
     const parsed = parseMathLineForGapPicker(line);
     if (!parsed || parsed.gap !== null) return line;
-    const task = buildMentalMathTask(
-      {
-        left: parsed.a,
-        operator: parsed.op,
-        right: parsed.b,
-        result: parsed.result,
-      },
-      index,
-      DEFAULT_MATH_GAP_SLOT,
-    );
-    return `${task.prompt} => ${task.answer}`;
+    return applyMathGapSlot(line, index, DEFAULT_MATH_GAP_SLOT);
   }
 
   const MATH_TOOLBAR_ITEMS = [
@@ -507,13 +512,15 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     }
     const committedIndex = wasAppending ? lines.length - 1 : mathEditIndex;
     if (mathGap && value && committedIndex >= 0) {
-      lines[committedIndex] = applyDefaultMathGap(
+      lines[committedIndex] = applyMathGapSlot(
         lines[committedIndex]!,
         committedIndex,
+        mathEditGapSlot ?? DEFAULT_MATH_GAP_SLOT,
       );
     }
     commitMathLines(lines);
     setMathDraft("");
+    setMathEditGapSlot(null);
     setMathEditIndex(
       continueEditing && wasAppending && value ? lines.length : null,
     );
@@ -1080,6 +1087,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                     }
                                     if (event.key === "Escape") {
                                       setMathDraft("");
+                                      setMathEditGapSlot(null);
                                       setMathEditIndex(null);
                                     }
                                   }}
@@ -1195,6 +1203,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                           className="teacher-live__math-add"
                           onClick={() => {
                             setMathEditIndex(mathLines.length);
+                            setMathEditGapSlot(null);
                             setMathDraft("");
                           }}
                         >
