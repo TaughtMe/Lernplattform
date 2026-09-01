@@ -1,5 +1,5 @@
-const APP_VERSION = "0.2.0";
-const BUILD_FINGERPRINT = "a7a04eff1f94";
+const APP_VERSION = "0.3.0";
+const BUILD_FINGERPRINT = "80a138cdc9a3";
 const CACHE_NAME = `lernraum-${APP_VERSION}-${BUILD_FINGERPRINT}`;
 const APP_SHELL = ["/", "/favicon.svg", "/manifest.webmanifest"];
 
