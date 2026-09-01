@@ -543,19 +543,19 @@ test("teachers can prepare every native live-room content type", async ({
     page.getByRole("link", { name: "Unterrichtsrunde starten" }),
   ).toHaveAttribute("href", "/lehrer/live");
   await expect(
-    page.getByRole("heading", { name: "Unterrichtsrunde" }),
+    page.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
   ).toHaveCount(0);
 
   await page.goto("/lehrer/live");
   await expect(
-    page.getByRole("heading", { name: "Unterrichtsrunde" }),
-  ).toBeVisible();
+    page.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
+  ).toBeAttached();
   await expect(
     page.getByRole("heading", { name: "Klassen und Schüler" }),
   ).toHaveCount(0);
   await expect(page.getByText("2 Aufgaben")).toBeVisible();
 
-  await page.getByRole("button", { name: "Vokabeln" }).click();
+  await page.getByRole("tab", { name: "Vokabeln" }).click();
   await expect.poll(() => runtimeErrors).toEqual([]);
   await expect(page.getByText("3 Aufgaben")).toBeVisible();
   await expect(
@@ -563,7 +563,7 @@ test("teachers can prepare every native live-room content type", async ({
       name: "Vokabeln nach der Runde übernehmen",
     }),
   ).toHaveValue("errors");
-  await page.getByRole("button", { name: "Kopfrechnen" }).click();
+  await page.getByRole("tab", { name: "Kopfrechnen" }).click();
   await expect(page.getByText("4 Aufgaben")).toBeVisible();
   await expect(
     page.getByRole("checkbox", { name: "Negative Ergebnisse" }),
@@ -572,26 +572,24 @@ test("teachers can prepare every native live-room content type", async ({
     page.getByRole("checkbox", { name: "Lückenaufgaben" }),
   ).toBeVisible();
 
-  await page
-    .getByRole("button", { name: "Weiter zu den Einstellungen" })
-    .click();
-  await expect(page.getByRole("button", { name: /Freies Üben/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Battle/ })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: /Lernstandscheck/ }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: /Laufdiktat/ })).toBeVisible();
+  await page.getByRole("button", { name: /Weiter zur Konfiguration/ }).click();
+  await expect(page.getByRole("radio", { name: /Freies Üben/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Battle/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Stationen/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Laufdiktat/ })).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     content: document.documentElement.scrollWidth,
   }));
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
 
-  await page.getByRole("button", { name: "Lobby öffnen" }).click();
+  await page.getByRole("button", { name: /Lobby öffnen/ }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Live-Räume sind lokal noch nicht konfiguriert",
   );
-  await expect(page.getByText("Noch nicht geöffnet")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "2. Einstellungen" }),
+  ).toHaveAttribute("aria-current", "step");
 });
 
 test("the local teacher workspace manages classes, students, assignments and QR codes", async ({

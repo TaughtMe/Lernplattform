@@ -7,18 +7,18 @@ describe("TeacherLiveRoom", () => {
   it("offers all upstream content builders", () => {
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     expect(screen.getByText("2 Aufgaben")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Text" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Vokabeln" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Kopfrechnen" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Text" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Vokabeln" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Kopfrechnen" })).toBeVisible();
   });
 
   it("does not pretend to open an unconfigured live lobby", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     await user.click(
-      screen.getByRole("button", { name: "Weiter zu den Einstellungen" }),
+      screen.getByRole("button", { name: /Weiter zur Konfiguration/ }),
     );
-    await user.click(screen.getByRole("button", { name: "Lobby öffnen" }));
+    await user.click(screen.getByRole("button", { name: /Lobby öffnen/ }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Live-Räume sind lokal noch nicht konfiguriert",
     );
@@ -29,16 +29,16 @@ describe("TeacherLiveRoom", () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     await user.click(
-      screen.getByRole("button", { name: "Weiter zu den Einstellungen" }),
+      screen.getByRole("button", { name: /Weiter zur Konfiguration/ }),
     );
-    expect(screen.getByRole("button", { name: /^Laufdiktat/ })).toBeVisible();
+    expect(screen.getByRole("radio", { name: /^Laufdiktat/ })).toBeVisible();
     expect(screen.getByLabelText("Lehrkraftfreigabe")).toHaveAttribute(
       "type",
       "password",
     );
-    expect(screen.getByRole("button", { name: /^Freies Üben/ })).toBeVisible();
-    expect(screen.getByRole("button", { name: /^Battle/ })).toBeVisible();
-    expect(screen.getByRole("button", { name: /^Stationen/ })).toBeVisible();
+    expect(screen.getByRole("radio", { name: /^Freies Üben/ })).toBeVisible();
+    expect(screen.getByRole("radio", { name: /^Battle/ })).toBeVisible();
+    expect(screen.getByRole("radio", { name: /^Stationen/ })).toBeVisible();
   });
 
   it("supports configurable text sections and manual exclusion", async () => {

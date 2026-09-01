@@ -59,30 +59,48 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
   await page.goto("/lehrer/live");
 
   await expect(
-    page.getByRole("heading", { name: "Unterrichtsrunde" }),
-  ).toBeVisible();
+    page.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
+  ).toBeAttached();
   await expect(page.locator(".teacher-live")).toHaveAttribute(
     "data-hydrated",
     "true",
   );
-  await expect(page.getByRole("button", { name: "Text" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Vokabeln" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Kopfrechnen" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Text" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Vokabeln" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Kopfrechnen" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Trennregeln" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Markierung als Abschnitt" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Weiter zu den Einstellungen" })
-    .click();
-  await expect(page.getByRole("button", { name: /^Laufdiktat/ })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: /^Freies Üben/ }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Battle/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Stationen/ })).toBeVisible();
+
+  const stableFrame = async () =>
+    page.evaluate(() => {
+      const header = document.querySelector(".teacher-live__dashboard-header");
+      const footer = document.querySelector(".teacher-live__wizard-footer");
+      return {
+        pageScroll: window.scrollY,
+        pageHeight: document.documentElement.scrollHeight,
+        viewportHeight: document.documentElement.clientHeight,
+        header: header?.getBoundingClientRect().toJSON(),
+        footer: footer?.getBoundingClientRect().toJSON(),
+      };
+    });
+  const textFrame = await stableFrame();
+  await page.getByRole("tab", { name: "Vokabeln" }).click();
+  const vocabularyFrame = await stableFrame();
+  await page.getByRole("tab", { name: "Kopfrechnen" }).click();
+  const mathFrame = await stableFrame();
+  expect(vocabularyFrame).toEqual(textFrame);
+  expect(mathFrame).toEqual(textFrame);
+  expect(textFrame.pageHeight).toBe(textFrame.viewportHeight);
+
+  await page.getByRole("button", { name: /Weiter zur Konfiguration/ }).click();
+  await expect(page.getByRole("radio", { name: /^Laufdiktat/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /^Freies Üben/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /^Battle/ })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /^Stationen/ })).toBeVisible();
   await expect(page.getByLabel("Lehrkraftfreigabe")).toHaveAttribute(
     "type",
     "password",
@@ -132,12 +150,12 @@ test("a configured teacher and student can complete one live round", async ({
   await teacher.goto("/lehrer/live");
   await teacher.getByLabel(/Text – Sätze/).fill("Der Schulweg ist kurz.");
   await teacher
-    .getByRole("button", { name: "Weiter zu den Einstellungen" })
+    .getByRole("button", { name: /Weiter zur Konfiguration/ })
     .click();
   await teacher
     .getByLabel("Lehrkraftfreigabe")
     .fill(process.env["PILOT_TEACHER_ACCESS_CODE"] ?? "");
-  await teacher.getByRole("button", { name: "Lobby öffnen" }).click();
+  await teacher.getByRole("button", { name: /Lobby öffnen/ }).click();
   const roomCode = await teacher.locator(".teacher-live__code").innerText();
 
   await student.goto(`/raum?code=${roomCode}`);
