@@ -55,6 +55,7 @@ import {
   type VocabularyTransferChoice,
 } from "../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../src/integrations/laufdiktat/debounce";
+import { AnimalAvatar } from "./animal-avatar";
 import { useHydrated } from "./use-hydrated";
 
 type Props = { liveRoomConfig: LiveRoomConfig | null };
@@ -116,8 +117,8 @@ const ALL_MODES: Array<{
 ];
 const MODES = ALL_MODES;
 const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
-  text: "Der Morgen ist kühl. Die Klasse arbeitet konzentriert.",
-  vocabulary: "school;Schule\nclassroom;Klassenzimmer\nlibrary;Bibliothek",
+  text: "",
+  vocabulary: "",
   math: "7 + 8\n16 - 9\n6 · 7\n36 : 4",
 };
 function isOnline(participant: LiveRoomParticipant) {
@@ -132,6 +133,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sectionManagerOpen, setSectionManagerOpen] = useState(false);
+  const [markerMode, setMarkerMode] = useState(false);
+  const [markerAnchor, setMarkerAnchor] = useState<{
+    start: number;
+    end: number;
+  } | null>(null);
   const [mathSettingsOpen, setMathSettingsOpen] = useState(false);
   const [mathEditIndex, setMathEditIndex] = useState<number | null>(null);
   const [mathDraft, setMathDraft] = useState("");
@@ -140,6 +146,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     if (mathEditIndex !== null) mathEditInputRef.current?.focus();
   }, [mathEditIndex]);
   const [vocabularyPairs, setVocabularyPairs] = useState<VocabularyPair[]>([]);
+  const [vocabularyTableInput, setVocabularyTableInput] = useState("");
   const emptyVocabularySide = () => ({ primary: "", alternatives: [] });
   const serializeVocabularyPairs = (pairs: VocabularyPair[]) =>
     pairs
@@ -232,6 +239,67 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       return leftRank - rightRank;
     });
   }, [sectionOrder, textSections]);
+  const markerPieces = useMemo(() => {
+    const pieces: Array<
+      | { kind: "gap"; text: string }
+      | {
+          kind: "auto" | "manual";
+          text: string;
+          start: number;
+          end: number;
+        }
+    > = [];
+    let cursor = 0;
+    for (const section of textSections) {
+      if (section.start > cursor) {
+        pieces.push({ kind: "gap", text: source.slice(cursor, section.start) });
+      }
+      pieces.push({
+        kind: section.source,
+        text: section.text,
+        start: section.start,
+        end: section.end,
+      });
+      cursor = section.end;
+    }
+    if (cursor < source.length) {
+      pieces.push({ kind: "gap", text: source.slice(cursor) });
+    }
+    return pieces;
+  }, [source, textSections]);
+
+  function handleMarkerSectionClick(section: {
+    start: number;
+    end: number;
+    source: "auto" | "manual";
+  }) {
+    if (section.source === "manual") {
+      setManualRanges((current) =>
+        current.filter(
+          (range) =>
+            !(
+              range.type === "section" &&
+              range.start === section.start &&
+              range.end === section.end
+            ),
+        ),
+      );
+      setMarkerAnchor(null);
+      return;
+    }
+    if (!markerAnchor) {
+      setMarkerAnchor({ start: section.start, end: section.end });
+      return;
+    }
+    const start = Math.min(markerAnchor.start, section.start);
+    const end = Math.max(markerAnchor.end, section.end);
+    setManualRanges((current) => [
+      ...current,
+      { id: crypto.randomUUID(), type: "section", start, end },
+    ]);
+    setMarkerAnchor(null);
+  }
+
   const words = useMemo(
     () =>
       contentMode === "text"
@@ -273,6 +341,32 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   function startEditMathRow(index: number) {
     setMathEditIndex(index);
     setMathDraft(mathLines[index] ?? "");
+  }
+
+  function displayMathLine(line: string) {
+    const arrowIndex = line.indexOf("=>");
+    return arrowIndex === -1 ? line : line.slice(0, arrowIndex).trim();
+  }
+
+  const MATH_TOOLBAR_ITEMS = [
+    { label: "+", insert: " + " },
+    { label: "−", insert: " − " },
+    { label: "·", insert: " · " },
+    { label: ":", insert: " : " },
+    { label: "( )", insert: "()" },
+  ];
+
+  function insertAtMathCursor(token: string) {
+    const el = mathEditInputRef.current;
+    const start = el?.selectionStart ?? mathDraft.length;
+    const end = el?.selectionEnd ?? start;
+    const next = mathDraft.slice(0, start) + token + mathDraft.slice(end);
+    setMathDraft(next);
+    const pos = start + (token === "()" ? 1 : token.length);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(pos, pos);
+    });
   }
 
   function commitMathEdit(continueEditing: boolean) {
@@ -712,11 +806,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
               role="tabpanel"
               aria-label={`${LABELS[contentMode]} bearbeiten`}
             >
-              <div className="teacher-live__content-summary">
-                <span>{LABELS[contentMode]}</span>
-                <div className="teacher-live__content-summary-end">
-                  <strong>{words.length} Aufgaben</strong>
-                  {contentMode === "text" ? (
+              {contentMode === "text" ? (
+                <div className="teacher-live__content-summary">
+                  <span>{LABELS[contentMode]}</span>
+                  <div className="teacher-live__content-summary-end">
+                    <strong>{words.length} Abschnitte</strong>
                     <button
                       type="button"
                       className="teacher-live__section-toggle"
@@ -725,9 +819,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     >
                       Abschnitte verwalten
                     </button>
-                  ) : null}
+                  </div>
                 </div>
-              </div>
+              ) : null}
               {contentMode === "math" && (
                 <div className="teacher-live__math-workbench">
                   <div className="teacher-live__math-quickbar">
@@ -823,30 +917,50 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       ) : (
                         mathLines.map((line, index) =>
                           mathEditIndex === index ? (
-                            <input
+                            <div
                               key={`edit-${index}`}
-                              ref={mathEditInputRef}
-                              className="teacher-live__math-edit"
-                              value={mathDraft}
-                              onChange={(event) =>
-                                setMathDraft(event.target.value)
-                              }
-                              onBlur={() => commitMathEdit(false)}
-                              onKeyDown={(event) => {
-                                if (
-                                  event.key === "Enter" ||
-                                  event.key === "Tab"
-                                ) {
-                                  event.preventDefault();
-                                  commitMathEdit(true);
+                              className="teacher-live__math-edit-group"
+                            >
+                              <input
+                                ref={mathEditInputRef}
+                                className="teacher-live__math-edit"
+                                value={mathDraft}
+                                onChange={(event) =>
+                                  setMathDraft(event.target.value)
                                 }
-                                if (event.key === "Escape") {
-                                  setMathDraft("");
-                                  setMathEditIndex(null);
-                                }
-                              }}
-                              placeholder="z. B. 4 + 4"
-                            />
+                                onBlur={() => commitMathEdit(false)}
+                                onKeyDown={(event) => {
+                                  if (
+                                    event.key === "Enter" ||
+                                    event.key === "Tab"
+                                  ) {
+                                    event.preventDefault();
+                                    commitMathEdit(true);
+                                  }
+                                  if (event.key === "Escape") {
+                                    setMathDraft("");
+                                    setMathEditIndex(null);
+                                  }
+                                }}
+                                placeholder="z. B. 4 + 4"
+                              />
+                              <div className="teacher-live__math-edit-toolbar">
+                                {MATH_TOOLBAR_ITEMS.map((item) => (
+                                  <button
+                                    key={item.label}
+                                    type="button"
+                                    onMouseDown={(event) =>
+                                      event.preventDefault()
+                                    }
+                                    onClick={() =>
+                                      insertAtMathCursor(item.insert)
+                                    }
+                                  >
+                                    {item.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           ) : (
                             <div
                               key={`${line}-${index}`}
@@ -858,7 +972,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                 title="Zum Bearbeiten klicken"
                                 onClick={() => startEditMathRow(index)}
                               >
-                                {line}
+                                {displayMathLine(line)}
                               </button>
                               <button
                                 type="button"
@@ -891,24 +1005,43 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         )
                       )}
                       {mathEditIndex === mathLines.length ? (
-                        <input
-                          ref={mathEditInputRef}
-                          className="teacher-live__math-edit"
-                          value={mathDraft}
-                          onChange={(event) => setMathDraft(event.target.value)}
-                          onBlur={() => commitMathEdit(false)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === "Tab") {
-                              event.preventDefault();
-                              commitMathEdit(true);
+                        <div className="teacher-live__math-edit-group">
+                          <input
+                            ref={mathEditInputRef}
+                            className="teacher-live__math-edit"
+                            value={mathDraft}
+                            onChange={(event) =>
+                              setMathDraft(event.target.value)
                             }
-                            if (event.key === "Escape") {
-                              setMathDraft("");
-                              setMathEditIndex(null);
-                            }
-                          }}
-                          placeholder="z. B. 4 + 4"
-                        />
+                            onBlur={() => commitMathEdit(false)}
+                            onKeyDown={(event) => {
+                              if (
+                                event.key === "Enter" ||
+                                event.key === "Tab"
+                              ) {
+                                event.preventDefault();
+                                commitMathEdit(true);
+                              }
+                              if (event.key === "Escape") {
+                                setMathDraft("");
+                                setMathEditIndex(null);
+                              }
+                            }}
+                            placeholder="z. B. 4 + 4"
+                          />
+                          <div className="teacher-live__math-edit-toolbar">
+                            {MATH_TOOLBAR_ITEMS.map((item) => (
+                              <button
+                                key={item.label}
+                                type="button"
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => insertAtMathCursor(item.insert)}
+                              >
+                                {item.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       ) : null}
                     </div>
                     {mathEditIndex !== mathLines.length ? (
@@ -944,14 +1077,22 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         ×
                       </button>
                     </div>
-                    <label className="teacher-live__number">
-                      Von
-                      <input
-                        type="number"
+                    <div className="teacher-live__math-range">
+                      <StepperRow
+                        label="Von"
                         value={mathMin}
-                        onChange={(e) => setMathMin(Number(e.target.value))}
+                        onChange={setMathMin}
+                        min={-999}
+                        max={mathMax}
                       />
-                    </label>
+                      <StepperRow
+                        label="Bis"
+                        value={mathMax}
+                        onChange={setMathMax}
+                        min={mathMin}
+                        max={1000}
+                      />
+                    </div>
                     <div className="teacher-live__math-rules">
                       <Option
                         label="Negative Ergebnisse"
@@ -1041,6 +1182,18 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         <span aria-hidden="true">✓</span>
                       ) : null}
                       Enter
+                    </button>
+                    <button
+                      type="button"
+                      className="teacher-live__rule-toggle teacher-live__marker-toggle"
+                      aria-pressed={markerMode}
+                      disabled={!source.trim()}
+                      onClick={() => {
+                        setMarkerAnchor(null);
+                        setMarkerMode((current) => !current);
+                      }}
+                    >
+                      ✎ Marker
                     </button>
                   </div>
                   <div className="teacher-live__split-panels">
@@ -1193,7 +1346,52 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                   </div>
                 </section>
               )}
-              {contentMode !== "vocabulary" ? (
+              {contentMode === "text" && markerMode ? (
+                <div className="teacher-live__marker-editor">
+                  <p className="teacher-live__marker-hint">
+                    Zwei Abschnitte antippen, um sie zusammenzufassen. Einen
+                    markierten Abschnitt antippen, um ihn wieder zu lösen.
+                  </p>
+                  <div className="teacher-live__marker-text">
+                    {markerPieces.map((piece, index) =>
+                      piece.kind === "gap" ? (
+                        <span key={index}>{piece.text}</span>
+                      ) : (
+                        <span
+                          key={index}
+                          role="button"
+                          tabIndex={0}
+                          className={`teacher-live__marker-piece is-${piece.kind}${
+                            markerAnchor?.start === piece.start &&
+                            markerAnchor.end === piece.end
+                              ? " is-anchored"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            handleMarkerSectionClick({
+                              start: piece.start,
+                              end: piece.end,
+                              source: piece.kind,
+                            })
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              handleMarkerSectionClick({
+                                start: piece.start,
+                                end: piece.end,
+                                source: piece.kind,
+                              });
+                            }
+                          }}
+                        >
+                          {piece.text}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                </div>
+              ) : contentMode !== "vocabulary" ? (
                 <label className="teacher-live__source">
                   <span>
                     {contentMode === "text"
@@ -1204,6 +1402,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     ref={sourceRef}
                     value={source}
                     disabled={!hydrated}
+                    placeholder={
+                      contentMode === "text"
+                        ? "Text eingeben oder Dokument hochladen …"
+                        : "z. B. 4 + 8"
+                    }
                     onChange={(e) =>
                       setSources((current) => ({
                         ...current,
@@ -1359,10 +1562,42 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         <option value="none">Keine Vokabeln</option>
                       </select>
                     </label>
+                    <div className="teacher-live__vocabulary-paste">
+                      <h4>Tabelle einfügen</h4>
+                      <p>
+                        Zwei Spalten aus Excel/Sheets kopieren oder Semikolon
+                        verwenden. Alternativen mit | trennen.
+                      </p>
+                      <textarea
+                        value={vocabularyTableInput}
+                        onChange={(event) =>
+                          setVocabularyTableInput(event.target.value)
+                        }
+                        placeholder={"Haus\thome | house\nBaum\ttree"}
+                      />
+                      <button
+                        type="button"
+                        className="button button--primary"
+                        disabled={!vocabularyTableInput.trim()}
+                        onClick={() => {
+                          const imported = parseVocabularyTable(
+                            vocabularyTableInput,
+                          ).map((pair) => ({
+                            ...pair,
+                            id: crypto.randomUUID(),
+                          }));
+                          if (!imported.length) return;
+                          applyVocabularyPairs(imported);
+                          setVocabularyTableInput("");
+                        }}
+                      >
+                        Liste übernehmen
+                      </button>
+                    </div>
                   </aside>
                 </div>
               )}
-              {contentMode === "text" && source ? (
+              {contentMode === "text" && source && !markerMode ? (
                 <>
                   <div className="teacher-live__marker-actions">
                     <button
@@ -1746,9 +1981,7 @@ function ModeIcon({ mode }: { mode: TeacherGameMode }) {
           <path d="M4 14v4a2 2 0 0 0 2 2h2v-8H6a2 2 0 0 0-2 2Zm16 0v4a2 2 0 0 1-2 2h-2v-8h2a2 2 0 0 1 2 2Z" />
         </svg>
       ) : mode === "BATTLE" ? (
-        <svg viewBox="0 0 24 24">
-          <path d="m5 3 7 7-3 3-7-7 3-3Zm14 0-7 7 3 3 7-7-3-3ZM6 15l3 3-4 3-2-2 3-4Zm12 0-3 3 4 3 2-2-3-4Z" />
-        </svg>
+        <span className="teacher-live__mode-icon-emoji">⚔</span>
       ) : (
         <svg viewBox="0 0 24 24">
           <path d="M12 22s7-6.2 7-13A7 7 0 1 0 5 9c0 6.8 7 13 7 13Z" />
@@ -1972,7 +2205,15 @@ function RoomDashboard({
                   return (
                     <article key={label}>
                       <div>
-                        <strong>{label}</strong>
+                        <span className="teacher-live__progress-identity">
+                          {!stationMode ? (
+                            <AnimalAvatar
+                              studentName={label}
+                              className="teacher-live__progress-avatar"
+                            />
+                          ) : null}
+                          <strong>{label}</strong>
+                        </span>
                         <span>
                           {student?.finished ? "Fertig" : `${value}%`}
                         </span>
@@ -2035,10 +2276,15 @@ function RoomDashboard({
             <small>Zum Vergrößern anklicken</small>
           </button>
         )}
-        <div className="teacher-live__code-card">
+        <button
+          type="button"
+          className="teacher-live__code-card"
+          onClick={() => setShowLargeQr(true)}
+          aria-label="QR-Code groß anzeigen"
+        >
           <p className="teacher-live__code-label">oder Raum-Code eingeben</p>
           <strong className="teacher-live__code">{room.code}</strong>
-        </div>
+        </button>
       </section>
       <section className="teacher-live__participants">
         <div className="teacher-live__lobby-heading">
@@ -2056,10 +2302,21 @@ function RoomDashboard({
                 }
                 key={participant.studentName}
               >
-                <span aria-hidden="true">
-                  {connected.includes(participant.studentName) ? "✓" : "–"}
+                <span className="teacher-live__student-avatar-wrap">
+                  <AnimalAvatar
+                    studentName={participant.studentName}
+                    className="teacher-live__student-avatar"
+                  />
+                  <span
+                    className="teacher-live__student-status"
+                    aria-hidden="true"
+                  >
+                    {connected.includes(participant.studentName) ? "✓" : "–"}
+                  </span>
                 </span>
-                {participant.studentName}
+                <span className="teacher-live__student-name">
+                  {participant.studentName}
+                </span>
                 {!connected.includes(participant.studentName) ? (
                   <button
                     type="button"
@@ -2085,20 +2342,35 @@ function RoomDashboard({
       </section>
       {showLargeQr ? (
         <div
-          className="teacher-live__qr-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="QR-Code"
+          className="teacher-live__qr-backdrop"
+          role="button"
+          tabIndex={0}
+          aria-label="QR-Code schließen"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setShowLargeQr(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" || event.key === "Enter")
+              setShowLargeQr(false);
+          }}
         >
-          <button
-            type="button"
-            onClick={() => setShowLargeQr(false)}
-            aria-label="QR-Code schließen"
+          <div
+            className="teacher-live__qr-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="QR-Code"
           >
-            ×
-          </button>
-          <QRCodeCanvas value={joinUrl} size={420} level="H" marginSize={2} />
-          <strong>Raum {room.code}</strong>
+            <button
+              type="button"
+              className="teacher-live__qr-close"
+              onClick={() => setShowLargeQr(false)}
+              aria-label="QR-Code schließen"
+            >
+              ×
+            </button>
+            <QRCodeCanvas value={joinUrl} size={420} level="H" marginSize={2} />
+            <strong>Raum {room.code}</strong>
+          </div>
         </div>
       ) : null}
     </div>

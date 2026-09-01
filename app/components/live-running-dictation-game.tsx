@@ -89,6 +89,15 @@ export function LiveRunningDictationGame({
   );
   const [revealedCurrentWord, setRevealedCurrentWord] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [exitCountdown, setExitCountdown] = useState(3);
+  useEffect(() => {
+    if (!showExitConfirm || exitCountdown <= 0) return;
+    const timer = window.setTimeout(
+      () => setExitCountdown((value) => value - 1),
+      1000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [showExitConfirm, exitCountdown]);
   const [charge, setCharge] = useState(0);
   const [shield, setShield] = useState(false);
   const [picker, setPicker] = useState<AttackType | null>(null);
@@ -426,7 +435,10 @@ export function LiveRunningDictationGame({
         <button
           type="button"
           className="live-game-page__icon-button"
-          onClick={() => setShowExitConfirm(true)}
+          onClick={() => {
+            setExitCountdown(3);
+            setShowExitConfirm(true);
+          }}
           aria-label="Spiel verlassen"
           title="Spiel verlassen"
         >
@@ -688,9 +700,19 @@ export function LiveRunningDictationGame({
               >
                 Weiter üben
               </button>
-              <Link className="button button--primary" href="/">
-                Zur Startseite
-              </Link>
+              {exitCountdown > 0 ? (
+                <button
+                  type="button"
+                  className="button button--primary"
+                  disabled
+                >
+                  Zur Startseite ({exitCountdown})
+                </button>
+              ) : (
+                <Link className="button button--primary" href="/">
+                  Zur Startseite
+                </Link>
+              )}
             </div>
           </div>
         </div>
