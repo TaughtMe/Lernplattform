@@ -73,22 +73,50 @@ describe("TeacherLiveRoom", () => {
       screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
     );
     await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3 + 4{Enter}");
-    expect(screen.getByText("3 + 4")).toBeVisible();
+    const taskList = document.querySelector<HTMLElement>(
+      ".teacher-live__math-tasklist",
+    )!;
+    expect(within(taskList).getByText("3 + 4")).toBeVisible();
     expect(screen.getAllByText("5 Aufgaben")[0]).toBeVisible();
 
-    await user.click(screen.getByText("3 + 4"));
+    await user.click(within(taskList).getByText("3 + 4"));
     const editField = screen.getByDisplayValue("3 + 4");
     await user.clear(editField);
     await user.type(editField, "5 + 5{Enter}");
-    expect(screen.getByText("5 + 5")).toBeVisible();
+    expect(within(taskList).getByText("5 + 5")).toBeVisible();
 
-    const editedRow = screen
+    const editedRow = within(taskList)
       .getByText("5 + 5")
       .closest<HTMLElement>(".teacher-live__math-row")!;
     await user.click(
       within(editedRow).getByRole("button", { name: "Löschen" }),
     );
     expect(screen.getAllByText("4 Aufgaben")[0]).toBeVisible();
+  });
+
+  it("lets a teacher pick which number becomes the gap in the preview", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
+    await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
+    await user.click(kopfrechnenTab);
+
+    await user.click(screen.getByRole("button", { name: "Weitere Regeln" }));
+    await user.click(screen.getByLabelText("Lückenaufgaben"));
+    await user.click(screen.getByRole("button", { name: "Schließen" }));
+
+    const preview = document.querySelector<HTMLElement>(
+      ".teacher-live__math-preview",
+    )!;
+    expect(within(preview).getByText("Vorschau (Lücken)")).toBeVisible();
+    // "7 + 8" is the first default task: pick its result (15) as the gap.
+    await user.click(within(preview).getByRole("button", { name: "15" }));
+
+    const taskList = document.querySelector<HTMLElement>(
+      ".teacher-live__math-tasklist",
+    )!;
+    expect(within(taskList).getByText("7 + 8 = _")).toBeVisible();
+    expect(within(preview).getByRole("button", { name: "_" })).toBeVisible();
   });
 
   it("keeps a freshly added vocabulary pair visible while it is still empty", async () => {

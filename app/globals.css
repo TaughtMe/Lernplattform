@@ -5441,15 +5441,75 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   border-color: var(--coral);
   color: var(--coral-dark);
 }
-.teacher-live__math-tasklist {
+.teacher-live__math-columns {
   min-height: 0;
   flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.teacher-live__math-tasklist,
+.teacher-live__math-preview {
+  min-height: 0;
+  min-width: 0;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 20px;
+}
+.teacher-live__math-preview > span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.teacher-live__math-preview-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+.teacher-live__math-preview-rows {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow-y: auto;
+}
+.teacher-live__math-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.teacher-live__math-preview-row > span:first-child {
+  width: 20px;
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: right;
+}
+.teacher-live__math-preview-row button {
+  min-width: 30px;
+  padding: 2px 7px;
+  border: none;
+  border-radius: 7px;
+  background: var(--surface-muted);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.teacher-live__math-preview-row button[aria-pressed="true"] {
+  background: var(--coral);
+  color: white;
 }
 .teacher-live__math-tasklist > span {
   color: var(--muted);

@@ -17,7 +17,14 @@ import {
   type ManualRange,
   type TextSplitConfig,
 } from "../../src/domain/running-dictation-sections";
-import { MULTIPLICATION_TABLES } from "../../src/domain/mental-math";
+import {
+  buildMentalMathTask,
+  displayMathNumber,
+  MULTIPLICATION_TABLES,
+  parseMentalMathExpression,
+  type MathGapSlot,
+  type MathOperator,
+} from "../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import {
   getLiveRoomClient,
@@ -346,6 +353,80 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   function displayMathLine(line: string) {
     const arrowIndex = line.indexOf("=>");
     return arrowIndex === -1 ? line : line.slice(0, arrowIndex).trim();
+  }
+
+  function symbolToMathOperator(symbol: string): MathOperator {
+    if (symbol === "-" || symbol === "−") return "-";
+    if (symbol === "*" || symbol === "×" || symbol === "·") return "*";
+    if (symbol === "/" || symbol === ":" || symbol === "÷") return "/";
+    return "+";
+  }
+
+  type MathGapPickerLine = {
+    a: number;
+    op: MathOperator;
+    b: number;
+    result: number;
+    gap: MathGapSlot | null;
+  };
+
+  function parseMathLineForGapPicker(line: string): MathGapPickerLine | null {
+    const arrowIndex = line.indexOf("=>");
+    if (arrowIndex === -1) {
+      const expr = parseMentalMathExpression(line);
+      return expr
+        ? {
+            a: expr.left,
+            op: expr.operator,
+            b: expr.right,
+            result: expr.result,
+            gap: null,
+          }
+        : null;
+    }
+    const promptPart = line.slice(0, arrowIndex).trim();
+    const hidden = Number.parseFloat(
+      line
+        .slice(arrowIndex + 2)
+        .trim()
+        .replace(",", "."),
+    );
+    const match = promptPart.match(
+      /^(_|\(?-?\d+(?:[.,]\d+)?\)?)\s*([+\-−*×·/:÷])\s*(_|\(?-?\d+(?:[.,]\d+)?\)?)\s*=\s*(_|\(?-?\d+(?:[.,]\d+)?\)?)$/,
+    );
+    if (!match || !Number.isFinite(hidden)) return null;
+    const [, rawA, rawOp, rawB, rawResult] = match;
+    const toValue = (raw: string) =>
+      raw === "_"
+        ? hidden
+        : Number.parseFloat(raw.replace(/[()]/g, "").replace(",", "."));
+    const gap: MathGapSlot =
+      rawA === "_" ? "left" : rawB === "_" ? "right" : "result";
+    return {
+      a: toValue(rawA!),
+      op: symbolToMathOperator(rawOp!),
+      b: toValue(rawB!),
+      result: toValue(rawResult!),
+      gap,
+    };
+  }
+
+  function setMathLineGap(index: number, slot: MathGapSlot) {
+    const parsed = parseMathLineForGapPicker(mathLines[index] ?? "");
+    if (!parsed) return;
+    const task = buildMentalMathTask(
+      {
+        left: parsed.a,
+        operator: parsed.op,
+        right: parsed.b,
+        result: parsed.result,
+      },
+      index,
+      slot,
+    );
+    const lines = [...mathLines];
+    lines[index] = `${task.prompt} => ${task.answer}`;
+    commitMathLines(lines);
   }
 
   const MATH_TOOLBAR_ITEMS = [
@@ -905,157 +986,242 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       ⚙
                     </button>
                   </div>
-                  <div className="teacher-live__math-tasklist">
-                    <span>{mathLines.length} Aufgaben</span>
-                    <div className="teacher-live__math-rows">
-                      {mathLines.length === 0 && mathEditIndex === null ? (
+                  <div className="teacher-live__math-columns">
+                    <div className="teacher-live__math-tasklist">
+                      <span>{mathLines.length} Aufgaben</span>
+                      <div className="teacher-live__math-rows">
+                        {mathLines.length === 0 && mathEditIndex === null ? (
+                          <p className="teacher-live__math-empty">
+                            Noch keine Aufgaben.
+                            <br />
+                            Oben erzeugen oder unten selbst hinzufügen.
+                          </p>
+                        ) : (
+                          mathLines.map((line, index) =>
+                            mathEditIndex === index ? (
+                              <div
+                                key={`edit-${index}`}
+                                className="teacher-live__math-edit-group"
+                              >
+                                <input
+                                  ref={mathEditInputRef}
+                                  className="teacher-live__math-edit"
+                                  value={mathDraft}
+                                  onChange={(event) =>
+                                    setMathDraft(event.target.value)
+                                  }
+                                  onBlur={() => commitMathEdit(false)}
+                                  onKeyDown={(event) => {
+                                    if (
+                                      event.key === "Enter" ||
+                                      event.key === "Tab"
+                                    ) {
+                                      event.preventDefault();
+                                      commitMathEdit(true);
+                                    }
+                                    if (event.key === "Escape") {
+                                      setMathDraft("");
+                                      setMathEditIndex(null);
+                                    }
+                                  }}
+                                  placeholder="z. B. 4 + 4"
+                                />
+                                <div className="teacher-live__math-edit-toolbar">
+                                  {MATH_TOOLBAR_ITEMS.map((item) => (
+                                    <button
+                                      key={item.label}
+                                      type="button"
+                                      onMouseDown={(event) =>
+                                        event.preventDefault()
+                                      }
+                                      onClick={() =>
+                                        insertAtMathCursor(item.insert)
+                                      }
+                                    >
+                                      {item.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                key={`${line}-${index}`}
+                                className="teacher-live__math-row"
+                              >
+                                <button
+                                  type="button"
+                                  className="teacher-live__math-row-text"
+                                  title="Zum Bearbeiten klicken"
+                                  onClick={() => startEditMathRow(index)}
+                                >
+                                  {displayMathLine(line)}
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label="Neu würfeln"
+                                  title="Neu würfeln"
+                                  onClick={() => {
+                                    const lines = [...mathLines];
+                                    lines[index] = generateSingleMathLine();
+                                    commitMathLines(lines);
+                                  }}
+                                >
+                                  ↻
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label="Löschen"
+                                  title="Löschen"
+                                  onClick={() => {
+                                    const lines = [...mathLines];
+                                    lines.splice(index, 1);
+                                    commitMathLines(lines);
+                                    if (mathEditIndex !== null)
+                                      setMathEditIndex(null);
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ),
+                          )
+                        )}
+                        {mathEditIndex === mathLines.length ? (
+                          <div className="teacher-live__math-edit-group">
+                            <input
+                              ref={mathEditInputRef}
+                              className="teacher-live__math-edit"
+                              value={mathDraft}
+                              onChange={(event) =>
+                                setMathDraft(event.target.value)
+                              }
+                              onBlur={() => commitMathEdit(false)}
+                              onKeyDown={(event) => {
+                                if (
+                                  event.key === "Enter" ||
+                                  event.key === "Tab"
+                                ) {
+                                  event.preventDefault();
+                                  commitMathEdit(true);
+                                }
+                                if (event.key === "Escape") {
+                                  setMathDraft("");
+                                  setMathEditIndex(null);
+                                }
+                              }}
+                              placeholder="z. B. 4 + 4"
+                            />
+                            <div className="teacher-live__math-edit-toolbar">
+                              {MATH_TOOLBAR_ITEMS.map((item) => (
+                                <button
+                                  key={item.label}
+                                  type="button"
+                                  onMouseDown={(event) =>
+                                    event.preventDefault()
+                                  }
+                                  onClick={() =>
+                                    insertAtMathCursor(item.insert)
+                                  }
+                                >
+                                  {item.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                      {mathEditIndex !== mathLines.length ? (
+                        <button
+                          type="button"
+                          className="teacher-live__math-add"
+                          onClick={() => {
+                            setMathEditIndex(mathLines.length);
+                            setMathDraft("");
+                          }}
+                        >
+                          + Aufgabe hinzufügen
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="teacher-live__math-preview">
+                      <span>{mathGap ? "Vorschau (Lücken)" : "Vorschau"}</span>
+                      {mathLines.length === 0 ? (
                         <p className="teacher-live__math-empty">
                           Noch keine Aufgaben.
                           <br />
-                          Oben erzeugen oder unten selbst hinzufügen.
+                          Die Vorschau erscheint, sobald Aufgaben da sind.
                         </p>
-                      ) : (
-                        mathLines.map((line, index) =>
-                          mathEditIndex === index ? (
-                            <div
-                              key={`edit-${index}`}
-                              className="teacher-live__math-edit-group"
-                            >
-                              <input
-                                ref={mathEditInputRef}
-                                className="teacher-live__math-edit"
-                                value={mathDraft}
-                                onChange={(event) =>
-                                  setMathDraft(event.target.value)
-                                }
-                                onBlur={() => commitMathEdit(false)}
-                                onKeyDown={(event) => {
-                                  if (
-                                    event.key === "Enter" ||
-                                    event.key === "Tab"
-                                  ) {
-                                    event.preventDefault();
-                                    commitMathEdit(true);
-                                  }
-                                  if (event.key === "Escape") {
-                                    setMathDraft("");
-                                    setMathEditIndex(null);
-                                  }
-                                }}
-                                placeholder="z. B. 4 + 4"
-                              />
-                              <div className="teacher-live__math-edit-toolbar">
-                                {MATH_TOOLBAR_ITEMS.map((item) => (
-                                  <button
-                                    key={item.label}
-                                    type="button"
-                                    onMouseDown={(event) =>
-                                      event.preventDefault()
-                                    }
-                                    onClick={() =>
-                                      insertAtMathCursor(item.insert)
-                                    }
+                      ) : mathGap ? (
+                        <>
+                          <p className="teacher-live__math-preview-hint">
+                            Tippe die Zahl an, die zur Lücke (_) werden soll.
+                          </p>
+                          <div className="teacher-live__math-preview-rows">
+                            {mathLines.map((line, index) => {
+                              const parsed = parseMathLineForGapPicker(line);
+                              if (!parsed) {
+                                return (
+                                  <div
+                                    key={`${line}-${index}`}
+                                    className="teacher-live__math-preview-row"
                                   >
-                                    {item.label}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
+                                    <span>{index + 1}.</span>
+                                    <span>{displayMathLine(line)}</span>
+                                  </div>
+                                );
+                              }
+                              const slotButton = (
+                                slot: MathGapSlot,
+                                value: number,
+                              ) => (
+                                <button
+                                  type="button"
+                                  aria-pressed={parsed.gap === slot}
+                                  onClick={() => setMathLineGap(index, slot)}
+                                >
+                                  {parsed.gap === slot
+                                    ? "_"
+                                    : displayMathNumber(value)}
+                                </button>
+                              );
+                              return (
+                                <div
+                                  key={`${line}-${index}`}
+                                  className="teacher-live__math-preview-row"
+                                >
+                                  <span>{index + 1}.</span>
+                                  {slotButton("left", parsed.a)}
+                                  <span aria-hidden="true">
+                                    {parsed.op === "*"
+                                      ? "·"
+                                      : parsed.op === "/"
+                                        ? ":"
+                                        : parsed.op === "-"
+                                          ? "−"
+                                          : "+"}
+                                  </span>
+                                  {slotButton("right", parsed.b)}
+                                  <span aria-hidden="true">=</span>
+                                  {slotButton("result", parsed.result)}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="teacher-live__math-preview-rows">
+                          {mathLines.map((line, index) => (
                             <div
                               key={`${line}-${index}`}
-                              className="teacher-live__math-row"
+                              className="teacher-live__math-preview-row"
                             >
-                              <button
-                                type="button"
-                                className="teacher-live__math-row-text"
-                                title="Zum Bearbeiten klicken"
-                                onClick={() => startEditMathRow(index)}
-                              >
-                                {displayMathLine(line)}
-                              </button>
-                              <button
-                                type="button"
-                                aria-label="Neu würfeln"
-                                title="Neu würfeln"
-                                onClick={() => {
-                                  const lines = [...mathLines];
-                                  lines[index] = generateSingleMathLine();
-                                  commitMathLines(lines);
-                                }}
-                              >
-                                ↻
-                              </button>
-                              <button
-                                type="button"
-                                aria-label="Löschen"
-                                title="Löschen"
-                                onClick={() => {
-                                  const lines = [...mathLines];
-                                  lines.splice(index, 1);
-                                  commitMathLines(lines);
-                                  if (mathEditIndex !== null)
-                                    setMathEditIndex(null);
-                                }}
-                              >
-                                ×
-                              </button>
+                              <span>{index + 1}.</span>
+                              <span>{displayMathLine(line)}</span>
                             </div>
-                          ),
-                        )
-                      )}
-                      {mathEditIndex === mathLines.length ? (
-                        <div className="teacher-live__math-edit-group">
-                          <input
-                            ref={mathEditInputRef}
-                            className="teacher-live__math-edit"
-                            value={mathDraft}
-                            onChange={(event) =>
-                              setMathDraft(event.target.value)
-                            }
-                            onBlur={() => commitMathEdit(false)}
-                            onKeyDown={(event) => {
-                              if (
-                                event.key === "Enter" ||
-                                event.key === "Tab"
-                              ) {
-                                event.preventDefault();
-                                commitMathEdit(true);
-                              }
-                              if (event.key === "Escape") {
-                                setMathDraft("");
-                                setMathEditIndex(null);
-                              }
-                            }}
-                            placeholder="z. B. 4 + 4"
-                          />
-                          <div className="teacher-live__math-edit-toolbar">
-                            {MATH_TOOLBAR_ITEMS.map((item) => (
-                              <button
-                                key={item.label}
-                                type="button"
-                                onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => insertAtMathCursor(item.insert)}
-                              >
-                                {item.label}
-                              </button>
-                            ))}
-                          </div>
+                          ))}
                         </div>
-                      ) : null}
+                      )}
                     </div>
-                    {mathEditIndex !== mathLines.length ? (
-                      <button
-                        type="button"
-                        className="teacher-live__math-add"
-                        onClick={() => {
-                          setMathEditIndex(mathLines.length);
-                          setMathDraft("");
-                        }}
-                      >
-                        + Aufgabe hinzufügen
-                      </button>
-                    ) : null}
                   </div>
                 </div>
               )}
@@ -1391,22 +1557,14 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     )}
                   </div>
                 </div>
-              ) : contentMode !== "vocabulary" ? (
+              ) : contentMode === "text" ? (
                 <label className="teacher-live__source">
-                  <span>
-                    {contentMode === "text"
-                      ? "Text – Sätze werden automatisch getrennt"
-                      : "Eine Rechnung pro Zeile"}
-                  </span>
+                  <span>Text – Sätze werden automatisch getrennt</span>
                   <textarea
                     ref={sourceRef}
                     value={source}
                     disabled={!hydrated}
-                    placeholder={
-                      contentMode === "text"
-                        ? "Text eingeben oder Dokument hochladen …"
-                        : "z. B. 4 + 8"
-                    }
+                    placeholder="Text eingeben oder Dokument hochladen …"
                     onChange={(e) =>
                       setSources((current) => ({
                         ...current,
@@ -1415,7 +1573,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     }
                   />
                 </label>
-              ) : (
+              ) : contentMode === "vocabulary" ? (
                 <div className="teacher-live__vocabulary-workbench">
                   <section className="teacher-live__vocabulary-list">
                     <div className="teacher-live__vocabulary-list-heading">
@@ -1596,7 +1754,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     </div>
                   </aside>
                 </div>
-              )}
+              ) : null}
               {contentMode === "text" && source && !markerMode ? (
                 <>
                   <div className="teacher-live__marker-actions">
