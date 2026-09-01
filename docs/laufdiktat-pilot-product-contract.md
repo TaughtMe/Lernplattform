@@ -28,7 +28,7 @@ Nicht freigegeben sind persönliches Dashboard, Klassenverwaltung, allgemeine Ma
 
 1. Ein Text kann eingegeben oder als Textdatei importiert und in Aufgaben zerlegt werden.
 2. Klassisches Laufdiktat, freies Üben, Battle und Stationen sind auswählbar; Reihenfolge, Hilfen, Vorlesen, strikte Eingabe, Sterne und modusspezifische Regeln sind konfigurierbar.
-3. Eine Lobby kann nur mit einer gültigen, separat provisionierten Pilotfreigabe geöffnet werden.
+3. Eine Lobby kann ohne zusätzliche Freigabe geöffnet werden, sobald mindestens eine gültige Aufgabe vorliegt.
 4. QR-Code und vierstelliger Raumcode enthalten niemals Lehrkraft- oder Teilnehmertoken.
 5. Geräte, Verbindung, Fortschritt und Abschluss sind live erkennbar; die Runde kann beendet werden.
 6. Ohne Supabase-Konfiguration oder bei Verbindungsfehler wird kein Erfolg simuliert.

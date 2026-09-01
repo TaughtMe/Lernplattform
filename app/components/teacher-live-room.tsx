@@ -141,7 +141,6 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [vocabularyTransfer, setVocabularyTransfer] =
     useState<VocabularyTransferChoice>("errors");
   const [gameMode, setGameMode] = useState<TeacherGameMode>("LAUFDIKTAT");
-  const [teacherAccessCode, setTeacherAccessCode] = useState("");
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLElement>(null);
   const [shuffleWords, setShuffleWords] = useState(false);
@@ -388,25 +387,15 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     }
     if (!words.length)
       return setError("Bitte gib mindestens eine gültige Aufgabe ein.");
-    if (teacherAccessCode.trim().length < 12) {
-      setError("Bitte gib deine Lehrkraftfreigabe ein.");
-      return;
-    }
     setBusy(true);
     try {
-      const opened = await openLiveRoom(
-        liveRoomConfig,
-        roomConfig,
-        teacherAccessCode,
-      );
+      const opened = await openLiveRoom(liveRoomConfig, roomConfig);
       saveTeacherLiveRoom(opened);
       setRoom(opened);
       setStage("lobby");
-    } catch (cause) {
+    } catch {
       setError(
-        cause instanceof Error && /Lehrkraftfreigabe/i.test(cause.message)
-          ? "Die Lehrkraftfreigabe ist ungültig oder nicht mehr aktiv."
-          : "Der Raum konnte nicht geöffnet werden. Bitte prüfe die Verbindung.",
+        "Der Raum konnte nicht geöffnet werden. Bitte prüfe die Verbindung.",
       );
     } finally {
       setBusy(false);
@@ -1279,21 +1268,6 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                   />
                 </>
               )}
-              <label className="teacher-live__source">
-                <span id="teacher-access-label">Lehrkraftfreigabe</span>
-                <input
-                  aria-labelledby="teacher-access-label"
-                  type="password"
-                  autoComplete="current-password"
-                  value={teacherAccessCode}
-                  onChange={(event) => setTeacherAccessCode(event.target.value)}
-                  aria-describedby="teacher-access-help"
-                />
-                <small id="teacher-access-help">
-                  Die Freigabe wird nur zum Öffnen der Lobby übertragen und nie
-                  im QR-Code oder Link gespeichert.
-                </small>
-              </label>
             </aside>
           </div>
         )}

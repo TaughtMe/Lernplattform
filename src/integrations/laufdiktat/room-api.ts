@@ -65,13 +65,11 @@ export type LiveRoomStudent = LiveProgress & {
 export async function openLiveRoom(
   config: LiveRoomConfig,
   roomConfig: Record<string, unknown>,
-  teacherAccessCode: string,
 ): Promise<OpenedLiveRoom> {
   const { data, error } = await getLiveRoomClient(config).rpc(
     "open_room_secure",
     {
       p_config: roomConfig,
-      p_teacher_token: teacherAccessCode,
     },
   );
   if (error) throw new Error(error.message);

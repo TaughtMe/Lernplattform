@@ -25,17 +25,13 @@ describe("TeacherLiveRoom", () => {
     expect(screen.queryByText("Lobby geöffnet")).not.toBeInTheDocument();
   });
 
-  it("offers all upstream game modes and requires a teacher gate", async () => {
+  it("offers all upstream game modes", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     await user.click(
       screen.getByRole("button", { name: /Weiter zur Konfiguration/ }),
     );
     expect(screen.getByRole("radio", { name: /^Laufdiktat/ })).toBeVisible();
-    expect(screen.getByLabelText("Lehrkraftfreigabe")).toHaveAttribute(
-      "type",
-      "password",
-    );
     expect(screen.getByRole("radio", { name: /^Freies Üben/ })).toBeVisible();
     expect(screen.getByRole("radio", { name: /^Battle/ })).toBeVisible();
     expect(screen.getByRole("radio", { name: /^Stationen/ })).toBeVisible();
