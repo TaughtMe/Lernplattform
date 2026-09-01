@@ -4746,6 +4746,87 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   font-size: 0.9rem;
   font-weight: 720;
 }
+.teacher-live__toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.teacher-live__toggle input[type="checkbox"]:checked {
+  border-color: var(--coral);
+  background: var(--coral);
+}
+.teacher-live__toggle input[type="checkbox"]:checked::after {
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  content: "";
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+.teacher-live__toggle input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+.teacher-live__stepper-row {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 720;
+}
+.teacher-live__stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.teacher-live__stepper button {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+}
+.teacher-live__stepper button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+.teacher-live__stepper input {
+  width: 44px;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.teacher-live__stepper input::-webkit-outer-spin-button,
+.teacher-live__stepper input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
 .teacher-live__open {
   width: 100%;
   margin-top: 20px;

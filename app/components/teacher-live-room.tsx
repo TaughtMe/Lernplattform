@@ -1190,16 +1190,13 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                   />
                   {assistance && (
                     <>
-                      <label className="teacher-live__number">
-                        Fehlversuche bis Lösung
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={attempts}
-                          onChange={(e) => setAttempts(Number(e.target.value))}
-                        />
-                      </label>
+                      <StepperRow
+                        label="Fehlversuche bis Lösung"
+                        value={attempts}
+                        onChange={setAttempts}
+                        min={1}
+                        max={10}
+                      />
                       <Option
                         label="Falsche Aufgaben am Ende wiederholen"
                         checked={repeatWrongAnswers}
@@ -1225,16 +1222,13 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
               )}
               {gameMode === "STATION" && (
                 <>
-                  <label className="teacher-live__number">
-                    Anzahl Schülernummern
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={stationCount}
-                      onChange={(e) => setStationCount(Number(e.target.value))}
-                    />
-                  </label>
+                  <StepperRow
+                    label="Anzahl Schülernummern"
+                    value={stationCount}
+                    onChange={setStationCount}
+                    min={1}
+                    max={100}
+                  />
                   <Option
                     label="Reihenfolge je Schülernummer mischen"
                     checked={stationShuffle}
@@ -1370,6 +1364,72 @@ function ModeIcon({ mode }: { mode: TeacherGameMode }) {
         </svg>
       )}
     </span>
+  );
+}
+
+function Stepper({
+  value,
+  onChange,
+  min,
+  max,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+}) {
+  return (
+    <div className="teacher-live__stepper">
+      <button
+        type="button"
+        aria-label="Weniger"
+        disabled={value <= min}
+        onClick={() => onChange(Math.max(min, value - 1))}
+      >
+        −
+      </button>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(event) => {
+          const next = Number(event.target.value);
+          if (Number.isFinite(next))
+            onChange(Math.min(max, Math.max(min, next)));
+        }}
+      />
+      <button
+        type="button"
+        aria-label="Mehr"
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + 1))}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+function StepperRow({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+}) {
+  return (
+    <div className="teacher-live__stepper-row">
+      <span>{label}</span>
+      <Stepper value={value} onChange={onChange} min={min} max={max} />
+    </div>
   );
 }
 
