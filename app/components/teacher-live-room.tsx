@@ -20,6 +20,7 @@ import {
 import {
   buildMentalMathTask,
   displayMathNumber,
+  evaluateMentalMathExpression,
   MULTIPLICATION_TABLES,
   parseMentalMathExpression,
   type MathGapSlot,
@@ -372,7 +373,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
 
   function displayMathLine(line: string) {
     const arrowIndex = line.indexOf("=>");
-    return arrowIndex === -1 ? line : line.slice(0, arrowIndex).trim();
+    if (arrowIndex !== -1) return line.slice(0, arrowIndex).trim();
+    const parsed = parseMathLineForGapPicker(line);
+    if (parsed) return `${line} = ${displayMathNumber(parsed.result)}`;
+    const chained = evaluateMentalMathExpression(line);
+    return chained === null ? line : `${line} = ${displayMathNumber(chained)}`;
   }
 
   function symbolToMathOperator(symbol: string): MathOperator {
@@ -449,6 +454,24 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     commitMathLines(lines);
   }
 
+  const DEFAULT_MATH_GAP_SLOT: MathGapSlot = "right";
+
+  function applyDefaultMathGap(line: string, index: number) {
+    const parsed = parseMathLineForGapPicker(line);
+    if (!parsed || parsed.gap !== null) return line;
+    const task = buildMentalMathTask(
+      {
+        left: parsed.a,
+        operator: parsed.op,
+        right: parsed.b,
+        result: parsed.result,
+      },
+      index,
+      DEFAULT_MATH_GAP_SLOT,
+    );
+    return `${task.prompt} => ${task.answer}`;
+  }
+
   const MATH_TOOLBAR_ITEMS = [
     { label: "+", insert: " + " },
     { label: "−", insert: " − " },
@@ -481,6 +504,13 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       lines[mathEditIndex] = value;
     } else {
       lines.splice(mathEditIndex, 1);
+    }
+    const committedIndex = wasAppending ? lines.length - 1 : mathEditIndex;
+    if (mathGap && value && committedIndex >= 0) {
+      lines[committedIndex] = applyDefaultMathGap(
+        lines[committedIndex]!,
+        committedIndex,
+      );
     }
     commitMathLines(lines);
     setMathDraft("");
@@ -1307,7 +1337,16 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       <Option
                         label="Lückenaufgaben"
                         checked={mathGap}
-                        set={setMathGap}
+                        set={(checked) => {
+                          setMathGap(checked);
+                          if (checked) {
+                            commitMathLines(
+                              mathLines.map((line, index) =>
+                                applyDefaultMathGap(line, index),
+                              ),
+                            );
+                          }
+                        }}
                       />
                     </div>
                     {mathOps.some(

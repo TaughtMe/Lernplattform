@@ -76,17 +76,17 @@ describe("TeacherLiveRoom", () => {
     const taskList = document.querySelector<HTMLElement>(
       ".teacher-live__math-tasklist",
     )!;
-    expect(within(taskList).getByText("3 + 4")).toBeVisible();
+    expect(within(taskList).getByText("3 + 4 = 7")).toBeVisible();
     expect(screen.getAllByText("5 Aufgaben")[0]).toBeVisible();
 
-    await user.click(within(taskList).getByText("3 + 4"));
+    await user.click(within(taskList).getByText("3 + 4 = 7"));
     const editField = screen.getByDisplayValue("3 + 4");
     await user.clear(editField);
     await user.type(editField, "5 + 5{Enter}");
-    expect(within(taskList).getByText("5 + 5")).toBeVisible();
+    expect(within(taskList).getByText("5 + 5 = 10")).toBeVisible();
 
     const editedRow = within(taskList)
-      .getByText("5 + 5")
+      .getByText("5 + 5 = 10")
       .closest<HTMLElement>(".teacher-live__math-row")!;
     await user.click(
       within(editedRow).getByRole("button", { name: "Löschen" }),
@@ -109,14 +109,50 @@ describe("TeacherLiveRoom", () => {
       ".teacher-live__math-preview",
     )!;
     expect(within(preview).getByText("Vorschau (Lücken)")).toBeVisible();
-    // "7 + 8" is the first default task: pick its result (15) as the gap.
-    await user.click(within(preview).getByRole("button", { name: "15" }));
-
+    // "7 + 8" is the first default task: enabling gap mode should already
+    // mark the second number as the (default) gap, so the teacher can see
+    // that something is selected without clicking anything first.
+    const firstRow = document.querySelector<HTMLElement>(
+      ".teacher-live__math-preview-row",
+    )!;
     const taskList = document.querySelector<HTMLElement>(
       ".teacher-live__math-tasklist",
     )!;
+    expect(within(taskList).getByText("7 + _ = 15")).toBeVisible();
+    expect(within(firstRow).getByRole("button", { name: "_" })).toBeVisible();
+
+    // Clicking a different number (the result) switches the selection.
+    await user.click(within(firstRow).getByRole("button", { name: "15" }));
     expect(within(taskList).getByText("7 + 8 = _")).toBeVisible();
-    expect(within(preview).getByRole("button", { name: "_" })).toBeVisible();
+    const updatedFirstRow = document.querySelector<HTMLElement>(
+      ".teacher-live__math-preview-row",
+    )!;
+    expect(
+      within(updatedFirstRow).getByRole("button", { name: "_" }),
+    ).toBeVisible();
+    expect(
+      within(updatedFirstRow).getByRole("button", { name: "8" }),
+    ).toBeVisible();
+  });
+
+  it("supports manually chained expressions with more than two numbers", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
+    await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
+    await user.click(kopfrechnenTab);
+
+    await user.click(
+      screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
+    );
+    await user.type(
+      screen.getByPlaceholderText("z. B. 4 + 4"),
+      "3 + 4 - 2{Enter}",
+    );
+    const taskList = document.querySelector<HTMLElement>(
+      ".teacher-live__math-tasklist",
+    )!;
+    expect(within(taskList).getByText("3 + 4 - 2 = 5")).toBeVisible();
   });
 
   it("starts vocabulary mode with one empty pair ready to fill in", async () => {
