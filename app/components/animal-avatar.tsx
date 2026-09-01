@@ -38,7 +38,10 @@ type AnimalAvatarProps = {
   className?: string;
 };
 
-export function AnimalAvatar({ studentName, className = "" }: AnimalAvatarProps) {
+export function AnimalAvatar({
+  studentName,
+  className = "",
+}: AnimalAvatarProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
   const svgPath = useMemo(() => {

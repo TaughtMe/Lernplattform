@@ -129,7 +129,9 @@ describe("LiveRunningDictationGame", () => {
     );
     expect(screen.queryByText(/Die Lösung ist:/)).not.toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByRole("textbox", { name: "Deine Antwort" })).toHaveFocus(),
+      expect(
+        screen.getByRole("textbox", { name: "Deine Antwort" }),
+      ).toHaveFocus(),
     );
   });
 

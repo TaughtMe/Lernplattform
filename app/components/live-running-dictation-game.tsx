@@ -553,10 +553,7 @@ export function LiveRunningDictationGame({
 
         {phase === "revealed" ? (
           <div ref={revealContainerRef} className="live-game-reveal">
-            <h1
-              ref={revealTextRef}
-              style={{ fontSize: `${revealFontSize}px` }}
-            >
+            <h1 ref={revealTextRef} style={{ fontSize: `${revealFontSize}px` }}>
               {prompt}
             </h1>
           </div>
@@ -675,7 +672,11 @@ export function LiveRunningDictationGame({
       </main>
 
       {showExitConfirm ? (
-        <div className="live-game-exit-confirm" role="alertdialog" aria-modal="true">
+        <div
+          className="live-game-exit-confirm"
+          role="alertdialog"
+          aria-modal="true"
+        >
           <div className="live-game-exit-confirm__card">
             <h2>Spiel verlassen?</h2>
             <p>Dein bisheriger Fortschritt in dieser Runde bleibt erhalten.</p>

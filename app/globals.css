@@ -1320,7 +1320,10 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   aspect-ratio: 1;
   border: none;
   border-radius: 18px;
-  background: var(--game-glass-strong, color-mix(in srgb, var(--teal) 9%, var(--surface)));
+  background: var(
+    --game-glass-strong,
+    color-mix(in srgb, var(--teal) 9%, var(--surface))
+  );
   color: var(--game-ink, var(--ink));
   font: inherit;
   font-size: 1.35rem;

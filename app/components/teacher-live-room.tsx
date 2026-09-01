@@ -1022,15 +1022,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                           <label>
                             <input
                               type="checkbox"
-                              checked={
-                                !excludedSectionIds.includes(section.id)
-                              }
+                              checked={!excludedSectionIds.includes(section.id)}
                               onChange={() =>
                                 setExcludedSectionIds((current) =>
                                   current.includes(section.id)
-                                    ? current.filter(
-                                        (id) => id !== section.id,
-                                      )
+                                    ? current.filter((id) => id !== section.id)
                                     : [...current, section.id],
                                 )
                               }
