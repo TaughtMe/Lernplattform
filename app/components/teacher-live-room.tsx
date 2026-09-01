@@ -21,11 +21,9 @@ import {
   buildMentalMathTask,
   displayMathNumber,
   evaluateMentalMathExpression,
-  mathOperatorSymbol,
   MULTIPLICATION_TABLES,
   parseMentalMathExpression,
   type MathGapSlot,
-  type MathOperator,
 } from "../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import {
@@ -61,6 +59,7 @@ import {
 } from "../../src/integrations/laufdiktat/teacher-results";
 import {
   parseLiveSession,
+  type LiveWord,
   type VocabularyTransferChoice,
 } from "../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../src/integrations/laufdiktat/debounce";
@@ -157,9 +156,10 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [mathSettingsOpen, setMathSettingsOpen] = useState(false);
   const [mathEditIndex, setMathEditIndex] = useState<number | null>(null);
   const [mathDraft, setMathDraft] = useState("");
-  const [mathEditGapSlot, setMathEditGapSlot] = useState<MathGapSlot | null>(
-    null,
-  );
+  // Gap slot per math line, kept separate from the line's text (mirrors
+  // Laufdiktat's useMathImport hook) so editing/rerolling a task's numbers
+  // never has to parse a gap marker back out of the stored string.
+  const [mathGaps, setMathGaps] = useState<MathGapSlot[]>([]);
   const mathEditInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (mathEditIndex !== null) mathEditInputRef.current?.focus();
@@ -321,6 +321,71 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     setMarkerAnchor(null);
   }
 
+  const mathLines = useMemo(
+    () =>
+      sources.math
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0),
+    [sources.math],
+  );
+
+  const DEFAULT_MATH_GAP_SLOT: MathGapSlot = "right";
+
+  function parseSimpleMathLine(line: string) {
+    const expr = parseMentalMathExpression(line);
+    return expr
+      ? { a: expr.left, op: expr.operator, b: expr.right, result: expr.result }
+      : null;
+  }
+
+  // Mirrors Laufdiktat's useMathImport: gaps are derived fresh from the
+  // current text + the separate mathGaps array on every render, never baked
+  // into the stored line — so editing numbers or adding a task can't lose or
+  // corrupt the gap. Multi-operator chains (e.g. "3 + 4 - 2") are computed
+  // and displayed, but — as in Laufdiktat — never gapped: there is no single
+  // unambiguous slot to blank once more than two operands are involved.
+  const mathWords = useMemo(() => {
+    if (contentMode !== "math") return [];
+    const result: LiveWord[] = [];
+    mathLines.forEach((line, index) => {
+      const parsed = parseSimpleMathLine(line);
+      if (parsed) {
+        const slot = mathGap
+          ? (mathGaps[index] ?? DEFAULT_MATH_GAP_SLOT)
+          : undefined;
+        const task = buildMentalMathTask(
+          {
+            left: parsed.a,
+            operator: parsed.op,
+            right: parsed.b,
+            result: parsed.result,
+          },
+          index,
+          slot,
+        );
+        result.push({
+          id: task.id,
+          kind: "math",
+          prompt: task.prompt,
+          targetWord: String(task.answer),
+        });
+        return;
+      }
+      const value = evaluateMentalMathExpression(line);
+      if (value !== null) {
+        result.push({
+          id: `math-${index}-expression`,
+          kind: "math",
+          prompt: line,
+          targetWord: String(value),
+          isLatex: true,
+        });
+      }
+    });
+    return result;
+  }, [contentMode, mathLines, mathGap, mathGaps]);
+
   const words = useMemo(
     () =>
       contentMode === "text"
@@ -329,27 +394,22 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             kind: "text" as const,
             targetWord: section.text,
           }))
-        : buildTeacherWords(
-            contentMode,
-            source,
-            direction,
-            vocabularyCaseSensitive,
-          ),
+        : contentMode === "math"
+          ? mathWords
+          : buildTeacherWords(
+              contentMode,
+              source,
+              direction,
+              vocabularyCaseSensitive,
+            ),
     [
       contentMode,
       direction,
+      mathWords,
       orderedTextSections,
       source,
       vocabularyCaseSensitive,
     ],
-  );
-  const mathLines = useMemo(
-    () =>
-      sources.math
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0),
-    [sources.math],
   );
 
   function generateSingleMathLine() {
@@ -362,7 +422,6 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       excludeZeroOperand: mathExcludeZeroOperand,
       excludeZeroResult: mathExcludeZeroResult,
       multiplicationTables: mathTables,
-      gapMode: mathGap,
     }).trim();
   }
 
@@ -371,110 +430,23 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   }
 
   function startEditMathRow(index: number) {
-    const line = mathLines[index] ?? "";
-    const parsed = parseMathLineForGapPicker(line);
     setMathEditIndex(index);
-    setMathEditGapSlot(parsed?.gap ?? null);
-    setMathDraft(
-      parsed
-        ? `${displayMathNumber(parsed.a)} ${mathOperatorSymbol(parsed.op)} ${displayMathNumber(parsed.b)}`
-        : line,
-    );
+    setMathDraft(mathLines[index] ?? "");
   }
 
   function displayMathLine(line: string) {
-    const arrowIndex = line.indexOf("=>");
-    if (arrowIndex !== -1) return line.slice(0, arrowIndex).trim();
-    const parsed = parseMathLineForGapPicker(line);
+    const parsed = parseSimpleMathLine(line);
     if (parsed) return `${line} = ${displayMathNumber(parsed.result)}`;
     const chained = evaluateMentalMathExpression(line);
     return chained === null ? line : `${line} = ${displayMathNumber(chained)}`;
   }
 
-  function symbolToMathOperator(symbol: string): MathOperator {
-    if (symbol === "-" || symbol === "−") return "-";
-    if (symbol === "*" || symbol === "×" || symbol === "·") return "*";
-    if (symbol === "/" || symbol === ":" || symbol === "÷") return "/";
-    return "+";
-  }
-
-  type MathGapPickerLine = {
-    a: number;
-    op: MathOperator;
-    b: number;
-    result: number;
-    gap: MathGapSlot | null;
-  };
-
-  function parseMathLineForGapPicker(line: string): MathGapPickerLine | null {
-    const arrowIndex = line.indexOf("=>");
-    if (arrowIndex === -1) {
-      const expr = parseMentalMathExpression(line);
-      return expr
-        ? {
-            a: expr.left,
-            op: expr.operator,
-            b: expr.right,
-            result: expr.result,
-            gap: null,
-          }
-        : null;
-    }
-    const promptPart = line.slice(0, arrowIndex).trim();
-    const hidden = Number.parseFloat(
-      line
-        .slice(arrowIndex + 2)
-        .trim()
-        .replace(",", "."),
-    );
-    const match = promptPart.match(
-      /^(_|\(?-?\d+(?:[.,]\d+)?\)?)\s*([+\-−*×·/:÷])\s*(_|\(?-?\d+(?:[.,]\d+)?\)?)\s*=\s*(_|\(?-?\d+(?:[.,]\d+)?\)?)$/,
-    );
-    if (!match || !Number.isFinite(hidden)) return null;
-    const [, rawA, rawOp, rawB, rawResult] = match;
-    const toValue = (raw: string) =>
-      raw === "_"
-        ? hidden
-        : Number.parseFloat(raw.replace(/[()]/g, "").replace(",", "."));
-    const gap: MathGapSlot =
-      rawA === "_" ? "left" : rawB === "_" ? "right" : "result";
-    return {
-      a: toValue(rawA!),
-      op: symbolToMathOperator(rawOp!),
-      b: toValue(rawB!),
-      result: toValue(rawResult!),
-      gap,
-    };
-  }
-
-  const DEFAULT_MATH_GAP_SLOT: MathGapSlot = "right";
-
-  function applyMathGapSlot(line: string, index: number, slot: MathGapSlot) {
-    const parsed = parseMathLineForGapPicker(line);
-    if (!parsed) return line;
-    const task = buildMentalMathTask(
-      {
-        left: parsed.a,
-        operator: parsed.op,
-        right: parsed.b,
-        result: parsed.result,
-      },
-      index,
-      slot,
-    );
-    return `${task.prompt} => ${task.answer}`;
-  }
-
   function setMathLineGap(index: number, slot: MathGapSlot) {
-    const lines = [...mathLines];
-    lines[index] = applyMathGapSlot(lines[index] ?? "", index, slot);
-    commitMathLines(lines);
-  }
-
-  function applyDefaultMathGap(line: string, index: number) {
-    const parsed = parseMathLineForGapPicker(line);
-    if (!parsed || parsed.gap !== null) return line;
-    return applyMathGapSlot(line, index, DEFAULT_MATH_GAP_SLOT);
+    setMathGaps((current) => {
+      const next = [...current];
+      next[index] = slot;
+      return next;
+    });
   }
 
   const MATH_TOOLBAR_ITEMS = [
@@ -500,27 +472,24 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
 
   function commitMathEdit(continueEditing: boolean) {
     if (mathEditIndex === null) return;
-    const wasAppending = mathEditIndex >= mathLines.length;
+    const editIndex = mathEditIndex;
+    const wasAppending = editIndex >= mathLines.length;
     const lines = [...mathLines];
     const value = mathDraft.trim();
     if (wasAppending) {
       if (value) lines.push(value);
     } else if (value) {
-      lines[mathEditIndex] = value;
+      lines[editIndex] = value;
     } else {
-      lines.splice(mathEditIndex, 1);
-    }
-    const committedIndex = wasAppending ? lines.length - 1 : mathEditIndex;
-    if (mathGap && value && committedIndex >= 0) {
-      lines[committedIndex] = applyMathGapSlot(
-        lines[committedIndex]!,
-        committedIndex,
-        mathEditGapSlot ?? DEFAULT_MATH_GAP_SLOT,
-      );
+      lines.splice(editIndex, 1);
+      setMathGaps((current) => {
+        const next = [...current];
+        next.splice(editIndex, 1);
+        return next;
+      });
     }
     commitMathLines(lines);
     setMathDraft("");
-    setMathEditGapSlot(null);
     setMathEditIndex(
       continueEditing && wasAppending && value ? lines.length : null,
     );
@@ -1023,7 +992,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     <button
                       type="button"
                       className="teacher-live__math-generate"
-                      onClick={() =>
+                      onClick={() => {
                         setSources((current) => ({
                           ...current,
                           math: generateMentalMathSource({
@@ -1035,10 +1004,10 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                             excludeZeroOperand: mathExcludeZeroOperand,
                             excludeZeroResult: mathExcludeZeroResult,
                             multiplicationTables: mathTables,
-                            gapMode: mathGap,
                           }),
-                        }))
-                      }
+                        }));
+                        setMathGaps([]);
+                      }}
                     >
                       ✨ Aufgaben erzeugen
                     </button>
@@ -1087,7 +1056,6 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                     }
                                     if (event.key === "Escape") {
                                       setMathDraft("");
-                                      setMathEditGapSlot(null);
                                       setMathEditIndex(null);
                                     }
                                   }}
@@ -1143,6 +1111,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                     const lines = [...mathLines];
                                     lines.splice(index, 1);
                                     commitMathLines(lines);
+                                    setMathGaps((current) => {
+                                      const next = [...current];
+                                      next.splice(index, 1);
+                                      return next;
+                                    });
                                     if (mathEditIndex !== null)
                                       setMathEditIndex(null);
                                   }}
@@ -1203,7 +1176,6 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                           className="teacher-live__math-add"
                           onClick={() => {
                             setMathEditIndex(mathLines.length);
-                            setMathEditGapSlot(null);
                             setMathDraft("");
                           }}
                         >
@@ -1226,7 +1198,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                           </p>
                           <div className="teacher-live__math-preview-rows">
                             {mathLines.map((line, index) => {
-                              const parsed = parseMathLineForGapPicker(line);
+                              const parsed = parseSimpleMathLine(line);
                               if (!parsed) {
                                 return (
                                   <div
@@ -1238,16 +1210,18 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                   </div>
                                 );
                               }
+                              const activeGap =
+                                mathGaps[index] ?? DEFAULT_MATH_GAP_SLOT;
                               const slotButton = (
                                 slot: MathGapSlot,
                                 value: number,
                               ) => (
                                 <button
                                   type="button"
-                                  aria-pressed={parsed.gap === slot}
+                                  aria-pressed={activeGap === slot}
                                   onClick={() => setMathLineGap(index, slot)}
                                 >
-                                  {parsed.gap === slot
+                                  {activeGap === slot
                                     ? "_"
                                     : displayMathNumber(value)}
                                 </button>
@@ -1346,16 +1320,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       <Option
                         label="Lückenaufgaben"
                         checked={mathGap}
-                        set={(checked) => {
-                          setMathGap(checked);
-                          if (checked) {
-                            commitMathLines(
-                              mathLines.map((line, index) =>
-                                applyDefaultMathGap(line, index),
-                              ),
-                            );
-                          }
-                        }}
+                        set={setMathGap}
                       />
                     </div>
                     {mathOps.some(

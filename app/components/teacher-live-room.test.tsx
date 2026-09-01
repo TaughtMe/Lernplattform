@@ -109,21 +109,24 @@ describe("TeacherLiveRoom", () => {
       ".teacher-live__math-preview",
     )!;
     expect(within(preview).getByText("Vorschau (Lücken)")).toBeVisible();
-    // "7 + 8" is the first default task: enabling gap mode should already
-    // mark the second number as the (default) gap, so the teacher can see
-    // that something is selected without clicking anything first.
+    // The task list always shows the full, editable equation — the gap
+    // marker only ever lives in the separate preview picker (matches
+    // Laufdiktat: the task list itself never bakes a "_" into its rows).
     const firstRow = document.querySelector<HTMLElement>(
       ".teacher-live__math-preview-row",
     )!;
     const taskList = document.querySelector<HTMLElement>(
       ".teacher-live__math-tasklist",
     )!;
-    expect(within(taskList).getByText("7 + _ = 15")).toBeVisible();
+    expect(within(taskList).getByText("7 + 8 = 15")).toBeVisible();
+    // Enabling gap mode should already mark the second number as the
+    // (default) gap, so the teacher can see that something is selected
+    // without clicking anything first.
     expect(within(firstRow).getByRole("button", { name: "_" })).toBeVisible();
 
     // Clicking a different number (the result) switches the selection.
     await user.click(within(firstRow).getByRole("button", { name: "15" }));
-    expect(within(taskList).getByText("7 + 8 = _")).toBeVisible();
+    expect(within(taskList).getByText("7 + 8 = 15")).toBeVisible();
     const updatedFirstRow = document.querySelector<HTMLElement>(
       ".teacher-live__math-preview-row",
     )!;
@@ -135,7 +138,7 @@ describe("TeacherLiveRoom", () => {
     ).toBeVisible();
   });
 
-  it("re-editing a gap task shows a clean equation and keeps its gap slot", async () => {
+  it("keeps a task's chosen gap slot after editing its numbers, and applies gaps to freshly added tasks", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
@@ -146,7 +149,7 @@ describe("TeacherLiveRoom", () => {
     await user.click(screen.getByLabelText("Lückenaufgaben"));
     await user.click(screen.getByRole("button", { name: "Schließen" }));
 
-    // Switch the first task's gap to the left number (7 + _ = 15 -> _ + 8 = 15).
+    // Switch the first task's gap to the left number (default is "right").
     const firstRow = document.querySelector<HTMLElement>(
       ".teacher-live__math-preview-row",
     )!;
@@ -155,18 +158,41 @@ describe("TeacherLiveRoom", () => {
     const taskList = document.querySelector<HTMLElement>(
       ".teacher-live__math-tasklist",
     )!;
-    expect(within(taskList).getByText("_ + 8 = 15")).toBeVisible();
 
     // Re-opening the row for editing must show a plain, editable equation —
-    // never the internal "=> answer" storage format.
-    await user.click(within(taskList).getByText("_ + 8 = 15"));
+    // never a "_" or the internal "=> answer" storage format that used to
+    // leak into the field and make edits look like they "did nothing".
+    await user.click(within(taskList).getByText("7 + 8 = 15"));
     const editField = screen.getByDisplayValue("7 + 8");
     await user.clear(editField);
     await user.type(editField, "10 + 8{Enter}");
 
-    // The edited numbers take effect and the previously chosen gap slot
-    // (left) is preserved instead of resetting to the default.
-    expect(within(taskList).getByText("_ + 8 = 18")).toBeVisible();
+    // The edited numbers take effect...
+    expect(within(taskList).getByText("10 + 8 = 18")).toBeVisible();
+    // ...and the previously chosen gap slot (left) is preserved instead of
+    // resetting to the default, since the gap is tracked separately from
+    // the line's text rather than re-derived from it.
+    const updatedFirstRow = document.querySelector<HTMLElement>(
+      ".teacher-live__math-preview-row",
+    )!;
+    expect(
+      within(updatedFirstRow).getByRole("button", { name: "_" }),
+    ).toBeVisible();
+    expect(
+      within(updatedFirstRow).getByRole("button", { name: "8" }),
+    ).toBeVisible();
+
+    // A brand-new manually added task is captured by gap mode immediately,
+    // without any special-casing needed.
+    await user.click(
+      screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
+    );
+    await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3 + 3{Enter}");
+    const newRow = document.querySelectorAll<HTMLElement>(
+      ".teacher-live__math-preview-row",
+    )[4]!;
+    expect(within(newRow).getByRole("button", { name: "_" })).toBeVisible();
+    expect(within(newRow).getByRole("button", { name: "3" })).toBeVisible();
   });
 
   it("supports manually chained expressions with more than two numbers", async () => {
