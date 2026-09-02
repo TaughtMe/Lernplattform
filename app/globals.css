@@ -5142,21 +5142,32 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 }
 .teacher-live__marker-piece {
   border-radius: 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   transition: background 0.12s ease;
 }
+/* Two channels change together (fill AND outline color/weight), not just
+   one — a fill-only difference washes out in running text, and an
+   outline-only difference is easy to miss at a glance. */
 .teacher-live__marker-piece.is-auto-even {
-  background: color-mix(in srgb, var(--teal) 10%, transparent);
+  background: color-mix(in srgb, var(--teal) 24%, transparent);
+  outline: 1.5px solid color-mix(in srgb, var(--teal) 60%, transparent);
 }
 .teacher-live__marker-piece.is-auto-odd {
-  background: color-mix(in srgb, var(--teal) 18%, transparent);
+  background: color-mix(in srgb, var(--teal) 42%, transparent);
+  outline: 1.5px solid var(--teal-dark);
 }
 .teacher-live__marker-piece.is-manual {
   cursor: pointer;
-  background: color-mix(in srgb, var(--coral) 20%, transparent);
+  background: color-mix(in srgb, var(--coral) 40%, transparent);
+  /* Dashed, unlike the auto sections' solid outline, so two manual marks
+     sitting right next to each other still show a visible seam even though
+     their fill color is identical. */
+  outline: 2px dashed var(--coral-dark);
   color: var(--coral-dark);
 }
 .teacher-live__marker-piece.is-manual:hover {
-  background: color-mix(in srgb, var(--coral) 32%, transparent);
+  background: color-mix(in srgb, var(--coral) 55%, transparent);
 }
 .teacher-live__marker-word {
   border-radius: 4px;
