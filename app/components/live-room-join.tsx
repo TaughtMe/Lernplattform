@@ -28,6 +28,7 @@ import { LiveRunningDictationGame } from "./live-running-dictation-game";
 import { QrCodeScanner } from "./qr-code-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
 import { useHydrated } from "./use-hydrated";
+import { useLiveSessionGuards } from "./use-live-session-guards";
 
 type View = "join" | "connecting" | "lobby" | "starting" | "game" | "ended";
 type AttackType = "ink" | "flicker";
@@ -144,6 +145,11 @@ export function LiveRoomJoin({
   const [error, setError] = useState("");
   const [connectionWarning, setConnectionWarning] = useState("");
   const [room, setRoom] = useState<JoinedLiveRoom | null>(null);
+  // Keep the screen awake from the moment a room is joined — including the
+  // "warte auf die Lehrkraft" lobby wait, not just once the dictation is
+  // actually running. A locked screen drops the Realtime connection and the
+  // student silently disappears from the teacher's lobby.
+  useLiveSessionGuards(Boolean(room) && view !== "ended");
   const [session, setSession] = useState<LiveSession | null>(null);
   const [initialProgress, setInitialProgress] = useState<LiveProgress | null>(
     null,
@@ -155,6 +161,13 @@ export function LiveRoomJoin({
     from: string;
   } | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  // Last progress payload sent for this student, kept so a "request-progress"
+  // broadcast from a (re)joining classmate can be answered immediately
+  // instead of waiting for the next natural progress update.
+  const lastProgressBroadcastRef = useRef<{
+    event: "student-progress" | "student-finished";
+    payload: Record<string, unknown>;
+  } | null>(null);
   useEffect(() => {
     if (!room || !liveRoomConfig) return;
     const activeRoom = room;
@@ -199,7 +212,61 @@ export function LiveRoomJoin({
       }
     }
 
+    // Presence sign-in with acknowledgement check and retry: track() can
+    // come back "timed out" or "rate limited". Without a retry the student
+    // stays invisible in the teacher's lobby forever (channel connected, but
+    // never present) while their own device shows the completely normal
+    // waiting screen — the "18 angemeldet, 17 sichtbar" case from real
+    // classroom use.
+    async function trackPresence() {
+      for (let attempt = 1; attempt <= 5; attempt += 1) {
+        // Channel was torn down and rebuilt in the meantime (unmount/re-run)
+        // — the new channel's own SUBSCRIBED pass will take over instead.
+        if (channelRef.current !== channel) return;
+        const result = await channel.track({ name: activeRoom.studentName });
+        if (result === "ok") {
+          setConnectionWarning("");
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+      }
+      setConnectionWarning(
+        "Du bist verbunden, aber noch nicht in der Teilnehmerliste sichtbar.",
+      );
+    }
+
+    // Device wakes from standby / tab returns to the foreground: don't
+    // passively wait for the automatic reconnect backoff, kick it directly.
+    // If the channel is still joined, a fresh presence sign-in is enough; if
+    // the socket dropped (screen lock), connect() speeds up the rebuild —
+    // the following SUBSCRIBED event then re-tracks/resyncs as on first join.
+    function onVisibilityChange() {
+      if (document.visibilityState !== "visible") return;
+      if (channel.state === "joined") {
+        void trackPresence();
+      } else {
+        client.realtime.connect();
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     channel
+      // Drop disconnected classmates from the battle roster: it used to only
+      // grow (broadcast-based), so a student who lost their connection stayed
+      // selectable as an attack target forever, with the attack then landing
+      // on nobody. Presence reflects the real connection state; if they come
+      // back, their next student-progress broadcast re-adds them.
+      .on("presence", { event: "sync" }, () => {
+        const present = new Set(Object.keys(channel.presenceState()));
+        setRoster((current) => {
+          const entries = Object.entries(current).filter(([name]) =>
+            present.has(name),
+          );
+          return entries.length === Object.keys(current).length
+            ? current
+            : Object.fromEntries(entries);
+        });
+      })
       .on("broadcast", { event: "session-start" }, () => {
         setView("starting");
         void syncAuthorizedRoomState();
@@ -229,6 +296,17 @@ export function LiveRoomJoin({
           [name]: index,
         }));
       })
+      .on("broadcast", { event: "request-progress" }, () => {
+        // A (re)joining classmate is asking for everyone's current state —
+        // resend ours so their roster/battle view fills back in immediately
+        // instead of waiting for our next natural progress update.
+        if (lastProgressBroadcastRef.current) {
+          void channel.send({
+            type: "broadcast",
+            ...lastProgressBroadcastRef.current,
+          });
+        }
+      })
       .on("broadcast", { event: "attack" }, ({ payload }) => {
         const attack = payload as {
           to?: unknown;
@@ -249,17 +327,22 @@ export function LiveRoomJoin({
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          const presence = await channel.track({
-            name: activeRoom.studentName,
+          await trackPresence();
+          // Ask everyone else to resend their progress — harmless to send
+          // again after a mere reconnect too, and it's how we fill in the
+          // roster after losing and regaining the connection ourselves.
+          await channel.send({
+            type: "broadcast",
+            event: "request-progress",
+            payload: {},
           });
-          setConnectionWarning(
-            presence === "ok"
-              ? ""
-              : "Du bist verbunden, aber noch nicht in der Teilnehmerliste sichtbar.",
-          );
           await syncAuthorizedRoomState();
         }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
           setConnectionWarning(
             "Die Verbindung zur Unterrichtsrunde wurde unterbrochen.",
           );
@@ -267,6 +350,7 @@ export function LiveRoomJoin({
       });
 
     return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       channelRef.current = null;
       void client.removeChannel(channel);
     };
@@ -314,17 +398,18 @@ export function LiveRoomJoin({
           "Dein Fortschritt konnte gerade nicht an die Lehrkraft zurückgegeben werden.",
         );
       });
-      void channelRef.current?.send({
-        type: "broadcast",
-        event: progress.finished ? "student-finished" : "student-progress",
-        payload: {
-          name: progress.stationNumber
-            ? `Station ${progress.stationNumber}`
-            : room.studentName,
-          index: progress.currentIndex,
-          ...progress,
-        },
-      });
+      const event = progress.finished
+        ? ("student-finished" as const)
+        : ("student-progress" as const);
+      const payload = {
+        name: progress.stationNumber
+          ? `Station ${progress.stationNumber}`
+          : room.studentName,
+        index: progress.currentIndex,
+        ...progress,
+      };
+      lastProgressBroadcastRef.current = { event, payload };
+      void channelRef.current?.send({ type: "broadcast", event, payload });
     },
     [liveRoomConfig, room, session],
   );

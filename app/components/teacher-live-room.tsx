@@ -229,6 +229,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [students, setStudents] = useState<LiveRoomStudent[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [connectionWarning, setConnectionWarning] = useState("");
   const channelRef = useRef<RealtimeChannel | null>(null);
   const sourceRef = useRef<HTMLTextAreaElement>(null);
   const markerContainerRef = useRef<HTMLDivElement>(null);
@@ -752,13 +753,38 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       .on("broadcast", { event: "student-progress" }, refreshSoon.schedule)
       .on("broadcast", { event: "student-finished" }, refreshSoon.schedule)
       .on("broadcast", { event: "update-station-state" }, refreshSoon.schedule)
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setConnectionWarning("");
+        }
+        if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
+          setConnectionWarning(
+            "Die Verbindung zum Klassenraum wurde unterbrochen.",
+          );
+        }
+      });
     const first = window.setTimeout(() => void refresh(), 0);
     const interval = window.setInterval(
       () => void refresh(),
       stage === "live" ? 3_000 : 8_000,
     );
+    // Teacher device wakes from standby / tab returns to the foreground
+    // (e.g. an iPad at the projector): kick the connection immediately
+    // instead of waiting for the automatic reconnect backoff, and pull the
+    // authoritative state (results + roster) right away — broadcasts missed
+    // during standby never arrive after the fact.
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      if (channel.state !== "joined") client.realtime.connect();
+      refreshSoon.schedule();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.clearTimeout(first);
       window.clearInterval(interval);
       refreshSoon.cancel();
@@ -2349,6 +2375,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         {error && (
           <p className="teacher-live__error" role="alert">
             {error}
+          </p>
+        )}
+        {!error && connectionWarning && (
+          <p className="teacher-live__error" role="status">
+            {connectionWarning}
           </p>
         )}
       </main>
