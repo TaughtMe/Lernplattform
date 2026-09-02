@@ -67,6 +67,32 @@ describe("TeacherLiveRoom", () => {
     expect(screen.getByText("2 Abschnitte")).toBeVisible();
   });
 
+  it("marks an arbitrary word range as a manual section via tap-to-tap", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const source = screen.getByLabelText(/Text – Sätze/);
+    await waitFor(() => expect(source).toBeEnabled());
+    await user.clear(source);
+    await user.type(source, "Der Marker markiert Woerter im Text.");
+    await user.click(screen.getByRole("button", { name: "✎ Marker" }));
+
+    // Tap the start word, then the end word — the whole range between them
+    // (not just those two words) becomes one manual section.
+    await user.click(screen.getByText("markiert"));
+    await user.click(screen.getByText("im"));
+
+    const manualChip = screen.getByTitle(
+      "Antippen, um die manuelle Markierung zu entfernen",
+    );
+    expect(manualChip).toHaveTextContent("markiert Woerter im");
+
+    // Tapping the manual chip removes it again.
+    await user.click(manualChip);
+    expect(
+      screen.queryByTitle("Antippen, um die manuelle Markierung zu entfernen"),
+    ).not.toBeInTheDocument();
+  });
+
   it("supports adding, editing and deleting individual math tasks", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);

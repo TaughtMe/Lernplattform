@@ -231,6 +231,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [error, setError] = useState("");
   const channelRef = useRef<RealtimeChannel | null>(null);
   const sourceRef = useRef<HTMLTextAreaElement>(null);
+  const markerContainerRef = useRef<HTMLDivElement>(null);
 
   const source = sources[contentMode];
   useEffect(() => {
@@ -264,65 +265,156 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       return leftRank - rightRank;
     });
   }, [sectionOrder, textSections]);
+  // A contiguous run of the raw text for the marker view: the sections
+  // themselves plus everything between them (whitespace, consumed
+  // separators). Gapless on purpose — the marker view must render exactly
+  // the same characters as the plain textarea, or character offsets from a
+  // click/selection would no longer line up with the raw text.
+  type MarkerPiece = {
+    text: string;
+    start: number;
+    kind: "gap" | "auto" | "manual";
+    // Counts only the automatic sections, so adjacent auto sections can be
+    // colored in alternating shades (the boundary between them stays
+    // visible even when nothing manual has been marked yet).
+    autoIndex: number;
+  };
   const markerPieces = useMemo(() => {
-    const pieces: Array<
-      | { kind: "gap"; text: string }
-      | {
-          kind: "auto" | "manual";
-          text: string;
-          start: number;
-          end: number;
-        }
-    > = [];
+    const pieces: MarkerPiece[] = [];
     let cursor = 0;
+    let autoIndex = 0;
     for (const section of textSections) {
       if (section.start > cursor) {
-        pieces.push({ kind: "gap", text: source.slice(cursor, section.start) });
+        pieces.push({
+          text: source.slice(cursor, section.start),
+          start: cursor,
+          kind: "gap",
+          autoIndex,
+        });
       }
       pieces.push({
-        kind: section.source,
         text: section.text,
         start: section.start,
-        end: section.end,
+        kind: section.source,
+        autoIndex,
       });
+      if (section.source === "auto") autoIndex += 1;
       cursor = section.end;
     }
     if (cursor < source.length) {
-      pieces.push({ kind: "gap", text: source.slice(cursor) });
+      pieces.push({
+        text: source.slice(cursor),
+        start: cursor,
+        kind: "gap",
+        autoIndex,
+      });
     }
     return pieces;
   }, [source, textSections]);
 
-  function handleMarkerSectionClick(section: {
+  type MarkerToken = {
+    text: string;
     start: number;
     end: number;
-    source: "auto" | "manual";
-  }) {
-    if (section.source === "manual") {
-      setManualRanges((current) =>
-        current.filter(
-          (range) =>
-            !(
-              range.type === "section" &&
-              range.start === section.start &&
-              range.end === section.end
-            ),
-        ),
-      );
-      setMarkerAnchor(null);
-      return;
+    isWord: boolean;
+  };
+  function tokenizeMarkerText(text: string, base: number): MarkerToken[] {
+    const tokens: MarkerToken[] = [];
+    const regex = /(\p{L}+|\p{N}+)/gu;
+    let last = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text))) {
+      if (match.index > last) {
+        tokens.push({
+          text: text.slice(last, match.index),
+          start: base + last,
+          end: base + match.index,
+          isWord: false,
+        });
+      }
+      tokens.push({
+        text: match[0],
+        start: base + match.index,
+        end: base + regex.lastIndex,
+        isWord: true,
+      });
+      last = regex.lastIndex;
     }
-    if (!markerAnchor) {
-      setMarkerAnchor({ start: section.start, end: section.end });
-      return;
+    if (last < text.length) {
+      tokens.push({
+        text: text.slice(last),
+        start: base + last,
+        end: base + text.length,
+        isWord: false,
+      });
     }
-    const start = Math.min(markerAnchor.start, section.start);
-    const end = Math.max(markerAnchor.end, section.end);
+    return tokens;
+  }
+
+  // A new manual range replaces any manual range it overlaps, rather than
+  // stacking on top of it.
+  function addManualSection(start: number, end: number) {
     setManualRanges((current) => [
-      ...current,
+      ...current.filter(
+        (range) => Math.max(start, range.start) >= Math.min(end, range.end),
+      ),
       { id: crypto.randomUUID(), type: "section", start, end },
     ]);
+  }
+
+  function removeManualSection(section: { start: number; end: number }) {
+    setManualRanges((current) =>
+      current.filter(
+        (range) =>
+          Math.max(section.start, range.start) >=
+          Math.min(section.end, range.end),
+      ),
+    );
+  }
+
+  // First tapped word = anchor; second word (start or end, either order)
+  // closes the range into a new manual section. Trailing punctuation right
+  // after the second word is pulled in too, so it doesn't end up as its own
+  // tiny leftover section.
+  function handleMarkerWordTap(token: MarkerToken) {
+    if (!window.getSelection()?.isCollapsed) return;
+    if (!markerAnchor) {
+      setMarkerAnchor({ start: token.start, end: token.end });
+      return;
+    }
+    const start = Math.min(markerAnchor.start, token.start);
+    let end = Math.max(markerAnchor.end, token.end);
+    while (end < source.length && /[^\s\p{L}\p{N}]/u.test(source[end] ?? "")) {
+      end += 1;
+    }
     setMarkerAnchor(null);
+    addManualSection(start, end);
+  }
+
+  // Desktop alternative to word-tapping: drag-select a range with the mouse.
+  function handleMarkerMouseUp() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+    const range = selection.getRangeAt(0);
+    const container = markerContainerRef.current;
+    if (!container || !container.contains(range.commonAncestorContainer)) {
+      return;
+    }
+    const preSelection = range.cloneRange();
+    preSelection.selectNodeContents(container);
+    preSelection.setEnd(range.startContainer, range.startOffset);
+    let start = preSelection.toString().length;
+    let end = start + range.toString().length;
+
+    const selected = source.slice(start, end);
+    start += selected.length - selected.trimStart().length;
+    end -= selected.length - selected.trimEnd().length;
+
+    selection.removeAllRanges();
+    setMarkerAnchor(null);
+    if (start < end) addManualSection(start, end);
   }
 
   const mathLines = useMemo(
@@ -1633,46 +1725,99 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
               {contentMode === "text" && markerMode ? (
                 <div className="teacher-live__marker-editor">
                   <p className="teacher-live__marker-hint">
-                    Zwei Abschnitte antippen, um sie zusammenzufassen. Einen
-                    markierten Abschnitt antippen, um ihn wieder zu lösen.
+                    Text markieren – oder zwei Wörter antippen (Anfang und Ende)
+                    –, um einen Bereich zu einem Abschnitt zusammenzufassen.
+                    Einen manuellen Abschnitt antippen löst ihn wieder. Der Text
+                    ist währenddessen schreibgeschützt.
                   </p>
-                  <div className="teacher-live__marker-text">
-                    {markerPieces.map((piece, index) =>
-                      piece.kind === "gap" ? (
-                        <span key={index}>{piece.text}</span>
-                      ) : (
-                        <span
-                          key={index}
-                          role="button"
-                          tabIndex={0}
-                          className={`teacher-live__marker-piece is-${piece.kind}${
-                            markerAnchor?.start === piece.start &&
-                            markerAnchor.end === piece.end
-                              ? " is-anchored"
-                              : ""
-                          }`}
-                          onClick={() =>
-                            handleMarkerSectionClick({
-                              start: piece.start,
-                              end: piece.end,
-                              source: piece.kind,
-                            })
-                          }
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              handleMarkerSectionClick({
-                                start: piece.start,
-                                end: piece.end,
-                                source: piece.kind,
-                              });
-                            }
-                          }}
-                        >
-                          {piece.text}
-                        </span>
-                      ),
-                    )}
+                  {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- onMouseUp only reacts to a native text selection (already keyboard-accessible); each word inside is its own proper role="button". */}
+                  <div
+                    ref={markerContainerRef}
+                    className="teacher-live__marker-text"
+                    onMouseUp={handleMarkerMouseUp}
+                  >
+                    {markerPieces.map((piece, index) => {
+                      const tokens = tokenizeMarkerText(
+                        piece.text,
+                        piece.start,
+                      );
+                      const renderWordTokens = () =>
+                        tokens.map((token, tokenIndex) =>
+                          token.isWord ? (
+                            <span
+                              key={tokenIndex}
+                              role="button"
+                              tabIndex={0}
+                              className={`teacher-live__marker-word${
+                                markerAnchor?.start === token.start &&
+                                markerAnchor.end === token.end
+                                  ? " is-anchored"
+                                  : ""
+                              }`}
+                              onClick={() => handleMarkerWordTap(token)}
+                              onKeyDown={(event) => {
+                                if (
+                                  event.key === "Enter" ||
+                                  event.key === " "
+                                ) {
+                                  event.preventDefault();
+                                  handleMarkerWordTap(token);
+                                }
+                              }}
+                            >
+                              {token.text}
+                            </span>
+                          ) : (
+                            <span key={tokenIndex}>{token.text}</span>
+                          ),
+                        );
+
+                      if (piece.kind === "manual") {
+                        const manualRange = {
+                          start: piece.start,
+                          end: piece.start + piece.text.length,
+                        };
+                        return (
+                          <span
+                            key={index}
+                            role="button"
+                            tabIndex={0}
+                            title="Antippen, um die manuelle Markierung zu entfernen"
+                            className="teacher-live__marker-piece is-manual"
+                            onClick={() => {
+                              setMarkerAnchor(null);
+                              removeManualSection(manualRange);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setMarkerAnchor(null);
+                                removeManualSection(manualRange);
+                              }
+                            }}
+                          >
+                            {piece.text}
+                          </span>
+                        );
+                      }
+
+                      if (piece.kind === "auto") {
+                        return (
+                          <span
+                            key={index}
+                            className={`teacher-live__marker-piece ${
+                              piece.autoIndex % 2 === 0
+                                ? "is-auto-even"
+                                : "is-auto-odd"
+                            }`}
+                          >
+                            {renderWordTokens()}
+                          </span>
+                        );
+                      }
+
+                      return <span key={index}>{renderWordTokens()}</span>;
+                    })}
                   </div>
                 </div>
               ) : contentMode === "text" ? (

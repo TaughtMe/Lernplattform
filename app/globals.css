@@ -5138,28 +5138,38 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   color: var(--ink);
   font-size: 1rem;
   line-height: 1.7;
+  user-select: text;
 }
 .teacher-live__marker-piece {
   border-radius: 4px;
-  cursor: pointer;
   transition: background 0.12s ease;
 }
-.teacher-live__marker-piece.is-auto {
+.teacher-live__marker-piece.is-auto-even {
   background: color-mix(in srgb, var(--teal) 10%, transparent);
 }
-.teacher-live__marker-piece.is-auto:hover {
-  background: color-mix(in srgb, var(--teal) 20%, transparent);
+.teacher-live__marker-piece.is-auto-odd {
+  background: color-mix(in srgb, var(--teal) 18%, transparent);
 }
 .teacher-live__marker-piece.is-manual {
+  cursor: pointer;
   background: color-mix(in srgb, var(--coral) 20%, transparent);
   color: var(--coral-dark);
 }
 .teacher-live__marker-piece.is-manual:hover {
   background: color-mix(in srgb, var(--coral) 32%, transparent);
 }
-.teacher-live__marker-piece.is-anchored {
+.teacher-live__marker-word {
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.teacher-live__marker-word:hover {
+  background: color-mix(in srgb, var(--coral) 15%, transparent);
+}
+.teacher-live__marker-word.is-anchored {
   outline: 2px solid var(--coral);
   outline-offset: 1px;
+  background: color-mix(in srgb, var(--coral) 28%, transparent);
 }
 .teacher-live__split-panels {
   display: flex;
