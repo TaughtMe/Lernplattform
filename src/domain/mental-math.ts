@@ -305,6 +305,89 @@ export function evaluateMentalMathExpression(input: string) {
     : round(value);
 }
 
+export type MathChainToken =
+  { kind: "number"; value: number } | { kind: "symbol"; text: string };
+
+/**
+ * Tokenizes a manually typed arithmetic chain (numbers, + - * / ^, parens)
+ * into a flat, position-ordered list — used to re-space input and to pick
+ * which numeral in a chain becomes a gap. Returns null for anything that
+ * needs the general expression fallback instead (\frac, \sqrt, braces),
+ * which is left exactly as typed rather than reformatted.
+ */
+export function tokenizeMathChain(input: string): MathChainToken[] | null {
+  const tokens = tokenizeExpression(input.trim());
+  if (!tokens?.length) return null;
+  const chain: MathChainToken[] = [];
+  for (const token of tokens) {
+    if (token.type === "number") {
+      chain.push({ kind: "number", value: token.value });
+    } else if (token.type === "operator") {
+      chain.push({
+        kind: "symbol",
+        text: token.value === "^" ? "^" : mathOperatorSymbol(token.value),
+      });
+    } else if (token.type === "left-paren") {
+      chain.push({ kind: "symbol", text: "(" });
+    } else if (token.type === "right-paren") {
+      chain.push({ kind: "symbol", text: ")" });
+    } else {
+      return null;
+    }
+  }
+  return chain;
+}
+
+/**
+ * Re-serializes chain tokens into a canonically spaced string, e.g.
+ * "6+4-2" -> "6 + 4 - 2". Pass `gapIndex` (0-based, counting only number
+ * tokens) to blank that numeral as "_" instead of printing its value —
+ * used to build a gap task's visible prompt.
+ */
+export function formatMathChainTokens(
+  tokens: MathChainToken[],
+  gapIndex?: number,
+) {
+  let out = "";
+  let numberOrdinal = 0;
+  let spaceBeforeNext = false;
+  for (const token of tokens) {
+    let text: string;
+    let spaceBefore = spaceBeforeNext;
+    let spaceAfter = true;
+    if (token.kind === "number") {
+      text = numberOrdinal === gapIndex ? "_" : displayMathNumber(token.value);
+      numberOrdinal += 1;
+    } else if (token.text === "(") {
+      text = "(";
+      spaceAfter = false;
+    } else if (token.text === ")") {
+      text = ")";
+      spaceBefore = false;
+    } else {
+      text = token.text;
+    }
+    out += (spaceBefore ? " " : "") + text;
+    spaceBeforeNext = spaceAfter;
+  }
+  return out;
+}
+
+/** Counts the gappable numerals in a chain (its number tokens). */
+export function countMathChainNumbers(tokens: MathChainToken[]) {
+  return tokens.filter((token) => token.kind === "number").length;
+}
+
+/**
+ * Re-spaces a manually typed arithmetic chain into canonical form (e.g.
+ * "6+4-2" -> "6 + 4 - 2"), or returns null when the input isn't a plain
+ * chain (LaTeX-style \frac/\sqrt input is left exactly as typed).
+ */
+export function normalizeMathChainInput(input: string) {
+  const tokens = tokenizeMathChain(input);
+  return tokens ? formatMathChainTokens(tokens) : null;
+}
+
 function randomInteger(random: () => number, min: number, max: number) {
   const low = Math.min(min, max);
   const high = Math.max(min, max);

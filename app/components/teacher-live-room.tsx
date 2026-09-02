@@ -18,12 +18,13 @@ import {
   type TextSplitConfig,
 } from "../../src/domain/running-dictation-sections";
 import {
-  buildMentalMathTask,
+  countMathChainNumbers,
   displayMathNumber,
   evaluateMentalMathExpression,
+  formatMathChainTokens,
   MULTIPLICATION_TABLES,
-  parseMentalMathExpression,
-  type MathGapSlot,
+  normalizeMathChainInput,
+  tokenizeMathChain,
 } from "../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import {
@@ -156,10 +157,11 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [mathSettingsOpen, setMathSettingsOpen] = useState(false);
   const [mathEditIndex, setMathEditIndex] = useState<number | null>(null);
   const [mathDraft, setMathDraft] = useState("");
-  // Gap slot per math line, kept separate from the line's text (mirrors
-  // Laufdiktat's useMathImport hook) so editing/rerolling a task's numbers
-  // never has to parse a gap marker back out of the stored string.
-  const [mathGaps, setMathGaps] = useState<MathGapSlot[]>([]);
+  // Gap numeral index per math line (0..N-1 = that numeral in the
+  // expression, N = the result), kept separate from the line's text
+  // (mirrors Laufdiktat's useMathImport hook) so editing/rerolling a task's
+  // numbers never has to parse a gap marker back out of the stored string.
+  const [mathGaps, setMathGaps] = useState<number[]>([]);
   const mathEditInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (mathEditIndex !== null) mathEditInputRef.current?.focus();
@@ -330,58 +332,57 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     [sources.math],
   );
 
-  const DEFAULT_MATH_GAP_SLOT: MathGapSlot = "right";
-
-  function parseSimpleMathLine(line: string) {
-    const expr = parseMentalMathExpression(line);
-    return expr
-      ? { a: expr.left, op: expr.operator, b: expr.right, result: expr.result }
-      : null;
+  // A math line's gap is a single numeral index: 0..N-1 blanks that
+  // occurrence in the expression itself (counting only its number tokens,
+  // left to right), and N (one past the last) blanks the computed result
+  // instead. This applies uniformly to a plain two-operand task and to a
+  // multi-operator chain alike — Laufdiktat's own left/a/b/result slots are
+  // just the two-operand case of this (0 = left, 1 = right, 2 = result).
+  function defaultMathGapIndex(numberCount: number) {
+    return Math.max(0, numberCount - 1);
   }
 
   // Mirrors Laufdiktat's useMathImport: gaps are derived fresh from the
   // current text + the separate mathGaps array on every render, never baked
   // into the stored line — so editing numbers or adding a task can't lose or
-  // corrupt the gap. Multi-operator chains (e.g. "3 + 4 - 2") are computed
-  // and displayed, but — as in Laufdiktat — never gapped: there is no single
-  // unambiguous slot to blank once more than two operands are involved.
+  // corrupt the gap.
   const mathWords = useMemo(() => {
     if (contentMode !== "math") return [];
     const result: LiveWord[] = [];
     mathLines.forEach((line, index) => {
-      const parsed = parseSimpleMathLine(line);
-      if (parsed) {
-        const slot = mathGap
-          ? (mathGaps[index] ?? DEFAULT_MATH_GAP_SLOT)
+      const value = evaluateMentalMathExpression(line);
+      if (value === null) return;
+      const tokens = tokenizeMathChain(line);
+      const numberCount = tokens ? countMathChainNumbers(tokens) : 0;
+      const gapIndex =
+        mathGap && tokens
+          ? (mathGaps[index] ?? defaultMathGapIndex(numberCount))
           : undefined;
-        const task = buildMentalMathTask(
-          {
-            left: parsed.a,
-            operator: parsed.op,
-            right: parsed.b,
-            result: parsed.result,
-          },
-          index,
-          slot,
+      if (tokens && gapIndex !== undefined) {
+        const isResultGap = gapIndex >= numberCount;
+        const shownExpression = formatMathChainTokens(
+          tokens,
+          isResultGap ? undefined : gapIndex,
         );
+        const answer = isResultGap
+          ? value
+          : (tokens.filter((token) => token.kind === "number")[gapIndex]
+              ?.value ?? value);
         result.push({
-          id: task.id,
+          id: `math-${index}-gap-${gapIndex}`,
           kind: "math",
-          prompt: task.prompt,
-          targetWord: String(task.answer),
+          prompt: `${shownExpression} = ${isResultGap ? "_" : displayMathNumber(value)}`,
+          targetWord: String(answer),
         });
         return;
       }
-      const value = evaluateMentalMathExpression(line);
-      if (value !== null) {
-        result.push({
-          id: `math-${index}-expression`,
-          kind: "math",
-          prompt: line,
-          targetWord: String(value),
-          isLatex: true,
-        });
-      }
+      result.push({
+        id: `math-${index}-expression`,
+        kind: "math",
+        prompt: line,
+        targetWord: String(value),
+        ...(numberCount > 2 ? { isLatex: true } : {}),
+      });
     });
     return result;
   }, [contentMode, mathLines, mathGap, mathGaps]);
@@ -435,16 +436,14 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   }
 
   function displayMathLine(line: string) {
-    const parsed = parseSimpleMathLine(line);
-    if (parsed) return `${line} = ${displayMathNumber(parsed.result)}`;
-    const chained = evaluateMentalMathExpression(line);
-    return chained === null ? line : `${line} = ${displayMathNumber(chained)}`;
+    const value = evaluateMentalMathExpression(line);
+    return value === null ? line : `${line} = ${displayMathNumber(value)}`;
   }
 
-  function setMathLineGap(index: number, slot: MathGapSlot) {
+  function setMathLineGap(index: number, gapIndex: number) {
     setMathGaps((current) => {
       const next = [...current];
-      next[index] = slot;
+      next[index] = gapIndex;
       return next;
     });
   }
@@ -475,7 +474,10 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     const editIndex = mathEditIndex;
     const wasAppending = editIndex >= mathLines.length;
     const lines = [...mathLines];
-    const value = mathDraft.trim();
+    // Re-space "6+4-2" into "6 + 4 - 2" so the teacher never has to type
+    // (or read back) the spaces themselves; falls back to the raw input
+    // for anything that isn't a plain chain (e.g. \frac/\sqrt).
+    const value = normalizeMathChainInput(mathDraft) ?? mathDraft.trim();
     if (wasAppending) {
       if (value) lines.push(value);
     } else if (value) {
@@ -1198,8 +1200,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                           </p>
                           <div className="teacher-live__math-preview-rows">
                             {mathLines.map((line, index) => {
-                              const parsed = parseSimpleMathLine(line);
-                              if (!parsed) {
+                              const tokens = tokenizeMathChain(line);
+                              const value = evaluateMentalMathExpression(line);
+                              if (!tokens || value === null) {
                                 return (
                                   <div
                                     key={`${line}-${index}`}
@@ -1210,41 +1213,57 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                   </div>
                                 );
                               }
+                              const numberCount = countMathChainNumbers(tokens);
                               const activeGap =
-                                mathGaps[index] ?? DEFAULT_MATH_GAP_SLOT;
-                              const slotButton = (
-                                slot: MathGapSlot,
-                                value: number,
-                              ) => (
-                                <button
-                                  type="button"
-                                  aria-pressed={activeGap === slot}
-                                  onClick={() => setMathLineGap(index, slot)}
-                                >
-                                  {activeGap === slot
-                                    ? "_"
-                                    : displayMathNumber(value)}
-                                </button>
-                              );
+                                mathGaps[index] ??
+                                defaultMathGapIndex(numberCount);
+                              let numberOrdinal = 0;
                               return (
                                 <div
                                   key={`${line}-${index}`}
                                   className="teacher-live__math-preview-row"
                                 >
                                   <span>{index + 1}.</span>
-                                  {slotButton("left", parsed.a)}
-                                  <span aria-hidden="true">
-                                    {parsed.op === "*"
-                                      ? "·"
-                                      : parsed.op === "/"
-                                        ? ":"
-                                        : parsed.op === "-"
-                                          ? "−"
-                                          : "+"}
-                                  </span>
-                                  {slotButton("right", parsed.b)}
+                                  {tokens.map((token, tokenIndex) => {
+                                    if (token.kind === "symbol") {
+                                      return (
+                                        <span
+                                          key={tokenIndex}
+                                          aria-hidden="true"
+                                        >
+                                          {token.text}
+                                        </span>
+                                      );
+                                    }
+                                    const gapIndex = numberOrdinal;
+                                    numberOrdinal += 1;
+                                    return (
+                                      <button
+                                        key={tokenIndex}
+                                        type="button"
+                                        aria-pressed={activeGap === gapIndex}
+                                        onClick={() =>
+                                          setMathLineGap(index, gapIndex)
+                                        }
+                                      >
+                                        {activeGap === gapIndex
+                                          ? "_"
+                                          : displayMathNumber(token.value)}
+                                      </button>
+                                    );
+                                  })}
                                   <span aria-hidden="true">=</span>
-                                  {slotButton("result", parsed.result)}
+                                  <button
+                                    type="button"
+                                    aria-pressed={activeGap === numberCount}
+                                    onClick={() =>
+                                      setMathLineGap(index, numberCount)
+                                    }
+                                  >
+                                    {activeGap === numberCount
+                                      ? "_"
+                                      : displayMathNumber(value)}
+                                  </button>
                                 </div>
                               );
                             })}

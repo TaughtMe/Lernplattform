@@ -195,7 +195,25 @@ describe("TeacherLiveRoom", () => {
     expect(within(newRow).getByRole("button", { name: "3" })).toBeVisible();
   });
 
-  it("supports manually chained expressions with more than two numbers", async () => {
+  it("supports manually chained expressions and auto-spaces them", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
+    await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
+    await user.click(kopfrechnenTab);
+
+    await user.click(
+      screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
+    );
+    // Typed with no spaces at all — committing must insert them.
+    await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3+4-2{Enter}");
+    const taskList = document.querySelector<HTMLElement>(
+      ".teacher-live__math-tasklist",
+    )!;
+    expect(within(taskList).getByText("3 + 4 − 2 = 5")).toBeVisible();
+  });
+
+  it("lets a teacher gap any number in a chain, not just two-operand tasks", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
     const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
@@ -209,10 +227,39 @@ describe("TeacherLiveRoom", () => {
       screen.getByPlaceholderText("z. B. 4 + 4"),
       "3 + 4 - 2{Enter}",
     );
+
+    await user.click(screen.getByRole("button", { name: "Weitere Regeln" }));
+    await user.click(screen.getByLabelText("Lückenaufgaben"));
+    await user.click(screen.getByRole("button", { name: "Schließen" }));
+
+    const rows = document.querySelectorAll<HTMLElement>(
+      ".teacher-live__math-preview-row",
+    );
+    const chainRow = rows[rows.length - 1]!;
+    // Default gap is the last numeral in the chain.
+    expect(within(chainRow).getByRole("button", { name: "_" })).toBeVisible();
+    expect(within(chainRow).getByRole("button", { name: "3" })).toBeVisible();
+    expect(within(chainRow).getByRole("button", { name: "4" })).toBeVisible();
+
+    // Blanking the middle number (the "4") works too, not just left/right.
+    await user.click(within(chainRow).getByRole("button", { name: "4" }));
     const taskList = document.querySelector<HTMLElement>(
       ".teacher-live__math-tasklist",
     )!;
-    expect(within(taskList).getByText("3 + 4 - 2 = 5")).toBeVisible();
+    expect(within(taskList).getByText("3 + 4 − 2 = 5")).toBeVisible();
+    const updatedRows = document.querySelectorAll<HTMLElement>(
+      ".teacher-live__math-preview-row",
+    );
+    const updatedChainRow = updatedRows[updatedRows.length - 1]!;
+    expect(
+      within(updatedChainRow).getByRole("button", { name: "_" }),
+    ).toBeVisible();
+    expect(
+      within(updatedChainRow).getByRole("button", { name: "3" }),
+    ).toBeVisible();
+    expect(
+      within(updatedChainRow).getByRole("button", { name: "2" }),
+    ).toBeVisible();
   });
 
   it("starts vocabulary mode with one empty pair ready to fill in", async () => {
