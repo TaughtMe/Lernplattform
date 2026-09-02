@@ -20,7 +20,7 @@ Getrennte Webseiten auf verschiedenen Domains können nicht ohne Weiteres auf de
 
 - kurzlebige Raum- und Abrufschlüssel
 - Lehrerfunktionen rollenbasiert schützen
-- Backups vor dem Upload verschlüsseln
+- Backup-Ziele nur über geschützte Verbindungen anbinden; zusätzliche Dateiverschlüsselung optional halten
 - Namenszuordnungen lokal schützen
 - keine geheimen Schlüssel dauerhaft im Frontend hinterlegen
 - Eingaben und Schülertexte validieren
@@ -28,4 +28,3 @@ Getrennte Webseiten auf verschiedenen Domains können nicht ohne Weiteres auf de
 ## Grenzen
 
 Eine reine PWA kann lokale Manipulation, Screenshots oder Appwechsel nicht vollständig verhindern. Das muss bei Prüfungen und Ranglisten berücksichtigt werden.
-

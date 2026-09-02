@@ -40,6 +40,12 @@ Die App wählt Hilfen und Verzögerungen anhand bisheriger Fehler. Erfolgreiche 
 
 Fehlerfrei und ohne Hilfe führt zur nächsten Merkstufe. Eine falsch abgesendete Lösung oder verwendete Hilfe hält das Wort in der Stufe. Wiederholte Fehler können zu einer niedrigeren Merkstufe führen.
 
+Der erste native Funktionsprototyp ist im freien Deutschbereich umgesetzt. Er lässt alle fünf Stufen mit eigenen Wörtern ausprobieren, zeigt Hilfen bewusst als aufstiegshemmend und empfiehlt nach wiederholten Fehlern eine leichtere Stufe. Die Ergebnisse gelten zunächst nur für die laufende Runde; die dauerhafte Kopplung an den getrennten Leitner-Stand folgt mit dem Lernwort-Datenmodell.
+
+Die Bedienung folgt einem durchgängigen Schreibfluss: Sobald eine Eingabe erwartet wird, erhält sie automatisch den Tastaturfokus. **Enter** prüft eine Antwort beziehungsweise führt nach einer Merkanzeige zur Eingabe. Eine richtige Lösung wird nur kurz mit einem grünen Haken bestätigt und wechselt automatisch zum nächsten Wort. In Stufe 4 werden die Buchstaben direkt auf den sichtbaren Längenstrichen eingegeben; ein getrenntes Eingabefeld darunter ist ausgeschlossen. Stufe 5 verwendet **Umschalt + Enter** für eine zusätzliche Zeile, während Enter die vollständige Antwort prüft.
+
+Feste Sammlungen dienen als Wortbanken und enthalten im ersten Ausbau jeweils mindestens 100 Wörter. Eine konkrete Lernrunde übernimmt daraus standardmäßig nur 10 über die gesamte Sammlung verteilte Wörter; alternativ sind 5, 20 oder die vollständige Wortbank wählbar. Dadurch bleibt eine Runde überschaubar, ohne dass die inhaltliche Breite der Sammlung verloren geht. **Merkwörter & Fremdwörter** bilden eine eigene Sammlung: Wo keine verlässliche Regel greift, wird keine Strategie vorgetäuscht, sondern das Wortbild bewusst eingeprägt.
+
 In Stufe 5 wählt der Schüler eine Blockgröße von beispielsweise 1, 2, 3 oder 5 Wörtern. Eine größere Blockgröße bringt einen Merkbonus, darf sorgfältiges und fehlerfreies Schreiben aber nicht überkompensieren. Ein optionaler Sequenzmodus kann später zusätzlich die Reihenfolge prüfen.
 
 ## Tastschreibtraining als eigener Bereich

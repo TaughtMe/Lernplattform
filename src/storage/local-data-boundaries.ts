@@ -18,5 +18,8 @@ export interface LocalRepository<T extends { id: string }> {
  * read from another area implicitly; transfers happen through versioned bundles.
  */
 export interface LocalRepositoryFactory {
-  open<T extends { id: string }>(area: LocalDataArea, collection: string): LocalRepository<T>;
+  open<T extends { id: string }>(
+    area: LocalDataArea,
+    collection: string,
+  ): LocalRepository<T>;
 }

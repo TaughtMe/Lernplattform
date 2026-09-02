@@ -15,6 +15,14 @@ Der Unterrichtsraum ermöglicht gemeinsame, von der Lehrkraft gesteuerte Aktivit
 7. Je nach Einstellung werden alle, nur fehlerhafte oder keine Vokabeln an die persönliche LernBox übergeben.
 8. Der Schüler kann über **„Meine Fehler jetzt üben“** unmittelbar eine persönliche Übungsrunde starten.
 
+## Einstieg im Lernraum
+
+Das klassische Laufdiktat wird nicht als frei wählbare Deutsch-Kachel dargestellt. Es ist eine gemeinsame Unterrichtsrunde und beginnt deshalb immer mit Raumcode oder QR-Code. Ein Codefeld steht sowohl im Klassenraum als auch unter **Freies Üben** bereit und führt in die native Lobby, danach in das Spiel.
+
+Der QR-Scanner verwendet bevorzugt die rückseitige Kamera, lässt sich jederzeit schließen und fällt bei fehlender Kamerafreigabe auf die manuelle Code-Eingabe zurück. Ein gescannter Link wird nicht als fremde Adresse geöffnet; nur sein vierstelliger Raumcode wird übernommen.
+
+Der persönliche Deutschbereich öffnet stattdessen direkt die Lernwörter. Die vorhandene Laufdiktat-Fachlogik darf außerdem in anderen Grundlagenmodulen weiterverwendet werden, insbesondere für das Kopfrechnen und seine Aufgabenfamilien.
+
 ## Regeln
 
 - Lehrervokabeln werden mit stabiler ID übertragen.
@@ -31,3 +39,24 @@ Bei Textaufgaben kann die App Zieltext und Eingabe wortweise vergleichen. Ein ei
 ## Nutzen
 
 Der Unterricht wird zum Ausgangspunkt des langfristigen Lernens.
+
+## Aktueller nativer Stand – 13. August 2026
+
+Im persönlichen Deutschbereich ist der erste vollständige Laufdiktat-Weg nativ umgesetzt. Er verwendet die geprüfte Fachlogik aus Laufdiktat `6c2ade4` für Antwortprüfung, Vokabelimport, gemischte Abfragerichtungen, deterministische Hinweise und Sternebewertung.
+
+- Texte werden in Sätze und Zeilen zerlegt und über Ansehen, Verdecken und Schreiben geübt.
+- Vokabeltabellen unterstützen Alternativantworten sowie beide Richtungen und eine gemischte Runde.
+- Klassisches Laufdiktat und freies Üben mit stufenweisen Tipps sind getrennt auswählbar.
+- Nach einer Vokabelrunde werden je nach Auswahl alle, nur fehlerhafte oder keine Vokabeln über `LearningBundleV1` in die gemeinsame persönliche LernBox übergeben.
+- **Meine Fehler jetzt üben** öffnet anschließend direkt die LernBox; vorhandene Karten werden nicht dupliziert, sondern wieder fällig markiert.
+
+Der Live-Raum und das vollständige Lehrerdashboard sind inzwischen ebenfalls nativ integriert:
+
+- Die Lehrkraft erstellt Text-, Vokabel- oder Kopfrecheninhalte, importiert Text-/CSV-Dateien oder erzeugt Kopfrechenaufgaben.
+- Freies Üben, Lernstandscheck, Battle und klassisches Laufdiktat sind als vier getrennte Modi verfügbar.
+- QR-Code, Raumcode, Lobby, Teilnehmerstatus, sicherer Start, Wiederaufnahme nach Reload und Raumende folgen dem tokengebundenen Raumvertrag des Quellprojekts.
+- Der klassische Stationsmodus verwendet Schülernummern, eine stabile optionale Reihenfolge pro Nummer, Spickerzählung und wiederaufnehmbaren Stationsfortschritt.
+- Battle übernimmt Ladung, Tinte, Flimmern, Schild und Realtime-Zielangriffe innerhalb derselben Lernraum-Oberfläche.
+- Das Live-Dashboard zeigt Aktivität, Abschluss, Fortschritt, Sterne, häufige Fehler und einen CSV-Export.
+
+Die persönliche Übergabe von Vokabelfehlern an die LernBox bleibt davon getrennt erhalten. Die zentrale Live-Runde speichert keine vollständige persönliche Lernhistorie.

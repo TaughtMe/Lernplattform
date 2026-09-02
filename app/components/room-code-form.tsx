@@ -1,29 +1,122 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
+import { QrCodeScanner } from "./qr-code-scanner";
+import { SegmentedRoomCode } from "./segmented-room-code";
+import { useHydrated } from "./use-hydrated";
 
-export function RoomCodeForm() {
+type RoomCodeFormProps = {
+  idPrefix?: string;
+  mode?: "room" | "auto";
+};
+
+export function RoomCodeForm({
+  idPrefix = "room",
+  mode = "room",
+}: RoomCodeFormProps) {
+  const hydrated = useHydrated();
   const [error, setError] = useState("");
+  const [code, setCode] = useState("");
+  const inputId = `${idPrefix}-code-input`;
+  const labelId = `${idPrefix}-code-label`;
+  const errorId = `${idPrefix}-code-error`;
+  const label = mode === "room" ? "Raumcode" : "Klassen- oder Raumcode";
+
+  function openCode(rawCode: string) {
+    const joinCode = normalizeJoinCode(rawCode);
+    const isRoomCode = /^\d{4}$/.test(joinCode);
+    const isClassCode = /^[A-Z0-9]{4,12}$/.test(joinCode);
+    if (mode === "room" ? !isRoomCode : !isClassCode) {
+      setError(
+        mode === "room"
+          ? "Bitte gib den vierstelligen Raumcode ein."
+          : "Bitte gib einen gültigen Klassen- oder Raumcode ein.",
+      );
+      return;
+    }
+    const destination =
+      mode === "room" || isRoomCode
+        ? `/raum?code=${encodeURIComponent(joinCode)}`
+        : `/klasse/7b?code=${encodeURIComponent(joinCode)}`;
+    window.location.assign(destination);
+  }
 
   function joinRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const roomCode = String(form.get("roomCode") ?? "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-    if (roomCode.length < 6) {
-      setError("Bitte gib einen sechsstelligen Raumcode ein.");
-      return;
-    }
-    window.location.assign(`/raum?code=${encodeURIComponent(roomCode)}`);
+    openCode(code);
+  }
+
+  function useScan(value: string) {
+    const scannedCode = extractJoinCode(value);
+    setCode(scannedCode);
+    setError("");
+    openCode(scannedCode);
   }
 
   return (
-    <div className="room-code" id="raumcode">
+    <div className="room-code">
       <form onSubmit={joinRoom} noValidate>
-        <label htmlFor="room-code-input">Raumcode</label>
-        <input id="room-code-input" name="roomCode" autoComplete="off" maxLength={8} placeholder="z. B. 482913" aria-describedby={error ? "room-code-error" : undefined} aria-invalid={Boolean(error)} onChange={() => error && setError("")} />
-        <button className="button button--secondary" type="submit">Beitreten</button>
+        <div className="room-code__heading">
+          {mode === "room" ? (
+            <span id={labelId} className="room-code__label">
+              {label}
+            </span>
+          ) : (
+            <label id={labelId} htmlFor={inputId}>
+              {label}
+            </label>
+          )}
+          <small>
+            {mode === "room"
+              ? "Vierstelligen Code eingeben oder QR-Code scannen"
+              : "Code von deiner Lehrkraft eingeben oder QR-Code scannen"}
+          </small>
+        </div>
+        <div className="room-code__controls">
+          {mode === "room" ? (
+            <SegmentedRoomCode
+              idPrefix={idPrefix}
+              labelId={labelId}
+              value={code}
+              invalid={Boolean(error)}
+              describedBy={error ? errorId : undefined}
+              onChange={(value) => {
+                setCode(value);
+                if (error) setError("");
+              }}
+            />
+          ) : (
+            <input
+              id={inputId}
+              name="roomCode"
+              autoComplete="off"
+              maxLength={12}
+              placeholder="Code eingeben"
+              value={code}
+              aria-describedby={error ? errorId : undefined}
+              aria-invalid={Boolean(error)}
+              onChange={(event) => {
+                setCode(normalizeJoinCode(event.target.value));
+                if (error) setError("");
+              }}
+            />
+          )}
+          <QrCodeScanner onResult={useScan} />
+          <button
+            className="button button--secondary"
+            type="submit"
+            disabled={!hydrated}
+          >
+            Beitreten
+          </button>
+        </div>
       </form>
-      {error ? <p id="room-code-error" role="alert">{error}</p> : null}
+      {error ? (
+        <p id={errorId} role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

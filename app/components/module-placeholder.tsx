@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { AppHeader } from "./app-header";
 
-type Props = { eyebrow: string; title: string; description: string; status: string };
+type Props = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  status: string;
+};
 
-export function ModulePlaceholder({ eyebrow, title, description, status }: Props) {
+export function ModulePlaceholder({
+  eyebrow,
+  title,
+  description,
+  status,
+}: Props) {
   return (
     <main className="module-page">
       <AppHeader />
@@ -15,10 +25,15 @@ export function ModulePlaceholder({ eyebrow, title, description, status }: Props
           <span className="status-dot" aria-hidden="true" />
           <div>
             <strong>{status}</strong>
-            <p>Der Einstieg steht bereits. Die fachliche Logik wird über den gemeinsamen Lernraum-Kern angebunden, sobald sie stabil ist.</p>
+            <p>
+              Der Einstieg steht bereits. Die fachliche Logik wird über den
+              gemeinsamen Lernraum-Kern angebunden, sobald sie stabil ist.
+            </p>
           </div>
         </div>
-        <Link className="button button--primary" href="/">Zurück zur Startseite</Link>
+        <Link className="button button--primary" href="/">
+          Zurück zur Startseite
+        </Link>
       </section>
     </main>
   );

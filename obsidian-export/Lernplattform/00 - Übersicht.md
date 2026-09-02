@@ -3,7 +3,7 @@ tags:
   - lernplattform
   - projektübersicht
   - bildung
-status: konzept
+status: prototyp
 ---
 
 # Lernplattform – Gesamtübersicht
@@ -16,10 +16,11 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 
 ## Einstieg für Schüler
 
-- **Heute lernen:** fällige und schwierige Inhalte bearbeiten
-- **Raum beitreten:** per Raumcode oder QR-Code an einer Lehrerübung teilnehmen
-- **Duell:** Mitschüler mit einem gemeinsamen Wortschatz herausfordern
-- **Mein Haus:** gemeinsame Ziele, Fortschritt und positive Teamerfolge sehen
+- **Mein Lernraum:** die eigenen Klassen und das freie Üben öffnen
+- **Freies Üben:** Lernwörter, Kopfrechnen, Vokabeln und Tipptraining direkt und selbstbestimmt öffnen
+- **Klasse:** nur die von der Lehrkraft aktivierten Lernbereiche sehen
+- **Heute üben:** innerhalb einer Klasse fällige Inhalte und durch Fehler aktivierte Wiederholungen bearbeiten
+- **Aufgaben:** alle von der Lehrkraft freigeschalteten Arbeitsaufträge sehen
 
 ## Einstieg für Lehrkräfte
 
@@ -44,7 +45,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 9. [[09 - Duelle/Anwendung|Duelle]]
 10. [[10 - Häuser, Punkte und Motivation/Anwendung|Häuser, Punkte und Motivation]]
 11. [[11 - QR-Auswertung und Visualisierung/Anwendung|QR-Auswertung und Visualisierung]]
-12. [[12 - Inhaltsübertragung und Synchronisation/Anwendung|Inhaltsübertragung und Synchronisation]]
+12. [[12 - Inhaltsübertragung und Synchronisation/Anwendung|Temporäre Inhaltsübertragung und Synchronisation]]
 13. [[13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]]
 14. [[14 - Lokale Daten, Export und Cloud-Backup/Anwendung|Lokale Daten, Export und Cloud-Backup]]
 15. [[15 - Gemeinsames Datenmodell/Anwendung|Gemeinsames Datenmodell]]
@@ -53,22 +54,31 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 18. [[18 - Aufgabenübersicht/Anwendung|Aufgabenübersicht]]
 19. [[19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]]
 20. [[20 - Designgrundlage/Anwendung|Designgrundlage]]
+21. [[21 - Qualitätsgrundlage und Freigabe/Anwendung|Qualitätsgrundlage und Freigabe]]
+22. [[22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]]
+23. [[23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]]
 
 ## Grundprinzipien
 
 - Schüler benötigen möglichst kein Konto.
 - Persönliche Lernstände bleiben standardmäßig lokal auf dem Schülergerät.
 - Lehrerinhalte und persönliche Schülerdaten werden technisch getrennt behandelt.
+- Freies Üben bleibt persönlich; Klassenbereiche können ausdrücklich rankingfähige Ereignisse erzeugen.
+- Eine Klasse kann alle Module enthalten. Die erstellende Lehrkraft aktiviert nur die benötigten Bereiche.
 - Genauigkeit und Lernfortschritt zählen stärker als Geschwindigkeit.
 - Lernstand und Leistungswertung bleiben getrennt: Eine selbst korrigierte Eingabe kann fachlich richtig sein, ohne die volle Punktzahl zu erhalten.
 - Fehler führen nicht zu öffentlicher Bloßstellung oder Minuspunkten.
 - Lehrkräfte sehen standardmäßig nur die für den Unterricht erforderlichen Daten.
 - Alle Module verwenden ein gemeinsames, versioniertes Datenmodell.
+- Qualität wird nicht nachträglich geprüft, sondern gehört zur Definition of Done jeder Funktion.
 
 ## Offene Entscheidungen
 
-- Soll die Plattform eine gemeinsame PWA oder mehrere Apps mit gemeinsamem Kern werden?
-- Welche Daten darf das Lehrergerät dauerhaft speichern?
-- Welcher erste Cloudanbieter soll für verschlüsselte Backups unterstützt werden?
+- Welche Daten darf das Lehrergerät dauerhaft speichern? Diese Entscheidung wird erst vor einer Nutzung durch weitere Lehrkräfte produktkritisch; der aktuelle Hauptnutzer arbeitet lokal auf dem eigenen Lehrergerät.
+- In welcher Reihenfolge sollen Google Drive, Microsoft OneDrive und ein frei konfigurierbares WebDAV-Ziel umgesetzt werden? Eine lokale Verzeichnissicherung bildet den ersten, anbieterunabhängigen Weg. Die Sicherung persönlicher Lernstände hat Vorrang vor einer Mehrbenutzer-Lehrerarchitektur.
 - Welche Lernstandsregeln werden in Version 1 verbindlich umgesetzt?
 - Welche Funktionen gehören ins erste produktive Minimum?
+
+## Aktuelle Priorität
+
+Vor ersten Live-Tests werden Vault, Browser-Tests und aktuelle Oberflächenverträge synchronisiert. Danach folgt die freiwillige Sicherung persönlicher Schülerdaten in ein lokales Verzeichnis oder wahlweise zu Google Drive, Microsoft OneDrive beziehungsweise einem WebDAV-kompatiblen Speicher wie Nextcloud. Eine zusätzliche anwendungsseitige Verschlüsselung ist keine Voraussetzung; die Sicherheitsmechanismen des gewählten Geräts oder Anbieters gelten. Lehrer-Mehrbenutzerbetrieb und eine vollständige Lehrer-Authentifizierung bleiben wichtig, sind für die derzeitige Nutzung durch einen Hauptnutzer aber nachgeordnet.

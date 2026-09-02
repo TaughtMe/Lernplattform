@@ -1,0 +1,311 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  NUMPAD_LESSONS,
+  TYPING_LESSONS,
+  isNumpadLessonUnlocked,
+  isTypingLessonUnlocked,
+  type LessonDef,
+} from "../../../src/tastschreiben/curriculum";
+import { generateTypingPracticeText } from "../../../src/tastschreiben/text-generator";
+import type { TypingLessonProgress } from "../../../src/tastschreiben/typing-progress";
+import type { TypingStats } from "../../../src/tastschreiben/typing-stats";
+import { createTypingProgressRepository } from "../../../src/storage/personal-learning-events";
+import { FallingWordsGame } from "./falling-words-game";
+import { TypingCompanion } from "./typing-companion";
+import { TypingPractice } from "./typing-practice";
+
+type View =
+  | { mode: "overview" }
+  | { mode: "practice"; lesson: LessonDef; roundId: string }
+  | { mode: "result"; lesson: LessonDef; stats: TypingStats }
+  | { mode: "game" };
+
+export function TypingApp() {
+  const repository = useMemo(() => createTypingProgressRepository(), []);
+  const [progress, setProgress] = useState<
+    Record<string, TypingLessonProgress>
+  >({});
+  const [view, setView] = useState<View>({ mode: "overview" });
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(() => {
+    repository
+      .list()
+      .then((entries) =>
+        setProgress(
+          Object.fromEntries(entries.map((entry) => [entry.id, entry])),
+        ),
+      )
+      .finally(() => setLoading(false));
+  }, [repository]);
+
+  useEffect(() => refresh(), [refresh]);
+
+  function startLesson(lesson: LessonDef) {
+    setView({ mode: "practice", lesson, roundId: crypto.randomUUID() });
+  }
+
+  function finishLesson(
+    lesson: LessonDef,
+    roundId: string,
+    stats: TypingStats,
+  ) {
+    repository.recordAttempt(lesson.id, stats, roundId).then(() => {
+      refresh();
+      setView({ mode: "result", lesson, stats });
+    });
+  }
+
+  const completed = new Set(
+    Object.values(progress)
+      .filter((entry) => entry.completed)
+      .map((entry) => entry.id),
+  );
+  const completedCount = TYPING_LESSONS.filter((lesson) =>
+    completed.has(lesson.id),
+  ).length;
+  const gameUnlocked = completedCount >= 3;
+
+  return (
+    <main className="typing-shell">
+      <header className="running-topbar">
+        <Link href="/lernen/faecher/tastschreiben" className="back-link">
+          ← Fach Tastschreiben
+        </Link>
+        <div>
+          <strong>Tipptraining</strong>
+          <span>Genauigkeit vor Tempo</span>
+        </div>
+        <Link href="/" className="back-link">
+          Lernraum
+        </Link>
+      </header>
+
+      {view.mode === "overview" && (
+        <section className="typing-overview" aria-labelledby="typing-title">
+          <div className="typing-overview__hero">
+            <div className="student-welcome">
+              <p className="eyebrow">Tastschreiben</p>
+              <h1 id="typing-title">Schritt für Schritt sicher tippen</h1>
+              <p>
+                Beginne mit zwei Tasten. Ramo begleitet dich, während nach und
+                nach neue Fingerwege dazukommen.
+              </p>
+            </div>
+            <TypingCompanion
+              completed={completedCount}
+              total={TYPING_LESSONS.length}
+            />
+          </div>
+          {loading ? (
+            <p>Dein Lernstand wird geladen …</p>
+          ) : (
+            <>
+              <section
+                className="typing-game-entry"
+                aria-labelledby="game-title"
+              >
+                <div className="typing-game-entry__art" aria-hidden="true">
+                  <span>fj</span>
+                  <span>dk</span>
+                  <i>•‿•</i>
+                </div>
+                <div>
+                  <p className="eyebrow">Kurze Spielpause</p>
+                  <h2 id="game-title">Buchstabenregen</h2>
+                  <p>
+                    Tippe fallende Gruppen aus bereits gelernten Tasten. Nach
+                    drei Lernschritten begleitet Ramo dich in die erste
+                    Spielrunde.
+                  </p>
+                </div>
+                <button
+                  className="button button--secondary"
+                  disabled={!gameUnlocked}
+                  onClick={() => setView({ mode: "game" })}
+                >
+                  {gameUnlocked ? "Spielen" : "Nach Schritt 3"}
+                </button>
+              </section>
+
+              <div className="typing-path-heading">
+                <div>
+                  <p className="eyebrow">Hauptkurs</p>
+                  <h2>Buchstaben und Wörter</h2>
+                </div>
+                <span>{TYPING_LESSONS.length} Lernschritte</span>
+              </div>
+              <ol className="typing-lessons">
+                {TYPING_LESSONS.map((lesson, index) => {
+                  const unlocked = isTypingLessonUnlocked(lesson.id, completed);
+                  const item = progress[lesson.id];
+                  return (
+                    <li
+                      className={unlocked ? undefined : "is-locked"}
+                      key={lesson.id}
+                    >
+                      <span className="typing-lessons__number">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <strong>{lesson.title}</strong>
+                        <p>{lesson.description}</p>
+                        {item && (
+                          <small>
+                            Beste Genauigkeit: {item.bestAccuracy}% ·{" "}
+                            {item.attempts}{" "}
+                            {item.attempts === 1 ? "Runde" : "Runden"}
+                          </small>
+                        )}
+                      </div>
+                      <button
+                        className="button button--primary"
+                        disabled={!unlocked}
+                        onClick={() => startLesson(lesson)}
+                      >
+                        {item?.completed
+                          ? "Weiter üben"
+                          : unlocked
+                            ? "Starten"
+                            : "Noch gesperrt"}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+
+              <div className="typing-path-heading is-optional">
+                <div>
+                  <p className="eyebrow">Optionaler Zusatzweg</p>
+                  <h2>Ziffernblock</h2>
+                </div>
+                <span>{NUMPAD_LESSONS.length} Übungen</span>
+              </div>
+              <ol className="typing-lessons typing-lessons--numpad">
+                {NUMPAD_LESSONS.map((lesson, index) => {
+                  const unlocked = isNumpadLessonUnlocked(lesson.id, completed);
+                  const item = progress[lesson.id];
+                  return (
+                    <li
+                      className={unlocked ? undefined : "is-locked"}
+                      key={lesson.id}
+                    >
+                      <span className="typing-lessons__number">
+                        N{index + 1}
+                      </span>
+                      <div>
+                        <strong>{lesson.title}</strong>
+                        <p>{lesson.description}</p>
+                        {item ? (
+                          <small>Beste Genauigkeit: {item.bestAccuracy}%</small>
+                        ) : null}
+                      </div>
+                      <button
+                        className="button button--secondary"
+                        disabled={!unlocked}
+                        onClick={() => startLesson(lesson)}
+                      >
+                        {item?.completed
+                          ? "Weiter üben"
+                          : unlocked
+                            ? "Starten"
+                            : "Noch gesperrt"}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
+          )}
+        </section>
+      )}
+
+      {view.mode === "practice" && (
+        <section className="typing-round">
+          <p className="eyebrow">{view.lesson.title}</p>
+          <h1>Tippe ruhig und genau.</h1>
+          <p>{view.lesson.description}</p>
+          <TypingPractice
+            key={view.roundId}
+            text={generateTypingPracticeText(view.lesson, view.roundId)}
+            activeChars={view.lesson.practiceKeys ?? view.lesson.newKeys}
+            keyboardLayout={view.lesson.keyboard ?? "main"}
+            onFinish={(stats) => finishLesson(view.lesson, view.roundId, stats)}
+          />
+          <button
+            className="text-button"
+            onClick={() => setView({ mode: "overview" })}
+          >
+            Übung beenden
+          </button>
+        </section>
+      )}
+
+      {view.mode === "result" && (
+        <section className="typing-result">
+          <TypingCompanion
+            compact
+            mood={view.stats.accuracy >= 90 ? "celebrate" : "encourage"}
+            completed={completedCount}
+            total={TYPING_LESSONS.length}
+          />
+          <p className="eyebrow">Runde abgeschlossen</p>
+          <h1>{view.stats.accuracy}% genau</h1>
+          <p>
+            {view.stats.accuracy >= 90
+              ? "Die Lektion ist sicher genug für den nächsten Schritt."
+              : "Bleib noch bei dieser Lektion. Ruhiges, genaues Tippen bringt dich weiter."}
+          </p>
+          <div className="typing-result__metrics">
+            <article>
+              <strong>{view.stats.accuracy}%</strong>
+              <span>Genauigkeit</span>
+            </article>
+            <article>
+              <strong>{view.stats.corrections}</strong>
+              <span>Korrekturen</span>
+            </article>
+            <article>
+              <strong>{view.stats.wpm}</strong>
+              <span>Wörter/min · Info</span>
+            </article>
+          </div>
+          {view.stats.problemChars.length > 0 && (
+            <p>
+              Noch unsicher:{" "}
+              <strong>
+                {view.stats.problemChars
+                  .map((item) => (item.char === " " ? "Leertaste" : item.char))
+                  .join(", ")}
+              </strong>
+            </p>
+          )}
+          <div className="typing-result__actions">
+            <button
+              className="button button--secondary"
+              onClick={() => startLesson(view.lesson)}
+            >
+              Noch einmal
+            </button>
+            <button
+              className="button button--primary"
+              onClick={() => setView({ mode: "overview" })}
+            >
+              Zur Übersicht
+            </button>
+          </div>
+        </section>
+      )}
+
+      {view.mode === "game" && (
+        <FallingWordsGame
+          completedLessonIds={completed}
+          onExit={() => setView({ mode: "overview" })}
+        />
+      )}
+    </main>
+  );
+}

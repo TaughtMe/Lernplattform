@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "dist/**",
     "out/**",
     "build/**",
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
     "next-env.d.ts",
   ]),
   eslint.configs.recommended,
@@ -34,6 +37,23 @@ const eslintConfig = defineConfig([
       react: {
         version: "detect",
       },
+    },
+  },
+  {
+    files: ["src/domain/**/*.{ts,tsx}", "src/storage/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["next", "next/*", "react", "react/*", "@/app/*"],
+              message:
+                "Der fachliche Kern muss framework-unabhängig und außerhalb der Oberfläche testbar bleiben.",
+            },
+          ],
+        },
+      ],
     },
   },
 ]);

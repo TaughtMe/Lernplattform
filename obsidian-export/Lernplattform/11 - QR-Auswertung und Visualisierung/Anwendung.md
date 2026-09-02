@@ -17,6 +17,10 @@ Ein Schüler kann bewusst ausgewählte lokale Statistiken als QR-Code an das Leh
 
 ## Anwendung
 
+### Umsetzungsstand Aufgabenabgabe
+
+Der erste statische Ergebnisweg ist für Arbeitsaufträge umgesetzt. Er überträgt ausschließlich Aufgaben-ID, Klassen-ID, Mitgliedschafts-ID, Abschlusszeit, fortlaufende Standnummer und den Status **abgeschlossen**. Das Einschreibungstoken signiert den Nachweis lokal per HMAC-SHA-256; das Lehrergerät prüft ihn gegen seine lokale Schülerzuordnung. Doppelte und ältere Nachweise verändern den gespeicherten Stand nicht. Dieser datensparsame Abgabenachweis ist noch nicht der unten beschriebene verschlüsselte Ranking-Leistungsbrief mit frei wählbaren Statistiken.
+
 1. Die Lehrkraft legt jeden Schüler lokal an und erzeugt einen individuellen Einschreibungs-QR-Code.
 2. Das Schülergerät übernimmt Klassen-ID und feste Mitgliedschafts-ID. Wiederholtes Scannen erzeugt keinen weiteren Schülerdatensatz.
 3. Der Schüler wählt die freizugebenden Werte und erzeugt einen verschlüsselten, signierten QR-Code.
@@ -38,6 +42,8 @@ Für jeden Turnus oder jedes Aufgabenpaket speichert das Lehrergerät minimal:
 - Ergebnis: abgegeben, doppelt, veraltet oder ungültig
 
 Der vollständige QR-Inhalt und die persönliche Lernhistorie werden nicht unnötig im Protokoll abgelegt. Die Lehrkraft kann offene Abgaben filtern, den Turnus abschließen und das Protokoll nach einer festgelegten Frist löschen.
+
+Für Aufgabenabgaben speichert die erste Umsetzung bereits Mitgliedschaft, Aufgabe, höchste Standnummer, Abschluss- und Eingangszeit sowie Signatur. Die Oberfläche zeigt abgegebene und ausstehende Schüler. Filter, Turnusabschluss und Löschfrist sind noch offen.
 
 ## Kein Rückkanal erforderlich
 

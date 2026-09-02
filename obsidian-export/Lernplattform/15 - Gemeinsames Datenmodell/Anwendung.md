@@ -19,8 +19,15 @@ Alle Anwendungen benötigen ein gemeinsames, versioniertes Austauschformat, vorl
 - Test- oder Runden-ID, Antwortform und verwendete Hilfe
 - Merkstufe, Eingabekorrekturen und Merkspanne
 - Synchronisationsstatus
+- Fach und optionales Sprachpaar
+- Quellenverknüpfung: selbst angelegt, Lehrkraftpaket, Laufdiktat oder andere Lernaktivität
+- Inhaltspaket mit stabiler Paket-ID, Inhaltsversion und Ablaufmetadaten
+- temporärer Transferraum mit Erstellungs- und Ablaufzeit, aber ohne Schülerzuordnung
 - Duell- und Punktereignis
 - Klassenmitgliedschaft mit stabiler pseudonymer ID
+- bereitgestellter Lehrkraftinhalt als zusätzliche Quelle im persönlichen Lernraum
+- Tagesübung mit Auslöser „fällig“, „Fehler“ oder „Lehrkraft“
+- optionaler Klassenkontext im Lernereignis mit Klassen-ID, Aufgaben-ID und Rankingfreigabe
 - QR-Leistungsbrief mit Turnus-ID, Standnummer, Paket-ID und Signatur
 - lokaler Abgabestatus je Turnus oder Aufgabenpaket
 - Datenformat-Version
@@ -36,6 +43,9 @@ Alle Anwendungen benötigen ein gemeinsames, versioniertes Austauschformat, vorl
 - Ereignis-IDs gegen doppelte QR-Auswertung
 - idempotente QR-Übernahme: doppelte und ältere Standnummern verändern den Lehrerstand nicht
 - Export ohne Abhängigkeit von einem Anbieter
+- idempotente Paketübernahme ohne Zurücksetzen persönlicher Lernstände
+- fachliche Identität nicht allein aus sichtbarem Text ableiten
+- abgelaufene Transferpakete serverseitig unlesbar machen und löschen
 
 ## Erweiterbare Lernobjekte
 
