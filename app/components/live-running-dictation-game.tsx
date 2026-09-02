@@ -32,6 +32,7 @@ import {
   createPersonalLearningEventRepository,
 } from "../../src/storage/personal-learning-events";
 import { LiveStationGame } from "./live-station-game";
+import { MathDisplay } from "./math-display";
 import { LAUFDIKTAT_PILOT } from "../../src/pilot-mode";
 import { useLiveSessionGuards } from "./use-live-session-guards";
 import { useAutoFitFontSize } from "./use-auto-fit-font-size";
@@ -118,6 +119,7 @@ export function LiveRunningDictationGame({
 
   const kind = current ? liveWordKind(current) : "text";
   const prompt = current ? (current.prompt ?? current.targetWord) : "";
+  const isLatexPrompt = current?.isLatex ?? false;
   const {
     containerRef: revealContainerRef,
     textRef: revealTextRef,
@@ -566,7 +568,7 @@ export function LiveRunningDictationGame({
         {phase === "revealed" ? (
           <div ref={revealContainerRef} className="live-game-reveal">
             <h1 ref={revealTextRef} style={{ fontSize: `${revealFontSize}px` }}>
-              {prompt}
+              <MathDisplay text={prompt} isLatex={isLatexPrompt} />
             </h1>
           </div>
         ) : null}
@@ -575,9 +577,11 @@ export function LiveRunningDictationGame({
           <form className="live-game-write" onSubmit={submit}>
             <p className="eyebrow">Aus dem Gedächtnis</p>
             <h2>
-              {kind === "vocabulary" || kind === "math"
-                ? prompt
-                : "Was hast du dir gemerkt?"}
+              {kind === "vocabulary" || kind === "math" ? (
+                <MathDisplay text={prompt} isLatex={isLatexPrompt} />
+              ) : (
+                "Was hast du dir gemerkt?"
+              )}
             </h2>
             <div className="live-game-write__field">
               <input

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { deterministicOrder } from "../../src/domain/running-dictation";
 import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
 import type { LiveProgress } from "../../src/integrations/laufdiktat/room-api";
+import { MathDisplay } from "./math-display";
 
 type Props = {
   code: string;
@@ -131,7 +132,12 @@ export function LiveStationGame({
         ) : revealed ? (
           <>
             <p className="eyebrow">Merken und auf Papier schreiben</p>
-            <h1>{current.prompt ?? current.targetWord}</h1>
+            <h1>
+              <MathDisplay
+                text={current.prompt ?? current.targetWord}
+                isLatex={current.isLatex ?? false}
+              />
+            </h1>
             <button className="text-button" onClick={() => setRevealed(false)}>
               Aufgabe wieder verdecken
             </button>

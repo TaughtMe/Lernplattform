@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { ThemeToggle } from "./components/theme-toggle";
 import { SiteMetaActions } from "./components/site-meta-actions";
 import "./globals.css";
+import "katex/dist/katex.min.css";
 
 export const viewport: Viewport = {
   width: "device-width",

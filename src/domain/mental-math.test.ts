@@ -5,6 +5,7 @@ import {
   evaluateMentalMathExpression,
   formatMathChainTokens,
   generateMentalMathTasks,
+  isLatexMathSyntax,
   normalizeMathChainInput,
   parseMentalMathTask,
   tokenizeMathChain,
@@ -140,5 +141,13 @@ describe("manually typed math chains", () => {
     expect(formatMathChainTokens(tokens, 0)).toBe("_ + 4 − 2");
     expect(formatMathChainTokens(tokens, 1)).toBe("3 + _ − 2");
     expect(formatMathChainTokens(tokens, 2)).toBe("3 + 4 − _");
+  });
+
+  it("flags fractions/roots/powers as needing KaTeX, but not plain chains", () => {
+    expect(isLatexMathSyntax("\\frac{1}{2}")).toBe(true);
+    expect(isLatexMathSyntax("\\sqrt{9}")).toBe(true);
+    expect(isLatexMathSyntax("2^3")).toBe(true);
+    expect(isLatexMathSyntax("3 + 4 - 2")).toBe(false);
+    expect(isLatexMathSyntax("7 + 8")).toBe(false);
   });
 });

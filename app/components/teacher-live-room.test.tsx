@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { TeacherLiveRoom } from "./teacher-live-room";
@@ -67,7 +73,7 @@ describe("TeacherLiveRoom", () => {
     const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
     await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
     await user.click(kopfrechnenTab);
-    expect(screen.getAllByText("4 Aufgaben")[0]).toBeVisible();
+    expect(screen.getAllByText("0 Aufgaben")[0]).toBeVisible();
 
     await user.click(
       screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
@@ -77,7 +83,7 @@ describe("TeacherLiveRoom", () => {
       ".teacher-live__math-tasklist",
     )!;
     expect(within(taskList).getByText("3 + 4 = 7")).toBeVisible();
-    expect(screen.getAllByText("5 Aufgaben")[0]).toBeVisible();
+    expect(screen.getAllByText("1 Aufgaben")[0]).toBeVisible();
 
     await user.click(within(taskList).getByText("3 + 4 = 7"));
     const editField = screen.getByDisplayValue("3 + 4");
@@ -91,7 +97,7 @@ describe("TeacherLiveRoom", () => {
     await user.click(
       within(editedRow).getByRole("button", { name: "Löschen" }),
     );
-    expect(screen.getAllByText("4 Aufgaben")[0]).toBeVisible();
+    expect(screen.getAllByText("0 Aufgaben")[0]).toBeVisible();
   });
 
   it("lets a teacher pick which number becomes the gap in the preview", async () => {
@@ -100,6 +106,11 @@ describe("TeacherLiveRoom", () => {
     const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
     await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
     await user.click(kopfrechnenTab);
+
+    await user.click(
+      screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
+    );
+    await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "7 + 8{Enter}");
 
     await user.click(screen.getByRole("button", { name: "Weitere Regeln" }));
     await user.click(screen.getByLabelText("Lückenaufgaben"));
@@ -144,6 +155,11 @@ describe("TeacherLiveRoom", () => {
     const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
     await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
     await user.click(kopfrechnenTab);
+
+    await user.click(
+      screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
+    );
+    await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "7 + 8{Enter}");
 
     await user.click(screen.getByRole("button", { name: "Weitere Regeln" }));
     await user.click(screen.getByLabelText("Lückenaufgaben"));
@@ -190,7 +206,7 @@ describe("TeacherLiveRoom", () => {
     await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3 + 3{Enter}");
     const newRow = document.querySelectorAll<HTMLElement>(
       ".teacher-live__math-preview-row",
-    )[4]!;
+    )[1]!;
     expect(within(newRow).getByRole("button", { name: "_" })).toBeVisible();
     expect(within(newRow).getByRole("button", { name: "3" })).toBeVisible();
   });
@@ -260,6 +276,33 @@ describe("TeacherLiveRoom", () => {
     expect(
       within(updatedChainRow).getByRole("button", { name: "2" }),
     ).toBeVisible();
+  });
+
+  it("offers power/root/fraction buttons and renders LaTeX input via KaTeX", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+    const kopfrechnenTab = screen.getByRole("tab", { name: "Kopfrechnen" });
+    await waitFor(() => expect(kopfrechnenTab).toBeEnabled());
+    await user.click(kopfrechnenTab);
+
+    await user.click(
+      screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
+    );
+    expect(screen.getByRole("button", { name: "xʸ" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "√" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "a/b" }));
+    const input = screen.getByPlaceholderText("z. B. 4 + 4");
+    expect(input).toHaveValue("\\frac{}{}");
+
+    // Live result preview updates while typing, before committing.
+    fireEvent.change(input, { target: { value: "\\frac{1}{2}" } });
+    expect(screen.getByText("= 0,5")).toBeVisible();
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    const taskList = document.querySelector<HTMLElement>(
+      ".teacher-live__math-tasklist",
+    )!;
+    expect(taskList.querySelector(".katex")).not.toBeNull();
   });
 
   it("starts vocabulary mode with one empty pair ready to fill in", async () => {

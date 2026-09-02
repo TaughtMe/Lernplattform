@@ -22,6 +22,7 @@ import {
   displayMathNumber,
   evaluateMentalMathExpression,
   formatMathChainTokens,
+  isLatexMathSyntax,
   MULTIPLICATION_TABLES,
   normalizeMathChainInput,
   tokenizeMathChain,
@@ -65,6 +66,7 @@ import {
 } from "../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../src/integrations/laufdiktat/debounce";
 import { AnimalAvatar } from "./animal-avatar";
+import { MathDisplay } from "./math-display";
 import { useHydrated } from "./use-hydrated";
 
 type Props = { liveRoomConfig: LiveRoomConfig | null };
@@ -128,7 +130,7 @@ const MODES = ALL_MODES;
 const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
   text: "",
   vocabulary: "",
-  math: "7 + 8\n16 - 9\n6 · 7\n36 : 4",
+  math: "",
 };
 function isOnline(participant: LiveRoomParticipant) {
   return Boolean(
@@ -381,7 +383,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         kind: "math",
         prompt: line,
         targetWord: String(value),
-        ...(numberCount > 2 ? { isLatex: true } : {}),
+        ...(isLatexMathSyntax(line) ? { isLatex: true } : {}),
       });
     });
     return result;
@@ -435,9 +437,19 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     setMathDraft(mathLines[index] ?? "");
   }
 
-  function displayMathLine(line: string) {
+  // Fractions/roots/powers get real math typesetting via KaTeX; everything
+  // else (plain chains included) is shown as text — identical either way,
+  // just without the KaTeX overhead.
+  function renderMathLine(line: string) {
     const value = evaluateMentalMathExpression(line);
-    return value === null ? line : `${line} = ${displayMathNumber(value)}`;
+    if (value === null) return line;
+    if (!isLatexMathSyntax(line))
+      return `${line} = ${displayMathNumber(value)}`;
+    return (
+      <>
+        <MathDisplay text={line} isLatex /> = {displayMathNumber(value)}
+      </>
+    );
   }
 
   function setMathLineGap(index: number, gapIndex: number) {
@@ -449,25 +461,34 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   }
 
   const MATH_TOOLBAR_ITEMS = [
-    { label: "+", insert: " + " },
-    { label: "−", insert: " − " },
-    { label: "·", insert: " · " },
-    { label: ":", insert: " : " },
-    { label: "( )", insert: "()" },
+    { label: "+", insert: " + ", cursorOffset: 3 },
+    { label: "−", insert: " − ", cursorOffset: 3 },
+    { label: "·", insert: " · ", cursorOffset: 3 },
+    { label: ":", insert: " : ", cursorOffset: 3 },
+    { label: "( )", insert: "()", cursorOffset: 1 },
+    { label: "xʸ", insert: "^", cursorOffset: 1 },
+    { label: "√", insert: "\\sqrt{}", cursorOffset: 6 },
+    { label: "a/b", insert: "\\frac{}{}", cursorOffset: 6 },
   ];
 
-  function insertAtMathCursor(token: string) {
+  function insertAtMathCursor(token: string, cursorOffset: number) {
     const el = mathEditInputRef.current;
     const start = el?.selectionStart ?? mathDraft.length;
     const end = el?.selectionEnd ?? start;
     const next = mathDraft.slice(0, start) + token + mathDraft.slice(end);
     setMathDraft(next);
-    const pos = start + (token === "()" ? 1 : token.length);
+    const pos = start + cursorOffset;
     requestAnimationFrame(() => {
       el?.focus();
       el?.setSelectionRange(pos, pos);
     });
   }
+
+  // Live "= result" (or "ungültig") feedback shown next to the math edit
+  // field while typing, before the value is committed.
+  const mathDraftResult = mathDraft.trim()
+    ? evaluateMentalMathExpression(mathDraft)
+    : null;
 
   function commitMathEdit(continueEditing: boolean) {
     if (mathEditIndex === null) return;
@@ -1040,29 +1061,44 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                 key={`edit-${index}`}
                                 className="teacher-live__math-edit-group"
                               >
-                                <input
-                                  ref={mathEditInputRef}
-                                  className="teacher-live__math-edit"
-                                  value={mathDraft}
-                                  onChange={(event) =>
-                                    setMathDraft(event.target.value)
-                                  }
-                                  onBlur={() => commitMathEdit(false)}
-                                  onKeyDown={(event) => {
-                                    if (
-                                      event.key === "Enter" ||
-                                      event.key === "Tab"
-                                    ) {
-                                      event.preventDefault();
-                                      commitMathEdit(true);
+                                <div className="teacher-live__math-edit-row">
+                                  <input
+                                    ref={mathEditInputRef}
+                                    className="teacher-live__math-edit"
+                                    value={mathDraft}
+                                    onChange={(event) =>
+                                      setMathDraft(event.target.value)
                                     }
-                                    if (event.key === "Escape") {
-                                      setMathDraft("");
-                                      setMathEditIndex(null);
-                                    }
-                                  }}
-                                  placeholder="z. B. 4 + 4"
-                                />
+                                    onBlur={() => commitMathEdit(false)}
+                                    onKeyDown={(event) => {
+                                      if (
+                                        event.key === "Enter" ||
+                                        event.key === "Tab"
+                                      ) {
+                                        event.preventDefault();
+                                        commitMathEdit(true);
+                                      }
+                                      if (event.key === "Escape") {
+                                        setMathDraft("");
+                                        setMathEditIndex(null);
+                                      }
+                                    }}
+                                    placeholder="z. B. 4 + 4"
+                                  />
+                                  {mathDraft.trim() ? (
+                                    <span
+                                      className={
+                                        mathDraftResult === null
+                                          ? "teacher-live__math-edit-result is-invalid"
+                                          : "teacher-live__math-edit-result"
+                                      }
+                                    >
+                                      {mathDraftResult === null
+                                        ? "ungültig"
+                                        : `= ${displayMathNumber(mathDraftResult)}`}
+                                    </span>
+                                  ) : null}
+                                </div>
                                 <div className="teacher-live__math-edit-toolbar">
                                   {MATH_TOOLBAR_ITEMS.map((item) => (
                                     <button
@@ -1072,7 +1108,10 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                         event.preventDefault()
                                       }
                                       onClick={() =>
-                                        insertAtMathCursor(item.insert)
+                                        insertAtMathCursor(
+                                          item.insert,
+                                          item.cursorOffset,
+                                        )
                                       }
                                     >
                                       {item.label}
@@ -1091,7 +1130,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                   title="Zum Bearbeiten klicken"
                                   onClick={() => startEditMathRow(index)}
                                 >
-                                  {displayMathLine(line)}
+                                  {renderMathLine(line)}
                                 </button>
                                 <button
                                   type="button"
@@ -1130,29 +1169,44 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         )}
                         {mathEditIndex === mathLines.length ? (
                           <div className="teacher-live__math-edit-group">
-                            <input
-                              ref={mathEditInputRef}
-                              className="teacher-live__math-edit"
-                              value={mathDraft}
-                              onChange={(event) =>
-                                setMathDraft(event.target.value)
-                              }
-                              onBlur={() => commitMathEdit(false)}
-                              onKeyDown={(event) => {
-                                if (
-                                  event.key === "Enter" ||
-                                  event.key === "Tab"
-                                ) {
-                                  event.preventDefault();
-                                  commitMathEdit(true);
+                            <div className="teacher-live__math-edit-row">
+                              <input
+                                ref={mathEditInputRef}
+                                className="teacher-live__math-edit"
+                                value={mathDraft}
+                                onChange={(event) =>
+                                  setMathDraft(event.target.value)
                                 }
-                                if (event.key === "Escape") {
-                                  setMathDraft("");
-                                  setMathEditIndex(null);
-                                }
-                              }}
-                              placeholder="z. B. 4 + 4"
-                            />
+                                onBlur={() => commitMathEdit(false)}
+                                onKeyDown={(event) => {
+                                  if (
+                                    event.key === "Enter" ||
+                                    event.key === "Tab"
+                                  ) {
+                                    event.preventDefault();
+                                    commitMathEdit(true);
+                                  }
+                                  if (event.key === "Escape") {
+                                    setMathDraft("");
+                                    setMathEditIndex(null);
+                                  }
+                                }}
+                                placeholder="z. B. 4 + 4"
+                              />
+                              {mathDraft.trim() ? (
+                                <span
+                                  className={
+                                    mathDraftResult === null
+                                      ? "teacher-live__math-edit-result is-invalid"
+                                      : "teacher-live__math-edit-result"
+                                  }
+                                >
+                                  {mathDraftResult === null
+                                    ? "ungültig"
+                                    : `= ${displayMathNumber(mathDraftResult)}`}
+                                </span>
+                              ) : null}
+                            </div>
                             <div className="teacher-live__math-edit-toolbar">
                               {MATH_TOOLBAR_ITEMS.map((item) => (
                                 <button
@@ -1162,7 +1216,10 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                     event.preventDefault()
                                   }
                                   onClick={() =>
-                                    insertAtMathCursor(item.insert)
+                                    insertAtMathCursor(
+                                      item.insert,
+                                      item.cursorOffset,
+                                    )
                                   }
                                 >
                                   {item.label}
@@ -1209,7 +1266,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                     className="teacher-live__math-preview-row"
                                   >
                                     <span>{index + 1}.</span>
-                                    <span>{displayMathLine(line)}</span>
+                                    <span>{renderMathLine(line)}</span>
                                   </div>
                                 );
                               }
@@ -1277,7 +1334,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                               className="teacher-live__math-preview-row"
                             >
                               <span>{index + 1}.</span>
-                              <span>{displayMathLine(line)}</span>
+                              <span>{renderMathLine(line)}</span>
                             </div>
                           ))}
                         </div>

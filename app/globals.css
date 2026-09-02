@@ -5586,6 +5586,21 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 .teacher-live__math-edit:focus {
   outline: none;
 }
+.teacher-live__math-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.teacher-live__math-edit-result {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.teacher-live__math-edit-result.is-invalid {
+  color: var(--coral-dark);
+}
 .teacher-live__math-edit-group {
   padding: 8px;
   display: grid;
@@ -5595,6 +5610,11 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 }
 .teacher-live__math-edit-group .teacher-live__math-edit {
   width: 100%;
+}
+.teacher-live__math-edit-row .teacher-live__math-edit {
+  flex: 1;
+  width: auto;
+  min-width: 0;
 }
 .teacher-live__math-edit-toolbar {
   display: flex;

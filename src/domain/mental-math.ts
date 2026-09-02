@@ -309,11 +309,12 @@ export type MathChainToken =
   { kind: "number"; value: number } | { kind: "symbol"; text: string };
 
 /**
- * Tokenizes a manually typed arithmetic chain (numbers, + - * / ^, parens)
+ * Tokenizes a manually typed arithmetic chain (numbers, + - * /, parens)
  * into a flat, position-ordered list — used to re-space input and to pick
  * which numeral in a chain becomes a gap. Returns null for anything that
- * needs the general expression fallback instead (\frac, \sqrt, braces),
- * which is left exactly as typed rather than reformatted.
+ * needs real math typesetting instead (\frac, \sqrt, ^, braces), which is
+ * left exactly as typed and rendered via KaTeX rather than reformatted —
+ * a caret exponent read back as plain text ("2^3") isn't a real superscript.
  */
 export function tokenizeMathChain(input: string): MathChainToken[] | null {
   const tokens = tokenizeExpression(input.trim());
@@ -322,11 +323,8 @@ export function tokenizeMathChain(input: string): MathChainToken[] | null {
   for (const token of tokens) {
     if (token.type === "number") {
       chain.push({ kind: "number", value: token.value });
-    } else if (token.type === "operator") {
-      chain.push({
-        kind: "symbol",
-        text: token.value === "^" ? "^" : mathOperatorSymbol(token.value),
-      });
+    } else if (token.type === "operator" && token.value !== "^") {
+      chain.push({ kind: "symbol", text: mathOperatorSymbol(token.value) });
     } else if (token.type === "left-paren") {
       chain.push({ kind: "symbol", text: "(" });
     } else if (token.type === "right-paren") {
@@ -386,6 +384,19 @@ export function countMathChainNumbers(tokens: MathChainToken[]) {
 export function normalizeMathChainInput(input: string) {
   const tokens = tokenizeMathChain(input);
   return tokens ? formatMathChainTokens(tokens) : null;
+}
+
+/**
+ * True when a manually typed line uses LaTeX-only syntax (\frac, \sqrt, ^,
+ * braces) that benefits from KaTeX rendering — i.e. it evaluates but isn't a
+ * plain arithmetic chain. A long plain chain like "6 + 4 - 2" is still just
+ * text; only fractions/roots/powers actually need real math typesetting.
+ */
+export function isLatexMathSyntax(input: string) {
+  return (
+    tokenizeMathChain(input) === null &&
+    evaluateMentalMathExpression(input) !== null
+  );
 }
 
 function randomInteger(random: () => number, min: number, max: number) {

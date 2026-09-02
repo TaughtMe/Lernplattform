@@ -28,6 +28,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.105.4",
     "dexie": "4.4.4",
+    "katex": "^0.17.0",
     "qr-scanner": "1.4.2",
     "qrcode.react": "4.2.0",
     "react": "19.2.8",
@@ -44,6 +45,7 @@
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.4",
+    "@types/katex": "^0.16.8",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
