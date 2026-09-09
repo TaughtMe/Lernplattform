@@ -2,10 +2,13 @@
 import { LiveProgressNotice } from "./live-progress-notice";
 import type { ProgressDeliveryStatus } from "../../src/integrations/laufdiktat/progress-delivery";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { deterministicOrder } from "../../src/domain/running-dictation";
 import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
 import type { LiveProgress } from "../../src/integrations/laufdiktat/room-api";
+import { MathDisplay } from "./math-display";
+
+import { useAutoFitFontSize } from "./use-auto-fit-font-size";
 
 type Props = {
   code: string;
@@ -30,9 +33,12 @@ export function LiveStationGame({
   const [index, setIndex] = useState(0);
   const [peeks, setPeeks] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [seen, setSeen] = useState<Set<number>>(new Set());
+  const [seen, setSeen] = useState<Set<string>>(new Set());
   const [finished, setFinished] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [activity, setActivity] = useState(0);
+  const request = useRef(0);
   const reachedIndex = useRef(0);
 
   const words = useMemo(() => {
@@ -43,11 +49,35 @@ export function LiveStationGame({
     ).map((wordIndex) => session.words[wordIndex]!);
   }, [code, session, stationNumber]);
 
+  const seenKey = stationNumber + ":" + index;
+  const currentPrompt = words[index]?.prompt ?? words[index]?.targetWord ?? "";
+  const { containerRef, textRef, fontSize } = useAutoFitFontSize(
+    currentPrompt,
+    { min: 28, max: 72 },
+  );
+  useEffect(() => {
+    if (stationNumber === null || loading || revealed || loadError) return;
+    const timer = window.setTimeout(() => {
+      setStationNumber(null);
+      setRevealed(false);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [stationNumber, loading, revealed, loadError, activity]);
+  useEffect(
+    () => () => {
+      request.current++;
+    },
+    [],
+  );
+
   async function chooseStation(number: number) {
+    const activeRequest = ++request.current;
+    setLoadError("");
     setLoading(true);
     setStationNumber(number);
     try {
       const saved = await onLoadProgress(`station-${number}`);
+      if (request.current !== activeRequest) return;
       const restoredIndex = Math.min(
         saved?.currentIndex ?? 0,
         Math.max(0, session.words.length - 1),
@@ -56,10 +86,17 @@ export function LiveStationGame({
       reachedIndex.current = restoredIndex;
       setPeeks(saved?.peeks ?? 0);
       setFinished(saved?.finished ?? false);
+    } catch {
+      if (request.current === activeRequest)
+        setLoadError(
+          "Dein Stand konnte nicht geladen werden. Bitte erneut versuchen.",
+        );
     } finally {
-      setSeen(new Set());
-      setRevealed(false);
-      setLoading(false);
+      if (request.current === activeRequest) {
+        setRevealed(false);
+        setLoading(false);
+        setActivity((value) => value + 1);
+      }
     }
   }
 
@@ -75,14 +112,16 @@ export function LiveStationGame({
     });
   }
 
-  function reveal() {
-    const wasSeen = seen.has(index);
+  function reveal(show = true) {
+    if (loading || loadError || revealed) return;
+    const wasSeen = seen.has(seenKey);
     const nextPeeks = wasSeen ? peeks + 1 : peeks;
     const done = finished || index === words.length - 1;
-    setSeen((current) => new Set(current).add(index));
+    setSeen((current) => new Set(current).add(seenKey));
     setPeeks(nextPeeks);
     setFinished(done);
-    setRevealed(true);
+    setRevealed(show);
+    setActivity((value) => value + 1);
     report(index, nextPeeks, done);
   }
 
@@ -122,13 +161,28 @@ export function LiveStationGame({
   const current = words[index];
   if (!current) return null;
   return (
-    <div className="live-game-page">
-      <header className="live-game-topbar">
-        <div>
+    <div
+      className="live-game-page is-active-round"
+      onTouchStart={(event) => {
+        if (event.touches.length >= 2) reveal();
+      }}
+      onTouchEnd={(event) => {
+        if (event.touches.length < 2) {
+          setRevealed(false);
+          setActivity((value) => value + 1);
+        }
+      }}
+      onTouchCancel={() => {
+        setRevealed(false);
+        setActivity((value) => value + 1);
+      }}
+    >
+      <header className="live-game-page__header">
+        <div className="live-game-page__meta">
           <span>Nummer</span>
           <strong>{stationNumber}</strong>
         </div>
-        <div>
+        <div className="live-game-page__meta">
           <span>Aufgabe</span>
           <strong>
             {index + 1} / {words.length}
@@ -136,12 +190,43 @@ export function LiveStationGame({
         </div>
       </header>
       <section className="live-station live-station--active" aria-live="polite">
+        {loadError ? (
+          <div role="alert">
+            <p>{loadError}</p>
+            <button onClick={() => void chooseStation(stationNumber)}>
+              Erneut laden
+            </button>
+          </div>
+        ) : null}
+        {session.isTtsEnabled ? (
+          <button
+            disabled={loading || Boolean(loadError)}
+            aria-label="Vorlesen"
+            onClick={() => {
+              if (!("speechSynthesis" in window)) return;
+              const utterance = new SpeechSynthesisUtterance(currentPrompt);
+              utterance.lang = current.promptLang ?? "de-DE";
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(utterance);
+              reveal(false);
+            }}
+          >
+            Vorlesen
+          </button>
+        ) : null}
         {loading ? (
           <p>Dein Stand wird geladen …</p>
         ) : revealed ? (
           <>
             <p className="eyebrow">Merken und auf Papier schreiben</p>
-            <h1>{current.prompt ?? current.targetWord}</h1>
+            <div ref={containerRef} className="live-station__reveal">
+              <h1 ref={textRef} style={{ fontSize }}>
+                <MathDisplay
+                  text={current.prompt ?? current.targetWord}
+                  isLatex={current.isLatex ?? false}
+                />
+              </h1>
+            </div>
             <button className="text-button" onClick={() => setRevealed(false)}>
               Aufgabe wieder verdecken
             </button>
@@ -150,7 +235,11 @@ export function LiveStationGame({
           <>
             <p className="eyebrow">Bereit?</p>
             <h1>Aufgabe {index + 1}</h1>
-            <button className="button button--primary" onClick={reveal}>
+            <button
+              className="button button--primary"
+              disabled={loading || Boolean(loadError)}
+              onClick={() => reveal()}
+            >
               Aufgabe zeigen
             </button>
           </>
@@ -158,8 +247,9 @@ export function LiveStationGame({
         <div className="live-station__navigation">
           <button
             className="text-button"
-            disabled={index === 0}
+            disabled={index === 0 || loading || Boolean(loadError)}
             onClick={() => {
+              setActivity((value) => value + 1);
               const next = index - 1;
               setIndex(next);
               setRevealed(false);
@@ -171,8 +261,9 @@ export function LiveStationGame({
           {index < words.length - 1 ? (
             <button
               className="button button--primary"
-              disabled={!seen.has(index)}
+              disabled={!seen.has(seenKey) || loading || Boolean(loadError)}
               onClick={() => {
+                setActivity((value) => value + 1);
                 const next = index + 1;
                 reachedIndex.current = Math.max(reachedIndex.current, next);
                 setIndex(next);
@@ -185,7 +276,7 @@ export function LiveStationGame({
           ) : (
             <button
               className="button button--primary"
-              disabled={!seen.has(index)}
+              disabled={!seen.has(seenKey) || loading || Boolean(loadError)}
               onClick={() => {
                 setStationNumber(null);
                 setIndex(0);
@@ -198,6 +289,16 @@ export function LiveStationGame({
         </div>
         <LiveProgressNotice status={deliveryStatus} onRetry={onRetryProgress} />
         {connectionWarning ? <p role="status">{connectionWarning}</p> : null}
+        <button
+          className="text-button"
+          onClick={() => {
+            request.current++;
+            setStationNumber(null);
+            setRevealed(false);
+          }}
+        >
+          Zur Nummernauswahl
+        </button>
         <p className="live-station__hint">
           Erstes Ansehen ist frei. Erneutes Öffnen zählt als Spicker.
         </p>

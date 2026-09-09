@@ -63,11 +63,11 @@ test("completion survives failed delivery, retry and reload", async ({
     "data-hydrated",
     "true",
   );
-  await page.getByLabel("Name oder Pseudonym").fill("Mia");
   await page.getByRole("button", { name: "Beitreten", exact: true }).click();
   await page
-    .getByRole("button", { name: "Verstanden – jetzt schreiben" })
+    .getByRole("button", { name: "Aufgabe zeigen", exact: true })
     .click();
+  await page.getByRole("button", { name: "Jetzt schreiben" }).click();
   await expect(
     page.getByRole("textbox", { name: "Deine Antwort" }),
   ).toBeFocused();
@@ -104,7 +104,6 @@ test("completion survives failed delivery, retry and reload", async ({
     "data-hydrated",
     "true",
   );
-  await page.getByLabel("Name oder Pseudonym").fill("Mia");
   await page.getByRole("button", { name: "Beitreten", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Geschafft, Mia!" }),

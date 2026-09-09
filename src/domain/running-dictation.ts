@@ -10,6 +10,7 @@ export type RunningDictationItem = {
   acceptedAnswers?: string[];
   promptLocale?: string;
   answerLocale?: string;
+  caseSensitive?: boolean;
 };
 
 export type VocabularyPair = {
@@ -162,6 +163,7 @@ export function parseVocabularyTable(input: string): VocabularyPair[] {
 export function buildVocabularyItems(
   pairs: VocabularyPair[],
   direction: VocabularyDirection,
+  caseSensitive = false,
 ) {
   return pairs.flatMap((pair, index): RunningDictationItem[] => {
     const askLeft =
@@ -178,6 +180,7 @@ export function buildVocabularyItems(
         acceptedAnswers: answer.alternatives,
         promptLocale: askLeft ? "de-DE" : "en-GB",
         answerLocale: askLeft ? "en-GB" : "de-DE",
+        caseSensitive,
       },
     ];
   });

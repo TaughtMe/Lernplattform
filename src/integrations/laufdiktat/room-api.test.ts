@@ -58,7 +58,7 @@ describe("validated room API", () => {
   });
   it("does not treat empty teacher or join capabilities as success", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
-    await expect(openLiveRoom(config, {}, "invalid-code")).rejects.toThrow();
+    await expect(openLiveRoom(config, {})).rejects.toThrow();
     await expect(joinLiveRoom(config, "1234", "Mia")).resolves.toBeNull();
   });
   it("validates stored capabilities and preserves valid identities", () => {

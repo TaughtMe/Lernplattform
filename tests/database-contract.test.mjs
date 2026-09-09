@@ -56,14 +56,7 @@ async function rpc(sql, parameters = [], ip = "192.0.2.10") {
   });
 }
 async function room(ip = "192.0.2.20") {
-  const teacher = crypto.randomUUID();
-  await db.query(
-    "insert into private.teacher_pilot_keys(label,token_hash) values('test',encode(extensions.digest($1,'sha256'),'hex'))",
-    [teacher],
-  );
-  return (
-    await rpc("select * from public.open_room_secure('{}', $1)", [teacher], ip)
-  )[0];
+  return (await rpc("select * from public.open_room_secure('{}')", [], ip))[0];
 }
 const sessionId = "11111111-1111-4111-8111-111111111111";
 
@@ -80,7 +73,7 @@ test("rejects direct table access and private helpers after all migrations", asy
     );
   }
   await assert.rejects(
-    rpc("select * from private.teacher_pilot_keys"),
+    rpc("select * from private.request_limits"),
     /permission denied/,
   );
   await assert.rejects(
@@ -89,12 +82,12 @@ test("rejects direct table access and private helpers after all migrations", asy
   );
 });
 
-test("counts rejected teacher keys across committed requests", async () => {
+test("counts rejected room configurations across committed requests", async () => {
   for (let i = 0; i < 12; i++) {
     assert.deepEqual(
       await rpc(
-        "select * from public.open_room_secure('{}',$1)",
-        ["wrong-teacher-key"],
+        "select * from public.open_room_secure($1::jsonb)",
+        ["[]"],
         "192.0.2.30",
       ),
       [],
@@ -102,8 +95,8 @@ test("counts rejected teacher keys across committed requests", async () => {
   }
   await assert.rejects(
     rpc(
-      "select * from public.open_room_secure('{}',$1)",
-      ["wrong-teacher-key"],
+      "select * from public.open_room_secure($1::jsonb)",
+      ["[]"],
       "192.0.2.30",
     ),
     /Zu viele Anfragen/,

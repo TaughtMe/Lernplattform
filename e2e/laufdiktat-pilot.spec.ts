@@ -68,12 +68,12 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
   await expect(page.getByRole("tab", { name: "Text" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Vokabeln" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Kopfrechnen" })).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Trennregeln" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Markierung als Abschnitt" }),
-  ).toBeVisible();
+  await expect(page.getByRole("region", { name: "Trennregeln" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Marker/ })).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Text – Sätze werden automatisch getrennt" })
+    .fill("Der Hund läuft. Die Katze schläft.");
+  await expect(page.getByRole("button", { name: /Marker/ })).toBeEnabled();
 
   const stableFrame = async () =>
     page.evaluate(() => {
@@ -96,15 +96,12 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
   expect(mathFrame).toEqual(textFrame);
   expect(textFrame.pageHeight).toBe(textFrame.viewportHeight);
 
+  await page.getByRole("tab", { name: "Text", exact: true }).click();
   await page.getByRole("button", { name: /Weiter zur Konfiguration/ }).click();
   await expect(page.getByRole("radio", { name: /^Laufdiktat/ })).toBeVisible();
   await expect(page.getByRole("radio", { name: /^Freies Üben/ })).toBeVisible();
   await expect(page.getByRole("radio", { name: /^Battle/ })).toBeVisible();
   await expect(page.getByRole("radio", { name: /^Stationen/ })).toBeVisible();
-  await expect(page.getByLabel("Lehrkraftfreigabe")).toHaveAttribute(
-    "type",
-    "password",
-  );
 
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
@@ -125,11 +122,10 @@ test("room join keeps invalid input and shows an explicit unavailable state", as
     "data-hydrated",
     "true",
   );
-  await page.getByLabel("Name oder Pseudonym").fill("Mia");
   await page.getByRole("button", { name: "Beitreten" }).click();
 
   await expect(page.getByRole("alert")).toBeVisible();
-  await expect(page.getByLabel("Name oder Pseudonym")).toHaveValue("Mia");
+  await page.getByRole("button", { name: /Zur Code-Eingabe/ }).click();
   await expect(page.getByRole("textbox", { name: "Ziffer 1" })).toHaveValue(
     "4",
   );
@@ -140,8 +136,7 @@ test("a configured teacher and student can complete one live round", async ({
 }) => {
   test.skip(
     !process.env["NEXT_PUBLIC_SUPABASE_URL"] ||
-      !process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] ||
-      !process.env["PILOT_TEACHER_ACCESS_CODE"],
+      !process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
     "Benötigt die eigens provisionierte lokale Supabase-Pilotumgebung.",
   );
 
@@ -152,14 +147,10 @@ test("a configured teacher and student can complete one live round", async ({
   await teacher
     .getByRole("button", { name: /Weiter zur Konfiguration/ })
     .click();
-  await teacher
-    .getByLabel("Lehrkraftfreigabe")
-    .fill(process.env["PILOT_TEACHER_ACCESS_CODE"] ?? "");
   await teacher.getByRole("button", { name: /Lobby öffnen/ }).click();
   const roomCode = await teacher.locator(".teacher-live__code").innerText();
 
   await student.goto(`/raum?code=${roomCode}`);
-  await student.getByLabel("Name oder Pseudonym").fill("Schneller Igel");
   await student.getByRole("button", { name: "Beitreten" }).click();
   await expect(student.getByText(/Du bist dabei/)).toBeVisible();
 

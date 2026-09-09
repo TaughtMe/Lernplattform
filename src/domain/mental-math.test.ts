@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   checkMentalMathAnswer,
+  countMathChainNumbers,
   evaluateMentalMathExpression,
+  formatMathChainTokens,
   generateMentalMathTasks,
+  isLatexMathSyntax,
+  normalizeMathChainInput,
   parseMentalMathTask,
+  tokenizeMathChain,
   type MentalMathOperation,
 } from "./mental-math";
 
@@ -116,5 +121,33 @@ describe("mental math copied from the Laufdiktat task model", () => {
     expect(tasks).toHaveLength(50);
     expect(tasks.every((task) => task.answer !== 0)).toBe(true);
     expect(tasks.every((task) => task.source.includes("5"))).toBe(true);
+  });
+});
+
+describe("manually typed math chains", () => {
+  it("re-spaces a chain typed without spaces", () => {
+    expect(normalizeMathChainInput("3+4-2")).toBe("3 + 4 − 2");
+    expect(normalizeMathChainInput("6*7")).toBe("6 · 7");
+  });
+
+  it("leaves LaTeX-style input (fractions/roots) untouched", () => {
+    expect(normalizeMathChainInput("\\frac{1}{2}")).toBeNull();
+  });
+
+  it("counts and blanks any numeral in a chain, not just two operands", () => {
+    const tokens = tokenizeMathChain("3 + 4 - 2")!;
+    expect(countMathChainNumbers(tokens)).toBe(3);
+    expect(formatMathChainTokens(tokens)).toBe("3 + 4 − 2");
+    expect(formatMathChainTokens(tokens, 0)).toBe("_ + 4 − 2");
+    expect(formatMathChainTokens(tokens, 1)).toBe("3 + _ − 2");
+    expect(formatMathChainTokens(tokens, 2)).toBe("3 + 4 − _");
+  });
+
+  it("flags fractions/roots/powers as needing KaTeX, but not plain chains", () => {
+    expect(isLatexMathSyntax("\\frac{1}{2}")).toBe(true);
+    expect(isLatexMathSyntax("\\sqrt{9}")).toBe(true);
+    expect(isLatexMathSyntax("2^3")).toBe(true);
+    expect(isLatexMathSyntax("3 + 4 - 2")).toBe(false);
+    expect(isLatexMathSyntax("7 + 8")).toBe(false);
   });
 });

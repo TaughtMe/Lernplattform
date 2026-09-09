@@ -23,13 +23,104 @@ import {
   parseLiveSession,
   type LiveSession,
 } from "../../src/integrations/laufdiktat/live-session";
+import { AnimalAvatar } from "./animal-avatar";
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
 import { QrCodeScanner } from "./qr-code-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
 import { useHydrated } from "./use-hydrated";
+import { useLiveSessionGuards } from "./use-live-session-guards";
+
+import { LIVE_APP_VERSION } from "../../src/app-version";
+import { LiveVersionNotice } from "./live-version-notice";
 
 type View = "join" | "connecting" | "lobby" | "starting" | "game" | "ended";
 type AttackType = "ink" | "flicker";
+
+// Wie im eigenständigen Laufdiktat: Schüler bekommen einen zufälligen
+// Adjektiv+Tier-Namen zugewiesen (per Würfel neu generierbar) statt einen
+// eigenen Namen einzutippen – dadurch bleibt der Beitritt anonym und der
+// Avatar (siehe animal-avatar.tsx) ist immer eindeutig aus dem Namen ableitbar.
+const ADJECTIVES = [
+  "Schnell",
+  "Flink",
+  "Schlau",
+  "Mutig",
+  "Wild",
+  "Kühn",
+  "Listig",
+  "Stark",
+  "Frech",
+];
+const ANIMALS: Array<{ name: string; g: "m" | "f" | "n" }> = [
+  { name: "Koala", g: "m" },
+  { name: "Fledermaus", g: "f" },
+  { name: "Kamel", g: "n" },
+  { name: "Igel", g: "m" },
+  { name: "Capybara", g: "n" },
+  { name: "Eichhörnchen", g: "n" },
+  { name: "Elefant", g: "m" },
+  { name: "Qualle", g: "f" },
+  { name: "Tiefseefisch", g: "m" },
+  { name: "Clownfisch", g: "m" },
+  { name: "Schwein", g: "n" },
+  { name: "Ente", g: "f" },
+  { name: "Phönix", g: "m" },
+  { name: "Kiwi", g: "m" },
+  { name: "Roter Panda", g: "m" },
+  { name: "Giraffe", g: "f" },
+  { name: "Löwin", g: "f" },
+  { name: "Einhorn", g: "n" },
+  { name: "Orca", g: "m" },
+  { name: "Schildkröte", g: "f" },
+  { name: "Pfau", g: "m" },
+  { name: "Hund", g: "m" },
+  { name: "Affe", g: "m" },
+  { name: "Gorilla", g: "m" },
+  { name: "Fuchs", g: "m" },
+  { name: "Katze", g: "f" },
+  { name: "Sphynx-Katze", g: "f" },
+  { name: "Lama", g: "n" },
+  { name: "Yak", g: "n" },
+  { name: "Kobra", g: "f" },
+  { name: "Krokodil", g: "n" },
+  { name: "Zebra", g: "n" },
+  { name: "Flamingo", g: "m" },
+  { name: "Oktopus", g: "m" },
+  { name: "Chamäleon", g: "n" },
+  { name: "Hirsch", g: "m" },
+  { name: "Pelikan", g: "m" },
+  { name: "Erdmännchen", g: "n" },
+  { name: "Käfer", g: "m" },
+  { name: "Heuschrecke", g: "f" },
+  { name: "Schnabeltier", g: "n" },
+  { name: "Mistkäfer", g: "m" },
+  { name: "Krabbe", g: "f" },
+  { name: "Mammut", g: "n" },
+  { name: "Kaninchen", g: "n" },
+  { name: "Truthahn", g: "m" },
+  { name: "Gottesanbeterin", g: "f" },
+  { name: "Esel", g: "m" },
+  { name: "Robbe", g: "f" },
+  { name: "Strauß", g: "m" },
+  { name: "Taube", g: "f" },
+  { name: "Gepard", g: "m" },
+  { name: "Schmetterling", g: "m" },
+  { name: "Libelle", g: "f" },
+  { name: "Pudel", g: "m" },
+  { name: "Bobtail", g: "m" },
+  { name: "Mops", g: "m" },
+  { name: "Schäferhund", g: "m" },
+  { name: "Collie", g: "m" },
+  { name: "Dackel", g: "m" },
+  { name: "Perserkatze", g: "f" },
+];
+
+function getRandomName() {
+  const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]!;
+  const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]!;
+  const ending = animal.g === "m" ? "er" : animal.g === "f" ? "e" : "es";
+  return `${adjective}${ending} ${animal.name}`;
+}
 
 type LiveRoomJoinProps = {
   initialCode?: string;
@@ -44,11 +135,48 @@ export function LiveRoomJoin({
   const [code, setCode] = useState(() =>
     normalizeJoinCode(initialCode).replace(/\D/g, "").slice(0, 4),
   );
+  // Leer beim ersten Render: Math.random() im Server- und Client-Render
+  // ergäbe unterschiedliche Namen und damit einen Hydration-Mismatch. Der
+  // eigentliche Zufallsname entsteht deshalb erst nach dem Mount (Client-
+  // seitiger Folge-Render, siehe useEffect unten) – wie bei useHydrated().
   const [name, setName] = useState("");
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setName(getRandomName()));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  const joinForm = useRef<HTMLFormElement>(null);
+  const [requiredVersion, setRequiredVersion] = useState<string | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    let frame = 0;
+    try {
+      const pending = sessionStorage.getItem("lernraum-live-resume");
+      if (pending && /^\d{4}$/.test(pending)) {
+        if (pending !== code)
+          frame = requestAnimationFrame(() => setCode(pending));
+        else {
+          sessionStorage.removeItem("lernraum-live-resume");
+          joinForm.current?.requestSubmit();
+        }
+      }
+    } catch {
+      /* Manual rejoin stays available if storage is blocked. */
+    }
+    return () => cancelAnimationFrame(frame);
+  }, [hydrated, code]);
   const [view, setView] = useState<View>("join");
   const [error, setError] = useState("");
   const [connectionWarning, setConnectionWarning] = useState("");
   const [room, setRoom] = useState<JoinedLiveRoom | null>(null);
+  // Keep the screen awake from the moment a room is joined — including the
+  // "warte auf die Lehrkraft" lobby wait, not just once the dictation is
+  // actually running. A locked screen drops the Realtime connection and the
+  // student silently disappears from the teacher's lobby.
+  useLiveSessionGuards(
+    Boolean(room) &&
+      (view === "lobby" || view === "starting") &&
+      !requiredVersion,
+  );
   const [session, setSession] = useState<LiveSession | null>(null);
   const [initialProgress, setInitialProgress] = useState<LiveProgress | null>(
     null,
@@ -60,6 +188,13 @@ export function LiveRoomJoin({
     from: string;
   } | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  // Last progress payload sent for this student, kept so a "request-progress"
+  // broadcast from a (re)joining classmate can be answered immediately
+  // instead of waiting for the next natural progress update.
+  const lastProgressBroadcastRef = useRef<{
+    event: "student-progress" | "student-finished";
+    payload: Record<string, unknown>;
+  } | null>(null);
   useEffect(() => {
     if (!room || !liveRoomConfig) return;
     const activeRoom = room;
@@ -93,6 +228,12 @@ export function LiveRoomJoin({
             participantToken: activeRoom.participantToken,
             studentName: activeRoom.studentName,
           });
+          const required = nextSession["appVersion"];
+          if (typeof required === "string" && required !== LIVE_APP_VERSION) {
+            setRequiredVersion(required);
+            return;
+          }
+          setRequiredVersion(null);
           setInitialProgress(progress);
           setSession(nextSession);
           setView("game");
@@ -104,7 +245,61 @@ export function LiveRoomJoin({
       }
     }
 
+    // Presence sign-in with acknowledgement check and retry: track() can
+    // come back "timed out" or "rate limited". Without a retry the student
+    // stays invisible in the teacher's lobby forever (channel connected, but
+    // never present) while their own device shows the completely normal
+    // waiting screen — the "18 angemeldet, 17 sichtbar" case from real
+    // classroom use.
+    async function trackPresence() {
+      for (let attempt = 1; attempt <= 5; attempt += 1) {
+        // Channel was torn down and rebuilt in the meantime (unmount/re-run)
+        // — the new channel's own SUBSCRIBED pass will take over instead.
+        if (channelRef.current !== channel) return;
+        const result = await channel.track({ name: activeRoom.studentName });
+        if (result === "ok") {
+          setConnectionWarning("");
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+      }
+      setConnectionWarning(
+        "Du bist verbunden, aber noch nicht in der Teilnehmerliste sichtbar.",
+      );
+    }
+
+    // Device wakes from standby / tab returns to the foreground: don't
+    // passively wait for the automatic reconnect backoff, kick it directly.
+    // If the channel is still joined, a fresh presence sign-in is enough; if
+    // the socket dropped (screen lock), connect() speeds up the rebuild —
+    // the following SUBSCRIBED event then re-tracks/resyncs as on first join.
+    function onVisibilityChange() {
+      if (document.visibilityState !== "visible") return;
+      if (channel.state === "joined") {
+        void trackPresence();
+      } else {
+        client.realtime.connect();
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     channel
+      // Drop disconnected classmates from the battle roster: it used to only
+      // grow (broadcast-based), so a student who lost their connection stayed
+      // selectable as an attack target forever, with the attack then landing
+      // on nobody. Presence reflects the real connection state; if they come
+      // back, their next student-progress broadcast re-adds them.
+      .on("presence", { event: "sync" }, () => {
+        const present = new Set(Object.keys(channel.presenceState()));
+        setRoster((current) => {
+          const entries = Object.entries(current).filter(([name]) =>
+            present.has(name),
+          );
+          return entries.length === Object.keys(current).length
+            ? current
+            : Object.fromEntries(entries);
+        });
+      })
       .on("broadcast", { event: "session-start" }, () => {
         setView("starting");
         void syncAuthorizedRoomState();
@@ -134,6 +329,17 @@ export function LiveRoomJoin({
           [name]: index,
         }));
       })
+      .on("broadcast", { event: "request-progress" }, () => {
+        // A (re)joining classmate is asking for everyone's current state —
+        // resend ours so their roster/battle view fills back in immediately
+        // instead of waiting for our next natural progress update.
+        if (lastProgressBroadcastRef.current) {
+          void channel.send({
+            type: "broadcast",
+            ...lastProgressBroadcastRef.current,
+          });
+        }
+      })
       .on("broadcast", { event: "attack" }, ({ payload }) => {
         const attack = payload as {
           to?: unknown;
@@ -154,17 +360,22 @@ export function LiveRoomJoin({
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          const presence = await channel.track({
-            name: activeRoom.studentName,
+          await trackPresence();
+          // Ask everyone else to resend their progress — harmless to send
+          // again after a mere reconnect too, and it's how we fill in the
+          // roster after losing and regaining the connection ourselves.
+          await channel.send({
+            type: "broadcast",
+            event: "request-progress",
+            payload: {},
           });
-          setConnectionWarning(
-            presence === "ok"
-              ? ""
-              : "Du bist verbunden, aber noch nicht in der Teilnehmerliste sichtbar.",
-          );
           await syncAuthorizedRoomState();
         }
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
           setConnectionWarning(
             "Die Verbindung zur Unterrichtsrunde wurde unterbrochen.",
           );
@@ -175,6 +386,7 @@ export function LiveRoomJoin({
     void syncAuthorizedRoomState();
 
     return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       channelRef.current = null;
       void client.removeChannel(channel);
     };
@@ -218,17 +430,18 @@ export function LiveRoomJoin({
     (progress: LiveProgress) => {
       if (!liveRoomConfig || !room || !session) return;
       sendProgress(progress);
-      void channelRef.current?.send({
-        type: "broadcast",
-        event: progress.finished ? "student-finished" : "student-progress",
-        payload: {
-          name: progress.stationNumber
-            ? `Station ${progress.stationNumber}`
-            : room.studentName,
-          index: progress.currentIndex,
-          ...progress,
-        },
-      });
+      const event = progress.finished
+        ? ("student-finished" as const)
+        : ("student-progress" as const);
+      const payload = {
+        name: progress.stationNumber
+          ? `Station ${progress.stationNumber}`
+          : room.studentName,
+        index: progress.currentIndex,
+        ...progress,
+      };
+      lastProgressBroadcastRef.current = { event, payload };
+      void channelRef.current?.send({ type: "broadcast", event, payload });
     },
     [liveRoomConfig, room, session, sendProgress],
   );
@@ -259,7 +472,7 @@ export function LiveRoomJoin({
     [room],
   );
 
-  function useScan(value: string) {
+  function handleScan(value: string) {
     const scanned = extractJoinCode(value).replace(/\D/g, "").slice(0, 4);
     setCode(scanned);
     setError("");
@@ -268,13 +481,11 @@ export function LiveRoomJoin({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const normalizedCode = code.replace(/\D/g, "").slice(0, 4);
-    const normalizedName = name.trim().replace(/\s+/g, " ").slice(0, 32);
+    const normalizedName = (name.trim() || getRandomName())
+      .replace(/\s+/g, " ")
+      .slice(0, 32);
     if (!/^\d{4}$/.test(normalizedCode)) {
       setError("Bitte gib den vierstelligen Raumcode ein.");
-      return;
-    }
-    if (normalizedName.length < 2) {
-      setError("Bitte gib einen Namen oder ein Pseudonym ein.");
       return;
     }
     if (!liveRoomConfig) {
@@ -313,6 +524,15 @@ export function LiveRoomJoin({
       setError("Der Raum konnte nicht erreicht werden. Bitte prüfe den Code.");
     }
   }
+
+  if (requiredVersion)
+    return (
+      <LiveVersionNotice
+        key={requiredVersion}
+        required={requiredVersion}
+        code={code}
+      />
+    );
 
   if (view === "game" && room && session) {
     return (
@@ -380,6 +600,32 @@ export function LiveRoomJoin({
     );
   }
 
+  if (error) {
+    return (
+      <div className="live-room-page">
+        <section
+          className="live-room-join live-room-join--error"
+          role="alert"
+          aria-live="assertive"
+        >
+          <span className="live-room-join__error-mark" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static decorative illustration, not a next/image candidate */}
+            <img src="/face-expectation.svg" alt="" />
+          </span>
+          <h1>Ups, hier lief wohl etwas schief</h1>
+          <p className="live-room-join__intro">{error}</p>
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={() => setError("")}
+          >
+            ← Zur Code-Eingabe
+          </button>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="live-room-page">
       <section
@@ -387,49 +633,49 @@ export function LiveRoomJoin({
         aria-labelledby="live-room-title"
         data-hydrated={hydrated ? "true" : "false"}
       >
-        <p className="eyebrow">Laufdiktat</p>
-        <h1 id="live-room-title">Raum beitreten</h1>
+        <h1 id="live-room-title">Laufdiktat</h1>
         <p className="live-room-join__intro">
-          Gib den Code von der Tafel ein oder scanne den QR-Code.
+          Gib den Raumcode deiner Lehrkraft ein, um zu starten.
         </p>
-        <form onSubmit={submit} noValidate>
+        <form ref={joinForm} onSubmit={submit} noValidate>
           <span id="live-room-code-label" className="room-code__label">
             Raumcode
           </span>
-          <div className="live-room-code-row">
+          <div className="live-room-code-grid">
             <SegmentedRoomCode
               idPrefix="live-room"
               labelId="live-room-code-label"
               value={code}
               invalid={Boolean(error)}
-              describedBy={error ? "live-room-error" : undefined}
+              describedBy={undefined}
               onChange={(value) => {
                 setCode(value);
                 setError("");
               }}
             />
-            <QrCodeScanner onResult={useScan} />
+            <QrCodeScanner onResult={handleScan} />
           </div>
-          <label htmlFor="live-room-name">Name oder Pseudonym</label>
-          <input
-            id="live-room-name"
-            className="live-room-name-input"
-            autoComplete="name"
-            maxLength={32}
-            placeholder="Vorname oder Klassenname"
-            value={name}
-            onChange={(event) => {
-              setName(event.target.value);
-              setError("");
-            }}
-          />
-          {error ? (
-            <p id="live-room-error" className="live-room-error" role="alert">
-              {error}
-            </p>
-          ) : null}
+
+          <div className="live-room-join__avatar" aria-hidden="true">
+            <AnimalAvatar
+              studentName={name}
+              className="live-room-join__avatar-img"
+            />
+          </div>
+
+          <div className="live-room-join__name" aria-live="polite">
+            {name}
+          </div>
           <button
-            className="button button--primary"
+            type="button"
+            className="live-room-join__dice"
+            onClick={() => setName(getRandomName())}
+          >
+            <span aria-hidden="true">🎲</span> Zufälligen Namen generieren
+          </button>
+
+          <button
+            className="button button--primary live-room-join__submit"
             type="submit"
             disabled={!hydrated || view === "connecting"}
           >
@@ -439,6 +685,15 @@ export function LiveRoomJoin({
           </button>
         </form>
       </section>
+
+      <div className="live-room-join__footer">
+        <Link className="live-room-join__teacher-link" href="/lehrer">
+          Lehrer-Login
+        </Link>
+        <Link className="live-room-join__legal-link" href="/impressum">
+          Impressum &amp; Datenschutz
+        </Link>
+      </div>
     </div>
   );
 }

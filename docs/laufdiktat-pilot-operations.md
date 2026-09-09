@@ -1,15 +1,8 @@
 # Laufdiktat-Pilot: Betrieb und Pilotbeobachtung
 
-## Pilotfreigabe provisionieren
+## Raumöffnung
 
-Die Migration `20260831120000_gate_pilot_room_creation.sql` sperrt neue Räume zunächst vollständig. Ein Betreiber legt den Freigabecode ausschließlich in der Supabase-SQL-Konsole an; der Klartext gehört weder ins Repository noch in Browser-Umgebungsvariablen:
-
-```sql
-insert into private.teacher_pilot_keys (label, token_hash)
-values ('begleiteter Pilot', encode(extensions.digest('<starken Freigabecode einsetzen>', 'sha256'), 'hex'));
-```
-
-Nach dem Pilot wird der Schlüssel mit `active = false` deaktiviert. Schüler-, Lehrkraft- und Freigabetoken werden niemals in QR-Codes oder Beitrittslinks aufgenommen.
+Räume werden ohne separate Lehrkraftfreigabe geöffnet (siehe `20260901120000_remove_pilot_teacher_gate.sql` – hebt die Sperre aus `20260831120000_gate_pilot_room_creation.sql` wieder auf). `open_room_secure()` ist wie im ursprünglichen Laufdiktat nur pro Aufrufer ratenbegrenzt. Teilnehmer- und Raumtoken werden weiterhin niemals in QR-Codes oder Beitrittslinks aufgenommen.
 
 ## Unterstützte Pilotgeräte
 

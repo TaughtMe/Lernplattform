@@ -1,5 +1,5 @@
 -- Preserve existing rooms, tokens and progress. No learning history is rewritten.
--- Rejected credentials return an empty result to commit their rate-limit counter.
+-- Rejected requests return an empty result to commit their rate-limit counter.
 create or replace function private.enforce_rate_limit(p_scope text,p_max_requests int,p_window interval) returns void language plpgsql security definer set search_path=private,pg_catalog as $$
 declare k text:=private.request_key_hash(); n bigint;
 begin
@@ -33,8 +33,7 @@ begin
 end $$;
 
 create or replace function public.open_room_secure(
-  p_config jsonb default '{}'::jsonb,
-  p_teacher_token text default null
+  p_config jsonb default '{}'::jsonb
 )
 returns table(room_id uuid, code text, access_token text)
 language plpgsql
@@ -43,32 +42,14 @@ set search_path = public, private, extensions, pg_catalog
 as $$
 declare
   c text;
-  key_id uuid;
 begin
   perform private.enforce_rate_limit('open_room', 12, interval '10 minutes');
-
-  if p_teacher_token is null
-     or char_length(p_teacher_token) < 12
-     or char_length(p_teacher_token) > 200 then
-    return; -- Commit rejected attempts; return no capability.
-  end if;
-
-  select k.id into key_id
-  from private.teacher_pilot_keys k
-  where k.active
-    and k.token_hash = encode(extensions.digest(p_teacher_token, 'sha256'), 'hex')
-  limit 1;
-
-  if key_id is null then
-    return; -- Commit rejected attempts; return no capability.
-  end if;
 
   if jsonb_typeof(coalesce(p_config, '{}'::jsonb)) <> 'object'
      or octet_length(coalesce(p_config, '{}'::jsonb)::text) > 1048576 then
     return;
   end if;
 
-  update private.teacher_pilot_keys set last_used_at = now() where id = key_id;
 
   for attempt in 1..40 loop
     c := lpad((floor(random() * 10000))::int::text, 4, '0');
@@ -87,8 +68,8 @@ begin
 end;
 $$;
 
-revoke all on function public.open_room_secure(jsonb, text) from public, anon, authenticated;
-grant execute on function public.open_room_secure(jsonb, text) to anon;
+revoke all on function public.open_room_secure(jsonb) from public, anon, authenticated;
+grant execute on function public.open_room_secure(jsonb) to anon;
 
 
 
