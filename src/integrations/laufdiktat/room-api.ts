@@ -1,3 +1,14 @@
+import {
+  openedRoomSchema,
+  joinedRoomSchema,
+  roomStateSchema,
+  progressRowSchema,
+  studentRowSchema,
+  participantRowSchema,
+  storedTeacherRoomSchema,
+  storedIdentitySchema,
+  parseRpcRows,
+} from "./room-contract";
 import { getLiveRoomClient, type LiveRoomConfig } from "./live-room-client";
 import { LIVE_APP_VERSION } from "../../app-version";
 
@@ -40,9 +51,9 @@ export type LiveProgress = {
   attempts: number;
   errors: number;
   finished: boolean;
-  durationMs?: number;
-  wordErrors?: Record<string, number>;
-  stationNumber?: number | null;
+  durationMs?: number | undefined;
+  wordErrors?: Record<string, number> | undefined;
+  stationNumber?: number | null | undefined;
 };
 
 export type OpenedLiveRoom = {
@@ -75,8 +86,8 @@ export async function openLiveRoom(
     },
   );
   if (error) throw new Error(error.message);
-  const row = data?.[0];
-  if (!row) throw new Error("Der Raum konnte nicht geöffnet werden.");
+  const row = parseRpcRows(openedRoomSchema, data)[0];
+  if (!row) throw new Error("Lehrkraftfreigabe fehlt oder ist ungültig.");
   return {
     roomId: row.room_id,
     code: row.code,
@@ -127,12 +138,10 @@ export async function getLiveRoomParticipants(
     },
   );
   if (error) throw new Error(error.message);
-  return (data ?? []).map(
-    (row: { student_key: string; last_seen_at: string | null }) => ({
-      studentName: row.student_key,
-      lastSeenAt: row.last_seen_at,
-    }),
-  );
+  return parseRpcRows(participantRowSchema, data).map((row) => ({
+    studentName: row.student_key,
+    lastSeenAt: row.last_seen_at,
+  }));
 }
 
 export async function getLiveRoomStudents(
@@ -144,17 +153,17 @@ export async function getLiveRoomStudents(
     { p_room_id: room.roomId, p_access_token: room.accessToken },
   );
   if (error) throw new Error(error.message);
-  return (data ?? []).map((row: Record<string, unknown>) => ({
-    studentName: row["student_key"] as string,
-    stationNumber: (row["station_number"] as number | null) ?? null,
-    currentIndex: row["current_index"] as number,
-    peeks: row["peeks"] as number,
-    attempts: row["attempts"] as number,
-    errors: row["errors"] as number,
-    finished: row["finished"] as boolean,
-    durationMs: (row["duration_ms"] as number | null) ?? undefined,
-    wordErrors: (row["word_errors"] as Record<string, number>) ?? {},
-    appVersion: (row["app_version"] as string | null) ?? null,
+  return parseRpcRows(studentRowSchema, data).map((row) => ({
+    studentName: row.student_key,
+    stationNumber: row.station_number ?? null,
+    currentIndex: row.current_index,
+    peeks: row.peeks,
+    attempts: row.attempts,
+    errors: row.errors,
+    finished: row.finished,
+    durationMs: row.duration_ms ?? undefined,
+    wordErrors: row.word_errors ?? {},
+    appVersion: row.app_version,
   }));
 }
 
@@ -178,7 +187,10 @@ const TEACHER_ROOM_KEY = "lernraum-teacher-live-room";
 
 export function saveTeacherLiveRoom(room: OpenedLiveRoom) {
   try {
-    sessionStorage.setItem(TEACHER_ROOM_KEY, JSON.stringify(room));
+    sessionStorage.setItem(
+      TEACHER_ROOM_KEY,
+      JSON.stringify(storedTeacherRoomSchema.parse(room)),
+    );
   } catch {
     // Nur Wiederherstellung im selben Browserfenster; der Raum bleibt nutzbar.
   }
@@ -186,16 +198,10 @@ export function saveTeacherLiveRoom(room: OpenedLiveRoom) {
 
 export function readTeacherLiveRoom(): OpenedLiveRoom | null {
   try {
-    const parsed = JSON.parse(
-      sessionStorage.getItem(TEACHER_ROOM_KEY) ?? "null",
-    ) as Partial<OpenedLiveRoom> | null;
-    return parsed?.roomId && parsed.code && parsed.accessToken
-      ? {
-          roomId: parsed.roomId,
-          code: parsed.code,
-          accessToken: parsed.accessToken,
-        }
-      : null;
+    const result = storedTeacherRoomSchema.safeParse(
+      JSON.parse(sessionStorage.getItem(TEACHER_ROOM_KEY) ?? "null"),
+    );
+    return result.success ? result.data : null;
   } catch {
     return null;
   }
@@ -225,7 +231,7 @@ export async function joinLiveRoom(
       },
     );
     if (error) throw new Error(error.message);
-    const row = data?.[0];
+    const row = parseRpcRows(joinedRoomSchema, data)[0];
     if (!row) return null;
     return {
       roomId: row.room_id,
@@ -251,7 +257,7 @@ export async function getLiveRoomState(
     },
   );
   if (error) throw new Error(error.message);
-  const row = data?.[0];
+  const row = parseRpcRows(roomStateSchema, data)[0];
   if (!row) return null;
   return {
     status: row.status,
@@ -312,7 +318,7 @@ export async function getLiveProgress(
     },
   );
   if (error) throw new Error(error.message);
-  const row = data?.[0];
+  const row = parseRpcRows(progressRowSchema, data)[0];
   if (!row) return null;
   return {
     currentIndex: row.current_index,
@@ -351,10 +357,10 @@ type StoredIdentity = {
 
 export function readLiveRoomIdentity(code: string): StoredIdentity | null {
   try {
-    const stored = JSON.parse(
-      sessionStorage.getItem(IDENTITY_KEY) ?? "null",
-    ) as StoredIdentity | null;
-    return stored?.code === code ? stored : null;
+    const result = storedIdentitySchema.safeParse(
+      JSON.parse(sessionStorage.getItem(IDENTITY_KEY) ?? "null"),
+    );
+    return result.success && result.data.code === code ? result.data : null;
   } catch {
     return null;
   }
@@ -362,7 +368,10 @@ export function readLiveRoomIdentity(code: string): StoredIdentity | null {
 
 export function saveLiveRoomIdentity(identity: StoredIdentity) {
   try {
-    sessionStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+    sessionStorage.setItem(
+      IDENTITY_KEY,
+      JSON.stringify(storedIdentitySchema.parse(identity)),
+    );
   } catch {
     // Der Raum funktioniert weiter, auch wenn der Browser Sitzungsspeicher sperrt.
   }

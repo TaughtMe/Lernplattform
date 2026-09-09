@@ -146,6 +146,7 @@ export function LearningWordApp() {
           selfCorrected: nextIncorrectAttempts > 0,
           stage,
           roundId: roundIdRef.current,
+          attemptId: `${index}:${incorrectAttempts + 1}`,
         })
         .catch(() => setStorageIssue(true));
       const result: Result = {
@@ -171,6 +172,7 @@ export function LearningWordApp() {
         selfCorrected: false,
         stage,
         roundId: roundIdRef.current,
+        attemptId: `${index}:${incorrectAttempts + 1}`,
       })
       .catch(() => setStorageIssue(true));
     setPhase("feedback");

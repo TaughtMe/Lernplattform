@@ -20,10 +20,12 @@
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:render": "node --test tests/rendered-html.test.mjs",
+    "test:database": "node --test tests/database-contract.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:chromium": "playwright test --project=desktop-chromium --project=mobile-chrome --project=minimum-width",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run test:render",
-    "quality": "npm run check && npm run test:e2e"
+    "test:e2e:live": "playwright test --config playwright.live.config.ts",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:database && npm run build && npm run test:render",
+    "quality": "npm run check && npm run test:e2e && npm run test:e2e:live"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.105.4",
@@ -37,6 +39,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@cloudflare/vite-plugin": "1.51.3",
+    "@electric-sql/pglite": "0.5.8",
     "@eslint/js": "9.39.4",
     "@next/eslint-plugin-next": "16.2.6",
     "@playwright/test": "1.62.1",

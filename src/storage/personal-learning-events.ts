@@ -1,3 +1,10 @@
+import {
+  learningWordProgressSchema,
+  typingProgressSchema,
+  typingStatsSchema,
+} from "./progress-schema";
+import { learningEventV1Schema } from "../domain/learning-bundle";
+import { learningEventIdentity } from "./learning-event-identity";
 import Dexie, { type Table } from "dexie";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import type { LearningWordStage } from "../domain/learning-word";
@@ -213,36 +220,45 @@ export function createLearningBoxRepository(
       now?: string;
     }) => {
       const occurredAt = input.now ?? new Date().toISOString();
+      const eventId = await learningEventIdentity(
+        "learning-box",
+        input.roundId,
+        input.card.id,
+        input.direction,
+      );
       await database.transaction(
         "rw",
         database.learningBoxCards,
         database.learningEvents,
         async () => {
+          if (await database.learningEvents.get(eventId)) return;
           await database.learningBoxCards.put(input.card);
-          await database.learningEvents.put({
-            id: crypto.randomUUID(),
-            learningObjectId: input.card.id,
-            occurredAt,
-            source: "learning-box",
-            learningArea: "vocabulary",
-            roundId: input.roundId,
-            direction:
-              input.direction === "forward"
-                ? "prompt-to-answer"
-                : "answer-to-prompt",
-            answerMode: input.mode === "writing" ? "typed" : "self-check",
-            help: input.mode === "writing" ? "none" : "solution",
-            assessment: {
-              knowledge: input.correct ? "correct" : "incorrect",
-              writing:
-                input.mode === "writing"
-                  ? input.correct
-                    ? "correct"
-                    : "incorrect"
-                  : "not-assessed",
-              selfCorrected: false,
-            },
-          });
+          await database.learningEvents.add(
+            learningEventV1Schema.parse({
+              id: eventId,
+              learningObjectId: input.card.id,
+              occurredAt,
+              source: "learning-box",
+              learningArea: "vocabulary",
+              roundId: input.roundId,
+              direction:
+                input.direction === "forward"
+                  ? "prompt-to-answer"
+                  : "answer-to-prompt",
+              answerMode: input.mode === "writing" ? "typed" : "self-check",
+              help: input.mode === "writing" ? "none" : "solution",
+              assessment: {
+                knowledge: input.correct ? "correct" : "incorrect",
+                writing:
+                  input.mode === "writing"
+                    ? input.correct
+                      ? "correct"
+                      : "incorrect"
+                    : "not-assessed",
+                selfCorrected: false,
+              },
+            }),
+          );
         },
       );
     },
@@ -349,16 +365,35 @@ export function createLearningBoxRepository(
 
 export function createPersonalLearningEventRepository(
   database = new PersonalLearningDatabase(),
-): LocalRepository<LearningEventV1> {
+): Omit<LocalRepository<LearningEventV1>, "remove"> {
   return {
-    get: (id) => database.learningEvents.get(id),
-    list: () =>
-      database.learningEvents.orderBy("occurredAt").reverse().toArray(),
-    put: async (value) => {
-      await database.learningEvents.put(value);
+    get: async (id) => {
+      const event = await database.learningEvents.get(id);
+      return event === undefined
+        ? undefined
+        : learningEventV1Schema.parse(event);
     },
-    remove: async (id) => {
-      await database.learningEvents.delete(id);
+    list: async () =>
+      (
+        await database.learningEvents.orderBy("occurredAt").reverse().toArray()
+      ).map((event) => learningEventV1Schema.parse(event)),
+    put: async (value) => {
+      const event = learningEventV1Schema.parse(value);
+      await database.transaction("rw", database.learningEvents, async () => {
+        const current = await database.learningEvents.get(event.id);
+        if (current) {
+          if (
+            JSON.stringify(learningEventV1Schema.parse(current)) !==
+            JSON.stringify(event)
+          ) {
+            throw new Error(
+              "Ein gespeichertes Lernereignis darf nicht verändert werden.",
+            );
+          }
+          return;
+        }
+        await database.learningEvents.add(event);
+      });
     },
   };
 }
@@ -367,9 +402,17 @@ export function createLearningWordProgressRepository(
   database = new PersonalLearningDatabase(),
 ) {
   return {
-    list: () => database.learningWordProgress.toArray(),
-    listDue: (now = new Date().toISOString()) =>
-      database.learningWordProgress.where("dueAt").belowOrEqual(now).toArray(),
+    list: async () =>
+      (await database.learningWordProgress.toArray()).map((value) =>
+        learningWordProgressSchema.parse(value),
+      ),
+    listDue: async (now = new Date().toISOString()) =>
+      (
+        await database.learningWordProgress
+          .where("dueAt")
+          .belowOrEqual(now)
+          .toArray()
+      ).map((value) => learningWordProgressSchema.parse(value)),
     recordAttempt: async (input: {
       words: readonly string[];
       correct: boolean;
@@ -377,17 +420,34 @@ export function createLearningWordProgressRepository(
       selfCorrected: boolean;
       stage: LearningWordStage;
       roundId: string;
+      attemptId: string;
       now?: string;
     }) => {
       const now = input.now ?? new Date().toISOString();
+      const eventIds = await Promise.all(
+        input.words.map((word) =>
+          learningEventIdentity(
+            "learning-word",
+            input.roundId,
+            input.attemptId,
+            word.normalize("NFC").trim().toLocaleLowerCase("de-DE"),
+          ),
+        ),
+      );
       await database.transaction(
         "rw",
         database.learningWordProgress,
         database.learningEvents,
         async () => {
-          for (const word of input.words) {
+          for (const [wordIndex, word] of input.words.entries()) {
             const id = `learning-word:${word.normalize("NFC").trim().toLocaleLowerCase("de-DE")}`;
-            const current = await database.learningWordProgress.get(id);
+            const eventId = eventIds[wordIndex]!;
+            if (await database.learningEvents.get(eventId)) continue;
+            const stored = await database.learningWordProgress.get(id);
+            const current =
+              stored === undefined
+                ? undefined
+                : learningWordProgressSchema.parse(stored);
             await database.learningWordProgress.put(
               updateLearningWordProgress(current, {
                 word,
@@ -398,22 +458,24 @@ export function createLearningWordProgressRepository(
                 now,
               }),
             );
-            await database.learningEvents.put({
-              id: crypto.randomUUID(),
-              learningObjectId: id,
-              occurredAt: now,
-              source: "learning-word",
-              learningArea: "german",
-              roundId: input.roundId,
-              direction: "prompt-to-answer",
-              answerMode: "typed",
-              help: input.usedHelp ? "hint" : "none",
-              assessment: {
-                knowledge: input.correct ? "correct" : "incorrect",
-                writing: input.correct ? "correct" : "incorrect",
-                selfCorrected: input.selfCorrected,
-              },
-            });
+            await database.learningEvents.add(
+              learningEventV1Schema.parse({
+                id: eventId,
+                learningObjectId: id,
+                occurredAt: now,
+                source: "learning-word",
+                learningArea: "german",
+                roundId: input.roundId,
+                direction: "prompt-to-answer",
+                answerMode: "typed",
+                help: input.usedHelp ? "hint" : "none",
+                assessment: {
+                  knowledge: input.correct ? "correct" : "incorrect",
+                  writing: input.correct ? "correct" : "incorrect",
+                  selfCorrected: input.selfCorrected,
+                },
+              }),
+            );
           }
         },
       );
@@ -425,40 +487,60 @@ export function createTypingProgressRepository(
   database = new PersonalLearningDatabase(),
 ) {
   return {
-    list: () => database.typingProgress.toArray(),
+    list: async () =>
+      (await database.typingProgress.toArray()).map((value) =>
+        typingProgressSchema.parse(value),
+      ),
     recordAttempt: async (
       lessonId: string,
       stats: TypingStats,
       roundId: string,
       now = new Date().toISOString(),
     ) => {
-      const current = await database.typingProgress.get(lessonId);
-      const progress = updateTypingProgress(current, lessonId, stats, now);
-      await database.transaction(
+      const checkedStats = typingStatsSchema.parse(stats);
+      const eventId = await learningEventIdentity("typing", roundId, lessonId);
+      return database.transaction(
         "rw",
         database.typingProgress,
         database.learningEvents,
         async () => {
+          const stored = await database.typingProgress.get(lessonId);
+          const current =
+            stored === undefined
+              ? undefined
+              : typingProgressSchema.parse(stored);
+          if (await database.learningEvents.get(eventId)) {
+            if (!current) throw new Error("Der gespeicherte Lernstand fehlt.");
+            return current;
+          }
+          const progress = updateTypingProgress(
+            current,
+            lessonId,
+            checkedStats,
+            now,
+          );
           await database.typingProgress.put(progress);
-          await database.learningEvents.put({
-            id: crypto.randomUUID(),
-            learningObjectId: `typing:${lessonId}`,
-            occurredAt: now,
-            source: "typing",
-            learningArea: "typing",
-            roundId,
-            direction: "prompt-to-answer",
-            answerMode: "typed",
-            help: "none",
-            assessment: {
-              knowledge: "not-assessed",
-              writing: stats.accuracy >= 90 ? "correct" : "incorrect",
-              selfCorrected: stats.corrections > 0,
-            },
-          });
+          await database.learningEvents.add(
+            learningEventV1Schema.parse({
+              id: eventId,
+              learningObjectId: `typing:${lessonId}`,
+              occurredAt: now,
+              source: "typing",
+              learningArea: "typing",
+              roundId,
+              direction: "prompt-to-answer",
+              answerMode: "typed",
+              help: "none",
+              assessment: {
+                knowledge: "not-assessed",
+                writing: stats.accuracy >= 90 ? "correct" : "incorrect",
+                selfCorrected: stats.corrections > 0,
+              },
+            }),
+          );
+          return progress;
         },
       );
-      return progress;
     },
   };
 }

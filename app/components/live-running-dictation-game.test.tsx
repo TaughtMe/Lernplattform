@@ -35,6 +35,83 @@ const session: LiveSession = {
 };
 
 describe("LiveRunningDictationGame", () => {
+  it("keeps failed delivery visible after completion and offers retry", async () => {
+    const onRetry = vi.fn();
+    const props = {
+      code: "4829",
+      studentName: "Mia",
+      session,
+      connectionWarning: "Verbindung unterbrochen",
+      initialProgress: {
+        currentIndex: 0,
+        peeks: 0,
+        attempts: 1,
+        errors: 0,
+        finished: true,
+      },
+      onProgress: vi.fn(),
+      onRetryProgress: onRetry,
+    };
+    const { rerender } = render(
+      <LiveRunningDictationGame {...props} deliveryStatus="error" />,
+    );
+    expect(screen.getByText(/konnte nicht gesendet werden/)).toBeVisible();
+    expect(screen.getByText("Verbindung unterbrochen")).toBeVisible();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Erneut senden" }));
+    expect(onRetry).toHaveBeenCalledOnce();
+    rerender(<LiveRunningDictationGame {...props} deliveryStatus="saving" />);
+    expect(screen.getByText(/wird an die Lehrkraft gesendet/)).toBeVisible();
+    rerender(<LiveRunningDictationGame {...props} deliveryStatus="saved" />);
+    expect(screen.getByText(/wurde an diese Unterrichtsrunde/)).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Erneut senden" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("preserves restored word errors when the round completes", async () => {
+    const onProgress = vi.fn();
+    render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={session}
+        connectionWarning=""
+        initialProgress={{
+          currentIndex: 0,
+          peeks: 1,
+          attempts: 2,
+          errors: 1,
+          finished: false,
+          durationMs: 5000,
+          wordErrors: { old: 1 },
+        }}
+        onProgress={onProgress}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("button", { name: "Verstanden – jetzt schreiben" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "Schulweg{Enter}",
+    );
+    await waitFor(() =>
+      expect(onProgress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currentIndex: 0,
+          finished: true,
+          errors: 1,
+          wordErrors: { old: 1 },
+        }),
+      ),
+    );
+    expect(onProgress.mock.lastCall?.[0].durationMs).toBeGreaterThanOrEqual(
+      5000,
+    );
+  });
   it("runs an authorized room task natively through to completion", async () => {
     const user = userEvent.setup();
     const onProgress = vi.fn();
@@ -61,7 +138,7 @@ describe("LiveRunningDictationGame", () => {
       expect(screen.getByText("Geschafft, Mia!")).toBeVisible(),
     );
     expect(onProgress).toHaveBeenLastCalledWith(
-      expect.objectContaining({ currentIndex: 1, finished: true, errors: 0 }),
+      expect.objectContaining({ currentIndex: 0, finished: true, errors: 0 }),
     );
     expect(putLearningEvent).not.toHaveBeenCalled();
     expect(

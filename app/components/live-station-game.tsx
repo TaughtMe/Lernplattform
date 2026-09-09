@@ -1,4 +1,6 @@
 "use client";
+import { LiveProgressNotice } from "./live-progress-notice";
+import type { ProgressDeliveryStatus } from "../../src/integrations/laufdiktat/progress-delivery";
 
 import { useMemo, useRef, useState } from "react";
 import { deterministicOrder } from "../../src/domain/running-dictation";
@@ -9,6 +11,8 @@ type Props = {
   code: string;
   session: LiveSession;
   connectionWarning: string;
+  deliveryStatus?: ProgressDeliveryStatus;
+  onRetryProgress?: (() => void) | undefined;
   onProgress: (progress: LiveProgress) => void;
   onLoadProgress: (studentKey: string) => Promise<LiveProgress | null>;
 };
@@ -19,6 +23,8 @@ export function LiveStationGame({
   connectionWarning,
   onProgress,
   onLoadProgress,
+  deliveryStatus = "idle",
+  onRetryProgress,
 }: Props) {
   const [stationNumber, setStationNumber] = useState<number | null>(null);
   const [index, setIndex] = useState(0);
@@ -99,6 +105,10 @@ export function LiveStationGame({
               </button>
             ))}
           </div>
+          <LiveProgressNotice
+            status={deliveryStatus}
+            onRetry={onRetryProgress}
+          />
           {connectionWarning ? (
             <p className="live-game-warning" role="status">
               {connectionWarning}
@@ -186,6 +196,8 @@ export function LiveStationGame({
             </button>
           )}
         </div>
+        <LiveProgressNotice status={deliveryStatus} onRetry={onRetryProgress} />
+        {connectionWarning ? <p role="status">{connectionWarning}</p> : null}
         <p className="live-station__hint">
           Erstes Ansehen ist frei. Erneutes Öffnen zählt als Spicker.
         </p>

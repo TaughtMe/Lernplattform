@@ -61,6 +61,17 @@ Nicht übernommen wurden die abweichende Startseite und Navigation, eine zweite 
 
 ## Aktueller Laufdiktat-Port
 
+### Reparaturabgleich am 8. September 2026
+
+GitHub-HEAD und lokaler Laufdiktat-Quellstand wurden erneut auf
+`6c2ade41eadd2721f051df168244ed09563cea21` abgeglichen. Das Original meldet den
+letzten gültigen Aufgabenindex zusammen mit `finished: true`; Lernraum verwendet
+jetzt denselben Abschlussvertrag. Die fehlenden Wiederaufnahmefelder und das
+zu späte Rate-Limit im Original werden als Fehler korrigiert, nicht als
+fachliche Vorgaben übernommen. Stationsnummern, Spielmodi, Feedback und
+Sterneberechnung bleiben erhalten. Der ausführliche Plan und Prüfbericht stehen
+in [repair-plan.md](repair-plan.md).
+
 Der erneute Abgleich für den Laufdiktat-Pilot am 31. August 2026 bestätigt weiterhin Commit `6c2ade41eadd2721f051df168244ed09563cea21`; das Upstream-Repository enthält keinen neueren Stand. Der Pilot verwendet den echten klassischen Modusnamen `LAUFDIKTAT`. Der frühere Lernraum-Alias `TEST` wird an der Sessiongrenze rückwärtskompatibel eingelesen und auf `LAUFDIKTAT` normalisiert.
 
 Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests geschützt:

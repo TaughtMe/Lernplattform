@@ -1,4 +1,6 @@
 "use client";
+import { LiveProgressNotice } from "./live-progress-notice";
+import type { ProgressDeliveryStatus } from "../../src/integrations/laufdiktat/progress-delivery";
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -38,6 +40,8 @@ type LiveRunningDictationGameProps = {
   connectionWarning: string;
   initialProgress: LiveProgress | null;
   onProgress: (progress: LiveProgress) => void;
+  deliveryStatus?: ProgressDeliveryStatus;
+  onRetryProgress?: () => void;
   onLoadProgress?: (studentKey: string) => Promise<LiveProgress | null>;
   roster?: Record<string, number>;
   incomingAttack?: { id: number; type: AttackType; from: string } | null;
@@ -52,6 +56,8 @@ export function LiveRunningDictationGame({
   initialProgress,
   onProgress,
   onLoadProgress,
+  deliveryStatus = "idle",
+  onRetryProgress,
   roster = {},
   incomingAttack,
   onSendAttack,
@@ -96,7 +102,11 @@ export function LiveRunningDictationGame({
   const transferStartedFor = useRef("");
   const answerRef = useRef<HTMLInputElement>(null);
   const current = session.words[index];
-  useLiveSessionGuards(phase !== "complete");
+  useLiveSessionGuards(
+    phase !== "complete" ||
+      deliveryStatus === "saving" ||
+      deliveryStatus === "error",
+  );
 
   useEffect(() => {
     if (phase !== "correct") return;
@@ -104,12 +114,15 @@ export function LiveRunningDictationGame({
       if (index + 1 >= session.words.length) {
         setPhase("complete");
         onProgress({
-          currentIndex: session.words.length,
+          currentIndex: session.words.length - 1,
           peeks,
           attempts,
           errors,
           finished: true,
-          durationMs: Date.now() - startedAt.current,
+          durationMs: Math.min(
+            86_400_000,
+            (initialProgress?.durationMs ?? 0) + Date.now() - startedAt.current,
+          ),
           wordErrors,
         });
         return;
@@ -132,6 +145,7 @@ export function LiveRunningDictationGame({
     attempts,
     errors,
     index,
+    initialProgress?.durationMs,
     onProgress,
     peeks,
     phase,
@@ -213,6 +227,8 @@ export function LiveRunningDictationGame({
         connectionWarning={connectionWarning}
         onProgress={onProgress}
         onLoadProgress={onLoadProgress}
+        deliveryStatus={deliveryStatus}
+        onRetryProgress={onRetryProgress}
       />
     ) : null;
   }
@@ -236,10 +252,19 @@ export function LiveRunningDictationGame({
           <p>
             {session.words.length} Aufgaben · {errors} Fehlversuche
           </p>
-          <p>
-            Dein Ergebnis wurde nur an diese kurzlebige Unterrichtsrunde
-            zurückgegeben.
-          </p>
+          <LiveProgressNotice
+            status={
+              deliveryStatus === "idle" && initialProgress?.finished
+                ? "saved"
+                : deliveryStatus
+            }
+            onRetry={onRetryProgress}
+          />
+          {connectionWarning ? (
+            <p className="live-game-warning" role="status">
+              {connectionWarning}
+            </p>
+          ) : null}
           {localSaveWarning ? (
             <p className="live-game-warning" role="alert">
               {localSaveWarning}
@@ -394,6 +419,10 @@ export function LiveRunningDictationGame({
         <p className="live-game-warning" role="status">
           {connectionWarning}
         </p>
+      ) : null}
+
+      {deliveryStatus === "error" ? (
+        <LiveProgressNotice status={deliveryStatus} onRetry={onRetryProgress} />
       ) : null}
 
       {session.gameMode === "BATTLE" ? (

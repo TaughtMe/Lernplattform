@@ -14,6 +14,18 @@ const isCodexSeatbeltSandbox = process.env["CODEX_SANDBOX"] === "seatbelt";
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
+  // The local Worker has its own environment; forward explicitly supplied
+  // public connection settings (also used by the isolated browser tests).
+  ...(process.env["NEXT_PUBLIC_SUPABASE_URL"] &&
+  process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]
+    ? {
+        vars: {
+          NEXT_PUBLIC_SUPABASE_URL: process.env["NEXT_PUBLIC_SUPABASE_URL"],
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+            process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
+        },
+      }
+    : {}),
   d1_databases: d1
     ? [
         {

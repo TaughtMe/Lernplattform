@@ -1,4 +1,5 @@
 "use client";
+import { useLiveProgressDelivery } from "./use-live-progress-delivery";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import Link from "next/link";
@@ -13,7 +14,6 @@ import {
   getLiveRoomState,
   joinLiveRoom,
   readLiveRoomIdentity,
-  saveLiveProgress,
   saveLiveRoomIdentity,
   touchLiveParticipant,
   type LiveProgress,
@@ -171,6 +171,9 @@ export function LiveRoomJoin({
         }
       });
 
+    // The authorized HTTP state must also load when school networks block WebSockets.
+    void syncAuthorizedRoomState();
+
     return () => {
       channelRef.current = null;
       void client.removeChannel(channel);
@@ -200,25 +203,21 @@ export function LiveRoomJoin({
     };
   }, [liveRoomConfig, room]);
 
+  const {
+    status: deliveryStatus,
+    send: sendProgress,
+    retry: retryProgress,
+  } = useLiveProgressDelivery(
+    liveRoomConfig,
+    room?.roomId,
+    room?.participantToken,
+    room?.studentName,
+    session?.sessionId,
+  );
   const reportProgress = useCallback(
     (progress: LiveProgress) => {
       if (!liveRoomConfig || !room || !session) return;
-      void saveLiveProgress(
-        liveRoomConfig,
-        {
-          roomId: room.roomId,
-          sessionId: session.sessionId,
-          participantToken: room.participantToken,
-          studentName: progress.stationNumber
-            ? `station-${progress.stationNumber}`
-            : room.studentName,
-        },
-        progress,
-      ).catch(() => {
-        setConnectionWarning(
-          "Dein Fortschritt konnte gerade nicht an die Lehrkraft zurückgegeben werden.",
-        );
-      });
+      sendProgress(progress);
       void channelRef.current?.send({
         type: "broadcast",
         event: progress.finished ? "student-finished" : "student-progress",
@@ -231,7 +230,7 @@ export function LiveRoomJoin({
         },
       });
     },
-    [liveRoomConfig, room, session],
+    [liveRoomConfig, room, session, sendProgress],
   );
 
   const loadProgress = useCallback(
@@ -323,6 +322,8 @@ export function LiveRoomJoin({
         studentName={room.studentName}
         session={session}
         connectionWarning={connectionWarning}
+        deliveryStatus={deliveryStatus}
+        onRetryProgress={retryProgress}
         initialProgress={initialProgress}
         onProgress={reportProgress}
         onLoadProgress={loadProgress}
@@ -370,7 +371,7 @@ export function LiveRoomJoin({
           </span>
           <p className="eyebrow">Raum {code}</p>
           <h1>Diese Runde ist beendet.</h1>
-          <p>Dein erreichbarer Fortschritt wurde an die Lehrkraft gesendet.</p>
+          <p>Die Lehrkraft hat die Unterrichtsrunde geschlossen.</p>
           <Link className="button button--primary" href="/">
             Zur Startseite
           </Link>

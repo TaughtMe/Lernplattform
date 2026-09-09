@@ -42,6 +42,7 @@ describe("shared learning recommendations", () => {
     await database.learningBoxCards.put(card);
 
     await createLearningWordProgressRepository(database).recordAttempt({
+      attemptId: "attempt-1",
       words: ["Schlüssel"],
       correct: false,
       usedHelp: false,

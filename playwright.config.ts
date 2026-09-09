@@ -4,6 +4,7 @@ const isCI = Boolean(process.env["CI"]);
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: ["**/live/**"],
   fullyParallel: true,
   // Vinext compiles routes on demand. Serial browser runs avoid navigation
   // aborts while several projects request new RSC routes at the same time.

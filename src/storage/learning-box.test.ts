@@ -192,6 +192,7 @@ describe("learning box repository", () => {
     const typing = createTypingProgressRepository(database);
 
     await learningWords.recordAttempt({
+      attemptId: "attempt-1",
       words: ["Schlüssel"],
       correct: false,
       usedHelp: false,

@@ -75,6 +75,21 @@ Für `src/domain` und `src/storage` gelten derzeit mindestens:
 
 Abdeckung beweist keine Qualität. Sie ist eine Untergrenze gegen ungetesteten Kerncode und wird durch Eigenschafts-, Browser- und manuelle Tests ergänzt.
 
+### Datenbankverträge
+
+`npm run test:database` führt die gesamte SQL-Migrationskette in einer isolierten
+PostgreSQL-WASM-Instanz (PGlite, ausschließlich Entwicklungsabhängigkeit) aus.
+Die Tests rufen Funktionen als `anon` in getrennt abgeschlossenen Transaktionen
+auf und prüfen Fortschritt, Wiederaufnahme, Tokenrechte, Zugriffslimits und
+Materialtransfer. Nur die Registrierung von Cron-Jobs ist im Test nachgebildet;
+zeitgesteuerte Ausführung, PostgREST-Gateway und Parallelität mehrerer
+Datenbankverbindungen benötigen weiterhin einen Supabase-Integrationstest vor
+Produktivfreigabe. PGlite ersetzt weder die produktive Datenbank noch Dexie.
+
+`npm run test:e2e:live` prüft zusätzlich den Browserablauf mit kontrollierten
+HTTP-Antworten einschließlich Übertragungsfehler, Wiederholung und Neuladen.
+Seine Testkonfiguration setzt ausschließlich lokale Test-Verbindungsdaten.
+
 ## Abhängigkeiten und Sicherheit
 
 - Direkte Abhängigkeiten werden auf feste Versionen gepinnt; die Lockdatei wird committed.
