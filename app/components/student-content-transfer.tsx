@@ -12,6 +12,7 @@ import {
 } from "../../src/integrations/laufdiktat/live-room-client";
 import { createLearningBoxRepository } from "../../src/storage/personal-learning-events";
 import { QrCodeScanner } from "./qr-code-scanner";
+import { ArrowRightIcon } from "./ui-icons";
 
 function normalizeTransferCode(value: string) {
   return value
@@ -149,7 +150,9 @@ export function StudentContentTransfer({
           <span>
             {success.added} neu · {success.reused} bereits vorhanden
           </span>
-          <a href="/lernbox">In der LernBox öffnen →</a>
+          <a href="/lernbox">
+            In der LernBox öffnen <ArrowRightIcon aria-hidden="true" />
+          </a>
         </div>
       ) : null}
     </section>

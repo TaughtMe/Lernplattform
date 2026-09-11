@@ -67,6 +67,27 @@ import {
 import { createLiveRoomDebounce } from "../../src/integrations/laufdiktat/debounce";
 import { AnimalAvatar } from "./animal-avatar";
 import { MathDisplay } from "./math-display";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  CloseIcon,
+  DownloadIcon,
+  HomeIcon,
+  LiveLessonIcon,
+  PencilIcon,
+  RefreshIcon,
+  SlidersIcon,
+  SmallScreenIcon,
+  SparklesIcon,
+  StarIcon,
+  SwapIcon,
+  SwordsIcon,
+  TrashIcon,
+  UploadIcon,
+} from "./ui-icons";
 import { useHydrated } from "./use-hydrated";
 
 type Props = { liveRoomConfig: LiveRoomConfig | null };
@@ -132,6 +153,7 @@ const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
   vocabulary: "",
   math: "",
 };
+const SMALL_TEACHER_SCREEN_QUERY = "(max-width: 767px)";
 function isOnline(participant: LiveRoomParticipant) {
   return Boolean(
     participant.lastSeenAt &&
@@ -148,6 +170,8 @@ const emptyVocabularyPair = (): VocabularyPair => ({
 
 export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const hydrated = useHydrated();
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [smallScreenConfirmed, setSmallScreenConfirmed] = useState(false);
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sectionManagerOpen, setSectionManagerOpen] = useState(false);
@@ -173,6 +197,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   ]);
   const [vocabularyCaseSensitive, setVocabularyCaseSensitive] = useState(false);
   const [vocabularyTableInput, setVocabularyTableInput] = useState("");
+  const [vocabularySettingsOpen, setVocabularySettingsOpen] = useState(false);
+  const vocabularySettingsButtonRef = useRef<HTMLButtonElement>(null);
+  const vocabularySettingsCloseRef = useRef<HTMLButtonElement>(null);
   const serializeVocabularyPairs = (pairs: VocabularyPair[]) =>
     pairs
       .map((pair) => {
@@ -199,7 +226,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const [direction, setDirection] =
     useState<VocabularyDirection>("left-to-right");
   const [vocabularyTransfer, setVocabularyTransfer] =
-    useState<VocabularyTransferChoice>("errors");
+    useState<VocabularyTransferChoice>("none");
   const [gameMode, setGameMode] = useState<TeacherGameMode>("LAUFDIKTAT");
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLElement>(null);
@@ -235,6 +262,27 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
   const markerContainerRef = useRef<HTMLDivElement>(null);
 
   const source = sources[contentMode];
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia(SMALL_TEACHER_SCREEN_QUERY);
+    const update = () => setIsSmallScreen(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (vocabularySettingsOpen) vocabularySettingsCloseRef.current?.focus();
+  }, [vocabularySettingsOpen]);
+  useEffect(() => {
+    if (!vocabularySettingsOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setVocabularySettingsOpen(false);
+      vocabularySettingsButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [vocabularySettingsOpen]);
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTop = 0;
   }, [stage]);
@@ -947,6 +995,39 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
     if (stage === "live") void endRoom();
   }
 
+  function closeVocabularySettings() {
+    setVocabularySettingsOpen(false);
+    vocabularySettingsButtonRef.current?.focus();
+  }
+
+  if (isSmallScreen && !smallScreenConfirmed) {
+    return (
+      <main className="teacher-small-screen-warning">
+        <section aria-labelledby="small-screen-warning-title">
+          <SmallScreenIcon aria-hidden="true" />
+          <h1 id="small-screen-warning-title">Bildschirm zu schmal</h1>
+          <p>
+            Für das Lehrer-Dashboard empfehlen wir ein Tablet, einen Laptop oder
+            das Querformat. Auf diesem Bildschirm können Bedienelemente enger
+            dargestellt sein.
+          </p>
+          <div>
+            <Link className="button button--quiet" href="/">
+              Zur Startseite
+            </Link>
+            <button
+              className="button button--primary"
+              type="button"
+              onClick={() => setSmallScreenConfirmed(true)}
+            >
+              Trotzdem öffnen
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <section
       className="teacher-live"
@@ -964,7 +1045,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             aria-label="Zur Startseite"
           >
             <span className="teacher-live__home" aria-hidden="true">
-              ⌂
+              <HomeIcon />
             </span>
             <span>
               <strong>Lernraum · Laufdiktat</strong>
@@ -1004,7 +1085,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       id === "lobby" && !room ? void openLobby() : setStage(id)
                     }
                   >
-                    <span aria-hidden="true">{isDone ? "✓" : index + 1}</span>
+                    <span aria-hidden="true">
+                      {isDone ? <CheckIcon /> : index + 1}
+                    </span>
                     {isCurrent ? <strong>{label}</strong> : null}
                   </button>
                 </span>
@@ -1031,6 +1114,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     aria-selected={contentMode === mode}
                     disabled={!hydrated}
                     onClick={() => {
+                      setVocabularySettingsOpen(false);
                       setContentMode(mode);
                       if (mode === "vocabulary") {
                         setShuffleWords(true);
@@ -1047,7 +1131,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
               </div>
               {contentMode === "text" ? (
                 <label className="teacher-live__upload-pill">
-                  <span aria-hidden="true">⇧</span> Dokument hochladen
+                  <UploadIcon aria-hidden="true" /> Dokument hochladen
                   <input
                     className="sr-only"
                     type="file"
@@ -1150,7 +1234,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         setMathGaps([]);
                       }}
                     >
-                      ✨ Aufgaben erzeugen
+                      <SparklesIcon aria-hidden="true" /> Aufgaben erzeugen
                     </button>
                     <button
                       type="button"
@@ -1159,7 +1243,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       title="Weitere Regeln"
                       onClick={() => setMathSettingsOpen(true)}
                     >
-                      ⚙
+                      <SlidersIcon aria-hidden="true" />
                     </button>
                   </div>
                   <div className="teacher-live__math-columns">
@@ -1260,7 +1344,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                     commitMathLines(lines);
                                   }}
                                 >
-                                  ↻
+                                  <RefreshIcon aria-hidden="true" />
                                 </button>
                                 <button
                                   type="button"
@@ -1279,7 +1363,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                       setMathEditIndex(null);
                                   }}
                                 >
-                                  ×
+                                  <TrashIcon aria-hidden="true" />
                                 </button>
                               </div>
                             ),
@@ -1476,7 +1560,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         aria-label="Schließen"
                         onClick={() => setMathSettingsOpen(false)}
                       >
-                        ×
+                        <CloseIcon aria-hidden="true" />
                       </button>
                     </div>
                     <div className="teacher-live__math-range">
@@ -1565,7 +1649,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       }
                     >
                       {splitConfig.punctuationEnabled ? (
-                        <span aria-hidden="true">✓</span>
+                        <CheckIcon aria-hidden="true" />
                       ) : null}
                       Zeichen
                     </button>
@@ -1581,7 +1665,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       }
                     >
                       {splitConfig.newlineEnabled ? (
-                        <span aria-hidden="true">✓</span>
+                        <CheckIcon aria-hidden="true" />
                       ) : null}
                       Enter
                     </button>
@@ -1595,7 +1679,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         setMarkerMode((current) => !current);
                       }}
                     >
-                      ✎ Marker
+                      <PencilIcon aria-hidden="true" /> Marker
                     </button>
                   </div>
                   <div className="teacher-live__split-panels">
@@ -1706,8 +1790,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                 }))
                               }
                             >
-                              {delimiter.value}{" "}
-                              <span aria-hidden="true">×</span>
+                              {delimiter.value} <CloseIcon aria-hidden="true" />
                             </button>
                           ))}
                         </div>
@@ -1881,6 +1964,17 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                             onChange={(e) => importFile(e.target.files?.[0])}
                           />
                         </label>
+                        <button
+                          ref={vocabularySettingsButtonRef}
+                          type="button"
+                          className="teacher-live__vocabulary-settings-button"
+                          aria-haspopup="dialog"
+                          aria-expanded={vocabularySettingsOpen}
+                          onClick={() => setVocabularySettingsOpen(true)}
+                        >
+                          <SlidersIcon aria-hidden="true" />
+                          Einstellungen
+                        </button>
                       </div>
                     </div>
                     <div className="teacher-live__vocabulary-rows">
@@ -1954,7 +2048,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                               );
                             }}
                           >
-                            ×
+                            <TrashIcon aria-hidden="true" />
                           </button>
                         </div>
                       ))}
@@ -1976,85 +2070,140 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       + Vokabel hinzufügen
                     </button>
                   </section>
-                  <aside className="teacher-live__vocabulary-sidebar">
-                    <div>
-                      <h4>⇄ Abfragerichtung</h4>
-                      {(
-                        [
-                          ["left-to-right", "Links → rechts"],
-                          ["right-to-left", "Rechts → links"],
-                          ["mixed", "Beide Richtungen gemischt"],
-                        ] as const
-                      ).map(([value, label]) => (
-                        <label key={value}>
+                  <div
+                    className={`teacher-live__vocabulary-settings-layer${
+                      vocabularySettingsOpen ? " is-open" : ""
+                    }`}
+                  >
+                    <aside
+                      className="teacher-live__vocabulary-sidebar"
+                      role={vocabularySettingsOpen ? "dialog" : undefined}
+                      aria-modal={vocabularySettingsOpen ? "true" : undefined}
+                      aria-labelledby={
+                        vocabularySettingsOpen
+                          ? "vocabulary-settings-title"
+                          : undefined
+                      }
+                    >
+                      <div className="teacher-live__vocabulary-settings-heading">
+                        <h3 id="vocabulary-settings-title">
+                          Vokabel-Einstellungen
+                        </h3>
+                        <button
+                          ref={vocabularySettingsCloseRef}
+                          type="button"
+                          aria-label="Vokabel-Einstellungen schließen"
+                          onClick={closeVocabularySettings}
+                        >
+                          <CloseIcon aria-hidden="true" />
+                        </button>
+                      </div>
+                      <div>
+                        <h4>
+                          <SwapIcon aria-hidden="true" /> Abfragerichtung
+                        </h4>
+                        {(
+                          [
+                            ["left-to-right", "Links → rechts"],
+                            ["right-to-left", "Rechts → links"],
+                            ["mixed", "Beide Richtungen gemischt"],
+                          ] as const
+                        ).map(([value, label]) => (
+                          <label key={value}>
+                            <input
+                              type="radio"
+                              name="vocabulary-direction"
+                              checked={direction === value}
+                              onChange={() => setDirection(value)}
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                      <label className="teacher-live__vocabulary-case">
+                        <input
+                          type="checkbox"
+                          checked={vocabularyCaseSensitive}
+                          onChange={(event) =>
+                            setVocabularyCaseSensitive(event.target.checked)
+                          }
+                        />
+                        Groß-/Kleinschreibung prüfen
+                      </label>
+                      <div className="teacher-live__vocabulary-transfer-toggle">
+                        <span>
+                          <strong>Vokabeln übernehmen</strong>
+                          <small>
+                            Nach der Runde in die persönliche LernBox
+                          </small>
+                        </span>
+                        <span className="teacher-live__switch">
                           <input
-                            type="radio"
-                            name="vocabulary-direction"
-                            checked={direction === value}
-                            onChange={() => setDirection(value)}
+                            id="vocabulary-transfer-enabled"
+                            type="checkbox"
+                            aria-label="Vokabeln übernehmen"
+                            checked={vocabularyTransfer !== "none"}
+                            onChange={(event) =>
+                              setVocabularyTransfer(
+                                event.target.checked ? "errors" : "none",
+                              )
+                            }
                           />
-                          {label}
+                          <span aria-hidden="true" />
+                        </span>
+                      </div>
+                      {vocabularyTransfer !== "none" ? (
+                        <label className="teacher-live__vocabulary-transfer">
+                          Welche Vokabeln übernehmen?
+                          <select
+                            value={vocabularyTransfer}
+                            onChange={(event) =>
+                              setVocabularyTransfer(
+                                event.target.value as VocabularyTransferChoice,
+                              )
+                            }
+                          >
+                            <option value="errors">
+                              Nur fehlerhafte Vokabeln
+                            </option>
+                            <option value="all">Alle Vokabeln</option>
+                          </select>
                         </label>
-                      ))}
-                    </div>
-                    <label className="teacher-live__vocabulary-case">
-                      <input
-                        type="checkbox"
-                        checked={vocabularyCaseSensitive}
-                        onChange={(event) =>
-                          setVocabularyCaseSensitive(event.target.checked)
-                        }
-                      />
-                      Groß-/Kleinschreibung prüfen
-                    </label>
-                    <label className="teacher-live__vocabulary-transfer">
-                      Vokabeln nach der Runde übernehmen
-                      <select
-                        value={vocabularyTransfer}
-                        onChange={(event) =>
-                          setVocabularyTransfer(
-                            event.target.value as VocabularyTransferChoice,
-                          )
-                        }
-                      >
-                        <option value="errors">Nur fehlerhafte Vokabeln</option>
-                        <option value="all">Alle Vokabeln</option>
-                        <option value="none">Keine Vokabeln</option>
-                      </select>
-                    </label>
-                    <div className="teacher-live__vocabulary-paste">
-                      <h4>Tabelle einfügen</h4>
-                      <p>
-                        Zwei Spalten aus Excel/Sheets kopieren oder Semikolon
-                        verwenden. Alternativen mit | trennen.
-                      </p>
-                      <textarea
-                        value={vocabularyTableInput}
-                        onChange={(event) =>
-                          setVocabularyTableInput(event.target.value)
-                        }
-                        placeholder={"Haus\thome | house\nBaum\ttree"}
-                      />
-                      <button
-                        type="button"
-                        className="button button--primary"
-                        disabled={!vocabularyTableInput.trim()}
-                        onClick={() => {
-                          const imported = parseVocabularyTable(
-                            vocabularyTableInput,
-                          ).map((pair) => ({
-                            ...pair,
-                            id: crypto.randomUUID(),
-                          }));
-                          if (!imported.length) return;
-                          applyVocabularyPairs(imported);
-                          setVocabularyTableInput("");
-                        }}
-                      >
-                        Liste übernehmen
-                      </button>
-                    </div>
-                  </aside>
+                      ) : null}
+                      <div className="teacher-live__vocabulary-paste">
+                        <h4>Tabelle einfügen</h4>
+                        <p>
+                          Zwei Spalten aus Excel/Sheets kopieren oder Semikolon
+                          verwenden. Alternativen mit | trennen.
+                        </p>
+                        <textarea
+                          value={vocabularyTableInput}
+                          onChange={(event) =>
+                            setVocabularyTableInput(event.target.value)
+                          }
+                          placeholder={"Haus\thome | house\nBaum\ttree"}
+                        />
+                        <button
+                          type="button"
+                          className="button button--primary"
+                          disabled={!vocabularyTableInput.trim()}
+                          onClick={() => {
+                            const imported = parseVocabularyTable(
+                              vocabularyTableInput,
+                            ).map((pair) => ({
+                              ...pair,
+                              id: crypto.randomUUID(),
+                            }));
+                            if (!imported.length) return;
+                            applyVocabularyPairs(imported);
+                            setVocabularyTableInput("");
+                          }}
+                        >
+                          Liste übernehmen
+                        </button>
+                      </div>
+                    </aside>
+                  </div>
                 </div>
               ) : null}
               {contentMode === "text" && source && !markerMode ? (
@@ -2127,7 +2276,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                         aria-label="Schließen"
                         onClick={() => setSectionManagerOpen(false)}
                       >
-                        ×
+                        <CloseIcon aria-hidden="true" />
                       </button>
                     </div>
                     <p>
@@ -2172,7 +2321,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                 );
                               }}
                             >
-                              ↑
+                              <ChevronUpIcon aria-hidden="true" />
                             </button>
                             <button
                               type="button"
@@ -2193,7 +2342,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                 );
                               }}
                             >
-                              ↓
+                              <ChevronDownIcon aria-hidden="true" />
                             </button>
                           </div>
                         </li>
@@ -2243,7 +2392,9 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     <strong>{mode.title}</strong>
                     <small>{mode.short}</small>
                   </span>
-                  <i aria-hidden="true">{gameMode === mode.id ? "✓" : ""}</i>
+                  <i aria-hidden="true">
+                    {gameMode === mode.id ? <CheckIcon /> : null}
+                  </i>
                 </button>
               ))}
             </div>
@@ -2377,7 +2528,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
           aria-hidden={stage === "content"}
           tabIndex={stage === "content" ? -1 : 0}
         >
-          ← Zurück
+          <ArrowLeftIcon aria-hidden="true" /> Zurück
         </button>
         {stage === "live" && room ? (
           <div className="teacher-live__footer-code">
@@ -2406,7 +2557,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                   ? "Beendet …"
                   : footerLabel
             : footerLabel}{" "}
-          {stage === "live" ? "" : "→"}
+          {stage === "live" ? null : <ArrowRightIcon aria-hidden="true" />}
         </button>
       </footer>
     </section>
@@ -2430,7 +2581,7 @@ function ModeIcon({ mode }: { mode: TeacherGameMode }) {
           <path d="M4 14v4a2 2 0 0 0 2 2h2v-8H6a2 2 0 0 0-2 2Zm16 0v4a2 2 0 0 1-2 2h-2v-8h2a2 2 0 0 1 2 2Z" />
         </svg>
       ) : mode === "BATTLE" ? (
-        <span className="teacher-live__mode-icon-emoji">⚔</span>
+        <SwordsIcon />
       ) : (
         <svg viewBox="0 0 24 24">
           <path d="M12 22s7-6.2 7-13A7 7 0 1 0 5 9c0 6.8 7 13 7 13Z" />
@@ -2622,7 +2773,7 @@ function RoomDashboard({
                 onClick={onExport}
                 disabled={!students.length}
               >
-                ⇩ Ergebnisse exportieren (CSV)
+                <DownloadIcon aria-hidden="true" /> Ergebnisse exportieren (CSV)
               </button>
             </div>
             <div className="teacher-live__progress-list">
@@ -2672,13 +2823,18 @@ function RoomDashboard({
                       </progress>
                       {showStars && student?.finished ? (
                         <small>
-                          {"★".repeat(
-                            Math.max(
-                              1,
-                              5 -
-                                Math.ceil(
-                                  student.errors / Math.max(1, wordsCount),
-                                ),
+                          {Array.from(
+                            {
+                              length: Math.max(
+                                1,
+                                5 -
+                                  Math.ceil(
+                                    student.errors / Math.max(1, wordsCount),
+                                  ),
+                              ),
+                            },
+                            (_, starIndex) => (
+                              <StarIcon key={starIndex} />
                             ),
                           )}
                         </small>
@@ -2760,7 +2916,9 @@ function RoomDashboard({
                     className="teacher-live__student-status"
                     aria-hidden="true"
                   >
-                    {connected.includes(participant.studentName) ? "✓" : "–"}
+                    {connected.includes(participant.studentName) ? (
+                      <CheckIcon />
+                    ) : null}
                   </span>
                 </span>
                 <span className="teacher-live__student-name">
@@ -2772,7 +2930,7 @@ function RoomDashboard({
                     aria-label={`${participant.studentName} entfernen`}
                     onClick={() => onRemove(participant.studentName)}
                   >
-                    ×
+                    <TrashIcon aria-hidden="true" />
                   </button>
                 ) : null}
               </li>
@@ -2780,7 +2938,7 @@ function RoomDashboard({
           </ul>
         ) : (
           <div className="teacher-live__waiting">
-            <span aria-hidden="true">⌁</span>
+            <LiveLessonIcon aria-hidden="true" />
             <strong>Warte auf Verbindung …</strong>
             <p>
               Sobald mindestens ein Gerät verbunden ist, kannst du das Diktat
@@ -2815,7 +2973,7 @@ function RoomDashboard({
               onClick={() => setShowLargeQr(false)}
               aria-label="QR-Code schließen"
             >
-              ×
+              <CloseIcon aria-hidden="true" />
             </button>
             <QRCodeCanvas value={joinUrl} size={420} level="H" marginSize={2} />
             <strong>Raum {room.code}</strong>

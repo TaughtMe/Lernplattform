@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TeacherCockpitShell } from "../components/teacher-cockpit-shell";
+import { ArrowRightIcon } from "../components/ui-icons";
 
 export const metadata: Metadata = { title: "Lehrerbereich" };
 
@@ -36,7 +37,9 @@ export default function Page() {
               Wähle Laufdiktat, Vokabeln oder Kopfrechnen und öffne danach einen
               Raum für deine Klasse.
             </p>
-            <Link href="/lehrer/live">Runde vorbereiten →</Link>
+            <Link href="/lehrer/live">
+              Runde vorbereiten <ArrowRightIcon aria-hidden="true" />
+            </Link>
           </article>
 
           <nav
@@ -66,7 +69,10 @@ export default function Page() {
           </nav>
 
           <aside className="teacher-dashboard__privacy">
-            <span aria-hidden="true">●</span>
+            <span
+              className="teacher-dashboard__privacy-dot"
+              aria-hidden="true"
+            />
             <div>
               <strong>Dieses Gerät ist die Schutzgrenze.</strong>
               <p>

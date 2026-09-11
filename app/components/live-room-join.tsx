@@ -32,6 +32,13 @@ import { useLiveSessionGuards } from "./use-live-session-guards";
 
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import { LiveVersionNotice } from "./live-version-notice";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  CloseIcon,
+  DiceIcon,
+} from "./ui-icons";
 
 type View = "join" | "connecting" | "lobby" | "starting" | "game" | "ended";
 type AttackType = "ink" | "flicker";
@@ -559,7 +566,7 @@ export function LiveRoomJoin({
       <div className="live-room-page">
         <section className="live-room-state" aria-live="polite">
           <span className="live-room-state__mark" aria-hidden="true">
-            {view === "lobby" ? "✓" : "→"}
+            {view === "lobby" ? <CheckIcon /> : <ArrowRightIcon />}
           </span>
           <p className="eyebrow">Raum {code}</p>
           <h1>
@@ -587,7 +594,7 @@ export function LiveRoomJoin({
       <div className="live-room-page">
         <section className="live-room-state" aria-live="polite">
           <span className="live-room-state__mark" aria-hidden="true">
-            ×
+            <CloseIcon />
           </span>
           <p className="eyebrow">Raum {code}</p>
           <h1>Diese Runde ist beendet.</h1>
@@ -619,7 +626,7 @@ export function LiveRoomJoin({
             className="button button--primary"
             onClick={() => setError("")}
           >
-            ← Zur Code-Eingabe
+            <ArrowLeftIcon aria-hidden="true" /> Zur Code-Eingabe
           </button>
         </section>
       </div>
@@ -671,7 +678,7 @@ export function LiveRoomJoin({
             className="live-room-join__dice"
             onClick={() => setName(getRandomName())}
           >
-            <span aria-hidden="true">🎲</span> Zufälligen Namen generieren
+            <DiceIcon aria-hidden="true" /> Zufälligen Namen generieren
           </button>
 
           <button

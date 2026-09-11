@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CheckIcon } from "./ui-icons";
 import { APP_VERSION } from "../../src/app-version";
 
 type UpdateState = "idle" | "checking" | "current" | "ready" | "error";
@@ -127,7 +128,7 @@ export function ServiceWorkerManager() {
       : state === "checking"
         ? "Suche …"
         : state === "current"
-          ? "Aktuell ✓"
+          ? "Aktuell"
           : state === "error"
             ? `v${APP_VERSION} · offline`
             : `v${APP_VERSION}`;
@@ -144,8 +145,9 @@ export function ServiceWorkerManager() {
       }
       aria-live="polite"
     >
-      {state === "ready" ? <span aria-hidden="true">●</span> : null}
+      {state === "ready" ? <span className="version-button__dot" /> : null}
       {label}
+      {state === "current" ? <CheckIcon aria-hidden="true" /> : null}
     </button>
   );
 }

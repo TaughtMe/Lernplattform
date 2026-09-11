@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ArrowLeftIcon } from "./ui-icons";
 
 export function LegalPage({
   eyebrow,
@@ -16,7 +17,7 @@ export function LegalPage({
     <div className="legal-shell">
       <header className="legal-header">
         <Link href="/" aria-label="Zurück zur Lernraum-Startseite">
-          <span aria-hidden="true">←</span> Lernraum
+          <ArrowLeftIcon aria-hidden="true" /> Lernraum
         </Link>
         <nav aria-label="Rechtliche Seiten">
           <Link href="/impressum">Impressum</Link>

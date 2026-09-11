@@ -9,6 +9,7 @@ import { PersonalLearningDatabase } from "../../src/storage/personal-learning-ev
 import { RoomCodeForm } from "./room-code-form";
 import { StudentDashboardShell } from "./student-dashboard-shell";
 import { StudentIdentitySummary } from "./student-identity-summary";
+import { ArrowRightIcon } from "./ui-icons";
 
 const DAILY_TARGET = 20;
 const BOXES = [1, 2, 3, 4, 5] as const;
@@ -444,7 +445,9 @@ export function StudentHome() {
               <p className="eyebrow">Deine LernBox</p>
               <h2 id="box-title">{snapshot.learningBoxTotal} Karten</h2>
             </div>
-            <Link href="/lernbox">Alle ansehen →</Link>
+            <Link href="/lernbox">
+              Alle ansehen <ArrowRightIcon aria-hidden="true" />
+            </Link>
           </header>
           <div
             className="student-overview__bars"
@@ -492,7 +495,9 @@ export function StudentHome() {
               Du erhältst genau so viel Hilfe, wie du für den nächsten sicheren
               Abruf brauchst.
             </p>
-            <Link href="/frei/german/lernwoerter">Lernwörter öffnen →</Link>
+            <Link href="/frei/german/lernwoerter">
+              Lernwörter öffnen <ArrowRightIcon aria-hidden="true" />
+            </Link>
           </article>
 
           <article>
@@ -502,7 +507,9 @@ export function StudentHome() {
               <span style={{ width: `${snapshot.missionProgress}%` }} />
             </div>
             <strong>{snapshot.missionProgress} / 100</strong>
-            <Link href="/lernen/aufgaben">Aufgaben und Leistungs-QR →</Link>
+            <Link href="/lernen/aufgaben">
+              Aufgaben und Leistungs-QR <ArrowRightIcon aria-hidden="true" />
+            </Link>
           </article>
         </section>
       </div>

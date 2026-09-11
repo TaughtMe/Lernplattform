@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeftIcon } from "./ui-icons";
 import {
   useCallback,
   useEffect,
@@ -99,11 +100,11 @@ export function LearningBoxApp() {
       <header className="learning-box-topbar">
         {view === "decks" ? (
           <Link href="/lernen/faecher/vokabeln" className="back-link">
-            ← Fach Vokabeln
+            <ArrowLeftIcon aria-hidden="true" /> Fach Vokabeln
           </Link>
         ) : (
           <button className="text-button" onClick={leaveDeck}>
-            ← Meine LernBox
+            <ArrowLeftIcon aria-hidden="true" /> Meine LernBox
           </button>
         )}
         <div>

@@ -6,6 +6,8 @@ import {
   PERSONAL_SUBJECTS,
 } from "../../../../src/domain/personal-learning-space";
 import { DailyPracticePanel } from "../../../components/daily-practice-panel";
+import { ArrowLeftIcon } from "../../../components/ui-icons";
+import { SubjectIcon } from "../../../components/subject-icon";
 
 type SubjectPageProps = {
   params: Promise<{ subject: string }>;
@@ -32,7 +34,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
     <main className="subject-space-shell">
       <header className="learning-room-topbar">
         <Link href="/lernen#faecher" className="back-link">
-          ← Alle Fächer
+          <ArrowLeftIcon aria-hidden="true" /> Alle Fächer
         </Link>
         <strong>Mein Lernraum</strong>
         <span>Lernstand bleibt lokal</span>
@@ -41,7 +43,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
       <section className="subject-space">
         <div className="subject-space__heading">
           <span className="subject-space__icon" aria-hidden="true">
-            {subject.icon}
+            <SubjectIcon subject={subject.id} />
           </span>
           <div>
             <p className="eyebrow">Fach in deinem Lernraum</p>

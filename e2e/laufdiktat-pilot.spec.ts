@@ -10,9 +10,16 @@ test("pilot start exposes only room join and the teacher path", async ({
     page.getByRole("heading", { name: "Bereit für dein Laufdiktat?" }),
   ).toBeVisible();
   await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
-  ).toBeVisible();
+  const cameraButton = page.getByRole("button", {
+    name: "QR-Code mit Kamera scannen",
+  });
+  await expect(cameraButton).toBeVisible();
+  await expect(cameraButton.locator("svg")).toHaveCount(1);
+  const themeButton = page.getByRole("button", {
+    name: /Darstellung wechseln/,
+  });
+  await expect(themeButton).toBeVisible();
+  await expect(themeButton.locator("svg")).toHaveCount(1);
   await expect(
     page.getByRole("link", { name: "Lehrerbereich" }),
   ).toHaveAttribute("href", "/lehrer");
@@ -58,6 +65,18 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
 }) => {
   await page.goto("/lehrer/live");
 
+  const smallScreenWarning = page.getByRole("heading", {
+    name: "Bildschirm zu schmal",
+  });
+  if ((page.viewportSize()?.width ?? 768) <= 767) {
+    await expect(smallScreenWarning).toBeVisible();
+    const warningAccessibility = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(warningAccessibility.violations).toEqual([]);
+    await page.getByRole("button", { name: "Trotzdem öffnen" }).click();
+  }
+
   await expect(
     page.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
   ).toBeAttached();
@@ -89,6 +108,21 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
     });
   const textFrame = await stableFrame();
   await page.getByRole("tab", { name: "Vokabeln" }).click();
+  if ((page.viewportSize()?.width ?? 371) <= 370) {
+    await page
+      .getByRole("button", { name: "Einstellungen", exact: true })
+      .click();
+    await expect(
+      page.getByRole("dialog", { name: "Vokabel-Einstellungen" }),
+    ).toBeVisible();
+    const settingsAccessibility = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(settingsAccessibility.violations).toEqual([]);
+    await page
+      .getByRole("button", { name: "Vokabel-Einstellungen schließen" })
+      .click();
+  }
   const vocabularyFrame = await stableFrame();
   await page.getByRole("tab", { name: "Kopfrechnen" }).click();
   const mathFrame = await stableFrame();

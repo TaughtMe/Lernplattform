@@ -8,6 +8,7 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
+import { ArrowLeftIcon, CheckIcon, RefreshIcon, TrashIcon } from "./ui-icons";
 import {
   MULTIPLICATION_TABLES,
   checkMentalMathAnswer,
@@ -442,7 +443,7 @@ export function MentalMathApp() {
                             )
                           }
                         >
-                          ↻
+                          <RefreshIcon aria-hidden="true" />
                         </button>
                         <button
                           type="button"
@@ -453,7 +454,7 @@ export function MentalMathApp() {
                             )
                           }
                         >
-                          ×
+                          <TrashIcon aria-hidden="true" />
                         </button>
                       </span>
                     ) : null}
@@ -547,7 +548,11 @@ export function MentalMathApp() {
           role="status"
           aria-live="polite"
         >
-          {feedback === "correct" ? "✓ Richtig" : null}
+          {feedback === "correct" ? (
+            <>
+              <CheckIcon aria-hidden="true" /> Richtig
+            </>
+          ) : null}
           {feedback === "incorrect" ? "Noch nicht – probiere es erneut." : null}
         </div>
       </section>
@@ -583,7 +588,7 @@ function MentalMathShell({ children }: { children: React.ReactNode }) {
         {/* Native anchor keeps this client component independently testable. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/lernen/faecher/mathematik" className="back-link">
-          ← Fach Mathematik
+          <ArrowLeftIcon aria-hidden="true" /> Fach Mathematik
         </a>
         <span className="ranking-note">Lernstand bleibt lokal</span>
       </header>

@@ -6,7 +6,7 @@ tags:
   - ux
   - startseite
 status: designgrundlage
-stand: 2026-08-13
+stand: 2026-09-11
 ---
 
 # Designgrundlage
@@ -82,6 +82,8 @@ accent-teal:    #58B8B5
 ## Navigation
 
 Die Startseite bleibt ruhig und zeigt als zentrale Entscheidungen **Mein Lernraum** und **Freies Üben**. Darunter steht die Code-Eingabe für einen Raum. Beispielgruppen, Duell und Haus gehören nicht auf die Hauptseite.
+
+Diese Beschreibung ist das Zielbild des vollständigen persönlichen Lernraums. Der sichtbare Einstieg wird entsprechend dem [[../17 - Entwicklungsplan/Anwendung#Rahmenplan für den sichtbaren Produkteeinstieg|dreistufigen Rahmenplan]] aufgebaut: zunächst ausschließlich Raumbeitritt zum Laufdiktat, mit der LernBox eine Auswahl tatsächlich freigegebener Lernbereiche und erst nach belastbaren Verknüpfungen das persönliche Schülerdashboard. Unfertige Bereiche werden nicht vorzeitig als leere oder deaktivierte Kacheln gezeigt.
 
 Nach dem Einstieg zeigt **Mein Lernraum** die lokal bekannten Klassen und erneut die Möglichkeit, per Code beizutreten. Innerhalb einer Klasse kehren drei Bereiche in derselben Reihenfolge wieder:
 

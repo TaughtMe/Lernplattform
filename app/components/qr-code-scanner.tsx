@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CameraIcon, CloseIcon } from "./ui-icons";
 
 type QrCodeScannerProps = {
   onResult: (value: string) => void;
@@ -61,7 +62,7 @@ export function QrCodeScanner({ onResult }: QrCodeScannerProps) {
         onClick={openScanner}
         aria-label="QR-Code mit Kamera scannen"
       >
-        <span className="room-code__camera-icon" aria-hidden="true" />
+        <CameraIcon className="room-code__camera-icon" aria-hidden="true" />
       </button>
       {open ? (
         <div className="qr-scanner-backdrop" role="presentation">
@@ -81,7 +82,7 @@ export function QrCodeScanner({ onResult }: QrCodeScannerProps) {
                 onClick={() => setOpen(false)}
                 aria-label="Scanner schließen"
               >
-                ×
+                <CloseIcon aria-hidden="true" />
               </button>
             </div>
             <div className="qr-scanner-video">

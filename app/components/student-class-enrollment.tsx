@@ -10,6 +10,7 @@ import {
   type ClassEnrollment,
 } from "../../src/domain/class-enrollment";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
+import { ArrowRightIcon } from "./ui-icons";
 
 export function StudentClassEnrollment() {
   const repository = useMemo(() => createStudentClassesRepository(), []);
@@ -169,7 +170,9 @@ export function StudentClassEnrollment() {
               <p>
                 {item.teacherName} · {item.schoolYear} · {item.displayName}
               </p>
-              <strong>Klasse öffnen →</strong>
+              <strong>
+                Klasse öffnen <ArrowRightIcon aria-hidden="true" />
+              </strong>
             </Link>
           ))
         )}

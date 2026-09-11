@@ -1,5 +1,13 @@
 "use client";
 import { LiveProgressNotice } from "./live-progress-notice";
+import {
+  ArrowLeftIcon,
+  CheckIcon,
+  CloseIcon,
+  StarIcon,
+  TrophyIcon,
+  VolumeIcon,
+} from "./ui-icons";
 import type { ProgressDeliveryStatus } from "../../src/integrations/laufdiktat/progress-delivery";
 
 import Link from "next/link";
@@ -301,7 +309,7 @@ export function LiveRunningDictationGame({
       <div className="live-game-page">
         <section className="live-game-complete" aria-live="polite">
           <span aria-hidden="true" className="live-game-complete__trophy">
-            🏆
+            <TrophyIcon />
           </span>
           <p className="eyebrow">Raum {code} · Runde abgeschlossen</p>
           <h1>Geschafft, {studentName}!</h1>
@@ -310,8 +318,16 @@ export function LiveRunningDictationGame({
               className="running-stars"
               aria-label={`${stars} von 5 Sternen`}
             >
-              <span>{"★".repeat(stars)}</span>
-              <i>{"★".repeat(5 - stars)}</i>
+              <span>
+                {Array.from({ length: stars }, (_, index) => (
+                  <StarIcon key={`filled-${index}`} />
+                ))}
+              </span>
+              <i>
+                {Array.from({ length: 5 - stars }, (_, index) => (
+                  <StarIcon key={`empty-${index}`} />
+                ))}
+              </i>
             </div>
           ) : null}
           <p>
@@ -524,7 +540,7 @@ export function LiveRunningDictationGame({
           aria-label="Spiel verlassen"
           title="Spiel verlassen"
         >
-          ←
+          <ArrowLeftIcon aria-hidden="true" />
         </button>
         <div className="live-game-page__meta">
           <span>Raum {code}</span>
@@ -541,7 +557,7 @@ export function LiveRunningDictationGame({
               title="Vorlesen (zählt als Spicker)"
               aria-label="Vorlesen"
             >
-              🔊
+              <VolumeIcon aria-hidden="true" />
             </button>
           ) : null}
           <span>Spicker {peeks}</span>
@@ -733,7 +749,7 @@ export function LiveRunningDictationGame({
                 className="live-game-write__submit"
                 aria-label="Bestätigen"
               >
-                ✓
+                <CheckIcon aria-hidden="true" />
               </button>
             </div>
             <button
@@ -751,7 +767,9 @@ export function LiveRunningDictationGame({
           <div
             className={`live-game-feedback ${lastAnswerCorrect ? "is-correct" : "is-wrong"}`}
           >
-            <span aria-hidden="true">{lastAnswerCorrect ? "✓" : "×"}</span>
+            <span aria-hidden="true">
+              {lastAnswerCorrect ? <CheckIcon /> : <CloseIcon />}
+            </span>
             <p>{lastAnswerCorrect ? "Richtig" : "Nicht richtig"}</p>
           </div>
         ) : null}

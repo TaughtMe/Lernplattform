@@ -16,16 +16,46 @@ Danach hat die freiwillige Sicherung persönlicher Schülerdaten Vorrang. Vorges
 
 Das Supabase-Projekt `Lernraum` ist seit dem 25. August 2026 in `eu-west-1` aktiv. Der vorhandene Dienst bleibt ein kurzlebiger Übergaberaum und wird nicht stillschweigend zum dauerhaften Schüler-Backup umgewidmet. Seine tatsächliche Backup-Aufbewahrung und Löschfrist werden weiterhin betrieblich dokumentiert.
 
+## Rahmenplan für den sichtbaren Produkteeinstieg
+
+Lernraum wächst in drei sichtbaren Ausbaustufen. Die Oberfläche zeigt in jeder Stufe nur Funktionen, die bereits zuverlässig nutzbar sind. Noch nicht freigegebene Lernbereiche erscheinen weder als leere noch als deaktivierte Kacheln.
+
+### Stufe 1: Laufdiktat als einziger Schülereinstieg
+
+Die öffentliche Startseite zeigt Lernraum als gemeinsame Marke und unmittelbar den Beitritt zu einem Laufdiktat-Raum per vierstelligem Code oder QR-Code. Der Ablauf wird als **Raum beitreten** und nicht als Login bezeichnet, weil kein Schülerkonto angemeldet wird.
+
+Codeeingabe beziehungsweise QR-Scan, Wahl des Tiernamens und Lobby bilden einen zusammenhängenden Ablauf. Ein bereits übernommener gültiger Raumcode wird nicht auf einer zweiten Seite erneut abgefragt oder bestätigt. Ein direkter Raumlink führt ohne Umweg über die Startseite zur Namenswahl; eine bereits gespeicherte gültige Raumidentität kann unmittelbar in die Lobby zurückkehren. Nur ein ungültiger, nicht erreichbarer oder beendeter Raum führt zurück zu einer bearbeitbaren Codeeingabe.
+
+### Stufe 2: Auswahl freigegebener Lernbereiche
+
+Sobald mit der LernBox ein zweiter vollständig nutzbarer Schülerbereich integriert ist, wird die Startseite zu einer einfachen Auswahl der verfügbaren Lernbereiche. Zunächst stehen dort **Laufdiktat** und **LernBox**. Wortschatz, Tipptraining und freie Aufgaben kommen erst hinzu, wenn ihr jeweiliger Ablauf produktiv freigegeben ist.
+
+Die Auswahl ist eine bewusste Zwischenstufe und verwendet bereits die gemeinsame Lernraum-Gestaltung, Navigation und stabilen Routen. QR- und Raumlinks öffnen weiterhin direkt den Laufdiktat-Beitritt. Die Lernbereiche erhalten keine getrennten App-Hüllen, Themes oder parallelen Datenmodelle.
+
+### Stufe 3: gemeinsames Schülerdashboard
+
+Das persönliche Schülerdashboard wird erst zum Haupteinstieg, wenn mehrere Lernbereiche sowie ihre fachlichen Verknüpfungen einen echten gemeinsamen Nutzen bieten. Dazu gehört insbesondere, dass Ergebnisse aus dem Laufdiktat kontrolliert in die LernBox übernommen und daraus sinnvolle persönliche Wiederholungen erzeugt werden können.
+
+Das Dashboard priorisiert dann heutige Lernschritte, Aufgaben und Fortschritt. Die Auswahl aus Stufe 2 bleibt innerhalb des Dashboards als **Alle Lernbereiche** erhalten und wird nicht verworfen. Laufdiktat, LernBox, Wortschatz, Tipptraining und freie Aufgaben bleiben erkennbare Wege unter einem gemeinsamen Lernraum-Dach und verwenden denselben persönlichen Lernkern, soweit ihre Daten fachlich zusammengehören.
+
+### Übergangskriterien
+
+- Stufe 1 bleibt aktiv, solange Laufdiktat der einzige freigegebene Schülerbereich ist.
+- Stufe 2 beginnt mit der produktiv nutzbaren LernBox, nicht allein mit bereits vorhandenem Quellcode oder unfertigen Modulen.
+- Die Ergebnisübergabe Laufdiktat → LernBox wird innerhalb von Stufe 2 ergänzt und vor dem Dashboard stabilisiert.
+- Stufe 3 beginnt erst, wenn das Dashboard mehr leistet als eine Sammlung von App-Kacheln: Es muss aus mehreren Lernbereichen konkrete nächste Schritte, Aufgaben oder Fortschritt ableiten können.
+- Stabile Direktlinks, gemeinsame Gestaltung, Barrierefreiheit und mobile Bedienbarkeit werden von Stufe zu Stufe weiterverwendet.
+
 ## Empfohlene Reihenfolge
 
-0. Gemeinsamen persönlichen Schülereinstieg mit **Heute üben**, Fachauswahl, eigenen und übernommenen Inhalten als Plattformrahmen umsetzen.
+0. Den Laufdiktat-Beitritt als einzigen sichtbaren Schülereinstieg vereinfachen und die doppelte Codebestätigung entfernen.
 1. LernBoxV2 und Laufdiktat commitgenau prüfen und geeignete Fachlogik, Abläufe und Tests gezielt in den gemeinsamen Lernraum integrieren.
 2. LearningBundle v1 und stabile IDs definieren.
 3. LernBox auf Tags, Herkunft und getrennte Lernstände vorbereiten.
 4. Vokabelmodus im Laufdiktat entwickeln.
 5. Übertragung Laufdiktat → LernBox umsetzen.
 6. Persönliche Runde **„Meine Fehler jetzt üben“** und kurzfristige Wiederholung ergänzen.
-7. Tagesauswahl und adaptive Wiederholung ergänzen.
+7. Nach mehreren verknüpften Lernbereichen die Tagesauswahl und adaptive Wiederholung als Grundlage des Schülerdashboards ergänzen.
 8. Lernwörter mit fünfstufiger Merkstrecke entwickeln.
 9. Fehler aus Texten als Lernwörter vorschlagen und Rechtschreibphänomene zuordnen.
 10. Lernwort-Wertung mit 5.000 Punkten, Sternen und Merkspanne erproben.

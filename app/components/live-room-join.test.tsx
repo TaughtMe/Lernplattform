@@ -9,9 +9,11 @@ describe("LiveRoomJoin", () => {
 
     expect(screen.getByRole("textbox", { name: "Ziffer 1" })).toHaveValue("4");
     expect(screen.getByRole("textbox", { name: "Ziffer 4" })).toHaveValue("9");
-    expect(
-      screen.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
-    ).toBeVisible();
+    const cameraButton = screen.getByRole("button", {
+      name: "QR-Code mit Kamera scannen",
+    });
+    expect(cameraButton).toBeVisible();
+    expect(cameraButton.querySelector("svg")).toBeInTheDocument();
     expect(screen.queryByText("Kamera")).not.toBeInTheDocument();
   });
 

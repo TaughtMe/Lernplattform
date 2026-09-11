@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeftIcon, StarIcon } from "./ui-icons";
 import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import {
   buildRunningDictationHint,
@@ -289,8 +290,16 @@ export function RunningDictationApp() {
           <p className="eyebrow">Runde abgeschlossen</p>
           <h1>Geschafft!</h1>
           <div className="running-stars" aria-label={`${stars} von 5 Sternen`}>
-            <span>{"★".repeat(stars)}</span>
-            <i>{"★".repeat(5 - stars)}</i>
+            <span>
+              {Array.from({ length: stars }, (_, index) => (
+                <StarIcon key={`filled-${index}`} />
+              ))}
+            </span>
+            <i>
+              {Array.from({ length: 5 - stars }, (_, index) => (
+                <StarIcon key={`empty-${index}`} />
+              ))}
+            </i>
           </div>
           <p>
             {items.length} Aufgaben · {totalErrors} Fehlversuche
@@ -428,7 +437,7 @@ function RunningDictationShell({ children }: { children: React.ReactNode }) {
     <main className="running-shell">
       <header className="running-topbar">
         <Link href="/frei/german" className="back-link">
-          ← Deutsch
+          <ArrowLeftIcon aria-hidden="true" /> Deutsch
         </Link>
         <div>
           <strong>Laufdiktat</strong>

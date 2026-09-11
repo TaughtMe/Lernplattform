@@ -6,8 +6,12 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TeacherLiveRoom } from "./teacher-live-room";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("TeacherLiveRoom", () => {
   it("offers all upstream content builders", () => {
@@ -16,6 +20,94 @@ describe("TeacherLiveRoom", () => {
     expect(screen.getByRole("tab", { name: "Text" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "Vokabeln" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "Kopfrechnen" })).toBeVisible();
+  });
+
+  it("activates vocabulary transfer before choosing its scope", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+
+    const vocabularyTab = screen.getByRole("tab", { name: "Vokabeln" });
+    await waitFor(() => expect(vocabularyTab).toBeEnabled());
+    await user.click(vocabularyTab);
+
+    const transferToggle = screen.getByRole("checkbox", {
+      name: /Vokabeln übernehmen/,
+    });
+    expect(transferToggle).not.toBeChecked();
+    expect(
+      screen.queryByRole("combobox", {
+        name: "Welche Vokabeln übernehmen?",
+      }),
+    ).not.toBeInTheDocument();
+
+    await user.click(transferToggle);
+    expect(
+      screen.getByRole("combobox", {
+        name: "Welche Vokabeln übernehmen?",
+      }),
+    ).toHaveValue("errors");
+
+    await user.selectOptions(
+      screen.getByRole("combobox", {
+        name: "Welche Vokabeln übernehmen?",
+      }),
+      "all",
+    );
+    expect(
+      screen.getByRole("combobox", {
+        name: "Welche Vokabeln übernehmen?",
+      }),
+    ).toHaveValue("all");
+  });
+
+  it("requires confirmation before opening the dashboard on a small screen", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }),
+    );
+
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Bildschirm zu schmal" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Trotzdem öffnen" }));
+    expect(
+      screen.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens vocabulary settings as a closable panel", async () => {
+    const user = userEvent.setup();
+    render(<TeacherLiveRoom liveRoomConfig={null} />);
+
+    const vocabularyTab = screen.getByRole("tab", { name: "Vokabeln" });
+    await waitFor(() => expect(vocabularyTab).toBeEnabled());
+    await user.click(vocabularyTab);
+    await user.click(screen.getByRole("button", { name: "Einstellungen" }));
+
+    expect(
+      screen.getByRole("dialog", { name: "Vokabel-Einstellungen" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", {
+        name: "Vokabel-Einstellungen schließen",
+      }),
+    ).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(
+      screen.queryByRole("dialog", { name: "Vokabel-Einstellungen" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not pretend to open an unconfigured live lobby", async () => {
@@ -74,7 +166,7 @@ describe("TeacherLiveRoom", () => {
     await waitFor(() => expect(source).toBeEnabled());
     await user.clear(source);
     await user.type(source, "Der Marker markiert Woerter im Text.");
-    await user.click(screen.getByRole("button", { name: "✎ Marker" }));
+    await user.click(screen.getByRole("button", { name: "Marker" }));
 
     // Tap the start word, then the end word — the whole range between them
     // (not just those two words) becomes one manual section.

@@ -41,7 +41,7 @@ describe("MentalMathApp", () => {
     const answer = screen.getByRole("textbox", { name: "Dein Ergebnis" });
     expect(answer).toHaveFocus();
     await user.type(answer, "8{Enter}");
-    expect(screen.getByText("✓ Richtig")).toBeVisible();
+    expect(screen.getByText("Richtig")).toBeVisible();
     await waitFor(() =>
       expect(screen.getByText("Gut gerechnet")).toBeVisible(),
     );

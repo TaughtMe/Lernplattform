@@ -305,10 +305,21 @@
 
 .running-stars {
   margin: 28px 0 20px;
-  font-size: clamp(2rem, 7vw, 4rem);
-  letter-spacing: 0.08em;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
 }
 
+.running-stars span,
+.running-stars i {
+  display: inline-flex;
+  gap: 5px;
+}
+.running-stars svg {
+  width: clamp(2rem, 7vw, 4rem);
+  height: clamp(2rem, 7vw, 4rem);
+  fill: currentColor;
+}
 .running-stars span {
   color: #e4a743;
 }
@@ -678,35 +689,8 @@ h2 {
   background: color-mix(in srgb, var(--teal) 25%, var(--surface));
 }
 .room-code__camera-icon {
-  width: 23px;
-  height: 16px;
-  position: relative;
-  display: block;
-  border: 2.5px solid currentColor;
-  border-radius: 4px;
-}
-.room-code__camera-icon::before {
-  width: 7px;
-  height: 7px;
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border: 2.5px solid currentColor;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
-.room-code__camera-icon::after {
-  width: 8px;
-  height: 4px;
-  content: "";
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  border: 2.5px solid currentColor;
-  border-bottom: 0;
-  border-radius: 3px 3px 0 0;
-  transform: translateX(-50%);
+  width: 25px;
+  height: 25px;
 }
 .qr-scanner-backdrop {
   padding: 20px;
@@ -745,7 +729,10 @@ h2 {
   border-radius: 50%;
   background: var(--surface-soft);
   color: var(--ink);
-  font-size: 1.5rem;
+}
+.qr-scanner-dialog__heading > button svg {
+  width: 21px;
+  height: 21px;
 }
 .qr-scanner-video {
   aspect-ratio: 4 / 3;
@@ -877,6 +864,12 @@ h2 {
   font-weight: 750;
   cursor: pointer;
 }
+.live-room-join__dice svg {
+  width: 17px;
+  height: 17px;
+  margin-right: 4px;
+  vertical-align: -4px;
+}
 .live-room-join__dice:hover {
   color: var(--ink);
 }
@@ -935,6 +928,10 @@ h2 {
   color: var(--teal-dark);
   font-size: 1.9rem;
   font-weight: 850;
+}
+.live-room-state__mark svg {
+  width: 32px;
+  height: 32px;
 }
 /* Vollbild-Diktatspiel: bewusst IMMER dunkel (unabhängig vom Hell/Dunkel-
    Umschalter der Plattform), analog zum eigenständigen Laufdiktat-Original.
@@ -1022,6 +1019,10 @@ h2 {
 }
 .live-game-page__icon-button:hover {
   background: var(--game-glass-strong);
+}
+.live-game-page__icon-button svg {
+  width: 20px;
+  height: 20px;
 }
 .live-game-warning {
   width: min(100%, 720px);
@@ -1152,6 +1153,11 @@ h2 {
   font-weight: 900;
   cursor: pointer;
 }
+.live-game-write__submit svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
 .live-game-write > .text-button {
   margin-top: 22px;
   border: none;
@@ -1197,6 +1203,11 @@ h2 {
   font-size: 2.8rem;
   font-weight: 850;
 }
+.live-game-feedback > span svg {
+  width: 38px;
+  height: 38px;
+  stroke-width: 2.5;
+}
 .live-game-feedback.is-correct > span {
   background: color-mix(in srgb, var(--game-success) 22%, transparent);
   color: var(--game-success-strong);
@@ -1227,7 +1238,11 @@ h2 {
 }
 .live-game-complete__trophy {
   margin-bottom: 6px;
-  font-size: 3.2rem;
+}
+.live-game-complete__trophy svg {
+  width: 54px;
+  height: 54px;
+  color: #e4a743;
 }
 .live-game-complete h1 {
   margin: 6px 0 16px;
@@ -1509,12 +1524,10 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   font-weight: 800;
 }
 
-.teacher-cockpit__sidebar nav a > span {
-  width: 7px;
-  height: 7px;
+.teacher-cockpit__sidebar nav a > svg {
+  width: 20px;
+  height: 20px;
   flex: 0 0 auto;
-  border: 1px solid currentColor;
-  border-radius: 50%;
 }
 
 .teacher-cockpit__sidebar nav a:hover {
@@ -1525,11 +1538,6 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 .teacher-cockpit__sidebar nav a.is-active {
   background: var(--primary-fill);
   color: white;
-}
-
-.teacher-cockpit__sidebar nav a.is-active > span {
-  border-color: white;
-  background: white;
 }
 
 .teacher-cockpit__device {
@@ -1592,9 +1600,19 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 }
 
 .teacher-cockpit__topbar > a {
+  min-height: 44px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.teacher-cockpit__topbar > a svg {
+  width: 20px;
+  height: 20px;
 }
 
 .teacher-cockpit__topbar > a:hover {
@@ -1756,6 +1774,14 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 
 .teacher-dashboard__privacy > span {
   color: var(--teal);
+}
+.teacher-dashboard__privacy-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--teal);
 }
 
 .teacher-dashboard__privacy p {
@@ -2200,12 +2226,10 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
     text-align: center;
   }
 
-  .teacher-cockpit__mobile-nav a > span,
+  .teacher-cockpit__mobile-nav a > svg,
   .student-dashboard__mobile-nav a > span {
     width: 17px;
-    height: 12px;
-    border-radius: 5px;
-    background: var(--line);
+    height: 17px;
   }
 
   .teacher-cockpit__mobile-nav a.is-active,
@@ -2213,7 +2237,12 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
     color: var(--coral-dark);
   }
 
-  .teacher-cockpit__mobile-nav a.is-active > span,
+  .student-dashboard__mobile-nav a > span {
+    height: 12px;
+    border-radius: 5px;
+    background: var(--line);
+  }
+
   .student-dashboard__mobile-nav a.is-active > span {
     background: var(--coral);
   }
@@ -3406,8 +3435,14 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   border-color: var(--coral);
 }
 .theme-toggle__icon {
-  font-size: 1.2rem;
-  line-height: 1;
+  width: 21px;
+  height: 21px;
+  display: grid;
+  place-items: center;
+}
+.theme-toggle__icon svg {
+  width: 100%;
+  height: 100%;
 }
 .theme-toggle__label {
   font-size: 0.75rem;
@@ -3435,6 +3470,34 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 750;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.back-link svg,
+.legal-header a svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+.legal-header a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.teacher-cockpit__live-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.teacher-cockpit__live-note i {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
 }
 .student-start,
 .class-overview {
@@ -3638,7 +3701,14 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 }
 .today-card strong {
   margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--teal-dark);
+}
+.today-card strong svg {
+  width: 17px;
+  height: 17px;
 }
 .assignment-list {
   overflow: hidden;
@@ -4906,10 +4976,10 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   justify-items: center;
   text-align: center;
 }
-.teacher-live__waiting > span {
+.teacher-live__waiting > svg {
+  width: 28px;
+  height: 28px;
   color: var(--teal);
-  font-size: 1.5rem;
-  letter-spacing: 0.2em;
 }
 .teacher-live__waiting strong {
   margin-top: 9px;
@@ -4967,6 +5037,11 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   color: white;
   font-size: 8px;
   line-height: 1;
+}
+.teacher-live__student-status svg {
+  width: 8px;
+  height: 8px;
+  stroke-width: 3;
 }
 .teacher-live__student-list .is-offline .teacher-live__student-status {
   background: var(--muted);
@@ -5113,6 +5188,13 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   border-color: var(--coral);
   background: color-mix(in srgb, var(--coral) 12%, var(--surface));
   color: var(--coral-dark);
+}
+.teacher-live__rule-toggle svg,
+.teacher-live__math-generate svg,
+.teacher-live__upload-pill svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
 }
 .teacher-live__marker-toggle {
   margin-left: auto;
@@ -5440,6 +5522,9 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 .teacher-live__math-generate:hover {
   background: var(--coral-dark);
@@ -5461,6 +5546,10 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 .teacher-live__math-settings-toggle:hover {
   border-color: var(--coral);
   color: var(--coral-dark);
+}
+.teacher-live__math-settings-toggle svg {
+  width: 20px;
+  height: 20px;
 }
 .teacher-live__math-columns {
   min-height: 0;
@@ -5592,6 +5681,10 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   background: var(--surface-hover);
   color: var(--ink);
 }
+.teacher-live__math-row > button:not(.teacher-live__math-row-text) svg {
+  width: 17px;
+  height: 17px;
+}
 .teacher-live__math-edit {
   min-height: 44px;
   padding: 0 14px;
@@ -5702,6 +5795,7 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 }
 .teacher-live__vocabulary-list-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -5723,6 +5817,13 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
+}
+.teacher-live__vocabulary-settings-button,
+.teacher-live__vocabulary-settings-heading {
+  display: none;
+}
+.teacher-live__vocabulary-settings-layer {
+  display: contents;
 }
 .teacher-live__vocabulary-rows {
   max-height: 430px;
@@ -5805,7 +5906,8 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   display: grid;
   gap: 6px;
 }
-.teacher-live__vocabulary-sidebar label {
+.teacher-live__vocabulary-sidebar label,
+.teacher-live__vocabulary-sidebar .teacher-live__vocabulary-transfer-toggle {
   min-height: 40px;
   padding: 0 10px;
   display: flex;
@@ -5841,6 +5943,79 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 }
 .teacher-live__vocabulary-sidebar .teacher-live__vocabulary-case {
   accent-color: var(--coral);
+}
+.teacher-live__vocabulary-sidebar .teacher-live__vocabulary-transfer-toggle {
+  min-height: 58px;
+  justify-content: space-between;
+}
+.teacher-live__vocabulary-transfer-toggle > span:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.teacher-live__vocabulary-transfer-toggle strong,
+.teacher-live__vocabulary-transfer-toggle small {
+  display: block;
+}
+.teacher-live__vocabulary-transfer-toggle small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.teacher-live__switch {
+  width: 42px;
+  height: 24px;
+  flex: 0 0 auto;
+  position: relative;
+}
+.teacher-live__switch input {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.teacher-live__switch > span {
+  width: 42px;
+  height: 24px;
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  pointer-events: none;
+}
+.teacher-live__switch > span::after {
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  border-radius: 50%;
+  background: var(--muted);
+  content: "";
+  transition:
+    transform 150ms ease,
+    background 150ms ease;
+}
+.teacher-live__switch input:checked + span {
+  border-color: var(--coral);
+  background: color-mix(in srgb, var(--coral) 18%, var(--surface));
+}
+.teacher-live__switch input:checked + span::after {
+  background: var(--coral);
+  transform: translateX(18px);
+}
+.teacher-live__switch input:focus-visible + span {
+  outline: 3px solid color-mix(in srgb, var(--coral) 32%, transparent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .teacher-live__switch > span::after {
+    transition: none;
+  }
 }
 .teacher-live__vocabulary-sidebar .teacher-live__vocabulary-transfer {
   display: grid;
@@ -5988,6 +6163,16 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
 .teacher-live__progress-list progress {
   width: 100%;
   accent-color: var(--teal);
+}
+.teacher-live__progress-list small {
+  display: inline-flex;
+  gap: 2px;
+  color: #e4a743;
+}
+.teacher-live__progress-list small svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
 }
 .teacher-live__error-ranking {
   margin-bottom: 22px;
@@ -7295,6 +7480,10 @@ body,
   background: var(--surface-muted);
   color: var(--ink);
 }
+.mental-math-preview__actions button svg {
+  width: 15px;
+  height: 15px;
+}
 .mental-math-preview small {
   color: var(--muted);
 }
@@ -7434,6 +7623,15 @@ body,
   min-height: 34px;
   margin-top: 18px;
   font-weight: 850;
+}
+.mental-math-feedback.correct {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mental-math-feedback svg {
+  width: 18px;
+  height: 18px;
 }
 .mental-math-feedback.correct {
   color: #2f7a54;
@@ -7610,6 +7808,16 @@ body,
   font-weight: 780;
   line-height: 1;
   white-space: nowrap;
+}
+.version-button svg {
+  width: 14px;
+  height: 14px;
+}
+.version-button__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
 }
 .version-button {
   cursor: pointer;
@@ -7810,6 +8018,31 @@ body,
   background: color-mix(in srgb, var(--teal) 13%, var(--surface));
   color: var(--teal-dark);
   font-weight: 900;
+}
+.personal-subject-grid__icon svg,
+.subject-space__icon svg {
+  width: 27px;
+  height: 27px;
+}
+.personal-subject-grid strong,
+.student-class-list strong,
+.student-transfer-success a,
+.teacher-dashboard__next > a,
+.student-overview__learning-box header > a,
+.student-overview__support article > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.personal-subject-grid strong svg,
+.student-class-list strong svg,
+.student-transfer-success a svg,
+.teacher-dashboard__next > a svg,
+.student-overview__learning-box header > a svg,
+.student-overview__support article > a svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 .personal-subject-grid h2,
 .personal-subject-grid h3 {
@@ -8924,9 +9157,10 @@ body,
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   text-align: center;
 }
-.falling-words__finished > span {
+.falling-words__finished > svg {
+  width: 52px;
+  height: 52px;
   color: var(--teal);
-  font-size: 3rem;
 }
 .falling-words__finished > strong {
   font-size: clamp(1.5rem, 4vw, 2.4rem);
@@ -9508,6 +9742,47 @@ body,
 }
 
 /* Laufdiktat teacher dashboard: original fixed wizard layout in Lernraum colors. */
+.teacher-small-screen-warning {
+  min-height: 100dvh;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: var(--shell);
+}
+
+.teacher-small-screen-warning > section {
+  width: min(100%, 420px);
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.teacher-small-screen-warning svg {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  color: var(--coral-dark);
+}
+
+.teacher-small-screen-warning h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.teacher-small-screen-warning p {
+  margin: 12px 0 24px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.teacher-small-screen-warning section > div {
+  display: grid;
+  gap: 10px;
+}
+
 html:has(.teacher-live),
 body:has(.teacher-live) {
   height: 100%;
@@ -9602,8 +9877,11 @@ body:has(.teacher-live) .theme-toggle__label,
   display: grid;
   place-items: center;
   color: var(--muted);
-  font-size: 1.45rem;
-  line-height: 1;
+}
+
+.teacher-live__home svg {
+  width: 21px;
+  height: 21px;
 }
 
 .teacher-live__step-row > p {
@@ -9807,6 +10085,21 @@ body:has(.teacher-live) .theme-toggle__label,
   font-size: 0.79rem;
   font-weight: 800;
   cursor: pointer;
+}
+.teacher-live__section-dialog button svg,
+.teacher-live__vocabulary-settings-heading button svg,
+.teacher-live__qr-close svg {
+  width: 19px;
+  height: 19px;
+}
+.teacher-live__vocabulary-sidebar h4 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.teacher-live__vocabulary-sidebar h4 svg {
+  width: 18px;
+  height: 18px;
 }
 
 .teacher-live__builder {
@@ -10428,6 +10721,13 @@ body:has(.teacher-live) .theme-toggle__label,
   font-size: 0.72rem;
   font-weight: 800;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.teacher-live__live-panel-heading button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .teacher-live__wizard-footer {
@@ -10451,6 +10751,9 @@ body:has(.teacher-live) .theme-toggle__label,
   font-size: 0.92rem;
   font-weight: 850;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .teacher-live__back {
@@ -10469,6 +10772,12 @@ body:has(.teacher-live) .theme-toggle__label,
   justify-self: end;
   background: var(--coral);
   color: white;
+  justify-content: center;
+}
+.teacher-live__back svg,
+.teacher-live__next svg {
+  width: 18px;
+  height: 18px;
 }
 
 .teacher-live__next--lobby {
@@ -10610,6 +10919,10 @@ body:has(.teacher-live) .theme-toggle__label,
     grid-template-columns: 1fr;
   }
 
+  .teacher-live__vocabulary-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .teacher-live__mode-list,
   .teacher-live__options,
   .teacher-live__participants,
@@ -10699,6 +11012,101 @@ body:has(.teacher-live) .theme-toggle__label,
     min-width: 40px;
     min-height: 40px;
     margin-bottom: 6px;
+  }
+
+  .teacher-live__vocabulary-row {
+    grid-template-columns: minmax(0, 1fr) 40px;
+  }
+
+  .teacher-live__vocabulary-row > div {
+    grid-column: 1;
+  }
+
+  .teacher-live__vocabulary-row > button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .teacher-live__vocabulary-settings-button {
+    min-height: 36px;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .teacher-live__vocabulary-settings-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .teacher-live__vocabulary-settings-layer {
+    display: none;
+  }
+
+  .teacher-live__vocabulary-settings-layer.is-open {
+    padding: 108px 14px 84px;
+    display: grid;
+    align-items: start;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgb(23 21 19 / 62%);
+    backdrop-filter: blur(4px);
+  }
+
+  .teacher-live__vocabulary-settings-layer.is-open
+    .teacher-live__vocabulary-sidebar {
+    width: 100%;
+    max-height: 100%;
+    padding: 16px;
+    overflow-y: auto;
+    background: var(--surface);
+    box-shadow: 0 26px 70px rgb(0 0 0 / 34%);
+  }
+
+  .teacher-live__vocabulary-sidebar
+    > .teacher-live__vocabulary-settings-heading {
+    min-height: 44px;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: -16px;
+    z-index: 1;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .teacher-live__vocabulary-settings-heading h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .teacher-live__vocabulary-settings-heading button {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface-soft);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .teacher-live__vocabulary-settings-heading button svg {
+    width: 19px;
+    height: 19px;
   }
 
   .teacher-live__mode-list button {

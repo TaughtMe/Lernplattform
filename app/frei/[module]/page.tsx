@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { ArrowLeftIcon } from "../../components/ui-icons";
 
 export default function Page() {
   return (
     <main className="class-shell">
       <header className="class-topbar">
         <Link href="/lernen#faecher" className="back-link">
-          ← Fächer
+          <ArrowLeftIcon aria-hidden="true" /> Fächer
         </Link>
         <span className="ranking-note">Persönlicher Bereich</span>
       </header>

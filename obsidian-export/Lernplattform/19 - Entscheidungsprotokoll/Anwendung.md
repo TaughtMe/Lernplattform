@@ -6,7 +6,7 @@ tags:
   - klassenranking
   - gamification
 status: beschlossen
-stand: 2026-08-25
+stand: 2026-09-11
 ---
 
 # Entscheidungsprotokoll
@@ -482,3 +482,15 @@ Diese Entscheidung ersetzt Entscheidung 19 insoweit, wie sie einen allgemeinen A
 - Das Lehrergerät prüft lokale Mitgliedschaft, Zuteilung und Signatur. Je Aufgabe und Mitgliedschaft wird nur der höchste Stand gespeichert; gleiche oder ältere Codes sind idempotent.
 - Das lokale Protokoll und sein Export gehören zur Lehrerdatenbank. Es zeigt abgegebene und ausstehende Schüler.
 - Dieser Aufgaben-Abgabenachweis ist bewusst nicht mit dem späteren verschlüsselten Ranking-Leistungsbrief gleichzusetzen. Aggregierte Lernwerte, Löschfristen, Filter, Scanfeedback und animierte QR-Codes bleiben separat offen.
+
+## 46. Stufenweiser Produkteeinstieg statt vorgezogenem Schülerdashboard – 11. September 2026
+
+**Beschlossen:** Der sichtbare Schülereinstieg wächst mit den tatsächlich freigegebenen Funktionen und nimmt das vollständige Dashboard nicht vorweg.
+
+1. Solange Laufdiktat der einzige freigegebene Schülerbereich ist, zeigt die Startseite ausschließlich den direkten Raumbeitritt per Code oder QR-Code. Nach der Übernahme eines gültigen Codes folgt nur noch die Wahl des Tiernamens; derselbe Code wird nicht erneut bestätigt.
+2. Mit der produktiv integrierten LernBox wird die Startseite zu einer einfachen Auswahl der verfügbaren Lernbereiche. Weitere Bereiche erscheinen erst bei ihrer Freigabe.
+3. Das persönliche Schülerdashboard wird erst zum Haupteinstieg, wenn Laufdiktat, LernBox und weitere Lernwege fachlich verbunden sind und daraus echte gemeinsame Empfehlungen, Aufgaben oder Fortschrittsanzeigen entstehen.
+
+Die Auswahl der Lernbereiche bleibt später als **Alle Lernbereiche** im Dashboard erhalten. Direkte QR- und Raumlinks umgehen die Auswahl weiterhin und öffnen unmittelbar den passenden Beitrittsablauf. Alle Stufen verwenden dieselbe Lernraum-App, stabile Routen und gemeinsame Gestaltungsgrundlage; es entstehen keine getrennten Mini-Apps.
+
+Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendung#Rahmenplan für den sichtbaren Produkteeinstieg|Entwicklungsplan]].

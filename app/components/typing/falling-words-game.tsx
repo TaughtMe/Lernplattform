@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { CloudIcon } from "../ui-icons";
 import {
   FALLING_WORDS_DURATION_MS,
   FALLING_WORDS_LANES,
@@ -145,7 +146,7 @@ export function FallingWordsGame({
 
         {state.finished ? (
           <div className="falling-words__finished">
-            <span aria-hidden="true">☁</span>
+            <CloudIcon aria-hidden="true" />
             <strong>Spielpause geschafft!</strong>
             <p>
               {state.score} Punkte · beste Serie {state.bestStreak}

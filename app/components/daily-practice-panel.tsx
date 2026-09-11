@@ -8,6 +8,7 @@ import {
 } from "../../src/domain/class-workspace";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
+import { ArrowRightIcon } from "./ui-icons";
 
 const PERSONAL_PRACTICE_MODULES: readonly ClassModule[] = [
   "vocabulary",
@@ -100,7 +101,7 @@ export function DailyPracticePanel({
               : item.reason === "due"
                 ? "Jetzt wiederholen"
                 : "Lernweg fortsetzen"}{" "}
-            →
+            <ArrowRightIcon aria-hidden="true" />
           </strong>
         </Link>
       ))}

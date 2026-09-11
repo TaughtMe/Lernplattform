@@ -547,6 +547,13 @@ test("teachers can prepare every native live-room content type", async ({
   ).toHaveCount(0);
 
   await page.goto("/lehrer/live");
+  const smallScreenWarning = page.getByRole("heading", {
+    name: "Bildschirm zu schmal",
+  });
+  if ((page.viewportSize()?.width ?? 768) <= 767) {
+    await expect(smallScreenWarning).toBeVisible();
+    await page.getByRole("button", { name: "Trotzdem öffnen" }).click();
+  }
   await expect(
     page.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
   ).toBeAttached();
@@ -558,9 +565,14 @@ test("teachers can prepare every native live-room content type", async ({
   await page.getByRole("tab", { name: "Vokabeln" }).click();
   await expect.poll(() => runtimeErrors).toEqual([]);
   await expect(page.getByText("3 Aufgaben")).toBeVisible();
+  const vocabularyTransfer = page.getByRole("checkbox", {
+    name: /Vokabeln übernehmen/,
+  });
+  await expect(vocabularyTransfer).not.toBeChecked();
+  await vocabularyTransfer.check();
   await expect(
     page.getByRole("combobox", {
-      name: "Vokabeln nach der Runde übernehmen",
+      name: "Welche Vokabeln übernehmen?",
     }),
   ).toHaveValue("errors");
   await page.getByRole("tab", { name: "Kopfrechnen" }).click();

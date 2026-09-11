@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeftIcon } from "../ui-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   NUMPAD_LESSONS,
@@ -73,7 +74,7 @@ export function TypingApp() {
     <main className="typing-shell">
       <header className="running-topbar">
         <Link href="/lernen/faecher/tastschreiben" className="back-link">
-          ← Fach Tastschreiben
+          <ArrowLeftIcon aria-hidden="true" /> Fach Tastschreiben
         </Link>
         <div>
           <strong>Tipptraining</strong>

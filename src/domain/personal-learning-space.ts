@@ -2,7 +2,6 @@ export const PERSONAL_SUBJECTS = [
   {
     id: "german",
     label: "Deutsch",
-    icon: "Aa",
     description:
       "Lernwörter und Rechtschreibstrategien Schritt für Schritt sichern.",
     hubRoute: "/lernen/faecher/deutsch",
@@ -13,7 +12,6 @@ export const PERSONAL_SUBJECTS = [
   {
     id: "mathematics",
     label: "Mathematik",
-    icon: "×",
     description:
       "Grundrechenarten und passende Aufgabenfamilien sicher automatisieren.",
     hubRoute: "/lernen/faecher/mathematik",
@@ -24,7 +22,6 @@ export const PERSONAL_SUBJECTS = [
   {
     id: "vocabulary",
     label: "Vokabeln",
-    icon: "ABC",
     description:
       "Eigene und übernommene Stapel mit einem gemeinsamen Lernstand lernen.",
     hubRoute: "/lernen/faecher/vokabeln",
@@ -35,7 +32,6 @@ export const PERSONAL_SUBJECTS = [
   {
     id: "typing",
     label: "Tastschreiben",
-    icon: "⌨",
     description:
       "Genauigkeit und einen ruhigen Schreibrhythmus nachhaltig trainieren.",
     hubRoute: "/lernen/faecher/tastschreiben",

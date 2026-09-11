@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeftIcon, CheckIcon } from "./ui-icons";
 import {
   forwardRef,
   useEffect,
@@ -206,7 +207,7 @@ export function LearningWordApp() {
     <main className="learning-word-shell">
       <header className="running-topbar">
         <Link href="/lernen/faecher/deutsch" className="back-link">
-          ← Fach Deutsch
+          <ArrowLeftIcon aria-hidden="true" /> Fach Deutsch
         </Link>
         <div>
           <strong>Lernwörter</strong>
@@ -505,7 +506,7 @@ export function LearningWordApp() {
 
             {phase === "success" && (
               <div className="learning-word-success" role="status">
-                <span aria-hidden="true">✓</span>
+                <CheckIcon aria-hidden="true" />
                 <strong>Richtig</strong>
               </div>
             )}
