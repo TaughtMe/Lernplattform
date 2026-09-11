@@ -2,39 +2,82 @@
 
 Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidungen stehen in den verlinkten Kapiteln.
 
+## Jetzt: Stabilisierung vor Live-Tests
+
+- [x] Vault-Status, Produktprioritäten und aktuellen Code-Stand abgleichen
+- [x] Vinext innerhalb des unterstützten Beta-Kanals kontrolliert aktualisieren; Alpha nicht als Stabilitätsgewinn behandeln
+- [x] E2E-Suite auf Desktop, Mobilgeräten und 320 CSS-Pixeln vollständig stabilisieren
+- [x] Veraltete Browser-Erwartungen an Einschreibecode und vierstelligen Raumcode anpassen
+- [x] Feste globale Bedienelemente auf kleinen Displays ohne Überlagerung nutzbar machen
+- [x] Vollständiges Quality Gate nach Toolchain- und E2E-Anpassungen ausführen
+- [ ] Erste begleitete Live-Tests mit realistischen Schülergeräten vorbereiten
+- [x] Freiwillige Sicherung in ein lokales Verzeichnis, Google Drive, OneDrive oder ein freies WebDAV-Ziel als nächsten Produktmeilenstein festlegen
+
+## Jetzt: Vollständiger lokaler Lehrerarbeitsplatz
+
+- [x] Lehrerbereich ohne Prototyp- oder Login-Hürde als zusammenhängendes Cockpit strukturieren
+- [x] Persönliche Lehrkraftinformationen lokal speichern und bearbeiten
+- [x] Mehrere Klassen anlegen, auswählen und mit ihren lokalen Daten löschen
+- [x] Schüler beziehungsweise Aliasse je Klasse anlegen, anzeigen und entfernen
+- [x] Individuelle Einschreibungs-QR-Codes pro Schüler erzeugen
+- [x] Lokale Materialbibliothek speichern, bearbeiten, importieren, exportieren und löschen
+- [x] Aufgaben mit Titel, Anleitung, Fach, Material und Fälligkeit erstellen und bearbeiten
+- [x] Aufgaben einer oder mehreren Klassen zuteilen und wieder löschen
+- [x] Datenschutzarmen Aufgaben-QR-Code ohne Schülernamen erzeugen und kopieren
+- [x] Aufgaben-QR-Codes per Kamera oder manueller Eingabe lesen und validieren
+- [x] Lehrerdatenbank auf IndexedDB-Schema 5 für Profil, Klassen, Schüler, Materialien, Aufgaben und Abgaben erweitern
+- [x] Gesamte lokale Lehrerdatenbank als geprüfte JSON-Datei exportieren und importieren
+- [x] Zugewiesene Aufgabe auf dem Schülergerät übernehmen und in den persönlichen Lernraum einordnen
+- [x] Einzelne Schüler zusätzlich zu ganzen Klassen als optionale Zuteilungsziele unterstützen
+- [x] Signierten QR-Abgabenachweis und lokales Abgabeprotokoll als getrennten Ergebnisweg umsetzen
+- [ ] Kontinuierlichen Scanmodus mit unmittelbarer Ton-, Vibrations- und Rahmenbestätigung ergänzen
+- [ ] Verschlüsselten Ranking-Leistungsbrief mit auswählbaren aggregierten Statistiken ergänzen
+
 ## Jetzt: Vokabel-Kern und Fehlerkreislauf
 
-- [ ] Bestehendes Laufdiktat stabilisieren und automatisierte Basistests ergänzen
-- [ ] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
-- [ ] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
-- [ ] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
-- [ ] Leitner-Boxen und Fälligkeiten lokal umsetzen
-- [ ] Vokabelmodus im Laufdiktat entwickeln
-- [ ] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
-- [ ] Dublettenfreie Übergabe vom Laufdiktat an die LernBox umsetzen
-- [ ] Falsche Testvokabeln automatisch als fällig markieren
-- [ ] Schaltfläche **„Meine Fehler jetzt üben“** und persönliche Fehlerrunde umsetzen
-- [ ] Nach Hilfen einen verdeckten Abruf erzwingen
-- [ ] Tagesauswahl und kurzfristige Wiederholungen ergänzen
-- [ ] Datei-Export und Wiederherstellung testen
+- [x] Bestehendes Laufdiktat stabilisieren und automatisierte Basistests ergänzen
+- [x] LearningBundle v1 mit stabilen Vokabel- und Ereignis-IDs festlegen
+- [x] Herkunft, Runden-ID, Antwortform und verwendete Hilfe im Lernereignis speichern
+- [x] „Gewusst“ und „geschrieben“ je Abfragerichtung getrennt abbilden
+- [x] Leitner-Boxen und Fälligkeiten lokal aus Lernereignissen ableiten
+- [x] Persönlichen Vokabelmodus im Laufdiktat mit beiden und gemischten Richtungen integrieren
+- [x] Lehreroption „alle / nur fehlerhafte / keine Vokabeln übernehmen“ umsetzen
+- [x] Dublettenfreien LernBox-Eingangsadapter für Laufdiktat-Fehler umsetzen
+- [x] Persönlichen Laufdiktat-Ergebnisfluss an den gemeinsamen LernBox-Eingangsadapter anschließen
+- [x] Falsche Vokabeln aus persönlichen Laufdiktat-Runden automatisch als fällig markieren
+- [x] Schaltfläche **„Meine Fehler jetzt üben“** nach persönlichen Vokabelrunden umsetzen
+- [x] Nach Hilfen einen verdeckten Abruf erzwingen
+- [x] Tagesauswahl aus Fälligkeiten und kurzfristigen Fehlerwiederholungen ergänzen
+- [x] Fällige Mehrkarten-Lernrunde für Vokabelstapel umsetzen
+- [x] Schreib- und Karteikartenmodus mit unterschiedlicher Nachweisstärke umsetzen
+- [x] Beide Vokabelrichtungen mit getrennten Fälligkeiten anbieten
+- [x] Sitzungsfortschritt und Rundenabschluss anzeigen
+- [x] Datei-Export und Wiederherstellung testen
 
 ## Danach: Lernwörter
 
-- [ ] Lernobjekttyp „Lernwort“ im gemeinsamen Datenmodell ergänzen
-- [ ] Merkstufe und Leitner-Box getrennt speichern
-- [ ] Stufe 1: vollständiges Wort fehlerfrei abschreiben
-- [ ] Stufe 2: wenige fehlende Buchstaben ergänzen
-- [ ] Stufe 3: Wort mit vielen Lücken rekonstruieren
-- [ ] Stufe 4: Wort ansehen, verdecken und mit Längenstrichen tippen
-- [ ] Stufe 5: mehrere Wörter ansehen, merken und tippen
-- [ ] Blockgrößen 1, 2, 3 und 5 ohne verpflichtende Reihenfolge anbieten
-- [ ] Regeln für Aufstieg, Verbleib, Rückstufung und Hilfen implementieren
-- [ ] Lernstand und Leistungswertung technisch trennen
-- [ ] Selbstkorrekturen erfassen, aber die endgültig richtige Lösung als fachlich richtig werten
+**Aktueller Stand:** Die fünf Merkstufen können im freien Deutschbereich mit eigenen Wörtern vollständig durchlaufen werden. Merkstufe, Leitner-Fälligkeit und typisierte Lernereignisse werden dauerhaft im gemeinsamen persönlichen Datenbereich gespeichert. Die Punktewertung ist bewusst noch nicht angebunden.
+
+- [x] Lernobjekttyp „Lernwort“ im gemeinsamen Datenmodell ergänzen
+- [x] Merkstufe und Leitner-Box getrennt speichern
+- [x] Stufe 1 als überprüfbaren Funktionsprototyp: vollständiges Wort fehlerfrei abschreiben
+- [x] Stufe 2 als überprüfbaren Funktionsprototyp: wenige fehlende Buchstaben ergänzen
+- [x] Stufe 3 als überprüfbaren Funktionsprototyp: Wort mit vielen Lücken rekonstruieren
+- [x] Stufe 4 als überprüfbaren Funktionsprototyp: Wort ansehen, verdecken und mit Längenstrichen tippen
+- [x] Stufe 5 als überprüfbaren Funktionsprototyp: mehrere Wörter ansehen, merken und tippen
+- [x] Blockgrößen 1, 2, 3 und 5 ohne verpflichtende Reihenfolge prototypisch anbieten
+- [x] Regeln für Aufstieg, Verbleib, Rückstufung und Hilfen im Funktionsprototyp implementieren
+- [x] Tastaturfluss mit Autofokus, Enter-Bestätigung und automatischem Weitergehen nach richtigen Antworten umsetzen
+- [x] Stufe 4 als direkte Eingabe auf den Längenstrichen statt als getrenntes Eingabefeld umsetzen
+- [x] Lernstand und Leistungswertung technisch trennen
+- [x] Selbstkorrekturen erfassen, aber die endgültig richtige Lösung als fachlich richtig werten
 - [ ] 5.000-Punkte-Wertung und Sterneanzeige prototypisch umsetzen
 - [ ] Punktabzüge und Merkbonus mit Schülern erproben und kalibrieren
-- [ ] Feste Lernwortlisten nach Rechtschreibphänomenen anlegen
-- [ ] Rechtschreibstrategien Silbieren, Verlängern, Ableiten und Merken taggen
+- [ ] Feste Lernwortlisten nach allen vorgesehenen Rechtschreibphänomenen anlegen
+- [x] Wortbanken mit jeweils mindestens 100 eindeutigen Wörtern für Doppelkonsonanten, ck/tz, Auslautverhärtung, Umlaute, langes i und Dehnungs-h anlegen
+- [x] Eigene Wortbank „Merkwörter & Fremdwörter“ für Wörter ohne verlässliche Regel anlegen
+- [x] Überschaubare Rundengrößen 5, 10, 20 oder gesamte Wortbank anbieten
+- [x] Erste Sammlungen mit den Rechtschreibstrategien Silbieren, Verlängern, Ableiten und Merken taggen
 - [ ] Lernwörter aus Tests, Lehrerzuweisungen und eigenen Texten übernehmen
 
 ## Später: automatische Fehleranalyse
@@ -48,49 +91,180 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 
 ## Später: Tastschreiben
 
-- [ ] Eigenen Bereich für Tastschreibtraining konzipieren
+- [x] Eigenen Bereich für Tastschreibtraining konzipieren
 - [ ] Physische Tastatur und Bildschirmtastatur unterscheiden
-- [ ] Grundstellung, Buchstabenreihen, Großbuchstaben, Umlaute und Satzzeichen abbilden
-- [ ] Wörter, Sätze, kurze Texte und freies Abschreiben ergänzen
-- [ ] Finger- und Tastenhinweise auf einer Bildschirmtastatur darstellen
-- [ ] Anschläge pro Minute, Genauigkeit, Korrekturen und unsichere Tasten auswerten
-- [ ] Geschwindigkeit nur informativ und Genauigkeit vorrangig behandeln
+- [x] Grundstellung, Buchstabenreihen, Großbuchstaben, Umlaute und Satzzeichen abbilden
+- [x] Wörter, Sätze, kurze Texte und freies Abschreiben ergänzen
+- [x] Finger- und Tastenhinweise auf einer Bildschirmtastatur darstellen
+- [x] Anschläge pro Minute, Genauigkeit, Korrekturen und unsichere Tasten auswerten
+- [x] Geschwindigkeit nur informativ und Genauigkeit vorrangig behandeln
 
 ## Langfristig: Mathematik
 
-- [ ] Kompetenz-IDs und Aufgabenfamilien fachlich definieren
+- [x] Erste stabile Kompetenz-IDs für Plus, Minus, Mal und Geteilt samt Zahlenraum definieren
 - [ ] Metadaten für Thema, Schwierigkeit und Lösungsstrategie festlegen
-- [ ] Fehler aus Aufgaben einer passenden Aufgabenfamilie zuordnen
-- [ ] Neue passende Aufgaben statt einzelner Fehleraufgaben erzeugen
-- [ ] Mathematische Lernwege und Hilfsstrategien prototypisch testen
+- [x] Fehler aus Kopfrechenaufgaben einer passenden Grundrechenfamilie zuordnen
+- [x] Neue passende Aufgaben statt einzelner Fehleraufgaben erzeugen
+- [x] Vollständigen Kopfrechenprototyp aus Laufdiktat nativ integrieren
+  - [x] Zahlenraum von/bis und alle vier Grundrechenarten
+  - [x] Negative Ergebnisse sowie Null als Operand oder Ergebnis steuerbar machen
+  - [x] Einmaleins-Reihen für Mal und Geteilt auswählbar machen
+  - [x] Lückenaufgaben an erstem Operand, zweitem Operand oder Ergebnis erzeugen
+  - [x] Eigene Aufgaben mit Dezimalzahlen, Klammern, Potenzen, Brüchen und Wurzeln sicher ohne `eval` auswerten
+  - [x] Aufgabenliste erzeugen, einzelne Aufgaben neu würfeln oder löschen
+  - [x] Tastaturfluss mit Enter, Autofokus und automatischem Weitergehen umsetzen
+- [ ] Weiterführende mathematische Lernwege und Hilfsstrategien außerhalb des Kopfrechnens prototypisch testen
 
 ## Plattform und Betrieb
 
-- [ ] Lehrer-Cockpit und Rollenmodell entwickeln
-- [ ] Gemeinsame App mit getrennten privaten, Klassen- und Lehrerarbeitsbereichen umsetzen
-- [ ] Lehrerbereich mit eigener Authentifizierung schützen
-- [ ] Sicherstellen, dass das Verlassen des Klassenmodus niemals Lehrerrechte erteilt
-- [ ] Schüler in einer Klasse lokal anlegen und individuelle Einschreibungs-QR-Codes erzeugen
-- [ ] Wiederholtes Scannen derselben Einschreibung ohne doppeltes Schülerprofil behandeln
+- [x] Adaptiven Lernkreislauf als übergeordnete Produkt- und Facharchitektur dokumentieren
+- [x] Klassenansicht auf „Heute üben / Frei üben / Mein Fortschritt“ reduzieren
+- [x] Erste lokale Fortschrittsübersicht für Aktivität, aktive Tage und bewältigte frühere Fehler umsetzen
+- [x] LernBox, Lernwörter, Kopfrechnen und Tastschreiben über ein gemeinsames typisiertes Lernsignal- und Empfehlungsmodell an den adaptiven Kern anbinden
+- [x] Digitale Hausaufgaben und Lehrerimpulse aus der Klassenansicht entfernen; Aufgaben werden klassisch mitgeteilt
+- [x] Deutsch direkt mit Lernwörtern, Vokabeln direkt mit LernBox und Mathematik direkt mit Kopfrechnen verknüpfen
+- [x] Separaten Laufdiktat-Raumcode in Klassenraum und freiem Bereich platzieren
+- [ ] Klassen-QR und Raumcode für Einschreibung und Inhaltsübertragung umsetzen
+- [ ] Aggregierten QR-Klassenbeitrag mit persönlichem Lob und gedeckelten Punkten umsetzen
+
+- [x] LernBoxV2 und Laufdiktat als verbindliche Quellmodule statt als Vorbilder für einen Nachbau festlegen
+- [x] Aktuelle Upstream-Repositories und Commitstände dokumentieren
+- [x] LernBox-Leitnerlogik, Decks, Karten und Sicherungen gezielt in den gemeinsamen Lernraum portieren
+- [x] Eigenständige LernBox-PWA-Hülle, iframe, Router, Service Worker und doppelte Einstellungen entfernen
+- [x] Native LernBox-Oberfläche an globales Theme, Navigation und persönliche Lerndatenbank anbinden
+- [x] Laufdiktat-Fachlogik und benötigte Schüler-/Lehrerabläufe gezielt nativ integrieren
+- [x] Ersten nativen persönlichen Laufdiktat-Weg für Text und Vokabeln integrieren
+- [x] Antwortprüfung, Hinweise, Vokabelimport und Sterneberechnung aus Laufdiktat `6c2ade4` portieren und testen
+- [x] Live-Raum, Lehrer-Dashboard, Stationen und Battle nativ integrieren
+  - [x] Sicheren Schülerbeitritt und native Wartelobby aus Laufdiktat portieren
+  - [x] Autorisierte Sitzungsdaten in ein natives Spiel für Text, Vokabeln und Kopfrechnen übernehmen
+  - [x] Fortschritt, Wiederaufnahme und Teilnehmer-Heartbeat an den bestehenden sicheren Raumvertrag anbinden
+  - [x] Lehrerraum mit Inhaltserstellung, QR-/Code-Lobby, Teilnehmerliste und sicherem Sitzungsstart überführen
+  - [x] Stationsmodus in die Lernraum-Oberfläche überführen
+  - [x] Battle in die Lernraum-Oberfläche überführen
+- [ ] Vorhandene Tests beider Anwendungen in das gemeinsame Quality Gate übernehmen
+- [ ] Upstream-Abgleich als wiederholbaren Integrationsablauf einrichten
+- [x] Historischen Schülereinstieg mit getrennten Bereichen für Klasse und freies Üben anlegen; durch die neue gemeinsame Lernraumstruktur zu ersetzen
+- [x] Historische Klassenansicht mit „Heute üben“ und „Aufgaben“ als Grundstruktur anlegen; durch die neue gemeinsame Lernraumstruktur zu ersetzen
+- [x] Aktivierbare Klassenmodule prototypisch validieren; Produktmodell durch freie Grundfunktionen und konkrete Lehrkraftinhalte ersetzt
+- [x] Lokale Lehreroberfläche für Modulfreigaben prototypisch bauen; nicht als endgültigen Veröffentlichungsweg weiterführen
+- [x] Allgemeine Aufgabenplanung zugunsten des Übungs- und Wiederholungskreislaufs entfernen
+- [x] Fehlerhaften Klassenversuch automatisch in „Heute üben“ aufnehmen
+- [x] Fehlerwiederholung nach einem späteren richtigen Abruf wieder schließen
+- [x] Fälligkeiten aus Leitner-Boxen zusätzlich in „Heute üben“ aufnehmen
+- [x] Leitner-Prinzip als sichtbare Fünf-Boxen-Reihen für Bedeutung und Schreiben darstellen
+- [x] Konkrete Lehrkraftinhalte als verschlüsseltes, versioniertes und höchstens 24 Stunden verfügbares Transferpaket veröffentlichen
+- [x] Lernereignisse optional einem rankingfähigen Klassenkontext zuordnen
+- [x] Verbindlichen Coding-, Bibliotheks- und Teststandard festlegen
+- [x] Strikte TypeScript- und Architekturregeln aktivieren
+- [x] Laufzeitvalidierung für LearningBundle v1 mit Zod anlegen
+- [x] Unit-, Nutzerinteraktions- und Eigenschaftstests einrichten
+- [x] Browser-, Mobil- und automatische Barrierefreiheitstests einrichten
+- [x] Automatische Quality Gates für Push und Pull Request anlegen
+- [x] Abhängigkeiten prüfen und vor Bild-Uploads eine erneute Sicherheitsbewertung festhalten
+- [x] Ersten vollständigen Lernweg Material → Aufgabe → lokales Ergebnis → Lernstand umsetzen
+- [ ] React-Aria-Grundkomponenten erst mit dem ersten komplexen Widget einführen
+- [ ] Netzwerkfehler-Simulation mit Mock Service Worker beim ersten Raumabruf ergänzen
+- [x] Verbindliche Qualitätsgrundlage und Definition of Done dokumentieren
+- [x] Vorlage für einen Qualitätsbericht pro Meilenstein anlegen
+- [ ] Testdatensätze für leere, kleine, große, alte und beschädigte Datenbestände erstellen
+- [ ] Migrations- und Rückfallstrategie vor der ersten Datenformatänderung umsetzen
+- [ ] PWA-Update- und Cache-Strategie festlegen und testen
+- [ ] Speicherknappheit und gelöschten Browserspeicher erkennbar behandeln
+- [ ] Zeit-, Zeitzonen- und Tagesgrenzen für Fälligkeiten festlegen
+- [ ] Unicode-, Tastatur- und Autokorrekturregeln für Lernantworten definieren
+- [ ] Datenschutzfreundliche Fehlerdiagnose ohne vollständige Schülerantworten konzipieren
+- [ ] Leistungsbudgets für schwächere Schulgeräte und große Datenbestände festlegen
+- [x] Mobile-first als verbindliche Entwicklungs- und Abnahmegrundlage festlegen
+- [x] Hellen, dunklen und systemabhängigen Darstellungsmodus als Plattformgrundlage umsetzen
+- [x] Gemeinsame Mobil- und Tablet-Navigation mit Safe-Area-Unterstützung anlegen
+- [x] Jede neue Ansicht ab 320 CSS-Pixel Breite und ohne horizontales Scrollen prüfen
+- [ ] Hochformat, Querformat und eingeblendete Bildschirmtastatur pro Lernmodus testen
+- [ ] Geräte- und Browsermatrix vor jedem größeren Meilenstein vollständig durchlaufen
+- [x] Lehrer-Cockpit und lokales Rollenmodell entwickeln
+- [x] Gemeinsame App mit getrennten privaten, Klassen- und Lehrerarbeitsbereichen umsetzen
+- [x] Lehrerbereich in der lokalen Einzelplatzphase ohne eigenen Login zugänglich machen
+- [x] Entsperrtes Gerät beziehungsweise getrenntes Browserprofil als Schutzgrenze sichtbar erklären
+- [ ] Später: Lehrerlogin beziehungsweise Kontotrennung für gemeinsam genutzte Geräte oder mehrere Lehrkräfte neu bewerten
+- [ ] Vor einem Lehrerlogin Nutzen, Authentifizierungsanbieter, Wiederherstellung, Datenschutz, Betriebsaufwand und laufende Kosten verbindlich klären
+- [ ] Keine eigene Login-Infrastruktur betreiben, solange der Mehrwert die zusätzlichen Betriebs- und Anbieterkosten nicht rechtfertigt
+- [x] Schüler in einer Klasse lokal anlegen und individuelle Einschreibungs-QR-Codes erzeugen
+- [x] Wiederholtes Scannen derselben Einschreibung ohne doppeltes Schülerprofil behandeln
 - [ ] Ersatz- oder Zweitgerät nur nach ausdrücklicher Lehrerbestätigung koppeln
 - [ ] Verschlüsselten und signierten QR-Leistungsbrief definieren
-- [ ] Turnus- und Aufgabenpaket-ID sowie fortlaufende Standnummer implementieren
+- [x] Aufgaben-ID und fortlaufende Standnummer für Aufgabenabgaben implementieren
 - [ ] Kontinuierlichen Klassen-Scanmodus ohne einzelnen Bestätigungsdialog entwickeln
 - [ ] Erfolgreichen Scan mit Ton oder Vibration, grünem Rahmen und lokalem Namen bestätigen
-- [ ] Doppelte, veraltete, ungültige und klassenfremde Codes unterscheiden
-- [ ] Lokales Abgabeprotokoll „abgegeben / ausstehend“ je Turnus führen
-- [ ] Fortschritt „x von y abgegeben“ und Liste fehlender Schüler anzeigen
-- [ ] Erneutes Einlesen desselben QR-Codes ohne doppelte Wertung erlauben
+- [x] Doppelte, veraltete, ungültige und klassenfremde Aufgaben-Abgabecodes unterscheiden
+- [x] Lokales Abgabeprotokoll „abgegeben / ausstehend“ je Aufgabe führen
+- [x] Fortschritt „x von y abgegeben“ und Liste fehlender Schüler anzeigen
+- [x] Erneutes Einlesen desselben Aufgaben-Abgabecodes ohne doppelte Wertung erlauben
 - [ ] Löschfrist und manuelles Löschen von Abgabeprotokollen umsetzen
 - [ ] Statischen QR als Standard und animierten QR nur für größere Lernhistorien vorsehen
 - [ ] Lokales Klassenranking aus aggregierten Wochenwerten berechnen
 - [ ] Tageslimits, Aliasdarstellung und motivierende Ranggruppen erproben
 - [ ] Häuser und datensparsame Gruppenpunkte ergänzen
 - [ ] Duelle und QR-Auswertung entwickeln
-- [ ] Verschlüsselten Export und Cloud-Backup ergänzen
+- [ ] Lokale Verzeichnissicherung und manuellen Datei-Export ergänzen
+- [ ] Google Drive und Microsoft OneDrive als optionale Sicherungsziele anbinden
+- [ ] Frei konfigurierbares WebDAV-Ziel für Nextcloud, ownCloud und schulische Speicher anbinden
+- [ ] Zusätzliche Dateiverschlüsselung nur als optionale Schutzstufe vorsehen
+- [ ] Hinweis und bewusste Bestätigung zur Nutzerverantwortung für Anbieterwahl, Freigaben und sensible Daten gestalten
+- [ ] Später: Google-Cloud-Projekte für Test und Produktion anlegen, Drive API aktivieren und OAuth-Anwendung konfigurieren
+- [ ] Später: Microsoft-Entra-Anwendung registrieren, Kontotypen, Weiterleitungsadressen und minimale Graph-Berechtigung festlegen
+- [ ] OAuth-Verbindungen widerrufbar machen und WebDAV-Zugangsdaten sicher behandeln
 - [ ] Persönliches Cloud-Backup technisch von Klasseneinschreibung und Lehrer-Ranking trennen
 - [ ] Barrierefreiheit und gemeinsame Geräteprofile testen
-- [ ] Module unter einer gemeinsamen Plattformoberfläche zusammenführen
+- [x] Module unter einer gemeinsamen Plattformoberfläche zusammenführen
+
+## Nächste Architekturänderung: ein persönlicher Lernraum
+
+- [x] Gemeinsamen persönlichen Lernraum als verbindliches Produktmodell dokumentieren
+- [x] Getrennten Haupteinstieg „Freies Üben“ entfernen und als Aktion innerhalb eines Fachs einordnen
+- [x] Auswahl **Alles fällige** oder einzelnes Fach vor der Lernrunde umsetzen
+- [ ] Fachübergreifende Tagesauswahl in überschaubaren Fachblöcken erzeugen
+- [ ] Manuell angelegte und von der Lehrkraft übernommene Fächer gemeinsam darstellen
+- [ ] Eigene und übernommene Stapel auf denselben persönlichen Lernstand abbilden
+- [ ] Quellenbeziehungen getrennt von Lernobjekt und Lernstand speichern
+- [ ] Vokabeldubletten anhand von Sprachpaar, Grundform, Bedeutung und Richtung prüfen
+- [ ] Vorhandenen Lernstand bei Paketaktualisierungen vollständig bewahren
+
+## Nächste Architekturänderung: temporäre Inhaltsübertragung
+
+- [x] Supabase als kurzlebigen Übergaberaum statt als Dauerbibliothek festlegen
+- [x] Supabase-Projekt `Lernraum` in der EU-Region `eu-west-1` anlegen und gesunden Ausgangszustand prüfen
+- [x] Leeren Ausgangszustand ohne Anwendungstabellen, Migrationen oder Edge Functions dokumentieren
+- [x] Lokale Entwicklung und Hosting über Projekt-URL und modernen Publishable Key verbinden; keine Secret- oder `service_role`-Schlüssel im Client verwenden
+- [x] Supabase-Migrationen und lokale Projektkonfiguration nachvollziehbar im Repository anlegen
+- [x] Automatische Data-API-Standardrechte für neue Tabellen, Sequenzen und Funktionen projektweit entziehen
+- [x] Lokale und dateibasierte Lehrkraftbibliothek mit stabilem Exportformat umsetzen
+- [x] Unveränderliches `LearningBundle` vor dem Upload auf dem Lehrergerät verschlüsseln
+- [x] Temporären Transferraum mit maximal 24 Stunden Ablaufzeit implementieren
+- [x] QR-Nutzlast mit ausreichend zufälligem Abrufnachweis erzeugen
+- [x] Sicheren manuellen Transfercode mit raumbezogener Fehlversuchsgrenze entwickeln
+- [x] Paket ohne Schülerkonto oder dauerhafte Klassenmitgliedschaft abrufen
+- [x] Paket lokal entschlüsseln, validieren und idempotent integrieren
+- [x] Paket lokal entschlüsseln und als `LearningBundleV1` validieren
+- [x] Entschlüsseltes Paket idempotent in die persönliche LernBox integrieren
+- [x] Abruf nach Ablauf technisch verweigern
+- [ ] Backup-Aufbewahrung und tatsächliche Löschfrist des Dienstes betrieblich dokumentieren
+- [x] Abgelaufene aktive Pakete über einen stündlichen Löschauftrag automatisch entfernen
+- [x] RLS, minimale API-Rechte und fehlende Schülerzuordnung automatisiert prüfen
+- [x] Sicherstellen, dass weder Schülerliste noch Abrufhistorie oder Lernstand im Transferraum gespeichert werden
+- [x] Netzabbruch, abgelaufenen Code, beschädigtes Paket und erneute Freigabe testen
+
+## Langfristig: Ramagotchi und nachhaltige Gamification
+
+- [x] Positive Leitidee und pädagogische Schutzregeln dokumentieren
+- [x] Gamification als spätere Ausbaustufe nach dem stabilen Lernkern einordnen
+- [ ] Messbare Reife- und Freigabekriterien für den Lernkern festlegen
+- [ ] Abschaltbaren Prototyp für persönliche Entwicklungsstufe und Wochenziel entwerfen
+- [ ] Erfahrung ausschließlich aus typisierten, sinnvollen Lernsignalen ableiten
+- [ ] Tages- und Wochenlimits gegen Punktesammeln festlegen
+- [ ] Ramagotchi ohne Krankheit, Verlust oder Bestrafung bei Pausen prototypisieren
+- [ ] Kosmetische Entwicklung und persönlichen Lernraum barrierearm gestalten
+- [ ] Aggregierte Haus- und Klassenquests mit freiwilliger Teilnahme erproben
+- [ ] Wirkung, Druckempfinden und unerwünschtes Farmverhalten mit Schülern evaluieren
 
 ## Noch zu entscheiden
 

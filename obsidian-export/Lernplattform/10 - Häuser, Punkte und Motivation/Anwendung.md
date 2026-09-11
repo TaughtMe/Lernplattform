@@ -51,3 +51,9 @@ Fünf Sterne setzen vollständig richtige Eingaben ohne Korrekturen und Hilfen v
 - 50 Wörter sicher schreiben
 - 20 persönliche Lernstufen aufsteigen
 - an fünf Tagen gemeinsam lernen
+
+## Ramagotchi als spätere Motivationsschicht
+
+Nach Fertigstellung und Stabilisierung der zentralen Lernwege kann ein persönlicher **Ramagotchi-Lernbegleiter** den echten Kompetenzfortschritt sichtbar machen. Er entwickelt sich durch sinnvolle Lernhandlungen, persönliche Verbesserung und verzeihende Wochenziele. Lernpausen und Fehler verursachen niemals Krankheit, Verlust oder Minuspunkte.
+
+Die vollständige Leitidee, Schutzregeln und vorgesehene Ausbaufolge stehen unter [[../23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]].
