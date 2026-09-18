@@ -47,6 +47,7 @@ test("server-renders the Lernraum start page", async () => {
 test("server-renders the released pilot entry pages", async () => {
   for (const [path, title] of [
     ["/raum", "Raum beitreten"],
+    ["/frei/mathematics", "Kopfrechnen"],
     ["/lehrer/live", "Laufdiktat Lehrerdashboard"],
     ["/impressum", "Angaben gemäß"],
     ["/datenschutz", "Persönliche Lernstände"],

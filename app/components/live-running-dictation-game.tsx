@@ -1,4 +1,7 @@
 "use client";
+import { createMathAttempt } from "../../src/storage/math-practice";
+import { mathTaskFromPrompt } from "../../src/domain/math-practice";
+import type { LearningEventV1 } from "../../src/domain/learning-bundle";
 import { LiveProgressNotice } from "./live-progress-notice";
 import {
   ArrowLeftIcon,
@@ -148,6 +151,9 @@ export function LiveRunningDictationGame({
   const startedAt = useRef(0);
   const lastAttackId = useRef(0);
   const transferStartedFor = useRef("");
+  const mathSaving = useRef(false);
+  const pendingMath = useRef<LearningEventV1 | null>(null);
+  const [savingMath, setSavingMath] = useState(false);
   const answerRef = useRef<HTMLInputElement>(null);
   const current = session.words[index];
   useLiveSessionGuards(
@@ -365,6 +371,34 @@ export function LiveRunningDictationGame({
             </p>
           ) : null}
           {transferNotice ? <p role="status">{transferNotice}</p> : null}
+          {session.words.some((word) => liveWordKind(word) === "math") ? (
+            <>
+              <p>
+                Du kannst jetzt allein weiterüben. Dein Unterrichtsergebnis
+                bleibt gleich.
+              </p>
+              {deliveryStatus === "saving" || deliveryStatus === "error" ? (
+                <p>Warte kurz, bis dein Ergebnis gesendet wurde.</p>
+              ) : (
+                <div className="live-game-complete__actions">
+                  {errors > 0 ? (
+                    <Link
+                      className="button button--primary"
+                      href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=errors`}
+                    >
+                      Meine Fehler üben
+                    </Link>
+                  ) : null}
+                  <Link
+                    className="button button--quiet"
+                    href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=more`}
+                  >
+                    Weitere Aufgaben üben
+                  </Link>
+                </div>
+              )}
+            </>
+          ) : null}
           <div className="live-game-complete__actions">
             <Link className="button button--primary" href="/">
               Zurück zur Startseite
@@ -444,14 +478,48 @@ export function LiveRunningDictationGame({
     setPeeks((value) => value + 1);
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (phase !== "write" || !answer.trim()) return;
+    if (phase !== "write" || !answer.trim() || mathSaving.current) return;
+    if (kind === "math") {
+      const task = mathTaskFromPrompt(prompt, activeWord.targetWord, index);
+      if (task) {
+        mathSaving.current = true;
+        setSavingMath(true);
+        try {
+          pendingMath.current ??= await createMathAttempt({
+            task,
+            answer,
+            roundId: session.sessionId,
+            // Server counters can lag behind local storage after a disconnect.
+            // This ID belongs to this submission and survives its save retries.
+            attemptId: crypto.randomUUID(),
+            selfCorrected: Boolean(wordErrors[errorKey]),
+            usedHelp: copyMode,
+            source: "running-dictation",
+            ...(session.mathPracticeOptions
+              ? { options: session.mathPracticeOptions }
+              : {}),
+          });
+          await learningEventRepository.put(pendingMath.current);
+          pendingMath.current = null;
+          setLocalSaveWarning("");
+        } catch {
+          setLocalSaveWarning(
+            "Nicht auf diesem Gerät gespeichert. Bitte bestätige deine Antwort erneut.",
+          );
+          return;
+        } finally {
+          mathSaving.current = false;
+          setSavingMath(false);
+        }
+      }
+    }
     if (!startedAt.current) startedAt.current = Date.now();
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     const isCorrect = checkLiveAnswer(activeWord, answer);
-    if (!LAUFDIKTAT_PILOT) {
+    if (!LAUFDIKTAT_PILOT && kind !== "math") {
       void learningEventRepository
         .put({
           id: crypto.randomUUID(),
@@ -461,12 +529,7 @@ export function LiveRunningDictationGame({
           ),
           occurredAt: new Date().toISOString(),
           source: "running-dictation",
-          learningArea:
-            kind === "vocabulary"
-              ? "vocabulary"
-              : kind === "math"
-                ? "mathematics"
-                : "german",
+          learningArea: kind === "vocabulary" ? "vocabulary" : "german",
           roundId: session.sessionId,
           direction: "prompt-to-answer",
           answerMode: "typed",
@@ -648,6 +711,11 @@ export function LiveRunningDictationGame({
         </div>
       ) : null}
 
+      {localSaveWarning ? (
+        <p className="live-game-warning" role="alert">
+          {localSaveWarning}
+        </p>
+      ) : null}
       <main className="live-game-page__stage">
         <div
           className={`live-game-page__edge live-game-page__edge--left${phase === "idle" ? " is-waiting" : ""}`}
@@ -705,6 +773,8 @@ export function LiveRunningDictationGame({
                 inputMode={kind === "math" ? "decimal" : "text"}
                 autoComplete="off"
                 spellCheck={false}
+                disabled={savingMath}
+                maxLength={2000}
                 value={answer}
                 {...(session.strictTypingMode
                   ? {
@@ -741,12 +811,14 @@ export function LiveRunningDictationGame({
                   ) {
                     return;
                   }
+                  pendingMath.current = null;
                   setAnswer(next);
                 }}
               />
               <button
                 type="submit"
                 className="live-game-write__submit"
+                disabled={savingMath}
                 aria-label="Bestätigen"
               >
                 <CheckIcon aria-hidden="true" />

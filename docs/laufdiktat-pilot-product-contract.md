@@ -11,9 +11,10 @@ Der Pilot macht Laufdiktat in seinem vollständigen, im Quellrepository erprobte
 - Lehrkraftweg Inhalt → Einstellungen → Lobby → Durchführung → Auswertung.
 - Text-, Vokabel- und Kopfrecheninhalte mit Import, konfigurierbaren Trennregeln, manuellen Abschnitten und sicherer Antwortprüfung.
 - Kurzlebige Supabase-Räume mit getrennten Lehrkraft- und Teilnehmertoken.
+- Persönliches Matheüben unter `/frei/mathematics`: Fehler und Antworten lokal speichern, nach Abschluss weiterüben und eigene Aufgaben erzeugen.
 - Datenschutz und Impressum.
 
-Nicht freigegeben sind persönliches Dashboard, Klassenverwaltung, allgemeine Material- und Aufgabenverwaltung, LernBox, Lernwörter außerhalb des Laufdiktats, eigenständiges Kopfrechnen außerhalb des Laufdiktats, Tastschreiben, Häuser, Duelle, Rankings, Ramagotchi, Cloud-Backup und automatische Förderzuweisung. Direkte Alt-URLs werden im Pilot zentral auf den passenden Pilot-Einstieg umgeleitet. Gespeicherte Altdaten werden nicht gelöscht oder migriert.
+Nicht freigegeben sind persönliches Dashboard, Klassenverwaltung, allgemeine Material- und Aufgabenverwaltung, LernBox, Lernwörter außerhalb des Laufdiktats, Tastschreiben, Häuser, Duelle, Rankings, Ramagotchi, Cloud-Backup und automatische Förderzuweisung. Direkte Alt-URLs werden im Pilot zentral auf den passenden Pilot-Einstieg umgeleitet. Gespeicherte Altdaten werden nicht gelöscht oder migriert.
 
 ## Abnahmekriterien Schüler
 
@@ -22,7 +23,7 @@ Nicht freigegeben sind persönliches Dashboard, Klassenverwaltung, allgemeine Ma
 3. Lobby, noch nicht gestartet, beendet, ungültig, offline und Verbindungsabbruch sind unterscheidbare Zustände.
 4. Nach Neuladen oder kurzer Unterbrechung werden gerätegebundene Identität und erreichbarer Rundenfortschritt wiederverwendet.
 5. Jede Aufgabe zeigt nacheinander Merk- und Schreibphase. Richtiges und falsches Feedback sind eindeutig verschieden.
-6. Der Abschluss nennt Aufgaben und Fehler und führt zurück zur Pilotstartseite.
+6. Der Abschluss nennt Aufgaben und Fehler. Nach Mathe-Runden sind persönliche Fehlerübungen und weitere Aufgaben erreichbar, sobald das Unterrichtsergebnis übertragen ist. Die übrigen Schüler können ihre Runde weiter bearbeiten.
 
 ## Abnahmekriterien Lehrkraft
 
@@ -38,7 +39,8 @@ Nicht freigegeben sind persönliches Dashboard, Klassenverwaltung, allgemeine Ma
 - Raumkonfiguration, pseudonyme Teilnehmende und Fortschritt werden spätestens 24 Stunden nach Rundenende gelöscht; verlassene Räume enden nach drei Stunden.
 - Teilnehmertoken sind raum- und gerätegebunden und nur gehasht gespeichert.
 - Lehrkraft-Raumerstellung verlangt einen gesonderten Pilotfreigabecode. Er wird im HTTPS-RPC-Body übertragen, nicht in URLs, QR-Codes oder lokalem Langzeitspeicher.
-- Im Pilot wird keine persönliche Lernhistorie und keine automatische Fehlerübergabe in die LernBox erzeugt. Diese bleibt einem späteren Ausbau-Gate vorbehalten.
+- Matheversuche werden im bestehenden persönlichen Datenbereich auf dem Gerät gespeichert: Aufgabe, Antwort, Lösung, Rechenregeln, Hilfen und Korrekturstatus. Sie enthalten keine Namen, Raumcodes oder Teilnehmertoken. Das persönliche Weiterüben sendet keine Ergebnisse an den Raumdienst und verändert keine Unterrichtswertung. Stationsgeräte bleiben vom persönlichen Speichern ausgenommen.
+- Andere Fächer und automatische Fehlerübergaben in die LernBox bleiben einem späteren Ausbau vorbehalten.
 
 ## Freigabe-Gate
 

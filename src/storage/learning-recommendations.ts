@@ -1,3 +1,5 @@
+import { mathReviews } from "../domain/math-practice";
+import { learningEventV1Schema } from "../domain/learning-bundle";
 import type { ClassModule } from "../domain/class-workspace";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import {
@@ -43,7 +45,7 @@ function eventCandidates(
   events: readonly LearningEventV1[],
   now: string,
 ): LearningRecommendationCandidate[] {
-  const latest = latestEvents(events);
+  const latest = latestEvents(events.filter((event) => !event.math));
   const candidates: LearningRecommendationCandidate[] = [];
 
   for (const learningModule of ["vocabulary", "mathematics"] as const) {
@@ -128,7 +130,29 @@ export function createLearningRecommendationRepository(
         database.learningWordProgress.toArray(),
         database.typingProgress.toArray(),
       ]);
-      const candidates = eventCandidates(events, now);
+      const checkedEvents = events.map((event) =>
+        learningEventV1Schema.parse(event),
+      );
+      const candidates = eventCandidates(checkedEvents, now);
+      const mathDue = mathReviews(checkedEvents).filter(
+        (review) => review.dueAt <= now,
+      );
+      if (mathDue.length)
+        candidates.push({
+          id: "math-reviews",
+          module: "mathematics",
+          title: "Mathe weiter üben",
+          detail:
+            "Deine Fehler und Wiederholungen mit passenden Aufgaben üben.",
+          route: "/frei/mathematics",
+          reason: mathDue.some(
+            (review) => review.errors > 0 && review.streak < 2,
+          )
+            ? "error"
+            : "due",
+          amount: mathDue.length,
+          dueAt: mathDue[0]!.dueAt,
+        });
 
       const dueCards = cards.filter(
         (card) =>

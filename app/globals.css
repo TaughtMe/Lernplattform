@@ -11928,3 +11928,56 @@ body:has(.teacher-live) .theme-toggle__label,
 .live-station--active .text-button {
   color: #fff;
 }
+
+.math-review-panel {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.math-review-panel p {
+  line-height: 1.6;
+}
+.mental-math-round > .button,
+.mental-math-round > .text-button {
+  margin: 8px;
+  min-height: 44px;
+}
+.mental-math-tables button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.mental-math-tables > div {
+  grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+}
+.mental-math-progress progress {
+  max-width: 100%;
+}
+.mental-math-settings > label {
+  min-width: 0;
+}
+@media (max-width: 400px) {
+  .mental-math-generator__header {
+    flex-wrap: wrap;
+  }
+  .mental-math-settings {
+    grid-template-columns: 1fr;
+  }
+  .mental-math-shell .class-topbar {
+    flex-wrap: wrap;
+  }
+}
+
+.mental-math-round h1 {
+  font-size: clamp(2rem, 9vw, 5rem);
+  overflow-wrap: anywhere;
+}
+
+.math-review-panel h2 {
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+}
+.math-review-panel p {
+  margin: 10px 0;
+}

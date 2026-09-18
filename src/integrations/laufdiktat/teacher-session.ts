@@ -1,3 +1,4 @@
+import type { MathOptions } from "../../domain/math-practice";
 import {
   buildVocabularyItems,
   parseRunningDictationText,
@@ -33,9 +34,11 @@ export type TeacherSessionOptions = {
   stationShuffle?: boolean;
   battleOptions?: TeacherBattleOptions;
   wordsOverride?: LiveWord[];
+  mathPracticeOptions?: MathOptions;
 };
 
 export type TeacherRoomConfig = {
+  mathPracticeOptions?: MathOptions;
   words: LiveWord[];
   gameMode: "LAUFDIKTAT" | "UEBUNG" | "BATTLE";
   battleOptions: TeacherBattleOptions;
@@ -116,6 +119,9 @@ export function buildTeacherRoomConfig(
   options: TeacherSessionOptions,
 ): TeacherRoomConfig {
   return {
+    ...(options.mathPracticeOptions
+      ? { mathPracticeOptions: options.mathPracticeOptions }
+      : {}),
     words:
       options.wordsOverride ??
       buildTeacherWords(

@@ -1,3 +1,4 @@
+import { mathOptionsSchema } from "../../domain/math-practice";
 import { z } from "zod";
 import { deterministicOrder } from "../../domain/running-dictation";
 
@@ -17,6 +18,7 @@ const liveWordSchema = z
 
 const liveSessionConfigSchema = z
   .object({
+    mathPracticeOptions: mathOptionsSchema.optional(),
     words: z.array(liveWordSchema).min(1).max(1_000),
     gameMode: z
       .enum(["LAUFDIKTAT", "UEBUNG", "BATTLE", "TEST"])
@@ -81,7 +83,7 @@ export function checkLiveAnswer(word: LiveWord, input: string) {
   const value = input.trim();
   if (!value) return false;
   if (kind === "math") {
-    const actual = Number.parseFloat(value.replace(",", "."));
+    const actual = Number(value.replace(",", "."));
     const expected = Number(word.targetWord);
     return (
       Number.isFinite(actual) &&

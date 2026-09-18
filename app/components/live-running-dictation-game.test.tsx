@@ -257,3 +257,76 @@ describe("LiveRunningDictationGame", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+it("stores math errors locally and keeps extra practice out of lesson scoring", async () => {
+  putLearningEvent.mockClear();
+  const user = userEvent.setup();
+  const onProgress = vi.fn();
+  const { container } = render(
+    <LiveRunningDictationGame
+      code="4829"
+      studentName="Mia"
+      session={{
+        ...session,
+        words: [{ id: "m", kind: "math", prompt: "7 · 8", targetWord: "56" }],
+      }}
+      connectionWarning=""
+      initialProgress={null}
+      onProgress={onProgress}
+      deliveryStatus="saved"
+    />,
+  );
+  revealWithTwoFingers(container);
+  const answer = screen.getByRole("textbox", { name: "Deine Antwort" });
+  await user.type(answer, "54{Enter}");
+  await waitFor(() => expect(putLearningEvent).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(answer).toBeEnabled());
+  await user.type(answer, "56{Enter}");
+  await screen.findByRole("heading", { name: "Geschafft, Mia!" });
+  expect(putLearningEvent.mock.calls[0]![0]).toMatchObject({
+    source: "running-dictation",
+    math: { answer: "54", task: { answer: 56 } },
+  });
+  expect(putLearningEvent.mock.calls[1]![0].assessment.selfCorrected).toBe(
+    true,
+  );
+  expect(
+    screen.getByRole("link", { name: "Meine Fehler üben" }),
+  ).toHaveAttribute("href", "/frei/mathematics?round=session-1&mode=errors");
+  expect(
+    screen.getByRole("link", { name: "Weitere Aufgaben üben" }),
+  ).toBeVisible();
+  expect(onProgress).toHaveBeenLastCalledWith(
+    expect.objectContaining({ finished: true, errors: 1, attempts: 2 }),
+  );
+});
+
+it("preserves a math answer after local storage failure", async () => {
+  putLearningEvent.mockClear().mockRejectedValueOnce(new Error("disk"));
+  const user = userEvent.setup();
+  const onProgress = vi.fn();
+  const { container } = render(
+    <LiveRunningDictationGame
+      code="4829"
+      studentName="Mia"
+      session={{
+        ...session,
+        words: [{ id: "m", kind: "math", prompt: "2 + 3", targetWord: "5" }],
+      }}
+      connectionWarning=""
+      initialProgress={null}
+      onProgress={onProgress}
+    />,
+  );
+  revealWithTwoFingers(container);
+  const answer = screen.getByRole("textbox", { name: "Deine Antwort" });
+  await user.type(answer, "5{Enter}");
+  await screen.findByRole("alert");
+  expect(answer).toHaveValue("5");
+  expect(onProgress).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Bestätigen" }));
+  await screen.findByRole("heading", { name: "Geschafft, Mia!" });
+  expect(putLearningEvent.mock.calls[0]![0]).toEqual(
+    putLearningEvent.mock.calls[1]![0],
+  );
+});

@@ -16,20 +16,20 @@ export type MentalMathTask = {
   answer: number;
   skillId: string;
   operation: MentalMathOperation | "mixed-expression";
-  gap?: MathGapSlot;
+  gap?: MathGapSlot | undefined;
 };
 
 export type MentalMathOptions = {
   operations: readonly MentalMathOperation[];
-  minValue?: number;
+  minValue?: number | undefined;
   maxValue: number;
   count: number;
-  allowNegativeResults?: boolean;
-  excludeZeroOperand?: boolean;
-  excludeZeroResult?: boolean;
-  multiplicationTables?: readonly number[];
-  gapMode?: boolean;
-  gapSlots?: readonly MathGapSlot[];
+  allowNegativeResults?: boolean | undefined;
+  excludeZeroOperand?: boolean | undefined;
+  excludeZeroResult?: boolean | undefined;
+  multiplicationTables?: readonly number[] | undefined;
+  gapMode?: boolean | undefined;
+  gapSlots?: readonly MathGapSlot[] | undefined;
 };
 
 export const MULTIPLICATION_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -407,46 +407,82 @@ function randomInteger(random: () => number, min: number, max: number) {
 
 function generateOperands(
   operation: MentalMathOperation,
-  options: Required<Omit<MentalMathOptions, "operations" | "gapSlots">>,
+  options: {
+    [K in keyof Omit<MentalMathOptions, "operations" | "gapSlots">]-?: Exclude<
+      MentalMathOptions[K],
+      undefined
+    >;
+  },
   random: () => number,
 ) {
   const tables = options.multiplicationTables.length
     ? options.multiplicationTables
     : MULTIPLICATION_TABLES;
-  for (let attempt = 0; attempt < 200; attempt += 1) {
-    if (operation === "multiply" || operation === "divide") {
-      const table = tables[randomInteger(random, 0, tables.length - 1)] ?? 1;
-      const factor = randomInteger(random, 0, 10);
-      const left =
-        operation === "multiply"
-          ? random() < 0.5
-            ? table
-            : factor
-          : table * factor;
-      const right =
-        operation === "multiply" ? (left === table ? factor : table) : table;
-      const result = compute(left, operationToOperator[operation], right)!;
-      if (Math.max(left, right, result) > options.maxValue) continue;
-      if (options.excludeZeroOperand && (left === 0 || right === 0)) continue;
-      if (options.excludeZeroResult && result === 0) continue;
-      return { left, right, result };
-    }
-    const left = randomInteger(random, options.minValue, options.maxValue);
-    const right = randomInteger(random, options.minValue, options.maxValue);
-    const result = compute(left, operationToOperator[operation], right)!;
-    const minimumResult = options.allowNegativeResults
-      ? Math.min(options.minValue, -options.maxValue)
-      : options.minValue;
-    if (result < minimumResult || result > options.maxValue) continue;
-    if (options.excludeZeroOperand && (left === 0 || right === 0)) continue;
-    if (options.excludeZeroResult && result === 0) continue;
+  const minimumResult = options.allowNegativeResults
+    ? Math.min(options.minValue, -options.maxValue)
+    : Math.max(0, options.minValue);
+  function candidate(left: number, right: number) {
+    const result = compute(left, operationToOperator[operation], right);
+    if (
+      result === null ||
+      left < options.minValue ||
+      right < options.minValue ||
+      left > options.maxValue ||
+      right > options.maxValue ||
+      result < minimumResult ||
+      result > options.maxValue ||
+      (options.excludeZeroOperand && (left === 0 || right === 0)) ||
+      (options.excludeZeroResult && result === 0)
+    )
+      return null;
     return { left, right, result };
   }
-  return {
-    left: 1,
-    right: operation === "subtract" ? 0 : 1,
-    result: operation === "subtract" ? 1 : operation === "add" ? 2 : 1,
-  };
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    let left: number;
+    let right: number;
+    if (operation === "multiply" || operation === "divide") {
+      const table = tables[randomInteger(random, 0, tables.length - 1)]!;
+      const factor = randomInteger(random, 0, 10);
+      left = operation === "divide" ? table * factor : table;
+      right = operation === "divide" ? table : factor;
+      if (operation === "multiply" && random() < 0.5)
+        [left, right] = [right, left];
+    } else {
+      left = randomInteger(random, options.minValue, options.maxValue);
+      right = randomInteger(random, options.minValue, options.maxValue);
+    }
+    const valid = candidate(left, right);
+    if (valid) return valid;
+  }
+  // Bounded fallback also honors narrow ranges, selected rows and zero rules.
+  if (operation === "multiply" || operation === "divide") {
+    for (const table of tables)
+      for (let factor = 0; factor <= 10; factor += 1) {
+        const valid =
+          operation === "multiply"
+            ? candidate(table, factor)
+            : candidate(table * factor, table);
+        if (valid) return valid;
+      }
+  } else {
+    const values = [
+      options.minValue,
+      options.maxValue,
+      0,
+      1,
+      -1,
+      options.minValue + 1,
+      options.maxValue - 1,
+    ];
+    for (const left of values)
+      for (const right of values) {
+        const valid = candidate(left, right);
+        if (valid) return valid;
+      }
+  }
+  throw new Error(
+    "Für diese Einstellungen gibt es keine passenden Aufgaben. Ändere den Zahlenraum oder die Regeln.",
+  );
 }
 
 export function buildMentalMathTask(

@@ -39,9 +39,12 @@ export default function Home() {
           <RoomCodeForm idPrefix="main-join" mode="room" />
         </div>
         <PilotConnectionNotice configured={configured} />
+        <Link className="button button--quiet" href="/frei/mathematics">
+          Mathe selbst üben
+        </Link>
         <p className="privacy-note">
-          Keine Konten, keine dauerhafte Schülerhistorie. Live-Räume benötigen
-          Internet.
+          Keine Konten. Matheaufgaben und Antworten bleiben auf diesem Gerät.
+          Live-Räume benötigen Internet.
         </p>
       </section>
     </main>

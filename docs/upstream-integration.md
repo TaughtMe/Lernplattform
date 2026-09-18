@@ -103,3 +103,7 @@ Aus Laufdiktat `6c2ade4` sind jetzt nativ übernommen und durch gemeinsame Tests
 Die App-Hülle, ihr Router, Service Worker, eigenes Theme und allgemeine Einstellungen wurden bewusst nicht übernommen. Laufdiktat läuft als fester Bestandteil des Lernraums und verwendet dessen Theme, Navigation und responsive Qualitätsgrundlage. Noch offen bleibt die vollständige lokale Übergabe aller Live-Fehler an die jeweiligen persönlichen Fördermodule; dafür ist weiterhin ein ausdrücklicher, datensparsamer Rückgabeweg nötig.
 
 Der Raumbeitritt lädt nur dann den Browserclient, wenn `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` gesetzt sind. Ein Service-Role-Schlüssel darf niemals im Browser liegen. Ohne Konfiguration bleibt die lokale Anwendung vollständig nutzbar und nennt die fehlende Live-Verbindung verständlich; sie simuliert keinen erfolgreichen Raumbeitritt.
+
+## Mathe-Weiterüben (18. September 2026)
+
+Der vorhandene Port aus `src/utils/dashboard/mathTasks.ts` des Laufdiktat-Quellprojekts bleibt die Generatorgrundlage. Persönliche Fehlerablage, Wiederholung und der Anschluss nach Unterrichtsrunden ergänzen diesen Kern im Lernraum. Der Generator-Fallback wurde korrigiert: Zahlenraum, Nullregeln und Reihen gelten auch nach erfolgloser Zufallsauswahl; unmögliche Kombinationen werden gemeldet. Numerische Live-Antworten werden vollständig geprüft; ein Zahlpräfix mit angehängtem Text zählt nicht mehr als richtige Antwort. Beide Abweichungen sind durch Regressionstests geschützt.

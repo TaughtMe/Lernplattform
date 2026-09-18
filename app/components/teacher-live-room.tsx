@@ -686,8 +686,39 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
         stationShuffle,
         battleOptions: { ink: battleInk, flicker: battleFlicker },
         wordsOverride: words,
+        ...(contentMode === "math"
+          ? {
+              mathPracticeOptions: {
+                operations: (mathOps.length ? mathOps : ["+"]).map((op) =>
+                  op === "+"
+                    ? ("add" as const)
+                    : op === "-"
+                      ? ("subtract" as const)
+                      : op === "*"
+                        ? ("multiply" as const)
+                        : ("divide" as const),
+                ),
+                minValue: mathMin,
+                maxValue: mathMax,
+                count: 10,
+                allowNegativeResults: mathAllowNegative,
+                excludeZeroOperand: mathExcludeZeroOperand,
+                excludeZeroResult: mathExcludeZeroResult,
+                multiplicationTables: mathTables,
+                gapMode: mathGap,
+              },
+            }
+          : {}),
       }),
     [
+      mathOps,
+      mathMin,
+      mathMax,
+      mathAllowNegative,
+      mathExcludeZeroOperand,
+      mathExcludeZeroResult,
+      mathTables,
+      mathGap,
       assistance,
       attempts,
       battleFlicker,
@@ -1218,9 +1249,8 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                       type="button"
                       className="teacher-live__math-generate"
                       onClick={() => {
-                        setSources((current) => ({
-                          ...current,
-                          math: generateMentalMathSource({
+                        try {
+                          const math = generateMentalMathSource({
                             count: mathCount,
                             min: mathMin,
                             max: mathMax,
@@ -1229,9 +1259,15 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                             excludeZeroOperand: mathExcludeZeroOperand,
                             excludeZeroResult: mathExcludeZeroResult,
                             multiplicationTables: mathTables,
-                          }),
-                        }));
-                        setMathGaps([]);
+                          });
+                          setSources((current) => ({ ...current, math }));
+                          setMathGaps([]);
+                          setError("");
+                        } catch {
+                          setError(
+                            "Keine passenden Aufgaben. Bitte ändere den Zahlenraum oder die Regeln.",
+                          );
+                        }
                       }}
                     >
                       <SparklesIcon aria-hidden="true" /> Aufgaben erzeugen
@@ -1340,7 +1376,14 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                                   title="Neu würfeln"
                                   onClick={() => {
                                     const lines = [...mathLines];
-                                    lines[index] = generateSingleMathLine();
+                                    try {
+                                      lines[index] = generateSingleMathLine();
+                                    } catch {
+                                      setError(
+                                        "Keine passenden Aufgaben. Bitte ändere den Zahlenraum oder die Regeln.",
+                                      );
+                                      return;
+                                    }
                                     commitMathLines(lines);
                                   }}
                                 >

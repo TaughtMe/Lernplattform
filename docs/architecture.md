@@ -32,7 +32,7 @@ Der verbindliche Coding-, Bibliotheks- und Teststandard steht in [engineering-qu
 
 ## Aktueller fachlicher Stand
 
-Der sichtbare Produktumfang ist vorübergehend durch den zentralen Laufdiktat-Pilotmodus begrenzt. Öffentlich sind nur Start, Raumbeitritt, klassisches Lehrkraft-Laufdiktat sowie Datenschutz und Impressum. Alle übrigen Routen werden kontrolliert umgeleitet; ihre Komponenten, Fachlogik, Tests und lokalen Daten bleiben unverändert im Repository. Der Produktvertrag steht in [laufdiktat-pilot-product-contract.md](laufdiktat-pilot-product-contract.md).
+Der sichtbare Produktumfang ist vorübergehend durch den zentralen Laufdiktat-Pilotmodus begrenzt. Öffentlich sind nur Start, Raumbeitritt, klassisches Lehrkraft-Laufdiktat sowie persönliches Matheüben, Datenschutz und Impressum. Alle übrigen Routen werden kontrolliert umgeleitet; ihre Komponenten, Fachlogik, Tests und lokalen Daten bleiben unverändert im Repository. Der Produktvertrag steht in [laufdiktat-pilot-product-contract.md](laufdiktat-pilot-product-contract.md).
 
 LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unter gemeinsamen Lernraum-Routen. Lernwörter speichern Merkstufe und Wiederholungsfälligkeit getrennt; Tastschreiben bewertet Genauigkeit vor Geschwindigkeit. LernBox, Lernwörter, Kopfrechnen und Tastschreiben schreiben typisierte Ereignisse in den persönlichen Lernverlauf oder stellen ihre nativen Fälligkeiten über einen Modul-Adapter bereit.
 
@@ -41,3 +41,13 @@ LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unt
 `LearningBundleV1` bleibt das versionierte Austauschformat zwischen Modulen und transportiert beispielsweise fehlerhafte Laufdiktat-Vokabeln dublettenfrei in die persönliche LernBox. Vollständige persönliche Antworten bleiben lokal.
 
 Der nächste fachliche Schritt ist, Lernwortrunden direkt aus den empfohlenen individuellen Merkstufen zusammenzustellen und Tippsequenzen aus den tatsächlich unsicheren Tasten zu erzeugen. Danach werden lokale Klassenmitgliedschaften und versionierte Klassenpakete anstelle der fest eingebauten Demo-Klasse angebunden. Duelle, Häuser oder weitere Motivationsfunktionen bleiben nachgeordnet.
+
+## Persönliches Matheüben
+
+Matheversuche erweitern `LearningEventV1` additiv um den optionalen `math`-Datensatz. Bestehende Ereignisse bleiben gültig; es entsteht weder eine zweite Datenbank noch eine neue Tabelle. Das Repository prüft gespeicherte Daten zur Laufzeit. Stabile Versuch-IDs verhindern doppelte Einträge bei erneuter Speicherung. Die Projektion lässt sich aus den unveränderten Ereignissen wiederherstellen.
+
+Fehler, Korrekturen und Lösungen mit Hilfe bleiben fällig. Zwei sichere Antworten erlauben eine Wiederholung nach einem Tag; ein erfolgreicher späterer Abruf in einer neuen Runde verlängert auf drei Tage. Ein neuer Fehler macht die Aufgabe erneut fällig. Varianten werden dem ursprünglichen Lernobjekt zugeordnet; andere Fehler werden dadurch nicht erledigt. Eine Runde umfasst höchstens zehn Wiederholungsaufgaben, eigene Runden höchstens fünfzig.
+
+Der gemeinsame Aufgabengenerator bleibt die Quelle. Einfache Aufgaben erhalten Varianten nach Rechenart, Zahlenraum, Einmaleinsreihe und Lückenposition. Dezimalzahlen und komplexe Ausdrücke werden vorerst exakt wiederholt. Bei alten Räumen ohne Generatoreinstellungen werden diese aus der Aufgabe abgeleitet. Nicht erzeugbare Kombinationen melden einen Fehler, statt still Aufgaben außerhalb der gewählten Regeln zu liefern.
+
+Die Raumwertung endet vor dem Wechsel zur persönlichen Übung. Die persönlichen Antworten bleiben lokal. Gemeinsam genutzte Stationsgeräte erzeugen keine persönliche Mathehistorie.

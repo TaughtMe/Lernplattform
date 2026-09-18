@@ -65,3 +65,12 @@ describe("native Laufdiktat live sessions", () => {
     expect(session.gameMode).toBe("LAUFDIKTAT");
   });
 });
+
+it("rejects numeric prefixes with trailing text", () => {
+  expect(
+    checkLiveAnswer(
+      { id: "math", kind: "math", prompt: "4 + 4", targetWord: "8" },
+      "8abc",
+    ),
+  ).toBe(false);
+});

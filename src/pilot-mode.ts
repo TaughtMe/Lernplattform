@@ -3,6 +3,7 @@ export const LAUFDIKTAT_PILOT = true as const;
 export const PILOT_PUBLIC_ROUTES = [
   "/",
   "/raum",
+  "/frei/mathematics",
   "/lehrer/live",
   "/datenschutz",
   "/impressum",

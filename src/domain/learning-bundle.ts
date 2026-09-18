@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { mathAttemptSchema } from "./math-practice";
 
 /** Stable cross-module contract. Keep additive changes backward compatible within v1. */
 export const LEARNING_BUNDLE_VERSION = "1.0.0" as const;
@@ -80,6 +81,7 @@ export const learningEventV1Schema = z
     direction: learningDirectionSchema,
     answerMode: answerModeSchema,
     help: helpKindSchema,
+    math: mathAttemptSchema.optional(),
     practice: z
       .object({
         title: z.string().trim().min(1).max(200),
