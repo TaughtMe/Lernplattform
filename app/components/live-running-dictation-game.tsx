@@ -322,6 +322,7 @@ export function LiveRunningDictationGame({
           {session.showStars ? (
             <div
               className="running-stars"
+              role="img"
               aria-label={`${stars} von 5 Sternen`}
             >
               <span>

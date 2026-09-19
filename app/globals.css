@@ -11981,3 +11981,129 @@ body:has(.teacher-live) .theme-toggle__label,
 .math-review-panel p {
   margin: 10px 0;
 }
+
+/* Personal animal selection stays outside active learning and teacher tools. */
+.learner-profile {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 40;
+}
+.learner-profile__trigger,
+.learner-profile__close {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.learner-profile__trigger img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+.learner-profile__trigger svg,
+.learner-profile__close svg {
+  width: 24px;
+  height: 24px;
+}
+.learner-profile__dialog {
+  width: min(680px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--ink);
+  overflow: hidden;
+}
+.learner-profile__dialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.learner-profile__dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+.learner-profile__dialog p {
+  line-height: 1.5;
+  margin: 0;
+}
+.learner-profile__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.learner-profile__header h2 {
+  font-size: 1.7rem;
+}
+.learner-profile__animals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 100px;
+  padding: 5px;
+}
+.learner-profile__animals button {
+  min-height: 92px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+.learner-profile__animals button[aria-pressed="true"] {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 12%, var(--surface));
+}
+.learner-profile__animals img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+.learner-profile__footer {
+  display: grid;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.learner-profile__footer p {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.live-room-lobby-avatar {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 16px;
+}
+body:has(.is-active-round, .mental-math-round, .teacher-live) .learner-profile {
+  display: none;
+}
+.main-entry__header,
+.mental-math-shell .class-topbar {
+  padding-right: max(84px, calc((100vw - 1080px) / 2));
+}
+@media (max-width: 400px) {
+  .main-entry__header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .learner-profile__dialog {
+    padding: 14px;
+  }
+}

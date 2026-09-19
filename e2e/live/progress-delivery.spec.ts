@@ -59,11 +59,7 @@ test("completion survives failed delivery, retry and reload", async ({
     await route.fulfill({ json: body });
   });
   await page.goto("/raum?code=4829");
-  await expect(page.locator(".live-room-join")).toHaveAttribute(
-    "data-hydrated",
-    "true",
-  );
-  await page.getByRole("button", { name: "Beitreten", exact: true }).click();
+
   await page
     .getByRole("button", { name: "Aufgabe zeigen", exact: true })
     .click();
@@ -100,11 +96,7 @@ test("completion survives failed delivery, retry and reload", async ({
   await expect(page.getByText(/wurde an diese Unterrichtsrunde/)).toBeVisible();
   expect(writes).toBe(2);
   await page.reload();
-  await expect(page.locator(".live-room-join")).toHaveAttribute(
-    "data-hydrated",
-    "true",
-  );
-  await page.getByRole("button", { name: "Beitreten", exact: true }).click();
+
   await expect(
     page.getByRole("heading", { name: "Geschafft, Mia!" }),
   ).toBeVisible();

@@ -185,7 +185,6 @@ test("a configured teacher and student can complete one live round", async ({
   const roomCode = await teacher.locator(".teacher-live__code").innerText();
 
   await student.goto(`/raum?code=${roomCode}`);
-  await student.getByRole("button", { name: "Beitreten" }).click();
   await expect(student.getByText(/Du bist dabei/)).toBeVisible();
 
   await teacher.getByRole("button", { name: "Sitzung starten" }).click();

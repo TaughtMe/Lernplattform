@@ -56,11 +56,7 @@ for (const withError of [true, false])
       await route.fulfill({ json: body });
     });
     await page.goto("/raum?code=4829");
-    await expect(page.locator(".live-room-join")).toHaveAttribute(
-      "data-hydrated",
-      "true",
-    );
-    await page.getByRole("button", { name: "Beitreten", exact: true }).click();
+
     await page
       .getByRole("button", { name: "Aufgabe zeigen", exact: true })
       .click();

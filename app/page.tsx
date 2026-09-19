@@ -30,8 +30,8 @@ export default function Home() {
           <h1 id="main-entry-title">Bereit für dein Laufdiktat?</h1>
           <p>
             Gib den vierstelligen Raumcode deiner Lehrkraft ein oder scanne den
-            QR-Code. Danach wählst du deinen Namen oder ein Pseudonym und
-            wartest gemeinsam in der Lobby.
+            QR-Code. Mit deinem Profil-Tier bist du direkt dabei. Ohne Auswahl
+            bekommst du ein zufälliges Tier.
           </p>
         </div>
 

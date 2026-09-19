@@ -46,11 +46,6 @@ async function join(
     return;
   }
   await page.goto("/raum?code=4829");
-  await expect(page.locator(".live-room-join")).toHaveAttribute(
-    "data-hydrated",
-    "true",
-  );
-  await page.getByRole("button", { name: "Beitreten", exact: true }).click();
 }
 async function accessible(page: Page, screenshot: string) {
   expect(
