@@ -4,15 +4,15 @@ import { expect, test } from "@playwright/test";
 test("the profile uses original animals, keeps the choice and supports keyboard and small screens", async ({
   page,
 }) => {
-  await page.goto("/");
-  const trigger = page.getByRole("button", { name: "Dein Profil öffnen" });
+  await page.goto("/lernen/einstellungen");
+  const trigger = page.getByRole("button", { name: "Profil-Tier auswählen" });
   await trigger.click();
   const dialog = page.getByRole("dialog", { name: "Dein Profil" });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Fuchs", exact: true }).click();
+  await dialog.getByRole("radio", { name: "Fuchs", exact: true }).click();
   await expect(
-    dialog.getByRole("button", { name: "Fuchs", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+    dialog.getByRole("radio", { name: "Fuchs", exact: true }),
+  ).toHaveAttribute("aria-checked", "true");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(
     await page.evaluate(
@@ -38,8 +38,8 @@ test("the profile uses original animals, keeps the choice and supports keyboard 
   await trigger.focus();
   await trigger.press("Enter");
   await expect(
-    dialog.getByRole("button", { name: "Fuchs", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+    dialog.getByRole("radio", { name: "Fuchs", exact: true }),
+  ).toHaveAttribute("aria-checked", "true");
   await page.keyboard.press("Escape");
   await expect(trigger).toBeFocused();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

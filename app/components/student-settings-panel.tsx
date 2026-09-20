@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { LearnerProfileMenu } from "./learner-profile-menu";
 
 type ThemePreference = "system" | "light" | "dark";
 
@@ -74,15 +75,11 @@ export function StudentSettingsPanel() {
           Wähle dein Profil-Tier für gemeinsame Runden. Name und Lernstand
           bleiben lokal auf diesem Gerät.
         </p>
-        <button
-          className="button button--secondary"
-          onClick={() =>
-            window.dispatchEvent(new Event("lernraum-open-profile"))
-          }
-          type="button"
-        >
-          Profil-Tier auswählen
-        </button>
+        <LearnerProfileMenu
+          embedded
+          showLabel
+          triggerLabel="Profil-Tier auswählen"
+        />
       </section>
 
       <section

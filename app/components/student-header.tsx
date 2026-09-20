@@ -1,12 +1,35 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { LearnerProfileMenu } from "./learner-profile-menu";
+import {
+  BookOpenIcon,
+  HomeIcon,
+  SlidersIcon,
+  SparklesIcon,
+  TrophyIcon,
+} from "./ui-icons";
 import { StudentIdentitySummary } from "./student-identity-summary";
+import { StudentNavLink } from "./student-nav-link";
 
-const primaryNavigation = [
-  { href: "/lernen", label: "Heute üben" },
-  { href: "/lernen/material", label: "Frei üben" },
-  { href: "/lernen/fortschritt", label: "Mein Fortschritt" },
+const studentNavigation = [
+  { href: "/lernen", label: "Heute", shortLabel: "Heute", icon: HomeIcon },
+  {
+    href: "/lernbox",
+    label: "LernBox",
+    shortLabel: "LernBox",
+    icon: BookOpenIcon,
+  },
+  {
+    href: "/lernen/material",
+    label: "Lernwerkstatt",
+    shortLabel: "Werkstatt",
+    icon: SparklesIcon,
+  },
+  {
+    href: "/lernen/fortschritt",
+    label: "Mein Fortschritt",
+    shortLabel: "Fortschritt",
+    icon: TrophyIcon,
+  },
 ] as const;
 
 function isActivePath(activePath: string | undefined, href: string) {
@@ -21,31 +44,44 @@ function isActivePath(activePath: string | undefined, href: string) {
   return activePath.startsWith(href);
 }
 
+function NavigationItems({ activePath }: { activePath?: string | undefined }) {
+  return (
+    <>
+      {studentNavigation.map((item) => {
+        const Icon = item.icon;
+        const active = isActivePath(activePath, item.href);
+        return (
+          <StudentNavLink
+            aria-current={active ? "page" : undefined}
+            className={active ? "is-active" : undefined}
+            href={item.href}
+            key={item.href}
+          >
+            <Icon aria-hidden="true" />
+            <span className="student-nav-link__label-full">{item.label}</span>
+            {"shortLabel" in item ? (
+              <span className="student-nav-link__label-short">
+                {item.shortLabel}
+              </span>
+            ) : null}
+          </StudentNavLink>
+        );
+      })}
+    </>
+  );
+}
+
 export function StudentMobileNavigation({
   activePath,
 }: {
-  activePath: string | undefined;
+  activePath?: string | undefined;
 }) {
   return (
     <nav
       className="student-dashboard__mobile-nav"
-      aria-label="Mobile Bereiche im Lernraum"
+      aria-label="Lernraum-Bereiche"
     >
-      {primaryNavigation.map((item) => (
-        <Link
-          aria-current={
-            isActivePath(activePath, item.href) ? "page" : undefined
-          }
-          className={
-            isActivePath(activePath, item.href) ? "is-active" : undefined
-          }
-          href={item.href}
-          key={item.href}
-        >
-          <span aria-hidden="true" />
-          {item.label}
-        </Link>
-      ))}
+      <NavigationItems activePath={activePath} />
     </nav>
   );
 }
@@ -55,43 +91,62 @@ export function StudentHeader({
   showTeacherLink = false,
   summary,
 }: {
-  activePath?: string;
+  activePath?: string | undefined;
   showTeacherLink?: boolean;
   summary?: ReactNode;
 }) {
   return (
     <>
-      <header className="student-dashboard__topbar student-header">
+      <aside className="student-shell__sidebar student-header">
         <Link className="brand" href="/" aria-label="Lernraum Startseite">
           <span className="brand__mark" aria-hidden="true">
             L
           </span>
           <span>Lernraum</span>
         </Link>
-        <nav aria-label="Bereiche im Lernraum">
-          {primaryNavigation.map((item) => {
-            const active = isActivePath(activePath, item.href);
-            return (
-              <Link
-                aria-current={active ? "page" : undefined}
-                className={active ? "is-active" : undefined}
-                href={item.href}
-                key={item.href}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="student-header__account">
+        <div className="student-shell__identity">
           {summary ?? <StudentIdentitySummary />}
-          <LearnerProfileMenu embedded />
+        </div>
+
+        <nav className="student-shell__nav" aria-label="Lernraum-Bereiche">
+          <NavigationItems activePath={activePath} />
+        </nav>
+
+        <div className="student-shell__room-action">
+          <Link className="student-shell__room-link" href="/#raumcode">
+            Raum beitreten
+          </Link>
+        </div>
+
+        <div className="student-shell__footer-nav">
+          <StudentNavLink
+            aria-current={
+              activePath === "/lernen/einstellungen" ? "page" : undefined
+            }
+            className={
+              activePath === "/lernen/einstellungen" ? "is-active" : undefined
+            }
+            href="/lernen/einstellungen"
+          >
+            <SlidersIcon aria-hidden="true" />
+            <span>Einstellungen</span>
+          </StudentNavLink>
           {showTeacherLink ? (
             <Link className="student-header__teacher-link" href="/lehrer">
               Lehrerbereich
             </Link>
           ) : null}
         </div>
+      </aside>
+
+      <header className="student-shell__mobile-topbar student-header">
+        <Link className="brand" href="/" aria-label="Lernraum Startseite">
+          <span className="brand__mark" aria-hidden="true">
+            L
+          </span>
+          <span>Lernraum</span>
+        </Link>
+        <StudentIdentitySummary />
       </header>
       <StudentMobileNavigation activePath={activePath} />
     </>

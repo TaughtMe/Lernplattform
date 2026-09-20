@@ -2,11 +2,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { StudentContentTransfer } from "../../components/student-content-transfer";
 import { StudentDashboardShell } from "../../components/student-dashboard-shell";
-import { SubjectIcon } from "../../components/subject-icon";
-import { ArrowRightIcon } from "../../components/ui-icons";
-import { PERSONAL_SUBJECTS } from "../../../src/domain/personal-learning-space";
+import {
+  BookOpenIcon,
+  KeyboardIcon,
+  LiveLessonIcon,
+  SparklesIcon,
+} from "../../components/ui-icons";
 
-export const metadata: Metadata = { title: "Frei üben" };
+const WORKSHOP_OPTIONS = [
+  { href: "/frei/mathematics", label: "Frei üben", icon: SparklesIcon },
+  {
+    href: "/frei/german/laufdiktat",
+    label: "Meine Laufdiktate",
+    icon: LiveLessonIcon,
+  },
+  { href: "/frei/typing", label: "Tippen", icon: KeyboardIcon },
+  { href: "/lernbox", label: "Vokabeln", icon: BookOpenIcon },
+] as const;
+
+export const metadata: Metadata = { title: "Lernwerkstatt" };
 
 export default function Page() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"];
@@ -17,23 +31,19 @@ export default function Page() {
     <StudentDashboardShell activePath="/lernen/material">
       <div className="student-dashboard__page">
         <header>
-          <p className="eyebrow">Persönlich üben</p>
-          <h1>Frei üben</h1>
-          <p>Wähle ein Fach und starte direkt.</p>
+          <h1>Lernwerkstatt</h1>
+          <p>Wähle eine Übung.</p>
         </header>
-        <div className="personal-subject-grid">
-          {PERSONAL_SUBJECTS.map((subject) => (
-            <Link href={subject.hubRoute} key={subject.id}>
-              <span className="personal-subject-grid__icon" aria-hidden="true">
-                <SubjectIcon subject={subject.id} />
-              </span>
-              <h2>{subject.label}</h2>
-              <p>{subject.description}</p>
-              <strong>
-                Fach öffnen <ArrowRightIcon aria-hidden="true" />
-              </strong>
-            </Link>
-          ))}
+        <div className="student-workshop-grid" aria-label="Lernwerkstatt">
+          {WORKSHOP_OPTIONS.map((option) => {
+            const Icon = option.icon;
+            return (
+              <Link href={option.href} key={option.href}>
+                <Icon aria-hidden="true" />
+                <span>{option.label}</span>
+              </Link>
+            );
+          })}
         </div>
         <StudentContentTransfer transferConfig={transferConfig} />
       </div>

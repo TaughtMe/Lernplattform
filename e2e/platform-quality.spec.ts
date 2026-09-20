@@ -29,11 +29,9 @@ test("start page exposes the core learner actions", async ({ page }) => {
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Mein Lernraum", exact: false }).first(),
+    page.getByRole("group", { name: /Lernraum öffnen/ }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: /Mein Lernraum/ })).toHaveCount(
-    1,
-  );
+  await expect(page.getByRole("link", { name: /^Frei üben/ })).toBeVisible();
 });
 
 test("layout never scrolls horizontally", async ({ page }) => {
@@ -90,7 +88,7 @@ test("mobile learners retain direct access to their personal learning room", asy
   test.skip(!testInfo.project.name.includes("mobile"));
   await page.goto("/");
   await expect(
-    page.getByRole("link", { name: "Mein Lernraum", exact: false }),
+    page.getByRole("group", { name: /Lernraum öffnen/ }),
   ).toBeVisible();
 });
 
@@ -468,15 +466,29 @@ test("the personal learning room keeps today's task focused and separates suppor
     page.getByRole("heading", { name: "Mein Fortschritt" }),
   ).toHaveCount(0);
 
-  await page.locator(".student-overview__start").click();
-  await expect(page.getByRole("heading", { name: "Frei üben" })).toBeVisible();
+  await page
+    .locator('a[href="/lernen/material"]:visible')
+    .filter({ hasText: "Lernwerkstatt" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Lernwerkstatt" }),
+  ).toBeVisible();
 
+  await expect(page.getByRole("link", { name: "Frei üben" })).toHaveAttribute(
+    "href",
+    "/frei/mathematics",
+  );
   await expect(
-    page.getByRole("link", { name: /Vokabeln.*Fach öffnen/ }),
-  ).toHaveAttribute("href", "/lernen/faecher/vokabeln");
-  await expect(
-    page.getByRole("link", { name: /Deutsch.*Fach öffnen/ }),
-  ).toHaveAttribute("href", "/lernen/faecher/deutsch");
+    page.getByRole("link", { name: "Meine Laufdiktate" }),
+  ).toHaveAttribute("href", "/frei/german/laufdiktat");
+  await expect(page.getByRole("link", { name: "Tippen" })).toHaveAttribute(
+    "href",
+    "/frei/typing",
+  );
+  await expect(page.getByRole("link", { name: "Vokabeln" })).toHaveAttribute(
+    "href",
+    "/lernbox",
+  );
 
   await page.goto("/lernen/klasse");
   await expect(

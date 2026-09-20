@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeftIcon } from "./ui-icons";
+import { StudentHeader } from "./student-header";
 import {
   useCallback,
   useEffect,
@@ -95,26 +96,36 @@ export function LearningBoxApp() {
     setNotice("");
   }
 
-  return (
-    <main className="learning-box-shell">
-      <header className="learning-box-topbar">
-        {view === "decks" ? (
-          <Link href="/lernen/faecher/vokabeln" className="back-link">
-            <ArrowLeftIcon aria-hidden="true" /> Fach Vokabeln
-          </Link>
-        ) : (
-          <button className="text-button" onClick={leaveDeck}>
-            <ArrowLeftIcon aria-hidden="true" /> Meine LernBox
+  const workspace = (
+    <div
+      className={`learning-box-shell${view === "session" ? " learning-box-shell--session" : ""}`}
+    >
+      {view === "session" ? (
+        <div className="learning-box-session-topbar">
+          <button className="text-button" onClick={() => setView("deck")}>
+            <ArrowLeftIcon aria-hidden="true" /> LernBox verlassen
           </button>
-        )}
-        <div>
-          <strong>Meine LernBox</strong>
-          <span>Persönlich · auf diesem Gerät</span>
         </div>
-        <Link href="/lernen/material" className="back-link">
-          Frei üben
-        </Link>
-      </header>
+      ) : (
+        <header className="learning-box-topbar">
+          {view === "decks" ? (
+            <Link href="/lernen/faecher/vokabeln" className="back-link">
+              <ArrowLeftIcon aria-hidden="true" /> Fach Vokabeln
+            </Link>
+          ) : (
+            <button className="text-button" onClick={leaveDeck}>
+              <ArrowLeftIcon aria-hidden="true" /> Meine LernBox
+            </button>
+          )}
+          <div>
+            <strong>Meine LernBox</strong>
+            <span>Persönlich · auf diesem Gerät</span>
+          </div>
+          <Link href="/lernen/material" className="back-link">
+            Lernwerkstatt
+          </Link>
+        </header>
+      )}
 
       {view === "decks" && (
         <DeckOverview
@@ -198,6 +209,15 @@ export function LearningBoxApp() {
           onClose={() => setView("deck")}
         />
       )}
+    </div>
+  );
+
+  if (view === "session") return workspace;
+
+  return (
+    <main className="learning-room-shell student-dashboard student-dashboard--with-sidebar">
+      <StudentHeader activePath="/lernbox" />
+      <div className="learning-box-workspace">{workspace}</div>
     </main>
   );
 }

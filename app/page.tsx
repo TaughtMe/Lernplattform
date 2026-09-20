@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LandingLearnerAction } from "./components/landing-learner-action";
 import { PilotConnectionNotice } from "./components/pilot-connection-notice";
 import { RoomCodeForm } from "./components/room-code-form";
 import { isPilotGateEnabled } from "../src/pilot-mode";
@@ -72,16 +73,11 @@ export default function Home() {
         >
           <div className="landing-paths__intro">
             <p className="eyebrow">Dein nächster Schritt</p>
-            <h2 id="paths-title">Wähle deinen nächsten Schritt.</h2>
-            <p>Wähle deinen nächsten Schritt und bleib bei einer Sache.</p>
+            <h2 id="paths-title">Was heute passt.</h2>
+            <p>Ein ruhiger Startpunkt für deine nächste Runde.</p>
           </div>
           <div className="landing-paths__grid">
-            <Link className="landing-path landing-path--feature" href="/lernen">
-              <strong>Mein Lernraum</strong>
-              <span>
-                Heute üben, Fehler wiederholen und den Überblick behalten.
-              </span>
-            </Link>
+            <LandingLearnerAction />
             <Link className="landing-path" href="/lernen/material">
               <strong>Frei üben</strong>
               <span>

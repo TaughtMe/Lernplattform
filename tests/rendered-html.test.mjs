@@ -37,7 +37,7 @@ test("server-renders the Lernraum start page", async () => {
   assert.match(html, /Bereit für dein Laufdiktat/);
   assert.match(html, /Raumcode/);
   assert.match(html, /Lehrerbereich/);
-  assert.match(html, /Mein Lernraum/);
+  assert.match(html, /Dein Lernraum/);
   assert.match(html, /Frei üben/);
   assert.doesNotMatch(html, /Raum beitreten/);
   assert.match(html, /href="\/impressum"/);
@@ -68,7 +68,7 @@ test("server-renders the released pilot entry pages", async () => {
 test("server-renders the complete learning and teacher workspaces", async () => {
   for (const [path, title] of [
     ["/lernen", "Meine Startseite"],
-    ["/lernen/material", "Frei üben"],
+    ["/lernen/material", "Lernwerkstatt"],
     ["/frei/german/lernwoerter", "Lernwörter"],
     ["/klasse/7b", "Klasse 7b"],
     ["/lernbox", "LernBox"],

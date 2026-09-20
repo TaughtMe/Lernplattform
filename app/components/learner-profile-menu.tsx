@@ -20,8 +20,12 @@ import { useHydrated } from "./use-hydrated";
 
 export function LearnerProfileMenu({
   embedded = false,
+  showLabel = false,
+  triggerLabel = "Dein Profil öffnen",
 }: {
   embedded?: boolean;
+  showLabel?: boolean;
+  triggerLabel?: string;
 }) {
   const ready = useHydrated();
   const snapshot = useSyncExternalStore(
@@ -51,7 +55,7 @@ export function LearnerProfileMenu({
 
   function save() {
     const next = profile
-      ? { ...profile, animal: selection }
+      ? { ...profile, animal: selection || null }
       : createLearnerProfile(selection);
     try {
       learnerProfileRepository.save(next);
@@ -70,10 +74,10 @@ export function LearnerProfileMenu({
       className={`learner-profile${embedded ? " learner-profile--embedded" : ""}`}
     >
       <button
-        className="learner-profile__trigger"
+        className={`learner-profile__trigger${showLabel ? " learner-profile__trigger--with-label" : ""}`}
         type="button"
         disabled={!ready}
-        aria-label="Dein Profil öffnen"
+        aria-label={triggerLabel}
         aria-haspopup="dialog"
         onClick={openDialog}
       >
@@ -92,6 +96,7 @@ export function LearnerProfileMenu({
             <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
           </svg>
         )}
+        {showLabel ? <span>{triggerLabel}</span> : null}
       </button>
       {notice ? (
         <span className="sr-only" role="status">
@@ -126,14 +131,29 @@ export function LearnerProfileMenu({
         ) : null}
         <div
           className="learner-profile__animals"
-          role="group"
+          role="radiogroup"
           aria-label="Tier auswählen"
         >
+          <button
+            type="button"
+            role="radio"
+            aria-checked={selection === ""}
+            onClick={() => {
+              setSelection("");
+              setError("");
+            }}
+          >
+            <span className="learner-profile__no-tier" aria-hidden="true">
+              -
+            </span>
+            <span>Kein Tier</span>
+          </button>
           {ANIMALS.map((animal) => (
             <button
               key={animal.name}
               type="button"
-              aria-pressed={selection === animal.name}
+              role="radio"
+              aria-checked={selection === animal.name}
               onClick={() => {
                 setSelection(animal.name);
                 setError("");
@@ -158,7 +178,7 @@ export function LearnerProfileMenu({
           <button
             type="button"
             className="button button--primary"
-            disabled={!selection}
+            disabled={!selection && !profile}
             onClick={save}
           >
             Tier speichern
