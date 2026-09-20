@@ -6,7 +6,9 @@ test("math errors survive reload and practice works offline with keyboard and he
   context,
 }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Mathe selbst üben" }).click();
+  await page.getByRole("link", { name: /^Frei üben/ }).click();
+  await page.getByRole("link", { name: /^Mathematik/ }).click();
+  await page.getByRole("link", { name: /Kopfrechnen frei üben/ }).click();
   await expect(
     page.getByRole("heading", { name: "Kopfrechnen", exact: true }),
   ).toBeVisible();

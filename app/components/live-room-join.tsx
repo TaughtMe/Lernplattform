@@ -532,8 +532,8 @@ export function LiveRoomJoin({
           <p className="eyebrow">Raum {code}</p>
           <h1>Diese Runde ist beendet.</h1>
           <p>Die Lehrkraft hat die Unterrichtsrunde geschlossen.</p>
-          <Link className="button button--primary" href="/">
-            Zur Startseite
+          <Link className="button button--primary" href="/lernen">
+            Zum persönlichen Lernraum
           </Link>
         </section>
       </div>

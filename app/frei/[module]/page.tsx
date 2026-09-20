@@ -5,8 +5,8 @@ export default function Page() {
   return (
     <main className="class-shell">
       <header className="class-topbar">
-        <Link href="/lernen#faecher" className="back-link">
-          <ArrowLeftIcon aria-hidden="true" /> Fächer
+        <Link href="/lernen/material" className="back-link">
+          <ArrowLeftIcon aria-hidden="true" /> Zurück zu Frei üben
         </Link>
         <span className="ranking-note">Persönlicher Bereich</span>
       </header>
@@ -18,7 +18,7 @@ export default function Page() {
           Ergebnisse bleiben persönlich und werden nicht automatisch mit einer
           Klasse geteilt.
         </p>
-        <Link className="button button--primary" href="/lernen#faecher">
+        <Link className="button button--primary" href="/lernen/material">
           Andere Übung wählen
         </Link>
       </section>

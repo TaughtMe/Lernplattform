@@ -13,6 +13,13 @@ npm install
 npm run dev
 ```
 
+Die vollständige Lernraum- und Lehrkraft-Oberfläche ist im Development-Preview
+erreichbar. Produktionsläufe bleiben standardmäßig auf den eingeschränkten
+Laufdiktat-Pilot begrenzt. Für eine ausdrücklich freigegebene produktive
+Erweiterung kann die Routenschranke mit `LERNRAUM_PILOT_GATE=0` deaktiviert
+werden; mit `LERNRAUM_PILOT_GATE=1` lässt sie sich auch im Development-Preview
+erzwingen.
+
 ## Prüfen
 
 ```bash

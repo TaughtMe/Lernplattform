@@ -138,7 +138,7 @@ export function StudentAssignments() {
         <div>
           <p className="eyebrow">Von deiner Lehrkraft</p>
           <h3 id="assignment-import-title">Aufgabe übernehmen</h3>
-          <p>Scanne den Aufgaben-QR oder füge den kopierten Code ein.</p>
+          <p>Scanne den Aufgaben-QR oder füge den Code manuell ein.</p>
         </div>
         <form onSubmit={submitCode}>
           <label>
@@ -148,7 +148,7 @@ export function StudentAssignments() {
               rows={4}
               value={code}
               onChange={(event) => setCode(event.target.value)}
-              placeholder="lernraum:assignment:…"
+              placeholder="Code hier einfügen"
             />
           </label>
           <div>
@@ -217,12 +217,6 @@ export function StudentAssignments() {
           <div className="student-performance-qr__code">
             <QRCodeSVG value={performanceCode} size={240} level="M" />
           </div>
-          <textarea
-            readOnly
-            rows={5}
-            aria-label="Leistungsbrief"
-            value={performanceCode}
-          />
         </section>
       ) : null}
     </div>

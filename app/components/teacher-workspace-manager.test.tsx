@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
+import { createTeacherAssignmentCode } from "../../src/domain/teacher-workspace";
 import { LOCAL_DATA_AREAS } from "../../src/storage/local-data-boundaries";
 import { createTeacherClassRepository } from "../../src/storage/teacher-class-settings";
 import {
@@ -76,15 +77,31 @@ describe("teacher workspace manager", () => {
         "Aufgabe wurde erstellt und den Klassen zugeteilt.",
       ),
     ).toBeVisible();
-    const code = screen.getByRole("textbox", {
-      name: "Aufgabencode",
-    }) as HTMLTextAreaElement;
-    expect(code.value).toContain("lernraum:assignment:");
-
-    fireEvent.change(screen.getByRole("textbox", { name: "Code einfügen" }), {
-      target: { value: code.value },
+    const code = createTeacherAssignmentCode({
+      id: "123e4567-e89b-42d3-a456-426614174003",
+      title: "Lernwörter üben",
+      instructions: "Bearbeite die Lernwort-Runde.",
+      subject: "german",
+      materialId: null,
+      classIds: ["123e4567-e89b-42d3-a456-426614174001"],
+      memberIds: [],
+      dueDate: "",
+      status: "assigned",
+      createdAt: "2026-09-20T10:00:00.000Z",
+      updatedAt: "2026-09-20T10:00:00.000Z",
     });
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Code manuell prüfen" }),
+      {
+        target: { value: code },
+      },
+    );
     await user.click(screen.getByRole("button", { name: "Code prüfen" }));
-    expect(screen.getAllByText("Lernwörter üben")).toHaveLength(4);
+    await waitFor(() =>
+      expect(
+        document.querySelector(".teacher-qr-reader__result"),
+      ).toHaveTextContent("Lernwörter üben"),
+    );
   });
 });

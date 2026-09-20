@@ -401,8 +401,8 @@ export function LiveRunningDictationGame({
             </>
           ) : null}
           <div className="live-game-complete__actions">
-            <Link className="button button--primary" href="/">
-              Zurück zur Startseite
+            <Link className="button button--primary" href="/lernen">
+              Zum persönlichen Lernraum
             </Link>
             {transferStatus === "success" ? (
               <Link className="button" href="/lernbox">
@@ -871,11 +871,11 @@ export function LiveRunningDictationGame({
                   className="button button--primary"
                   disabled
                 >
-                  Zur Startseite ({exitCountdown})
+                  Zum Lernraum ({exitCountdown})
                 </button>
               ) : (
-                <Link className="button button--primary" href="/">
-                  Zur Startseite
+                <Link className="button button--primary" href="/lernen">
+                  Zum persönlichen Lernraum
                 </Link>
               )}
             </div>

@@ -33,7 +33,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
   return (
     <main className="subject-space-shell">
       <header className="learning-room-topbar">
-        <Link href="/lernen#faecher" className="back-link">
+        <Link href="/lernen/material" className="back-link">
           <ArrowLeftIcon aria-hidden="true" /> Alle Fächer
         </Link>
         <strong>Mein Lernraum</strong>

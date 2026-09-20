@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  createClassRemovalCode,
   createClassRemovalLink,
   createEnrollmentCode,
   createEnrollmentLink,
@@ -456,7 +455,6 @@ export function TeacherClassConfigurator() {
           <ul className="teacher-class-archive__list">
             {archivedClasses.map((course) => {
               const isRemovalShown = removalShown?.id === course.id;
-              const removalCode = createClassRemovalCode(course.id);
               const removalQrValue = appOrigin
                 ? createClassRemovalLink(appOrigin, course.id)
                 : "";
@@ -502,7 +500,6 @@ export function TeacherClassConfigurator() {
                           unter „Klasse“ ein. Der persönliche Lernstand bleibt
                           erhalten.
                         </p>
-                        <code>{removalCode}</code>
                       </div>
                     </div>
                   ) : null}

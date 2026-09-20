@@ -111,8 +111,8 @@ export function LearningBoxApp() {
           <strong>Meine LernBox</strong>
           <span>Persönlich · auf diesem Gerät</span>
         </div>
-        <Link href="/" className="back-link">
-          Lernraum
+        <Link href="/lernen/material" className="back-link">
+          Frei üben
         </Link>
       </header>
 

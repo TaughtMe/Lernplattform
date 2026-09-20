@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isPilotPublicRoute } from "./src/pilot-mode";
+import { isPilotGateEnabled, isPilotPublicRoute } from "./src/pilot-mode";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const pilotGateEnabled = isPilotGateEnabled();
   if (
+    !pilotGateEnabled ||
     isPilotPublicRoute(pathname) ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/api/") ||

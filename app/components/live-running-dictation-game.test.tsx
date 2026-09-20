@@ -146,8 +146,8 @@ describe("LiveRunningDictationGame", () => {
     );
     expect(putLearningEvent).not.toHaveBeenCalled();
     expect(
-      screen.getByRole("link", { name: "Zurück zur Startseite" }),
-    ).toHaveAttribute("href", "/");
+      screen.getByRole("link", { name: "Zum persönlichen Lernraum" }),
+    ).toHaveAttribute("href", "/lernen");
   });
 
   it("shows incorrect feedback as an error in classic Laufdiktat", async () => {

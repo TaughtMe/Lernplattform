@@ -1,9 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("pilot start exposes only room join and the teacher path", async ({
-  page,
-}) => {
+test("local preview exposes the clear learner entries", async ({ page }) => {
   await page.goto("/");
 
   await expect(
@@ -15,15 +13,16 @@ test("pilot start exposes only room join and the teacher path", async ({
   });
   await expect(cameraButton).toBeVisible();
   await expect(cameraButton.locator("svg")).toHaveCount(1);
-  const themeButton = page.getByRole("button", {
-    name: /Darstellung wechseln/,
-  });
-  await expect(themeButton).toBeVisible();
-  await expect(themeButton.locator("svg")).toHaveCount(1);
   await expect(
     page.getByRole("link", { name: "Lehrerbereich" }),
   ).toHaveAttribute("href", "/lehrer");
-  await expect(page.getByText("Mein Lernraum", { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: /^Mein Lernraum/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Frei üben/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Raum beitreten/ })).toHaveCount(
+    0,
+  );
 
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
@@ -37,14 +36,18 @@ test("pilot start exposes only room join and the teacher path", async ({
   expect(results.violations).toEqual([]);
 });
 
-test("legacy product routes are centrally redirected without deleting data", async ({
+test("the complete learning and teacher workspaces are reachable", async ({
   page,
 }) => {
   await page.goto("/lernen");
-  await expect(page).toHaveURL(/\/?pilot=1$/);
+  await expect(
+    page.getByRole("heading", { name: "Meine Startseite" }),
+  ).toBeVisible();
 
   await page.goto("/lehrer/klassen");
-  await expect(page).toHaveURL(/\/lehrer\/live\?pilot=1$/);
+  await expect(
+    page.getByRole("heading", { name: "Klassen und Schüler" }),
+  ).toBeVisible();
 });
 
 test("room code entry works with the keyboard", async ({ page }) => {

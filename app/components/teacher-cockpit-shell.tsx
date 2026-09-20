@@ -1,6 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { HomeIcon, LiveLessonIcon } from "./ui-icons";
+import {
+  BookOpenIcon,
+  HomeIcon,
+  LiveLessonIcon,
+  PencilIcon,
+  SlidersIcon,
+  UploadIcon,
+} from "./ui-icons";
 
 export type TeacherArea =
   "overview" | "live" | "classes" | "material" | "assignments" | "settings";
@@ -12,10 +19,58 @@ const navigation: readonly {
   icon: typeof LiveLessonIcon;
 }[] = [
   {
+    area: "overview",
+    href: "/lehrer",
+    label: "Übersicht",
+    icon: HomeIcon,
+  },
+  {
+    area: "classes",
+    href: "/lehrer/klassen",
+    label: "Klassen",
+    icon: BookOpenIcon,
+  },
+  {
+    area: "material",
+    href: "/lehrer/material",
+    label: "Material",
+    icon: UploadIcon,
+  },
+  {
+    area: "assignments",
+    href: "/lehrer/aufgaben",
+    label: "Aufgaben",
+    icon: PencilIcon,
+  },
+  {
     area: "live",
     href: "/lehrer/live",
     label: "Laufdiktat",
     icon: LiveLessonIcon,
+  },
+  {
+    area: "settings",
+    href: "/lehrer/einstellungen",
+    label: "Einstellungen",
+    icon: SlidersIcon,
+  },
+] as const;
+
+const navigationGroups = [
+  {
+    label: "Unterricht",
+    items: navigation.filter(
+      (item) =>
+        item.area === "overview" ||
+        item.area === "classes" ||
+        item.area === "material" ||
+        item.area === "assignments" ||
+        item.area === "live",
+    ),
+  },
+  {
+    label: "System",
+    items: navigation.filter((item) => item.area === "settings"),
   },
 ] as const;
 
@@ -40,33 +95,33 @@ export function TeacherCockpitShell({
         </Link>
 
         <nav aria-label="Lehrerbereiche">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                className={item.area === active ? "is-active" : undefined}
-                href={item.href}
-                key={item.area}
-                aria-current={item.area === active ? "page" : undefined}
-              >
-                <Icon aria-hidden="true" />
-                {item.label}
-              </Link>
-            );
-          })}
+          {navigationGroups.map((group) => (
+            <div className="teacher-cockpit__nav-group" key={group.label}>
+              <span className="teacher-cockpit__nav-label">{group.label}</span>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    className={item.area === active ? "is-active" : undefined}
+                    href={item.href}
+                    key={item.area}
+                    aria-current={item.area === active ? "page" : undefined}
+                  >
+                    <Icon aria-hidden="true" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
-
-        <div className="teacher-cockpit__device">
-          <strong>Lokaler Arbeitsplatz</strong>
-          <small>Begleiteter Pilot</small>
-          <span className="teacher-cockpit__live-note">
-            <i aria-hidden="true" /> Live-Räume werden automatisch gelöscht
-          </span>
-        </div>
       </aside>
 
       <div className="teacher-cockpit__content">
-        <header className="teacher-cockpit__topbar">
+        <header
+          className="teacher-cockpit__topbar"
+          style={{ paddingRight: "clamp(74px, 8vw, 116px)" }}
+        >
           <div>
             <span className="teacher-cockpit__mobile-mark" aria-hidden="true">
               L

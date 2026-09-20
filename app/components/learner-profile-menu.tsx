@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   ANIMALS,
   animalFileName,
@@ -12,20 +18,36 @@ import { learnerProfileRepository } from "../../src/storage/learner-profile";
 import { CloseIcon } from "./ui-icons";
 import { useHydrated } from "./use-hydrated";
 
-export function LearnerProfileMenu() {
+export function LearnerProfileMenu({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   const ready = useHydrated();
   const snapshot = useSyncExternalStore(
     learnerProfileRepository.subscribe,
     learnerProfileRepository.snapshot,
     () => null,
   );
-  const profile = snapshot
-    ? learnerProfileSchema.parse(JSON.parse(snapshot))
-    : null;
+  const profile =
+    ready && snapshot ? learnerProfileSchema.parse(JSON.parse(snapshot)) : null;
   const dialog = useRef<HTMLDialogElement>(null);
   const [selection, setSelection] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  const openDialog = useCallback(() => {
+    setSelection(profile?.animal ?? "");
+    setError("");
+    setNotice("");
+    dialog.current?.showModal();
+  }, [profile]);
+
+  useEffect(() => {
+    window.addEventListener("lernraum-open-profile", openDialog);
+    return () =>
+      window.removeEventListener("lernraum-open-profile", openDialog);
+  }, [openDialog]);
 
   function save() {
     const next = profile
@@ -44,19 +66,16 @@ export function LearnerProfileMenu() {
   }
 
   return (
-    <div className="learner-profile">
+    <div
+      className={`learner-profile${embedded ? " learner-profile--embedded" : ""}`}
+    >
       <button
         className="learner-profile__trigger"
         type="button"
         disabled={!ready}
         aria-label="Dein Profil öffnen"
         aria-haspopup="dialog"
-        onClick={() => {
-          setSelection(profile?.animal ?? "");
-          setError("");
-          setNotice("");
-          dialog.current?.showModal();
-        }}
+        onClick={openDialog}
       >
         {profile ? (
           // eslint-disable-next-line @next/next/no-img-element -- existing local SVG illustration
@@ -74,9 +93,11 @@ export function LearnerProfileMenu() {
           </svg>
         )}
       </button>
-      <span className="sr-only" role="status">
-        {notice}
-      </span>
+      {notice ? (
+        <span className="sr-only" role="status">
+          {notice}
+        </span>
+      ) : null}
       <dialog
         ref={dialog}
         className="learner-profile__dialog"

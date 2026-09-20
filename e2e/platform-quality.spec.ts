@@ -4,6 +4,7 @@ import {
   createEnrollmentCode,
   createEnrollmentLink,
 } from "../src/domain/class-enrollment";
+import { createTeacherAssignmentCode } from "../src/domain/teacher-workspace";
 
 test.skip(
   process.env["ENABLE_PRE_PILOT_E2E"] !== "1",
@@ -20,17 +21,15 @@ test("start page exposes the core learner actions", async ({ page }) => {
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Wie möchtest du heute lernen?",
+      name: "Ein Lernraum, der dich weiterbringt.",
     }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("textbox", { name: "Klassen- oder Raumcode" }),
-  ).toBeVisible();
+  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Mein Lernraum", exact: false }),
+    page.getByRole("link", { name: "Mein Lernraum", exact: false }).first(),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: /Mein Lernraum/ })).toHaveCount(
     1,
@@ -401,13 +400,13 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
     "background-color",
     "rgb(23, 21, 19)",
   );
-  await expect(page.locator(".main-action--class")).toHaveCSS(
-    "background-color",
-    "rgb(36, 29, 27)",
-  );
-  await expect(page.locator(".main-action")).toHaveCount(1);
 
   await page.goto("/klasse/7b");
+  await expect(page.locator(".class-context__panel")).toHaveCSS(
+    "background-color",
+    "rgb(33, 30, 27)",
+  );
+  await expect(page.locator(".class-context__panel")).toHaveCount(1);
   const moduleTag = page.locator(".module-chips span").first();
   await expect(moduleTag).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(moduleTag).toHaveCSS("border-color", "rgb(85, 76, 69)");
@@ -451,25 +450,6 @@ test("the personal learning room keeps today's task focused and separates suppor
     page.getByRole("heading", { name: "Meine Startseite" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
-  const monthFormatter = new Intl.DateTimeFormat("de-DE", {
-    month: "long",
-    year: "numeric",
-  });
-  await expect(
-    page.getByRole("table", {
-      name: `Lernkalender für ${monthFormatter.format(new Date())}`,
-    }),
-  ).toBeVisible();
-  await expect(page.getByRole("columnheader")).toHaveCount(7);
-
-  const nextMonth = new Date();
-  nextMonth.setMonth(nextMonth.getMonth() + 1, 1);
-  await page.getByRole("button", { name: "Nächster Monat" }).click();
-  await expect(
-    page.getByRole("table", {
-      name: `Lernkalender für ${monthFormatter.format(nextMonth)}`,
-    }),
-  ).toBeVisible();
   const calendarLayout = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     content: document.documentElement.scrollWidth,
@@ -477,7 +457,10 @@ test("the personal learning room keeps today's task focused and separates suppor
   expect(calendarLayout.content).toBeLessThanOrEqual(
     calendarLayout.viewport + 1,
   );
-  await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Raumcode" })).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Fortschritt ansehen" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Mein Material" }),
   ).toHaveCount(0);
@@ -485,10 +468,8 @@ test("the personal learning room keeps today's task focused and separates suppor
     page.getByRole("heading", { name: "Mein Fortschritt" }),
   ).toHaveCount(0);
 
-  await page.getByRole("link", { name: "Material", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Mein Material" }),
-  ).toBeVisible();
+  await page.locator(".student-overview__start").click();
+  await expect(page.getByRole("heading", { name: "Frei üben" })).toBeVisible();
 
   await expect(
     page.getByRole("link", { name: /Vokabeln.*Fach öffnen/ }),
@@ -534,10 +515,10 @@ test("teachers can prepare every native live-room content type", async ({
   });
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Übersicht" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Guten Morgen" }),
-  ).toBeVisible();
-  await expect(page.getByText("Lokaler Arbeitsplatz")).toHaveCount(1);
+    page.getByText("Dieses Gerät ist die Schutzgrenze."),
+  ).toHaveCount(1);
   await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "Unterrichtsrunde starten" }),
@@ -560,11 +541,16 @@ test("teachers can prepare every native live-room content type", async ({
   await expect(
     page.getByRole("heading", { name: "Klassen und Schüler" }),
   ).toHaveCount(0);
-  await expect(page.getByText("2 Aufgaben")).toBeVisible();
+  await expect(page.getByText("0 Abschnitte")).toBeVisible();
 
   await page.getByRole("tab", { name: "Vokabeln" }).click();
   await expect.poll(() => runtimeErrors).toEqual([]);
-  await expect(page.getByText("3 Aufgaben")).toBeVisible();
+  await expect(page.getByText("1 Vokabeln")).toBeVisible();
+  if ((page.viewportSize()?.width ?? 768) <= 370) {
+    await page
+      .getByRole("button", { name: "Einstellungen", exact: true })
+      .click();
+  }
   const vocabularyTransfer = page.getByRole("checkbox", {
     name: /Vokabeln übernehmen/,
   });
@@ -575,14 +561,25 @@ test("teachers can prepare every native live-room content type", async ({
       name: "Welche Vokabeln übernehmen?",
     }),
   ).toHaveValue("errors");
+  if ((page.viewportSize()?.width ?? 768) <= 370) {
+    await page
+      .getByRole("button", {
+        name: "Vokabel-Einstellungen schließen",
+      })
+      .click();
+  }
   await page.getByRole("tab", { name: "Kopfrechnen" }).click();
-  await expect(page.getByText("4 Aufgaben")).toBeVisible();
+  await expect(page.getByText("0 Aufgaben")).toBeVisible();
+  await page.getByRole("button", { name: "Aufgaben erzeugen" }).click();
+  await expect(page.getByText("10 Aufgaben")).toBeVisible();
+  await page.getByRole("button", { name: "Weitere Regeln" }).click();
   await expect(
     page.getByRole("checkbox", { name: "Negative Ergebnisse" }),
   ).toBeVisible();
   await expect(
     page.getByRole("checkbox", { name: "Lückenaufgaben" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Schließen" }).click();
 
   await page.getByRole("button", { name: /Weiter zur Konfiguration/ }).click();
   await expect(page.getByRole("radio", { name: /Freies Üben/ })).toBeVisible();
@@ -691,11 +688,23 @@ test("the local teacher workspace manages classes, students, assignments and QR 
     page.getByText("Aufgabe wurde erstellt und den Klassen zugeteilt."),
   ).toBeVisible();
 
-  const assignmentCode = await page
-    .getByRole("textbox", { name: "Aufgabencode", exact: true })
-    .inputValue();
-  expect(assignmentCode).toContain("lernraum:assignment:");
-  await page.getByLabel("Code einfügen").fill(assignmentCode);
+  const assignmentCode = createTeacherAssignmentCode({
+    id: "123e4567-e89b-42d3-a456-426614174003",
+    title: "Lernwörter üben",
+    instructions: "Bearbeitet die Lernwort-Runde bis Freitag.",
+    subject: "german",
+    materialId: null,
+    classIds: [
+      "123e4567-e89b-42d3-a456-426614174004",
+      "123e4567-e89b-42d3-a456-426614174005",
+    ],
+    memberIds: [],
+    dueDate: "",
+    status: "assigned",
+    createdAt: "2026-09-20T10:00:00.000Z",
+    updatedAt: "2026-09-20T10:00:00.000Z",
+  });
+  await page.getByLabel("Code manuell prüfen").fill(assignmentCode);
   await page.getByRole("button", { name: "Code prüfen" }).click();
   await expect(page.locator(".teacher-qr-reader__result")).toContainText(
     "Lernwörter üben",

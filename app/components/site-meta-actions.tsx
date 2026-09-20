@@ -3,10 +3,14 @@ import { ServiceWorkerManager } from "./service-worker-manager";
 
 export function SiteMetaActions() {
   return (
-    <nav className="site-meta-actions" aria-label="Version und Rechtliches">
-      <Link href="/impressum">Impressum</Link>
-      <Link href="/datenschutz">Datenschutz</Link>
-      <ServiceWorkerManager />
-    </nav>
+    <footer className="site-footer site-meta-actions">
+      <span>Lernraum</span>
+      <span>Persönlicher Lernraum, lokal auf diesem Gerät.</span>
+      <nav aria-label="Version und Rechtliches">
+        <Link href="/impressum">Impressum</Link>
+        <Link href="/datenschutz">Datenschutz</Link>
+        <ServiceWorkerManager />
+      </nav>
+    </footer>
   );
 }

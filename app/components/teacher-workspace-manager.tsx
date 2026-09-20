@@ -804,19 +804,10 @@ export function TeacherAssignmentManager() {
               <div className="teacher-qr-generator__code">
                 <QRCodeSVG value={qrCode} size={220} level="M" />
               </div>
-              <textarea
-                aria-label="Aufgabencode"
-                readOnly
-                rows={5}
-                value={qrCode}
-              />
-              <button
-                className="button"
-                type="button"
-                onClick={() => void navigator.clipboard.writeText(qrCode)}
-              >
-                Code kopieren
-              </button>
+              <p className="teacher-qr-generator__note">
+                Der QR-Code enthält nur die Aufgabe und ihre Zielklassen. Teile
+                ihn direkt über den Bildschirm oder einen Ausdruck.
+              </p>
             </>
           )}
         </section>
@@ -829,15 +820,18 @@ export function TeacherAssignmentManager() {
           <h3 id="qr-reader-title">Aufgabe oder Abgabe prüfen</h3>
           <div className="teacher-qr-reader__controls">
             <label>
-              Code einfügen
+              Code manuell prüfen
               <textarea
                 rows={5}
                 value={manualCode}
                 onChange={(event) => setManualCode(event.target.value)}
-                placeholder="lernraum:assignment:… oder lernraum:performance:…"
+                placeholder="Code hier einfügen"
               />
             </label>
-            <QrCodeScanner onResult={(value) => void inspectCode(value)} />
+            <QrCodeScanner
+              continuous
+              onResult={(value) => void inspectCode(value)}
+            />
             <button
               className="button"
               type="button"
