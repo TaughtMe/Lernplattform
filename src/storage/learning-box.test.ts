@@ -132,6 +132,255 @@ describe("learning box repository", () => {
     expect(cards[0]?.source.kind).toBe("running-dictation");
   });
 
+  it("keeps personal progress unchanged across repeated teacher-package revisions", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const deck = await repository.createDeck({ title: "Eigene Vokabeln" });
+    const { card } = await repository.addCard({
+      deckId: deck.id,
+      question: "library",
+      answer: "Bibliothek",
+    });
+    const personalProgress = {
+      ...card,
+      level: 4 as const,
+      box: 4 as const,
+      interval: 7,
+      nextReview: 2_000_000,
+      writingStreak: 3,
+      reverseBox: 3 as const,
+      reverseInterval: 4,
+      reverseNextReview: 3_000_000,
+      reverseWritingStreak: 2,
+      lastReviewed: 1_000_000,
+      updatedAt: 1_000_000,
+    };
+    await repository.putCard(personalProgress);
+
+    const teacherBundle = parseLearningBundleV1({
+      schemaVersion: LEARNING_BUNDLE_VERSION,
+      id: "teacher-package",
+      revision: 2,
+      createdAt: "2026-08-25T12:00:00.000Z",
+      source: { kind: "teacher", id: "teacher-package" },
+      vocabulary: [
+        {
+          kind: "vocabulary",
+          id: "teacher-package:vocabulary:1",
+          prompt: { text: "library", locale: "en" },
+          answer: { text: "Bibliothek", locale: "de" },
+          tagIds: ["unit-1"],
+          createdAt: "2026-08-25T12:00:00.000Z",
+          updatedAt: "2026-08-25T12:00:00.000Z",
+        },
+      ],
+      stacks: [
+        {
+          id: "teacher-package:stack",
+          title: "Unit 1",
+          itemIds: ["teacher-package:vocabulary:1"],
+          tagIds: ["unit-1"],
+        },
+      ],
+    });
+    const input = {
+      bundle: teacherBundle,
+      title: "Unit 1",
+      source: {
+        kind: "teacher" as const,
+        sourceId: teacherBundle.id,
+        classId: "class-7b",
+      },
+    };
+
+    await expect(repository.ingestBundle(input)).resolves.toMatchObject({
+      added: 0,
+      reused: 1,
+    });
+    await expect(
+      repository.ingestBundle({
+        ...input,
+        bundle: parseLearningBundleV1({ ...teacherBundle, revision: 3 }),
+      }),
+    ).resolves.toMatchObject({ added: 0, reused: 1 });
+    const stored = await repository.getCard(card.id);
+    expect(stored).toMatchObject({
+      id: personalProgress.id,
+      deckId: personalProgress.deckId,
+      level: personalProgress.level,
+      box: personalProgress.box,
+      interval: personalProgress.interval,
+      nextReview: personalProgress.nextReview,
+      writingStreak: personalProgress.writingStreak,
+      reverseBox: personalProgress.reverseBox,
+      reverseInterval: personalProgress.reverseInterval,
+      reverseNextReview: personalProgress.reverseNextReview,
+      reverseWritingStreak: personalProgress.reverseWritingStreak,
+      lastReviewed: personalProgress.lastReviewed,
+      createdAt: personalProgress.createdAt,
+      updatedAt: personalProgress.updatedAt,
+      source: { kind: "self" },
+      question: "library",
+      answer: "Bibliothek",
+    });
+    expect(stored?.sourceLinks).toEqual([
+      expect.objectContaining({
+        itemId: "teacher-package:vocabulary:1",
+        revision: 3,
+        source: {
+          kind: "teacher",
+          sourceId: "teacher-package",
+          classId: "class-7b",
+        },
+      }),
+    ]);
+    expect(await repository.listCards(deck.id)).toHaveLength(1);
+  });
+
+  it("updates a linked package item by stable id without resetting progress", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const source = {
+      kind: "teacher" as const,
+      sourceId: "package-1",
+      classId: "class-7b",
+    };
+    const makeBundle = (revision: number, answer: string) =>
+      parseLearningBundleV1({
+        schemaVersion: LEARNING_BUNDLE_VERSION,
+        id: "package-1",
+        revision,
+        createdAt: "2026-08-25T12:00:00.000Z",
+        source: { kind: "teacher", id: "package-1" },
+        vocabulary: [
+          {
+            kind: "vocabulary",
+            id: "package-1:item-1",
+            prompt: { text: "library", locale: "en" },
+            answer: { text: answer, locale: "de" },
+            tagIds: ["unit-1"],
+            createdAt: "2026-08-25T12:00:00.000Z",
+            updatedAt: "2026-08-25T12:00:00.000Z",
+          },
+        ],
+        stacks: [],
+      });
+
+    await repository.ingestBundle({
+      bundle: makeBundle(1, "Bibliothek"),
+      title: "Unit 1",
+      source,
+    });
+    const deck = (await repository.listDecks())[0]!;
+    const initial = (await repository.listCards(deck.id))[0]!;
+    await repository.putCard({
+      ...initial,
+      box: 4,
+      level: 4,
+      interval: 7,
+      nextReview: 2_000_000,
+      lastReviewed: 1_000_000,
+      updatedAt: 1_000_000,
+    });
+
+    await expect(
+      repository.ingestBundle({
+        bundle: makeBundle(2, "Bibliotheken"),
+        title: "Unit 1",
+        source,
+      }),
+    ).resolves.toEqual({ deckId: deck.id, added: 0, reused: 1 });
+
+    const updated = (await repository.listCards(deck.id))[0]!;
+    expect(updated).toMatchObject({
+      id: initial.id,
+      question: "library",
+      answer: "Bibliotheken",
+      box: 4,
+      level: 4,
+      interval: 7,
+      nextReview: 2_000_000,
+      lastReviewed: 1_000_000,
+      updatedAt: 1_000_000,
+    });
+
+    await repository.ingestBundle({
+      bundle: makeBundle(1, "Bibliothek-alt"),
+      title: "Unit 1",
+      source,
+    });
+    const afterOlderRevision = (await repository.listCards(deck.id))[0]!;
+    expect(afterOlderRevision.answer).toBe("Bibliotheken");
+
+    await repository.ingestBundle({
+      bundle: parseLearningBundleV1({
+        ...makeBundle(3, "Bibliotheken"),
+        vocabulary: [],
+        stacks: [],
+      }),
+      title: "Unit 1",
+      source,
+    });
+    expect(await repository.listCards(deck.id)).toHaveLength(1);
+  });
+
+  it("merges equal vocabulary from multiple sources and keeps both links", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const bundle = (id: string) =>
+      parseLearningBundleV1({
+        schemaVersion: LEARNING_BUNDLE_VERSION,
+        id,
+        revision: 1,
+        createdAt: "2026-08-25T12:00:00.000Z",
+        source: { kind: "teacher", id },
+        vocabulary: [
+          {
+            kind: "vocabulary",
+            id: `${id}:item-1`,
+            prompt: { text: "library", locale: "en" },
+            answer: { text: "Bibliothek", locale: "de" },
+            tagIds: [],
+            createdAt: "2026-08-25T12:00:00.000Z",
+            updatedAt: "2026-08-25T12:00:00.000Z",
+          },
+        ],
+        stacks: [],
+      });
+
+    await repository.ingestBundle({
+      bundle: bundle("package-a"),
+      title: "Unit A",
+      source: { kind: "teacher", sourceId: "package-a", classId: "class-1" },
+    });
+    await expect(
+      repository.ingestBundle({
+        bundle: bundle("package-b"),
+        title: "Unit B",
+        source: { kind: "teacher", sourceId: "package-b", classId: "class-1" },
+      }),
+    ).resolves.toMatchObject({ added: 0, reused: 1 });
+
+    const decks = await repository.listDecks();
+    const cards = (
+      await Promise.all(decks.map((deck) => repository.listCards(deck.id)))
+    ).flat();
+    expect(cards).toHaveLength(1);
+    expect(cards[0]?.sourceLinks).toHaveLength(2);
+    expect(
+      new Set(cards[0]?.sourceLinks?.map((link) => link.source.sourceId)),
+    ).toEqual(new Set(["package-a", "package-b"]));
+  });
+
   it("migrates the former standalone LernBox database only once", async () => {
     const legacy = new Dexie("LernBoxDB");
     legacy.version(2).stores({

@@ -45,6 +45,7 @@ describe("class enrollment links", () => {
       enrollment: expect.objectContaining({
         className: "Klasse 7b",
         displayName: "Léa",
+        enabledModules: ["vocabulary"],
       }),
     });
     expect(code.length).toBeLessThan(300);
@@ -88,6 +89,22 @@ describe("class enrollment links", () => {
       membershipId: member.id,
       displayName: "Léa",
     });
+  });
+
+  it("still accepts the former compact c2 payload without module metadata", () => {
+    const current = createEnrollmentCode(course, member);
+    const encoded = current.slice("lernraum:c2:".length);
+    const padding = "=".repeat((4 - (encoded.length % 4)) % 4);
+    const payload = JSON.parse(
+      atob(encoded.replaceAll("-", "+").replaceAll("_", "/") + padding),
+    ) as unknown[];
+    payload.pop();
+    const legacy = `lernraum:c2:${btoa(JSON.stringify(payload))
+      .replaceAll("+", "-")
+      .replaceAll("/", "_")
+      .replace(/=+$/, "")}`;
+
+    expect(parseEnrollmentCode(legacy)).not.toHaveProperty("enabledModules");
   });
 
   it("rejects malformed class-removal codes and links", () => {

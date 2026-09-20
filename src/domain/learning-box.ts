@@ -6,8 +6,16 @@ export type LearningBoxLevel = 1 | 2 | 3 | 4 | 5;
 
 export type LearningBoxSource = {
   kind: "self" | "teacher" | "import" | "running-dictation";
-  sourceId?: string;
-  classId?: string;
+  sourceId?: string | undefined;
+  classId?: string | undefined;
+};
+
+export type LearningBoxSourceLink = {
+  source: LearningBoxSource;
+  itemId: string;
+  revision: number;
+  promptLocale: string;
+  answerLocale: string;
 };
 
 export type LearningBoxDeck = {
@@ -25,7 +33,7 @@ export type LearningBoxCard = {
   deckId: string;
   question: string;
   answer: string;
-  tag?: string;
+  tag?: string | undefined;
   fingerprint: string;
   source: LearningBoxSource;
   level: LearningBoxLevel;
@@ -40,6 +48,7 @@ export type LearningBoxCard = {
   lastReviewed: number;
   createdAt: number;
   updatedAt: number;
+  sourceLinks?: LearningBoxSourceLink[] | undefined;
 };
 
 export function learningBoxFingerprint(question: string, answer: string) {

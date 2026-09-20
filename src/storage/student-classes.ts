@@ -12,7 +12,7 @@ import {
 export class StudentClassesDatabase extends Dexie {
   memberships!: Table<ClassEnrollment, string>;
   assignments!: Table<StudentAssignment, string>;
-  constructor(name = LOCAL_DATA_AREAS.classes) {
+  constructor(name: string = LOCAL_DATA_AREAS.classes) {
     super(name);
     this.version(1).stores({ memberships: "membershipId, classId, issuedAt" });
     this.version(2).stores({
@@ -28,7 +28,16 @@ export function createStudentAssignmentRepository(
     list: () => database.assignments.orderBy("issuedAt").reverse().toArray(),
     get: (id: string) => database.assignments.get(id),
     put: async (value: StudentAssignment) => {
-      await database.assignments.put(studentAssignmentSchema.parse(value));
+      const assignment = studentAssignmentSchema.parse(value);
+      const membership = await database.memberships.get(
+        assignment.membershipId,
+      );
+      if (!membership || membership.classId !== assignment.classId) {
+        throw new Error(
+          "Die Aufgabe gehört zu keiner bekannten Klasseneinschreibung.",
+        );
+      }
+      await database.assignments.put(assignment);
     },
   };
 }

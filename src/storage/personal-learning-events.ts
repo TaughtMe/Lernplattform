@@ -3,7 +3,10 @@ import {
   typingProgressSchema,
   typingStatsSchema,
 } from "./progress-schema";
-import { learningEventV1Schema } from "../domain/learning-bundle";
+import {
+  learningEventV1Schema,
+  normalizeVocabularyText,
+} from "../domain/learning-bundle";
 import { learningEventIdentity } from "./learning-event-identity";
 import Dexie, { type Table } from "dexie";
 import type { LearningEventV1 } from "../domain/learning-bundle";
@@ -16,6 +19,7 @@ import type {
   LearningBoxDirection,
   LearningBoxMode,
   LearningBoxSource,
+  LearningBoxSourceLink,
 } from "../domain/learning-box";
 import {
   createLearningBoxCard,
@@ -95,6 +99,55 @@ type LegacyCard = {
 
 function asLearningBoxLevel(value: number | undefined) {
   return Math.min(5, Math.max(1, value ?? 1)) as 1 | 2 | 3 | 4 | 5;
+}
+
+function bundleItemId(item: LearningBundleV1["vocabulary"][number]): string {
+  return item.sourceId ?? item.id;
+}
+
+function bundleItemRevision(
+  item: LearningBundleV1["vocabulary"][number],
+  bundle: LearningBundleV1,
+): number {
+  return item.sourceRevision ?? bundle.revision;
+}
+
+function bundleItemFingerprint(
+  item: LearningBundleV1["vocabulary"][number],
+): string {
+  return JSON.stringify([
+    item.prompt.locale.trim().toLocaleLowerCase("en-US"),
+    normalizeVocabularyText(item.prompt.text, item.prompt.locale),
+    item.answer.locale.trim().toLocaleLowerCase("en-US"),
+    normalizeVocabularyText(item.answer.text, item.answer.locale),
+  ]);
+}
+
+function sourceLinkMatches(
+  link: LearningBoxSourceLink,
+  source: LearningBoxSource,
+  itemId: string,
+): boolean {
+  return (
+    link.itemId === itemId &&
+    link.source.kind === source.kind &&
+    link.source.sourceId === source.sourceId &&
+    link.source.classId === source.classId
+  );
+}
+
+function createSourceLink(
+  source: LearningBoxSource,
+  item: LearningBundleV1["vocabulary"][number],
+  bundle: LearningBundleV1,
+): LearningBoxSourceLink {
+  return {
+    source: { ...source },
+    itemId: bundleItemId(item),
+    revision: bundleItemRevision(item, bundle),
+    promptLocale: item.prompt.locale,
+    answerLocale: item.answer.locale,
+  };
 }
 
 export async function migrateLegacyLearningBox(
@@ -304,62 +357,140 @@ export function createLearningBoxRepository(
       bundle: LearningBundleV1;
       title: string;
       source: LearningBoxSource;
-    }): Promise<RunningDictationImportResult> => {
-      let deck = input.source.sourceId
-        ? await database.learningBoxDecks
-            .where("source.sourceId")
-            .equals(input.source.sourceId)
-            .first()
-        : undefined;
-      if (!deck) {
-        deck = await database.learningBoxDecks
-          .where("source.kind")
-          .equals(input.source.kind)
-          .filter((candidate) => candidate.title === input.title)
-          .first();
-      }
-      if (!deck) {
-        deck = createLearningBoxDeck({
-          title: input.title,
-          source: input.source,
-        });
-        await database.learningBoxDecks.add(deck);
-      }
+    }): Promise<RunningDictationImportResult> =>
+      database.transaction(
+        "rw",
+        database.learningBoxDecks,
+        database.learningBoxCards,
+        async () => {
+          let deck = input.source.sourceId
+            ? await database.learningBoxDecks
+                .where("source.sourceId")
+                .equals(input.source.sourceId)
+                .first()
+            : undefined;
+          if (!deck) {
+            deck = await database.learningBoxDecks
+              .where("source.kind")
+              .equals(input.source.kind)
+              .filter((candidate) => candidate.title === input.title)
+              .first();
+          }
+          if (!deck) {
+            deck = createLearningBoxDeck({
+              title: input.title,
+              source: input.source,
+            });
+            await database.learningBoxDecks.add(deck);
+          }
 
-      let added = 0;
-      let reused = 0;
-      for (const item of input.bundle.vocabulary) {
-        const fingerprint = learningBoxFingerprint(
-          item.prompt.text,
-          item.answer.text,
-        );
-        const existing = await database.learningBoxCards
-          .where("fingerprint")
-          .equals(fingerprint)
-          .first();
-        if (existing) {
-          await database.learningBoxCards.update(existing.id, {
-            nextReview: Date.now(),
-            reverseNextReview: Date.now(),
-            source: input.source,
-            updatedAt: Date.now(),
-          });
-          reused += 1;
-          continue;
-        }
-        await database.learningBoxCards.add(
-          createLearningBoxCard({
-            deckId: deck.id,
-            question: item.prompt.text,
-            answer: item.answer.text,
-            ...(item.tagIds[0] ? { tag: item.tagIds[0] } : {}),
-            source: input.source,
-          }),
-        );
-        added += 1;
-      }
-      return { deckId: deck.id, added, reused };
-    },
+          const cards = await database.learningBoxCards.toArray();
+          let added = 0;
+          let reused = 0;
+          for (const item of input.bundle.vocabulary) {
+            const itemId = bundleItemId(item);
+            const incomingRevision = bundleItemRevision(item, input.bundle);
+            const sourceLink = createSourceLink(
+              input.source,
+              item,
+              input.bundle,
+            );
+            let existing = cards.find((card) =>
+              (card.sourceLinks ?? []).some((link) =>
+                sourceLinkMatches(link, input.source, itemId),
+              ),
+            );
+
+            if (!existing) {
+              const bundleFingerprint = bundleItemFingerprint(item);
+              const legacyFingerprint = learningBoxFingerprint(
+                item.prompt.text,
+                item.answer.text,
+              );
+              existing = cards.find(
+                (card) =>
+                  card.fingerprint === bundleFingerprint ||
+                  card.fingerprint === legacyFingerprint,
+              );
+            }
+
+            if (existing) {
+              const links = existing.sourceLinks ?? [];
+              const matchingLink = links.find((link) =>
+                sourceLinkMatches(link, input.source, itemId),
+              );
+              const isOlderRevision =
+                matchingLink !== undefined &&
+                incomingRevision < matchingLink.revision;
+
+              if (input.source.kind === "running-dictation") {
+                const now = Date.now();
+                const nextLinks = matchingLink
+                  ? links.map((link) =>
+                      sourceLinkMatches(link, input.source, itemId)
+                        ? {
+                            ...link,
+                            revision: Math.max(link.revision, incomingRevision),
+                          }
+                        : link,
+                    )
+                  : [...links, sourceLink];
+                const nextCard: LearningBoxCard = {
+                  ...existing,
+                  sourceLinks: nextLinks,
+                  nextReview: now,
+                  reverseNextReview: now,
+                  updatedAt: now,
+                };
+                await database.learningBoxCards.put(nextCard);
+                Object.assign(existing, nextCard);
+              } else if (!isOlderRevision && matchingLink) {
+                const nextLinks = links.map((link) =>
+                  sourceLinkMatches(link, input.source, itemId)
+                    ? sourceLink
+                    : link,
+                );
+                const nextCard: LearningBoxCard = {
+                  ...existing,
+                  question: item.prompt.text.trim(),
+                  answer: item.answer.text.trim(),
+                  fingerprint: bundleItemFingerprint(item),
+                  sourceLinks: nextLinks,
+                };
+                if (item.tagIds[0]) nextCard.tag = item.tagIds[0];
+                else delete nextCard.tag;
+                await database.learningBoxCards.put(nextCard);
+                Object.assign(existing, nextCard);
+              } else if (!matchingLink) {
+                const nextCard: LearningBoxCard = {
+                  ...existing,
+                  sourceLinks: [...links, sourceLink],
+                };
+                await database.learningBoxCards.put(nextCard);
+                Object.assign(existing, nextCard);
+              }
+              reused += 1;
+              continue;
+            }
+
+            const card: LearningBoxCard = {
+              ...createLearningBoxCard({
+                deckId: deck.id,
+                question: item.prompt.text,
+                answer: item.answer.text,
+                ...(item.tagIds[0] ? { tag: item.tagIds[0] } : {}),
+                source: input.source,
+              }),
+              fingerprint: bundleItemFingerprint(item),
+              sourceLinks: [sourceLink],
+            };
+            await database.learningBoxCards.add(card);
+            cards.push(card);
+            added += 1;
+          }
+          return { deckId: deck.id, added, reused };
+        },
+      ),
   };
 }
 

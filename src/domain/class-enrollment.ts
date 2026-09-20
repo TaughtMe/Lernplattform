@@ -33,6 +33,7 @@ export const classEnrollmentSchema = z
     displayName: z.string().trim().min(1).max(80),
     enrollmentToken: z.string().regex(/^[0-9a-f]{32}$/),
     issuedAt: z.iso.datetime(),
+    enabledModules: z.array(classModuleSchema).min(1).optional(),
   })
   .strict();
 export type TeacherClass = z.infer<typeof teacherClassSchema>;
@@ -79,6 +80,7 @@ export function createEnrollmentCode(
     displayName: member.displayName,
     enrollmentToken: member.enrollmentToken,
     issuedAt: member.createdAt,
+    enabledModules: course.enabledModules,
   });
   return `lernraum:c2:${encodeCompactPayload([
     enrollment.classId,
@@ -89,6 +91,7 @@ export function createEnrollmentCode(
     enrollment.displayName,
     enrollment.enrollmentToken,
     enrollment.issuedAt,
+    enrollment.enabledModules,
   ])}`;
 }
 export function parseEnrollmentCode(value: string) {
@@ -96,15 +99,28 @@ export function parseEnrollmentCode(value: string) {
   const compactPrefix = "lernraum:c2:";
   if (normalized.startsWith(compactPrefix)) {
     const payload = z
-      .tuple([
-        z.string().uuid(),
-        z.string().uuid(),
-        z.string(),
-        z.string(),
-        z.string(),
-        z.string(),
-        z.string(),
-        z.string(),
+      .union([
+        z.tuple([
+          z.string().uuid(),
+          z.string().uuid(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+        ]),
+        z.tuple([
+          z.string().uuid(),
+          z.string().uuid(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.array(classModuleSchema).min(1),
+        ]),
       ])
       .parse(decodeCompactPayload(normalized.slice(compactPrefix.length)));
     return classEnrollmentSchema.parse({
@@ -117,6 +133,7 @@ export function parseEnrollmentCode(value: string) {
       displayName: payload[5],
       enrollmentToken: payload[6],
       issuedAt: payload[7],
+      ...(payload.length === 9 ? { enabledModules: payload[8] } : {}),
     });
   }
   const legacyPrefix = "lernraum:class:";

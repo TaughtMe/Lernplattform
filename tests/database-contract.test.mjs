@@ -55,6 +55,46 @@ async function rpc(sql, parameters = [], ip = "192.0.2.10") {
     return (await tx.query(sql, parameters)).rows;
   });
 }
+
+async function rpcAs(role, sql, parameters = [], ip = "192.0.2.10") {
+  return db.transaction(async (tx) => {
+    await tx.exec(`set local role ${role}`);
+    await tx.query("select set_config('request.headers', $1, true)", [
+      JSON.stringify({ "x-forwarded-for": ip }),
+    ]);
+    return (await tx.query(sql, parameters)).rows;
+  });
+}
+
+async function readyTransfer({
+  packageId = `bundle-${crypto.randomUUID()}`,
+  contentVersion = 1,
+  ttlMinutes = 15,
+  ip = "192.0.2.70",
+} = {}) {
+  const [reservation] = await rpc(
+    "select * from public.reserve_content_transfer($1,'1.0.0',$2,$3)",
+    [packageId, contentVersion, ttlMinutes],
+    ip,
+  );
+  assert.ok(reservation);
+
+  const [upload] = await rpc(
+    "select public.upload_content_transfer($1,$2,$3,$4,$5,$6,$7::jsonb) as accepted",
+    [
+      reservation.transfer_id,
+      reservation.upload_token,
+      "encrypted-learning-bundle",
+      "nonce-123456",
+      "wrapped-qr-key",
+      "wrapped-manual-key",
+      JSON.stringify({ algorithm: "AES-GCM", version: 1 }),
+    ],
+    ip,
+  );
+  assert.equal(upload.accepted, true);
+  return reservation;
+}
 async function room(ip = "192.0.2.20") {
   return (await rpc("select * from public.open_room_secure('{}')", [], ip))[0];
 }
@@ -105,6 +145,27 @@ test("counts rejected room configurations across committed requests", async () =
     "select count(*)::int as count from private.request_limits where scope='open_room' and key_hash=encode(extensions.digest('192.0.2.30','sha256'),'hex')",
   );
   assert.equal(result.rows[0].count, 12);
+});
+
+test("serializes same-caller rate limits and keeps room codes unique", async () => {
+  const [rateLimitFunction] = (
+    await db.query(
+      `select p.prosrc
+       from pg_proc p
+       join pg_namespace n on n.oid=p.pronamespace
+       where n.nspname='private' and p.proname='enforce_rate_limit'`,
+    )
+  ).rows;
+  assert.match(rateLimitFunction.prosrc, /pg_advisory_xact_lock/);
+
+  const index = (
+    await db.query(
+      `select indexdef from pg_indexes
+       where schemaname='public' and indexname='rooms_active_code_uidx'`,
+    )
+  ).rows[0];
+  assert.match(index.indexdef, /unique/i);
+  assert.match(index.indexdef, /status <> 'ended'/);
 });
 
 test("counts unknown room codes and preserves valid token-based rejoin", async () => {
@@ -263,11 +324,29 @@ test("restores only the intended transfer capabilities", async () => {
     "select * from public.reserve_content_transfer('bundle','1.0.0',1,15)",
   );
   assert.ok(transfer.transfer_id);
-  const result = await db.query(
-    "select has_function_privilege('anon', 'public.retrieve_content_transfer_by_qr(uuid,text)', 'execute') as allowed, has_function_privilege('authenticated', 'public.reserve_content_transfer(text,text,bigint,integer)', 'execute') as authenticated_allowed",
-  );
-  assert.equal(result.rows[0].allowed, true);
-  assert.equal(result.rows[0].authenticated_allowed, false);
+  const {
+    rows: [privileges],
+  } = await db.query(`
+    select
+      has_function_privilege('anon', 'public.reserve_content_transfer(text,text,bigint,integer)', 'execute') as anon_reserve,
+      has_function_privilege('anon', 'public.upload_content_transfer(uuid,text,text,text,text,text,jsonb)', 'execute') as anon_upload,
+      has_function_privilege('anon', 'public.retrieve_content_transfer_by_qr(uuid,text)', 'execute') as anon_qr,
+      has_function_privilege('anon', 'public.retrieve_content_transfer_by_code(text)', 'execute') as anon_code,
+      has_function_privilege('authenticated', 'public.reserve_content_transfer(text,text,bigint,integer)', 'execute') as authenticated_reserve,
+      has_function_privilege('authenticated', 'public.upload_content_transfer(uuid,text,text,text,text,text,jsonb)', 'execute') as authenticated_upload,
+      has_function_privilege('authenticated', 'public.retrieve_content_transfer_by_qr(uuid,text)', 'execute') as authenticated_qr,
+      has_function_privilege('authenticated', 'public.retrieve_content_transfer_by_code(text)', 'execute') as authenticated_code
+  `);
+  assert.deepEqual(privileges, {
+    anon_reserve: true,
+    anon_upload: true,
+    anon_qr: true,
+    anon_code: true,
+    authenticated_reserve: false,
+    authenticated_upload: false,
+    authenticated_qr: false,
+    authenticated_code: false,
+  });
   assert.deepEqual(
     await rpc(
       "select * from public.retrieve_content_transfer_by_qr($1,'wrong')",
@@ -275,4 +354,227 @@ test("restores only the intended transfer capabilities", async () => {
     ),
     [],
   );
+});
+
+test("keeps the encrypted transfer table private and free of learner data", async () => {
+  const {
+    rows: [security],
+  } = await db.query(`
+    select relrowsecurity as rls_enabled, relforcerowsecurity as rls_forced
+    from pg_class
+    where oid = 'public.content_transfers'::regclass
+  `);
+  assert.deepEqual(security, { rls_enabled: true, rls_forced: true });
+
+  const { rows: policies } = await db.query(
+    "select policyname from pg_policies where schemaname='public' and tablename='content_transfers'",
+  );
+  assert.deepEqual(policies, []);
+
+  const { rows: columns } = await db.query(`
+    select column_name
+    from information_schema.columns
+    where table_schema = 'public' and table_name = 'content_transfers'
+    order by ordinal_position
+  `);
+  const names = columns.map(({ column_name }) => column_name);
+  for (const forbidden of [
+    "student_id",
+    "membership_id",
+    "display_name",
+    "learning_progress",
+    "answers",
+    "errors",
+    "due_at",
+  ]) {
+    assert.equal(names.includes(forbidden), false);
+  }
+
+  await assert.rejects(
+    rpcAs("authenticated", "select * from public.content_transfers"),
+    /permission denied/,
+  );
+});
+
+test("validates version metadata and the maximum transfer lifetime", async () => {
+  for (const [packageId, schemaVersion, contentVersion, ttlMinutes] of [
+    ["", "1.0.0", 1, 15],
+    ["bundle", "", 1, 15],
+    ["bundle", "1.0.0", -1, 15],
+    ["bundle", "1.0.0", 1, 14],
+    ["bundle", "1.0.0", 1, 1441],
+  ]) {
+    await assert.rejects(
+      rpc(
+        "select * from public.reserve_content_transfer($1,$2,$3,$4)",
+        [packageId, schemaVersion, contentVersion, ttlMinutes],
+        "192.0.2.71",
+      ),
+      /invalid transfer reservation/,
+    );
+  }
+
+  const [transfer] = await rpc(
+    "select * from public.reserve_content_transfer('versioned-bundle','1.0.0',7,1440)",
+    [],
+    "192.0.2.72",
+  );
+  const {
+    rows: [stored],
+  } = await db.query(
+    `select package_id, schema_version, content_version,
+      expires_at <= created_at + interval '24 hours' as within_limit
+     from public.content_transfers where id=$1`,
+    [transfer.transfer_id],
+  );
+  assert.deepEqual(stored, {
+    package_id: "versioned-bundle",
+    schema_version: "1.0.0",
+    content_version: 7,
+    within_limit: true,
+  });
+});
+
+test("accepts one upload and makes retries unable to replace ciphertext", async () => {
+  const reservation = await readyTransfer({
+    packageId: "single-upload",
+    contentVersion: 2,
+    ip: "192.0.2.73",
+  });
+
+  const [retry] = await rpc(
+    "select public.upload_content_transfer($1,$2,'replacement','nonce-123456','wrapped-qr-key','wrapped-manual-key','{}'::jsonb) as accepted",
+    [reservation.transfer_id, reservation.upload_token],
+    "192.0.2.73",
+  );
+  assert.equal(retry.accepted, false);
+
+  const {
+    rows: [stored],
+  } = await db.query(
+    "select ciphertext, status from public.content_transfers where id=$1",
+    [reservation.transfer_id],
+  );
+  assert.deepEqual(stored, {
+    ciphertext: "encrypted-learning-bundle",
+    status: "ready",
+  });
+});
+
+test("returns the same versioned ciphertext for repeated authorized retrievals", async () => {
+  const reservation = await readyTransfer({
+    packageId: "repeatable-retrieval",
+    contentVersion: 3,
+    ip: "192.0.2.74",
+  });
+  const query = "select * from public.retrieve_content_transfer_by_qr($1,$2)";
+
+  const first = await rpc(
+    query,
+    [reservation.transfer_id, reservation.retrieval_token],
+    "192.0.2.74",
+  );
+  const repeated = await rpc(
+    query,
+    [reservation.transfer_id, reservation.retrieval_token],
+    "192.0.2.75",
+  );
+  assert.deepEqual(repeated, first);
+  assert.deepEqual(first, [
+    {
+      package_id: "repeatable-retrieval",
+      schema_version: "1.0.0",
+      content_version: 3,
+      ciphertext: "encrypted-learning-bundle",
+      nonce: "nonce-123456",
+      wrapped_key: "wrapped-qr-key",
+      crypto_metadata: { algorithm: "AES-GCM", version: 1 },
+      expires_at: reservation.expires_at,
+    },
+  ]);
+
+  assert.deepEqual(
+    await rpc(query, [reservation.transfer_id, "x".repeat(32)]),
+    [],
+  );
+});
+
+test("locks manual retrieval after repeated unauthorized attempts", async () => {
+  const reservation = await readyTransfer({
+    packageId: "manual-lockout",
+    ip: "192.0.2.76",
+  });
+  const locator = reservation.manual_transfer_code.slice(0, 9);
+  const wrongCode = `${locator}ZZZZ-ZZZZ-ZZZZ-ZZZZ`;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    assert.deepEqual(
+      await rpc(
+        "select * from public.retrieve_content_transfer_by_code($1)",
+        [wrongCode],
+        "192.0.2.76",
+      ),
+      [],
+    );
+  }
+  assert.deepEqual(
+    await rpc(
+      "select * from public.retrieve_content_transfer_by_code($1)",
+      [reservation.manual_transfer_code],
+      "192.0.2.76",
+    ),
+    [],
+  );
+
+  const {
+    rows: [locked],
+  } = await db.query(
+    "select failed_attempts, locked_until > statement_timestamp() as locked from public.content_transfers where id=$1",
+    [reservation.transfer_id],
+  );
+  assert.deepEqual(locked, { failed_attempts: 5, locked: true });
+});
+
+test("makes expired transfers unreadable and deletes them with the scheduled cleanup", async () => {
+  const reservation = await readyTransfer({
+    packageId: "expired-bundle",
+    ip: "192.0.2.77",
+  });
+  await db.query(
+    `update public.content_transfers
+     set created_at=statement_timestamp()-interval '1 hour',
+         expires_at=statement_timestamp()-interval '1 second'
+     where id=$1`,
+    [reservation.transfer_id],
+  );
+
+  assert.deepEqual(
+    await rpc("select * from public.retrieve_content_transfer_by_qr($1,$2)", [
+      reservation.transfer_id,
+      reservation.retrieval_token,
+    ]),
+    [],
+  );
+  assert.deepEqual(
+    await rpc("select * from public.retrieve_content_transfer_by_code($1)", [
+      reservation.manual_transfer_code,
+    ]),
+    [],
+  );
+
+  const {
+    rows: [job],
+  } = await db.query(
+    "select schedule, command from cron.job where jobname='delete-expired-content-transfers'",
+  );
+  assert.equal(job.schedule, "17 * * * *");
+  assert.match(job.command, /delete from public\.content_transfers/);
+  await db.exec(job.command);
+  const {
+    rows: [remaining],
+  } = await db.query(
+    "select count(*)::int as count from public.content_transfers where id=$1",
+    [reservation.transfer_id],
+  );
+  assert.equal(remaining.count, 0);
 });
