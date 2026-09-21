@@ -23,7 +23,7 @@ describe("LiveRoomJoin", () => {
 
     await user.click(screen.getByRole("button", { name: "Beitreten" }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       "noch nicht mit dem Laufdiktat-Raumdienst verbunden",
     );
     expect(screen.queryByText(/Du bist dabei/)).not.toBeInTheDocument();
