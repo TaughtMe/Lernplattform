@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowLeftIcon } from "./ui-icons";
-import { StudentHeader } from "./student-header";
+import { StudentDashboardShell } from "./student-dashboard-shell";
 import {
   useCallback,
   useEffect,
@@ -106,26 +105,13 @@ export function LearningBoxApp() {
             <ArrowLeftIcon aria-hidden="true" /> LernBox verlassen
           </button>
         </div>
-      ) : (
-        <header className="learning-box-topbar">
-          {view === "decks" ? (
-            <Link href="/lernen/faecher/vokabeln" className="back-link">
-              <ArrowLeftIcon aria-hidden="true" /> Fach Vokabeln
-            </Link>
-          ) : (
-            <button className="text-button" onClick={leaveDeck}>
-              <ArrowLeftIcon aria-hidden="true" /> Meine LernBox
-            </button>
-          )}
-          <div>
-            <strong>Meine LernBox</strong>
-            <span>Persönlich · auf diesem Gerät</span>
-          </div>
-          <Link href="/lernen/material" className="back-link">
-            Lernwerkstatt
-          </Link>
-        </header>
-      )}
+      ) : view === "deck" ? (
+        <div className="learning-box-localbar">
+          <button className="text-button" onClick={leaveDeck}>
+            <ArrowLeftIcon aria-hidden="true" /> Meine LernBox
+          </button>
+        </div>
+      ) : null}
 
       {view === "decks" && (
         <DeckOverview
@@ -212,13 +198,10 @@ export function LearningBoxApp() {
     </div>
   );
 
-  if (view === "session") return workspace;
-
   return (
-    <main className="learning-room-shell student-dashboard student-dashboard--with-sidebar">
-      <StudentHeader activePath="/lernbox" />
+    <StudentDashboardShell activePath="/lernbox">
       <div className="learning-box-workspace">{workspace}</div>
-    </main>
+    </StudentDashboardShell>
   );
 }
 

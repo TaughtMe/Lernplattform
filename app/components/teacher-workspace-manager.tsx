@@ -791,104 +791,112 @@ export function TeacherAssignmentManager() {
           className="teacher-qr-generator"
           aria-labelledby="qr-generator-title"
         >
-          <p className="eyebrow">QR-Code Generator</p>
-          <h3 id="qr-generator-title">Aufgabe weitergeben</h3>
-          {!qrAssignment ? (
-            <p>Wähle bei einer gespeicherten Aufgabe „QR-Code“.</p>
-          ) : (
-            <>
-              <p>
-                <strong>{qrAssignment.title}</strong> · ohne Schülernamen oder
-                persönliche Lernstände
-              </p>
-              <div className="teacher-qr-generator__code">
-                <QRCodeSVG value={qrCode} size={220} level="M" />
-              </div>
-              <p className="teacher-qr-generator__note">
-                Der QR-Code enthält nur die Aufgabe und ihre Zielklassen. Teile
-                ihn direkt über den Bildschirm oder einen Ausdruck.
-              </p>
-            </>
-          )}
+          <header className="teacher-qr-tool__head">
+            <p className="eyebrow">QR-Code Generator</p>
+            <h3 id="qr-generator-title">Aufgabe weitergeben</h3>
+          </header>
+          <div className="teacher-qr-tool__body">
+            {!qrAssignment ? (
+              <p>Wähle bei einer gespeicherten Aufgabe „QR-Code“.</p>
+            ) : (
+              <>
+                <p>
+                  <strong>{qrAssignment.title}</strong> · ohne Schülernamen oder
+                  persönliche Lernstände
+                </p>
+                <div className="teacher-qr-generator__code">
+                  <QRCodeSVG value={qrCode} size={220} level="M" />
+                </div>
+                <p className="teacher-qr-generator__note">
+                  Der QR-Code enthält nur die Aufgabe und ihre Zielklassen.
+                  Teile ihn direkt über den Bildschirm oder einen Ausdruck.
+                </p>
+              </>
+            )}
+          </div>
         </section>
 
         <section
           className="teacher-qr-reader"
           aria-labelledby="qr-reader-title"
         >
-          <p className="eyebrow">QR-Code Leser</p>
-          <h3 id="qr-reader-title">Aufgabe oder Abgabe prüfen</h3>
-          <div className="teacher-qr-reader__controls">
-            <label>
-              Code manuell prüfen
-              <textarea
-                rows={5}
-                value={manualCode}
-                onChange={(event) => setManualCode(event.target.value)}
-                placeholder="Code hier einfügen"
+          <header className="teacher-qr-tool__head">
+            <p className="eyebrow">QR-Code Leser</p>
+            <h3 id="qr-reader-title">Aufgabe oder Abgabe prüfen</h3>
+          </header>
+          <div className="teacher-qr-tool__body">
+            <div className="teacher-qr-reader__controls">
+              <label>
+                Code manuell prüfen
+                <textarea
+                  rows={5}
+                  value={manualCode}
+                  onChange={(event) => setManualCode(event.target.value)}
+                  placeholder="Code hier einfügen"
+                />
+              </label>
+              <QrCodeScanner
+                continuous
+                onResult={(value) => void inspectCode(value)}
               />
-            </label>
-            <QrCodeScanner
-              continuous
-              onResult={(value) => void inspectCode(value)}
-            />
-            <button
-              className="button"
-              type="button"
-              onClick={() => void inspectCode(manualCode)}
-            >
-              Code prüfen
-            </button>
+              <button
+                className="button"
+                type="button"
+                onClick={() => void inspectCode(manualCode)}
+              >
+                Code prüfen
+              </button>
+            </div>
+            {scanError ? <p role="alert">{scanError}</p> : null}
+            {scanned ? (
+              <article className="teacher-qr-reader__result" aria-live="polite">
+                <span>{TEACHER_SUBJECT_LABELS[scanned.subject]}</span>
+                <h4>{scanned.title}</h4>
+                <p>{scanned.instructions}</p>
+                <small>
+                  {scanned.classIds.length} Klasse
+                  {scanned.classIds.length === 1 ? "" : "n"}
+                  {scanned.dueDate ? ` · fällig ${scanned.dueDate}` : ""}
+                </small>
+              </article>
+            ) : null}
+            {qrAssignment ? (
+              <section
+                className="teacher-submission-log"
+                aria-labelledby="submission-log-title"
+              >
+                <div>
+                  <p className="eyebrow">Lokales Abgabelog</p>
+                  <h4 id="submission-log-title">{qrAssignment.title}</h4>
+                  <strong>
+                    {submissions.length} / {expectedMembers.length} abgegeben
+                  </strong>
+                </div>
+                {expectedMembers.length === 0 ? (
+                  <p>Für diese Zuteilung sind noch keine Schüler vorhanden.</p>
+                ) : (
+                  <ul>
+                    {expectedMembers.map((member) => (
+                      <li key={member.id}>
+                        <span>{member.displayName}</span>
+                        <span
+                          className={
+                            submittedMemberIds.has(member.id)
+                              ? "teacher-submission-log__done"
+                              : "teacher-submission-log__open"
+                          }
+                        >
+                          {submittedMemberIds.has(member.id)
+                            ? "abgegeben"
+                            : "ausstehend"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ) : null}
           </div>
-          {scanError ? <p role="alert">{scanError}</p> : null}
-          {scanned ? (
-            <article className="teacher-qr-reader__result" aria-live="polite">
-              <span>{TEACHER_SUBJECT_LABELS[scanned.subject]}</span>
-              <h4>{scanned.title}</h4>
-              <p>{scanned.instructions}</p>
-              <small>
-                {scanned.classIds.length} Klasse
-                {scanned.classIds.length === 1 ? "" : "n"}
-                {scanned.dueDate ? ` · fällig ${scanned.dueDate}` : ""}
-              </small>
-            </article>
-          ) : null}
-          {qrAssignment ? (
-            <section
-              className="teacher-submission-log"
-              aria-labelledby="submission-log-title"
-            >
-              <div>
-                <p className="eyebrow">Lokales Abgabelog</p>
-                <h4 id="submission-log-title">{qrAssignment.title}</h4>
-                <strong>
-                  {submissions.length} / {expectedMembers.length} abgegeben
-                </strong>
-              </div>
-              {expectedMembers.length === 0 ? (
-                <p>Für diese Zuteilung sind noch keine Schüler vorhanden.</p>
-              ) : (
-                <ul>
-                  {expectedMembers.map((member) => (
-                    <li key={member.id}>
-                      <span>{member.displayName}</span>
-                      <span
-                        className={
-                          submittedMemberIds.has(member.id)
-                            ? "teacher-submission-log__done"
-                            : "teacher-submission-log__open"
-                        }
-                      >
-                        {submittedMemberIds.has(member.id)
-                          ? "abgegeben"
-                          : "ausstehend"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ) : null}
         </section>
       </div>
     </section>

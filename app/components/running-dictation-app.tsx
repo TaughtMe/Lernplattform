@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeftIcon, StarIcon } from "./ui-icons";
+import { StarIcon } from "./ui-icons";
 import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import {
   buildRunningDictationHint,
@@ -433,21 +433,5 @@ export function RunningDictationApp() {
 }
 
 function RunningDictationShell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="running-shell">
-      <header className="running-topbar">
-        <Link href="/frei/german" className="back-link">
-          <ArrowLeftIcon aria-hidden="true" /> Deutsch
-        </Link>
-        <div>
-          <strong>Laufdiktat</strong>
-          <span>Im Lernraum</span>
-        </div>
-        <Link href="/" className="back-link">
-          Lernraum
-        </Link>
-      </header>
-      {children}
-    </main>
-  );
+  return <div className="running-shell">{children}</div>;
 }

@@ -11,6 +11,15 @@ import {
 } from "./room-contract";
 import { getLiveRoomClient, type LiveRoomConfig } from "./live-room-client";
 import { LIVE_APP_VERSION } from "../../app-version";
+import {
+  animalTokenFromDisplayName,
+  type AnimalToken,
+} from "../../domain/learner-profile";
+import {
+  createRoomJoinPayload,
+  createRoomReentryToken,
+  roomIdentityStorageKey,
+} from "../../domain/room-identity";
 
 async function withLiveRoomRetry<T>(
   operation: () => Promise<T>,
@@ -37,6 +46,8 @@ export type JoinedLiveRoom = {
   status: "lobby" | "live" | "ended";
   studentName: string;
   participantToken: string;
+  animalToken: AnimalToken | null;
+  animalNumber: number;
 };
 
 export type LiveRoomState = {
@@ -64,6 +75,8 @@ export type OpenedLiveRoom = {
 
 export type LiveRoomParticipant = {
   studentName: string;
+  animalToken: AnimalToken | null;
+  animalNumber: number;
   lastSeenAt: string | null;
 };
 
@@ -138,6 +151,8 @@ export async function getLiveRoomParticipants(
   if (error) throw new Error(error.message);
   return parseRpcRows(participantRowSchema, data).map((row) => ({
     studentName: row.student_key,
+    animalToken: row.animal_token ?? null,
+    animalNumber: row.animal_number ?? 0,
     lastSeenAt: row.last_seen_at,
   }));
 }
@@ -216,16 +231,29 @@ export function clearTeacherLiveRoom() {
 export async function joinLiveRoom(
   config: LiveRoomConfig,
   code: string,
-  studentName: string,
+  studentNameOrIdentity:
+    string | { animalToken: AnimalToken | null; participantToken?: string },
   participantToken?: string,
 ): Promise<JoinedLiveRoom | null> {
+  const animalToken =
+    typeof studentNameOrIdentity === "string"
+      ? animalTokenFromDisplayName(studentNameOrIdentity)
+      : studentNameOrIdentity.animalToken;
+  const requestedToken =
+    typeof studentNameOrIdentity === "string"
+      ? participantToken
+      : studentNameOrIdentity.participantToken;
+  const payload = createRoomJoinPayload(
+    animalToken,
+    requestedToken ?? createRoomReentryToken(),
+  );
   return withLiveRoomRetry(async () => {
     const { data, error } = await getLiveRoomClient(config).rpc(
       "join_room_secure",
       {
         p_code: code,
-        p_student_key: studentName,
-        p_participant_token: participantToken ?? null,
+        p_student_key: payload.animalToken,
+        p_participant_token: payload.reentryToken,
       },
     );
     if (error) throw new Error(error.message);
@@ -237,6 +265,8 @@ export async function joinLiveRoom(
       status: row.status,
       studentName: row.assigned_student_key,
       participantToken: row.participant_token,
+      animalToken: row.animal_token ?? null,
+      animalNumber: row.animal_number ?? 0,
     };
   });
 }
@@ -345,19 +375,22 @@ export async function touchLiveParticipant(
   if (error) throw new Error(error.message);
 }
 
-const IDENTITY_KEY = "lernraum-live-room-identity";
+const LEGACY_IDENTITY_KEY = "lernraum-live-room-identity";
 
 type StoredIdentity = {
   code: string;
   name: string;
   participantToken: string;
+  animalToken?: AnimalToken | null | undefined;
+  participantKey?: string | undefined;
 };
 
 export function readLiveRoomIdentity(code: string): StoredIdentity | null {
   try {
-    const result = storedIdentitySchema.safeParse(
-      JSON.parse(sessionStorage.getItem(IDENTITY_KEY) ?? "null"),
-    );
+    const raw =
+      sessionStorage.getItem(roomIdentityStorageKey(code)) ??
+      sessionStorage.getItem(LEGACY_IDENTITY_KEY);
+    const result = storedIdentitySchema.safeParse(JSON.parse(raw ?? "null"));
     return result.success && result.data.code === code ? result.data : null;
   } catch {
     return null;
@@ -366,9 +399,16 @@ export function readLiveRoomIdentity(code: string): StoredIdentity | null {
 
 export function saveLiveRoomIdentity(identity: StoredIdentity) {
   try {
+    const storedIdentity = storedIdentitySchema.parse({
+      ...identity,
+      participantKey: identity.participantKey ?? identity.name,
+      ...(identity.animalToken !== undefined
+        ? { animalToken: identity.animalToken }
+        : { animalToken: animalTokenFromDisplayName(identity.name) }),
+    });
     sessionStorage.setItem(
-      IDENTITY_KEY,
-      JSON.stringify(storedIdentitySchema.parse(identity)),
+      roomIdentityStorageKey(storedIdentity.code),
+      JSON.stringify(storedIdentity),
     );
   } catch {
     // Der Raum funktioniert weiter, auch wenn der Browser Sitzungsspeicher sperrt.

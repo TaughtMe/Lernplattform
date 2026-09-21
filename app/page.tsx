@@ -19,74 +19,41 @@ export default function Home() {
           </span>
           <span>Lernraum</span>
         </Link>
-        <nav
-          className="landing-page__nav"
-          aria-label="Schnellnavigation"
-          style={{
-            marginRight: "clamp(0px, calc((100vw - 760px) * 0.25), 76px)",
-          }}
-        >
-          {previewEnabled ? (
-            <a href="#funktionen">Was du hier findest</a>
-          ) : null}
-          <Link className="teacher-link" href="/lehrer">
-            Lehrerbereich
+        <nav className="landing-page__nav" aria-label="Schnellnavigation">
+          <Link
+            className="teacher-link"
+            href="/lehrer"
+            aria-label="Lehrerbereich"
+          >
+            <span className="teacher-link__full">Lehrerbereich</span>
+            <span className="teacher-link__short">Lehrer</span>
           </Link>
         </nav>
       </header>
 
-      <section className="landing-hero" aria-labelledby="landing-title">
-        <div className="landing-hero__copy">
-          <p className="eyebrow">Lernen im eigenen Rhythmus</p>
-          <h1 id="landing-title">
-            Ein Lernraum, der dich <em>weiterbringt.</em>
-          </h1>
-          <p>
-            Übe genau das, was heute dran ist. Persönlich, ruhig und direkt auf
-            deinem Gerät.
-          </p>
-          <p className="landing-hero__note">
-            Ohne Konto. Persönliche Lernstände bleiben lokal.
-          </p>
+      <section className="landing-launch" aria-labelledby="landing-title">
+        <h1 id="landing-title" className="sr-only">
+          Lernraum starten
+        </h1>
+        <div className="landing-launch__profile">
+          {previewEnabled ? <LandingLearnerAction variant="entry" /> : null}
         </div>
-        <div className="landing-hero__entry" id="raumcode">
+        <div className="landing-launch__join" id="raumcode">
           <div className="landing-entry__heading">
-            <p className="eyebrow">Gemeinsam im Unterricht</p>
             <h2 id="room-title">Bereit für dein Laufdiktat?</h2>
-            <p>
-              Gib den Raumcode deiner Lehrkraft ein oder scanne den QR-Code.
-              Dein Profil-Tier ist direkt dabei.
-            </p>
+            <p>Raumcode eingeben oder QR-Code scannen.</p>
           </div>
           <div className="landing-entry__form">
             <RoomCodeForm idPrefix="main-join" mode="room" />
             <PilotConnectionNotice configured={configured} />
           </div>
         </div>
+        {previewEnabled ? (
+          <nav className="landing-launch__secondary" aria-label="Direkt lernen">
+            <Link href="/lernen/material">Frei üben</Link>
+          </nav>
+        ) : null}
       </section>
-
-      {previewEnabled ? (
-        <section
-          className="landing-paths"
-          id="funktionen"
-          aria-labelledby="paths-title"
-        >
-          <div className="landing-paths__intro">
-            <p className="eyebrow">Dein nächster Schritt</p>
-            <h2 id="paths-title">Was heute passt.</h2>
-            <p>Ein ruhiger Startpunkt für deine nächste Runde.</p>
-          </div>
-          <div className="landing-paths__grid">
-            <LandingLearnerAction />
-            <Link className="landing-path" href="/lernen/material">
-              <strong>Frei üben</strong>
-              <span>
-                Ein Fach auswählen und direkt mit einer Übung beginnen.
-              </span>
-            </Link>
-          </div>
-        </section>
-      ) : null}
     </main>
   );
 }

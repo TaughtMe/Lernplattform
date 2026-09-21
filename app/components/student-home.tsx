@@ -8,6 +8,7 @@ import { createLearningRecommendationRepository } from "../../src/storage/learni
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
 import { StudentDashboardShell } from "./student-dashboard-shell";
 import { StudentIdentitySummary } from "./student-identity-summary";
+import { BookOpenIcon, SparklesIcon } from "./ui-icons";
 
 const DAILY_TARGET = 20;
 const BOXES = [1, 2, 3, 4, 5] as const;
@@ -79,12 +80,6 @@ export function createCalendarMonth(month: Date, today = new Date()) {
       isToday: localDayKey(date) === localDayKey(today),
     };
   });
-}
-
-function recommendationAction(recommendation: LearningRecommendation) {
-  if (recommendation.reason === "error") return "Fehler jetzt üben";
-  if (recommendation.reason === "due") return "Runde starten";
-  return "Lernweg fortsetzen";
 }
 
 export function StudentHome() {
@@ -175,9 +170,6 @@ export function StudentHome() {
     100,
     Math.round((snapshot.completedToday / DAILY_TARGET) * 100),
   );
-  const memoryProgress = Math.round(
-    (snapshot.memoryStage / BOXES.length) * 100,
-  );
 
   return (
     <StudentDashboardShell
@@ -248,14 +240,14 @@ export function StudentHome() {
                 href={primary.route}
               >
                 <span className="sr-only">{primary.title}. </span>
-                {recommendationAction(primary)}
+                Heute üben
               </Link>
             ) : (
               <Link
                 className="button button--primary student-overview__start"
                 href="/lernen/material"
               >
-                Frei üben
+                Heute üben
               </Link>
             )}
           </div>
@@ -291,34 +283,35 @@ export function StudentHome() {
               <span style={{ width: `${targetProgress}%` }} />
             </div>
           </div>
-          <div className="student-overview__context-line">
-            <p className="eyebrow">Lernstand</p>
-            <strong>
-              {snapshot.learningBoxTotal > 0
-                ? "LernBox ist bereit"
-                : "Dein Lernweg beginnt mit der ersten Karte"}
-            </strong>
-            <div
-              className="student-overview__progress"
-              aria-label={`${memoryProgress} Prozent der Merkstrecke`}
-              aria-valuemax={100}
-              aria-valuemin={0}
-              aria-valuenow={memoryProgress}
-              role="progressbar"
-            >
-              <span style={{ width: `${memoryProgress}%` }} />
-            </div>
-            <div className="student-overview__context-links">
-              <Link href="/lernen/fortschritt">Fortschritt ansehen</Link>
-              <Link href="/lernbox">LernBox öffnen</Link>
-              <Link href="/frei/german/lernwoerter">Lernwörter öffnen</Link>
-            </div>
-          </div>
           <p className="student-overview__local-note">
             Dein Lernstand bleibt ausschließlich auf diesem Gerät.
           </p>
         </aside>
       </div>
+
+      <section
+        className="student-home__support-grid"
+        aria-label="Weitere Lernbereiche"
+      >
+        <Link className="student-home__support-link" href="/lernbox">
+          <BookOpenIcon aria-hidden="true" />
+          <span>
+            <strong>LernBox</strong>
+            <small>
+              {snapshot.learningBoxTotal
+                ? `${snapshot.learningBoxTotal} Karten bereit`
+                : "Eigene Karten anlegen und wiederholen"}
+            </small>
+          </span>
+        </Link>
+        <Link className="student-home__support-link" href="/lernen/material">
+          <SparklesIcon aria-hidden="true" />
+          <span>
+            <strong>Lernwerkstatt / Üben</strong>
+            <small>Ein Fach wählen und direkt starten</small>
+          </span>
+        </Link>
+      </section>
     </StudentDashboardShell>
   );
 }

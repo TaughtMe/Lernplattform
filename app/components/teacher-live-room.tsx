@@ -75,7 +75,6 @@ import {
   ChevronUpIcon,
   CloseIcon,
   DownloadIcon,
-  HomeIcon,
   LiveLessonIcon,
   PencilIcon,
   RefreshIcon,
@@ -1061,7 +1060,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
 
   return (
     <section
-      className="teacher-live"
+      className={`teacher-live${stage === "live" ? " teacher-live--active" : " teacher-live--embedded"}`}
       aria-labelledby="teacher-live-title"
       data-hydrated={hydrated ? "true" : "false"}
     >
@@ -1070,19 +1069,15 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
       </h1>
       <header className="teacher-live__dashboard-header">
         <div className="teacher-live__brand-row">
-          <Link
-            href="/"
-            className="teacher-live__brand"
-            aria-label="Zur Startseite"
-          >
-            <span className="teacher-live__home" aria-hidden="true">
-              <HomeIcon />
+          <div className="teacher-live__brand">
+            <span className="teacher-live__brand-mark" aria-hidden="true">
+              L
             </span>
             <span>
               <strong>Lernraum · Laufdiktat</strong>
               <small>Lehrkraft-Dashboard</small>
             </span>
-          </Link>
+          </div>
           <span className="teacher-local-note">
             {room ? `Raum ${room.code}` : "Vorbereitung"}
           </span>

@@ -52,6 +52,8 @@ export function TeacherContentTransfer({
   const revision = useRef(0);
   const library = useMemo(() => createTeacherContentLibraryRepository(), []);
   const importInput = useRef<HTMLInputElement>(null);
+  const sourceInput = useRef<HTMLTextAreaElement>(null);
+  const sourceFileInput = useRef<HTMLInputElement>(null);
   const pairs = useMemo(
     () =>
       source
@@ -185,6 +187,30 @@ export function TeacherContentTransfer({
         "Die Datei ist keine gültige Lernraum-Lehrkraftbibliothek der Version 1.",
       );
     }
+  }
+
+  async function importVocabularyFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setError("");
+    setLibraryNotice("");
+    const importedSource = await file.text();
+    setSource(importedSource);
+    setPublished(null);
+    const importedPairs = importedSource
+      .split(/\r?\n/)
+      .filter((line) => line.includes(";") || line.includes("\t")).length;
+    if (importedPairs === 0) {
+      setError(
+        "Die Datei enthält noch keine erkennbaren Vokabelpaare. Trenne Vorder- und Rückseite mit Semikolon oder Tab.",
+      );
+      requestAnimationFrame(() => sourceInput.current?.focus());
+      return;
+    }
+    setLibraryNotice(
+      `${importedPairs} Vokabelpaare aus „${file.name}“ wurden übernommen.`,
+    );
   }
 
   async function publish(event: FormEvent<HTMLFormElement>) {
@@ -347,31 +373,66 @@ export function TeacherContentTransfer({
             }}
           />
         </label>
-        <label>
-          Vokabelpaare – Semikolon oder Tab
+        <div className="teacher-transfer__vocab">
+          <label htmlFor="teacher-vocabulary-source">
+            Vokabelpaare
+            <small>Eine Zeile pro Paar, getrennt mit Semikolon oder Tab.</small>
+          </label>
           <textarea
+            id="teacher-vocabulary-source"
+            ref={sourceInput}
             value={source}
             onChange={(event) => {
               setSource(event.target.value);
               setPublished(null);
             }}
           />
-        </label>
-        <button
-          type="submit"
-          className="button button--primary"
-          disabled={busy || !title.trim() || pairs === 0}
-        >
-          {busy ? "Wird verschlüsselt …" : "Paket verschlüsselt freigeben"}
-        </button>
-        <button
-          type="button"
-          className="button button--secondary"
-          disabled={!title.trim() || pairs === 0}
-          onClick={() => void saveToLibrary()}
-        >
-          Lokal speichern
-        </button>
+          <div
+            className="teacher-transfer__vocab-actions"
+            role="group"
+            aria-label="Vokabelerfassung"
+          >
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => sourceInput.current?.focus()}
+            >
+              Vokabeln eingeben
+            </button>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => sourceFileInput.current?.click()}
+            >
+              Datei importieren
+            </button>
+            <input
+              ref={sourceFileInput}
+              hidden
+              type="file"
+              accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+              aria-label="Datei mit Vokabelpaaren auswählen"
+              onChange={(event) => void importVocabularyFile(event)}
+            />
+          </div>
+        </div>
+        <div className="teacher-transfer__actions" aria-label="Paketaktionen">
+          <button
+            type="submit"
+            className="button button--primary"
+            disabled={busy || !title.trim() || pairs === 0}
+          >
+            {busy ? "Wird verschlüsselt …" : "Für Schüler freigeben"}
+          </button>
+          <button
+            type="button"
+            className="button button--secondary"
+            disabled={!title.trim() || pairs === 0}
+            onClick={() => void saveToLibrary()}
+          >
+            Lokal speichern
+          </button>
+        </div>
       </form>
 
       {libraryNotice ? <p role="status">{libraryNotice}</p> : null}

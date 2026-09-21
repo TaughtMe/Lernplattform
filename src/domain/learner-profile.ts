@@ -74,6 +74,13 @@ export const ANIMALS: Array<{ name: string; g: "m" | "f" | "n" }> = [
   { name: "Perserkatze", g: "f" },
 ];
 
+const animalNames = ANIMALS.map((animal) => animal.name) as [
+  string,
+  ...string[],
+];
+export const animalTokenSchema = z.enum(animalNames);
+export type AnimalToken = z.infer<typeof animalTokenSchema>;
+
 const FILENAME_OVERRIDES: Record<string, string> = {
   chamäleon: "chameleon",
   tiefseefisch: "anglerfisch",
@@ -83,8 +90,8 @@ const FILENAME_OVERRIDES: Record<string, string> = {
   hund: "dackel",
 };
 
-export function animalFileName(animal: string): string {
-  const lower = animal.toLowerCase().trim();
+export function animalFileName(animal: string | null): string {
+  const lower = (animal ?? "koala").toLowerCase().trim();
   if (FILENAME_OVERRIDES[lower]) return FILENAME_OVERRIDES[lower];
   return lower
     .replace(/ä/g, "ae")
@@ -98,9 +105,7 @@ export function animalFileName(animal: string): string {
 export const learnerProfileSchema = z
   .object({
     version: z.literal(1),
-    animal: z
-      .string()
-      .refine((value) => ANIMALS.some((animal) => animal.name === value)),
+    animal: animalTokenSchema.nullable(),
     adjective: z.string().refine((value) => ADJECTIVES.includes(value)),
   })
   .strict();
@@ -108,30 +113,38 @@ export type LearnerProfile = z.infer<typeof learnerProfileSchema>;
 
 export function createLearnerProfile(
   animalName?: string,
-  random: () => number = Math.random,
+  _random: () => number = Math.random,
 ): LearnerProfile {
-  const animal =
-    ANIMALS.find((animal) => animal.name === animalName) ??
-    ANIMALS[
-      Math.min(
-        ANIMALS.length - 1,
-        Math.max(0, Math.floor(random() * ANIMALS.length)),
-      )
-    ]!;
+  const animal = ANIMALS.find((animal) => animal.name === animalName) ?? null;
   const adjective =
     ADJECTIVES[
       Math.min(
         ADJECTIVES.length - 1,
-        Math.max(0, Math.floor(random() * ADJECTIVES.length)),
+        Math.max(0, Math.floor(_random() * ADJECTIVES.length)),
       )
     ]!;
-  return { version: 1, animal: animal.name, adjective };
+  return { version: 1, animal: animal?.name ?? null, adjective };
 }
 
 export function learnerDisplayName(profile: LearnerProfile) {
+  if (!profile.animal) return "Lernender";
   const animal = ANIMALS.find((animal) => animal.name === profile.animal)!;
   const ending = animal.g === "m" ? "er" : animal.g === "f" ? "e" : "es";
   return `${profile.adjective}${ending} ${animal.name}`;
+}
+
+export function animalTokenFromDisplayName(value: string): AnimalToken | null {
+  const name = value
+    .trim()
+    .replace(/\s+\d+$/, "")
+    .toLocaleLowerCase("de-DE");
+  return (
+    ANIMALS.find(
+      (animal) =>
+        name === animal.name.toLocaleLowerCase("de-DE") ||
+        name.endsWith(` ${animal.name.toLocaleLowerCase("de-DE")}`),
+    )?.name ?? null
+  );
 }
 
 /** Server-assigned numeric suffixes distinguish pupils without changing the animal. */

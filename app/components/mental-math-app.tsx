@@ -9,7 +9,7 @@ import {
   type FormEvent,
 } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, CheckIcon, RefreshIcon, TrashIcon } from "./ui-icons";
+import { CheckIcon, RefreshIcon, TrashIcon } from "./ui-icons";
 import {
   MULTIPLICATION_TABLES,
   displayMathNumber,
@@ -769,17 +769,5 @@ function Check({
 }
 
 function MentalMathShell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="mental-math-shell">
-      <header className="class-topbar">
-        {/* Native anchor keeps this client component independently testable. */}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/" className="back-link">
-          <ArrowLeftIcon aria-hidden="true" /> Startseite
-        </a>
-        <span className="ranking-note">Lernstand bleibt lokal</span>
-      </header>
-      {children}
-    </main>
-  );
+  return <div className="mental-math-shell">{children}</div>;
 }

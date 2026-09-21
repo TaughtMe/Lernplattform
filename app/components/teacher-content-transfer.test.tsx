@@ -66,6 +66,26 @@ describe("TeacherContentTransfer", () => {
     expect(await screen.findByText(/wurde lokal gespeichert/)).toBeVisible();
   });
 
+  it("imports vocabulary pairs from a text file into the editable field", async () => {
+    const user = userEvent.setup();
+    render(<TeacherContentTransfer transferConfig={null} />);
+
+    const file = new File(["hello;Hallo\nworld\tWelt"], "words.tsv", {
+      type: "text/tab-separated-values",
+    });
+    await user.upload(
+      screen.getByLabelText("Datei mit Vokabelpaaren auswählen"),
+      file,
+    );
+
+    expect(screen.getByLabelText(/^Vokabelpaare/)).toHaveValue(
+      "hello;Hallo\nworld\tWelt",
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "2 Vokabelpaare",
+    );
+  });
+
   it("encrypts and publishes the prepared vocabulary package", async () => {
     const user = userEvent.setup();
     render(
@@ -78,7 +98,7 @@ describe("TeacherContentTransfer", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: "Paket verschlüsselt freigeben" }),
+      screen.getByRole("button", { name: "Für Schüler freigeben" }),
     );
 
     expect(publishLearningBundle).toHaveBeenCalledWith(
@@ -112,7 +132,7 @@ describe("TeacherContentTransfer", () => {
     );
 
     const publishButton = screen.getByRole("button", {
-      name: "Paket verschlüsselt freigeben",
+      name: "Für Schüler freigeben",
     });
     await user.click(publishButton);
     await user.click(publishButton);

@@ -17,7 +17,7 @@ test("local preview exposes the clear learner entries", async ({ page }) => {
     page.getByRole("link", { name: "Lehrerbereich" }),
   ).toHaveAttribute("href", "/lehrer");
   await expect(
-    page.getByRole("link", { name: /^Mein Lernraum/ }),
+    page.getByRole("link", { name: /Tier wählen/ }).first(),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: /^Frei üben/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /^Raum beitreten/ })).toHaveCount(
@@ -105,8 +105,28 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
         pageScroll: window.scrollY,
         pageHeight: document.documentElement.scrollHeight,
         viewportHeight: document.documentElement.clientHeight,
-        header: header?.getBoundingClientRect().toJSON(),
-        footer: footer?.getBoundingClientRect().toJSON(),
+        header: (() => {
+          const rect = header?.getBoundingClientRect();
+          return rect
+            ? {
+                height: rect.height,
+                left: rect.left,
+                right: rect.right,
+                width: rect.width,
+              }
+            : undefined;
+        })(),
+        footer: (() => {
+          const rect = footer?.getBoundingClientRect();
+          return rect
+            ? {
+                height: rect.height,
+                left: rect.left,
+                right: rect.right,
+                width: rect.width,
+              }
+            : undefined;
+        })(),
       };
     });
   const textFrame = await stableFrame();

@@ -61,6 +61,54 @@ describe("validated room API", () => {
     await expect(openLiveRoom(config, {})).rejects.toThrow();
     await expect(joinLiveRoom(config, "1234", "Mia")).resolves.toBeNull();
   });
+  it("sends only the animal enum and room reentry token for a new join", async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          room_id: roomId,
+          station_mode: false,
+          status: "lobby",
+          assigned_student_key: "participant-opaque",
+          participant_token: "b".repeat(48),
+          animal_token: "Fuchs",
+          animal_number: 2,
+        },
+      ],
+      error: null,
+    });
+    await expect(
+      joinLiveRoom(config, "1234", {
+        animalToken: "Fuchs",
+        participantToken: "a".repeat(48),
+      }),
+    ).resolves.toMatchObject({
+      studentName: "participant-opaque",
+      animalToken: "Fuchs",
+      animalNumber: 2,
+    });
+    expect(rpc).toHaveBeenCalledWith("join_room_secure", {
+      p_code: "1234",
+      p_student_key: "Fuchs",
+      p_participant_token: "a".repeat(48),
+    });
+  });
+  it("keeps the reentry identity in the current tab and room scope", () => {
+    saveLiveRoomIdentity({
+      code: "1234",
+      name: "participant-opaque",
+      participantToken: "a".repeat(48),
+      animalToken: "Fuchs",
+    });
+    expect(readLiveRoomIdentity("1234")).toMatchObject({
+      participantToken: "a".repeat(48),
+      animalToken: "Fuchs",
+    });
+    expect(readLiveRoomIdentity("5678")).toBeNull();
+
+    // A newly opened tab has separate sessionStorage and no reentry identity.
+    sessionStorage.clear();
+    expect(readLiveRoomIdentity("1234")).toBeNull();
+  });
   it("validates stored capabilities and preserves valid identities", () => {
     const room = { roomId, code: "1234", accessToken: "a".repeat(32) };
     saveTeacherLiveRoom(room);
@@ -71,12 +119,17 @@ describe("validated room API", () => {
       participantToken: identity.participantToken,
     };
     saveLiveRoomIdentity(student);
-    expect(readLiveRoomIdentity("1234")).toEqual(student);
+    expect(readLiveRoomIdentity("1234")).toMatchObject({
+      ...student,
+      animalToken: null,
+      participantKey: "Mia",
+    });
     expect(readLiveRoomIdentity("5678")).toBeNull();
     sessionStorage.setItem(
       "lernraum-live-room-identity",
       JSON.stringify({ ...student, participantToken: 42 }),
     );
+    sessionStorage.removeItem("lernraum-live-room-identity:1234");
     sessionStorage.setItem(
       "lernraum-teacher-live-room",
       '{"roomId":true,"code":1234,"accessToken":true}',

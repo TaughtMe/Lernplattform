@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { animalTokenSchema } from "../../domain/learner-profile";
 
 const count = z.number().int().min(0).max(100_000);
 const status = z.enum(["lobby", "live", "ended"]);
 const name = z.string().min(1).max(64);
 const participantToken = z.string().regex(/^[0-9a-f]{48}$/);
+const animalToken = animalTokenSchema.nullable();
 
 export const openedRoomSchema = z.object({
   room_id: z.uuid(),
@@ -16,6 +18,8 @@ export const joinedRoomSchema = z.object({
   status,
   assigned_student_key: name,
   participant_token: participantToken,
+  animal_token: animalToken.nullish(),
+  animal_number: z.number().int().min(0).max(100_000).nullish(),
 });
 export const roomStateSchema = z.object({
   status,
@@ -38,6 +42,8 @@ export const studentRowSchema = progressRowSchema.extend({
 });
 export const participantRowSchema = z.object({
   student_key: name,
+  animal_token: animalToken.nullish(),
+  animal_number: z.number().int().min(0).max(100_000).nullish(),
   last_seen_at: z.iso.datetime({ offset: true }).nullable(),
 });
 export const storedTeacherRoomSchema = z.object({
@@ -49,6 +55,8 @@ export const storedIdentitySchema = z.object({
   code: openedRoomSchema.shape.code,
   name,
   participantToken,
+  animalToken: animalToken.nullish(),
+  participantKey: name.optional(),
 });
 
 export function parseRpcRows<T>(schema: z.ZodType<T>, data: unknown): T[] {

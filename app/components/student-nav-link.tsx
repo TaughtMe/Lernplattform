@@ -7,6 +7,7 @@ type StudentNavLinkProps = LinkProps & {
   children: ReactNode;
   className?: string | undefined;
   "aria-current"?: "page" | undefined;
+  title?: string | undefined;
 };
 
 export function StudentNavLink({

@@ -59,7 +59,11 @@ export function StudentIdentitySummary() {
             : "Einstellungen öffnen. Noch kein Tier gewählt"
         }
       >
-        <span className="student-dashboard__profile-avatar" aria-hidden="true">
+        <span
+          className="student-dashboard__profile-avatar"
+          aria-hidden="true"
+          style={{ viewTransitionName: "learner-profile" }}
+        >
           {profile?.animal ? (
             // eslint-disable-next-line @next/next/no-img-element -- small local animal illustration in the shared shell
             <img

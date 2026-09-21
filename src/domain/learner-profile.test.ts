@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ANIMALS,
   animalFileName,
+  animalTokenFromDisplayName,
   createLearnerProfile,
   learnerDisplayName,
   learnerProfileSchema,
@@ -30,13 +31,16 @@ describe("animal profile", () => {
       name,
     );
   });
-  it("generates a valid random fallback and rejects external profile values", () => {
+  it("keeps an unselected animal explicit as null and rejects external profile values", () => {
+    expect(createLearnerProfile(undefined, () => 0.5).animal).toBeNull();
+    expect(createLearnerProfile("unknown", () => 0).animal).toBeNull();
     expect(
-      learnerProfileSchema.safeParse(createLearnerProfile(undefined, () => 0.5))
-        .success,
+      learnerProfileSchema.safeParse({
+        version: 1,
+        animal: null,
+        adjective: "Flink",
+      }).success,
     ).toBe(true);
-    expect(createLearnerProfile("unknown", () => 0).animal).toBe("Koala");
-    expect(createLearnerProfile(undefined, () => 1).animal).toBe("Perserkatze");
     expect(
       learnerProfileSchema.safeParse({
         version: 2,
@@ -58,6 +62,10 @@ describe("animal profile", () => {
         adjective: "secret",
       }).success,
     ).toBe(false);
+  });
+  it("extracts only an allowed animal token from a legacy display name", () => {
+    expect(animalTokenFromDisplayName("Schneller Fuchs 2")).toBe("Fuchs");
+    expect(animalTokenFromDisplayName("Mia")).toBeNull();
   });
   it.each([
     ["Flinker Roter Panda 2", "roter_panda"],

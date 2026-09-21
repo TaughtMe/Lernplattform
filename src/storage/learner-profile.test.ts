@@ -20,11 +20,12 @@ it("persists the selection across repository instances and notifies the UI", () 
   repo.save(createLearnerProfile("Katze"));
   expect(listener).toHaveBeenCalledOnce();
 });
-it("repairs corrupt data and creates only one fallback animal", () => {
+it("repairs corrupt data and keeps the unselected animal null", () => {
   const repo = createLearnerProfileRepository();
   localStorage.setItem(LEARNER_PROFILE_KEY, "broken");
   expect(repo.read()).toBeNull();
   const first = repo.ensure();
+  expect(first.animal).toBeNull();
   expect(repo.ensure()).toEqual(first);
   localStorage.setItem(LEARNER_PROFILE_KEY, '{"animal":"unknown"}');
   expect(repo.read()).toBeNull();

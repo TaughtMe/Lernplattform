@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { SiteMetaActions } from "./components/site-meta-actions";
-import "./globals.css?ui=acceptance-v2";
+import "./globals.css?ui=acceptance-v5";
+import "./student-module-shell.css";
 import "katex/dist/katex.min.css";
 
 export const viewport: Viewport = {

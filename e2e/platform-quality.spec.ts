@@ -21,9 +21,9 @@ test("start page exposes the core learner actions", async ({ page }) => {
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Ein Lernraum, der dich weiterbringt.",
+      name: "Lernraum starten",
     }),
-  ).toBeVisible();
+  ).toBeAttached();
   await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
@@ -32,6 +32,22 @@ test("start page exposes the core learner actions", async ({ page }) => {
     page.getByRole("group", { name: /Lernraum öffnen/ }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: /^Frei üben/ })).toBeVisible();
+
+  const launchLayout = await page.evaluate(() => {
+    const avatar = document.querySelector(
+      ".landing-launch__profile .landing-learner-action__avatar",
+    );
+    const join = document.querySelector(".landing-launch__join");
+    const avatarBox = avatar?.getBoundingClientRect();
+    const joinBox = join?.getBoundingClientRect();
+    return {
+      avatarWidth: avatarBox?.width ?? 0,
+      avatarBottom: avatarBox?.bottom ?? 0,
+      joinTop: joinBox?.top ?? 0,
+    };
+  });
+  expect(launchLayout.avatarWidth).toBeGreaterThanOrEqual(120);
+  expect(launchLayout.joinTop).toBeGreaterThan(launchLayout.avatarBottom);
 });
 
 test("layout never scrolls horizontally", async ({ page }) => {
@@ -194,6 +210,9 @@ test("a native Laufdiktat mistake becomes due LernBox practice", async ({
 }) => {
   await page.goto("/frei/german/laufdiktat");
   await expect(page.locator("iframe")).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Lernraum-Bereiche" }).first(),
+  ).toBeAttached();
   const vocabularyMode = page.getByRole("button", { name: "Vokabeln" });
   await vocabularyMode.click();
   await expect(vocabularyMode).toHaveAttribute("aria-pressed", "true");
@@ -455,10 +474,46 @@ test("the personal learning room keeps today's task focused and separates suppor
   expect(calendarLayout.content).toBeLessThanOrEqual(
     calendarLayout.viewport + 1,
   );
-  await expect(page.getByRole("group", { name: "Raumcode" })).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Fortschritt ansehen" }),
-  ).toBeVisible();
+
+  const isDesktop = (page.viewportSize()?.width ?? 0) > 760;
+
+  if (isDesktop) {
+    await expect(page.getByRole("group", { name: "Raumcode" })).toHaveCount(1);
+    const toggle = page.locator(".student-sidebar-toggle");
+    await expect(toggle).toBeEnabled();
+    await expect(toggle).toHaveAccessibleName("Seitenleiste einklappen");
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(toggle).toHaveAccessibleName("Seitenleiste ausklappen");
+
+    const collapsedLayout = await page.evaluate(() => {
+      const sidebar = document.querySelector(".student-shell__sidebar");
+      return {
+        sidebarWidth: sidebar?.getBoundingClientRect().width ?? 0,
+        viewport: document.documentElement.clientWidth,
+        content: document.documentElement.scrollWidth,
+      };
+    });
+    expect(collapsedLayout.sidebarWidth).toBeLessThanOrEqual(78);
+    expect(collapsedLayout.content).toBeLessThanOrEqual(
+      collapsedLayout.viewport + 1,
+    );
+  } else {
+    await expect(page.getByRole("group", { name: "Raumcode" })).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Raum beitreten" }),
+    ).toBeVisible();
+  }
+
+  const progressLink = page.getByRole("link", { name: "Fortschritt ansehen" });
+  if (isDesktop) {
+    await expect(progressLink).toBeVisible();
+  } else {
+    await expect(progressLink).toHaveCount(0);
+  }
+
   await expect(
     page.getByRole("heading", { name: "Mein Material" }),
   ).toHaveCount(0);
@@ -474,9 +529,9 @@ test("the personal learning room keeps today's task focused and separates suppor
     page.getByRole("heading", { name: "Lernwerkstatt" }),
   ).toBeVisible();
 
-  await expect(page.getByRole("link", { name: "Frei üben" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Mathematik" })).toHaveAttribute(
     "href",
-    "/frei/mathematics",
+    "/lernen/faecher/mathematik",
   );
   await expect(
     page.getByRole("link", { name: "Meine Laufdiktate" }),
@@ -499,6 +554,41 @@ test("the personal learning room keeps today's task focused and separates suppor
   await expect(
     page.getByText(/Vollständige Antworten werden nicht übertragen/),
   ).toBeVisible();
+});
+
+test("teacher material and assignment tools share a consistent grid", async ({
+  page,
+}) => {
+  await page.goto("/lehrer/material");
+  const materialSurface = await page
+    .locator(".teacher-transfer")
+    .evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(materialSurface).toBe("rgba(0, 0, 0, 0)");
+  await expect(
+    page.getByRole("button", { name: "Datei importieren" }),
+  ).toBeVisible();
+
+  await page.goto("/lehrer/aufgaben");
+  const layout = await page.evaluate(() => {
+    const boxes = [
+      ".teacher-assignment-form",
+      ".teacher-assignment-list",
+      ".teacher-qr-generator",
+      ".teacher-qr-reader",
+    ].map((selector) =>
+      document.querySelector(selector)?.getBoundingClientRect(),
+    );
+    return boxes.map((box) => ({
+      width: box?.width ?? 0,
+      height: box?.height ?? 0,
+    }));
+  });
+  expect(layout.every(({ width }) => width > 0)).toBe(true);
+  if ((page.viewportSize()?.width ?? 0) > 800) {
+    expect(Math.abs(layout[0]!.width - layout[1]!.width)).toBeLessThan(2);
+    expect(Math.abs(layout[2]!.width - layout[3]!.width)).toBeLessThan(2);
+    expect(Math.abs(layout[2]!.height - layout[3]!.height)).toBeLessThan(2);
+  }
 });
 
 test("free practice is selected inside a subject", async ({ page }) => {

@@ -10,7 +10,11 @@ import {
 } from "../../components/ui-icons";
 
 const WORKSHOP_OPTIONS = [
-  { href: "/frei/mathematics", label: "Frei üben", icon: SparklesIcon },
+  {
+    href: "/lernen/faecher/mathematik",
+    label: "Mathematik",
+    icon: SparklesIcon,
+  },
   {
     href: "/frei/german/laufdiktat",
     label: "Meine Laufdiktate",

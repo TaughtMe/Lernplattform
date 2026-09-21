@@ -201,7 +201,9 @@ test("counts unknown room codes and preserves valid token-based rejoin", async (
     "192.0.2.40",
   );
   assert.equal(again.participant_token, joined.participant_token);
-  assert.equal(again.assigned_student_key, "Mia");
+  assert.equal(again.assigned_student_key, joined.assigned_student_key);
+  assert.equal(again.animal_token, null);
+  assert.equal(again.animal_number, 0);
   const [missing] = (
     await db.query(
       "select lpad(n::text,4,'0') as code from generate_series(0,9999) n where not exists(select 1 from public.rooms where code=lpad(n::text,4,'0') and status<>'ended') limit 1",
@@ -219,6 +221,89 @@ test("counts unknown room codes and preserves valid token-based rejoin", async (
     "select count(*)::int as n from private.request_limits where scope='join_room' and key_hash=encode(extensions.digest('192.0.2.41','sha256'),'hex')",
   );
   assert.equal(rows[0].n, 1);
+});
+
+test("binds animal display metadata to room participants, not submissions", async () => {
+  const opened = await room("192.0.2.42");
+  const firstToken = "a".repeat(48);
+  const secondToken = "b".repeat(48);
+  const [first] = await rpc(
+    "select * from public.join_room_secure($1,'Fuchs',$2)",
+    [opened.code, firstToken],
+    "192.0.2.42",
+  );
+  const [rejoined] = await rpc(
+    "select * from public.join_room_secure($1,'Fuchs',$2)",
+    [opened.code, first.participant_token],
+    "192.0.2.43",
+  );
+  const [second] = await rpc(
+    "select * from public.join_room_secure($1,'Fuchs',$2)",
+    [opened.code, secondToken],
+    "192.0.2.44",
+  );
+  const [neutral] = await rpc(
+    "select * from public.join_room_secure($1,'Mia',$2)",
+    [opened.code, "c".repeat(48)],
+    "192.0.2.45",
+  );
+
+  assert.equal(first.animal_token, "Fuchs");
+  assert.equal(first.animal_number, 1);
+  assert.equal(rejoined.assigned_student_key, first.assigned_student_key);
+  assert.equal(rejoined.animal_number, 1);
+  assert.notEqual(second.assigned_student_key, first.assigned_student_key);
+  assert.equal(second.animal_token, "Fuchs");
+  assert.equal(second.animal_number, 2);
+  assert.equal(neutral.animal_token, null);
+  assert.equal(neutral.animal_number, 0);
+
+  await rpc("select public.update_session_secure($1,$2,$3,$4)", [
+    opened.room_id,
+    opened.access_token,
+    sessionId,
+    JSON.stringify({ words: [{ id: "house", targetWord: "Haus" }] }),
+  ]);
+  await rpc(
+    "select public.upsert_progress_secure($1,$2,$3,'Fuchs',$4,0,1,0,true)",
+    [opened.room_id, sessionId, first.participant_token, 0],
+  );
+  const [submission] = (
+    await db.query(
+      "select student_key from public.room_students where room_id=$1",
+      [opened.room_id],
+    )
+  ).rows;
+  assert.deepEqual(submission, { student_key: first.assigned_student_key });
+});
+
+test("blocks old participant tokens as soon as a room ends", async () => {
+  const opened = await room("192.0.2.46");
+  const [joined] = await rpc(
+    "select * from public.join_room_secure($1,'Fuchs',$2)",
+    [opened.code, "d".repeat(48)],
+    "192.0.2.46",
+  );
+  await rpc("select public.end_room_secure($1,$2)", [
+    opened.room_id,
+    opened.access_token,
+  ]);
+
+  assert.deepEqual(
+    await rpc("select * from public.get_room_state_secure($1,$2,null)", [
+      opened.room_id,
+      joined.participant_token,
+    ]),
+    [],
+  );
+  assert.deepEqual(
+    await rpc(
+      "select * from public.join_room_secure($1,'Fuchs',$2)",
+      [opened.code, joined.participant_token],
+      "192.0.2.47",
+    ),
+    [],
+  );
 });
 
 test("saves completion, restores details, and rejects foreign tokens", async () => {

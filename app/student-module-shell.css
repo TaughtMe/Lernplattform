@@ -1,0 +1,22 @@
+/* Shared student module overrides are maintained as a small companion to globals.css. */
+
+/* Neutralize the standalone mental-math page shell when embedded in a student module workspace. */
+.student-module-workspace .mental-math-shell {
+  min-height: 0;
+  background: transparent;
+}
+
+.student-module-workspace .mental-math-shell > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.student-module-workspace .mental-math-studio,
+.student-module-workspace .mental-math-studio__layout,
+.student-module-workspace .mental-math-generator,
+.student-module-workspace .mental-math-rules,
+.student-module-workspace .mental-math-round,
+.student-module-workspace .mental-math-complete {
+  max-width: 100%;
+  min-width: 0;
+}

@@ -6,7 +6,7 @@ import {
   PERSONAL_SUBJECTS,
 } from "../../../../src/domain/personal-learning-space";
 import { DailyPracticePanel } from "../../../components/daily-practice-panel";
-import { ArrowLeftIcon } from "../../../components/ui-icons";
+import { StudentDashboardShell } from "../../../components/student-dashboard-shell";
 import { SubjectIcon } from "../../../components/subject-icon";
 
 type SubjectPageProps = {
@@ -31,15 +31,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
   if (!subject) notFound();
 
   return (
-    <main className="subject-space-shell">
-      <header className="learning-room-topbar">
-        <Link href="/lernen/material" className="back-link">
-          <ArrowLeftIcon aria-hidden="true" /> Alle Fächer
-        </Link>
-        <strong>Mein Lernraum</strong>
-        <span>Lernstand bleibt lokal</span>
-      </header>
-
+    <StudentDashboardShell activePath={subject.hubRoute}>
       <section className="subject-space">
         <div className="subject-space__heading">
           <span className="subject-space__icon" aria-hidden="true">
@@ -91,6 +83,6 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
           </article>
         </div>
       </section>
-    </main>
+    </StudentDashboardShell>
   );
 }
