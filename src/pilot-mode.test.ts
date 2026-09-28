@@ -6,13 +6,13 @@ describe("pilot gate", () => {
     vi.unstubAllEnvs();
   });
 
-  it("keeps the pilot gate enabled by default in production", () => {
+  it("keeps all areas reachable by default, also in production", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("LERNRAUM_PILOT_GATE", "");
-    expect(isPilotGateEnabled()).toBe(true);
+    expect(isPilotGateEnabled()).toBe(false);
   });
 
-  it("allows an explicit development preview opt-out", () => {
+  it("stays open with an explicit opt-out", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("LERNRAUM_PILOT_GATE", "0");
     expect(isPilotGateEnabled()).toBe(false);

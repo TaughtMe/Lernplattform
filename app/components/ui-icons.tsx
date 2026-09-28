@@ -21,6 +21,35 @@ export function HomeIcon(props: IconProps) {
   );
 }
 
+export function HouseIcon(props: IconProps) {
+  return (
+    <svg {...sharedProps} {...props}>
+      <path d="M4 10.5 12 4l8 6.5V20H4z" />
+      <path d="M9.5 20v-5h5v5" />
+    </svg>
+  );
+}
+
+export function QrIcon(props: IconProps) {
+  return (
+    <svg {...sharedProps} {...props}>
+      <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" />
+      <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
+      <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
+      <path d="M14 14h2.5v2.5M20.5 14v6.5H14v-3" />
+    </svg>
+  );
+}
+
+export function BeamerIcon(props: IconProps) {
+  return (
+    <svg {...sharedProps} {...props}>
+      <rect x="3" y="4.5" width="18" height="12" rx="2" />
+      <path d="M8 20h8M12 16.5V20" />
+    </svg>
+  );
+}
+
 export function SunIcon(props: IconProps) {
   return (
     <svg {...sharedProps} {...props}>

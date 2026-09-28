@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --coral: #b84443;
-  --coral-dark: #963536;
-  --primary-fill: #b84443;
-  --primary-fill-hover: #963536;
-  --teal: #087a76;
-  --teal-dark: #05625f;
-  --cream: #fffaf4;
-  --cream-strong: #fff1e6;
-  --surface: #ffffff;
-  --surface-soft: #fffdf9;
-  --surface-muted: #f7f5f2;
-  --surface-hover: #f2ede8;
-  --shell: #fbfaf8;
-  --header: rgb(255 250 244 / 92%);
-  --header-strong: rgb(255 255 255 / 96%);
-  --field: #ffffff;
-  --ink: #2c211b;
-  --muted: #74665e;
-  --line: #e9dfd7;
-  --shadow: 0 14px 40px rgb(65 42 28 / 8%);
+  --coral: #7a5a12;
+  --coral-dark: #5c4209;
+  --primary-fill: #7a5a12;
+  --primary-fill-hover: #5c4209;
+  --teal: #2f6b4f;
+  --teal-dark: #26543f;
+  --cream: #f6f2e8;
+  --cream-strong: #efe9da;
+  --surface: #fffdf7;
+  --surface-soft: #fffdf7;
+  --surface-muted: #efe9da;
+  --surface-hover: #f0e9d8;
+  --shell: #f6f2e8;
+  --header: rgb(246 242 232 / 92%);
+  --header-strong: rgb(255 253 247 / 96%);
+  --field: #fffdf7;
+  --ink: #211f1b;
+  --muted: #6b6252;
+  --line: #e3dac7;
+  --shadow: 0 14px 36px rgb(80 62 26 / 14%);
   --finger-pinky: #f4b8cf;
   --finger-ring: #f4d6a8;
   --finger-middle: #f2eaa0;
@@ -34,6 +34,33 @@
   --radius-md: 20px;
   --radius-lg: 30px;
   --content: 1180px;
+
+  /* Lernraum-UI-Tokens (Design „Lernraum UI“) */
+  --bg: #f6f2e8;
+  --surface2: #efe9da;
+  --line2: #d5cbb6;
+  --ink2: #6b6252;
+  --ink3: #8d8677;
+  --accent: #7a5a12;
+  --accent-ink: #fffdf7;
+  --accent-bg: #fdf4dd;
+  --ring: #e7dfcd;
+  --gold: #e0a83a;
+  --green: #2f6b4f;
+  --green-ink: #f4fff9;
+  --nav: #211f1b;
+  --nav-line: #332f28;
+  --nav-ink: #f7f4ee;
+  --nav-ink2: #a89e8c;
+  --nav-active: #332f28;
+  --nav-accent: #f0cf84;
+  --bad: #a8432c;
+  --bad-bg: #f8e6df;
+  --good: #26543f;
+  --good-bg: #e4f1e9;
+  --kbd: #d6d1c7;
+  --kbd-key: #fbf9f4;
+  --font-fun: "Fredoka", "Work Sans", system-ui, sans-serif;
 }
 
 /* Native Laufdiktat: reused Fachlogik inside the shared Lernraum shell. */
@@ -372,26 +399,26 @@
 }
 
 :root[data-theme="dark"] {
-  --coral: #e77a78;
-  --coral-dark: #ef9794;
-  --primary-fill: #a94948;
-  --primary-fill-hover: #ba5553;
-  --teal: #58b8b5;
-  --teal-dark: #7bc8c5;
-  --cream: #171513;
-  --cream-strong: #1c1917;
-  --surface: #211e1b;
-  --surface-soft: #241f1c;
-  --surface-muted: #25211e;
-  --surface-hover: #28231f;
-  --shell: #171513;
-  --header: rgb(23 21 19 / 96%);
-  --header-strong: rgb(23 21 19 / 98%);
-  --field: #1c1917;
-  --ink: #f4eee8;
-  --muted: #b9ada3;
-  --line: #39332e;
-  --shadow: 0 14px 38px rgb(0 0 0 / 20%);
+  --coral: #f0cf84;
+  --coral-dark: #f6dea6;
+  --primary-fill: #8a6a1e;
+  --primary-fill-hover: #9c7a28;
+  --teal: #8fd1ae;
+  --teal-dark: #b0e0c6;
+  --cream: #17150f;
+  --cream-strong: #221f1b;
+  --surface: #221f1b;
+  --surface-soft: #221f1b;
+  --surface-muted: #2f2b25;
+  --surface-hover: #332f28;
+  --shell: #17150f;
+  --header: rgb(23 21 15 / 96%);
+  --header-strong: rgb(23 21 15 / 98%);
+  --field: #1c1a16;
+  --ink: #f7f4ee;
+  --muted: #a89e8c;
+  --line: #332f28;
+  --shadow: 0 14px 38px rgb(0 0 0 / 45%);
   --finger-pinky: #6f374d;
   --finger-ring: #6d552d;
   --finger-middle: #625e2a;
@@ -401,6 +428,31 @@
   --finger-right-ring: #47335f;
   --finger-right-pinky: #5e3455;
   --finger-thumb: #48433d;
+
+  --bg: #17150f;
+  --surface2: #2f2b25;
+  --line2: #423d33;
+  --ink2: #a89e8c;
+  --ink3: #8d8677;
+  --accent: #f0cf84;
+  --accent-ink: #211f1b;
+  --accent-bg: #332f28;
+  --ring: #2f2b25;
+  --gold: #f0cf84;
+  --green: #2f6b4f;
+  --green-ink: #eafff3;
+  --nav: #100f0b;
+  --nav-line: #2a2723;
+  --nav-ink: #f7f4ee;
+  --nav-ink2: #a89e8c;
+  --nav-active: #2a2723;
+  --nav-accent: #f0cf84;
+  --bad: #f09a80;
+  --bad-bg: #3a2520;
+  --good: #8fd1ae;
+  --good-bg: #1f3329;
+  --kbd: #2a2723;
+  --kbd-key: #4a4438;
 }
 
 * {
@@ -417,7 +469,12 @@ body {
   overflow-x: hidden;
   background: var(--cream);
   color: var(--ink);
-  font-family: "Aptos", "Segoe UI", system-ui, sans-serif;
+  font-family:
+    "Work Sans",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
 }
 main,
 section,
@@ -596,12 +653,13 @@ h2 {
 .button--quiet {
   width: 100%;
   min-height: 44px;
-  background: #fbf8f5;
+  background: var(--surface-soft);
+  color: var(--ink);
   border-color: var(--line);
 }
 .button--quiet:hover {
   background: var(--cream-strong);
-  border-color: #d9c9bc;
+  border-color: var(--line2, #d9c9bc);
 }
 .room-code {
   width: min(100%, 520px);
@@ -955,9 +1013,9 @@ h2 {
   --game-bg: #1c1712;
   --game-ink: #f7f1ea;
   --game-muted: #b9ada3;
-  --game-accent: #e77a78;
-  --game-accent-strong: #ef9794;
-  --game-success: #58b8b5;
+  --game-accent: #f0cf84;
+  --game-accent-strong: #f6dea6;
+  --game-success: #8fd1ae;
   --game-success-strong: #8ad4d1;
   --game-line: rgb(255 255 255 / 14%);
   --game-glass: rgb(255 255 255 / 6%);
@@ -1489,8 +1547,8 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   position: sticky;
   top: 0;
   align-self: start;
-  background: #2c201b;
-  color: #fffaf4;
+  background: var(--shell);
+  color: var(--ink);
 }
 
 .teacher-cockpit__brand {
@@ -2552,7 +2610,7 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   font-weight: 900;
 }
 .subject-badge--coral {
-  background: #b84443;
+  background: #7a5a12;
 }
 .subject-badge--violet {
   background: #704ca5;
@@ -2567,7 +2625,7 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   background: #ae508c;
 }
 .subject-badge--teal {
-  background: #087a76;
+  background: #2f6b4f;
 }
 .group-card__label {
   margin: 22px 0 6px;
@@ -3105,7 +3163,7 @@ body:has(.live-game-page.is-active-round) .site-meta-actions {
   margin-top: 5px;
   border-radius: 50%;
   background: var(--teal);
-  box-shadow: 0 0 0 6px rgb(7 155 150 / 12%);
+  box-shadow: 0 0 0 6px rgb(47 107 79 / 12%);
 }
 
 .learning-round {
@@ -12939,7 +12997,7 @@ body:has(.teacher-cockpit) > .learner-profile {
 
 .landing-path--feature {
   background:
-    radial-gradient(circle at 100% 0, rgb(231 122 120 / 18%), transparent 44%),
+    radial-gradient(circle at 100% 0, rgb(240 207 132 / 18%), transparent 44%),
     var(--surface);
 }
 
@@ -12989,7 +13047,7 @@ body:has(.teacher-cockpit) > .learner-profile {
 
 .student-dashboard__topbar .brand__mark,
 .teacher-cockpit__brand .brand__mark {
-  box-shadow: 0 7px 18px rgb(184 68 67 / 22%);
+  box-shadow: 0 7px 18px rgb(122 90 18 / 22%);
 }
 
 .student-settings-grid {
@@ -13084,7 +13142,7 @@ body:has(.teacher-cockpit) > .learner-profile {
 
 .student-settings-panel--quiet {
   background:
-    radial-gradient(circle at 100% 0, rgb(8 122 118 / 12%), transparent 60%),
+    radial-gradient(circle at 100% 0, rgb(47 107 79 / 12%), transparent 60%),
     var(--surface);
 }
 
@@ -13665,7 +13723,7 @@ body:has(.teacher-cockpit) > .learner-profile {
 /* Student workspace: one quiet shell for the four personal learning areas. */
 :root:not([data-theme="dark"]) .student-dashboard {
   --muted: #62544c;
-  --primary-fill: #963536;
+  --primary-fill: #5c4209;
   --primary-fill-hover: #7d2a2a;
   --coral-dark: #8b302f;
 }
@@ -15365,4 +15423,111 @@ body:has(.teacher-live--active) .theme-toggle {
   .teacher-cockpit .teacher-transfer__actions {
     flex-direction: column;
   }
+}
+
+/* ==========================================================================
+   Lernraum UI (Design „Lernraum UI“, Turns 1–7)
+   Dunkle Navigationsflächen und Landingpage: Tokens lokal auf die
+   Anthrazit-Palette umschalten, damit alle Bausteine automatisch folgen.
+   ========================================================================== */
+.student-shell__sidebar,
+.teacher-cockpit__sidebar,
+.landing-page {
+  --cream: #211f1b;
+  --cream-strong: #2a2723;
+  --surface: #2a2723;
+  --surface-soft: #2a2723;
+  --surface-muted: #332f28;
+  --surface-hover: #332f28;
+  --shell: #211f1b;
+  --field: #2a2723;
+  --ink: #f7f4ee;
+  --muted: #a89e8c;
+  --line: #3a352d;
+  --coral: #f0cf84;
+  --coral-dark: #f0cf84;
+  --primary-fill: #f0cf84;
+  --primary-fill-hover: #f6dea6;
+  --teal: #8fd1ae;
+  --teal-dark: #8fd1ae;
+  --header: rgb(33 31 27 / 96%);
+  --header-strong: rgb(33 31 27 / 98%);
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"]
+  :is(.student-shell__sidebar, .teacher-cockpit__sidebar, .landing-page) {
+  --cream: #100f0b;
+  --shell: #100f0b;
+  --surface: #1c1a15;
+  --surface-soft: #1c1a15;
+}
+
+.student-shell__sidebar {
+  background: var(--shell);
+  border-right-color: transparent;
+}
+
+.student-shell__nav a.is-active,
+.student-shell__footer-nav a.is-active,
+.teacher-cockpit__sidebar nav a.is-active {
+  border-color: transparent;
+  background: var(--surface-muted);
+  color: #f0cf84;
+}
+
+/* Gefüllte Knöpfe auf dunklen Flächen: Bernstein mit dunkler Schrift. */
+:is(.student-shell__sidebar, .teacher-cockpit__sidebar, .landing-page)
+  .button--primary {
+  color: #211f1b;
+}
+
+.brand__mark,
+.teacher-cockpit__mobile-mark {
+  background: #211f1b;
+  color: #f0cf84;
+}
+
+:is(.student-shell__sidebar, .teacher-cockpit__sidebar, .landing-page)
+  .brand__mark {
+  background: #332f28;
+}
+
+/* Landingpage: Tier auf dunkler Bühne (Design 2a). */
+.landing-page {
+  background:
+    radial-gradient(circle at 50% 30%, #2d2923 0%, transparent 60%),
+    var(--shell);
+  color: var(--ink);
+}
+
+/* Typografie: ruhig und kräftig statt sehr großer, dünner Überschriften. */
+body {
+  letter-spacing: -0.005em;
+}
+
+main h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+main :is(h2, h3) {
+  letter-spacing: -0.02em;
+}
+
+/* Mobile Leisten passen sich der Anzahl der Einträge an. */
+.teacher-cockpit__mobile-nav,
+.student-dashboard__mobile-nav {
+  grid-template-columns: none !important;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+/* Karten und Akzentflächen wie im Design. */
+.button--primary {
+  box-shadow: 0 3px 0 color-mix(in oklch, var(--primary-fill) 55%, #000);
+}
+
+:focus-visible {
+  outline-color: var(--coral);
 }

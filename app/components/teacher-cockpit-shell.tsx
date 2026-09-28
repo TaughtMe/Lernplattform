@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import {
   BookOpenIcon,
   HomeIcon,
+  HouseIcon,
   LiveLessonIcon,
   PencilIcon,
   SlidersIcon,
@@ -10,7 +11,13 @@ import {
 } from "./ui-icons";
 
 export type TeacherArea =
-  "overview" | "live" | "classes" | "material" | "assignments" | "settings";
+  | "overview"
+  | "live"
+  | "classes"
+  | "material"
+  | "assignments"
+  | "houses"
+  | "settings";
 
 const navigation: readonly {
   area: TeacherArea;
@@ -49,6 +56,12 @@ const navigation: readonly {
     icon: LiveLessonIcon,
   },
   {
+    area: "houses",
+    href: "/lehrer/haeuser",
+    label: "Häuser",
+    icon: HouseIcon,
+  },
+  {
     area: "settings",
     href: "/lehrer/einstellungen",
     label: "Einstellungen",
@@ -65,7 +78,8 @@ const navigationGroups = [
         item.area === "classes" ||
         item.area === "material" ||
         item.area === "assignments" ||
-        item.area === "live",
+        item.area === "live" ||
+        item.area === "houses",
     ),
   },
   {

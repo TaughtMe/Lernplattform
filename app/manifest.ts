@@ -6,8 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Gemeinsam lernen, im Unterricht und zu Hause.",
     start_url: "/",
     display: "standalone",
-    background_color: "#fffaf4",
-    theme_color: "#df625f",
+    background_color: "#211f1b",
+    theme_color: "#211f1b",
     lang: "de",
     icons: [{ src: "/favicon.svg", sizes: "any", type: "image/svg+xml" }],
   };

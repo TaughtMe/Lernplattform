@@ -13,12 +13,30 @@ npm install
 npm run dev
 ```
 
-Die vollständige Lernraum- und Lehrkraft-Oberfläche ist im Development-Preview
-erreichbar. Produktionsläufe bleiben standardmäßig auf den eingeschränkten
-Laufdiktat-Pilot begrenzt. Für eine ausdrücklich freigegebene produktive
-Erweiterung kann die Routenschranke mit `LERNRAUM_PILOT_GATE=0` deaktiviert
-werden; mit `LERNRAUM_PILOT_GATE=1` lässt sie sich auch im Development-Preview
-erzwingen.
+Alle Lernraum- und Lehrkraft-Bereiche sind standardmäßig erreichbar – auch im
+Produktionsbuild. Die frühere Pilot-Routenschranke (nur Laufdiktat und
+Kopfrechnen) ist opt-in und lässt sich mit `LERNRAUM_PILOT_GATE=1` wieder
+aktivieren.
+
+## Oberfläche
+
+Die Farben und Flächen folgen dem Design „Lernraum UI“ (warmes Anthrazit für
+Navigation und Einstieg, Bernstein als Akzent, Papier-Hintergrund, hell und
+dunkel). Die Werte stehen zentral als Variablen am Anfang von
+`app/globals.css`; dunkle Navigationsflächen schalten diese Variablen lokal um
+(Abschnitt „Lernraum UI“ am Ende der Datei). Die Design-Vorlage liegt im
+Branch `claude/tender-turing-gg1wv3` unter `docs/design/`.
+
+## Häuser
+
+`/haus` (Schüler) und `/lehrer/haeuser` (Lehrkraft) setzen Konzept 10/11 um:
+Hauspunkte werden lokal aus den eigenen Lernereignissen berechnet (Tageslimit
+150, keine Minuspunkte). Der Haus-Leistungsbrief ist ein QR-Code mit
+fortlaufender Standnummer, signiert mit dem persönlichen Einschreibe-Schlüssel
+(HMAC-SHA-256, wie der Aufgaben-Leistungsbrief). Das Lehrergerät prüft die
+Signatur, übernimmt nur höhere Standnummern und erkennt doppelte, veraltete,
+klassenfremde und manipulierte Briefe. Einen Rückkanal zum Schülergerät gibt es
+bewusst nicht.
 
 ## Prüfen
 

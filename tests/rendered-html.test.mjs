@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 // This render contract covers the explicitly enabled local full-preview build.
-// Production remains pilot-gated unless the deployment opts out deliberately.
+// The pilot gate is opt-in (LERNRAUM_PILOT_GATE=1); the last test enables it explicitly.
 process.env["LERNRAUM_PILOT_GATE"] = "0";
 
 // Aus package.json gelesen statt hart codiert: verhindert, dass diese Tests
@@ -77,6 +77,8 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/lehrer/material", "Material"],
     ["/lehrer/aufgaben", "Aufgaben"],
     ["/lehrer/einstellungen", "Einstellungen"],
+    ["/haus", "Mein Haus"],
+    ["/lehrer/haeuser", "Häuser"],
   ]) {
     const response = await render(path);
     assert.equal(response.status, 200, path);
@@ -120,6 +122,7 @@ test("keeps every non-pilot route behind the pilot fallback", async () => {
     "/lehrer/einstellungen",
     "/lehrer/klassen",
     "/lehrer/material",
+    "/lehrer/haeuser",
   ];
 
   try {

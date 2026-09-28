@@ -1,5 +1,8 @@
 export const LAUFDIKTAT_PILOT = true as const;
 
+// Das Pilot-Gate sperrt alle Bereiche außer dem Laufdiktat. Es ist opt-in:
+// nur aktiv, wenn LERNRAUM_PILOT_GATE=1 gesetzt ist.
+
 export const PILOT_PUBLIC_ROUTES = [
   "/",
   "/raum",
@@ -10,11 +13,7 @@ export const PILOT_PUBLIC_ROUTES = [
 ] as const;
 
 export function isPilotGateEnabled() {
-  return (
-    process.env["LERNRAUM_PILOT_GATE"] === "1" ||
-    (process.env["NODE_ENV"] === "production" &&
-      process.env["LERNRAUM_PILOT_GATE"] !== "0")
-  );
+  return process.env["LERNRAUM_PILOT_GATE"] === "1";
 }
 
 export function isPilotPublicRoute(pathname: string) {

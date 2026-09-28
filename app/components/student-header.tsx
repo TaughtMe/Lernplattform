@@ -4,6 +4,7 @@ import {
   BookOpenIcon,
   CameraIcon,
   HomeIcon,
+  HouseIcon,
   SlidersIcon,
   SparklesIcon,
   TrophyIcon,
@@ -32,6 +33,12 @@ const coreNavigation = [
     label: "Üben",
     shortLabel: "Üben",
     icon: SparklesIcon,
+  },
+  {
+    href: "/haus",
+    label: "Mein Haus",
+    shortLabel: "Haus",
+    icon: HouseIcon,
   },
 ] as const;
 
