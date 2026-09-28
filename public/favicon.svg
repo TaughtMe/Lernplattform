@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="18" fill="#df625f"/>
-  <path d="M21 15v29c0 4 2 6 6 6h18v-9H31V15H21Z" fill="#fff"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#211f1b"/><text x="32" y="44" text-anchor="middle" font-family="Work Sans, Arial, sans-serif" font-size="34" font-weight="800" fill="#f0cf84">L</text></svg>

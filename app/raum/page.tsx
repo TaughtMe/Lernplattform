@@ -1,4 +1,16 @@
 import type { Metadata } from "next";
-import { ModulePlaceholder } from "../components/module-placeholder";
+import { Suspense } from "react";
+import { StudentShell } from "../components/student-shell";
+import { RaumClient } from "./raum-client";
+
 export const metadata: Metadata = { title: "Raum beitreten" };
-export default function Page() { return <ModulePlaceholder eyebrow="Unterrichtsraum" title="Raum beitreten" description="Der Raumcode-Einstieg ist vorbereitet. Paketabruf und Laufdiktat werden über eine stabile Inhalts-Schnittstelle ergänzt." status="Laufdiktat wird separat weiterentwickelt" />; }
+
+export default function Page() {
+  return (
+    <StudentShell>
+      <Suspense fallback={<main className="page"><h1 className="h-page">Raum beitreten</h1></main>}>
+        <RaumClient />
+      </Suspense>
+    </StudentShell>
+  );
+}
