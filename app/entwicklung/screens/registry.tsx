@@ -29,7 +29,14 @@ const STUDENT_PHASES: readonly StudentDictationPhase[] = [
 export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
   const variant = id.split("-")[1] ?? "";
   if (screen === "2a") {
-    return <LandingScreen animal="Fuchs" code="" teacherHref="/lehrer" />;
+    return (
+      <LandingScreen
+        animal="Fuchs"
+        code=""
+        teacherHref="/lehrer"
+        enterHref="/lernen"
+      />
+    );
   }
   if (screen === "5a" || screen === "5b") {
     const phase = STUDENT_PHASES.find((p) => p === variant) ?? "station";
@@ -49,6 +56,9 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
         optionsOpen={variant === "options"}
         theme={theme}
         qr={<QrPlaceholder />}
+        onEditSections={() => {}}
+        onImportFile={() => {}}
+        onMoveSection={() => {}}
       />
     );
   }

@@ -47,20 +47,28 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
 
 Jeder Schritt endet mit grünem Designvergleich, grünen statischen Prüfungen und Freigabe der Ansicht durch die Projektverantwortliche Lehrkraft im Katalog, bevor die Anbindung beginnt.
 
-| Schritt | Screens                    | Ansicht                            | Anbindung                                                                |
-| ------- | -------------------------- | ---------------------------------- | ------------------------------------------------------------------------ |
-| 1       | Grundlage                  | ✅ Tokens, Schriften, Vergleich    | –                                                                        |
-| 2       | 2a Startseite              | ✅                                 | offen: Tierprofil, Raumcode, QR-Scanner, Freigaberegister                |
-| 3       | 5a/5b Laufdiktat Schüler   | ✅ alle Phasen, hell/dunkel        | offen: Raum-Session, Stationen, Halten/Lesen/Schreiben, Battle, Ergebnis |
-| 4       | 5c/5d Laufdiktat Lehrkraft | ✅ alle Schritte, Optionen-Overlay | offen: Import, Abschnitte, Modi, Lobby, Live, CSV                        |
-| 5       | 4a–4c LernBox              | offen                              | offen                                                                    |
-| 6       | 2b/3a/3b Dashboard         | offen                              | offen                                                                    |
-| 7       | 4d–4f Wortspeicher         | offen                              | offen                                                                    |
-| 8       | 1d/2c/3c/3d Lehrerbereich  | offen                              | offen                                                                    |
-| 9       | 6a–6c Tastenwelt           | offen                              | offen                                                                    |
-| 10      | 7a–7c Häuser               | offen                              | offen                                                                    |
+| Schritt | Screens                    | Ansicht                            | Anbindung                                                                                                          |
+| ------- | -------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1       | Grundlage                  | ✅ Tokens, Schriften, Vergleich    | –                                                                                                                  |
+| 2       | 2a Startseite              | ✅                                 | ✅ `/`: Tierprofil, Raumcode, QR-Scanner; Tier → eigener Lernraum                                                  |
+| 3       | 5a/5b Laufdiktat Schüler   | ✅ alle Phasen, hell/dunkel        | offen: Raum-Session, Stationen, Halten/Lesen/Schreiben, Battle, Ergebnis                                           |
+| 4       | 5c/5d Laufdiktat Lehrkraft | ✅ alle Schritte, Optionen-Overlay | ✅ `/lehrer/live`: Text/Vokabeln/Mathe, Satz/Zeile/Wort, Sortieren, Datei, Modi, Optionen, Lobby mit QR, Live, CSV |
+| 5       | 4a–4c LernBox              | offen                              | offen                                                                                                              |
+| 6       | 2b/3a/3b Dashboard         | offen                              | offen                                                                                                              |
+| 7       | 4d–4f Wortspeicher         | offen                              | offen                                                                                                              |
+| 8       | 1d/2c/3c/3d Lehrerbereich  | offen                              | offen                                                                                                              |
+| 9       | 6a–6c Tastenwelt           | offen                              | offen                                                                                                              |
+| 10      | 7a–7c Häuser               | offen                              | offen                                                                                                              |
 
 Bereiche ohne Vorlage (Klassenverwaltung, Material, Aufgaben, Kopfrechnen) bleiben bis zu einem eigenen Design in ihrer jetzigen Form und werden über das Freigaberegister gesteuert.
+
+## Stand der Anbindung (29.09.2026)
+
+- **Startseite `/`** nutzt die Ansicht 2a. Sie füllt genau den Bildschirm ohne Scrollen und zeigt „Lehrer-Login“. Das Tier führt in den eigenen Lernraum; die Tierwahl liegt im Profil. Impressum und Datenschutz stehen klein unter dem Raumcode, weil der Seitenfuß auf Vollbild-Screens entfällt.
+- **Laufdiktat Lehrkraft `/lehrer/live`** nutzt die Ansicht 5c/5d ohne Lehrer-Seitenleiste; Hell/Dunkel sitzt oben rechts. Der Adapter `app/lehrer/live/dictation-adapter.ts` übersetzt zwischen Kern und Ansicht.
+- **Vorerst ausgeblendet, weil der Entwurf sie nicht zeigt:** eigene Trennzeichen, Marker-Modus und manuelle Abschnitte, Abschnitte ausschließen, Mathe-Generator mit Zahlenraum und Lücken, Vokabel-Tabelleneditor mit Groß-/Kleinschreibung und Übernahme in die LernBox, Teilnehmende entfernen, großer QR-Code. Die Logik dafür bleibt im Hook `useTeacherLiveRoom` erhalten und kommt mit eigenem Entwurf zurück.
+- **Freigaben:** Lernbereiche und Lehrerbereich stehen auf `frei` (Entscheidung 48). Motivation und Duell bleiben `aus`.
+- **Noch in alter Oberfläche:** Schüler-Laufdiktat `/raum`, Lernraum `/lernen`, Lehrerbereich `/lehrer` und alle weiteren Seiten, bis ihre Screens an der Reihe sind.
 
 ## Regeln für die Anbindung
 

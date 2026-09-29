@@ -1,19 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import { Icon } from "../../ui/icons";
 import { Animal } from "../parts/parts";
 import styles from "./landing-screen.module.css";
 
 export type LandingScreenProps = {
-  animal: string;
+  /** Tier aus dem Profil; vor dem Laden null. */
+  animal: string | null;
   /** Raumcode aus bis zu vier Zeichen. */
   code: string;
   teacherHref: string;
-  onEnter?: () => void;
+  /** Ziel beim Tippen auf das Tier (eigener Lernraum). */
+  enterHref: string;
   onCodeChange?: (code: string) => void;
-  onScan?: () => void;
+  /** Kamera-Knopf; erhält die Klasse aus dem Entwurf. Ohne Angabe ein schlichter Knopf. */
+  renderScan?: (className: string) => ReactNode;
+  /** Zusätzliche Hinweise unter dem Code, z. B. Verbindungsstatus. */
+  notice?: ReactNode;
+  /** Rechtliche Links unter dem Hinweis (nur auf der echten Startseite). */
+  showLegal?: boolean;
 };
 
 const CODE_LENGTH = 4;
@@ -23,9 +30,11 @@ export function LandingScreen({
   animal,
   code,
   teacherHref,
-  onEnter,
+  enterHref,
   onCodeChange,
-  onScan,
+  renderScan,
+  notice,
+  showLegal = false,
 }: LandingScreenProps) {
   const fields = useRef<Array<HTMLInputElement | null>>([]);
   const chars = Array.from(
@@ -54,22 +63,23 @@ export function LandingScreen({
       </header>
 
       <section className={styles.stage} aria-labelledby="landing-greeting">
-        <button
-          type="button"
+        <Link
+          href={enterHref}
           className={styles.disc}
-          onClick={onEnter}
           aria-labelledby="landing-greeting"
         >
-          <Animal
-            animal={animal}
-            size={224}
-            label="Dein Tier"
-            className={styles.animal}
-          />
-        </button>
+          {animal ? (
+            <Animal
+              animal={animal}
+              size={224}
+              fluid
+              className={styles.animal}
+            />
+          ) : null}
+        </Link>
         <div className={styles.greeting}>
           <h1 id="landing-greeting" className={styles.greetingTitle}>
-            Weiter als {animal}
+            {animal ? `Weiter als ${animal}` : "Dein Lernraum"}
           </h1>
           <p className={styles.greetingHint}>Tippen öffnet deinen Lernraum</p>
         </div>
@@ -103,23 +113,33 @@ export function LandingScreen({
               aria-label={`Raumcode Zeichen ${index + 1}`}
             />
           ))}
-          <button
-            type="button"
-            className={styles.scan}
-            aria-label="Code mit Kamera scannen"
-            onClick={onScan}
-          >
-            <Icon
-              name="camera"
-              size={30}
-              strokeWidth={1.8}
-              strokeLinejoin="miter"
-            />
-          </button>
+          {renderScan ? (
+            renderScan(styles.scan)
+          ) : (
+            <button
+              type="button"
+              className={styles.scan}
+              aria-label="Code mit Kamera scannen"
+            >
+              <Icon
+                name="camera"
+                size={30}
+                strokeWidth={1.8}
+                strokeLinejoin="miter"
+              />
+            </button>
+          )}
         </div>
+        {notice}
         <p className={styles.note}>
           Ohne Konto · Tier änderst du später im Profil
         </p>
+        {showLegal ? (
+          <nav className={styles.legal} aria-label="Rechtliches">
+            <Link href="/impressum">Impressum</Link>
+            <Link href="/datenschutz">Datenschutz</Link>
+          </nav>
+        ) : null}
       </div>
     </main>
   );

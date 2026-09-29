@@ -81,3 +81,26 @@ export function useThemePreference() {
     cycleTheme,
   };
 }
+
+/**
+ * Umschalter aus dem Entwurf: zwei Zustände, ausgehend von der aktuell
+ * sichtbaren Darstellung. Vor dem Laden gilt „hell“.
+ */
+export function useThemeToggle() {
+  const { preference } = useThemePreference();
+  const theme = useSyncExternalStore<"light" | "dark">(
+    subscribeToPreference,
+    () => resolveTheme(getPreferenceSnapshot()),
+    () => "light",
+  );
+
+  function toggleTheme() {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      theme === "dark" ? "light" : "dark",
+    );
+    window.dispatchEvent(new Event(CHANGE_EVENT));
+  }
+
+  return { theme, preference, toggleTheme };
+}

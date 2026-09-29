@@ -44,6 +44,7 @@ const DEMO_STUDENTS = [
 export const DEMO_TEACHER: TeacherDictationScreenProps = {
   className: "7b",
   roomCode: "4K2P",
+  joinHost: "lernraum.app",
   theme: "light",
   step: "import",
   content: {

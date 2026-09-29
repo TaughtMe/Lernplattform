@@ -18,33 +18,25 @@ function isKnownFrameworkDiagnostic(message: string) {
 test("start page exposes the core learner actions", async ({ page }) => {
   await page.goto("/");
 
+  const animal = page.getByRole("link", { name: /^Weiter als / });
+  await expect(animal).toHaveAttribute("href", "/lernen");
   await expect(
-    page.getByRole("heading", {
-      level: 1,
-      name: "Lernraum starten",
-    }),
-  ).toBeAttached();
+    page.getByRole("heading", { level: 1, name: /^Weiter als / }),
+  ).toBeVisible();
   await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
-  const animal = page.getByRole("link", { name: /^Weiter als / });
-  await expect(animal).toHaveAttribute("href", "/lernen");
 
   // Design 2a: großes Tier oben, Raumcode darunter.
-  const launchLayout = await page.evaluate(() => {
-    const disc = document.querySelector(".ui-landing__disc");
-    const join = document.querySelector(".ui-room-code");
-    const discBox = disc?.getBoundingClientRect();
-    const joinBox = join?.getBoundingClientRect();
-    return {
-      discWidth: discBox?.width ?? 0,
-      discBottom: discBox?.bottom ?? 0,
-      joinTop: joinBox?.top ?? 0,
-    };
-  });
-  expect(launchLayout.discWidth).toBeGreaterThanOrEqual(200);
-  expect(launchLayout.joinTop).toBeGreaterThan(launchLayout.discBottom);
+  const discBox = await animal.boundingBox();
+  const joinBox = await page
+    .getByRole("group", { name: "Raumcode" })
+    .boundingBox();
+  expect(discBox?.width ?? 0).toBeGreaterThanOrEqual(200);
+  expect(joinBox?.y ?? 0).toBeGreaterThan(
+    (discBox?.y ?? 0) + (discBox?.height ?? 0),
+  );
 });
 
 test("layout never scrolls horizontally", async ({ page }) => {
@@ -615,56 +607,41 @@ test("teachers can prepare every native live-room content type", async ({
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Klassen und Schüler" }),
-  ).toHaveCount(0);
-  await expect(page.getByText("0 Abschnitte")).toBeVisible();
+  await expect(page.locator("[data-hydrated]")).toHaveAttribute(
+    "data-hydrated",
+    "true",
+  );
 
-  await page.getByRole("tab", { name: "Vokabeln" }).click();
+  await page.getByRole("button", { name: "Vokabeln", exact: true }).click();
+  await page.getByRole("textbox", { name: "Vokabeln" }).fill("Hund;dog");
+  await expect(page.getByText("Hund → dog")).toBeVisible();
+
+  await page.getByRole("button", { name: "Mathe", exact: true }).click();
+  await page.getByRole("textbox", { name: "Mathe" }).fill("7 + 5");
+  await expect(
+    page.getByText("1 Abschnitte · so sehen es die Schüler"),
+  ).toBeVisible();
   await expect.poll(() => runtimeErrors).toEqual([]);
-  await expect(page.getByText("1 Vokabeln")).toBeVisible();
-  const vocabularyTransfer = page.getByRole("checkbox", {
-    name: /Vokabeln übernehmen/,
-  });
-  await expect(vocabularyTransfer).not.toBeChecked();
-  await vocabularyTransfer.check();
-  await expect(
-    page.getByRole("combobox", {
-      name: "Welche Vokabeln übernehmen?",
-    }),
-  ).toHaveValue("errors");
-  await page.getByRole("tab", { name: "Kopfrechnen" }).click();
-  await expect(page.getByText("0 Aufgaben")).toBeVisible();
-  await page.getByRole("button", { name: "Aufgaben erzeugen" }).click();
-  await expect(page.getByText("10 Aufgaben")).toBeVisible();
-  await page.getByRole("button", { name: "Weitere Regeln" }).click();
-  await expect(
-    page.getByRole("checkbox", { name: "Negative Ergebnisse" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("checkbox", { name: "Lückenaufgaben" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Schließen" }).click();
 
-  await page.getByRole("button", { name: /Weiter zu Modus/ }).click();
-  await expect(page.getByRole("radio", { name: /Freies Üben/ })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /Battle/ })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /Stationen/ })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /Laufdiktat/ })).toBeVisible();
+  await page.getByRole("button", { name: "Weiter zu Modus" }).click();
+  for (const mode of ["Laufdiktat", "Freie Übung", "Battle", "Stationen"]) {
+    await expect(
+      page.getByRole("button", { name: new RegExp(`^${mode}`) }).first(),
+    ).toBeVisible();
+  }
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     content: document.documentElement.scrollWidth,
   }));
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
 
-  await page.getByRole("button", { name: /Lobby öffnen/ }).click();
+  await page.getByRole("button", { name: "Raum öffnen" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Live-Räume sind lokal noch nicht konfiguriert",
   );
-  await expect(page.getByRole("button", { name: "2. Modus" })).toHaveAttribute(
-    "aria-current",
-    "step",
-  );
+  await expect(
+    page.getByRole("button", { name: /Modus/ }).first(),
+  ).toHaveAttribute("aria-current", "step");
 });
 
 test("the local teacher workspace manages classes, students, assignments and QR codes", async ({

@@ -34,24 +34,30 @@ test("server-renders the Lernraum start page", async () => {
   const html = await response.text();
   assert.match(html, /<html[^>]+lang="de"/i);
   assert.match(html, /Lernraum/);
-  assert.match(html, /Bereit für dein Laufdiktat/);
   assert.match(html, /Raumcode/);
-  assert.match(html, /Lehrerbereich/);
-  assert.match(html, /Lernraum starten/);
+  assert.match(html, /Raumcode Zeichen 4/);
   // Design 2a: ein Tier, ein Code, sonst nichts.
-  assert.match(html, /Dein Tier/);
-  assert.match(html, /Nach der vierten Ziffer geht es los/);
+  assert.match(html, /Lehrer-Login/);
+  assert.match(html, /Tippen öffnet deinen Lernraum/);
+  assert.match(html, /href="\/lernen"/);
   assert.doesNotMatch(html, /Frei üben/);
   assert.doesNotMatch(html, /Raum beitreten/);
   assert.match(html, /href="\/impressum"/);
   assert.match(html, /href="\/datenschutz"/);
-  assert.match(html, new RegExp(`>v${APP_VERSION.replace(/\./g, "\\.")}<`));
+  // Vollbild-Screen: kein Seitenfuß, die Version steht auf den übrigen Seiten.
+  assert.doesNotMatch(html, /class="ui ui-footer"/);
   assert.doesNotMatch(html, /<strong>Freies Üben<\/strong>/);
   assert.doesNotMatch(html, /Beispiel-Lerngruppen|Duell|Mein Haus/);
   assert.doesNotMatch(
     html,
     /codex-preview|react-loading-skeleton|Building your site/i,
   );
+});
+
+test("shows the app version in the footer of regular pages", async () => {
+  const html = await (await render("/impressum")).text();
+  assert.match(html, /class="ui ui-footer"/);
+  assert.match(html, new RegExp(`>v${APP_VERSION.replace(/\./g, "\\.")}<`));
 });
 
 test("server-renders the released pilot entry pages", async () => {
@@ -104,6 +110,7 @@ test("server-renders the houses once motivation is switched on", async () => {
 });
 
 test("shows only released areas without preview and redirects the rest", async () => {
+  // Entscheidung 48: Lernbereiche und Lehrerbereich sind frei.
   const releasedRoutes = [
     "/",
     "/raum",
@@ -111,29 +118,15 @@ test("shows only released areas without preview and redirects the rest", async (
     "/lehrer/live",
     "/datenschutz",
     "/impressum",
-  ];
-  const previewRoutes = [
-    "/frei",
-    "/frei/german",
     "/frei/german/laufdiktat",
     "/frei/german/lernwoerter",
     "/frei/typing",
-    "/frei/vocabulary",
     "/klasse/7b",
-    "/klasse/7b/aufgaben/vokabeln",
     "/lernbox",
     "/lernen",
-    "/lernen/aufgaben",
     "/lernen/einstellungen",
-    "/lernen/faecher/deutsch",
-    "/lernen/fortschritt",
-    "/lernen/klasse",
-    "/lernen/material",
     "/lehrer",
-    "/lehrer/aufgaben",
-    "/lehrer/einstellungen",
     "/lehrer/klassen",
-    "/lehrer/material",
   ];
   // Motivation ist nach Entscheidung 47 im Schulbetrieb zunächst aus.
   const offRoutes = ["/demo/mathematics", "/duell", "/haus", "/lehrer/haeuser"];
@@ -142,42 +135,42 @@ test("shows only released areas without preview and redirects the rest", async (
     const response = await render(path, null);
     assert.equal(response.status, 200, path);
     if (path === "/") {
-      const html = await response.text();
-      assert.doesNotMatch(html, /href="\/lernen/);
+      // Das Tier auf der Startseite führt in den eigenen Lernraum.
+      assert.match(await response.text(), /href="\/lernen"/);
     }
   }
 
-  for (const path of [...previewRoutes, ...offRoutes]) {
-    const response = await render(path, null);
-    assert.equal(response.status, 307, path);
-    const location = new URL(
-      response.headers.get("location") ?? "",
-      "http://localhost",
-    );
-    assert.equal(
-      location.pathname,
-      path.startsWith("/lehrer") ? "/lehrer/live" : "/",
-      path,
-    );
-    assert.equal(location.search, "", path);
-  }
-
   for (const path of offRoutes) {
-    const response = await render(path);
-    assert.equal(
-      response.status,
-      307,
-      `${path} bleibt auch in der Vorschau aus`,
-    );
+    for (const cookie of [null, undefined]) {
+      const response = await render(path, cookie);
+      assert.equal(response.status, 307, path);
+      const location = new URL(
+        response.headers.get("location") ?? "",
+        "http://localhost",
+      );
+      assert.equal(
+        location.pathname,
+        path.startsWith("/lehrer") ? "/lehrer/live" : "/",
+        path,
+      );
+    }
   }
 
-  const enable = await render("/lernbox?vorschau=an", null);
-  assert.equal(enable.status, 307);
-  assert.match(enable.headers.get("set-cookie") ?? "", /lernraum-vorschau=1/);
-  assert.equal(
-    new URL(enable.headers.get("location") ?? "", "http://localhost").search,
-    "",
-  );
+  // Bereiche in der Vorschau erscheinen nur mit Vorschau-Cookie.
+  process.env["LERNRAUM_FREIGABE"] = "lernbox=vorschau";
+  try {
+    assert.equal((await render("/lernbox", null)).status, 307);
+    assert.equal((await render("/lernbox")).status, 200);
+    const enable = await render("/lernbox?vorschau=an", null);
+    assert.equal(enable.status, 307);
+    assert.match(enable.headers.get("set-cookie") ?? "", /lernraum-vorschau=1/);
+    assert.equal(
+      new URL(enable.headers.get("location") ?? "", "http://localhost").search,
+      "",
+    );
+  } finally {
+    delete process.env["LERNRAUM_FREIGABE"];
+  }
 });
 
 test("ships the update-aware service worker", async () => {

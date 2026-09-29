@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { Icon, type IconName } from "../../ui/icons";
 import {
   Animal,
@@ -24,7 +24,7 @@ export type DictationOption =
 
 export type LiveStudent = {
   name: string;
-  animal: string;
+  animal: string | null;
   progress: number;
   total: number;
   mistakes: number;
@@ -36,7 +36,8 @@ export type StationState = {
 };
 
 export type TeacherDictationScreenProps = {
-  className: string;
+  /** Klasse, falls der Raum zu einer Klasse gehört. */
+  className?: string;
   roomCode: string;
   theme: Theme;
   step: TeacherStep;
@@ -52,9 +53,12 @@ export type TeacherDictationScreenProps = {
   optionsOpen: boolean;
   /** QR-Code zum Raum; ohne Angabe erscheint ein Platzhalter. */
   qr?: ReactNode;
+  /** Adresse, unter der Schüler den Code eingeben (z. B. lernraum.app). */
+  joinHost: string;
   lobby: {
-    expected: number;
-    joined: ReadonlyArray<{ name: string; animal: string }>;
+    /** Erwartete Teilnehmende; ohne Angabe nur die Zahl der Beigetretenen. */
+    expected?: number;
+    joined: ReadonlyArray<{ name: string; animal: string | null }>;
   };
   live: {
     active: number;
@@ -64,14 +68,24 @@ export type TeacherDictationScreenProps = {
     stations: readonly StationState[];
     mistakes: ReadonlyArray<{ word: string; count: number }>;
   };
+  /** Beschriftung und Sperre des Weiter-Knopfs (z. B. „Öffnet …“). */
+  nextLabel?: string;
+  nextDisabled?: boolean;
+  /** Schritte, die gerade nicht angesprungen werden können. */
+  lockedSteps?: readonly TeacherStep[];
+  /** Fehler oder Hinweis unter dem Inhalt. */
+  notice?: string;
   onToggleTheme?: () => void;
   onLeave?: () => void;
   onStep?: (step: TeacherStep) => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
+  onMoveSection?: (from: number, to: number) => void;
   onKind?: (kind: ContentKind) => void;
   onText?: (text: string) => void;
   onSplit?: (split: SplitMode) => void;
   onEditSections?: () => void;
-  onImportFile?: () => void;
+  onImportFile?: (file: File | undefined) => void;
   onMode?: (mode: DictationMode) => void;
   onToggleOption?: (option: DictationOption) => void;
   onStationCount?: (count: number) => void;
@@ -213,7 +227,8 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
           <span className={styles.stepLabel}>
             <span className={styles.narrowOnly}>{stepLabel} · Laufdiktat</span>
             <span className={styles.wideOnly}>
-              Klasse {props.className} · Laufdiktat · {stepLabel}
+              {props.className ? `Klasse ${props.className} · ` : ""}
+              Laufdiktat · {stepLabel}
             </span>
           </span>
           <h1 className={styles.stepTitle}>{current.title}</h1>
@@ -225,6 +240,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
               type="button"
               className={cx(styles.step, stepIndex < index && styles.done)}
               aria-current={stepIndex === index ? "step" : undefined}
+              disabled={props.lockedSteps?.includes(step.id)}
               onClick={() => props.onStep?.(step.id)}
             >
               <span className={styles.stepDot}>{stepIndex + 1}</span>
@@ -240,6 +256,11 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
         {props.step === "settings" ? <SettingsStep {...props} /> : null}
         {props.step === "lobby" ? <LobbyStep {...props} /> : null}
         {props.step === "live" ? <LiveStep {...props} /> : null}
+        {props.notice ? (
+          <p className={styles.notice} role="alert">
+            {props.notice}
+          </p>
+        ) : null}
       </div>
 
       <footer className={styles.footer}>
@@ -248,7 +269,9 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
             type="button"
             className={styles.previous}
             aria-label="Zurück"
-            onClick={() => props.onStep?.(STEPS[index - 1]!.id)}
+            onClick={
+              props.onPrevious ?? (() => props.onStep?.(STEPS[index - 1]!.id))
+            }
           >
             <Icon
               name="back"
@@ -264,9 +287,13 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
         </span>
         <GreenButton
           className={styles.next}
-          onClick={() => props.onStep?.(STEPS[Math.min(index + 1, 3)]!.id)}
+          disabled={props.nextDisabled}
+          onClick={
+            props.onNext ??
+            (() => props.onStep?.(STEPS[Math.min(index + 1, 3)]!.id))
+          }
         >
-          {current.next}
+          {props.nextLabel ?? current.next}
         </GreenButton>
       </footer>
 
@@ -315,6 +342,12 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
   );
 }
 
+const PLACEHOLDERS: Record<ContentKind, string> = {
+  text: "Text einfügen oder tippen. Er wird automatisch in Abschnitte geteilt.",
+  vocabulary: "Eine Vokabel pro Zeile: Wort ; Übersetzung",
+  math: "Eine Aufgabe pro Zeile, z. B. 7 + 5",
+};
+
 function ImportStep({
   content,
   onKind,
@@ -322,8 +355,11 @@ function ImportStep({
   onSplit,
   onEditSections,
   onImportFile,
+  onMoveSection,
 }: TeacherDictationScreenProps) {
   const count = content.sections.length;
+  const [dragged, setDragged] = useState<number | null>(null);
+  const sortable = Boolean(onMoveSection) && content.kind === "text";
   return (
     <div className={styles.stage}>
       <div className={styles.column}>
@@ -340,66 +376,104 @@ function ImportStep({
         </div>
         <textarea
           className={styles.source}
-          aria-label="Text"
+          aria-label={KINDS.find(([kind]) => kind === content.kind)?.[1]}
+          placeholder={PLACEHOLDERS[content.kind]}
           value={content.text}
           onChange={(event) => onText?.(event.target.value)}
         />
         <div className={styles.splitRow}>
-          <div className={styles.split} role="group" aria-label="Teilen nach">
-            <span className={styles.label} aria-hidden="true">
-              Teilen nach
-            </span>
-            {SPLITS.map(([split, label]) => (
-              <Chip
-                key={split}
-                pressed={content.split === split}
-                onClick={() => onSplit?.(split)}
-              >
-                {label}
-              </Chip>
-            ))}
-          </div>
-          <button
-            type="button"
-            className={styles.fileButton}
-            onClick={onImportFile}
-          >
-            Datei importieren
-          </button>
+          {content.kind === "text" ? (
+            <div className={styles.split} role="group" aria-label="Teilen nach">
+              <span className={styles.label} aria-hidden="true">
+                Teilen nach
+              </span>
+              {SPLITS.map(([split, label]) => (
+                <Chip
+                  key={split}
+                  pressed={content.split === split}
+                  onClick={() => onSplit?.(split)}
+                >
+                  {label}
+                </Chip>
+              ))}
+            </div>
+          ) : (
+            <span />
+          )}
+          {onImportFile ? (
+            <label className={styles.fileButton}>
+              Datei importieren
+              <input
+                type="file"
+                accept=".txt,.csv,.tsv,text/plain,text/csv"
+                className={styles.fileInput}
+                onChange={(event) => {
+                  onImportFile(event.target.files?.[0]);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          ) : null}
         </div>
       </div>
       <div className={styles.column}>
         <div className={styles.between}>
           <span className={styles.label}>
             <span className={styles.narrowOnly}>
-              {count} Abschnitte · ziehen zum Sortieren
+              {count} Abschnitte{sortable ? " · ziehen zum Sortieren" : ""}
             </span>
             <span className={styles.wideOnly}>
               {count} Abschnitte · so sehen es die Schüler
             </span>
           </span>
-          <button
-            type="button"
-            className={cx(styles.linkButton, styles.narrowOnly)}
-            onClick={onEditSections}
-          >
-            Bearbeiten
-          </button>
-          <span className={cx(styles.muted, styles.wideOnly)}>
-            ziehen zum Sortieren
-          </span>
+          {onEditSections ? (
+            <button
+              type="button"
+              className={cx(styles.linkButton, styles.narrowOnly)}
+              onClick={onEditSections}
+            >
+              Bearbeiten
+            </button>
+          ) : null}
+          {sortable ? (
+            <span className={cx(styles.muted, styles.wideOnly)}>
+              ziehen zum Sortieren
+            </span>
+          ) : null}
         </div>
-        <ol className={styles.sections}>
-          {content.sections.map((section, sectionIndex) => (
-            <li key={sectionIndex} className={styles.section}>
-              <span className={styles.sectionNumber}>{sectionIndex + 1}</span>
-              <span className={styles.sectionText}>{section}</span>
-              <span className={styles.handle} aria-hidden="true">
-                ⋮⋮
-              </span>
-            </li>
-          ))}
-        </ol>
+        {count ? (
+          <ol className={styles.sections}>
+            {content.sections.map((section, sectionIndex) => (
+              <li
+                key={`${sectionIndex}-${section}`}
+                className={cx(
+                  styles.section,
+                  dragged === sectionIndex && styles.dragging,
+                )}
+                draggable={sortable}
+                onDragStart={() => setDragged(sectionIndex)}
+                onDragEnd={() => setDragged(null)}
+                onDragOver={(event) => {
+                  if (dragged !== null) event.preventDefault();
+                }}
+                onDrop={() => {
+                  if (dragged !== null && dragged !== sectionIndex) {
+                    onMoveSection?.(dragged, sectionIndex);
+                  }
+                  setDragged(null);
+                }}
+              >
+                <span className={styles.sectionNumber}>{sectionIndex + 1}</span>
+                <span className={styles.sectionText}>{section}</span>
+                {sortable ? (
+                  <span className={styles.handle} aria-hidden="true">
+                    ⋮⋮
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        ) : null}
       </div>
     </div>
   );
@@ -530,13 +604,17 @@ function SettingsStep(props: TeacherDictationScreenProps) {
   );
 }
 
-function RoomCard({ roomCode, qr }: TeacherDictationScreenProps) {
+function RoomCard({ roomCode, qr, joinHost }: TeacherDictationScreenProps) {
   return (
     <div className={styles.roomCard}>
       <div className={styles.qr}>{qr}</div>
       <div className={styles.roomCode}>
         <span className={styles.roomCodeLabel}>Raumcode</span>
-        <span className={styles.codeTiles} aria-label={`Raumcode ${roomCode}`}>
+        <span
+          className={styles.codeTiles}
+          role="img"
+          aria-label={`Raumcode ${roomCode}`}
+        >
           {[...roomCode].map((char, charIndex) => (
             <span key={charIndex} aria-hidden="true">
               {char}
@@ -544,7 +622,7 @@ function RoomCard({ roomCode, qr }: TeacherDictationScreenProps) {
           ))}
         </span>
         <span className={styles.roomHint}>
-          lernraum.app · Code eingeben oder scannen
+          {joinHost} · Code eingeben oder scannen
         </span>
       </div>
     </div>
@@ -566,7 +644,8 @@ function LobbyStep(props: TeacherDictationScreenProps) {
       <div className={styles.column}>
         <div className={styles.between}>
           <span className={styles.label}>
-            Beigetreten · {lobby.joined.length} von {lobby.expected}
+            Beigetreten · {lobby.joined.length}
+            {lobby.expected ? ` von ${lobby.expected}` : ""}
           </span>
           <button
             type="button"
@@ -584,7 +663,9 @@ function LobbyStep(props: TeacherDictationScreenProps) {
           {lobby.joined.map((student) => (
             <li key={student.name} className={styles.joinedCard}>
               <span className={styles.avatar}>
-                <Animal animal={student.animal} size={26} />
+                {student.animal ? (
+                  <Animal animal={student.animal} size={26} />
+                ) : null}
               </span>
               <span className={styles.name}>{student.name}</span>
             </li>
@@ -646,7 +727,9 @@ function LiveStep({
               {live.students.map((student) => (
                 <li key={student.name} className={styles.student}>
                   <span className={styles.studentHead}>
-                    <Animal animal={student.animal} size={26} />
+                    {student.animal ? (
+                      <Animal animal={student.animal} size={26} />
+                    ) : null}
                     <span className={styles.studentName}>{student.name}</span>
                   </span>
                   <span className={styles.studentMeta}>

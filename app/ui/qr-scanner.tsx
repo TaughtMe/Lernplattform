@@ -9,12 +9,17 @@ type QrCodeScannerProps = {
   onResult: (value: string) => void;
   /** Klasse des Kamera-Knopfs; Standard ist das bisherige Aussehen. */
   buttonClassName?: string;
+  /** Symbolgröße und Strichstärke der Kamera. */
+  iconSize?: number;
+  iconStrokeWidth?: number;
 };
 
 export function QrCodeScanner({
   continuous = false,
   onResult,
   buttonClassName = "ui-icon-btn ui-icon-btn--square",
+  iconSize = 20,
+  iconStrokeWidth,
 }: QrCodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const onResultRef = useRef(onResult);
@@ -140,7 +145,11 @@ export function QrCodeScanner({
         onClick={openScanner}
         aria-label="QR-Code mit Kamera scannen"
       >
-        <Icon name="camera" size={20} />
+        <Icon
+          name="camera"
+          size={iconSize}
+          {...(iconStrokeWidth ? { strokeWidth: iconStrokeWidth } : {})}
+        />
       </button>
       <Sheet open={open} title="QR-Code scannen" onClose={() => setOpen(false)}>
         <div className={`ui-scanner${feedback ? " is-success" : ""}`}>

@@ -1,0 +1,14 @@
+/* Der Live-Raum füllt den Bildschirm wie im Entwurf (5c/5d). */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+.page > :first-child {
+  flex: 1;
+  min-height: 0;
+}
+.qr {
+  width: 100% !important;
+  height: 100% !important;
+}

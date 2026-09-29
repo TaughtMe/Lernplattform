@@ -97,19 +97,13 @@ test("the teacher lobby projects the code and lists joined animals", async ({
   page,
 }) => {
   await restoreRoom(page, "lobby");
-  await expect(
-    page.getByRole("heading", { name: "Lobby öffnen" }),
-  ).toBeVisible();
-  await expect(page.getByRole("status", { name: "Raumcode" })).toHaveText(
-    "4829",
-  );
+  await expect(page.getByRole("heading", { name: "Lobby" })).toBeVisible();
+  await expect(page.getByLabel("Raumcode 4829")).toBeVisible();
   await expect(
     page.getByRole("img", { name: "QR-Code zum Raum 4829" }).first(),
   ).toBeVisible();
   await expect(page.getByText("Fuchs", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Koala 2 entfernen" }),
-  ).toBeVisible();
+  await expect(page.getByText("Koala 2", { exact: true })).toBeVisible();
   await expect(page.getByText("participant-a")).toHaveCount(0);
   await accessible(page);
   await page.screenshot({
@@ -125,14 +119,13 @@ test("the live view shows progress per animal and the most frequent errors", asy
   await expect(
     page.getByRole("heading", { name: "Live-Sitzung" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("progressbar", { name: "Fortschritt Fuchs" }),
-  ).toHaveAttribute("aria-valuenow", "100");
+  const fox = page.getByRole("listitem").filter({ hasText: "Fuchs" });
+  await expect(fox.getByText("Fertig")).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Häufigste Fehler" }).getByText("Hof"),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Ergebnisse exportieren (CSV)" }),
+    page.getByRole("button", { name: "Ergebnisse als CSV" }),
   ).toBeEnabled();
   await accessible(page);
   await page.screenshot({

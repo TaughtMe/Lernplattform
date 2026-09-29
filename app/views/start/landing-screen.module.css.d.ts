@@ -13,6 +13,7 @@ declare const styles: {
   readonly greetingHint: string;
   readonly greetingTitle: string;
   readonly header: string;
+  readonly legal: string;
   readonly note: string;
   readonly scan: string;
   readonly screen: string;

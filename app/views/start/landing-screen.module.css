@@ -1,12 +1,20 @@
 /* Startseite: Design 2a · ein Tier, ein Code, sonst nichts (immer dunkel). */
 .screen {
   composes: view from "../parts/parts.module.css";
+  --disc: min(288px, 36dvh);
   display: flex;
   flex-direction: column;
-  min-height: 788px;
+  /* Ganze Bildschirmhöhe ohne Scrollen. */
+  min-height: 100dvh;
   padding: 22px 22px 26px;
   background: #211f1b;
   color: #f7f4ee;
+}
+/* Auf breiten Bildschirmen bleibt die Spalte so schmal wie im Entwurf. */
+.screen > * {
+  width: 100%;
+  max-width: 346px;
+  align-self: center;
 }
 .header {
   display: flex;
@@ -45,8 +53,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 288px;
-  height: 288px;
+  width: var(--disc);
+  height: var(--disc);
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -67,6 +75,8 @@
     0 22px 60px rgba(0, 0, 0, 0.5);
 }
 .animal {
+  width: calc(var(--disc) * 0.778);
+  height: calc(var(--disc) * 0.778);
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45));
 }
 .greeting {
@@ -150,4 +160,14 @@
   color: #8d8677;
   font-size: 12.5px;
   text-align: center;
+}
+.legal {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+.legal a {
+  color: #8d8677;
 }

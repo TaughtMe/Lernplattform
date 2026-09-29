@@ -4,9 +4,9 @@ import { expect, test } from "@playwright/test";
 test("local preview exposes the clear learner entries", async ({ page }) => {
   await page.goto("/");
 
-  await expect(
-    page.getByRole("heading", { name: "Bereit für dein Laufdiktat?" }),
-  ).toBeAttached();
+  // Design 2a: ein Tier (öffnet den Lernraum), ein Code, sonst nichts.
+  const animal = page.getByRole("link", { name: /^Weiter als / });
+  await expect(animal).toHaveAttribute("href", "/lernen");
   await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   const cameraButton = page.getByRole("button", {
     name: "QR-Code mit Kamera scannen",
@@ -14,22 +14,26 @@ test("local preview exposes the clear learner entries", async ({ page }) => {
   await expect(cameraButton).toBeVisible();
   await expect(cameraButton.locator("svg")).toHaveCount(1);
   await expect(
-    page.getByRole("link", { name: "Lehrerbereich" }),
+    page.getByRole("link", { name: "Lehrer-Login" }),
   ).toHaveAttribute("href", "/lehrer");
-  // Design 2a: ein Tier (öffnet den Lernraum), ein Code, sonst nichts.
-  await expect(
-    page.getByRole("link", { name: /^Weiter als / }),
-  ).toHaveAttribute("href", "/lernen");
-  await expect(page.getByRole("button", { name: "Tier ändern" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /^Raum beitreten/ })).toHaveCount(
+  await expect(page.getByRole("button", { name: "Tier ändern" })).toHaveCount(
     0,
   );
+  await expect(page.getByRole("link", { name: "Impressum" })).toBeVisible();
 
+  // Die Startseite passt ohne Scrollen auf den Bildschirm.
   const dimensions = await page.evaluate(() => ({
-    viewport: document.documentElement.clientWidth,
-    content: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+    contentWidth: document.documentElement.scrollWidth,
+    viewportHeight: document.documentElement.clientHeight,
+    contentHeight: document.documentElement.scrollHeight,
   }));
-  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+  expect(dimensions.contentWidth).toBeLessThanOrEqual(
+    dimensions.viewportWidth + 1,
+  );
+  expect(dimensions.contentHeight).toBeLessThanOrEqual(
+    dimensions.viewportHeight + 1,
+  );
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
@@ -53,15 +57,9 @@ test("the complete learning and teacher workspaces are reachable", async ({
 
 test("room code entry works with the keyboard", async ({ page }) => {
   await page.goto("/");
-  // Nach der vierten Ziffer öffnet sich der Raum; der Hinweis steht vorher da.
-  await expect(
-    page.getByText("Nach der vierten Ziffer geht es los."),
-  ).toBeVisible();
-  await expect(page.locator(".ui-room-code")).toHaveAttribute(
-    "data-hydrated",
-    "true",
-  );
-  const first = page.getByRole("textbox", { name: "Ziffer 1" });
+  // Das Tier erscheint erst nach dem Laden; dann reagieren die Felder.
+  await expect(page.getByRole("link", { name: /^Weiter als / })).toBeVisible();
+  const first = page.getByRole("textbox", { name: "Raumcode Zeichen 1" });
   await first.click();
   await page.keyboard.type("4829");
   await expect(page).toHaveURL(/\/raum\?code=4829$/);
@@ -75,80 +73,44 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),
   ).toBeVisible();
-  await expect(page.locator(".ui-live")).toHaveAttribute(
+  await expect(page.locator("[data-hydrated]")).toHaveAttribute(
     "data-hydrated",
     "true",
   );
-  await expect(page.getByRole("tab", { name: "Text" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Vokabeln" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Kopfrechnen" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Trennregeln" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Marker/ })).toBeVisible();
+  for (const kind of ["Text", "Vokabeln", "Mathe"]) {
+    await expect(
+      page.getByRole("button", { name: kind, exact: true }),
+    ).toBeVisible();
+  }
+  await expect(
+    page.getByRole("button", { name: "Weiter zu Modus" }),
+  ).toBeDisabled();
   await page
-    .getByRole("textbox", { name: "Text – Sätze werden automatisch getrennt" })
+    .getByRole("textbox", { name: "Text" })
     .fill("Der Hund läuft. Die Katze schläft.");
-  await expect(page.getByRole("button", { name: /Marker/ })).toBeEnabled();
+  await expect(page.getByText("Die Katze schläft.").first()).toBeVisible();
 
-  const stableFrame = async () =>
-    page.evaluate(() => {
-      const header = document.querySelector(".ui-live__head");
-      const footer = document.querySelector(".ui-live__foot");
-      return {
-        pageScroll: window.scrollY,
-        pageHeight: document.documentElement.scrollHeight,
-        viewportHeight: document.documentElement.clientHeight,
-        header: (() => {
-          const rect = header?.getBoundingClientRect();
-          return rect
-            ? {
-                height: rect.height,
-                left: rect.left,
-                right: rect.right,
-                width: rect.width,
-              }
-            : undefined;
-        })(),
-        footer: (() => {
-          const rect = footer?.getBoundingClientRect();
-          return rect
-            ? {
-                height: rect.height,
-                left: rect.left,
-                right: rect.right,
-                width: rect.width,
-              }
-            : undefined;
-        })(),
-      };
-    });
-  const textFrame = await stableFrame();
-  await page.getByRole("tab", { name: "Vokabeln" }).click();
-  await page.getByRole("button", { name: "Tabelle einfügen" }).click();
-  await expect(
-    page.getByRole("dialog", { name: "Tabelle einfügen" }),
-  ).toBeVisible();
-  const pasteAccessibility = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
-  expect(pasteAccessibility.violations).toEqual([]);
-  await page.keyboard.press("Escape");
-  await expect(
-    page.getByRole("dialog", { name: "Tabelle einfügen" }),
-  ).toBeHidden();
-  const vocabularyFrame = await stableFrame();
-  await page.getByRole("tab", { name: "Kopfrechnen" }).click();
-  const mathFrame = await stableFrame();
-  expect(vocabularyFrame.header).toEqual(textFrame.header);
-  expect(vocabularyFrame.footer).toEqual(textFrame.footer);
-  expect(mathFrame.header).toEqual(textFrame.header);
-  expect(mathFrame.footer).toEqual(textFrame.footer);
+  // Kopf und Fuß bleiben beim Wechsel der Inhaltsart stehen.
+  const frame = () =>
+    page.evaluate(() =>
+      ["header", "footer"].map((tag) => {
+        const rect = document.querySelector(tag)?.getBoundingClientRect();
+        return rect ? [rect.top, rect.height, rect.width] : null;
+      }),
+    );
+  const textFrame = await frame();
+  await page.getByRole("button", { name: "Vokabeln", exact: true }).click();
+  expect(await frame()).toEqual(textFrame);
+  await page.getByRole("button", { name: "Mathe", exact: true }).click();
+  expect(await frame()).toEqual(textFrame);
 
-  await page.getByRole("tab", { name: "Text", exact: true }).click();
-  await page.getByRole("button", { name: /Weiter zu Modus/ }).click();
-  await expect(page.getByRole("radio", { name: /^Laufdiktat/ })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /^Freies Üben/ })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /^Battle/ })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /^Stationen/ })).toBeVisible();
+  await page.getByRole("button", { name: "Text", exact: true }).click();
+  await page.getByRole("button", { name: "Weiter zu Modus" }).click();
+  for (const mode of ["Laufdiktat", "Freie Übung", "Battle", "Stationen"]) {
+    await expect(
+      page.getByRole("button", { name: new RegExp(`^${mode}`) }).first(),
+    ).toBeVisible();
+  }
 
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
@@ -190,17 +152,21 @@ test("a configured teacher and student can complete one live round", async ({
   const teacher = await browser.newPage();
   const student = await browser.newPage();
   await teacher.goto("/lehrer/live");
-  await teacher.getByLabel(/Text – Sätze/).fill("Der Schulweg ist kurz.");
-  await teacher.getByRole("button", { name: /Weiter zu Modus/ }).click();
-  await teacher.getByRole("button", { name: /Lobby öffnen/ }).click();
+  await teacher
+    .getByRole("textbox", { name: "Text" })
+    .fill("Der Schulweg ist kurz.");
+  await teacher.getByRole("button", { name: "Weiter zu Modus" }).click();
+  await teacher.getByRole("button", { name: "Raum öffnen" }).click();
   const roomCode = (
-    await teacher.getByRole("status", { name: "Raumcode" }).textContent()
-  )?.trim();
+    await teacher
+      .locator('[aria-label^="Raumcode "]')
+      .getAttribute("aria-label")
+  )?.replace("Raumcode ", "");
 
   await student.goto(`/raum?code=${roomCode ?? ""}`);
   await expect(student.getByText(/Du bist dabei/)).toBeVisible();
 
-  await teacher.getByRole("button", { name: "Diktat starten" }).click();
+  await teacher.getByRole("button", { name: "Sitzung starten" }).click();
   await student
     .getByRole("button", { name: "Verstanden – jetzt schreiben" })
     .click();

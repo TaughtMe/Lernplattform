@@ -17,8 +17,10 @@ declare const styles: {
   readonly divider: string;
   readonly done: string;
   readonly dot: string;
+  readonly dragging: string;
   readonly errors: string;
   readonly fileButton: string;
+  readonly fileInput: string;
   readonly finished: string;
   readonly flow: string;
   readonly flowNumber: string;
@@ -53,6 +55,7 @@ declare const styles: {
   readonly name: string;
   readonly narrowOnly: string;
   readonly next: string;
+  readonly notice: string;
   readonly option: string;
   readonly optionHint: string;
   readonly optionLabel: string;

@@ -22,9 +22,9 @@ type AreaDefinition = {
 };
 
 /**
- * Standardstufen für den Schulbetrieb: Laufdiktat (Schüler und Lehrkraft)
- * und persönliches Matheüben sind frei, Motivation und Duell sind aus,
- * alles Weitere liegt in der Vorschau.
+ * Standardstufen für den Schulbetrieb: Alle Lernbereiche und der
+ * Lehrerbereich sind frei (Entscheidung 48: Schüler erreichen ihren
+ * Lernraum über das Tier auf der Startseite). Motivation und Duell sind aus.
  * Abweichungen werden per LERNRAUM_FREIGABE gesetzt, z. B.
  * `lernbox=frei,motivation=vorschau`.
  */
@@ -59,32 +59,32 @@ export const RELEASE_AREAS = {
       "/lernen/material",
       "/lernen/faecher",
     ],
-    stage: "vorschau",
+    stage: "frei",
   },
   lernbox: {
     label: "LernBox",
     routes: ["/lernbox", "/frei/vocabulary"],
-    stage: "vorschau",
+    stage: "frei",
   },
   wortspeicher: {
     label: "Wortspeicher",
     routes: ["/frei/german"],
-    stage: "vorschau",
+    stage: "frei",
   },
   "laufdiktat-frei": {
     label: "Laufdiktat allein üben",
     routes: ["/frei/german/laufdiktat"],
-    stage: "vorschau",
+    stage: "frei",
   },
   tastenwelt: {
     label: "Tastenwelt",
     routes: ["/frei/typing"],
-    stage: "vorschau",
+    stage: "frei",
   },
   lehrer: {
     label: "Lehrerbereich",
     routes: ["/lehrer"],
-    stage: "vorschau",
+    stage: "frei",
   },
   motivation: {
     label: "Häuser, Serie und Abzeichen",

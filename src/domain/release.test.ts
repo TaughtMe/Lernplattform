@@ -30,12 +30,14 @@ describe("Freigaberegister", () => {
   it("nutzt Schulbetrieb-Standards und übernimmt gültige Abweichungen", () => {
     const defaults = resolveStages(undefined);
     expect(defaults.raum).toBe("frei");
-    expect(defaults.lernbox).toBe("vorschau");
+    expect(defaults.lernbox).toBe("frei");
+    expect(defaults.lernen).toBe("frei");
+    expect(defaults.lehrer).toBe("frei");
     expect(defaults.motivation).toBe("aus");
     expect(defaults.duell).toBe("aus");
 
-    const custom = resolveStages(" lernbox = frei ,duell=vorschau");
-    expect(custom.lernbox).toBe("frei");
+    const custom = resolveStages(" lernbox = vorschau ,duell=vorschau");
+    expect(custom.lernbox).toBe("vorschau");
     expect(custom.duell).toBe("vorschau");
     expect(custom.raum).toBe("frei");
   });
@@ -54,7 +56,7 @@ describe("Freigaberegister", () => {
     expect(isStageVisible("vorschau", true)).toBe(true);
     expect(isStageVisible("aus", true)).toBe(false);
 
-    const stages = resolveStages(undefined);
+    const stages = resolveStages("lernbox=vorschau");
     const school = resolveVisibility(stages, false);
     const preview = resolveVisibility(stages, true);
     expect(isPathVisible("/raum?code=1234".split("?")[0]!, school)).toBe(true);

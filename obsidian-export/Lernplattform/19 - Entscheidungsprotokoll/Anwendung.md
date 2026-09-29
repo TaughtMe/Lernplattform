@@ -514,4 +514,6 @@ Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendu
 - **Kern bleibt:** Lernlogik, Speicherung, Datensicherung, Freigaberegister, Supabase-Verträge und Tests werden übernommen, nicht neu geschrieben.
 - **Abnahme je Screen:** Die Projektverantwortliche Lehrkraft gibt jede Ansicht im Katalog frei, bevor sie angebunden wird.
 - **Schriften lokal:** Work Sans und Fredoka werden aus dem eigenen Paket ausgeliefert statt von Google Fonts. Das dient dem Datenschutz und dem Offlinebetrieb.
+- **Freigaben:** Lernbereiche (Mein Lernraum, LernBox, Wortspeicher, Tastenwelt, Laufdiktat allein) und der Lehrerbereich stehen auf `frei`. Schüler erreichen ihren Lernraum über das Tier auf der Startseite; die Tierwahl liegt im Profil. Motivation und Duell bleiben `aus`. Das ersetzt die Standardstufe `vorschau` aus Entscheidung 47.
+- **Funktionen ohne Entwurf:** Was die Vorlage nicht zeigt, wird beim Anbinden vorerst ausgeblendet und später mit eigenem Entwurf ergänzt; die Logik bleibt im Kern erhalten.
 - **Browser-Standards der Vorlage:** Schaltflächen zeigen wie in der Vorlage die Systemschrift des Geräts (Token `--font-control`). Die Entscheidung lässt sich mit einer Zeile auf Work Sans umstellen.

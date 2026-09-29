@@ -116,11 +116,14 @@ export function Animal({
   animal,
   size,
   label,
+  fluid = false,
   className,
 }: {
   animal: string;
   size: number;
   label?: string | undefined;
+  /** Größe kommt aus CSS (`className`) statt aus `size`. */
+  fluid?: boolean;
   className?: string | undefined;
 }) {
   return (
@@ -129,7 +132,7 @@ export function Animal({
       src={`/animals/${animalFileName(animal)}.svg`}
       width={size}
       height={size}
-      style={{ width: size, height: size }}
+      style={fluid ? undefined : { width: size, height: size }}
       alt={label ?? ""}
       aria-hidden={label ? undefined : true}
       className={cx(styles.animal, className)}
