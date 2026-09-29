@@ -38,7 +38,10 @@ test("server-renders the Lernraum start page", async () => {
   assert.match(html, /Raumcode/);
   assert.match(html, /Lehrerbereich/);
   assert.match(html, /Lernraum starten/);
-  assert.match(html, /Frei üben/);
+  // Design 2a: ein Tier, ein Code, sonst nichts.
+  assert.match(html, /Dein Tier/);
+  assert.match(html, /Nach der vierten Ziffer geht es los/);
+  assert.doesNotMatch(html, /Frei üben/);
   assert.doesNotMatch(html, /Raum beitreten/);
   assert.match(html, /href="\/impressum"/);
   assert.match(html, /href="\/datenschutz"/);

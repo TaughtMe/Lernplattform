@@ -48,6 +48,9 @@ import {
   createPersonalLearningEventRepository,
 } from "../../src/storage/personal-learning-events";
 import { LiveStationGame } from "./live-station-game";
+import { AnimalImage } from "../ui/animal";
+import { Icon } from "../ui/icons";
+import { ThemeButton } from "../ui/theme-button";
 import { MathDisplay } from "./math-display";
 import { LAUFDIKTAT_PILOT } from "../../src/pilot-mode";
 import { useLiveSessionGuards } from "./use-live-session-guards";
@@ -75,6 +78,9 @@ type LiveRunningDictationGameProps = {
   roster?: Record<string, number>;
   incomingAttack?: { id: number; type: AttackType; from: string } | null;
   onSendAttack?: (to: string, type: AttackType) => boolean;
+  /** Angezeigter Tiername (z. B. „Fuchs 2“); studentName ist ein anonymer Schlüssel. */
+  displayName?: string | null;
+  animal?: string | null;
 };
 
 export function LiveRunningDictationGame({
@@ -90,7 +96,13 @@ export function LiveRunningDictationGame({
   roster = {},
   incomingAttack,
   onSendAttack,
+  displayName: displayNameProp = null,
+  animal = null,
 }: LiveRunningDictationGameProps) {
+  // Ältere Räume vergeben lesbare Namen; neue nur anonyme Schlüssel.
+  const displayName =
+    displayNameProp ??
+    (studentName.startsWith("participant-") ? null : studentName);
   const learningBoxRepository = useMemo(
     () => createLearningBoxRepository(),
     [],
@@ -312,13 +324,13 @@ export function LiveRunningDictationGame({
   if (phase === "complete") {
     const stars = computeRunningDictationStars(errors, session.words.length);
     return (
-      <div className="live-game-page">
+      <div className="ui live-game-page">
         <section className="live-game-complete" aria-live="polite">
           <span aria-hidden="true" className="live-game-complete__trophy">
             <TrophyIcon />
           </span>
           <p className="eyebrow">Raum {code} · Runde abgeschlossen</p>
-          <h1>Geschafft, {studentName}!</h1>
+          <h1>{displayName ? `Geschafft, ${displayName}!` : "Geschafft!"}</h1>
           {session.showStars ? (
             <div
               className="running-stars"
@@ -588,7 +600,7 @@ export function LiveRunningDictationGame({
 
   return (
     <div
-      className={`live-game-page is-active-round${activeAttack === "flicker" ? " is-flickering" : ""}`}
+      className={`ui live-game-page is-active-round${activeAttack === "flicker" ? " is-flickering" : ""}`}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       onTouchCancel={onTouchEnd}
@@ -606,11 +618,23 @@ export function LiveRunningDictationGame({
         >
           <ArrowLeftIcon aria-hidden="true" />
         </button>
+        {animal ? (
+          <AnimalImage
+            animal={animal}
+            size={40}
+            className="live-game-page__animal"
+          />
+        ) : null}
         <div className="live-game-page__meta">
-          <span>Raum {code}</span>
-          <strong>
-            {index + 1} / {session.words.length}
-          </strong>
+          <span className="live-game-page__title">
+            Laufdiktat · Raum {code}
+          </span>
+          <span>
+            {displayName ? `${displayName} · ` : ""}
+            <strong>
+              {index + 1} / {session.words.length}
+            </strong>
+          </span>
         </div>
         <div className="live-game-page__stats">
           {session.isTtsEnabled ? (
@@ -626,8 +650,23 @@ export function LiveRunningDictationGame({
           ) : null}
           <span>Spicker {peeks}</span>
           <span>Fehler {errors}</span>
+          <ThemeButton />
         </div>
       </header>
+      <div className="live-game-page__progress" aria-hidden="true">
+        {session.words.slice(0, 40).map((word, position) => (
+          <span
+            key={`${word.id}-${position}`}
+            className={
+              position < index
+                ? "is-done"
+                : position === index
+                  ? "is-current"
+                  : undefined
+            }
+          />
+        ))}
+      </div>
 
       {connectionWarning ? (
         <p className="live-game-warning" role="status">
@@ -718,14 +757,16 @@ export function LiveRunningDictationGame({
         </p>
       ) : null}
       <main className="live-game-page__stage">
-        <div
-          className={`live-game-page__edge live-game-page__edge--left${phase === "idle" ? " is-waiting" : ""}`}
-          aria-hidden="true"
-        />
-        <div
-          className={`live-game-page__edge live-game-page__edge--right${phase === "idle" ? " is-waiting" : ""}`}
-          aria-hidden="true"
-        />
+        {(["left", "right"] as const).map((side) => (
+          <div
+            key={side}
+            className={`live-game-page__edge live-game-page__edge--${side}${phase === "idle" ? " is-waiting" : ""}${phase === "revealed" ? " is-holding" : ""}`}
+            aria-hidden="true"
+          >
+            <Icon name="hand" size={20} />
+            <span>Halten</span>
+          </div>
+        ))}
 
         {phase === "idle" ? (
           <p className="live-game-idle-hint">

@@ -27,7 +27,7 @@ function isThemePreference(value: string | null): value is ThemePreference {
 
 function resolveTheme(preference: ThemePreference): "light" | "dark" {
   if (preference !== "system") return preference;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
@@ -44,14 +44,14 @@ function getPreferenceSnapshot(): ThemePreference {
 }
 
 function subscribeToPreference(onChange: () => void) {
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  const media = window.matchMedia?.("(prefers-color-scheme: dark)");
   window.addEventListener("storage", onChange);
   window.addEventListener(CHANGE_EVENT, onChange);
-  media.addEventListener("change", onChange);
+  media?.addEventListener("change", onChange);
   return () => {
     window.removeEventListener("storage", onChange);
     window.removeEventListener(CHANGE_EVENT, onChange);
-    media.removeEventListener("change", onChange);
+    media?.removeEventListener("change", onChange);
   };
 }
 

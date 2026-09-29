@@ -5,6 +5,7 @@ import {
   animalFileName,
   animalTokenFromDisplayName,
   createLearnerProfile,
+  createRandomLearnerProfile,
   learnerDisplayName,
   learnerProfileSchema,
   studentAnimalFileName,
@@ -63,6 +64,14 @@ describe("animal profile", () => {
       }).success,
     ).toBe(false);
   });
+  it("draws a random animal for a first profile", () => {
+    const first = createRandomLearnerProfile(() => 0);
+    const last = createRandomLearnerProfile(() => 0.9999);
+    expect(first.animal).toBe(ANIMALS[0]!.name);
+    expect(last.animal).toBe(ANIMALS.at(-1)!.name);
+    expect(learnerProfileSchema.parse(first)).toEqual(first);
+  });
+
   it("extracts only an allowed animal token from a legacy display name", () => {
     expect(animalTokenFromDisplayName("Schneller Fuchs 2")).toBe("Fuchs");
     expect(animalTokenFromDisplayName("Mia")).toBeNull();

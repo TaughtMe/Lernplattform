@@ -21,7 +21,7 @@ test("failed automatic join keeps the code and retries only on request", async (
 });
 
 for (const preset of [true, false]) {
-  test(`code link joins once with ${preset ? "saved" : "no"} animal and resumes identity`, async ({
+  test(`code link joins once with ${preset ? "saved" : "random"} animal and resumes identity`, async ({
     page,
   }) => {
     if (preset)
@@ -59,15 +59,14 @@ for (const preset of [true, false]) {
     expect(joins[0]!["p_participant_token"]).toBeNull();
     if (preset) expect(joins[0]!["p_student_key"]).toBe("Fuchs");
     else {
-      // Ohne gewähltes Tier bleibt das Profil tierlos; es wird kein Tier erfunden.
-      expect(joins[0]!["p_student_key"]).toBeNull();
-      expect(
-        await page.evaluate(
-          () =>
-            JSON.parse(localStorage.getItem("lernraum:personal:profile:v1")!)
-              .animal,
-        ),
-      ).toBeNull();
+      // Ohne eigene Wahl wird ein zufälliges Tier gespeichert (Entscheidung 47).
+      const animal = await page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem("lernraum:personal:profile:v1")!)
+            .animal,
+      );
+      expect(animal).toBeTruthy();
+      expect(joins[0]!["p_student_key"]).toBe(animal);
     }
     await page.reload();
     await expect(

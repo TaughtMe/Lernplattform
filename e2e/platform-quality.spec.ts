@@ -28,26 +28,23 @@ test("start page exposes the core learner actions", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "QR-Code mit Kamera scannen" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("group", { name: /Lernraum öffnen/ }),
-  ).toBeVisible();
-  await expect(page.getByRole("link", { name: /^Frei üben/ })).toBeVisible();
+  const animal = page.getByRole("link", { name: /^Weiter als / });
+  await expect(animal).toHaveAttribute("href", "/lernen");
 
+  // Design 2a: großes Tier oben, Raumcode darunter.
   const launchLayout = await page.evaluate(() => {
-    const avatar = document.querySelector(
-      ".landing-launch__profile .landing-learner-action__avatar",
-    );
-    const join = document.querySelector(".landing-launch__join");
-    const avatarBox = avatar?.getBoundingClientRect();
+    const disc = document.querySelector(".ui-landing__disc");
+    const join = document.querySelector(".ui-room-code");
+    const discBox = disc?.getBoundingClientRect();
     const joinBox = join?.getBoundingClientRect();
     return {
-      avatarWidth: avatarBox?.width ?? 0,
-      avatarBottom: avatarBox?.bottom ?? 0,
+      discWidth: discBox?.width ?? 0,
+      discBottom: discBox?.bottom ?? 0,
       joinTop: joinBox?.top ?? 0,
     };
   });
-  expect(launchLayout.avatarWidth).toBeGreaterThanOrEqual(120);
-  expect(launchLayout.joinTop).toBeGreaterThan(launchLayout.avatarBottom);
+  expect(launchLayout.discWidth).toBeGreaterThanOrEqual(200);
+  expect(launchLayout.joinTop).toBeGreaterThan(launchLayout.discBottom);
 });
 
 test("layout never scrolls horizontally", async ({ page }) => {
@@ -411,7 +408,7 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
   await page.addInitScript(() => {
     window.localStorage.setItem("theme-preference", "dark");
   });
-  await page.goto("/");
+  await page.goto("/lernen");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   // Dunkelmodus-Tokens aus Entscheidung 47 (Design „Lernraum UI“).
   await expect(page.locator("body")).toHaveCSS(

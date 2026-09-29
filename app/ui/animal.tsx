@@ -29,6 +29,7 @@ export function AnimalImage({
       src={failed === src ? FALLBACK : src}
       width={size}
       height={size}
+      style={{ width: size, height: size }}
       alt={label ?? ""}
       aria-hidden={label ? undefined : true}
       className={`ui-animal ${className}`}

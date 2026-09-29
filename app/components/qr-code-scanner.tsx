@@ -6,11 +6,14 @@ import { CameraIcon, CloseIcon } from "./ui-icons";
 type QrCodeScannerProps = {
   continuous?: boolean;
   onResult: (value: string) => void;
+  /** Klasse des Kamera-Knopfs; Standard ist das bisherige Aussehen. */
+  buttonClassName?: string;
 };
 
 export function QrCodeScanner({
   continuous = false,
   onResult,
+  buttonClassName = "room-code__camera",
 }: QrCodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const onResultRef = useRef(onResult);
@@ -131,7 +134,7 @@ export function QrCodeScanner({
   return (
     <>
       <button
-        className="room-code__camera"
+        className={buttonClassName}
         type="button"
         onClick={openScanner}
         aria-label="QR-Code mit Kamera scannen"

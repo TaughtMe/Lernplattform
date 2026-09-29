@@ -20,12 +20,12 @@ it("persists the selection across repository instances and notifies the UI", () 
   repo.save(createLearnerProfile("Katze"));
   expect(listener).toHaveBeenCalledOnce();
 });
-it("repairs corrupt data and keeps the unselected animal null", () => {
+it("repairs corrupt data and stores a random animal without a choice", () => {
   const repo = createLearnerProfileRepository();
   localStorage.setItem(LEARNER_PROFILE_KEY, "broken");
   expect(repo.read()).toBeNull();
   const first = repo.ensure();
-  expect(first.animal).toBeNull();
+  expect(first.animal).toEqual(expect.any(String));
   expect(repo.ensure()).toEqual(first);
   localStorage.setItem(LEARNER_PROFILE_KEY, '{"animal":"unknown"}');
   expect(repo.read()).toBeNull();

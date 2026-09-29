@@ -1,5 +1,5 @@
 import {
-  createLearnerProfile,
+  createRandomLearnerProfile,
   learnerProfileSchema,
   type LearnerProfile,
 } from "../domain/learner-profile";
@@ -41,7 +41,7 @@ export function createLearnerProfileRepository(
     ensure: () => {
       const existing = read() ?? fallback;
       if (existing) return existing;
-      const profile = createLearnerProfile();
+      const profile = createRandomLearnerProfile();
       try {
         save(profile);
       } catch {

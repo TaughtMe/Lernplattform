@@ -127,7 +127,7 @@ export function LiveStationGame({
 
   if (stationNumber === null) {
     return (
-      <div className="live-game-page">
+      <div className="ui live-game-page">
         <section className="live-station" aria-labelledby="station-title">
           <p className="eyebrow">Raum {code} · Laufdiktat</p>
           <h1 id="station-title">Wähle deine Nummer</h1>
@@ -162,7 +162,7 @@ export function LiveStationGame({
   if (!current) return null;
   return (
     <div
-      className="live-game-page is-active-round"
+      className="ui live-game-page is-active-round"
       onTouchStart={(event) => {
         if (event.touches.length >= 2) reveal();
       }}

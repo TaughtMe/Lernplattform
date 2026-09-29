@@ -25,7 +25,10 @@ import {
 } from "../../src/integrations/laufdiktat/live-session";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
 import { animalTokenFromDisplayName } from "../../src/domain/learner-profile";
-import { AnimalAvatar } from "./animal-avatar";
+import { AnimalImage } from "../ui/animal";
+import { RoomFrame } from "../ui/room-frame";
+import { useLearnerProfile } from "../ui/use-learner-profile";
+import { useRelease } from "../release/release-context";
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
 import { QrCodeScanner } from "./qr-code-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
@@ -54,6 +57,8 @@ export function LiveRoomJoin({
   liveRoomConfig,
 }: LiveRoomJoinProps) {
   const hydrated = useHydrated();
+  const profile = useLearnerProfile();
+  const visibility = useRelease();
   const [code, setCode] = useState(() =>
     normalizeJoinCode(initialCode).replace(/\D/g, "").slice(0, 4),
   );
@@ -471,12 +476,22 @@ export function LiveRoomJoin({
       />
     );
 
+  // studentName ist ein anonymer Serverschlüssel; angezeigt wird nur das Tier.
+  const lobbyName = room?.animalToken
+    ? room.animalNumber > 1
+      ? `${room.animalToken} ${room.animalNumber}`
+      : room.animalToken
+    : null;
+  const frameAnimal = room?.animalToken ?? profile?.animal ?? null;
+
   if (view === "game" && room && session) {
     return (
       <LiveRunningDictationGame
         key={session.sessionId}
         code={code}
         studentName={room.studentName}
+        displayName={lobbyName}
+        animal={room.animalToken}
         session={session}
         connectionWarning={connectionWarning}
         deliveryStatus={deliveryStatus}
@@ -492,123 +507,137 @@ export function LiveRoomJoin({
   }
 
   if (view === "lobby" || view === "starting") {
-    // studentName ist ein anonymer Serverschlüssel; angezeigt wird nur das Tier.
-    const lobbyName = room?.animalToken
-      ? room.animalNumber > 1
-        ? `${room.animalToken} ${room.animalNumber}`
-        : room.animalToken
-      : null;
     return (
-      <div className="live-room-page">
-        <section className="live-room-state" aria-live="polite">
-          <span className="live-room-state__mark" aria-hidden="true">
+      <RoomFrame code={code} animal={frameAnimal} subtitle={lobbyName}>
+        <section className="ui-card ui-room__card" aria-live="polite">
+          <span className="ui-room__mark" aria-hidden="true">
             {view === "lobby" ? <CheckIcon /> : <ArrowRightIcon />}
           </span>
-          {room ? (
-            <AnimalAvatar
-              studentName={lobbyName ?? room.studentName}
-              className="live-room-lobby-avatar"
-            />
-          ) : null}
-          <p className="eyebrow">Raum {code}</p>
-          <h1>
+          <AnimalImage
+            animal={room?.animalToken ?? null}
+            size={120}
+            className="ui-bob live-room-lobby-avatar"
+          />
+          <h1 className="ui-room__title">
             {view === "lobby"
               ? lobbyName
                 ? `Du bist dabei, ${lobbyName}.`
                 : "Du bist dabei."
               : "Das Laufdiktat startet."}
           </h1>
-          <p>
+          <p className="ui-muted">
             {view === "lobby"
               ? "Warte kurz, bis die Lehrkraft die Runde startet."
               : "Die Übung wird im Lernraum vorbereitet."}
           </p>
           {connectionWarning ? (
-            <p className="live-game-warning" role="status">
+            <p className="ui-notice" role="status">
               {connectionWarning}
             </p>
           ) : null}
         </section>
-      </div>
+      </RoomFrame>
     );
   }
 
   if (view === "ended") {
     return (
-      <div className="live-room-page">
-        <section className="live-room-state" aria-live="polite">
-          <span className="live-room-state__mark" aria-hidden="true">
+      <RoomFrame code={code} animal={frameAnimal}>
+        <section className="ui-card ui-room__card" aria-live="polite">
+          <span className="ui-room__mark ui-room__mark--bad" aria-hidden="true">
             <CloseIcon />
           </span>
-          <p className="eyebrow">Raum {code}</p>
-          <h1>Diese Runde ist beendet.</h1>
-          <p>Die Lehrkraft hat die Unterrichtsrunde geschlossen.</p>
-          <Link className="button button--primary" href="/lernen">
-            Zum persönlichen Lernraum
-          </Link>
+          <h1 className="ui-room__title">Diese Runde ist beendet.</h1>
+          <p className="ui-muted">
+            Die Lehrkraft hat die Unterrichtsrunde geschlossen.
+          </p>
+          {visibility.lernen ? (
+            <Link
+              className="ui-btn ui-btn--primary ui-btn--block"
+              href="/lernen"
+            >
+              Zum persönlichen Lernraum
+            </Link>
+          ) : (
+            <Link className="ui-btn ui-btn--primary ui-btn--block" href="/">
+              Zur Startseite
+            </Link>
+          )}
         </section>
-      </div>
+      </RoomFrame>
     );
   }
 
   if (error) {
     return (
-      <div className="live-room-page">
+      <RoomFrame code={code} animal={frameAnimal}>
         <section
-          className="live-room-join live-room-join--error"
+          className="ui-card ui-room__card"
           role="alert"
           aria-live="assertive"
         >
-          <span className="live-room-join__error-mark" aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static decorative illustration, not a next/image candidate */}
-            <img src="/face-expectation.svg" alt="" />
-          </span>
-          <h1>Ups, hier lief wohl etwas schief</h1>
-          <p className="live-room-join__intro">{error}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element -- statische Illustration */}
+          <img src="/face-expectation.svg" alt="" width={72} height={72} />
+          <h1 className="ui-room__title">Ups, hier lief wohl etwas schief</h1>
+          <p className="ui-muted">{error}</p>
           <button
             type="button"
-            className="button button--primary"
+            className="ui-btn ui-btn--primary ui-btn--block"
             onClick={() => setError("")}
           >
-            <ArrowLeftIcon aria-hidden="true" /> Zur Code-Eingabe
+            <ArrowLeftIcon aria-hidden="true" width={18} height={18} /> Zur
+            Code-Eingabe
           </button>
         </section>
-      </div>
+      </RoomFrame>
     );
   }
 
   return (
-    <div className="live-room-page">
+    <RoomFrame code="" animal={frameAnimal}>
       <section
-        className="live-room-join"
+        className="ui-card ui-room__card live-room-join"
         aria-labelledby="live-room-title"
         data-hydrated={hydrated ? "true" : "false"}
       >
-        <h1 id="live-room-title">Laufdiktat</h1>
-        <p className="live-room-join__intro">
-          Gib den Raumcode deiner Lehrkraft ein, um zu starten.
+        <h1 id="live-room-title" className="ui-room__title">
+          Bereit für dein Laufdiktat?
+        </h1>
+        <p className="ui-muted">
+          Gib den Raumcode deiner Lehrkraft ein oder scanne den QR-Code.
         </p>
-        <form ref={joinForm} onSubmit={submit} noValidate>
-          <span id="live-room-code-label" className="room-code__label">
+        <form
+          ref={joinForm}
+          onSubmit={submit}
+          noValidate
+          className="ui-room-code"
+        >
+          <span id="live-room-code-label" className="ui-eyebrow">
             Raumcode
           </span>
-          <div className="live-room-code-grid">
-            <SegmentedRoomCode
-              idPrefix="live-room"
-              labelId="live-room-code-label"
-              value={code}
-              invalid={Boolean(error)}
-              describedBy={undefined}
-              onChange={(value) => {
-                setCode(value);
-                setError("");
-              }}
+          <div className="ui-row">
+            <div className="ui-grow">
+              <SegmentedRoomCode
+                idPrefix="live-room"
+                labelId="live-room-code-label"
+                value={code}
+                invalid={Boolean(error)}
+                describedBy={undefined}
+                className="ui-code"
+                onChange={(value) => {
+                  setCode(value);
+                  setError("");
+                }}
+              />
+            </div>
+            <QrCodeScanner
+              buttonClassName="ui-room-code__camera"
+              onResult={handleScan}
             />
-            <QrCodeScanner onResult={handleScan} />
           </div>
 
           <button
-            className="button button--primary live-room-join__submit"
+            className="ui-btn ui-btn--primary ui-btn--block"
             type="submit"
             disabled={!hydrated || view === "connecting"}
           >
@@ -618,15 +647,10 @@ export function LiveRoomJoin({
           </button>
         </form>
       </section>
-
-      <div className="live-room-join__footer">
-        <Link className="live-room-join__teacher-link" href="/lehrer">
-          Lehrer-Login
-        </Link>
-        <Link className="live-room-join__legal-link" href="/impressum">
-          Impressum &amp; Datenschutz
-        </Link>
-      </div>
-    </div>
+      <p className="ui-small ui-muted ui-center">
+        <Link href="/impressum">Impressum</Link> ·{" "}
+        <Link href="/datenschutz">Datenschutz</Link>
+      </p>
+    </RoomFrame>
   );
 }

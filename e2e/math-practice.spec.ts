@@ -6,9 +6,11 @@ test("math errors survive reload and practice works offline with keyboard and he
   context,
 }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: /^Frei üben/ }).click();
-  await page.getByRole("link", { name: /^Mathematik/ }).click();
-  await page.getByRole("link", { name: /Kopfrechnen frei üben/ }).click();
+  await page.getByRole("link", { name: /^Weiter als / }).click();
+  await page
+    .getByRole("navigation", { name: "Lernbereiche" })
+    .getByRole("link", { name: "Kopfrechnen" })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Kopfrechnen", exact: true }),
   ).toBeVisible();

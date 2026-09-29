@@ -1019,6 +1019,12 @@
 }
 
 /* Seitenfuß (Impressum, Datenschutz, Version) in App-Seiten schlicht. */
+body:has(.ui-shell, .ui-teacher) .site-meta-actions :is(span, a, button) {
+  color: var(--ink2);
+}
+body:has(.ui-shell, .ui-teacher) .site-meta-actions > span:first-child {
+  color: var(--ink);
+}
 body:has(.ui-shell) .site-meta-actions {
   min-height: 0;
   padding: 14px 18px;
@@ -1192,4 +1198,513 @@ body:has(.ui-teacher) .site-meta-actions {
   border-top: 1px solid var(--line);
   background: var(--bg);
   font-size: 12.5px;
+}
+
+/* ============ Startseite (Design 2a, immer dunkel) ============ */
+.ui-landing {
+  min-height: 100dvh;
+  background: #211f1b;
+}
+.ui-landing__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 440px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 22px 22px 26px;
+}
+.ui-landing__brand {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.ui-landing__pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #423d33;
+  border-radius: 999px;
+  color: #cfc7b6;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.ui-landing__pill:hover {
+  border-color: var(--nav-accent);
+  color: var(--nav-accent);
+}
+.ui-landing__stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px 0;
+  text-align: center;
+}
+.ui-landing__disc-link {
+  display: block;
+  margin-bottom: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.ui-landing__disc {
+  display: grid;
+  place-items: center;
+  width: 288px;
+  height: 288px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 42%,
+    #37322a 0%,
+    #272420 62%,
+    #221f1b 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px #453f34,
+    0 18px 50px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.2s;
+}
+.ui-landing__disc-link:hover .ui-landing__disc {
+  box-shadow:
+    inset 0 0 0 1px #6b6153,
+    0 22px 60px rgba(0, 0, 0, 0.5);
+}
+.ui-landing__animal {
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45));
+}
+.ui .ui-landing__title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.ui-room-code {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ui-room-code .ui-code input {
+  height: 70px;
+  font-size: 30px;
+}
+.ui-room-code__camera {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 68px;
+  height: 70px;
+  padding: 0;
+  border: 0;
+  border-radius: 15px;
+  background: var(--green);
+  color: var(--green-ink);
+  cursor: pointer;
+}
+.ui-room-code__camera svg {
+  width: 26px;
+  height: 26px;
+}
+.ui-room-code__camera:hover {
+  filter: brightness(1.1);
+}
+.ui-landing .pilot-status {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+body:has(.ui-landing) {
+  background: #211f1b;
+}
+body:has(.ui-landing) .site-meta-actions {
+  border-top: 1px solid #332f28;
+  background: #211f1b;
+}
+body:has(.ui-landing) .site-meta-actions :is(span, a, button) {
+  color: #b3a995;
+}
+body:has(.ui-landing) .site-meta-actions > span:first-child {
+  color: #f7f4ee;
+}
+@media (max-width: 360px) {
+  .ui-landing__disc {
+    width: 236px;
+    height: 236px;
+  }
+}
+
+/* ============ Laufdiktat-Raum (Design 5a, 5b) ============ */
+.ui-room {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+.ui-room__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 16px 18px 8px;
+}
+.ui-room__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 12px 18px 28px;
+}
+.ui-room__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 460px);
+  padding: 26px 22px;
+  text-align: center;
+}
+.ui-room__card .ui-room-code {
+  width: 100%;
+  text-align: left;
+}
+.ui .ui-room__title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.ui-room__mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--good-bg);
+  color: var(--good);
+}
+.ui-room__mark--bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+/* ============ Live-Spiel (Design 5a/5b) ============
+ * Das Spiel behält Logik und Struktur; diese Schicht legt seine
+ * --game-*-Variablen auf die Lernraum-Tokens (hell und dunkel). */
+.ui.live-game-page {
+  --game-bg: var(--bg);
+  --game-ink: var(--ink);
+  --game-muted: var(--ink2);
+  --game-accent: var(--accent);
+  --game-accent-strong: var(--ink);
+  --game-success: var(--good);
+  --game-success-strong: var(--good);
+  --game-line: var(--line);
+  --game-glass: var(--surface);
+  --game-glass-strong: var(--surface2);
+  background: var(--bg);
+  color: var(--ink);
+}
+.ui.live-game-page .live-game-page__header {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 14px 18px 6px;
+  justify-content: flex-start;
+}
+.ui.live-game-page
+  .live-game-page__header
+  > .live-game-page__icon-button:first-child {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.ui.live-game-page .live-game-page__meta {
+  flex: 1;
+  justify-items: start;
+  min-width: 0;
+  text-align: left;
+}
+.ui.live-game-page .live-game-page__meta .live-game-page__title {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+.ui.live-game-page .live-game-page__meta span {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.ui.live-game-page .live-game-page__meta strong {
+  font-size: inherit;
+  font-weight: 700;
+}
+.ui.live-game-page .live-game-page__stats {
+  color: var(--ink2);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.live-game-page__progress {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  max-width: 1240px;
+  margin: 4px auto 0;
+  padding: 0 18px;
+}
+.live-game-page__progress span {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface2);
+}
+.live-game-page__progress .is-done {
+  background: var(--gold);
+}
+.live-game-page__progress .is-current {
+  background: var(--accent);
+}
+.ui.live-game-page .live-game-warning {
+  width: min(100% - 36px, 720px);
+  margin: 10px auto 0;
+  background: var(--accent-bg);
+  color: var(--ink);
+}
+.ui.live-game-page .live-game-page__stage {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 16px 96px 20px;
+}
+/* Mittlere Karte (Design: helle Fläche zwischen den Halteleisten). */
+.ui.live-game-page .live-game-page__stage::before {
+  position: absolute;
+  inset: 16px 96px 20px;
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  content: "";
+}
+.ui.live-game-page:has(.live-game-page__edge.is-holding)
+  .live-game-page__stage::before {
+  border-color: var(--accent);
+}
+.ui.live-game-page .live-game-page__stage > :not(.live-game-page__edge) {
+  position: relative;
+  z-index: 1;
+}
+.ui.live-game-page .live-game-page__edge {
+  top: 16px;
+  bottom: 20px;
+  z-index: 1;
+  flex-direction: column;
+  gap: 6px;
+  width: 64px;
+  border: 2px dashed var(--accent);
+  border-radius: 22px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+.ui.live-game-page .live-game-page__edge::after {
+  display: none;
+}
+.ui.live-game-page .live-game-page__edge--left {
+  left: 18px;
+}
+.ui.live-game-page .live-game-page__edge--right {
+  right: 18px;
+}
+.ui.live-game-page .live-game-page__edge.is-waiting {
+  opacity: 1;
+}
+.ui.live-game-page .live-game-page__edge.is-holding {
+  border-style: solid;
+  background: var(--accent);
+  color: var(--accent-ink);
+  opacity: 1;
+}
+.ui.live-game-page .live-game-idle-hint {
+  display: grid;
+  gap: 12px;
+  color: var(--ink2);
+  font-size: 16px;
+  font-weight: 600;
+}
+.ui.live-game-page .text-button {
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: none;
+  cursor: pointer;
+}
+.ui.live-game-page .live-game-reveal h1 {
+  color: var(--ink);
+  font-weight: 800;
+}
+.ui.live-game-page .live-game-write .eyebrow {
+  color: var(--ink2);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+.ui.live-game-page .live-game-write__field input {
+  border-color: var(--line2);
+  background: var(--bg);
+  color: var(--ink);
+}
+.ui.live-game-page .live-game-write__field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-bg);
+}
+.ui.live-game-page .live-game-write__submit {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.ui.live-game-page .live-game-feedback.is-correct > span {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.ui.live-game-page .live-game-feedback.is-wrong > span {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.ui.live-game-page .live-game-feedback.is-wrong > p {
+  color: var(--bad);
+}
+.ui.live-game-page .live-battle {
+  width: min(100% - 36px, 720px);
+  margin: 10px auto 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  color: var(--ink);
+}
+.ui.live-game-page .live-battle button {
+  min-height: 44px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--surface2);
+  color: var(--ink);
+  font-weight: 700;
+}
+.ui.live-game-page .live-game-complete {
+  width: min(100% - 36px, 520px);
+  margin: auto;
+  padding: 28px 22px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.ui.live-game-page .live-game-complete .eyebrow,
+.ui.live-game-page .live-game-complete > p {
+  color: var(--ink2);
+}
+@media (max-width: 699px) {
+  .ui.live-game-page .live-game-page__stage {
+    padding: 12px 64px 16px;
+  }
+  .ui.live-game-page .live-game-page__stage::before {
+    inset: 12px 64px 16px;
+  }
+  .ui.live-game-page .live-game-page__edge {
+    top: 12px;
+    bottom: 16px;
+    width: 46px;
+    font-size: 9px;
+  }
+  .ui.live-game-page .live-game-page__edge--left {
+    left: 10px;
+  }
+  .ui.live-game-page .live-game-page__edge--right {
+    right: 10px;
+  }
+  .ui.live-game-page .live-game-page__stats > span {
+    display: none;
+  }
+}
+.ui.live-game-page .live-station {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+.ui.live-game-page .live-station h1 {
+  font-size: clamp(22px, 4vw, 30px);
+  font-weight: 700;
+}
+.ui.live-game-page .live-station__grid {
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+}
+.ui.live-game-page .live-station__grid button {
+  aspect-ratio: auto;
+  min-height: 66px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 800;
+}
+.ui.live-game-page .live-station__grid button:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* ============ Brücke für ältere Inhalte im neuen Rahmen ============
+ * Ältere Seiten nutzen noch .button, .eyebrow usw. Innerhalb von .ui
+ * erhalten sie das Aussehen der Lernraum-Bausteine, bis ihr Umbau folgt. */
+.ui .button {
+  border-radius: var(--radius-m);
+  font-weight: 700;
+}
+.ui .button:hover {
+  transform: none;
+  filter: brightness(1.08);
+}
+.ui .button--primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: none;
+}
+.ui .button--secondary {
+  background: var(--green);
+  color: var(--green-ink);
+}
+.ui .button--quiet {
+  border-color: var(--line2);
+  background: var(--surface);
+  color: var(--ink);
+}
+.ui .eyebrow {
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }

@@ -126,6 +126,20 @@ export function createLearnerProfile(
   return { version: 1, animal: animal?.name ?? null, adjective };
 }
 
+/**
+ * Erstes Profil ohne eigene Wahl: zufälliges Tier (Entscheidung 47), im
+ * Profil jederzeit änderbar.
+ */
+export function createRandomLearnerProfile(
+  random: () => number = Math.random,
+): LearnerProfile {
+  const index = Math.min(
+    ANIMALS.length - 1,
+    Math.max(0, Math.floor(random() * ANIMALS.length)),
+  );
+  return createLearnerProfile(ANIMALS[index]!.name, random);
+}
+
 export function learnerDisplayName(profile: LearnerProfile) {
   if (!profile.animal) return "Lernender";
   const animal = ANIMALS.find((animal) => animal.name === profile.animal)!;

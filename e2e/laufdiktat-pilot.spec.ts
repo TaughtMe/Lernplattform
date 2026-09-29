@@ -6,7 +6,7 @@ test("local preview exposes the clear learner entries", async ({ page }) => {
 
   await expect(
     page.getByRole("heading", { name: "Bereit für dein Laufdiktat?" }),
-  ).toBeVisible();
+  ).toBeAttached();
   await expect(page.getByRole("group", { name: "Raumcode" })).toBeVisible();
   const cameraButton = page.getByRole("button", {
     name: "QR-Code mit Kamera scannen",
@@ -16,10 +16,11 @@ test("local preview exposes the clear learner entries", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Lehrerbereich" }),
   ).toHaveAttribute("href", "/lehrer");
+  // Design 2a: ein Tier (öffnet den Lernraum), ein Code, sonst nichts.
   await expect(
-    page.getByRole("link", { name: /Tier wählen/ }).first(),
-  ).toBeVisible();
-  await expect(page.getByRole("link", { name: /^Frei üben/ })).toBeVisible();
+    page.getByRole("link", { name: /^Weiter als / }),
+  ).toHaveAttribute("href", "/lernen");
+  await expect(page.getByRole("button", { name: "Tier ändern" })).toBeVisible();
   await expect(page.getByRole("link", { name: /^Raum beitreten/ })).toHaveCount(
     0,
   );
@@ -52,14 +53,17 @@ test("the complete learning and teacher workspaces are reachable", async ({
 
 test("room code entry works with the keyboard", async ({ page }) => {
   await page.goto("/");
-  const join = page.getByRole("button", { name: "Beitreten" });
-  await expect(join).toBeEnabled();
-  for (const [index, digit] of ["4", "8", "2", "9"].entries()) {
-    await page
-      .getByRole("textbox", { name: `Ziffer ${index + 1}` })
-      .fill(digit);
-  }
-  await page.getByRole("textbox", { name: "Ziffer 4" }).press("Enter");
+  // Nach der vierten Ziffer öffnet sich der Raum; der Hinweis steht vorher da.
+  await expect(
+    page.getByText("Nach der vierten Ziffer geht es los."),
+  ).toBeVisible();
+  await expect(page.locator(".ui-room-code")).toHaveAttribute(
+    "data-hydrated",
+    "true",
+  );
+  const first = page.getByRole("textbox", { name: "Ziffer 1" });
+  await first.click();
+  await page.keyboard.type("4829");
   await expect(page).toHaveURL(/\/raum\?code=4829$/);
 });
 
