@@ -7,3 +7,5 @@ playwright-report
 test-results
 obsidian-export
 public/og.png
+docs/design/lernraum-ui.dc.html
+docs/design/support.js

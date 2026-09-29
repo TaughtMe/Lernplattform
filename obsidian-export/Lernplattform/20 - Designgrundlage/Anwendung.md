@@ -13,6 +13,8 @@ stand: 2026-09-11
 
 ## Status und Zweck
 
+> **Aktualisiert am 29. September 2026 (Entscheidung 47):** Verbindliche Gestaltungsgrundlage ist jetzt das Design-Canvas „Lernraum UI“ (`docs/design/` im Repository) mit Anthrazit, Bernstein und warmem Papier. Die Farbrollen Korall/Teal und die Dunkelmodus-Werte unten sind historisch und gelten nicht mehr. Struktur-, Barrierefreiheits- und Responsivitätsregeln dieser Seite gelten weiter.
+
 Der abgestimmte Startseitenentwurf dient als **visuelle und konzeptionelle Designgrundlage** für Lernraum. Er legt die gewünschte Richtung für Oberfläche, Navigation, Farbwirkung und zentrale Interaktionen fest. Er ist noch kein pixelgenaues finales Design; Details dürfen bei Umsetzung, Responsivität, Barrierefreiheit und Nutzertests angepasst werden.
 
 ## Referenzentwurf

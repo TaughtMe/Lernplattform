@@ -6,7 +6,7 @@ tags:
   - klassenranking
   - gamification
 status: beschlossen
-stand: 2026-09-11
+stand: 2026-09-29
 ---
 
 # Entscheidungsprotokoll
@@ -494,3 +494,14 @@ Diese Entscheidung ersetzt Entscheidung 19 insoweit, wie sie einen allgemeinen A
 Die Auswahl der Lernbereiche bleibt später als **Alle Lernbereiche** im Dashboard erhalten. Direkte QR- und Raumlinks umgehen die Auswahl weiterhin und öffnen unmittelbar den passenden Beitrittsablauf. Alle Stufen verwenden dieselbe Lernraum-App, stabile Routen und gemeinsame Gestaltungsgrundlage; es entstehen keine getrennten Mini-Apps.
 
 Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendung#Rahmenplan für den sichtbaren Produkteeinstieg|Entwicklungsplan]].
+
+## 47. Design „Lernraum UI“, Freigaberegister und abschaltbare Motivation – 29. September 2026
+
+**Beschlossen:** Das Design-Canvas „Lernraum UI“ (Turns 1–7, abgelegt unter `docs/design/` im Repository) ist die verbindliche Gestaltungsgrundlage. Fachlogik, Datenverträge und Tests des bestehenden Lernraums bleiben maßgeblich; nur die Oberfläche wird ersetzt. Der Umsetzungsplan steht in `docs/umsetzungsplan-lernraum-ui.md`.
+
+- **Farben:** Anthrazit, Bernstein und warmes Papier ersetzen Korall und Teal. Navigationsflächen sind dunkel; Hell- und Dunkelmodus bleiben semantische Tokens. Diese Entscheidung ersetzt die Farbrollen aus [[../20 - Designgrundlage/Anwendung|Designgrundlage]] und Entscheidung 22.
+- **Freigaberegister:** Jeder Lernbereich hat eine Freigabestufe `aus`, `vorschau` oder `frei`. Schüler sehen nur freigegebene Bereiche; es entstehen keine leeren oder deaktivierten Kacheln. Die Lehrkraft kann auf ihrem Gerät eine Vorschau einschalten. Das Register ersetzt das bisherige Alles-oder-nichts-Pilot-Gate und setzt den gestuften Einstieg aus Entscheidung 46 technisch um.
+- **Motivation:** Serie, Abzeichen und Häuser werden wie im Design gebaut, liegen aber hinter einem Schalter und sind im Schulbetrieb zunächst ausgeschaltet. Entscheidung 39 bleibt gültig: Einschalten erst nach stabilem Lernkern und Erprobung.
+- **Tierprofil:** Ohne eigene Wahl wird beim ersten Start ein zufälliges Tier gespeichert und im Profil änderbar angeboten.
+- **Raumcode:** bleibt vierstellig numerisch, weil der Supabase-Vertrag es so festlegt; das alphanumerische Beispiel im Design wird nicht übernommen.
+- **Inhalte:** Kann der bestehende Code eine im Design gezeigte Funktion bereits, wird sie übernommen. Andernfalls wird der Screen mit gekennzeichneten Beispielinhalten gefüllt und das fachliche Wissen unter `docs/inhalte/` für die spätere Anbindung dokumentiert.

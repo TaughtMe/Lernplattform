@@ -18,6 +18,8 @@ Das Supabase-Projekt `Lernraum` ist seit dem 25. August 2026 in `eu-west-1` akti
 
 ## Rahmenplan für den sichtbaren Produkteeinstieg
 
+> **Umsetzung ab 29. September 2026:** Die Stufen werden über ein Freigaberegister je Lernbereich (`aus` / `vorschau` / `frei`) gesteuert, siehe [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidung 47]] und `docs/umsetzungsplan-lernraum-ui.md`.
+
 Lernraum wächst in drei sichtbaren Ausbaustufen. Die Oberfläche zeigt in jeder Stufe nur Funktionen, die bereits zuverlässig nutzbar sind. Noch nicht freigegebene Lernbereiche erscheinen weder als leere noch als deaktivierte Kacheln.
 
 ### Stufe 1: Laufdiktat als einziger Schülereinstieg
