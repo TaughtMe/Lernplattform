@@ -205,21 +205,21 @@ test("keeps the versioned learning contract framework-independent", async () => 
 });
 
 test("keeps mobile and tablet support in the platform shell", async () => {
-  const [header, studentHeader, layout, styles, strategy] = await Promise.all([
+  const [shell, layout, styles, uiStyles, strategy] = await Promise.all([
     readFile(
-      new URL("../app/components/app-header.tsx", import.meta.url),
-      "utf8",
-    ),
-    readFile(
-      new URL("../app/components/student-header.tsx", import.meta.url),
+      new URL("../app/ui/shell/student-shell.tsx", import.meta.url),
       "utf8",
     ),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/ui/lernraum-ui.css", import.meta.url), "utf8"),
     readFile(new URL("../docs/device-support.md", import.meta.url), "utf8"),
   ]);
-  assert.match(header, /student-header/);
-  assert.match(studentHeader, /student-dashboard__mobile-nav/);
+  assert.match(shell, /ui-shell__tabbar/);
+  assert.match(
+    uiStyles,
+    /\.ui-shell__tabbar\s*{[^}]*env\(safe-area-inset-bottom\)/s,
+  );
   assert.match(layout, /viewportFit:\s*"cover"/);
   assert.match(styles, /env\(safe-area-inset-bottom\)/);
   assert.match(styles, /body\s*{[^}]*min-width:\s*0/s);

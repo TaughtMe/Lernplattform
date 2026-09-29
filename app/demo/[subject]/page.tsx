@@ -8,6 +8,7 @@ export default function Page() {
       title="So fühlt sich eine Lerngruppe an"
       description="Die Demo enthält ausschließlich fiktive Inhalte. Echte Klassen und persönliche Lernstände sind nie öffentlich sichtbar."
       status="Demo-Inhalte folgen mit dem Vokabel-Kern"
+      activePath="/demo"
     />
   );
 }

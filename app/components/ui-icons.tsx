@@ -11,45 +11,6 @@ const sharedProps = {
   strokeLinejoin: "round",
 } as const;
 
-export function HomeIcon(props: IconProps) {
-  return (
-    <svg {...sharedProps} {...props}>
-      <path d="m3 11 9-8 9 8" />
-      <path d="M5.5 9.5V21h13V9.5" />
-      <path d="M9.5 21v-6h5v6" />
-    </svg>
-  );
-}
-
-export function HouseIcon(props: IconProps) {
-  return (
-    <svg {...sharedProps} {...props}>
-      <path d="M4 10.5 12 4l8 6.5V20H4z" />
-      <path d="M9.5 20v-5h5v5" />
-    </svg>
-  );
-}
-
-export function QrIcon(props: IconProps) {
-  return (
-    <svg {...sharedProps} {...props}>
-      <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" />
-      <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
-      <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
-      <path d="M14 14h2.5v2.5M20.5 14v6.5H14v-3" />
-    </svg>
-  );
-}
-
-export function BeamerIcon(props: IconProps) {
-  return (
-    <svg {...sharedProps} {...props}>
-      <rect x="3" y="4.5" width="18" height="12" rx="2" />
-      <path d="M8 20h8M12 16.5V20" />
-    </svg>
-  );
-}
-
 export function SunIcon(props: IconProps) {
   return (
     <svg {...sharedProps} {...props}>
@@ -144,15 +105,6 @@ export function CheckIcon(props: IconProps) {
   return (
     <svg {...sharedProps} {...props}>
       <path d="m5 12.5 4.5 4.5L19 7.5" />
-    </svg>
-  );
-}
-
-export function DiceIcon(props: IconProps) {
-  return (
-    <svg {...sharedProps} {...props}>
-      <rect x="4" y="4" width="16" height="16" rx="3" />
-      <path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01" />
     </svg>
   );
 }
