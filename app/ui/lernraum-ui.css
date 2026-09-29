@@ -2231,3 +2231,266 @@ body:has(.ui-landing) .site-meta-actions > span:first-child {
   caret-color: transparent;
   background: transparent;
 }
+
+/* ============ Tastenwelt (Design 6a–6c) ============ */
+.ui-tw {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+}
+.ui-tw__map {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 12px;
+  margin: 0;
+  padding: 26px 16px;
+  list-style: none;
+}
+.ui-tw__station {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.ui-tw__station strong {
+  font-size: 13px;
+}
+.ui-tw__node {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 58px;
+  border: 0;
+  border-radius: 16px;
+  background: hsl(var(--hue) 70% 78%);
+  box-shadow: 0 5px 0 hsl(var(--hue) 45% 55%);
+  color: #211f1b;
+  font: 700 24px/1 var(--font-fun);
+  cursor: pointer;
+}
+.ui-tw__node[aria-pressed="true"] {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+.ui-tw__station.is-current .ui-tw__node {
+  width: 78px;
+  height: 72px;
+  background: var(--gold);
+  box-shadow:
+    0 6px 0 #9c6f14,
+    0 0 0 10px var(--accent-bg);
+  font-size: 30px;
+}
+.ui-tw__station.is-locked .ui-tw__node {
+  border: 2px dashed var(--line2);
+  background: var(--surface2);
+  box-shadow: none;
+  color: var(--ink3);
+}
+.ui-tw__buddy {
+  position: absolute;
+  top: -44px;
+  left: calc(50% - 64px);
+}
+.ui-tw__lessons {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-tw__lessons li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.ui-tw__lessons li.is-locked strong {
+  color: var(--ink2);
+}
+.ui-tw__numpad summary {
+  min-height: 44px;
+  cursor: pointer;
+}
+.ui-tw__side .ui-card--dark .ui-eyebrow {
+  color: var(--nav-ink2);
+}
+.ui-tw__segments {
+  display: flex;
+  gap: 4px;
+}
+.ui-tw__segments span {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--nav-line);
+}
+.ui-tw__segments .is-done {
+  background: var(--gold);
+}
+.ui-tw__segments .is-current {
+  background: color-mix(in oklch, var(--gold) 55%, var(--nav-line));
+}
+.ui-tw__key {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: color-mix(
+    in oklch,
+    var(--bad) calc(var(--heat) * 70%),
+    var(--kbd-key)
+  );
+  box-shadow: 0 2px 0 var(--kbd);
+  color: var(--ink);
+  font: 600 15px/1 var(--font-fun);
+}
+.ui-tw-play {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+}
+.ui-tw-play__stage {
+  display: grid;
+  gap: 16px;
+}
+.ui-tw-play__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 24px;
+}
+.ui-tw-play__coach {
+  display: none;
+}
+.ui-tw-play__bubble {
+  position: relative;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--nav);
+  color: var(--nav-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ui .typing-practice__text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font: 600 26px/1 var(--font-fun);
+  white-space: normal;
+}
+.ui .typing-practice__text span {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 52px;
+  padding: 0 3px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--line2);
+  color: var(--ink);
+}
+.ui .typing-practice__text .is-pending {
+  color: var(--ink);
+}
+.ui .typing-practice__text .is-correct {
+  border-color: transparent;
+  background: var(--good-bg);
+  color: var(--good);
+}
+.ui .typing-practice__text .is-wrong {
+  border-color: transparent;
+  background: var(--bad-bg);
+  box-shadow: 0 2px 0 var(--bad);
+  color: var(--bad);
+}
+.ui .typing-practice__text .is-cursor {
+  border-color: var(--accent);
+  box-shadow: 0 5px 0 var(--accent);
+  outline: none;
+  transform: translateY(-3px);
+}
+.ui .typing-practice__hint {
+  color: var(--ink2);
+}
+.ui-tw-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(100% - 36px, 620px);
+  margin: 24px auto;
+  padding: 26px 22px;
+  text-align: center;
+}
+.ui-tw-result__metrics article {
+  display: grid;
+  gap: 2px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  background: var(--bg);
+}
+.ui-tw-result__metrics strong {
+  font-size: 22px;
+}
+@media (min-width: 700px) {
+  .ui-tw__map {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 56px 22px 30px;
+  }
+  .ui-tw__station:not(:nth-child(5n + 1))::before {
+    position: absolute;
+    top: 28px;
+    right: calc(50% + 34px);
+    width: calc(100% - 56px);
+    height: 5px;
+    border-radius: 999px;
+    background: var(--gold);
+    content: "";
+  }
+  .ui-tw__station.is-locked::before {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--line2) 0 6px,
+      transparent 6px 12px
+    ) !important;
+  }
+}
+@media (min-width: 1000px) {
+  .ui-tw {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    align-items: start;
+    padding: 22px 30px 30px;
+  }
+  .ui-tw-play__stage {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    align-items: start;
+  }
+  .ui-tw-play__coach {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+}
+.ui-tw-play__card .typing-practice {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
