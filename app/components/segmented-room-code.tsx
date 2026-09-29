@@ -8,6 +8,7 @@ type SegmentedRoomCodeProps = {
   value: string;
   invalid?: boolean;
   describedBy: string | undefined;
+  className?: string;
   onChange: (value: string) => void;
 };
 
@@ -17,6 +18,7 @@ export function SegmentedRoomCode({
   value,
   invalid = false,
   describedBy,
+  className = "room-code__digits",
   onChange,
 }: SegmentedRoomCodeProps) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
@@ -67,7 +69,7 @@ export function SegmentedRoomCode({
 
   return (
     <div
-      className="room-code__digits"
+      className={className}
       role="group"
       aria-labelledby={labelId}
       onPaste={handlePaste}
