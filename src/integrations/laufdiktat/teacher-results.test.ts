@@ -40,4 +40,12 @@ describe("teacher result export", () => {
     expect(csv).toContain("Mia;Fertig;100;1;4;1");
     expect(csv).toContain('"Haus;Hof";1');
   });
+
+  it("uses animal labels instead of anonymous server keys", () => {
+    const csv = buildTeacherResultCsv(["Mia"], students, 3, (name) =>
+      name === "Mia" ? "Fuchs 2" : name,
+    );
+    expect(csv).toContain("Fuchs 2;Fertig;100");
+    expect(csv).not.toContain("Mia;");
+  });
 });

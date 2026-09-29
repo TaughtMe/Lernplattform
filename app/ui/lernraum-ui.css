@@ -1708,3 +1708,113 @@ body:has(.ui-landing) .site-meta-actions > span:first-child {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+
+/* ============ Laufdiktat Lehrkraft (Design 5c/5d) ============ */
+.ui-teacher .teacher-live__brand {
+  display: none;
+}
+.ui-teacher .teacher-live__dashboard-header {
+  min-height: 0;
+  padding: 16px clamp(18px, 3vw, 30px);
+  background: var(--surface);
+}
+.ui-teacher .teacher-live__step-row > p {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.ui-teacher .teacher-live__step-row > p span {
+  color: var(--ink2);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ui-teacher .teacher-live__step-row > p b {
+  display: none;
+}
+.ui-teacher .teacher-live__step-row > p strong {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.ui-teacher .teacher-live__steps {
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  overflow-x: auto;
+}
+.ui-teacher .teacher-live__step > i {
+  display: none;
+}
+.ui-teacher .teacher-live__steps button {
+  min-height: 38px;
+  padding: 0 12px 0 6px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink2);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ui-teacher .teacher-live__steps button > span {
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--line2);
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+}
+.ui-teacher .teacher-live__steps button.is-done {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.ui-teacher .teacher-live__steps button.is-done > span {
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.ui-teacher .teacher-live__steps button.is-current {
+  background: var(--ink);
+  color: var(--bg);
+}
+.ui-teacher .teacher-live__steps button.is-current > span {
+  border: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+.ui-teacher .teacher-live__steps button > span svg {
+  width: 14px;
+  height: 14px;
+}
+.ui-teacher .teacher-live__next {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.ui-teacher .teacher-live__next--lobby,
+.ui-teacher .teacher-live__next--live {
+  background: var(--green);
+  color: var(--green-ink);
+}
+.ui-teacher .teacher-live__back {
+  background: var(--surface2);
+  color: var(--ink);
+}
+.ui-teacher .teacher-live__mode-list button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--ink);
+}
+.ui-teacher .teacher-live__mode-list button.is-active strong {
+  color: var(--ink);
+}
+.ui-teacher .teacher-live__mode-list button.is-active small {
+  color: var(--ink2);
+}
+.ui-teacher .teacher-live__mode-list button.is-active > i {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}

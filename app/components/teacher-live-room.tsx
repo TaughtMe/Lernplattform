@@ -974,7 +974,18 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
             .map((student) => student.studentName)
         : allNames;
     const blob = new Blob(
-      [buildTeacherResultCsv(resultNames, students, words.length)],
+      [
+        buildTeacherResultCsv(resultNames, students, words.length, (name) => {
+          const participant = participants.find(
+            (item) => item.studentName === name,
+          );
+          if (participant?.animalToken)
+            return participant.animalNumber > 1
+              ? `${participant.animalToken} ${participant.animalNumber}`
+              : participant.animalToken;
+          return name.startsWith("participant-") ? "Ohne Tier" : name;
+        }),
+      ],
       { type: "text/csv;charset=utf-8" },
     );
     const url = URL.createObjectURL(blob);
@@ -1114,7 +1125,7 @@ export function TeacherLiveRoom({ liveRoomConfig }: Props) {
                     <span aria-hidden="true">
                       {isDone ? <CheckIcon /> : index + 1}
                     </span>
-                    {isCurrent ? <strong>{label}</strong> : null}
+                    <strong>{label}</strong>
                   </button>
                 </span>
               );
@@ -2743,6 +2754,16 @@ function RoomDashboard({
   onRemove: (name: string) => void;
 }) {
   const [showLargeQr, setShowLargeQr] = useState(false);
+  // Serverschlüssel sind anonym; angezeigt werden Tier und Nummer.
+  const labelFor = (key: string | null | undefined) => {
+    const participant = participants.find((item) => item.studentName === key);
+    if (participant?.animalToken)
+      return participant.animalNumber > 1
+        ? `${participant.animalToken} ${participant.animalNumber}`
+        : participant.animalToken;
+    if (!key) return "Unbekannt";
+    return key.startsWith("participant-") ? "Ohne Tier" : key;
+  };
   const joinUrl =
     typeof window === "undefined"
       ? ""
@@ -2829,7 +2850,10 @@ function RoomDashboard({
                   if (!name && !student) return null;
                   const label = stationMode
                     ? `Schüler Nr. ${index + 1}`
-                    : (name ?? student?.studentName ?? "Unbekannt");
+                    : labelFor(name ?? student?.studentName);
+                  const rowKey = stationMode
+                    ? label
+                    : (name ?? student?.studentName ?? String(index));
                   const value = student?.finished
                     ? 100
                     : Math.min(
@@ -2841,7 +2865,7 @@ function RoomDashboard({
                         ),
                       );
                   return (
-                    <article key={label}>
+                    <article key={rowKey}>
                       <div>
                         <span className="teacher-live__progress-identity">
                           {!stationMode ? (
@@ -2914,7 +2938,14 @@ function RoomDashboard({
             onClick={() => setShowLargeQr(true)}
             aria-label="QR-Code groß anzeigen"
           >
-            <QRCodeCanvas value={joinUrl} size={220} level="H" marginSize={2} />
+            <QRCodeCanvas
+              value={joinUrl}
+              size={220}
+              level="H"
+              marginSize={2}
+              role="img"
+              aria-label={`QR-Code zum Raum ${room.code}`}
+            />
             <strong>Mit Schülergerät scannen</strong>
             <small>Zum Vergrößern anklicken</small>
           </button>
@@ -2947,7 +2978,7 @@ function RoomDashboard({
               >
                 <span className="teacher-live__student-avatar-wrap">
                   <AnimalAvatar
-                    studentName={participant.studentName}
+                    studentName={labelFor(participant.studentName)}
                     className="teacher-live__student-avatar"
                   />
                   <span
@@ -2960,12 +2991,12 @@ function RoomDashboard({
                   </span>
                 </span>
                 <span className="teacher-live__student-name">
-                  {participant.studentName}
+                  {labelFor(participant.studentName)}
                 </span>
                 {!connected.includes(participant.studentName) ? (
                   <button
                     type="button"
-                    aria-label={`${participant.studentName} entfernen`}
+                    aria-label={`${labelFor(participant.studentName)} entfernen`}
                     onClick={() => onRemove(participant.studentName)}
                   >
                     <TrashIcon aria-hidden="true" />
@@ -3013,7 +3044,14 @@ function RoomDashboard({
             >
               <CloseIcon aria-hidden="true" />
             </button>
-            <QRCodeCanvas value={joinUrl} size={420} level="H" marginSize={2} />
+            <QRCodeCanvas
+              value={joinUrl}
+              size={420}
+              level="H"
+              marginSize={2}
+              role="img"
+              aria-label={`QR-Code zum Raum ${room.code}`}
+            />
             <strong>Raum {room.code}</strong>
           </div>
         </div>

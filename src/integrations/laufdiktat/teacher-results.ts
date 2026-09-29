@@ -20,6 +20,8 @@ export function buildTeacherResultCsv(
   names: string[],
   students: LiveRoomStudent[],
   wordCount: number,
+  /** Anzeigename je Serverschlüssel, z. B. „Fuchs 2“. */
+  labelFor: (name: string) => string = (name) => name,
 ) {
   const rows = [
     [
@@ -43,7 +45,7 @@ export function buildTeacherResultCsv(
           ),
         );
     rows.push([
-      name,
+      labelFor(name),
       result?.finished ? "Fertig" : "Aktiv",
       String(progress),
       String(result?.errors ?? 0),
