@@ -10,7 +10,7 @@ export type RoomAnimalToken = z.infer<typeof roomAnimalTokenSchema>;
 export const roomJoinPayloadSchema = z
   .object({
     animalToken: roomAnimalTokenSchema,
-    reentryToken: roomReentryTokenSchema,
+    reentryToken: roomReentryTokenSchema.nullable(),
   })
   .strict();
 
@@ -29,9 +29,10 @@ export function createRoomReentryToken(
   );
 }
 
+/** Without a stored token the server issues a fresh one; nothing is invented client-side. */
 export function createRoomJoinPayload(
   animalToken: AnimalToken | null,
-  reentryToken = createRoomReentryToken(),
+  reentryToken: string | null = null,
 ): RoomJoinPayload {
   return roomJoinPayloadSchema.parse({ animalToken, reentryToken });
 }

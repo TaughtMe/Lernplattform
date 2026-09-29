@@ -24,7 +24,7 @@ import {
   type LiveSession,
 } from "../../src/integrations/laufdiktat/live-session";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
-import { learnerDisplayName } from "../../src/domain/learner-profile";
+import { animalTokenFromDisplayName } from "../../src/domain/learner-profile";
 import { AnimalAvatar } from "./animal-avatar";
 import { LiveRunningDictationGame } from "./live-running-dictation-game";
 import { QrCodeScanner } from "./qr-code-scanner";
@@ -412,14 +412,16 @@ export function LiveRoomJoin({
     setError("");
     try {
       const identity = readLiveRoomIdentity(normalizedCode);
-      const normalizedName =
-        identity?.name ?? learnerDisplayName(learnerProfileRepository.ensure());
-      const joined = await joinLiveRoom(
-        liveRoomConfig,
-        normalizedCode,
-        normalizedName,
-        identity?.participantToken,
-      );
+      // Der Serverschlüssel ist anonym; das Tier kommt aus der gespeicherten Identität oder dem Profil.
+      const animalToken = !identity
+        ? learnerProfileRepository.ensure().animal
+        : identity.animalToken !== undefined
+          ? identity.animalToken
+          : animalTokenFromDisplayName(identity.name);
+      const joined = await joinLiveRoom(liveRoomConfig, normalizedCode, {
+        animalToken,
+        participantToken: identity?.participantToken,
+      });
       if (!joined || joined.status === "ended") {
         setView("join");
         setError("Dieser Raum ist nicht verfügbar oder wurde bereits beendet.");
@@ -429,6 +431,7 @@ export function LiveRoomJoin({
         code: normalizedCode,
         name: joined.studentName,
         participantToken: joined.participantToken,
+        animalToken: joined.animalToken,
       });
       setCode(normalizedCode);
       setRoom(joined);
@@ -489,6 +492,12 @@ export function LiveRoomJoin({
   }
 
   if (view === "lobby" || view === "starting") {
+    // studentName ist ein anonymer Serverschlüssel; angezeigt wird nur das Tier.
+    const lobbyName = room?.animalToken
+      ? room.animalNumber > 1
+        ? `${room.animalToken} ${room.animalNumber}`
+        : room.animalToken
+      : null;
     return (
       <div className="live-room-page">
         <section className="live-room-state" aria-live="polite">
@@ -497,14 +506,16 @@ export function LiveRoomJoin({
           </span>
           {room ? (
             <AnimalAvatar
-              studentName={room.studentName}
+              studentName={lobbyName ?? room.studentName}
               className="live-room-lobby-avatar"
             />
           ) : null}
           <p className="eyebrow">Raum {code}</p>
           <h1>
             {view === "lobby"
-              ? `Du bist dabei, ${room?.studentName}.`
+              ? lobbyName
+                ? `Du bist dabei, ${lobbyName}.`
+                : "Du bist dabei."
               : "Das Laufdiktat startet."}
           </h1>
           <p>

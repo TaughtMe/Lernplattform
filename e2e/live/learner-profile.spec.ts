@@ -21,7 +21,7 @@ test("failed automatic join keeps the code and retries only on request", async (
 });
 
 for (const preset of [true, false]) {
-  test(`code link joins once with ${preset ? "saved" : "random"} animal and resumes identity`, async ({
+  test(`code link joins once with ${preset ? "saved" : "no"} animal and resumes identity`, async ({
     page,
   }) => {
     if (preset)
@@ -42,8 +42,10 @@ for (const preset of [true, false]) {
                 room_id: "11111111-1111-4111-8111-111111111111",
                 station_mode: false,
                 status: "lobby",
-                assigned_student_key: `${joins[0]!["p_student_key"]} 2`,
+                assigned_student_key: "participant-opaque",
                 participant_token: "a".repeat(48),
+                animal_token: joins[0]!["p_student_key"],
+                animal_number: 2,
               },
             ]
           : [{ status: "lobby", session_id: null, config: {} }],
@@ -55,21 +57,24 @@ for (const preset of [true, false]) {
     ).toBeVisible();
     expect(joins).toHaveLength(1);
     expect(joins[0]!["p_participant_token"]).toBeNull();
-    if (preset) expect(joins[0]!["p_student_key"]).toBe("Flinker Fuchs");
-    else
+    if (preset) expect(joins[0]!["p_student_key"]).toBe("Fuchs");
+    else {
+      // Ohne gewähltes Tier bleibt das Profil tierlos; es wird kein Tier erfunden.
+      expect(joins[0]!["p_student_key"]).toBeNull();
       expect(
         await page.evaluate(
           () =>
             JSON.parse(localStorage.getItem("lernraum:personal:profile:v1")!)
               .animal,
         ),
-      ).toBeTruthy();
+      ).toBeNull();
+    }
     await page.reload();
     await expect(
       page.getByRole("heading", { name: /Du bist dabei/ }),
     ).toBeVisible();
     expect(joins).toHaveLength(2);
-    expect(joins[1]!["p_student_key"]).toBe(`${joins[0]!["p_student_key"]} 2`);
+    expect(joins[1]!["p_student_key"]).toBe(joins[0]!["p_student_key"]);
     expect(joins[1]!["p_participant_token"]).toBe("a".repeat(48));
     if (preset)
       await expect(page.locator("img.live-room-lobby-avatar")).toHaveAttribute(

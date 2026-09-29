@@ -17,7 +17,6 @@ import {
 } from "../../domain/learner-profile";
 import {
   createRoomJoinPayload,
-  createRoomReentryToken,
   roomIdentityStorageKey,
 } from "../../domain/room-identity";
 
@@ -232,7 +231,11 @@ export async function joinLiveRoom(
   config: LiveRoomConfig,
   code: string,
   studentNameOrIdentity:
-    string | { animalToken: AnimalToken | null; participantToken?: string },
+    | string
+    | {
+        animalToken: AnimalToken | null;
+        participantToken?: string | undefined;
+      },
   participantToken?: string,
 ): Promise<JoinedLiveRoom | null> {
   const animalToken =
@@ -243,10 +246,7 @@ export async function joinLiveRoom(
     typeof studentNameOrIdentity === "string"
       ? participantToken
       : studentNameOrIdentity.participantToken;
-  const payload = createRoomJoinPayload(
-    animalToken,
-    requestedToken ?? createRoomReentryToken(),
-  );
+  const payload = createRoomJoinPayload(animalToken, requestedToken ?? null);
   return withLiveRoomRetry(async () => {
     const { data, error } = await getLiveRoomClient(config).rpc(
       "join_room_secure",
