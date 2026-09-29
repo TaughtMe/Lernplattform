@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { StarIcon } from "./ui-icons";
 import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import {
   buildRunningDictationHint,
@@ -14,12 +12,21 @@ import {
   type RunningDictationKind,
   type RunningDictationMode,
   type VocabularyDirection,
-} from "../../src/domain/running-dictation";
+} from "../../../../src/domain/running-dictation";
 import {
   LEARNING_BUNDLE_VERSION,
   parseLearningBundleV1,
-} from "../../src/domain/learning-bundle";
-import { createLearningBoxRepository } from "../../src/storage/personal-learning-events";
+} from "../../../../src/domain/learning-bundle";
+import { createLearningBoxRepository } from "../../../../src/storage/personal-learning-events";
+import { Icon } from "../../../ui/icons";
+import {
+  Button,
+  ButtonLink,
+  Card,
+  Pill,
+  ProgressBar,
+  Segmented,
+} from "../../../ui/primitives";
 
 type Phase = "setup" | "reveal" | "write" | "feedback" | "complete";
 type TransferChoice = "errors" | "all" | "none";
@@ -182,70 +189,74 @@ export function RunningDictationApp() {
 
   if (phase === "setup") {
     return (
-      <RunningDictationShell>
-        <section className="running-setup" aria-labelledby="running-title">
-          <div className="running-heading">
-            <p className="eyebrow">Deutsch · freies Üben</p>
-            <h1 id="running-title">Laufdiktat</h1>
-            <p>
-              Ansehen, merken, verdecken und aus dem Gedächtnis schreiben. Die
-              bewährte Fachlogik läuft jetzt direkt im Lernraum.
-            </p>
+      <section className="ui-page ui-stack" aria-labelledby="running-title">
+        <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
+          <p className="ui-eyebrow">Deutsch · allein üben</p>
+          <h1 id="running-title" className="ui-h-page">
+            Laufdiktat
+          </h1>
+          <p className="ui-small ui-muted">
+            Ansehen, merken, verdecken und aus dem Gedächtnis schreiben.
+          </p>
+        </div>
+
+        <Card look="pop" className="ui-stack">
+          <div
+            className="ui-grid-auto"
+            style={{ ["--min" as string]: "240px" }}
+          >
+            <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
+              <span className="ui-label">Inhalt</span>
+              <Segmented
+                label="Inhalt"
+                value={kind}
+                disabled={!interactionReady}
+                onChange={selectKind}
+                options={[
+                  { value: "text", label: "Text und Sätze" },
+                  { value: "vocabulary", label: "Vokabeln" },
+                ]}
+              />
+            </div>
+            <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
+              <span className="ui-label">Übungsart</span>
+              <Segmented
+                label="Übungsart"
+                value={mode}
+                disabled={!interactionReady}
+                onChange={setMode}
+                options={[
+                  { value: "running-dictation", label: "Klassisch" },
+                  { value: "practice", label: "Mit Tipps" },
+                ]}
+              />
+            </div>
           </div>
 
-          <div className="running-choice-grid">
-            <fieldset>
-              <legend>Inhalt</legend>
-              <button
-                aria-pressed={kind === "text"}
-                disabled={!interactionReady}
-                onClick={() => selectKind("text")}
-              >
-                Text und Sätze
-              </button>
-              <button
-                aria-pressed={kind === "vocabulary"}
-                disabled={!interactionReady}
-                onClick={() => selectKind("vocabulary")}
-              >
-                Vokabeln
-              </button>
-            </fieldset>
-            <fieldset>
-              <legend>Übungsart</legend>
-              <button
-                aria-pressed={mode === "running-dictation"}
-                disabled={!interactionReady}
-                onClick={() => setMode("running-dictation")}
-              >
-                Klassisches Laufdiktat
-              </button>
-              <button
-                aria-pressed={mode === "practice"}
-                disabled={!interactionReady}
-                onClick={() => setMode("practice")}
-              >
-                Freies Üben mit Tipps
-              </button>
-            </fieldset>
-          </div>
-
-          <label className="running-source">
+          <label
+            className="ui-stack ui-label"
+            style={{ ["--gap" as string]: "6px" }}
+          >
             {kind === "text"
               ? "Text – Sätze und Zeilen werden getrennt"
               : "Vokabeln – eine Zeile pro Paar: Vorderseite;Rückseite"}
             <textarea
+              className="ui-textarea"
               value={source}
               onChange={(event) => setSource(event.target.value)}
               rows={7}
             />
           </label>
 
-          {kind === "vocabulary" && (
-            <div className="running-settings-row">
-              <label>
+          {kind === "vocabulary" ? (
+            <div className="ui-grid2">
+              <label
+                className="ui-stack ui-label"
+                style={{ ["--gap" as string]: "6px" }}
+              >
                 Abfragerichtung
                 <select
+                  className="ui-input"
                   value={direction}
                   onChange={(event) =>
                     setDirection(event.target.value as VocabularyDirection)
@@ -256,9 +267,13 @@ export function RunningDictationApp() {
                   <option value="mixed">Gemischt</option>
                 </select>
               </label>
-              <label>
+              <label
+                className="ui-stack ui-label"
+                style={{ ["--gap" as string]: "6px" }}
+              >
                 Nach der Runde
                 <select
+                  className="ui-input"
                   value={transfer}
                   onChange={(event) =>
                     setTransfer(event.target.value as TransferChoice)
@@ -270,54 +285,58 @@ export function RunningDictationApp() {
                 </select>
               </label>
             </div>
-          )}
+          ) : null}
 
-          <button
-            className="button button--primary running-start"
+          <Button
+            size="lg"
+            variant="green"
             onClick={start}
             disabled={!interactionReady || !source.trim()}
           >
             Laufdiktat starten
-          </button>
-        </section>
-      </RunningDictationShell>
+          </Button>
+        </Card>
+      </section>
     );
   }
 
   if (phase === "complete") {
     const stars = computeRunningDictationStars(totalErrors, items.length);
     return (
-      <RunningDictationShell>
-        <section className="running-complete">
-          <p className="eyebrow">Runde abgeschlossen</p>
-          <h1>Geschafft!</h1>
-          <div className="running-stars" aria-label={`${stars} von 5 Sternen`}>
-            <span>
-              {Array.from({ length: stars }, (_, index) => (
-                <StarIcon key={`filled-${index}`} />
-              ))}
-            </span>
-            <i>
-              {Array.from({ length: 5 - stars }, (_, index) => (
-                <StarIcon key={`empty-${index}`} />
-              ))}
-            </i>
-          </div>
-          <p>
-            {items.length} Aufgaben · {totalErrors} Fehlversuche
+      <section className="ui-page">
+        <div className="ui-game__done">
+          <span className="ui-game__done-ring">
+            <Icon name="trophy" size={56} />
+          </span>
+          <p className="ui-eyebrow">Runde abgeschlossen</p>
+          <p
+            className="ui-game__stars"
+            role="img"
+            aria-label={`${stars} von 5 Sternen`}
+          >
+            {"★".repeat(stars)}
+            <span className="ui-faint">{"★".repeat(5 - stars)}</span>
           </p>
-          {transferNotice && (
-            <p className="learning-box-notice" role="status">
+          <h1 className="ui-h-fun">Geschafft!</h1>
+          <div className="ui-grid2 ui-game__tiles">
+            <span>
+              <strong>{items.length}</strong> Aufgaben
+            </span>
+            <span>
+              <strong>{totalErrors}</strong> Fehlversuche
+            </span>
+          </div>
+          {transferNotice ? (
+            <p className="ui-notice ui-notice--good" role="status">
               {transferNotice}
             </p>
-          )}
-          <div className="running-complete-actions">
-            <button className="button button--quiet" onClick={reset}>
+          ) : null}
+          <div className="ui-grid2">
+            <Button variant="ghost" onClick={reset}>
               Neue Runde
-            </button>
-            {transferNotice && (
-              <Link
-                className="button button--primary"
+            </Button>
+            {transferNotice ? (
+              <ButtonLink
                 href={
                   transferDeckId
                     ? `/lernbox?stapel=${encodeURIComponent(transferDeckId)}`
@@ -325,11 +344,11 @@ export function RunningDictationApp() {
                 }
               >
                 Meine Fehler jetzt üben
-              </Link>
-            )}
+              </ButtonLink>
+            ) : null}
           </div>
-        </section>
-      </RunningDictationShell>
+        </div>
+      </section>
     );
   }
 
@@ -341,106 +360,103 @@ export function RunningDictationApp() {
   );
 
   return (
-    <RunningDictationShell>
-      <section className="running-session" aria-labelledby="running-prompt">
-        <div className="running-progress">
-          <span>
-            {mode === "practice" ? "Freies Üben" : "Laufdiktat"} · Aufgabe{" "}
+    <section className="ui-page ui-stack" aria-labelledby="running-prompt">
+      <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
+        <div className="ui-between">
+          <span className="ui-small ui-muted">
+            {mode === "practice" ? "Mit Tipps" : "Laufdiktat"} · Aufgabe{" "}
             {index + 1}
           </span>
-          <strong>
+          <Pill>
             {index + 1} / {items.length}
-          </strong>
-          <div>
-            <span style={{ width: `${((index + 1) / items.length) * 100}%` }} />
-          </div>
+          </Pill>
         </div>
+        <ProgressBar
+          value={index + 1}
+          max={items.length}
+          label="Fortschritt der Runde"
+        />
+      </div>
 
-        <article className="running-task-card">
-          {phase === "reveal" && (
-            <>
-              <p className="eyebrow">Ansehen und merken</p>
-              <h1 id="running-prompt">{visiblePrompt}</h1>
-              <button
-                className="button button--primary"
-                onClick={() => setPhase("write")}
-              >
-                Verstanden – jetzt schreiben
-              </button>
-            </>
-          )}
-
-          {phase === "write" && (
-            <form onSubmit={submit}>
-              <p className="eyebrow">Aus dem Gedächtnis</p>
-              <h1 id="running-prompt">
-                {current.kind === "vocabulary"
-                  ? visiblePrompt
-                  : "Was hast du dir gemerkt?"}
-              </h1>
-              {mode === "practice" && wrongForCurrent > 0 && (
-                <p className="running-hint" aria-label="Tipp">
-                  {hint}
-                </p>
-              )}
-              <label>
-                Deine Antwort
-                <input
-                  value={answer}
-                  onChange={(event) => setAnswer(event.target.value)}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-              </label>
-              <div className="running-write-actions">
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => setPhase("reveal")}
-                >
-                  Noch einmal ansehen
-                </button>
-                <button className="button button--primary">Prüfen</button>
-              </div>
-            </form>
-          )}
-
-          {phase === "feedback" && (
-            <div
-              className={
-                lastCorrect
-                  ? "running-feedback is-correct"
-                  : "running-feedback is-wrong"
-              }
+      <div className="ui-game__card ui-running__card">
+        {phase === "reveal" ? (
+          <>
+            <Pill>Ansehen und merken</Pill>
+            <h1
+              id="running-prompt"
+              className="ui-game__prompt ui-running__prompt"
             >
-              <p className="eyebrow">Rückmeldung</p>
-              <h1 id="running-prompt">
-                {lastCorrect ? "Richtig" : "Noch nicht richtig"}
-              </h1>
-              {!lastCorrect && mode === "practice" && (
-                <p>Beim nächsten Versuch bekommst du einen gezielten Tipp.</p>
-              )}
-              <button
-                className="button button--primary"
-                onClick={continueRound}
-              >
-                {lastCorrect
-                  ? index + 1 < items.length
-                    ? "Nächste Aufgabe"
-                    : "Runde abschließen"
-                  : "Noch einmal versuchen"}
-              </button>
-            </div>
-          )}
-        </article>
-        <button className="text-button" onClick={reset}>
-          Runde beenden
-        </button>
-      </section>
-    </RunningDictationShell>
-  );
-}
+              {visiblePrompt}
+            </h1>
+            <Button onClick={() => setPhase("write")}>
+              Verstanden – jetzt schreiben
+            </Button>
+          </>
+        ) : null}
 
-function RunningDictationShell({ children }: { children: React.ReactNode }) {
-  return <div className="running-shell">{children}</div>;
+        {phase === "write" ? (
+          <form className="ui-game__write" onSubmit={submit}>
+            <p className="ui-eyebrow">Aus dem Gedächtnis</p>
+            <h1 id="running-prompt" className="ui-h-section">
+              {current.kind === "vocabulary"
+                ? visiblePrompt
+                : "Was hast du dir gemerkt?"}
+            </h1>
+            {mode === "practice" && wrongForCurrent > 0 ? (
+              <p className="ui-game__hint" aria-label="Tipp">
+                {hint}
+              </p>
+            ) : null}
+            <label
+              className="ui-stack ui-label"
+              style={{ ["--gap" as string]: "6px" }}
+            >
+              Deine Antwort
+              <input
+                className="ui-field"
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </label>
+            <div className="ui-row ui-wrap">
+              <Button type="submit">Prüfen</Button>
+              <Button variant="link" onClick={() => setPhase("reveal")}>
+                Noch einmal ansehen
+              </Button>
+            </div>
+          </form>
+        ) : null}
+
+        {phase === "feedback" ? (
+          <div
+            className={`ui-game__verdict ${lastCorrect ? "is-correct" : "is-wrong"}`}
+          >
+            <span aria-hidden="true">
+              <Icon name={lastCorrect ? "check" : "close"} size={44} />
+            </span>
+            <h1 id="running-prompt" className="ui-h-section">
+              {lastCorrect ? "Richtig" : "Noch nicht richtig"}
+            </h1>
+            {!lastCorrect && mode === "practice" ? (
+              <p className="ui-small ui-muted">
+                Beim nächsten Versuch bekommst du einen gezielten Tipp.
+              </p>
+            ) : null}
+            <Button onClick={continueRound}>
+              {lastCorrect
+                ? index + 1 < items.length
+                  ? "Nächste Aufgabe"
+                  : "Runde abschließen"
+                : "Noch einmal versuchen"}
+            </Button>
+          </div>
+        ) : null}
+      </div>
+      <Button variant="link" onClick={reset}>
+        Runde beenden
+      </Button>
+    </section>
+  );
 }

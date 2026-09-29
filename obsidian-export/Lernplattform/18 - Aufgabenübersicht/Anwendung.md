@@ -16,7 +16,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Qualitätsbericht „Lernraum UI“ anlegen
 - [ ] Pull Request gegen `main`, vollständige Cross-Browser-Suite in GitHub
 - [ ] Sichtprüfung auf realen Schulgeräten (iPad, Chromebook, kleines Android-Smartphone)
-- [ ] Ältere Seiteninhalte (Klassenbereich, Kopfrechnen, Lehrer-Unterseiten) vollständig auf `ui-`-Bausteine umstellen und `app/globals.css` auflösen
+- [x] Alle Seiteninhalte auf `ui-`-Bausteine umstellen und `app/globals.css` auflösen (Phase 12)
 
 ## Jetzt: Stabilisierung vor Live-Tests
 

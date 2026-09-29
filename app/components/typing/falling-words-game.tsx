@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { CloudIcon } from "../ui-icons";
+import { Icon } from "../../ui/icons";
 import {
   FALLING_WORDS_DURATION_MS,
   FALLING_WORDS_LANES,
@@ -78,19 +78,19 @@ export function FallingWordsGame({
   );
 
   return (
-    <section className="falling-words" aria-labelledby="falling-words-title">
-      <header className="falling-words__heading">
+    <section className="ui-falling" aria-labelledby="ui-falling-title">
+      <header className="ui-falling__heading">
         <div>
-          <p className="eyebrow">Freiwillige Spielpause</p>
-          <h1 id="falling-words-title">Buchstabenregen</h1>
+          <p className="ui-eyebrow">Freiwillige Spielpause</p>
+          <h1 id="ui-falling-title">Buchstabenregen</h1>
           <p>Tippe die Gruppen, bevor sie an Ramo vorbeiziehen.</p>
         </div>
-        <button className="text-button" type="button" onClick={onExit}>
+        <button className="ui-btn ui-btn--link" type="button" onClick={onExit}>
           Spiel verlassen
         </button>
       </header>
 
-      <div className="falling-words__hud" aria-live="polite">
+      <div className="ui-falling__hud" aria-live="polite">
         <span>
           <strong>{state.score}</strong> Punkte
         </span>
@@ -102,10 +102,10 @@ export function FallingWordsGame({
         </span>
       </div>
 
-      <label className="falling-words__sky">
+      <label className="ui-falling__sky">
         <input
           ref={input}
-          className="typing-practice__capture"
+          className="ui-typing__capture"
           value=""
           onChange={() => undefined}
           onKeyDown={handleKeyDown}
@@ -119,20 +119,20 @@ export function FallingWordsGame({
           disabled={state.finished}
         />
 
-        <div className="falling-words__cloud cloud-one" />
-        <div className="falling-words__cloud cloud-two" />
-        <div className="falling-words__ramo" aria-hidden="true">
+        <div className="ui-falling__cloud is-one" />
+        <div className="ui-falling__cloud is-two" />
+        <div className="ui-falling__ramo" aria-hidden="true">
           <i />
           <span>•‿•</span>
         </div>
 
         {!focused && !state.finished ? (
-          <p className="falling-words__focus">Zum Spielen hier klicken</p>
+          <p className="ui-falling__focus">Zum Spielen hier klicken</p>
         ) : null}
 
         {state.words.map((word) => (
           <span
-            className="falling-words__word"
+            className="ui-falling__word"
             key={word.id}
             style={{
               left: `${(word.lane + 0.5) * (100 / FALLING_WORDS_LANES)}%`,
@@ -145,27 +145,31 @@ export function FallingWordsGame({
         ))}
 
         {state.finished ? (
-          <div className="falling-words__finished">
-            <CloudIcon aria-hidden="true" />
+          <div className="ui-falling__finished">
+            <Icon name="cloud" size={40} />
             <strong>Spielpause geschafft!</strong>
             <p>
               {state.score} Punkte · beste Serie {state.bestStreak}
             </p>
             <button
-              className="button button--primary"
+              className="ui-btn ui-btn--primary"
               type="button"
               onClick={reset}
             >
               Noch einmal
             </button>
-            <button className="text-button" type="button" onClick={onExit}>
+            <button
+              className="ui-btn ui-btn--link"
+              type="button"
+              onClick={onExit}
+            >
               Zurück zu den Lektionen
             </button>
           </div>
         ) : null}
       </label>
 
-      <p className="falling-words__note">
+      <p className="ui-falling__note">
         Vorbeigezogen: {state.missed}. Dafür gibt es keine Minuspunkte.
       </p>
     </section>

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckIcon } from "./ui-icons";
-import { StudentDashboardShell } from "./student-dashboard-shell";
+import { StudentPage } from "../ui/shell/student-page";
 import { Icon } from "../ui/icons";
 import {
   forwardRef,
@@ -250,7 +249,7 @@ export function LearningWordApp() {
       : (collection?.title ?? "Eigene Wörter");
 
   return (
-    <StudentDashboardShell activePath="/frei/german/lernwoerter">
+    <StudentPage activePath="/frei/german/lernwoerter">
       <div className="ui-ws">
         {phase === "setup" && (
           <section className="ui-stack" aria-labelledby="word-title">
@@ -484,7 +483,7 @@ export function LearningWordApp() {
               >
                 <Icon name="back" size={18} />
               </button>
-              <div className="ui-grow running-progress">
+              <div className="ui-grow ui-ws__progress">
                 <p className="ui-h-section">{sessionTitle}</p>
                 <span className="ui-small ui-muted">
                   Merkstufe {stage} · {stageCopy[stage].title} · Wort{" "}
@@ -643,7 +642,7 @@ export function LearningWordApp() {
 
               {phase === "success" && (
                 <div className="ui-feedback ui-feedback--good" role="status">
-                  <CheckIcon aria-hidden="true" width={22} height={22} />
+                  <Icon name="check" size={22} />
                   <strong>Richtig</strong>
                 </div>
               )}
@@ -702,7 +701,7 @@ export function LearningWordApp() {
           </section>
         )}
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }
 
@@ -725,9 +724,9 @@ const UnderlineAnswer = forwardRef<
   const entered = Array.from(value);
 
   return (
-    <label className="learning-word-underline-answer">
+    <label className="ui-ws__slots-answer">
       <span>Deine Lösung</span>
-      <span className="learning-word-letter-slots" aria-hidden="true">
+      <span className="ui-ws__slots" aria-hidden="true">
         {slots.map((letter, index) => {
           const isLetter = /[\p{L}\p{M}]/u.test(letter);
           return (
@@ -744,7 +743,7 @@ const UnderlineAnswer = forwardRef<
       </span>
       <input
         ref={ref}
-        className="learning-word-slot-input"
+        className="ui-ws__slot-input"
         aria-label="Deine Lösung"
         value={value}
         maxLength={slots.length}

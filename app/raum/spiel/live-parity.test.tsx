@@ -7,9 +7,9 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { parseLiveSession } from "../../src/integrations/laufdiktat/live-session";
-import { LiveRunningDictationGame } from "./live-running-dictation-game";
-import { LiveStationGame } from "./live-station-game";
+import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import { LiveRunningDictationGame } from "./live-game";
+import { LiveStationGame } from "./station-game";
 
 const session = parseLiveSession(
   {

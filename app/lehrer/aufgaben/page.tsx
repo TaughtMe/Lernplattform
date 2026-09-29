@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { TeacherCockpitShell } from "../../components/teacher-cockpit-shell";
+import { TeacherShell } from "../../ui/shell/teacher-shell";
 import { TeacherAssignmentManager } from "../../components/teacher-workspace-manager";
 
 export const metadata: Metadata = { title: "Aufgaben" };
 
 export default function Page() {
   return (
-    <TeacherCockpitShell active="assignments">
-      <TeacherAssignmentManager />
-    </TeacherCockpitShell>
+    <TeacherShell active="assignments">
+      <div className="ui-page">
+        <TeacherAssignmentManager />
+      </div>
+    </TeacherShell>
   );
 }

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ThemeToggle } from "./theme-toggle";
+import { ThemeButton } from "./theme-button";
 
 const mediaListeners = new Set<() => void>();
 
@@ -29,10 +29,10 @@ afterEach(() => {
   mediaListeners.clear();
 });
 
-describe("ThemeToggle", () => {
+describe("ThemeButton", () => {
   it("cycles through system, light and dark and stores the preference", async () => {
     const user = userEvent.setup();
-    render(<ThemeToggle />);
+    render(<ThemeButton />);
 
     const toggle = screen.getByRole("button", {
       name: "Darstellung wechseln, aktuell System",
@@ -52,12 +52,12 @@ describe("ThemeToggle", () => {
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
   });
 
-  it("loads a saved dark preference", () => {
+  it("loads a saved dark preference", async () => {
     window.localStorage.setItem("theme-preference", "dark");
-    render(<ThemeToggle />);
+    render(<ThemeButton />);
 
     expect(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: "Darstellung wechseln, aktuell Dunkel",
       }),
     ).toBeVisible();

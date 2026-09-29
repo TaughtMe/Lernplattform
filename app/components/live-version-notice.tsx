@@ -5,6 +5,9 @@ import {
   compareLiveVersions,
   updateBeforeLiveRound,
 } from "../../src/integrations/laufdiktat/version-compatibility";
+import { Icon } from "../ui/icons";
+import { Button } from "../ui/primitives";
+import { RoomFrame } from "../ui/room-frame";
 
 export function LiveVersionNotice({
   required,
@@ -34,31 +37,37 @@ export function LiveVersionNotice({
     return () => window.clearTimeout(timer);
   }, [older, update]);
   return (
-    <div className="live-room-page">
-      <section className="live-room-state" aria-live="polite">
-        <h1>Die App-Versionen passen noch nicht zusammen.</h1>
-        <p>
+    <RoomFrame code={code} animal={null}>
+      <section className="ui-card ui-room__card" aria-live="polite">
+        <span className="ui-room__mark ui-room__mark--bad" aria-hidden="true">
+          <Icon name="refresh" size={28} />
+        </span>
+        <h1 className="ui-room__title">
+          Die App-Versionen passen noch nicht zusammen.
+        </h1>
+        <p className="ui-muted">
           {older
             ? "Dein Gerät benötigt eine Aktualisierung, bevor die Runde starten kann."
             : "Bitte die Lehrkraft bitten, ihre App zu aktualisieren und eine neue Runde zu starten."}
         </p>
-        <p>
+        <p className="ui-small ui-muted">
           Dieses Gerät: {LIVE_APP_VERSION} · Unterrichtsrunde: {required}
         </p>
         {older ? (
-          <button
-            className="button button--primary"
-            onClick={() => void update()}
-          >
+          <Button block onClick={() => void update()}>
             Aktualisierung erneut prüfen
-          </button>
+          </Button>
         ) : null}
-        {status ? <p role="status">{status}</p> : null}
-        <p>
+        {status ? (
+          <p className="ui-notice" role="status">
+            {status}
+          </p>
+        ) : null}
+        <p className="ui-tiny ui-muted">
           Dein Raumcode {code} und deine Zuordnung bleiben auf diesem Gerät
           erhalten.
         </p>
       </section>
-    </div>
+    </RoomFrame>
   );
 }

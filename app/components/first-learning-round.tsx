@@ -20,6 +20,7 @@ import {
   type VocabularySessionMode,
 } from "../../src/domain/vocabulary-session";
 import { createPersonalLearningEventRepository } from "../../src/storage/personal-learning-events";
+import { Button, Card } from "../ui/primitives";
 import { LeitnerTrack } from "./leitner-track";
 
 const CREATED_AT = "2026-08-12T10:00:00.000Z";
@@ -268,19 +269,24 @@ export function FirstLearningRound() {
   }
 
   return (
-    <section className="learning-round" aria-labelledby="learning-round-title">
-      <div className="learning-round__intro">
-        <p className="eyebrow">Klasse 7b · Vokabelübung</p>
-        <h1 id="learning-round-title">School words</h1>
-        <p>
+    <section
+      className="ui-page ui-stack"
+      aria-labelledby="learning-round-title"
+    >
+      <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
+        <p className="ui-eyebrow">Klasse 7b · Vokabelübung</p>
+        <h1 id="learning-round-title" className="ui-h-page">
+          School words
+        </h1>
+        <p className="ui-small ui-muted">
           Lerne einen ganzen Stapel in beide Richtungen. Fällige Karten werden
           automatisch ausgewählt und nach dem Leitner-Prinzip wiederholt.
         </p>
       </div>
 
-      <div className="learning-round__layout">
-        <article className="learning-card learning-card--session">
-          {stage === "overview" && (
+      <div className="ui-cols ui-cols--wide-left">
+        <div className="ui-card ui-card--pop ui-card--pad ui-stack">
+          {stage === "overview" ? (
             <SessionOverview
               dueCount={dueItems.length}
               direction={direction}
@@ -290,184 +296,182 @@ export function FirstLearningRound() {
               onModeChange={(value) => setMode(value)}
               onStart={startRound}
             />
-          )}
+          ) : null}
 
-          {stage === "task" && currentItem && (
-            <div className="vocabulary-task">
+          {stage === "task" && currentItem ? (
+            <div className="ui-stack">
               <SessionProgress
                 current={currentIndex + 1}
                 total={sessionItems.length}
                 direction={direction}
                 mode={mode}
               />
-              <p className="learning-prompt-label">
+              <p className="ui-eyebrow">
                 {mode === "writing" ? "Übersetze" : "Karteikarte"}
               </p>
-              <h2 lang={prompt.question.locale}>{prompt.question.text}</h2>
+              <h2 className="ui-h-fun" lang={prompt.question.locale}>
+                {prompt.question.text}
+              </h2>
 
               {mode === "writing" ? (
-                <form onSubmit={submitAnswer} noValidate>
-                  <label
-                    className="learning-answer-label"
-                    htmlFor="learning-answer"
-                  >
+                <form className="ui-stack" onSubmit={submitAnswer} noValidate>
+                  <label className="ui-labeled" htmlFor="learning-answer">
                     Deine Antwort
                   </label>
                   <input
                     id="learning-answer"
-                    className="learning-answer"
+                    className="ui-field"
                     autoComplete="off"
                     value={answer}
                     onChange={(event) => setAnswer(event.target.value)}
                     aria-describedby={message ? "learning-message" : undefined}
                   />
-                  <button className="button button--primary" disabled={saving}>
+                  <Button type="submit" disabled={saving}>
                     {saving ? "Wird gespeichert …" : "Antwort prüfen"}
-                  </button>
+                  </Button>
                 </form>
               ) : revealed ? (
-                <div className="vocabulary-reveal" aria-live="polite">
-                  <span>Antwort</span>
-                  <strong lang={prompt.expected.locale}>
+                <div className="ui-stack" aria-live="polite">
+                  <span className="ui-label">Antwort</span>
+                  <strong className="ui-h-fun" lang={prompt.expected.locale}>
                     {prompt.expected.text}
                   </strong>
-                  <p>Konntest du die Antwort selbstständig abrufen?</p>
-                  <div className="self-check-actions">
-                    <button
-                      className="button self-check-button self-check-button--wrong"
+                  <p className="ui-small ui-muted">
+                    Konntest du die Antwort selbstständig abrufen?
+                  </p>
+                  <div className="ui-grid2">
+                    <Button
+                      variant="bad"
                       onClick={() => void assessRevealed(false)}
                       disabled={saving}
                     >
                       Noch üben
-                    </button>
-                    <button
-                      className="button self-check-button self-check-button--right"
+                    </Button>
+                    <Button
+                      variant="green"
                       onClick={() => void assessRevealed(true)}
                       disabled={saving}
                     >
                       Gewusst
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
-                <button
-                  className="button button--primary reveal-button"
-                  onClick={() => setRevealed(true)}
-                >
+                <Button onClick={() => setRevealed(true)}>
                   Antwort aufdecken
-                </button>
+                </Button>
               )}
 
-              {message && (
-                <p
-                  className="learning-message learning-message--error"
-                  id="learning-message"
-                >
+              {message ? (
+                <p className="ui-notice ui-notice--bad" id="learning-message">
                   {message}
                 </p>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
 
-          {stage === "feedback" && lastResult && (
-            <div className="session-feedback" aria-live="polite">
+          {stage === "feedback" && lastResult ? (
+            <div className="ui-stack" aria-live="polite">
               <SessionProgress
                 current={currentIndex + 1}
                 total={sessionItems.length}
                 direction={direction}
                 mode={mode}
               />
-              <span className="learning-card__step">Ergebnis gespeichert</span>
-              <h2>
+              <p className="ui-eyebrow">Ergebnis gespeichert</p>
+              <h2 className="ui-h-fun">
                 {lastResult.accepted ? "Richtig gelöst" : "Noch nicht richtig"}
               </h2>
               <p
-                className={lastResult.accepted ? "result-good" : "result-retry"}
+                className={`ui-notice ${lastResult.accepted ? "ui-notice--good" : "ui-notice--bad"}`}
               >
                 {lastResult.accepted
                   ? "Die Karte wandert nach den Lernregeln weiter."
                   : `Die passende Antwort ist „${lastResult.expectedAnswer}“. Die Karte wird gezielt wiederholt.`}
               </p>
-              <button className="button button--secondary" onClick={nextCard}>
+              <Button variant="green" onClick={nextCard}>
                 {currentIndex + 1 < sessionItems.length
                   ? "Nächste Karte"
                   : "Runde abschließen"}
-              </button>
+              </Button>
             </div>
-          )}
+          ) : null}
 
-          {stage === "complete" && (
-            <div className="session-complete" aria-live="polite">
-              <span className="learning-card__step">Runde abgeschlossen</span>
-              <h2>
+          {stage === "complete" ? (
+            <div className="ui-stack" aria-live="polite">
+              <p className="ui-eyebrow">Runde abgeschlossen</p>
+              <h2 className="ui-h-fun">
                 {sessionItems.length > 0 ? "Gut gearbeitet" : "Alles erledigt"}
               </h2>
-              <p>
+              <p className="ui-small">
                 {sessionItems.length > 0
                   ? `${stats.correct} gewusst · ${stats.wrong} noch zu üben`
                   : "Für diese Auswahl ist im Moment keine Karte fällig."}
               </p>
-              <button className="button button--primary" onClick={startRound}>
-                Fällige Karten neu laden
-              </button>
-              <button
-                className="button button--quiet"
-                onClick={() => setStage("overview")}
-              >
-                Auswahl ändern
-              </button>
+              <div className="ui-grid2">
+                <Button onClick={startRound}>Fällige Karten neu laden</Button>
+                <Button variant="ghost" onClick={() => setStage("overview")}>
+                  Auswahl ändern
+                </Button>
+              </div>
             </div>
-          )}
-        </article>
+          ) : null}
+        </div>
 
-        <aside className="progress-card" aria-labelledby="progress-title">
-          <span className="learning-card__step">Lernstand</span>
-          <h2 id="progress-title">Deine Lernbox</h2>
-          <p className="current-card-label">
+        <Card look="soft" className="ui-stack" aria-labelledby="progress-title">
+          <p className="ui-eyebrow">Lernstand</p>
+          <h2 id="progress-title" className="ui-h-section">
+            Deine Lernbox
+          </h2>
+          <p className="ui-small">
             Aktuelle Karte: <strong>{displayItem.prompt.text}</strong>
           </p>
           {loading ? (
-            <p>Gespeicherter Lernstand wird geladen …</p>
+            <p className="ui-small ui-muted">
+              Gespeicherter Lernstand wird geladen …
+            </p>
           ) : (
             <>
-              <p className="leitner-explanation">
+              <p className="ui-small ui-muted">
                 Bedeutung und Schreiben entwickeln sich getrennt. Ein Fehler
                 setzt nur den betroffenen Lernstand zurück.
               </p>
-              <div className="leitner-tracks">
-                <LeitnerTrack
-                  label="Bedeutung"
-                  currentBox={leitnerProgress.knowledge.box}
-                />
-                <LeitnerTrack
-                  label="Schreiben"
-                  currentBox={leitnerProgress.writing.box}
-                />
-              </div>
-              <dl className="progress-values progress-values--compact">
+              <LeitnerTrack
+                label="Bedeutung"
+                currentBox={leitnerProgress.knowledge.box}
+              />
+              <LeitnerTrack
+                label="Schreiben"
+                currentBox={leitnerProgress.writing.box}
+              />
+              <dl className="ui-stats">
                 <div>
                   <dt>Versuche</dt>
-                  <dd>{progress.attempts}</dd>
+                  <dd>
+                    <strong>{progress.attempts}</strong>
+                  </dd>
                 </div>
                 <div>
                   <dt>Nächste Wiederholung</dt>
                   <dd>
-                    {nextDueAt <= new Date().toISOString()
-                      ? "jetzt"
-                      : new Intl.DateTimeFormat("de-DE", {
-                          day: "2-digit",
-                          month: "2-digit",
-                        }).format(new Date(nextDueAt))}
+                    <strong>
+                      {nextDueAt <= new Date().toISOString()
+                        ? "jetzt"
+                        : new Intl.DateTimeFormat("de-DE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                          }).format(new Date(nextDueAt))}
+                    </strong>
                   </dd>
                 </div>
               </dl>
             </>
           )}
-          <p className="progress-note">
+          <p className="ui-tiny ui-muted">
             Der Lernstand bleibt auf diesem Gerät und wird nicht an einen Server
             gesendet.
           </p>
-        </aside>
+        </Card>
       </div>
     </section>
   );
@@ -491,63 +495,68 @@ function SessionOverview({
   onStart: () => void;
 }) {
   return (
-    <div className="session-overview">
-      <span className="learning-card__step">Lernrunde vorbereiten</span>
-      <h2>{stack.title}</h2>
-      <p>Wähle, wie du die heute fälligen Karten bearbeiten möchtest.</p>
+    <div className="ui-stack">
+      <p className="ui-eyebrow">Lernrunde vorbereiten</p>
+      <h2 className="ui-h-section">{stack.title}</h2>
+      <p className="ui-small ui-muted">
+        Wähle, wie du die heute fälligen Karten bearbeiten möchtest.
+      </p>
 
-      <fieldset className="session-choice">
+      <fieldset className="ui-checks">
         <legend>Lernmodus</legend>
-        <button
-          type="button"
-          className={mode === "writing" ? "is-selected" : undefined}
-          aria-pressed={mode === "writing"}
-          onClick={() => onModeChange("writing")}
-          disabled={loading}
-        >
-          <strong>Schreiben</strong>
-          <small>Antwort selbst eintippen</small>
-        </button>
-        <button
-          type="button"
-          className={mode === "self-check" ? "is-selected" : undefined}
-          aria-pressed={mode === "self-check"}
-          onClick={() => onModeChange("self-check")}
-          disabled={loading}
-        >
-          <strong>Karteikarten</strong>
-          <small>Aufdecken und selbst bewerten</small>
-        </button>
-      </fieldset>
-
-      <fieldset className="direction-choice">
-        <legend>Richtung</legend>
-        {(Object.keys(directionLabels) as LearningDirection[]).map((value) => (
+        <div className="ui-grid2">
           <button
             type="button"
-            key={value}
-            className={direction === value ? "is-selected" : undefined}
-            aria-pressed={direction === value}
-            onClick={() => onDirectionChange(value)}
+            className="ui-select-card"
+            aria-pressed={mode === "writing"}
+            onClick={() => onModeChange("writing")}
             disabled={loading}
           >
-            {directionLabels[value]}
+            <strong>Schreiben</strong>
+            <span className="ui-small ui-muted">Antwort selbst eintippen</span>
           </button>
-        ))}
+          <button
+            type="button"
+            className="ui-select-card"
+            aria-pressed={mode === "self-check"}
+            onClick={() => onModeChange("self-check")}
+            disabled={loading}
+          >
+            <strong>Karteikarten</strong>
+            <span className="ui-small ui-muted">
+              Aufdecken und selbst bewerten
+            </span>
+          </button>
+        </div>
       </fieldset>
 
-      <div className="session-start-row">
-        <span>
+      <fieldset className="ui-checks">
+        <legend>Richtung</legend>
+        <div className="ui-seg">
+          {(Object.keys(directionLabels) as LearningDirection[]).map(
+            (value) => (
+              <button
+                type="button"
+                key={value}
+                aria-pressed={direction === value}
+                onClick={() => onDirectionChange(value)}
+                disabled={loading}
+              >
+                {directionLabels[value]}
+              </button>
+            ),
+          )}
+        </div>
+      </fieldset>
+
+      <div className="ui-between ui-wrap">
+        <span className="ui-small">
           <strong>{dueCount}</strong> von {exampleBundle.vocabulary.length}{" "}
           Karten fällig
         </span>
-        <button
-          className="button button--primary"
-          onClick={onStart}
-          disabled={loading}
-        >
+        <Button onClick={onStart} disabled={loading}>
           {loading ? "Lernstand wird geladen …" : "Lernrunde starten"}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -566,17 +575,21 @@ function SessionProgress({
 }) {
   return (
     <div
-      className="session-progress"
+      className="ui-stack"
+      style={{ ["--gap" as string]: "6px" }}
       aria-label={`Karte ${current} von ${total}`}
+      role="group"
     >
-      <span>
-        {mode === "writing" ? "Schreiben" : "Karteikarten"} ·{" "}
-        {directionLabels[direction]}
-      </span>
-      <strong>
-        {current} / {total}
-      </strong>
-      <div aria-hidden="true">
+      <div className="ui-between">
+        <span className="ui-small ui-muted">
+          {mode === "writing" ? "Schreiben" : "Karteikarten"} ·{" "}
+          {directionLabels[direction]}
+        </span>
+        <strong className="ui-small">
+          {current} / {total}
+        </strong>
+      </div>
+      <div className="ui-bar" aria-hidden="true">
         <span style={{ width: `${(current / total) * 100}%` }} />
       </div>
     </div>

@@ -58,7 +58,7 @@ test("server-renders the released pilot entry pages", async () => {
   for (const [path, title] of [
     ["/raum", "Raum beitreten"],
     ["/frei/mathematics", "Kopfrechnen"],
-    ["/lehrer/live", "Laufdiktat Lehrerdashboard"],
+    ["/lehrer/live", "Wortliste vorbereiten"],
     ["/impressum", "Angaben gemäß"],
     ["/datenschutz", "Persönliche Lernstände"],
   ]) {
@@ -224,7 +224,7 @@ test("keeps mobile and tablet support in the platform shell", async () => {
       "utf8",
     ),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/ui/base.css", import.meta.url), "utf8"),
     readFile(new URL("../app/ui/lernraum-ui.css", import.meta.url), "utf8"),
     readFile(new URL("../docs/device-support.md", import.meta.url), "utf8"),
   ]);
@@ -234,7 +234,6 @@ test("keeps mobile and tablet support in the platform shell", async () => {
     /\.ui-shell__tabbar\s*{[^}]*env\(safe-area-inset-bottom\)/s,
   );
   assert.match(layout, /viewportFit:\s*"cover"/);
-  assert.match(styles, /env\(safe-area-inset-bottom\)/);
   assert.match(styles, /body\s*{[^}]*min-width:\s*0/s);
   assert.match(styles, /@media\s*\(max-width:\s*370px\)/);
   assert.match(styles, /pointer:\s*coarse/);

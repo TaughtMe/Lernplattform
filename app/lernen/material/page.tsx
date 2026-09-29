@@ -1,28 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StudentContentTransfer } from "../../components/student-content-transfer";
-import { StudentDashboardShell } from "../../components/student-dashboard-shell";
-import {
-  BookOpenIcon,
-  KeyboardIcon,
-  LiveLessonIcon,
-  SparklesIcon,
-} from "../../components/ui-icons";
+import { StudentPage } from "../../ui/shell/student-page";
+import { Icon, type IconName } from "../../ui/icons";
+import { PageHeader } from "../../ui/primitives";
 
-const WORKSHOP_OPTIONS = [
-  {
-    href: "/lernen/faecher/mathematik",
-    label: "Mathematik",
-    icon: SparklesIcon,
-  },
-  {
-    href: "/frei/german/laufdiktat",
-    label: "Meine Laufdiktate",
-    icon: LiveLessonIcon,
-  },
-  { href: "/frei/typing", label: "Tippen", icon: KeyboardIcon },
-  { href: "/lernbox", label: "Vokabeln", icon: BookOpenIcon },
-] as const;
+const WORKSHOP_OPTIONS: ReadonlyArray<{
+  href: string;
+  label: string;
+  icon: IconName;
+}> = [
+  { href: "/lernen/faecher/mathematik", label: "Mathematik", icon: "math" },
+  { href: "/frei/german/laufdiktat", label: "Meine Laufdiktate", icon: "run" },
+  { href: "/frei/typing", label: "Tippen", icon: "keyboard" },
+  { href: "/lernbox", label: "Vokabeln", icon: "cards" },
+];
 
 export const metadata: Metadata = { title: "Lernwerkstatt" };
 
@@ -32,25 +24,19 @@ export default function Page() {
   const transferConfig = url && publishableKey ? { url, publishableKey } : null;
 
   return (
-    <StudentDashboardShell activePath="/lernen/material">
-      <div className="student-dashboard__page">
-        <header>
-          <h1>Lernwerkstatt</h1>
-          <p>Wähle eine Übung.</p>
-        </header>
-        <div className="student-workshop-grid" aria-label="Lernwerkstatt">
-          {WORKSHOP_OPTIONS.map((option) => {
-            const Icon = option.icon;
-            return (
-              <Link href={option.href} key={option.href}>
-                <Icon aria-hidden="true" />
-                <span>{option.label}</span>
-              </Link>
-            );
-          })}
-        </div>
+    <StudentPage activePath="/lernen/material">
+      <div className="ui-page">
+        <PageHeader title="Lernwerkstatt">Wähle eine Übung.</PageHeader>
+        <nav className="ui-workshop" aria-label="Lernwerkstatt">
+          {WORKSHOP_OPTIONS.map((option) => (
+            <Link href={option.href} key={option.href}>
+              <Icon name={option.icon} size={26} />
+              <span>{option.label}</span>
+            </Link>
+          ))}
+        </nav>
         <StudentContentTransfer transferConfig={transferConfig} />
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }

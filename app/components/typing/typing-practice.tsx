@@ -79,10 +79,10 @@ export function TypingPractice({
   }
 
   return (
-    <label className="typing-practice">
+    <label className="ui-typing">
       <input
         ref={input}
-        className="typing-practice__capture"
+        className="ui-typing__capture"
         value=""
         onChange={() => undefined}
         onKeyDown={handleKeyDown}
@@ -94,7 +94,7 @@ export function TypingPractice({
         autoCorrect="off"
         spellCheck={false}
       />
-      <p className="typing-practice__text" aria-hidden="true">
+      <p className="ui-typing__text" aria-hidden="true">
         {Array.from(text).map((char, index) => {
           const result = session.typed[index];
           const state = result
@@ -111,9 +111,7 @@ export function TypingPractice({
           );
         })}
       </p>
-      {!focused && (
-        <p className="typing-practice__hint">Zum Tippen hier klicken.</p>
-      )}
+      {!focused && <p className="ui-typing__hint">Zum Tippen hier klicken.</p>}
       <VirtualKeyboard
         nextChar={expectedTypingCharacter(session)}
         lastPress={lastPress}

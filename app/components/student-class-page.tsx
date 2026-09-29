@@ -1,10 +1,12 @@
 "use client";
-import Link from "next/link";
+
 import { useEffect, useMemo, useState } from "react";
 import type { ClassEnrollment } from "../../src/domain/class-enrollment";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
-import { RoomCodeForm } from "./room-code-form";
-import { StudentDashboardShell } from "./student-dashboard-shell";
+import { ClassOverview } from "../klasse/class-overview";
+import { ButtonLink, EmptyState } from "../ui/primitives";
+import { StudentPage } from "../ui/shell/student-page";
+
 export function StudentClassPage({ classId }: { classId: string }) {
   const repository = useMemo(() => createStudentClassesRepository(), []);
   const [value, setValue] = useState<ClassEnrollment>();
@@ -15,46 +17,31 @@ export function StudentClassPage({ classId }: { classId: string }) {
       .then((items) => setValue(items.find((x) => x.classId === classId)))
       .finally(() => setLoaded(true));
   }, [classId, repository]);
-  if (!loaded)
+
+  if (!loaded || !value)
     return (
-      <StudentDashboardShell activePath="/lernen/klasse">
-        <section className="class-shell">
-          <p>Klasse wird geladen …</p>
-        </section>
-      </StudentDashboardShell>
-    );
-  if (!value)
-    return (
-      <StudentDashboardShell activePath="/lernen/klasse">
-        <section className="class-shell">
-          <h1>Klasse nicht auf diesem Gerät</h1>
-          <Link href="/lernen/klasse">Einschreibecode übernehmen</Link>
-        </section>
-      </StudentDashboardShell>
-    );
-  return (
-    <StudentDashboardShell activePath="/lernen/klasse">
-      <section className="class-context">
-        <div className="class-context__heading">
-          <p className="eyebrow">Meine Klasse · {value.teacherName}</p>
-          <h1>{value.className}</h1>
-          <p>
-            Schuljahr {value.schoolYear}. Die Klasse ergänzt deinen persönlichen
-            Lernraum; dein Lernstand bleibt lokal.
-          </p>
-          <Link className="button button--primary" href="/lernen">
-            Im persönlichen Lernraum üben
-          </Link>
+      <StudentPage activePath="/lernen/klasse">
+        <div className="ui-page">
+          {!loaded ? (
+            <p className="ui-small ui-muted" role="status">
+              Klasse wird geladen …
+            </p>
+          ) : (
+            <EmptyState title="Klasse nicht auf diesem Gerät">
+              <ButtonLink href="/lernen/klasse" variant="ghost" size="sm">
+                Einschreibecode übernehmen
+              </ButtonLink>
+            </EmptyState>
+          )}
         </div>
-        <section className="running-room-entry">
-          <div>
-            <p className="eyebrow">Gemeinsame Runde</p>
-            <h2>Unterrichtsraum beitreten</h2>
-            <p>Gib den vierstelligen Code deiner Lehrkraft ein.</p>
-          </div>
-          <RoomCodeForm idPrefix="class-running-room" mode="room" />
-        </section>
-      </section>
-    </StudentDashboardShell>
+      </StudentPage>
+    );
+
+  return (
+    <ClassOverview
+      teacherName={value.teacherName}
+      className={value.className}
+      intro={`Schuljahr ${value.schoolYear}. Die Klasse ergänzt deinen persönlichen Lernraum; dein Lernstand bleibt lokal.`}
+    />
   );
 }

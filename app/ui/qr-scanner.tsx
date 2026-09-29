@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CameraIcon, CloseIcon } from "./ui-icons";
+import { Icon } from "./icons";
+import { Sheet } from "./sheet";
 
 type QrCodeScannerProps = {
   continuous?: boolean;
@@ -13,7 +14,7 @@ type QrCodeScannerProps = {
 export function QrCodeScanner({
   continuous = false,
   onResult,
-  buttonClassName = "room-code__camera",
+  buttonClassName = "ui-icon-btn ui-icon-btn--square",
 }: QrCodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const onResultRef = useRef(onResult);
@@ -139,50 +140,32 @@ export function QrCodeScanner({
         onClick={openScanner}
         aria-label="QR-Code mit Kamera scannen"
       >
-        <CameraIcon className="room-code__camera-icon" aria-hidden="true" />
+        <Icon name="camera" size={20} />
       </button>
-      {open ? (
-        <div className="qr-scanner-backdrop" role="presentation">
-          <section
-            className="qr-scanner-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="qr-scanner-title"
-          >
-            <div className="qr-scanner-dialog__heading">
-              <div>
-                <p className="eyebrow">Code beitreten</p>
-                <h2 id="qr-scanner-title">QR-Code scannen</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Scanner schließen"
-              >
-                <CloseIcon aria-hidden="true" />
-              </button>
-            </div>
-            <div className={`qr-scanner-video${feedback ? " is-success" : ""}`}>
-              <video ref={videoRef} muted playsInline />
-            </div>
-            {error ? <p role="alert">{error}</p> : null}
-            {feedback ? (
-              <p
-                className="qr-scanner-feedback"
-                role="status"
-                aria-live="polite"
-              >
-                Code erkannt. Nächsten Code scannen.
-              </p>
-            ) : null}
-            <p className="qr-scanner-hint">
-              {continuous
-                ? "Mehrere Codes nacheinander scannen. Halte den QR-Code vollständig in den Kamerabereich."
-                : "Halte den QR-Code vollständig in den Kamerabereich."}
-            </p>
-          </section>
+      <Sheet open={open} title="QR-Code scannen" onClose={() => setOpen(false)}>
+        <div className={`ui-scanner${feedback ? " is-success" : ""}`}>
+          <video ref={videoRef} muted playsInline />
         </div>
-      ) : null}
+        {error ? (
+          <p className="ui-notice ui-notice--bad" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {feedback ? (
+          <p
+            className="ui-notice ui-notice--good"
+            role="status"
+            aria-live="polite"
+          >
+            Code erkannt. Nächsten Code scannen.
+          </p>
+        ) : null}
+        <p className="ui-small ui-muted">
+          {continuous
+            ? "Mehrere Codes nacheinander scannen. Halte den QR-Code vollständig in den Kamerabereich."
+            : "Halte den QR-Code vollständig in den Kamerabereich."}
+        </p>
+      </Sheet>
     </>
   );
 }

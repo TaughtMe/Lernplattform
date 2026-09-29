@@ -41,34 +41,36 @@ export function AdaptiveProgressPanel() {
 
   if (loading)
     return (
-      <p className="learning-loop-loading">Fortschritt wird lokal geladen …</p>
+      <p className="ui-small ui-muted" role="status">
+        Fortschritt wird lokal geladen …
+      </p>
     );
 
   if (unavailable) {
     return (
-      <p className="learning-loop-loading" role="status">
+      <p className="ui-notice ui-notice--bad" role="status">
         Der lokale Lernstand ist auf diesem Gerät gerade nicht verfügbar.
       </p>
     );
   }
 
   return (
-    <div className="learning-loop-progress">
-      <div className="learning-loop-metrics">
-        <article>
+    <div className="ui-stack">
+      <div className="ui-stats">
+        <div>
           <strong>{summary.activities}</strong>
-          <span>Übungen bearbeitet</span>
-        </article>
-        <article>
+          Übungen bearbeitet
+        </div>
+        <div>
           <strong>{summary.activeDays}</strong>
-          <span>aktive Tage</span>
-        </article>
-        <article>
+          aktive Tage
+        </div>
+        <div>
           <strong>{summary.improvedObjects}</strong>
-          <span>frühere Fehler verbessert</span>
-        </article>
+          frühere Fehler verbessert
+        </div>
       </div>
-      <p>
+      <p className="ui-small ui-muted">
         Jede Übung zählt. {summary.privateActivities} Aktivitäten bleiben rein
         persönlich; {summary.classContributions} sind als Klassenbeitrag
         gekennzeichnet. Vollständige Antworten werden nicht übertragen.

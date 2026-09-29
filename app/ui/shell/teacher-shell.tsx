@@ -139,7 +139,7 @@ export function TeacherShell({
   );
 
   return (
-    <div className="ui ui-teacher teacher-shell teacher-cockpit">
+    <div className="ui ui-teacher">
       <aside className="ui-teacher__side ui-on-dark" aria-label="Lehrerbereich">
         {brand}
         {visibility.lehrer ? <TeacherClassList /> : null}
@@ -170,9 +170,7 @@ export function TeacherShell({
           <strong className="ui-grow">Lehrerbereich</strong>
           <ThemeButton />
         </header>
-        <main className="ui-teacher__main">
-          <div className="teacher-cockpit__page ui-legacy">{children}</div>
-        </main>
+        <main className="ui-teacher__main">{children}</main>
       </div>
 
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- Klick auf den Hintergrund ist nur eine Maus-Abkürzung; Tastatur nutzt Escape und den Schließen-Knopf */}

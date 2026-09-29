@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SegmentedRoomCode } from "../../components/segmented-room-code";
-import { ThemeToggle } from "../../components/theme-toggle";
+import { ThemeButton } from "../../ui/theme-button";
 import { AnimalImage } from "../../ui/animal";
 import { Icon } from "../../ui/icons";
 import {
@@ -39,7 +39,7 @@ export function UiCatalog() {
       <div className="ui-stack" style={{ maxWidth: 960, margin: "0 auto" }}>
         <div className="ui-between">
           <h1 className="ui-h-page">Bausteine „Lernraum UI“</h1>
-          <ThemeToggle />
+          <ThemeButton />
         </div>
 
         <Card>

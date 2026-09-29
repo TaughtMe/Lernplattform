@@ -25,7 +25,7 @@ import {
   type HouseScanLogEntry,
 } from "../../../src/storage/house";
 import { createTeacherClassRepository } from "../../../src/storage/teacher-class-settings";
-import { QrCodeScanner } from "../../components/qr-code-scanner";
+import { QrCodeScanner } from "../../ui/qr-scanner";
 import { useIsDark } from "../../haus/house-app";
 import { Towers } from "../../haus/towers";
 import { Icon } from "../../ui/icons";

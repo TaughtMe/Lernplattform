@@ -76,7 +76,7 @@ for (const preset of [true, false]) {
     expect(joins[1]!["p_student_key"]).toBe(joins[0]!["p_student_key"]);
     expect(joins[1]!["p_participant_token"]).toBe("a".repeat(48));
     if (preset)
-      await expect(page.locator("img.live-room-lobby-avatar")).toHaveAttribute(
+      await expect(page.locator("img.ui-room__animal")).toHaveAttribute(
         "src",
         "/animals/fuchs.svg",
       );

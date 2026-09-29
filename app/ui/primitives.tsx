@@ -219,11 +219,13 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   options: readonly SegmentOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  disabled?: boolean | undefined;
 }) {
   return (
     <div className="ui-seg" role="group" aria-label={label}>
@@ -232,11 +234,117 @@ export function Segmented<T extends string>({
           key={option.value}
           type="button"
           aria-pressed={option.value === value}
+          disabled={disabled}
           onClick={() => onChange(option.value)}
         >
           {option.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Schalterzeile; bleibt semantisch eine Checkbox. */
+export function Toggle({
+  label,
+  hint,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  hint?: string | undefined;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean | undefined;
+}) {
+  return (
+    <label className="ui-toggle-row ui-toggle">
+      <span className="ui-stack" style={{ ["--gap" as string]: "1px" }}>
+        <span className="ui-toggle__label">{label}</span>
+        {hint ? <span className="ui-tiny ui-muted">{hint}</span> : null}
+      </span>
+      <input
+        type="checkbox"
+        className="ui-toggle__input"
+        aria-label={label}
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="ui-switch" aria-hidden="true" />
+    </label>
+  );
+}
+
+/** Zahlenfeld mit Minus/Plus, begrenzt auf [min, max]. */
+export function NumberStepper({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
+  const clamp = (next: number) => Math.min(max, Math.max(min, next));
+  return (
+    <div className="ui-stepper" role="group" aria-label={label}>
+      <button
+        type="button"
+        aria-label={`${label} verringern`}
+        disabled={value <= min}
+        onClick={() => onChange(clamp(value - 1))}
+      >
+        −
+      </button>
+      <input
+        type="number"
+        inputMode="numeric"
+        aria-label={label}
+        min={min}
+        max={max}
+        value={value}
+        onChange={(event) => {
+          const next = Number(event.target.value);
+          if (Number.isFinite(next)) onChange(clamp(next));
+        }}
+      />
+      <button
+        type="button"
+        aria-label={`${label} erhöhen`}
+        disabled={value >= max}
+        onClick={() => onChange(clamp(value + 1))}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+/** Seitenkopf: kleine Überschrift, Titel und optionaler Einleitungstext. */
+export function PageHeader({
+  eyebrow,
+  title,
+  id,
+  children,
+}: {
+  eyebrow?: string | undefined;
+  title: ReactNode;
+  id?: string | undefined;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="ui-stack ui-page-head">
+      {eyebrow ? <p className="ui-eyebrow">{eyebrow}</p> : null}
+      <h1 id={id} className="ui-h-page">
+        {title}
+      </h1>
+      {children ? <p className="ui-small ui-muted">{children}</p> : null}
     </div>
   );
 }

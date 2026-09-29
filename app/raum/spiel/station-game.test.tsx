@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
-import { LiveStationGame } from "./live-station-game";
+import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import { LiveStationGame } from "./station-game";
 
 const session: LiveSession = {
   sessionId: "station-session",

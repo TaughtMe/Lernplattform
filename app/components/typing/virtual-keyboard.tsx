@@ -53,10 +53,12 @@ export function VirtualKeyboard({
   const finger = nextInfo?.key.finger;
 
   return (
-    <div className="keyboard-guide">
-      <div className="keyboard-guide__next" aria-live="polite">
+    <div className="ui-kb-guide">
+      <div className="ui-kb-guide__next" aria-live="polite">
         <span
-          className={finger ? `finger-dot finger-${finger}` : "finger-dot"}
+          className={
+            finger ? `ui-finger-dot ui-finger-${finger}` : "ui-finger-dot"
+          }
         />
         <span>
           {nextChar === " " ? "Leertaste" : nextChar?.toUpperCase() || "Fertig"}
@@ -64,7 +66,7 @@ export function VirtualKeyboard({
         </span>
       </div>
       <div
-        className={`virtual-keyboard${layout === "numpad" ? " is-numpad" : ""}`}
+        className={`ui-kb${layout === "numpad" ? " is-numpad" : ""}`}
         role="img"
         aria-label={
           layout === "numpad"
@@ -73,7 +75,7 @@ export function VirtualKeyboard({
         }
       >
         {rows.map((row, rowIndex) => (
-          <div className="virtual-keyboard__row" key={rowIndex}>
+          <div className="ui-kb__row" key={rowIndex}>
             {row.map((key) => {
               const isShift =
                 key.code === "ShiftLeft" || key.code === "ShiftRight";
@@ -92,8 +94,8 @@ export function VirtualKeyboard({
               return (
                 <span
                   className={[
-                    "virtual-keyboard__key",
-                    key.finger ? `finger-${key.finger}` : "",
+                    "ui-kb__key",
+                    key.finger ? `ui-finger-${key.finger}` : "",
                     key.kind !== "character" ? "is-control" : "",
                     key.base === " " ? "is-space" : "",
                     key.home ? "is-home" : "",
@@ -111,7 +113,7 @@ export function VirtualKeyboard({
                   style={keyStyle}
                 >
                   {key.shift ? (
-                    <span className="virtual-keyboard__symbols">
+                    <span className="ui-kb__symbols">
                       <small>{key.shift}</small>
                       <span>{key.label}</span>
                     </span>

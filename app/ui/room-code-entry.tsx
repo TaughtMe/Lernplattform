@@ -2,7 +2,7 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
-import { QrCodeScanner } from "../components/qr-code-scanner";
+import { QrCodeScanner } from "./qr-scanner";
 import { SegmentedRoomCode } from "../components/segmented-room-code";
 import { useHydrated } from "../components/use-hydrated";
 
@@ -85,6 +85,10 @@ export function RoomCodeEntry({
       <p id={hintId} className="ui-small ui-muted">
         {hint}
       </p>
+      {/* Ermöglicht das Absenden mit der Eingabetaste (mehrere Felder). */}
+      <button type="submit" className="ui-sr-only">
+        Beitreten
+      </button>
       {error ? (
         <p id={errorId} role="alert" className="ui-notice ui-notice--bad">
           {error}

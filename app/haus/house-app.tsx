@@ -23,7 +23,7 @@ import {
 } from "../../src/storage/house";
 import { createPersonalLearningEventRepository } from "../../src/storage/personal-learning-events";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
-import { StudentDashboardShell } from "../components/student-dashboard-shell";
+import { StudentPage } from "../ui/shell/student-page";
 import { Icon } from "../ui/icons";
 import { Button, Card, ProgressBar } from "../ui/primitives";
 import { Sheet } from "../ui/sheet";
@@ -192,7 +192,7 @@ export function HouseApp() {
   };
 
   return (
-    <StudentDashboardShell activePath="/haus">
+    <StudentPage activePath="/haus">
       <div className="ui-page ui-house ui-dots">
         <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
           <h1 className="ui-h-fun">Mein Haus</h1>
@@ -458,6 +458,6 @@ export function HouseApp() {
           </p>
         </Sheet>
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }

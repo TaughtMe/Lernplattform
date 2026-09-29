@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckIcon } from "./ui-icons";
+import { Icon } from "./icons";
 import { APP_VERSION } from "../../src/app-version";
 
 type UpdateState = "idle" | "checking" | "current" | "ready" | "error";
 
 const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 
-export function ServiceWorkerManager() {
+export function VersionButton() {
   const registration = useRef<ServiceWorkerRegistration | null>(null);
   const reloading = useRef(false);
   const reloadOnControllerChange = useRef(false);
@@ -136,7 +136,7 @@ export function ServiceWorkerManager() {
   return (
     <button
       type="button"
-      className={`version-button${state === "ready" ? " is-update-ready" : ""}`}
+      className={`ui-version${state === "ready" ? " is-update-ready" : ""}`}
       onClick={handleClick}
       title={
         state === "ready"
@@ -145,9 +145,9 @@ export function ServiceWorkerManager() {
       }
       aria-live="polite"
     >
-      {state === "ready" ? <span className="version-button__dot" /> : null}
+      {state === "ready" ? <span className="ui-version__dot" /> : null}
       {label}
-      {state === "current" ? <CheckIcon aria-hidden="true" /> : null}
+      {state === "current" ? <Icon name="check" size={14} /> : null}
     </button>
   );
 }

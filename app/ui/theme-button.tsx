@@ -1,12 +1,13 @@
 "use client";
 
-import { useThemePreference } from "../components/theme-toggle";
 import { useHydrated } from "../components/use-hydrated";
+import { Icon } from "./icons";
+import { useThemePreference } from "./theme";
 
-/** Runder Darstellungs-Knopf (Design: Mond/Sonne oben rechts bzw. in der Leiste). */
+/** Runder Darstellungs-Knopf: System → Hell → Dunkel. */
 export function ThemeButton({ className = "" }: { className?: string }) {
   const hydrated = useHydrated();
-  const { label, Icon, cycleTheme } = useThemePreference();
+  const { label, icon, cycleTheme } = useThemePreference();
   return (
     <button
       type="button"
@@ -15,7 +16,7 @@ export function ThemeButton({ className = "" }: { className?: string }) {
       aria-label={`Darstellung wechseln, aktuell ${hydrated ? label : "System"}`}
       title={`Darstellung: ${hydrated ? label : "System"}`}
     >
-      <Icon aria-hidden="true" width={18} height={18} />
+      <Icon name={hydrated ? icon : "beamer"} size={18} />
     </button>
   );
 }

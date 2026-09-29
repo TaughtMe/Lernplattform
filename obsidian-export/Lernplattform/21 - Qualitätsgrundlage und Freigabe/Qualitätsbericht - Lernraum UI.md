@@ -9,7 +9,7 @@ status: offen
 
 ## Stand
 
-- **Meilenstein:** Oberflächenumbau nach [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidung 47]], Phasen 0–11 aus `docs/umsetzungsplan-lernraum-ui.md`
+- **Meilenstein:** Oberflächenumbau nach [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidung 47]], Phasen 0–12 aus `docs/umsetzungsplan-lernraum-ui.md`
 - **App-Version:** 0.5.0
 - **Datenformat-Version:** unverändert (IndexedDB-Schema 5, `LearningEventV1`, `LearningBundleV1`); der Umbau ändert keine Datenverträge
 - **Prüfdatum:** 29. September 2026
@@ -29,12 +29,13 @@ status: offen
 - Dashboard „Heute“, Profil mit Tierraster, Farbschema und persönlicher Datensicherung (Download, Ordner, Wiederherstellung, Erinnerung nach 14 Tagen)
 - Lehrerbereich mit Übersicht und Klassenliste; Häuser (Schüler und Lehrkraft) im Design
 - Aufräumen: alte Kopfzeilenkette und ungenutzte Icons entfernt, 820 ungenutzte Regeln aus `app/globals.css` gelöscht
+- Phase 12: alle übrigen Seiten (Live-Raum der Lehrkraft, Schülerspiel, Klassen, Material, Aufgaben, Kopfrechnen, Rechtliches, Tastenwelt) auf `ui-`-Bausteine neu aufgebaut; `app/globals.css`, `student-module-shell.css` und die Übergangsklasse `.ui-legacy` entfernt. Es gibt nur noch eine Stilschicht (`app/ui/base.css` + `app/ui/lernraum-ui.css`)
+- Live-Raum der Lehrkraft aufgeteilt in Zustands-Hook (`use-teacher-live-room.tsx`) und Ansichten je Schritt (Diktat, Modus, Lobby, Live); Schülerspiel in `app/raum/spiel/`
 
 ### Bewusst nicht enthalten
 
 - Duell (bleibt `aus`, fachlich nicht vorhanden)
 - Motivation (Häuser, Serie) ist gebaut, aber standardmäßig `aus` (Entscheidungen 39 und 47)
-- Vollständiger Umbau älterer Seiteninhalte (Klassenbereich, Kopfrechnen, Lehrer-Unterseiten Klassen/Material/Aufgaben/Einstellungen): sie laufen im neuen Rahmen als `.ui-legacy` mit Design-Typografie
 - Änderungen an Supabase-Verträgen, Datenformaten oder Migrationen
 
 ## Automatisierte Prüfungen
@@ -44,9 +45,9 @@ status: offen
 - [x] Datenmodell- und Lernlogiktests (348 Unit-/Komponententests, 15 Datenbankvertragstests)
 - [x] Rendering- und Komponententests (Render-Tests inkl. Freigabe- und Umleitungsprüfung)
 - [ ] Migrations- und Rückwärtstests – entfällt, keine Formatänderung
-- [x] bekannte Fehlerfälle gegen Rückschritte (Live-e2e 10/10 in Chromium)
+- [x] bekannte Fehlerfälle gegen Rückschritte (Live-e2e 12/12 in Chromium, neu: gemockter Lehrer-Live-Raum mit Lobby und Live-Ansicht)
 
-Die Plattformsuite (`ENABLE_PRE_PILOT_E2E=1`) lief lokal in Chromium mit 28 bestandenen und 2 übersprungenen Fällen. Zwei Fälle schlagen nur in der Entwicklungsumgebung fehl, weil dort Google Fonts per Zertifikat blockiert wird und der Test Konsolenfehler verbietet („the native LernBox creates…“, „teachers can prepare every native live-room…“). In GitHub Actions ist dieser Fehler nicht zu erwarten; bestätigt wird das erst durch den CI-Lauf.
+Die Plattformsuite (`ENABLE_PRE_PILOT_E2E=1`) lief nach Phase 12 lokal in Chromium erneut; axe meldete auf 28 Seitenansichten keine Befunde, horizontales Scrollen trat nicht auf. Zwei Fälle schlagen nur in der Entwicklungsumgebung fehl, weil dort Google Fonts per Zertifikat blockiert wird und der Test Konsolenfehler verbietet („the native LernBox creates…“, „teachers can prepare every native live-room…“). In GitHub Actions ist dieser Fehler nicht zu erwarten; bestätigt wird das erst durch den CI-Lauf.
 
 Nach dem Entfernen der ungenutzten Stilregeln wurden 22 Seiten in hell/dunkel und bei 1280/390 px vor und nach der Änderung pixelgenau verglichen. Abweichungen gab es nur beim zufällig gewählten Tier.
 
@@ -113,7 +114,8 @@ Durch das Entfernen von rund 5 000 Zeilen Stilregeln ist das Stylesheet deutlich
 
 | Priorität | Befund | Auswirkung | Entscheidung / Aufgabe |
 |---|---|---|---|
-| mittel | Ältere Seiteninhalte nutzen noch `app/globals.css` | zwei Stilschichten bleiben bestehen | Folgeschritt: Seiten auf `ui-`-Bausteine umstellen, dann `globals.css` auflösen |
+| erledigt | Ältere Seiteninhalte nutzten `app/globals.css` | zwei Stilschichten | in Phase 12 aufgelöst, nur noch eine Stilschicht |
+| niedrig | Lehrer-Live-Raum zeigt keinen Kleinbildschirm-Hinweis mehr | Lehrkraft kann ihn auch am Smartphone bedienen | bewusst: Ansicht ist responsiv gebaut und bei 390 px geprüft |
 | niedrig | Häuser zeigen auf Schülergeräten einen Beispielstand der anderen Häuser | kann ohne Hinweis missverstanden werden | Hinweis „Beispielstand“ ist sichtbar; echter Stand nur am Beamer (Air-Gap) |
 | niedrig | Tastenwelt-Stationen und Teile des Wortspeichers sind exemplarisch gefüllt | Inhalte noch nicht fachlich vollständig | Wissen in `docs/inhalte/`, Anbindung als eigener Schritt |
 | niedrig | Zwei Plattformtests scheitern nur in der Sandbox (Fonts blockiert) | lokale Prüfung unvollständig | in GitHub-CI bestätigen |

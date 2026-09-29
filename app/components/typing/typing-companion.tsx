@@ -33,48 +33,42 @@ export function TypingCompanion({
 
   return (
     <aside
-      className={`typing-companion mood-${mood}${compact ? " is-compact" : ""}`}
+      className={`ui-buddy is-mood-${mood}${compact ? " is-compact" : ""}`}
       aria-label={`Ramo, dein Lernbegleiter. Entwicklungsstufe: ${level}.`}
     >
       <svg viewBox="0 0 180 160" aria-hidden="true">
-        <ellipse
-          className="typing-companion__shadow"
-          cx="90"
-          cy="146"
-          rx="52"
-          ry="8"
-        />
+        <ellipse className="ui-buddy__shadow" cx="90" cy="146" rx="52" ry="8" />
         <path
-          className="typing-companion__leaf leaf-left"
+          className="ui-buddy__leaf is-left"
           d="M69 39C45 35 36 17 38 7c18 1 34 14 38 31Z"
         />
         <path
-          className="typing-companion__leaf leaf-right"
+          className="ui-buddy__leaf is-right"
           d="M106 38c5-20 20-31 37-30 2 13-8 28-31 34Z"
         />
         <path
-          className="typing-companion__body"
+          className="ui-buddy__body"
           d="M45 91c0-35 19-60 45-60s45 25 45 60c0 36-18 55-45 55S45 127 45 91Z"
         />
         <path
-          className="typing-companion__belly"
+          className="ui-buddy__belly"
           d="M61 101c7-12 17-18 29-18s23 6 30 18c-4 25-14 37-30 37s-26-12-29-37Z"
         />
-        <circle className="typing-companion__eye" cx="75" cy="72" r="5" />
-        <circle className="typing-companion__eye" cx="106" cy="72" r="5" />
+        <circle className="ui-buddy__eye" cx="75" cy="72" r="5" />
+        <circle className="ui-buddy__eye" cx="106" cy="72" r="5" />
         <path
-          className="typing-companion__mouth"
+          className="ui-buddy__mouth"
           d={
             mood === "encourage"
               ? "M82 89c5-3 12-3 17 0"
               : "M82 87c5 6 12 6 17 0"
           }
         />
-        <circle className="typing-companion__cheek" cx="65" cy="86" r="6" />
-        <circle className="typing-companion__cheek" cx="116" cy="86" r="6" />
-        <path className="typing-companion__arm" d="M53 102c-15 1-22 8-26 17" />
-        <path className="typing-companion__arm" d="M127 102c15 1 22 8 26 17" />
-        <g className="typing-companion__key">
+        <circle className="ui-buddy__cheek" cx="65" cy="86" r="6" />
+        <circle className="ui-buddy__cheek" cx="116" cy="86" r="6" />
+        <path className="ui-buddy__arm" d="M53 102c-15 1-22 8-26 17" />
+        <path className="ui-buddy__arm" d="M127 102c15 1 22 8 26 17" />
+        <g className="ui-buddy__key">
           <rect x="73" y="108" width="35" height="27" rx="7" />
           <text x="90.5" y="126" textAnchor="middle">
             F J
@@ -82,12 +76,12 @@ export function TypingCompanion({
         </g>
       </svg>
       {!compact ? (
-        <div className="typing-companion__copy">
+        <div className="ui-buddy__copy">
           <span>Dein Lernbegleiter</span>
           <strong>Ramo · {level}</strong>
           <p>{message}</p>
           <div
-            className="typing-companion__progress"
+            className="ui-buddy__progress"
             role="progressbar"
             aria-label="Entwicklung von Ramo"
             aria-valuemin={0}
@@ -101,7 +95,7 @@ export function TypingCompanion({
           </small>
         </div>
       ) : (
-        <span className="typing-companion__bubble">{message}</span>
+        <span className="ui-buddy__bubble">{message}</span>
       )}
     </aside>
   );

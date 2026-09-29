@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   findPersonalSubject,
   PERSONAL_SUBJECTS,
 } from "../../../../src/domain/personal-learning-space";
 import { DailyPracticePanel } from "../../../components/daily-practice-panel";
-import { StudentDashboardShell } from "../../../components/student-dashboard-shell";
+import { StudentPage } from "../../../ui/shell/student-page";
 import { SubjectIcon } from "../../../components/subject-icon";
+import { ButtonLink, Card, PageHeader } from "../../../ui/primitives";
 
 type SubjectPageProps = {
   params: Promise<{ subject: string }>;
@@ -31,58 +31,70 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
   if (!subject) notFound();
 
   return (
-    <StudentDashboardShell activePath={subject.hubRoute}>
-      <section className="subject-space">
-        <div className="subject-space__heading">
-          <span className="subject-space__icon" aria-hidden="true">
+    <StudentPage activePath={subject.hubRoute}>
+      <div className="ui-page">
+        <div className="ui-row">
+          <span className="ui-icon-tile" aria-hidden="true">
             <SubjectIcon subject={subject.id} />
           </span>
-          <div>
-            <p className="eyebrow">Fach in deinem Lernraum</p>
-            <h1>{subject.label}</h1>
-            <p>{subject.description}</p>
-          </div>
+          <PageHeader eyebrow="Fach in deinem Lernraum" title={subject.label}>
+            {subject.description}
+          </PageHeader>
         </div>
 
-        <div className="subject-space__actions">
-          <article className="subject-action subject-action--due">
-            <span className="entry-card__label">In diesem Fach</span>
-            <h2>Heute üben</h2>
-            <p>
-              Fällige Inhalte und frühere Fehler aus {subject.label} werden hier
-              als eigener Fachblock ausgewählt.
-            </p>
-            <DailyPracticePanel enabledModules={[subject.id]} />
-          </article>
+        <Card
+          look="pop"
+          className="ui-stack"
+          aria-labelledby="subject-due-title"
+        >
+          <p className="ui-eyebrow">In diesem Fach</p>
+          <h2 id="subject-due-title" className="ui-h-section">
+            Heute üben
+          </h2>
+          <p className="ui-small ui-muted">
+            Fällige Inhalte und frühere Fehler aus {subject.label} werden hier
+            als eigener Fachblock ausgewählt.
+          </p>
+          <DailyPracticePanel enabledModules={[subject.id]} />
+        </Card>
 
-          <article className="subject-action subject-action--recommended">
-            <span className="entry-card__label">Selbst auswählen</span>
-            <h2>Freies Üben</h2>
-            <p>
+        <div className="ui-cols">
+          <Card
+            look="pop"
+            className="ui-stack"
+            aria-labelledby="subject-free-title"
+          >
+            <p className="ui-eyebrow">Selbst auswählen</p>
+            <h2 id="subject-free-title" className="ui-h-section">
+              Freies Üben
+            </h2>
+            <p className="ui-small ui-muted">
               Wähle Inhalt und Übungsart selbst. Die Ergebnisse fließen in
               denselben persönlichen Lernstand wie fällige Wiederholungen.
             </p>
-            <Link
-              className="button button--primary"
-              href={subject.practiceRoute}
-            >
+            <ButtonLink href={subject.practiceRoute}>
               {subject.practiceLabel}
-            </Link>
-          </article>
-
-          <article className="subject-action">
-            <span className="entry-card__label">Sammlungen</span>
-            <h2>{subject.contentLabel}</h2>
-            <p>
+            </ButtonLink>
+          </Card>
+          <Card
+            look="soft"
+            className="ui-stack"
+            aria-labelledby="subject-content-title"
+          >
+            <p className="ui-eyebrow">Sammlungen</p>
+            <h2 id="subject-content-title" className="ui-h-section">
+              {subject.contentLabel}
+            </h2>
+            <p className="ui-small ui-muted">
               Eigene und von einer Lehrkraft übernommene Inhalte bleiben nach
               ihrer Herkunft unterscheidbar, nutzen aber denselben Lernstand.
             </p>
-            <Link className="button button--quiet" href={subject.practiceRoute}>
+            <ButtonLink variant="ghost" href={subject.practiceRoute}>
               {subject.contentLabel} öffnen
-            </Link>
-          </article>
+            </ButtonLink>
+          </Card>
         </div>
-      </section>
-    </StudentDashboardShell>
+      </div>
+    </StudentPage>
   );
 }

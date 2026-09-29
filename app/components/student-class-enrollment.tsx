@@ -10,7 +10,8 @@ import {
   type ClassEnrollment,
 } from "../../src/domain/class-enrollment";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
-import { ArrowRightIcon } from "./ui-icons";
+import { Icon } from "../ui/icons";
+import { Button, EmptyState } from "../ui/primitives";
 
 export function StudentClassEnrollment() {
   const repository = useMemo(() => createStudentClassesRepository(), []);
@@ -152,129 +153,116 @@ export function StudentClassEnrollment() {
   );
 
   return (
-    <div className="personal-class-grid">
-      <div className="personal-class-list" aria-live="polite">
+    <div className="ui-cols">
+      <section
+        className="ui-stack"
+        aria-live="polite"
+        aria-label="Meine Klassen"
+      >
         {loading ? (
-          <p>Deine Klassen werden geladen …</p>
+          <p className="ui-small ui-muted">Deine Klassen werden geladen …</p>
         ) : items.length === 0 ? (
-          <p>Noch keine Klasse auf diesem Gerät.</p>
+          <EmptyState title="Noch keine Klasse auf diesem Gerät." />
         ) : (
           items.map((item) => (
             <Link
-              className="personal-class-card"
+              className="ui-card ui-card--pop ui-card--pad ui-stack ui-today-card"
               href={`/klasse/${item.classId}`}
               key={item.membershipId}
             >
-              <span className="entry-card__label">Meine Klasse</span>
-              <h3>{item.className}</h3>
-              <p>
+              <p className="ui-eyebrow">Meine Klasse</p>
+              <h3 className="ui-h-section">{item.className}</h3>
+              <p className="ui-small ui-muted">
                 {item.teacherName} · {item.schoolYear} · {item.displayName}
               </p>
-              <strong>
-                Klasse öffnen <ArrowRightIcon aria-hidden="true" />
+              <strong className="ui-row ui-today-card__cta">
+                Klasse öffnen <Icon name="arrow" size={16} />
               </strong>
             </Link>
           ))
         )}
-      </div>
+      </section>
 
       <section
-        className="join-class join-class--panel student-enrollment"
+        className="ui-card ui-card--pop ui-card--pad ui-stack"
         aria-label="In Klasse einschreiben"
       >
         {removalClassId ? (
-          <div className="student-enrollment__confirmation">
-            <p className="eyebrow">Klasse archiviert</p>
-            <h2>
+          <div className="ui-stack">
+            <p className="ui-eyebrow">Klasse archiviert</p>
+            <h2 className="ui-h-section">
               {removalMembership
                 ? `${removalMembership.className} entfernen?`
                 : "Klasse entfernen?"}
             </h2>
-            <p>
+            <p className="ui-small">
               Die Mitgliedschaft und zugehörige lokale Aufgaben werden von
               diesem Gerät entfernt. Dein persönlicher Lernstand bleibt
               erhalten.
             </p>
-            <div className="student-enrollment__actions">
-              <button
-                className="button button--primary"
-                type="button"
-                onClick={() => void confirmRemoval()}
-              >
+            <div className="ui-grid2">
+              <Button onClick={() => void confirmRemoval()}>
                 Klasse jetzt entfernen
-              </button>
-              <button
-                className="button button--quiet"
-                type="button"
-                onClick={changeCode}
-              >
+              </Button>
+              <Button variant="ghost" onClick={changeCode}>
                 Abbrechen
-              </button>
+              </Button>
             </div>
           </div>
         ) : candidate ? (
-          <div className="student-enrollment__confirmation">
-            <p className="eyebrow">Bitte bestätigen</p>
-            <h2>Bist du {candidate.displayName}?</h2>
-            <p>
+          <div className="ui-stack">
+            <p className="ui-eyebrow">Bitte bestätigen</p>
+            <h2 className="ui-h-section">Bist du {candidate.displayName}?</h2>
+            <p className="ui-small">
               Du trittst <strong>{candidate.className}</strong> bei{" "}
               {candidate.teacherName} im Schuljahr {candidate.schoolYear} bei.
             </p>
-            <p className="student-enrollment__privacy">
+            <p className="ui-tiny ui-muted">
               Die Klasse wird erst nach deiner Bestätigung auf diesem Gerät
               gespeichert.
             </p>
-            <div className="student-enrollment__actions">
-              <button
-                className="button button--primary"
-                type="button"
-                onClick={() => void confirmEnrollment()}
-              >
+            <div className="ui-grid2">
+              <Button onClick={() => void confirmEnrollment()}>
                 Ja, ich bin {candidate.displayName}
-              </button>
-              <button
-                className="button button--quiet"
-                type="button"
-                onClick={changeCode}
-              >
+              </Button>
+              <Button variant="ghost" onClick={changeCode}>
                 Nein, anderen Code verwenden
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
-          <>
-            <div>
-              <span>
-                <strong>Individuellen Klassencode eingeben</strong>
-                <small>
-                  Ein QR-Code trägt den Code automatisch ein. Hier kannst du
-                  auch einen Entfernungscode deiner Lehrkraft einfügen.
-                </small>
-              </span>
+          <form onSubmit={inspectCode} className="ui-stack">
+            <div className="ui-stack" style={{ ["--gap" as string]: "2px" }}>
+              <h2 className="ui-h-section">
+                Individuellen Klassencode eingeben
+              </h2>
+              <p className="ui-small ui-muted">
+                Ein QR-Code trägt den Code automatisch ein. Hier kannst du auch
+                einen Entfernungscode deiner Lehrkraft einfügen.
+              </p>
             </div>
-            <form onSubmit={inspectCode} className="student-enrollment__form">
-              <label htmlFor="class-enrollment-code">Einschreibecode</label>
-              <textarea
-                id="class-enrollment-code"
-                ref={codeInput}
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                required
-                rows={5}
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button className="button button--primary" type="submit">
-                Code prüfen
-              </button>
-            </form>
-          </>
+            <label className="ui-labeled" htmlFor="class-enrollment-code">
+              Einschreibecode
+            </label>
+            <textarea
+              id="class-enrollment-code"
+              className="ui-textarea"
+              ref={codeInput}
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              required
+              rows={4}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <Button type="submit">Code prüfen</Button>
+          </form>
         )}
-        {message && (
-          <p className="learning-message" role="status">
+        {message ? (
+          <p className="ui-notice" role="status">
             {message}
           </p>
-        )}
+        ) : null}
       </section>
     </div>
   );

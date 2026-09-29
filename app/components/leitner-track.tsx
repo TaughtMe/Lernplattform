@@ -2,6 +2,7 @@ import type { LeitnerBox } from "../../src/domain/leitner-schedule";
 
 const BOXES: readonly LeitnerBox[] = [1, 2, 3, 4, 5];
 
+/** Fünf Leitner-Boxen; die aktuelle Box ist hervorgehoben. */
 export function LeitnerTrack({
   label,
   currentBox,
@@ -11,30 +12,27 @@ export function LeitnerTrack({
 }) {
   return (
     <section
-      className="leitner-track"
+      className="ui-stack ui-leitner"
       aria-label={`${label}: Box ${currentBox} von 5`}
     >
-      <div className="leitner-track__heading">
-        <h3>{label}</h3>
-        <strong>Box {currentBox}</strong>
+      <div className="ui-between">
+        <h3 className="ui-label">{label}</h3>
+        <strong className="ui-small">Box {currentBox}</strong>
       </div>
-      <ol className="leitner-boxes" aria-label="Fünf Leitner-Boxen">
+      <ol className="ui-leitner__boxes" aria-label="Fünf Leitner-Boxen">
         {BOXES.map((box) => (
           <li
             className={
               box === currentBox
-                ? "leitner-box is-current"
+                ? "is-current"
                 : box < currentBox
-                  ? "leitner-box is-passed"
-                  : "leitner-box"
+                  ? "is-passed"
+                  : undefined
             }
             key={box}
             aria-current={box === currentBox ? "step" : undefined}
           >
-            <span>Box {box}</span>
-            <strong aria-hidden={box === currentBox ? undefined : true}>
-              {box === currentBox ? "1" : ""}
-            </strong>
+            {box}
           </li>
         ))}
       </ol>

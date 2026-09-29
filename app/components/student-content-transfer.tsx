@@ -11,8 +11,9 @@ import {
   type LiveRoomConfig,
 } from "../../src/integrations/laufdiktat/live-room-client";
 import { createLearningBoxRepository } from "../../src/storage/personal-learning-events";
-import { QrCodeScanner } from "./qr-code-scanner";
-import { ArrowRightIcon } from "./ui-icons";
+import { QrCodeScanner } from "../ui/qr-scanner";
+import { Icon } from "../ui/icons";
+import { Button, ButtonLink } from "../ui/primitives";
 
 function normalizeTransferCode(value: string) {
   return value
@@ -111,50 +112,58 @@ export function StudentContentTransfer({
   }
 
   return (
-    <section
-      className="student-transfer"
+    <form
+      className="ui-card ui-card--pop ui-card--pad ui-stack"
       aria-labelledby="student-transfer-title"
+      onSubmit={retrieveByCode}
     >
       <div>
-        <p className="eyebrow">Von deiner Lehrkraft</p>
-        <h3 id="student-transfer-title">Vokabelpaket übernehmen</h3>
-        <p>
+        <p className="ui-eyebrow">Von deiner Lehrkraft</p>
+        <h2 id="student-transfer-title" className="ui-h-section">
+          Vokabelpaket übernehmen
+        </h2>
+        <p className="ui-small ui-muted">
           Scanne den Paket-QR-Code oder gib den sicheren Transfercode ein. Das
           Paket wird nur auf diesem Gerät entschlüsselt.
         </p>
       </div>
-      <form onSubmit={retrieveByCode}>
-        <label htmlFor="student-transfer-code">Transfercode</label>
-        <div className="student-transfer__controls">
-          <input
-            id="student-transfer-code"
-            value={displayTransferCode(code)}
-            autoComplete="off"
-            inputMode="text"
-            placeholder="XXXX XXXX XXXX XXXX XXXX XXXX"
-            aria-invalid={Boolean(error)}
-            onChange={(event) =>
-              setCode(normalizeTransferCode(event.target.value))
-            }
-          />
-          <QrCodeScanner onResult={(value) => void retrieveByQr(value)} />
-          <button className="button button--secondary" disabled={busy}>
-            {busy ? "Übernimmt …" : "Übernehmen"}
-          </button>
-        </div>
-      </form>
-      {error ? <p role="alert">{error}</p> : null}
+      <label className="ui-labeled" htmlFor="student-transfer-code">
+        Transfercode
+      </label>
+      <div className="ui-row">
+        <input
+          id="student-transfer-code"
+          className="ui-input ui-grow"
+          value={displayTransferCode(code)}
+          autoComplete="off"
+          inputMode="text"
+          placeholder="XXXX XXXX XXXX XXXX XXXX XXXX"
+          aria-invalid={Boolean(error)}
+          onChange={(event) =>
+            setCode(normalizeTransferCode(event.target.value))
+          }
+        />
+        <QrCodeScanner onResult={(value) => void retrieveByQr(value)} />
+      </div>
+      <Button type="submit" variant="green" disabled={busy}>
+        {busy ? "Übernimmt …" : "Übernehmen"}
+      </Button>
+      {error ? (
+        <p className="ui-notice ui-notice--bad" role="alert">
+          {error}
+        </p>
+      ) : null}
       {success ? (
-        <div className="student-transfer__success" role="status">
+        <div className="ui-notice ui-notice--good ui-stack" role="status">
           <strong>{success.title} wurde übernommen.</strong>
-          <span>
+          <span className="ui-small">
             {success.added} neu · {success.reused} bereits vorhanden
           </span>
-          <a href="/lernbox">
-            In der LernBox öffnen <ArrowRightIcon aria-hidden="true" />
-          </a>
+          <ButtonLink href="/lernbox" variant="ghost" size="sm">
+            In der LernBox öffnen <Icon name="arrow" size={16} />
+          </ButtonLink>
         </div>
       ) : null}
-    </section>
+    </form>
   );
 }

@@ -8,13 +8,9 @@ describe("VirtualKeyboard", () => {
       <VirtualKeyboard nextChar="f" activeChars={["f", "j"]} />,
     );
 
-    const activeKeys = container.querySelectorAll(
-      ".virtual-keyboard__key.is-active",
-    );
+    const activeKeys = container.querySelectorAll(".ui-kb__key.is-active");
     expect(activeKeys).toHaveLength(2);
-    expect(
-      container.querySelectorAll(".virtual-keyboard__key.is-next"),
-    ).toHaveLength(1);
+    expect(container.querySelectorAll(".ui-kb__key.is-next")).toHaveLength(1);
     expect(
       container.querySelector('[style*="--key-width: 6.6"]'),
     ).not.toHaveClass("is-active");

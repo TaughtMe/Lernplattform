@@ -18,7 +18,7 @@ Die aktuell abgeglichenen Quellstände und die Übernahmeregeln stehen in [upstr
 
 ## Oberfläche
 
-Die Oberfläche folgt dem Design „Lernraum UI“ (`docs/design/`, Entscheidung 47). Es gibt genau eine Gestaltungsschicht: Tokens und Klassen mit Präfix `ui-` in `app/ui/lernraum-ui.css`, React-Bausteine in `app/ui/` und die beiden Rahmen in `app/ui/shell/`. Bausteine sind reine Darstellung ohne Speicherzugriff. Ältere Seiteninhalte, die noch nicht umgebaut sind, laufen im neuen Rahmen als `.ui-legacy`; `app/globals.css` enthält nur noch deren tatsächlich verwendete Regeln. Kontraste beider Farbmodi prüft `app/ui/contrast.test.ts` gegen WCAG AA.
+Die Oberfläche folgt dem Design „Lernraum UI“ (`docs/design/`, Entscheidung 47). Es gibt genau eine Gestaltungsschicht: `app/ui/base.css` (Reset) und `app/ui/lernraum-ui.css` (Tokens und Klassen mit Präfix `ui-`), React-Bausteine in `app/ui/` und die beiden Rahmen in `app/ui/shell/`. Bausteine sind reine Darstellung ohne Speicherzugriff. Umfangreiche Screens trennen Zustand und Abläufe (Hook) von der Darstellung (Schritt-Komponenten), etwa `app/lehrer/live/` und `app/raum/spiel/`. Es gibt keine älteren Stile oder Brückenklassen mehr. Kontraste beider Farbmodi prüft `app/ui/contrast.test.ts` gegen WCAG AA.
 
 ## Datenbereiche
 

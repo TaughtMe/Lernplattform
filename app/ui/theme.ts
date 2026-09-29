@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
-import { MoonIcon, SunIcon, SystemThemeIcon } from "./ui-icons";
+import type { IconName } from "./icons";
 
 export type ThemePreference = "light" | "dark" | "system";
 
@@ -15,10 +15,10 @@ const LABELS: Record<ThemePreference, string> = {
   system: "System",
 };
 
-const ICONS: Record<ThemePreference, typeof SunIcon> = {
-  light: SunIcon,
-  dark: MoonIcon,
-  system: SystemThemeIcon,
+const ICONS: Record<ThemePreference, IconName> = {
+  light: "sun",
+  dark: "moon",
+  system: "beamer",
 };
 
 function isThemePreference(value: string | null): value is ThemePreference {
@@ -77,27 +77,7 @@ export function useThemePreference() {
   return {
     preference,
     label: LABELS[preference],
-    Icon: ICONS[preference],
+    icon: ICONS[preference],
     cycleTheme,
   };
-}
-
-export function ThemeToggle() {
-  const { preference, cycleTheme } = useThemePreference();
-  const Icon = ICONS[preference];
-
-  return (
-    <button
-      className="theme-toggle"
-      type="button"
-      onClick={cycleTheme}
-      aria-label={`Darstellung wechseln, aktuell ${LABELS[preference]}`}
-      title={`Darstellung: ${LABELS[preference]}`}
-    >
-      <span className="theme-toggle__icon" aria-hidden="true">
-        <Icon />
-      </span>
-      <span className="theme-toggle__label">{LABELS[preference]}</span>
-    </button>
-  );
 }

@@ -6,7 +6,7 @@ import { CLASS_MODULE_LABELS } from "../../src/domain/class-workspace";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
-import { StudentDashboardShell } from "./student-dashboard-shell";
+import { StudentPage } from "../ui/shell/student-page";
 import { learnerDisplayName } from "../../src/domain/learner-profile";
 import { useAreaVisible } from "../release/release-context";
 import { AnimalImage } from "../ui/animal";
@@ -239,7 +239,7 @@ export function StudentHome() {
   const openToday = Math.max(0, DAILY_TARGET - snapshot.completedToday);
 
   return (
-    <StudentDashboardShell activePath="/lernen">
+    <StudentPage activePath="/lernen">
       <div className="ui-dash">
         <section className="ui-dash__main" aria-labelledby="home-title">
           <div className="ui-between ui-dash__head">
@@ -452,6 +452,6 @@ export function StudentHome() {
           </p>
         </aside>
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }

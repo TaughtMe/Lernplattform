@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createLearnerProfile } from "../../src/domain/learner-profile";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
-import { PilotConnectionNotice } from "../components/pilot-connection-notice";
+import { ConnectionNotice } from "../ui/connection-notice";
 import { useHydrated } from "../components/use-hydrated";
 import { AnimalImage } from "../ui/animal";
 import { AnimalPicker } from "../ui/animal-picker";
@@ -115,7 +115,7 @@ export function LandingView({
             Bereit für dein Laufdiktat?
           </h2>
           <RoomCodeEntry />
-          <PilotConnectionNotice configured={roomServiceConfigured} />
+          <ConnectionNotice configured={roomServiceConfigured} />
           <p className="ui-center ui-small ui-muted">
             Ohne Konto · Tier änderst du jederzeit
           </p>

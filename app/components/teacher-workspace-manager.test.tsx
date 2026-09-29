@@ -100,7 +100,7 @@ describe("teacher workspace manager", () => {
     await user.click(screen.getByRole("button", { name: "Code prüfen" }));
     await waitFor(() =>
       expect(
-        document.querySelector(".teacher-qr-reader__result"),
+        screen.getByRole("article", { name: "Eingelesene Aufgabe" }),
       ).toHaveTextContent("Lernwörter üben"),
     );
   });

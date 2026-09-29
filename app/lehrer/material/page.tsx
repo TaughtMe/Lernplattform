@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { TeacherCockpitShell } from "../../components/teacher-cockpit-shell";
+import { TeacherShell } from "../../ui/shell/teacher-shell";
 import { TeacherContentTransfer } from "../../components/teacher-content-transfer";
 
 export const metadata: Metadata = { title: "Material" };
@@ -10,8 +10,10 @@ export default function Page() {
   const liveRoomConfig = url && publishableKey ? { url, publishableKey } : null;
 
   return (
-    <TeacherCockpitShell active="material">
-      <TeacherContentTransfer transferConfig={liveRoomConfig} />
-    </TeacherCockpitShell>
+    <TeacherShell active="material">
+      <div className="ui-page">
+        <TeacherContentTransfer transferConfig={liveRoomConfig} />
+      </div>
+    </TeacherShell>
   );
 }

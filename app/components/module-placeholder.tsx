@@ -1,5 +1,5 @@
 import { ButtonLink, Card } from "../ui/primitives";
-import { StudentDashboardShell } from "./student-dashboard-shell";
+import { StudentPage } from "../ui/shell/student-page";
 
 type Props = {
   eyebrow: string;
@@ -18,7 +18,7 @@ export function ModulePlaceholder({
   activePath,
 }: Props) {
   return (
-    <StudentDashboardShell activePath={activePath}>
+    <StudentPage activePath={activePath}>
       <div className="ui-page">
         <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
           <p className="ui-eyebrow">{eyebrow}</p>
@@ -36,6 +36,6 @@ export function ModulePlaceholder({
           Zurück zur Startseite
         </ButtonLink>
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }

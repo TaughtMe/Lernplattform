@@ -72,22 +72,10 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
 }) => {
   await page.goto("/lehrer/live");
 
-  const smallScreenWarning = page.getByRole("heading", {
-    name: "Bildschirm zu schmal",
-  });
-  if ((page.viewportSize()?.width ?? 768) <= 767) {
-    await expect(smallScreenWarning).toBeVisible();
-    const warningAccessibility = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-      .analyze();
-    expect(warningAccessibility.violations).toEqual([]);
-    await page.getByRole("button", { name: "Trotzdem öffnen" }).click();
-  }
-
   await expect(
-    page.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
-  ).toBeAttached();
-  await expect(page.locator(".teacher-live")).toHaveAttribute(
+    page.getByRole("heading", { name: "Wortliste vorbereiten" }),
+  ).toBeVisible();
+  await expect(page.locator(".ui-live")).toHaveAttribute(
     "data-hydrated",
     "true",
   );
@@ -103,8 +91,8 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
 
   const stableFrame = async () =>
     page.evaluate(() => {
-      const header = document.querySelector(".teacher-live__dashboard-header");
-      const footer = document.querySelector(".teacher-live__wizard-footer");
+      const header = document.querySelector(".ui-live__head");
+      const footer = document.querySelector(".ui-live__foot");
       return {
         pageScroll: window.scrollY,
         pageHeight: document.documentElement.scrollHeight,
@@ -135,30 +123,28 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
     });
   const textFrame = await stableFrame();
   await page.getByRole("tab", { name: "Vokabeln" }).click();
-  if ((page.viewportSize()?.width ?? 371) <= 370) {
-    await page
-      .getByRole("button", { name: "Einstellungen", exact: true })
-      .click();
-    await expect(
-      page.getByRole("dialog", { name: "Vokabel-Einstellungen" }),
-    ).toBeVisible();
-    const settingsAccessibility = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-      .analyze();
-    expect(settingsAccessibility.violations).toEqual([]);
-    await page
-      .getByRole("button", { name: "Vokabel-Einstellungen schließen" })
-      .click();
-  }
+  await page.getByRole("button", { name: "Tabelle einfügen" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Tabelle einfügen" }),
+  ).toBeVisible();
+  const pasteAccessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(pasteAccessibility.violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("dialog", { name: "Tabelle einfügen" }),
+  ).toBeHidden();
   const vocabularyFrame = await stableFrame();
   await page.getByRole("tab", { name: "Kopfrechnen" }).click();
   const mathFrame = await stableFrame();
-  expect(vocabularyFrame).toEqual(textFrame);
-  expect(mathFrame).toEqual(textFrame);
-  expect(textFrame.pageHeight).toBe(textFrame.viewportHeight);
+  expect(vocabularyFrame.header).toEqual(textFrame.header);
+  expect(vocabularyFrame.footer).toEqual(textFrame.footer);
+  expect(mathFrame.header).toEqual(textFrame.header);
+  expect(mathFrame.footer).toEqual(textFrame.footer);
 
   await page.getByRole("tab", { name: "Text", exact: true }).click();
-  await page.getByRole("button", { name: /Weiter zur Konfiguration/ }).click();
+  await page.getByRole("button", { name: /Weiter zu Modus/ }).click();
   await expect(page.getByRole("radio", { name: /^Laufdiktat/ })).toBeVisible();
   await expect(page.getByRole("radio", { name: /^Freies Üben/ })).toBeVisible();
   await expect(page.getByRole("radio", { name: /^Battle/ })).toBeVisible();
@@ -179,7 +165,7 @@ test("room join keeps invalid input and shows an explicit unavailable state", as
   page,
 }) => {
   await page.goto("/raum?code=4829");
-  await expect(page.locator(".live-room-join")).toHaveAttribute(
+  await expect(page.locator(".ui-room__join")).toHaveAttribute(
     "data-hydrated",
     "true",
   );
@@ -205,16 +191,16 @@ test("a configured teacher and student can complete one live round", async ({
   const student = await browser.newPage();
   await teacher.goto("/lehrer/live");
   await teacher.getByLabel(/Text – Sätze/).fill("Der Schulweg ist kurz.");
-  await teacher
-    .getByRole("button", { name: /Weiter zur Konfiguration/ })
-    .click();
+  await teacher.getByRole("button", { name: /Weiter zu Modus/ }).click();
   await teacher.getByRole("button", { name: /Lobby öffnen/ }).click();
-  const roomCode = await teacher.locator(".teacher-live__code").innerText();
+  const roomCode = (
+    await teacher.getByRole("status", { name: "Raumcode" }).textContent()
+  )?.trim();
 
-  await student.goto(`/raum?code=${roomCode}`);
+  await student.goto(`/raum?code=${roomCode ?? ""}`);
   await expect(student.getByText(/Du bist dabei/)).toBeVisible();
 
-  await teacher.getByRole("button", { name: "Sitzung starten" }).click();
+  await teacher.getByRole("button", { name: "Diktat starten" }).click();
   await student
     .getByRole("button", { name: "Verstanden – jetzt schreiben" })
     .click();

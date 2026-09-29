@@ -183,11 +183,14 @@ Jede Phase endet mit:
 
 ## 5. Stand (29. September 2026)
 
-Phasen 0–11 sind auf `claude/lernraum-ui` umgesetzt, jeweils als eigener Commit. Abweichungen vom Plan:
+Phasen 0–12 sind auf `claude/lernraum-ui` umgesetzt. Phase 12 (Neubau statt Umstylen) hat alle verbliebenen Screens auf die Gestaltungsschicht umgestellt und `app/globals.css`, `student-module-shell.css`, das alte Icon-Set sowie die Brückenstile entfernt. Es gibt nur noch `app/ui/base.css` und `app/ui/lernraum-ui.css`.
 
-- Phase 9: Klassen, Material, Aufgaben und Einstellungen laufen im neuen Lehrerrahmen, ihre Inhalte aber noch als `.ui-legacy`. Neu im Design sind die Übersicht und die Klassenliste.
-- Phase 11: `app/globals.css` ist auf die tatsächlich genutzten Regeln reduziert, aber noch nicht aufgelöst. Die zweite Stilschicht verschwindet erst, wenn Klassenbereich, Kopfrechnen und Lehrer-Unterseiten umgebaut sind.
-- Motivation steht im Register auf `aus` (Standard laut Entscheidung 47), nicht auf `vorschau`.
+Abweichungen und Entscheidungen im Umbau:
+
+- Lehrkraft-Laufdiktat: Zustand in `useTeacherLiveRoom`, Darstellung in Schritt-Komponenten (Diktat, Modus, Lobby, Live) nach 5c/5d und 1d. Die Warnung „Bildschirm zu schmal“ entfällt, weil das Design eine mobile Lehreransicht vorsieht. Abschnitte werden direkt neben dem Text verwaltet statt in einem Dialog; Vokabel-Einstellungen stehen als Karte neben der Liste, nur „Tabelle einfügen“ öffnet einen Dialog.
+- Schülerspiel: Darstellung nach allen Zuständen aus 5a/5b (Halten, Lesen, Schreiben, Battle, Fertig); die Spiellogik ist unverändert.
+- Raumcode-Eingabe: Die frühere Klassen-/Raumcode-Kombination der Demo-Klasse entfällt; Klassencodes laufen über „Meine Klasse“. Die Eingabe hat jetzt einen versteckten Absende-Knopf, damit Enter auch bei unvollständigem Code eine Rückmeldung gibt.
+- Motivation steht im Register auf `aus` (Standard laut Entscheidung 47).
 - Der Pull Request gegen `main` wird erst auf ausdrücklichen Wunsch erstellt.
 
 Der Qualitätsbericht steht im Vault unter `21 - Qualitätsgrundlage und Freigabe/Qualitätsbericht - Lernraum UI.md`.

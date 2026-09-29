@@ -20,7 +20,8 @@ import {
   createStudentAssignmentRepository,
   createStudentClassesRepository,
 } from "../../src/storage/student-classes";
-import { QrCodeScanner } from "./qr-code-scanner";
+import { Button, ButtonLink, EmptyState, Pill } from "../ui/primitives";
+import { QrCodeScanner } from "../ui/qr-scanner";
 
 const SUBJECT_ROUTES: Record<StudentAssignment["subject"], string> = {
   german: "/lernen/faecher/deutsch",
@@ -130,20 +131,71 @@ export function StudentAssignments() {
   }
 
   return (
-    <div className="student-assignments">
-      <section
-        className="student-assignment-import"
-        aria-labelledby="assignment-import-title"
-      >
-        <div>
-          <p className="eyebrow">Von deiner Lehrkraft</p>
-          <h3 id="assignment-import-title">Aufgabe übernehmen</h3>
-          <p>Scanne den Aufgaben-QR oder füge den Code manuell ein.</p>
-        </div>
-        <form onSubmit={submitCode}>
-          <label>
+    <div className="ui-stack">
+      <div className="ui-cols ui-cols--wide-left">
+        <section className="ui-stack" aria-label="Meine Aufgaben">
+          {assignments.length === 0 ? (
+            <EmptyState title="Noch keine Aufgabe übernommen." />
+          ) : (
+            <ul className="ui-list">
+              {assignments.map((assignment) => (
+                <li key={assignment.id} className="ui-item">
+                  <div
+                    className="ui-stack ui-grow"
+                    style={{ ["--gap" as string]: "4px" }}
+                  >
+                    <Pill tone="accent">
+                      {TEACHER_SUBJECT_LABELS[assignment.subject]}
+                    </Pill>
+                    <h3 className="ui-h-section">{assignment.title}</h3>
+                    <p className="ui-small">{assignment.instructions}</p>
+                    <p className="ui-tiny ui-muted">
+                      {assignment.dueDate
+                        ? `Fällig am ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`
+                        : "Ohne Frist"}
+                    </p>
+                  </div>
+                  <div className="ui-item__actions">
+                    <ButtonLink
+                      variant="ghost"
+                      size="sm"
+                      href={SUBJECT_ROUTES[assignment.subject]}
+                    >
+                      Fach öffnen
+                    </ButtonLink>
+                    <Button
+                      size="sm"
+                      onClick={() => void completeAssignment(assignment)}
+                    >
+                      {assignment.status === "completed"
+                        ? "Leistungs-QR neu erzeugen"
+                        : "Als erledigt markieren"}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <form
+          className="ui-card ui-card--soft ui-card--pad ui-stack"
+          aria-labelledby="assignment-import-title"
+          onSubmit={submitCode}
+        >
+          <div>
+            <p className="ui-eyebrow">Von deiner Lehrkraft</p>
+            <h2 id="assignment-import-title" className="ui-h-section">
+              Aufgabe übernehmen
+            </h2>
+            <p className="ui-small ui-muted">
+              Scanne den Aufgaben-QR oder füge den Code manuell ein.
+            </p>
+          </div>
+          <label className="ui-labeled">
             Aufgabencode
             <textarea
+              className="ui-textarea"
               required
               rows={4}
               value={code}
@@ -151,71 +203,36 @@ export function StudentAssignments() {
               placeholder="Code hier einfügen"
             />
           </label>
-          <div>
+          <div className="ui-row">
             <QrCodeScanner onResult={(value) => void importCode(value)} />
-            <button className="button button--primary" type="submit">
-              Aufgabe übernehmen
-            </button>
+            <Button type="submit">Aufgabe übernehmen</Button>
           </div>
         </form>
-      </section>
-
-      <section className="student-assignment-list" aria-label="Meine Aufgaben">
-        {assignments.length === 0 ? (
-          <p>Noch keine Aufgabe übernommen.</p>
-        ) : (
-          assignments.map((assignment) => (
-            <article key={assignment.id}>
-              <span>{TEACHER_SUBJECT_LABELS[assignment.subject]}</span>
-              <h3>{assignment.title}</h3>
-              <p>{assignment.instructions}</p>
-              <small>
-                {assignment.dueDate
-                  ? `Fällig am ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`
-                  : "Ohne Frist"}
-              </small>
-              <div>
-                <a className="button" href={SUBJECT_ROUTES[assignment.subject]}>
-                  Fach öffnen
-                </a>
-                <button
-                  className="button button--primary"
-                  type="button"
-                  onClick={() => void completeAssignment(assignment)}
-                >
-                  {assignment.status === "completed"
-                    ? "Leistungs-QR neu erzeugen"
-                    : "Als erledigt markieren"}
-                </button>
-              </div>
-            </article>
-          ))
-        )}
-      </section>
+      </div>
 
       {message ? (
-        <p className="learning-message" role="status">
+        <p className="ui-notice" role="status">
           {message}
         </p>
       ) : null}
 
       {performanceCode ? (
         <section
-          className="student-performance-qr"
+          className="ui-card ui-card--dark ui-card--pad ui-on-dark ui-transfer__result"
           aria-labelledby="performance-qr-title"
         >
-          <div>
-            <p className="eyebrow">Abgabe ohne Konto</p>
-            <h3 id="performance-qr-title">
+          <div className="ui-qr-box">
+            <QRCodeSVG value={performanceCode} size={220} level="M" />
+          </div>
+          <div className="ui-stack">
+            <p className="ui-eyebrow">Abgabe ohne Konto</p>
+            <h2 id="performance-qr-title" className="ui-h-section">
               Leistungs-QR für {performanceTitle}
-            </h3>
-            <p>
+            </h2>
+            <p className="ui-small ui-muted">
               Enthält nur Aufgabe, Klassen- und Mitgliedschafts-ID,
               Abschlusszeit und Signatur – keine Antworten oder Klarnamen.
             </p>
-          </div>
-          <div className="student-performance-qr__code">
-            <QRCodeSVG value={performanceCode} size={240} level="M" />
           </div>
         </section>
       ) : null}

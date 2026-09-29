@@ -1,14 +1,15 @@
 "use client";
-import { LiveProgressNotice } from "./live-progress-notice";
-import type { ProgressDeliveryStatus } from "../../src/integrations/laufdiktat/progress-delivery";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { deterministicOrder } from "../../src/domain/running-dictation";
-import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
-import type { LiveProgress } from "../../src/integrations/laufdiktat/room-api";
-import { MathDisplay } from "./math-display";
-
-import { useAutoFitFontSize } from "./use-auto-fit-font-size";
+import { deterministicOrder } from "../../../src/domain/running-dictation";
+import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import type { ProgressDeliveryStatus } from "../../../src/integrations/laufdiktat/progress-delivery";
+import type { LiveProgress } from "../../../src/integrations/laufdiktat/room-api";
+import { MathDisplay } from "../../components/math-display";
+import { useAutoFitFontSize } from "../../components/use-auto-fit-font-size";
+import { Icon } from "../../ui/icons";
+import { Button, Pill } from "../../ui/primitives";
+import { DeliveryNotice, GameHeader, GameWarning } from "./game-parts";
 
 type Props = {
   code: string;
@@ -127,31 +128,40 @@ export function LiveStationGame({
 
   if (stationNumber === null) {
     return (
-      <div className="ui live-game-page">
-        <section className="live-station" aria-labelledby="station-title">
-          <p className="eyebrow">Raum {code} · Laufdiktat</p>
-          <h1 id="station-title">Wähle deine Nummer</h1>
-          <p>
+      <div className="ui ui-game">
+        <GameHeader code={code} subtitle="Stationen" />
+        <section
+          className="ui-stack ui-game__stations"
+          aria-labelledby="station-title"
+        >
+          <div className="ui-between">
+            <h1 id="station-title" className="ui-h-page">
+              Wähle deine Nummer
+            </h1>
+            <span className="ui-small ui-muted">
+              {session.stationCount} Schüler
+            </span>
+          </div>
+          <p className="ui-small ui-muted">
             Tippe deine Nummer an und merke dir die Aufgaben an der Station.
           </p>
-          <div className="live-station__grid">
+          <div className="ui-game__numbers">
             {Array.from(
               { length: session.stationCount },
               (_, item) => item + 1,
             ).map((number) => (
-              <button key={number} onClick={() => void chooseStation(number)}>
+              <button
+                key={number}
+                type="button"
+                onClick={() => void chooseStation(number)}
+              >
                 {number}
               </button>
             ))}
           </div>
-          <LiveProgressNotice
-            status={deliveryStatus}
-            onRetry={onRetryProgress}
-          />
+          <DeliveryNotice status={deliveryStatus} onRetry={onRetryProgress} />
           {connectionWarning ? (
-            <p className="live-game-warning" role="status">
-              {connectionWarning}
-            </p>
+            <GameWarning>{connectionWarning}</GameWarning>
           ) : null}
         </section>
       </div>
@@ -160,9 +170,10 @@ export function LiveStationGame({
 
   const current = words[index];
   if (!current) return null;
+  const blocked = loading || Boolean(loadError);
   return (
     <div
-      className="ui live-game-page is-active-round"
+      className="ui ui-game is-active-round"
       onTouchStart={(event) => {
         if (event.touches.length >= 2) reveal();
       }}
@@ -177,30 +188,15 @@ export function LiveStationGame({
         setActivity((value) => value + 1);
       }}
     >
-      <header className="live-game-page__header">
-        <div className="live-game-page__meta">
-          <span>Nummer</span>
-          <strong>{stationNumber}</strong>
-        </div>
-        <div className="live-game-page__meta">
-          <span>Aufgabe</span>
-          <strong>
-            {index + 1} / {words.length}
-          </strong>
-        </div>
-      </header>
-      <section className="live-station live-station--active" aria-live="polite">
-        {loadError ? (
-          <div role="alert">
-            <p>{loadError}</p>
-            <button onClick={() => void chooseStation(stationNumber)}>
-              Erneut laden
-            </button>
-          </div>
-        ) : null}
+      <GameHeader
+        code={code}
+        subtitle={`Nummer ${stationNumber} · Aufgabe ${index + 1} / ${words.length}`}
+      >
         {session.isTtsEnabled ? (
           <button
-            disabled={loading || Boolean(loadError)}
+            type="button"
+            className="ui-icon-btn"
+            disabled={blocked}
             aria-label="Vorlesen"
             onClick={() => {
               if (!("speechSynthesis" in window)) return;
@@ -211,43 +207,62 @@ export function LiveStationGame({
               reveal(false);
             }}
           >
-            Vorlesen
+            <Icon name="speaker" size={18} />
           </button>
         ) : null}
-        {loading ? (
-          <p>Dein Stand wird geladen …</p>
-        ) : revealed ? (
-          <>
-            <p className="eyebrow">Merken und auf Papier schreiben</p>
-            <div ref={containerRef} className="live-station__reveal">
-              <h1 ref={textRef} style={{ fontSize }}>
-                <MathDisplay
-                  text={current.prompt ?? current.targetWord}
-                  isLatex={current.isLatex ?? false}
-                />
-              </h1>
+      </GameHeader>
+      <main className="ui-game__stage" aria-live="polite">
+        <div className={`ui-game__card${revealed ? " is-revealed" : ""}`}>
+          {loadError ? (
+            <div className="ui-notice ui-notice--bad ui-stack" role="alert">
+              <p>{loadError}</p>
+              <Button
+                size="sm"
+                onClick={() => void chooseStation(stationNumber)}
+              >
+                Erneut laden
+              </Button>
             </div>
-            <button className="text-button" onClick={() => setRevealed(false)}>
-              Aufgabe wieder verdecken
-            </button>
-          </>
-        ) : (
-          <>
-            <p className="eyebrow">Bereit?</p>
-            <h1>Aufgabe {index + 1}</h1>
-            <button
-              className="button button--primary"
-              disabled={loading || Boolean(loadError)}
-              onClick={() => reveal()}
-            >
-              Aufgabe zeigen
-            </button>
-          </>
-        )}
-        <div className="live-station__navigation">
-          <button
-            className="text-button"
-            disabled={index === 0 || loading || Boolean(loadError)}
+          ) : null}
+          {loading ? (
+            <p className="ui-small ui-muted">Dein Stand wird geladen …</p>
+          ) : revealed ? (
+            <>
+              <Pill>Merken und auf Papier schreiben</Pill>
+              <div ref={containerRef} className="ui-game__reveal">
+                <h1
+                  ref={textRef}
+                  className="ui-game__prompt"
+                  style={{ fontSize }}
+                >
+                  <MathDisplay
+                    text={current.prompt ?? current.targetWord}
+                    isLatex={current.isLatex ?? false}
+                  />
+                </h1>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setRevealed(false)}
+              >
+                Aufgabe wieder verdecken
+              </Button>
+            </>
+          ) : (
+            <>
+              <Pill>Bereit?</Pill>
+              <h1 className="ui-h-fun">Aufgabe {index + 1}</h1>
+              <Button disabled={blocked} onClick={() => reveal()}>
+                Aufgabe zeigen
+              </Button>
+            </>
+          )}
+        </div>
+        <div className="ui-between ui-game__station-nav">
+          <Button
+            variant="ghost"
+            disabled={index === 0 || blocked}
             onClick={() => {
               setActivity((value) => value + 1);
               const next = index - 1;
@@ -257,11 +272,10 @@ export function LiveStationGame({
             }}
           >
             Zurück
-          </button>
+          </Button>
           {index < words.length - 1 ? (
-            <button
-              className="button button--primary"
-              disabled={!seen.has(seenKey) || loading || Boolean(loadError)}
+            <Button
+              disabled={!seen.has(seenKey) || blocked}
               onClick={() => {
                 setActivity((value) => value + 1);
                 const next = index + 1;
@@ -272,11 +286,11 @@ export function LiveStationGame({
               }}
             >
               Nächste Aufgabe
-            </button>
+            </Button>
           ) : (
-            <button
-              className="button button--primary"
-              disabled={!seen.has(seenKey) || loading || Boolean(loadError)}
+            <Button
+              variant="green"
+              disabled={!seen.has(seenKey) || blocked}
               onClick={() => {
                 setStationNumber(null);
                 setIndex(0);
@@ -284,13 +298,15 @@ export function LiveStationGame({
               }}
             >
               Fertig · nächste Nummer
-            </button>
+            </Button>
           )}
         </div>
-        <LiveProgressNotice status={deliveryStatus} onRetry={onRetryProgress} />
-        {connectionWarning ? <p role="status">{connectionWarning}</p> : null}
-        <button
-          className="text-button"
+        <DeliveryNotice status={deliveryStatus} onRetry={onRetryProgress} />
+        {connectionWarning ? (
+          <GameWarning>{connectionWarning}</GameWarning>
+        ) : null}
+        <Button
+          variant="link"
           onClick={() => {
             request.current++;
             setStationNumber(null);
@@ -298,11 +314,11 @@ export function LiveStationGame({
           }}
         >
           Zur Nummernauswahl
-        </button>
-        <p className="live-station__hint">
+        </Button>
+        <p className="ui-tiny ui-muted ui-center">
           Erstes Ansehen ist frei. Erneutes Öffnen zählt als Spicker.
         </p>
-      </section>
+      </main>
     </div>
   );
 }

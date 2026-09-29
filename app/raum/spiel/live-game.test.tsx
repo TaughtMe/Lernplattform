@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { LiveSession } from "../../src/integrations/laufdiktat/live-session";
-import { LiveRunningDictationGame } from "./live-running-dictation-game";
+import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import { LiveRunningDictationGame } from "./live-game";
 
 // Ersetzt den Button-Klick aus der alten Oberfläche: das Original-Laufdiktat
 // deckt die Aufgabe per Zwei-Finger-Rand-Geste auf, die hier simuliert wird.
 function revealWithTwoFingers(container: HTMLElement) {
-  const stage = container.querySelector(".live-game-page") as HTMLElement;
+  const stage = container.querySelector(".ui-game") as HTMLElement;
   fireEvent.touchStart(stage, { touches: [{}, {}] });
   fireEvent.touchEnd(stage, { touches: [] });
 }
@@ -19,7 +19,7 @@ const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
   putLearningEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../../src/storage/personal-learning-events", () => ({
+vi.mock("../../../src/storage/personal-learning-events", () => ({
   createLearningBoxRepository: () => ({ ingestBundle }),
   createPersonalLearningEventRepository: () => ({ put: putLearningEvent }),
 }));
@@ -324,7 +324,7 @@ it("preserves a math answer after local storage failure", async () => {
   await screen.findByRole("alert");
   expect(answer).toHaveValue("5");
   expect(onProgress).not.toHaveBeenCalled();
-  await user.click(screen.getByRole("button", { name: "Bestätigen" }));
+  await user.click(screen.getByRole("button", { name: "Prüfen" }));
   await screen.findByRole("heading", { name: "Geschafft, Mia!" });
   expect(putLearningEvent.mock.calls[0]![0]).toEqual(
     putLearningEvent.mock.calls[1]![0],

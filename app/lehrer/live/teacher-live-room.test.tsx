@@ -60,54 +60,25 @@ describe("TeacherLiveRoom", () => {
     ).toHaveValue("all");
   });
 
-  it("requires confirmation before opening the dashboard on a small screen", async () => {
-    const user = userEvent.setup();
-    vi.stubGlobal(
-      "matchMedia",
-      vi.fn().mockReturnValue({
-        matches: true,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      }),
-    );
-
-    render(<TeacherLiveRoom liveRoomConfig={null} />);
-
-    expect(
-      await screen.findByRole("heading", { name: "Bildschirm zu schmal" }),
-    ).toBeVisible();
-    expect(
-      screen.queryByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
-    ).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Trotzdem öffnen" }));
-    expect(
-      screen.getByRole("heading", { name: "Laufdiktat Lehrerdashboard" }),
-    ).toBeInTheDocument();
-  });
-
-  it("opens vocabulary settings as a closable panel", async () => {
+  it("pastes a vocabulary table from a closable dialog", async () => {
     const user = userEvent.setup();
     render(<TeacherLiveRoom liveRoomConfig={null} />);
 
     const vocabularyTab = screen.getByRole("tab", { name: "Vokabeln" });
     await waitFor(() => expect(vocabularyTab).toBeEnabled());
     await user.click(vocabularyTab);
-    await user.click(screen.getByRole("button", { name: "Einstellungen" }));
+    await user.click(screen.getByRole("button", { name: "Tabelle einfügen" }));
 
-    expect(
-      screen.getByRole("dialog", { name: "Vokabel-Einstellungen" }),
-    ).toBeVisible();
-    expect(
-      screen.getByRole("button", {
-        name: "Vokabel-Einstellungen schließen",
-      }),
-    ).toHaveFocus();
-
-    await user.keyboard("{Escape}");
-    expect(
-      screen.queryByRole("dialog", { name: "Vokabel-Einstellungen" }),
-    ).not.toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "Tabelle einfügen" });
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Tabelle" }),
+      "Haus;home{Enter}Baum;tree",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Liste übernehmen" }),
+    );
+    expect(screen.getByText("2 Vokabeln")).toBeVisible();
+    expect(screen.getByDisplayValue("Baum")).toBeVisible();
   });
 
   it("does not pretend to open an unconfigured live lobby", async () => {
@@ -116,9 +87,7 @@ describe("TeacherLiveRoom", () => {
     const source = screen.getByLabelText(/Text – Sätze/);
     await waitFor(() => expect(source).toBeEnabled());
     await user.type(source, "Der Schulweg ist kurz.");
-    await user.click(
-      screen.getByRole("button", { name: /Weiter zur Konfiguration/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /Weiter zu Modus/ }));
     await user.click(screen.getByRole("button", { name: /Lobby öffnen/ }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Live-Räume sind lokal noch nicht konfiguriert",
@@ -132,9 +101,7 @@ describe("TeacherLiveRoom", () => {
     const source = screen.getByLabelText(/Text – Sätze/);
     await waitFor(() => expect(source).toBeEnabled());
     await user.type(source, "Der Schulweg ist kurz.");
-    await user.click(
-      screen.getByRole("button", { name: /Weiter zur Konfiguration/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /Weiter zu Modus/ }));
     expect(screen.getByRole("radio", { name: /^Laufdiktat/ })).toBeVisible();
     expect(screen.getByRole("radio", { name: /^Freies Üben/ })).toBeVisible();
     expect(screen.getByRole("radio", { name: /^Battle/ })).toBeVisible();
@@ -150,12 +117,8 @@ describe("TeacherLiveRoom", () => {
     await user.type(source, "Eins, zwei. Drei.");
     await user.click(screen.getByRole("button", { name: "," }));
     expect(screen.getByText("3 Abschnitte")).toBeVisible();
-    await user.click(
-      screen.getByRole("button", { name: "Abschnitte verwalten" }),
-    );
     const sections = screen.getAllByRole("checkbox");
     await user.click(sections.at(-1)!);
-    await user.click(screen.getByRole("button", { name: "Schließen" }));
     expect(screen.getByText("2 Abschnitte")).toBeVisible();
   });
 
@@ -197,9 +160,7 @@ describe("TeacherLiveRoom", () => {
       screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
     );
     await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3 + 4{Enter}");
-    const taskList = document.querySelector<HTMLElement>(
-      ".teacher-live__math-tasklist",
-    )!;
+    const taskList = screen.getByRole("region", { name: "Aufgabenliste" });
     expect(within(taskList).getByText("3 + 4 = 7")).toBeVisible();
     expect(screen.getAllByText("1 Aufgaben")[0]).toBeVisible();
 
@@ -211,7 +172,7 @@ describe("TeacherLiveRoom", () => {
 
     const editedRow = within(taskList)
       .getByText("5 + 5 = 10")
-      .closest<HTMLElement>(".teacher-live__math-row")!;
+      .closest<HTMLElement>("li")!;
     await user.click(
       within(editedRow).getByRole("button", { name: "Löschen" }),
     );
@@ -234,19 +195,15 @@ describe("TeacherLiveRoom", () => {
     await user.click(screen.getByLabelText("Lückenaufgaben"));
     await user.click(screen.getByRole("button", { name: "Schließen" }));
 
-    const preview = document.querySelector<HTMLElement>(
-      ".teacher-live__math-preview",
-    )!;
+    const preview = screen.getByRole("region", { name: "Vorschau" });
     expect(within(preview).getByText("Vorschau (Lücken)")).toBeVisible();
     // The task list always shows the full, editable equation — the gap
     // marker only ever lives in the separate preview picker (matches
     // Laufdiktat: the task list itself never bakes a "_" into its rows).
-    const firstRow = document.querySelector<HTMLElement>(
-      ".teacher-live__math-preview-row",
-    )!;
-    const taskList = document.querySelector<HTMLElement>(
-      ".teacher-live__math-tasklist",
-    )!;
+    const firstRow = within(
+      screen.getByRole("region", { name: "Vorschau" }),
+    ).getAllByRole("listitem")[0]!;
+    const taskList = screen.getByRole("region", { name: "Aufgabenliste" });
     expect(within(taskList).getByText("7 + 8 = 15")).toBeVisible();
     // Enabling gap mode should already mark the second number as the
     // (default) gap, so the teacher can see that something is selected
@@ -256,9 +213,9 @@ describe("TeacherLiveRoom", () => {
     // Clicking a different number (the result) switches the selection.
     await user.click(within(firstRow).getByRole("button", { name: "15" }));
     expect(within(taskList).getByText("7 + 8 = 15")).toBeVisible();
-    const updatedFirstRow = document.querySelector<HTMLElement>(
-      ".teacher-live__math-preview-row",
-    )!;
+    const updatedFirstRow = within(
+      screen.getByRole("region", { name: "Vorschau" }),
+    ).getAllByRole("listitem")[0]!;
     expect(
       within(updatedFirstRow).getByRole("button", { name: "_" }),
     ).toBeVisible();
@@ -284,14 +241,12 @@ describe("TeacherLiveRoom", () => {
     await user.click(screen.getByRole("button", { name: "Schließen" }));
 
     // Switch the first task's gap to the left number (default is "right").
-    const firstRow = document.querySelector<HTMLElement>(
-      ".teacher-live__math-preview-row",
-    )!;
+    const firstRow = within(
+      screen.getByRole("region", { name: "Vorschau" }),
+    ).getAllByRole("listitem")[0]!;
     await user.click(within(firstRow).getByRole("button", { name: "7" }));
 
-    const taskList = document.querySelector<HTMLElement>(
-      ".teacher-live__math-tasklist",
-    )!;
+    const taskList = screen.getByRole("region", { name: "Aufgabenliste" });
 
     // Re-opening the row for editing must show a plain, editable equation —
     // never a "_" or the internal "=> answer" storage format that used to
@@ -306,9 +261,9 @@ describe("TeacherLiveRoom", () => {
     // ...and the previously chosen gap slot (left) is preserved instead of
     // resetting to the default, since the gap is tracked separately from
     // the line's text rather than re-derived from it.
-    const updatedFirstRow = document.querySelector<HTMLElement>(
-      ".teacher-live__math-preview-row",
-    )!;
+    const updatedFirstRow = within(
+      screen.getByRole("region", { name: "Vorschau" }),
+    ).getAllByRole("listitem")[0]!;
     expect(
       within(updatedFirstRow).getByRole("button", { name: "_" }),
     ).toBeVisible();
@@ -322,9 +277,9 @@ describe("TeacherLiveRoom", () => {
       screen.getByRole("button", { name: "+ Aufgabe hinzufügen" }),
     );
     await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3 + 3{Enter}");
-    const newRow = document.querySelectorAll<HTMLElement>(
-      ".teacher-live__math-preview-row",
-    )[1]!;
+    const newRow = within(
+      screen.getByRole("region", { name: "Vorschau" }),
+    ).getAllByRole("listitem")[1]!;
     expect(within(newRow).getByRole("button", { name: "_" })).toBeVisible();
     expect(within(newRow).getByRole("button", { name: "3" })).toBeVisible();
   });
@@ -341,9 +296,7 @@ describe("TeacherLiveRoom", () => {
     );
     // Typed with no spaces at all — committing must insert them.
     await user.type(screen.getByPlaceholderText("z. B. 4 + 4"), "3+4-2{Enter}");
-    const taskList = document.querySelector<HTMLElement>(
-      ".teacher-live__math-tasklist",
-    )!;
+    const taskList = screen.getByRole("region", { name: "Aufgabenliste" });
     expect(within(taskList).getByText("3 + 4 − 2 = 5")).toBeVisible();
   });
 
@@ -366,9 +319,9 @@ describe("TeacherLiveRoom", () => {
     await user.click(screen.getByLabelText("Lückenaufgaben"));
     await user.click(screen.getByRole("button", { name: "Schließen" }));
 
-    const rows = document.querySelectorAll<HTMLElement>(
-      ".teacher-live__math-preview-row",
-    );
+    const rows = within(
+      screen.getByRole("region", { name: "Vorschau" }),
+    ).getAllByRole("listitem");
     const chainRow = rows[rows.length - 1]!;
     // Default gap is the last numeral in the chain.
     expect(within(chainRow).getByRole("button", { name: "_" })).toBeVisible();
@@ -377,13 +330,11 @@ describe("TeacherLiveRoom", () => {
 
     // Blanking the middle number (the "4") works too, not just left/right.
     await user.click(within(chainRow).getByRole("button", { name: "4" }));
-    const taskList = document.querySelector<HTMLElement>(
-      ".teacher-live__math-tasklist",
-    )!;
+    const taskList = screen.getByRole("region", { name: "Aufgabenliste" });
     expect(within(taskList).getByText("3 + 4 − 2 = 5")).toBeVisible();
-    const updatedRows = document.querySelectorAll<HTMLElement>(
-      ".teacher-live__math-preview-row",
-    );
+    const updatedRows = within(
+      screen.getByRole("region", { name: "Vorschau" }),
+    ).getAllByRole("listitem");
     const updatedChainRow = updatedRows[updatedRows.length - 1]!;
     expect(
       within(updatedChainRow).getByRole("button", { name: "_" }),
@@ -417,9 +368,7 @@ describe("TeacherLiveRoom", () => {
     expect(screen.getByText("= 0,5")).toBeVisible();
 
     fireEvent.keyDown(input, { key: "Enter" });
-    const taskList = document.querySelector<HTMLElement>(
-      ".teacher-live__math-tasklist",
-    )!;
+    const taskList = screen.getByRole("region", { name: "Aufgabenliste" });
     expect(taskList.querySelector(".katex")).not.toBeNull();
   });
 
@@ -446,9 +395,7 @@ describe("TeacherLiveRoom", () => {
     );
     const newPrimary = screen.getByPlaceholderText("Vokabel 2");
     expect(newPrimary).toBeVisible();
-    const newRow = newPrimary.closest<HTMLElement>(
-      ".teacher-live__vocabulary-row",
-    )!;
+    const newRow = newPrimary.closest<HTMLElement>("li")!;
     await user.type(newPrimary, "tree");
     await user.type(within(newRow).getByPlaceholderText("Übersetzung"), "Baum");
     expect(screen.getByText("2 Vokabeln")).toBeVisible();

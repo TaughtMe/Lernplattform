@@ -1,6 +1,6 @@
 "use client";
 
-import { StudentDashboardShell } from "./student-dashboard-shell";
+import { StudentPage } from "../ui/shell/student-page";
 import {
   useCallback,
   useEffect,
@@ -141,7 +141,7 @@ export function LearningBoxApp() {
   const mainOpen = view !== "decks" && Boolean(selectedDeck);
 
   return (
-    <StudentDashboardShell activePath="/lernbox">
+    <StudentPage activePath="/lernbox">
       <div className={`ui-lb${mainOpen ? " ui-lb--main" : ""}`}>
         <DeckPanel
           decks={decks}
@@ -233,7 +233,7 @@ export function LearningBoxApp() {
           )}
         </section>
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }
 

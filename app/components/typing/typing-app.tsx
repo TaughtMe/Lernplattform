@@ -1,6 +1,6 @@
 "use client";
 
-import { StudentDashboardShell } from "../student-dashboard-shell";
+import { StudentPage } from "../../ui/shell/student-page";
 import { AnimalImage } from "../../ui/animal";
 import { Icon } from "../../ui/icons";
 import { useLearnerProfile } from "../../ui/use-learner-profile";
@@ -103,7 +103,7 @@ export function TypingApp() {
     ) + 1;
 
   return (
-    <StudentDashboardShell activePath="/frei/typing">
+    <StudentPage activePath="/frei/typing">
       {view.mode === "overview" && (
         <div className="ui-tw">
           <section className="ui-stack" aria-labelledby="typing-title">
@@ -486,6 +486,6 @@ export function TypingApp() {
           />
         </div>
       )}
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }

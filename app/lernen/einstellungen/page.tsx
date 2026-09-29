@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { StudentDashboardShell } from "../../components/student-dashboard-shell";
+import { StudentPage } from "../../ui/shell/student-page";
 import { StudentSettingsPanel } from "../../components/student-settings-panel";
 
 export const metadata: Metadata = { title: "Profil" };
 
 export default function Page() {
   return (
-    <StudentDashboardShell activePath="/lernen/einstellungen">
+    <StudentPage activePath="/lernen/einstellungen">
       <div className="ui-page">
         <header>
           <h1 className="ui-h-page">Profil und Einstellungen</h1>
@@ -16,6 +16,6 @@ export default function Page() {
         </header>
         <StudentSettingsPanel />
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }

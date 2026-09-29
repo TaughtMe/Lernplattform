@@ -25,6 +25,8 @@ import {
   type LiveRoomConfig,
 } from "../../src/integrations/laufdiktat/live-room-client";
 import { createTeacherContentLibraryRepository } from "../../src/storage/teacher-class-settings";
+import { Icon } from "../ui/icons";
+import { Button, Card, Pill } from "../ui/primitives";
 
 const DEFAULT_VOCABULARY =
   "school;Schule\nclassroom;Klassenzimmer\nlibrary;Bibliothek";
@@ -259,37 +261,123 @@ export function TeacherContentTransfer({
 
   return (
     <section
-      className="teacher-transfer"
+      className="ui-stack ui-transfer"
       aria-labelledby="teacher-transfer-title"
     >
-      <div className="teacher-transfer__heading">
-        <div>
-          <p className="eyebrow">Temporäre Inhaltsübertragung</p>
-          <h1 id="teacher-transfer-title">Vokabelpaket freigeben</h1>
-          <p>
+      <div className="ui-between ui-wrap">
+        <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
+          <p className="ui-eyebrow">Temporäre Inhaltsübertragung</p>
+          <h1 id="teacher-transfer-title" className="ui-h-page">
+            Vokabelpaket freigeben
+          </h1>
+          <p className="ui-small ui-muted">
             Das Paket wird auf diesem Gerät verschlüsselt und nach spätestens 24
             Stunden automatisch gelöscht.
           </p>
         </div>
-        <span className="teacher-local-note">{pairs} Vokabelpaare</span>
+        <Pill>{pairs} Vokabelpaare</Pill>
       </div>
 
-      <section
-        className="teacher-library"
-        aria-labelledby="teacher-library-title"
-      >
-        <div>
-          <p className="eyebrow">Nur auf diesem Gerät</p>
-          <h2 id="teacher-library-title">Lehrkraftbibliothek</h2>
-          <p>
-            Pakete lokal vorbereiten, später erneut öffnen oder als geprüfte
-            Datei sichern und wiederherstellen.
-          </p>
-        </div>
-        <div className="teacher-library__controls">
-          <label>
+      <div className="ui-cols ui-cols--wide-left">
+        <form
+          className="ui-card ui-card--pop ui-card--pad ui-stack"
+          aria-label="Vokabelpaket"
+          onSubmit={publish}
+        >
+          <label className="ui-labeled">
+            Titel des Pakets
+            <input
+              className="ui-input"
+              value={title}
+              maxLength={300}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                setPublished(null);
+              }}
+            />
+          </label>
+          <label className="ui-labeled" htmlFor="teacher-vocabulary-source">
+            Vokabelpaare
+            <span className="ui-tiny ui-muted">
+              Eine Zeile pro Paar, getrennt mit Semikolon oder Tab.
+            </span>
+          </label>
+          <textarea
+            id="teacher-vocabulary-source"
+            className="ui-textarea"
+            rows={9}
+            ref={sourceInput}
+            value={source}
+            onChange={(event) => {
+              setSource(event.target.value);
+              setPublished(null);
+            }}
+          />
+          <div
+            className="ui-row ui-wrap"
+            role="group"
+            aria-label="Vokabelerfassung"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => sourceInput.current?.focus()}
+            >
+              Vokabeln eingeben
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => sourceFileInput.current?.click()}
+            >
+              <Icon name="upload" size={16} />
+              Datei importieren
+            </Button>
+            <input
+              ref={sourceFileInput}
+              hidden
+              type="file"
+              accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+              aria-label="Datei mit Vokabelpaaren auswählen"
+              onChange={(event) => void importVocabularyFile(event)}
+            />
+          </div>
+          <div className="ui-row ui-wrap" aria-label="Paketaktionen">
+            <Button
+              type="submit"
+              disabled={busy || !title.trim() || pairs === 0}
+            >
+              {busy ? "Wird verschlüsselt …" : "Für Schüler freigeben"}
+            </Button>
+            <Button
+              variant="soft"
+              disabled={!title.trim() || pairs === 0}
+              onClick={() => void saveToLibrary()}
+            >
+              Lokal speichern
+            </Button>
+          </div>
+        </form>
+
+        <Card
+          look="soft"
+          className="ui-stack"
+          aria-labelledby="teacher-library-title"
+        >
+          <div>
+            <p className="ui-eyebrow">Nur auf diesem Gerät</p>
+            <h2 id="teacher-library-title" className="ui-h-section">
+              Lehrkraftbibliothek
+            </h2>
+            <p className="ui-small ui-muted">
+              Pakete lokal vorbereiten, später erneut öffnen oder als geprüfte
+              Datei sichern und wiederherstellen.
+            </p>
+          </div>
+          <label className="ui-labeled">
             Gespeichertes Paket
             <select
+              className="ui-input"
               value={selectedPackageId}
               onChange={(event) => setSelectedPackageId(event.target.value)}
             >
@@ -303,10 +391,10 @@ export function TeacherContentTransfer({
               ))}
             </select>
           </label>
-          <div className="teacher-library__actions">
-            <button
-              type="button"
-              className="button button--secondary"
+          <div className="ui-grid3">
+            <Button
+              variant="soft"
+              size="sm"
               disabled={!selectedPackageId}
               onClick={() => {
                 const entry = packages.find(
@@ -316,39 +404,35 @@ export function TeacherContentTransfer({
               }}
             >
               Öffnen
-            </button>
-            <button
-              type="button"
-              className="button button--secondary"
-              onClick={startNewPackage}
-            >
+            </Button>
+            <Button variant="soft" size="sm" onClick={startNewPackage}>
               Neu
-            </button>
-            <button
-              type="button"
-              className="button button--secondary"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               disabled={!selectedPackageId}
               onClick={() => void removeSelectedPackage()}
             >
               Löschen
-            </button>
+            </Button>
           </div>
-          <div className="teacher-library__actions">
-            <button
-              type="button"
-              className="button button--secondary"
+          <div className="ui-grid2">
+            <Button
+              variant="ghost"
+              size="sm"
               disabled={!packages.length}
               onClick={exportLibrary}
             >
               Bibliothek exportieren
-            </button>
-            <button
-              type="button"
-              className="button button--secondary"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => importInput.current?.click()}
             >
               Bibliothek importieren
-            </button>
+            </Button>
             <input
               ref={importInput}
               hidden
@@ -358,110 +442,52 @@ export function TeacherContentTransfer({
               onChange={(event) => void importLibrary(event)}
             />
           </div>
-        </div>
-      </section>
+        </Card>
+      </div>
 
-      <form className="teacher-transfer__form" onSubmit={publish}>
-        <label>
-          Titel des Pakets
-          <input
-            value={title}
-            maxLength={300}
-            onChange={(event) => {
-              setTitle(event.target.value);
-              setPublished(null);
-            }}
-          />
-        </label>
-        <div className="teacher-transfer__vocab">
-          <label htmlFor="teacher-vocabulary-source">
-            Vokabelpaare
-            <small>Eine Zeile pro Paar, getrennt mit Semikolon oder Tab.</small>
-          </label>
-          <textarea
-            id="teacher-vocabulary-source"
-            ref={sourceInput}
-            value={source}
-            onChange={(event) => {
-              setSource(event.target.value);
-              setPublished(null);
-            }}
-          />
-          <div
-            className="teacher-transfer__vocab-actions"
-            role="group"
-            aria-label="Vokabelerfassung"
-          >
-            <button
-              type="button"
-              className="button button--secondary"
-              onClick={() => sourceInput.current?.focus()}
-            >
-              Vokabeln eingeben
-            </button>
-            <button
-              type="button"
-              className="button button--secondary"
-              onClick={() => sourceFileInput.current?.click()}
-            >
-              Datei importieren
-            </button>
-            <input
-              ref={sourceFileInput}
-              hidden
-              type="file"
-              accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
-              aria-label="Datei mit Vokabelpaaren auswählen"
-              onChange={(event) => void importVocabularyFile(event)}
-            />
-          </div>
-        </div>
-        <div className="teacher-transfer__actions" aria-label="Paketaktionen">
-          <button
-            type="submit"
-            className="button button--primary"
-            disabled={busy || !title.trim() || pairs === 0}
-          >
-            {busy ? "Wird verschlüsselt …" : "Für Schüler freigeben"}
-          </button>
-          <button
-            type="button"
-            className="button button--secondary"
-            disabled={!title.trim() || pairs === 0}
-            onClick={() => void saveToLibrary()}
-          >
-            Lokal speichern
-          </button>
-        </div>
-      </form>
-
-      {libraryNotice ? <p role="status">{libraryNotice}</p> : null}
+      {libraryNotice ? (
+        <p className="ui-notice" role="status">
+          {libraryNotice}
+        </p>
+      ) : null}
 
       {error ? (
-        <p className="teacher-live__error" role="alert">
+        <p className="ui-notice ui-notice--bad" role="alert">
           {error}
         </p>
       ) : null}
 
       {published ? (
-        <section className="teacher-transfer__result" aria-live="polite">
-          <div>
-            <p className="eyebrow">Bereit zum Übernehmen</p>
-            <h2>QR-Code scannen</h2>
-            <QRCodeSVG
-              value={serializeTransferQrPayload(published.qrPayload)}
-              size={220}
-              level="H"
-              marginSize={2}
-              aria-label="QR-Code für das verschlüsselte Vokabelpaket"
-            />
+        <section
+          className="ui-card ui-card--dark ui-card--pad ui-on-dark ui-transfer__result"
+          aria-labelledby="transfer-result-title"
+          aria-live="polite"
+        >
+          <div className="ui-stack ui-center">
+            <p className="ui-eyebrow">Bereit zum Übernehmen</p>
+            <h2 id="transfer-result-title" className="ui-h-section">
+              QR-Code scannen
+            </h2>
+            <div className="ui-qr-box">
+              <QRCodeSVG
+                value={serializeTransferQrPayload(published.qrPayload)}
+                size={220}
+                level="H"
+                marginSize={2}
+                aria-label="QR-Code für das verschlüsselte Vokabelpaket"
+              />
+            </div>
           </div>
-          <div className="teacher-transfer__manual-code">
-            <span>oder sicheren Transfercode eingeben</span>
-            <strong>{formatTransferCode(published.manualTransferCode)}</strong>
-            <small>
+          <div className="ui-stack ui-center">
+            <span className="ui-small ui-muted">
+              oder sicheren Transfercode eingeben
+            </span>
+            <strong className="ui-transfer__code">
+              {formatTransferCode(published.manualTransferCode)}
+            </strong>
+            <span className="ui-tiny ui-muted">
               Gültig bis {new Date(published.expiresAt).toLocaleString("de-DE")}
-            </small>
+            </span>
           </div>
         </section>
       ) : null}

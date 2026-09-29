@@ -33,7 +33,8 @@ import {
   createTeacherSubmissionRepository,
   createTeacherWorkspaceRepository,
 } from "../../src/storage/teacher-class-settings";
-import { QrCodeScanner } from "./qr-code-scanner";
+import { Button, Card, Pill } from "../ui/primitives";
+import { QrCodeScanner } from "../ui/qr-scanner";
 
 const EMPTY_PROFILE: TeacherProfile = {
   id: "local-teacher",
@@ -173,26 +174,30 @@ export function TeacherProfilePanel() {
   }
 
   return (
-    <section
-      className="teacher-profile"
-      aria-labelledby="teacher-profile-title"
-    >
-      <div className="teacher-profile__heading">
-        <div>
-          <p className="eyebrow">Persönliche Informationen</p>
-          <h2 id="teacher-profile-title">Mein Lehrerarbeitsplatz</h2>
-          <p>
+    <section className="ui-stack" aria-labelledby="teacher-profile-title">
+      <div className="ui-between ui-wrap">
+        <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
+          <p className="ui-eyebrow">Persönliche Informationen</p>
+          <h2 id="teacher-profile-title" className="ui-h-page">
+            Mein Lehrerarbeitsplatz
+          </h2>
+          <p className="ui-small ui-muted">
             Diese Angaben bleiben in der lokalen Lehrerdatenbank dieses
             Browserprofils.
           </p>
         </div>
-        <span className="teacher-local-note">IndexedDB · lokal</span>
+        <Pill>IndexedDB · lokal</Pill>
       </div>
-      <div className="teacher-profile__layout">
-        <form className="teacher-profile__form" onSubmit={saveProfile}>
-          <label>
+      <div className="ui-cols ui-cols--wide-left">
+        <form
+          className="ui-card ui-card--pop ui-card--pad ui-stack"
+          aria-label="Persönliche Informationen"
+          onSubmit={saveProfile}
+        >
+          <label className="ui-labeled">
             Anzeigename
             <input
+              className="ui-input"
               required
               disabled={!ready}
               value={profile.displayName}
@@ -205,9 +210,10 @@ export function TeacherProfilePanel() {
               placeholder="z. B. Tobias Becker"
             />
           </label>
-          <label>
+          <label className="ui-labeled">
             Schule
             <input
+              className="ui-input"
               disabled={!ready}
               value={profile.school}
               onChange={(event) =>
@@ -219,9 +225,10 @@ export function TeacherProfilePanel() {
               placeholder="optional"
             />
           </label>
-          <label>
+          <label className="ui-labeled">
             E-Mail
             <input
+              className="ui-input"
               type="email"
               disabled={!ready}
               value={profile.email}
@@ -234,76 +241,75 @@ export function TeacherProfilePanel() {
               placeholder="optional"
             />
           </label>
-          <label>
+          <label className="ui-labeled">
             Fächer
             <input
+              className="ui-input"
               disabled={!ready}
               value={subjects}
               onChange={(event) => setSubjects(event.target.value)}
               placeholder="Deutsch, Mathematik, Englisch"
             />
           </label>
-          <button
-            className="button button--primary"
-            type="submit"
-            disabled={!ready}
-          >
+          <Button type="submit" disabled={!ready}>
             Informationen speichern
-          </button>
+          </Button>
         </form>
-        <aside className="teacher-database" aria-labelledby="database-title">
-          <p className="eyebrow">Lokale Datenbank</p>
-          <h3 id="database-title">Alles auf diesem Gerät</h3>
-          <div className="teacher-database__stats">
+        <Card look="soft" className="ui-stack" aria-labelledby="database-title">
+          <p className="ui-eyebrow">Lokale Datenbank</p>
+          <h3 id="database-title" className="ui-h-section">
+            Alles auf diesem Gerät
+          </h3>
+          <div className="ui-stats">
             <div>
               <strong>{stats.classes}</strong>
-              <span>Klassen</span>
+              Klassen
             </div>
             <div>
               <strong>{stats.students}</strong>
-              <span>Schüler</span>
+              Schüler
             </div>
             <div>
               <strong>{stats.materials}</strong>
-              <span>Materialien</span>
+              Materialien
             </div>
             <div>
               <strong>{stats.assignments}</strong>
-              <span>Aufgaben</span>
+              Aufgaben
             </div>
           </div>
-          <p className="teacher-database__note">
+          <p className="ui-small ui-muted">
             Kein Serverkonto erforderlich. Export und Cloud-Sicherung werden
             später als getrennte Sicherungswege ergänzt.
           </p>
-          <div className="teacher-database__actions">
-            <button
-              className="button"
-              type="button"
+          <div className="ui-grid2">
+            <Button
+              variant="soft"
+              size="sm"
               onClick={() => void exportDatabase()}
             >
               Datenbank exportieren
-            </button>
-            <button
-              className="button button--quiet"
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => importInput.current?.click()}
             >
               Datenbank importieren
-            </button>
+            </Button>
             <input
               ref={importInput}
-              className="sr-only"
+              className="ui-sr-only"
               type="file"
               accept="application/json,.json"
               aria-label="Lehrerdatenbank auswählen"
               onChange={(event) => void importDatabase(event)}
             />
           </div>
-        </aside>
+        </Card>
       </div>
       {message ? (
-        <p className="learning-message" role="status">
+        <p className="ui-notice" role="status">
           {message}
         </p>
       ) : null}
@@ -506,38 +512,44 @@ export function TeacherAssignmentManager() {
     submissions.map(({ membershipId }) => membershipId),
   );
 
+  const classNames = (ids: string[]) =>
+    ids
+      .map((classId) => classes.find(({ id }) => id === classId)?.name)
+      .filter(Boolean)
+      .join(", ");
+
   return (
-    <section
-      className="teacher-assignments"
-      aria-labelledby="teacher-assignments-title"
-    >
-      <div className="teacher-assignments__heading">
-        <div>
-          <p className="eyebrow">Aufgaben und Zuteilung</p>
-          <h2 id="teacher-assignments-title">Arbeitsaufträge planen</h2>
-          <p>
+    <section className="ui-stack" aria-labelledby="teacher-assignments-title">
+      <div className="ui-between ui-wrap">
+        <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
+          <p className="ui-eyebrow">Aufgaben und Zuteilung</p>
+          <h2 id="teacher-assignments-title" className="ui-h-page">
+            Arbeitsaufträge planen
+          </h2>
+          <p className="ui-small ui-muted">
             Erstelle einen Auftrag, verknüpfe optional Material und teile ihn
             einer oder mehreren Klassen zu.
           </p>
         </div>
-        <span className="teacher-local-note">
-          {assignments.length} Aufgaben
-        </span>
+        <Pill>{assignments.length} Aufgaben</Pill>
       </div>
 
-      <div className="teacher-assignments__layout">
-        <form className="teacher-assignment-form" onSubmit={saveAssignment}>
-          <div className="teacher-panel__heading">
-            <div>
-              <p className="eyebrow">{editingId ? "Bearbeiten" : "Neu"}</p>
-              <h3 id="assignment-form-title">
-                {editingId ? "Aufgabe aktualisieren" : "Aufgabe erstellen"}
-              </h3>
-            </div>
+      <div className="ui-cols">
+        <form
+          className="ui-card ui-card--pop ui-card--pad ui-stack"
+          aria-labelledby="assignment-form-title"
+          onSubmit={saveAssignment}
+        >
+          <div>
+            <p className="ui-eyebrow">{editingId ? "Bearbeiten" : "Neu"}</p>
+            <h3 id="assignment-form-title" className="ui-h-section">
+              {editingId ? "Aufgabe aktualisieren" : "Aufgabe erstellen"}
+            </h3>
           </div>
-          <label>
+          <label className="ui-labeled">
             Titel
             <input
+              className="ui-input"
               required
               value={form.title}
               onChange={(event) =>
@@ -549,9 +561,10 @@ export function TeacherAssignmentManager() {
               placeholder="z. B. Vokabeln Schule wiederholen"
             />
           </label>
-          <label>
+          <label className="ui-labeled">
             Arbeitsauftrag
             <textarea
+              className="ui-textarea"
               required
               rows={5}
               value={form.instructions}
@@ -564,10 +577,11 @@ export function TeacherAssignmentManager() {
               placeholder="Was sollen die Schüler bearbeiten?"
             />
           </label>
-          <div className="teacher-assignment-form__row">
-            <label>
+          <div className="ui-grid2">
+            <label className="ui-labeled">
               Fach
               <select
+                className="ui-input"
                 value={form.subject}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -583,9 +597,10 @@ export function TeacherAssignmentManager() {
                 ))}
               </select>
             </label>
-            <label>
+            <label className="ui-labeled">
               Fällig am
               <input
+                className="ui-input"
                 type="date"
                 value={form.dueDate}
                 onChange={(event) =>
@@ -597,9 +612,10 @@ export function TeacherAssignmentManager() {
               />
             </label>
           </div>
-          <label>
+          <label className="ui-labeled">
             Material
             <select
+              className="ui-input"
               value={form.materialId}
               onChange={(event) =>
                 setForm((current) => ({
@@ -616,10 +632,12 @@ export function TeacherAssignmentManager() {
               ))}
             </select>
           </label>
-          <fieldset className="teacher-assignment-classes">
+          <fieldset className="ui-checks">
             <legend>Zuteilung an Klassen</legend>
             {classes.length === 0 ? (
-              <p>Lege zuerst mindestens eine Klasse an.</p>
+              <p className="ui-small ui-muted">
+                Lege zuerst mindestens eine Klasse an.
+              </p>
             ) : (
               classes.map((teacherClass) => (
                 <label key={teacherClass.id}>
@@ -654,16 +672,16 @@ export function TeacherAssignmentManager() {
             )}
           </fieldset>
           {form.classIds.length > 0 ? (
-            <fieldset className="teacher-assignment-classes">
+            <fieldset className="ui-checks">
               <legend>Einzelne Schüler (optional)</legend>
-              <p>
+              <p className="ui-small ui-muted">
                 Ohne Auswahl gilt die Aufgabe für alle Schüler der gewählten
                 Klassen.
               </p>
               {members.filter((member) =>
                 form.classIds.includes(member.classId),
               ).length === 0 ? (
-                <p>
+                <p className="ui-small ui-muted">
                   In den gewählten Klassen sind noch keine Schüler angelegt.
                 </p>
               ) : (
@@ -694,210 +712,209 @@ export function TeacherAssignmentManager() {
               )}
             </fieldset>
           ) : null}
-          <div className="teacher-library__actions">
-            <button
-              className="button button--primary"
-              type="submit"
-              disabled={classes.length === 0}
-            >
+          <div className="ui-row ui-wrap">
+            <Button type="submit" disabled={classes.length === 0}>
               {editingId ? "Änderungen speichern" : "Aufgabe zuteilen"}
-            </button>
+            </Button>
             {editingId ? (
-              <button
-                className="button button--quiet"
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setEditingId("");
                   setForm(emptyAssignmentForm());
                 }}
               >
                 Abbrechen
-              </button>
+              </Button>
             ) : null}
           </div>
         </form>
 
-        <section className="teacher-assignment-list" aria-label="Aufgabenliste">
-          <div className="teacher-panel__heading">
-            <div>
-              <p className="eyebrow">Gespeichert</p>
-              <h3>Aufgaben und Zuteilungen</h3>
-            </div>
+        <section className="ui-stack" aria-label="Aufgabenliste">
+          <div>
+            <p className="ui-eyebrow">Gespeichert</p>
+            <h3 className="ui-h-section">Aufgaben und Zuteilungen</h3>
           </div>
           {assignments.length === 0 ? (
-            <p className="teacher-assignment-list__empty">
-              Noch keine Aufgabe angelegt.
-            </p>
+            <p className="ui-empty ui-small">Noch keine Aufgabe angelegt.</p>
           ) : (
-            assignments.map((assignment) => (
-              <article key={assignment.id}>
-                <div>
-                  <span>{TEACHER_SUBJECT_LABELS[assignment.subject]}</span>
-                  <h4>{assignment.title}</h4>
-                  <p>{assignment.instructions}</p>
-                  <small>
-                    {assignment.classIds
-                      .map(
-                        (classId) =>
-                          classes.find(({ id }) => id === classId)?.name,
-                      )
-                      .filter(Boolean)
-                      .join(", ")}
-                    {assignment.dueDate
-                      ? ` · fällig ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`
-                      : " · ohne Frist"}
-                    {(assignment.memberIds ?? []).length > 0
-                      ? ` · ${(assignment.memberIds ?? []).length} Schüler individuell`
-                      : " · gesamte Klasse(n)"}
-                  </small>
-                </div>
-                <div className="teacher-assignment-list__actions">
-                  <button
-                    className="button"
-                    type="button"
-                    onClick={() => void selectQrAssignment(assignment)}
+            <ul className="ui-list">
+              {assignments.map((assignment) => (
+                <li key={assignment.id} className="ui-item">
+                  <div
+                    className="ui-stack ui-grow"
+                    style={{ ["--gap" as string]: "4px" }}
                   >
-                    QR-Code
-                  </button>
-                  <button
-                    className="button button--quiet"
-                    type="button"
-                    onClick={() => editAssignment(assignment)}
-                  >
-                    Bearbeiten
-                  </button>
-                  <button
-                    className="button button--quiet"
-                    type="button"
-                    onClick={() => void removeAssignment(assignment)}
-                  >
-                    Löschen
-                  </button>
-                </div>
-              </article>
-            ))
+                    <Pill tone="accent">
+                      {TEACHER_SUBJECT_LABELS[assignment.subject]}
+                    </Pill>
+                    <h4 className="ui-h-section">{assignment.title}</h4>
+                    <p className="ui-small">{assignment.instructions}</p>
+                    <p className="ui-tiny ui-muted">
+                      {classNames(assignment.classIds)}
+                      {assignment.dueDate
+                        ? ` · fällig ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`
+                        : " · ohne Frist"}
+                      {(assignment.memberIds ?? []).length > 0
+                        ? ` · ${(assignment.memberIds ?? []).length} Schüler individuell`
+                        : " · gesamte Klasse(n)"}
+                    </p>
+                  </div>
+                  <div className="ui-item__actions">
+                    <Button
+                      variant="soft"
+                      size="sm"
+                      onClick={() => void selectQrAssignment(assignment)}
+                    >
+                      QR-Code
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => editAssignment(assignment)}
+                    >
+                      Bearbeiten
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void removeAssignment(assignment)}
+                    >
+                      Löschen
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
       </div>
 
       {message ? (
-        <p className="learning-message" role="status">
+        <p className="ui-notice" role="status">
           {message}
         </p>
       ) : null}
 
-      <div className="teacher-qr-tools" id="qr-werkzeuge">
-        <section
-          className="teacher-qr-generator"
+      <div className="ui-cols ui-cols--stretch" id="qr-werkzeuge">
+        <Card
+          look="pop"
+          className="ui-stack"
           aria-labelledby="qr-generator-title"
         >
-          <header className="teacher-qr-tool__head">
-            <p className="eyebrow">QR-Code Generator</p>
-            <h3 id="qr-generator-title">Aufgabe weitergeben</h3>
-          </header>
-          <div className="teacher-qr-tool__body">
-            {!qrAssignment ? (
-              <p>Wähle bei einer gespeicherten Aufgabe „QR-Code“.</p>
-            ) : (
-              <>
-                <p>
-                  <strong>{qrAssignment.title}</strong> · ohne Schülernamen oder
-                  persönliche Lernstände
-                </p>
-                <div className="teacher-qr-generator__code">
-                  <QRCodeSVG value={qrCode} size={220} level="M" />
-                </div>
-                <p className="teacher-qr-generator__note">
-                  Der QR-Code enthält nur die Aufgabe und ihre Zielklassen.
-                  Teile ihn direkt über den Bildschirm oder einen Ausdruck.
-                </p>
-              </>
-            )}
+          <div>
+            <p className="ui-eyebrow">QR-Code Generator</p>
+            <h3 id="qr-generator-title" className="ui-h-section">
+              Aufgabe weitergeben
+            </h3>
           </div>
-        </section>
+          {!qrAssignment ? (
+            <p className="ui-small ui-muted">
+              Wähle bei einer gespeicherten Aufgabe „QR-Code“.
+            </p>
+          ) : (
+            <>
+              <p className="ui-small">
+                <strong>{qrAssignment.title}</strong> · ohne Schülernamen oder
+                persönliche Lernstände
+              </p>
+              <div className="ui-qr-box">
+                <QRCodeSVG value={qrCode} size={220} level="M" />
+              </div>
+              <p className="ui-tiny ui-muted">
+                Der QR-Code enthält nur die Aufgabe und ihre Zielklassen. Teile
+                ihn direkt über den Bildschirm oder einen Ausdruck.
+              </p>
+            </>
+          )}
+        </Card>
 
-        <section
-          className="teacher-qr-reader"
-          aria-labelledby="qr-reader-title"
-        >
-          <header className="teacher-qr-tool__head">
-            <p className="eyebrow">QR-Code Leser</p>
-            <h3 id="qr-reader-title">Aufgabe oder Abgabe prüfen</h3>
-          </header>
-          <div className="teacher-qr-tool__body">
-            <div className="teacher-qr-reader__controls">
-              <label>
-                Code manuell prüfen
-                <textarea
-                  rows={5}
-                  value={manualCode}
-                  onChange={(event) => setManualCode(event.target.value)}
-                  placeholder="Code hier einfügen"
-                />
-              </label>
-              <QrCodeScanner
-                continuous
-                onResult={(value) => void inspectCode(value)}
-              />
-              <button
-                className="button"
-                type="button"
-                onClick={() => void inspectCode(manualCode)}
-              >
-                Code prüfen
-              </button>
-            </div>
-            {scanError ? <p role="alert">{scanError}</p> : null}
-            {scanned ? (
-              <article className="teacher-qr-reader__result" aria-live="polite">
-                <span>{TEACHER_SUBJECT_LABELS[scanned.subject]}</span>
-                <h4>{scanned.title}</h4>
-                <p>{scanned.instructions}</p>
-                <small>
-                  {scanned.classIds.length} Klasse
-                  {scanned.classIds.length === 1 ? "" : "n"}
-                  {scanned.dueDate ? ` · fällig ${scanned.dueDate}` : ""}
-                </small>
-              </article>
-            ) : null}
-            {qrAssignment ? (
-              <section
-                className="teacher-submission-log"
-                aria-labelledby="submission-log-title"
-              >
-                <div>
-                  <p className="eyebrow">Lokales Abgabelog</p>
-                  <h4 id="submission-log-title">{qrAssignment.title}</h4>
-                  <strong>
-                    {submissions.length} / {expectedMembers.length} abgegeben
-                  </strong>
-                </div>
-                {expectedMembers.length === 0 ? (
-                  <p>Für diese Zuteilung sind noch keine Schüler vorhanden.</p>
-                ) : (
-                  <ul>
-                    {expectedMembers.map((member) => (
-                      <li key={member.id}>
-                        <span>{member.displayName}</span>
-                        <span
-                          className={
-                            submittedMemberIds.has(member.id)
-                              ? "teacher-submission-log__done"
-                              : "teacher-submission-log__open"
-                          }
-                        >
-                          {submittedMemberIds.has(member.id)
-                            ? "abgegeben"
-                            : "ausstehend"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ) : null}
+        <Card look="pop" className="ui-stack" aria-labelledby="qr-reader-title">
+          <div>
+            <p className="ui-eyebrow">QR-Code Leser</p>
+            <h3 id="qr-reader-title" className="ui-h-section">
+              Aufgabe oder Abgabe prüfen
+            </h3>
           </div>
-        </section>
+          <label className="ui-labeled">
+            Code manuell prüfen
+            <textarea
+              className="ui-textarea"
+              rows={4}
+              value={manualCode}
+              onChange={(event) => setManualCode(event.target.value)}
+              placeholder="Code hier einfügen"
+            />
+          </label>
+          <div className="ui-row">
+            <QrCodeScanner
+              continuous
+              onResult={(value) => void inspectCode(value)}
+            />
+            <Button variant="soft" onClick={() => void inspectCode(manualCode)}>
+              Code prüfen
+            </Button>
+          </div>
+          {scanError ? (
+            <p className="ui-notice ui-notice--bad" role="alert">
+              {scanError}
+            </p>
+          ) : null}
+          {scanned ? (
+            <article
+              className="ui-card ui-card--soft ui-card--pad ui-stack"
+              aria-label="Eingelesene Aufgabe"
+              aria-live="polite"
+            >
+              <Pill tone="accent">
+                {TEACHER_SUBJECT_LABELS[scanned.subject]}
+              </Pill>
+              <h4 className="ui-h-section">{scanned.title}</h4>
+              <p className="ui-small">{scanned.instructions}</p>
+              <p className="ui-tiny ui-muted">
+                {scanned.classIds.length} Klasse
+                {scanned.classIds.length === 1 ? "" : "n"}
+                {scanned.dueDate ? ` · fällig ${scanned.dueDate}` : ""}
+              </p>
+            </article>
+          ) : null}
+          {qrAssignment ? (
+            <section
+              className="ui-stack"
+              aria-labelledby="submission-log-title"
+            >
+              <div className="ui-between">
+                <div>
+                  <p className="ui-eyebrow">Lokales Abgabelog</p>
+                  <h4 id="submission-log-title" className="ui-h-section">
+                    {qrAssignment.title}
+                  </h4>
+                </div>
+                <Pill tone="good">
+                  {submissions.length} / {expectedMembers.length} abgegeben
+                </Pill>
+              </div>
+              {expectedMembers.length === 0 ? (
+                <p className="ui-small ui-muted">
+                  Für diese Zuteilung sind noch keine Schüler vorhanden.
+                </p>
+              ) : (
+                <ul className="ui-list">
+                  {expectedMembers.map((member) => (
+                    <li key={member.id} className="ui-between ui-item">
+                      <span>{member.displayName}</span>
+                      {submittedMemberIds.has(member.id) ? (
+                        <Pill tone="good">abgegeben</Pill>
+                      ) : (
+                        <Pill>ausstehend</Pill>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ) : null}
+        </Card>
       </div>
     </section>
   );

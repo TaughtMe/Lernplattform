@@ -190,6 +190,21 @@ const PATHS = {
     </>
   ),
   download: <path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14" />,
+  upload: <path d="M12 20V9M7 13.5l5-5 5 5M5 4.5h14" />,
+  up: <path d="M6 14.5l6-6 6 6" />,
+  down: <path d="M6 9.5l6 6 6-6" />,
+  refresh: <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4" />,
+  sliders: <path d="M5 7h9M18 7h1M5 17h3M12 17h7M16 5v4M10 15v4" />,
+  sparkles: (
+    <path d="M12 4l1.8 4.7L18.5 10.5l-4.7 1.8L12 17l-1.8-4.7L5.5 10.5l4.7-1.8zM18.5 16v4M16.5 18h4" />
+  ),
+  swap: <path d="M7 7.5h11l-3.5-3.5M17 16.5H6l3.5 3.5" />,
+  pencil: <path d="M5 19l1-4L16 5l3 3L9 18zM14 7l3 3" />,
+  shield: <path d="M12 3.5l7 3v5.5c0 4.2-3 7.4-7 8.5-4-1.1-7-4.3-7-8.5V6.5z" />,
+  drop: <path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5z" />,
+  cloud: (
+    <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;

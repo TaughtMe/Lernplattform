@@ -3,10 +3,9 @@ import { cookies, headers } from "next/headers";
 import { PREVIEW_COOKIE } from "../src/domain/release";
 import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
-import { SiteMetaActions } from "./components/site-meta-actions";
-import "./globals.css?ui=acceptance-v5";
-import "./student-module-shell.css";
+import { SiteFooter } from "./ui/site-footer";
 import "katex/dist/katex.min.css";
+import "./ui/base.css";
 import "./ui/lernraum-ui.css";
 
 export const viewport: Viewport = {
@@ -92,7 +91,7 @@ export default async function RootLayout({
       <body>
         <ReleaseProvider value={visibility}>
           {children}
-          <SiteMetaActions />
+          <SiteFooter />
         </ReleaseProvider>
       </body>
     </html>

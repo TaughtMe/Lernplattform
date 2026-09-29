@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 import { StudentAssignments } from "../../components/student-assignments";
-import { StudentDashboardShell } from "../../components/student-dashboard-shell";
+import { StudentPage } from "../../ui/shell/student-page";
+import { PageHeader } from "../../ui/primitives";
 
 export const metadata: Metadata = { title: "Meine Aufgaben" };
 
 export default function Page() {
   return (
-    <StudentDashboardShell activePath="/lernen/aufgaben">
-      <div className="student-dashboard__page">
-        <header>
-          <p className="eyebrow">Von deiner Lehrkraft</p>
-          <h1>Meine Aufgaben</h1>
-          <p>Übernimm einen Auftrag und arbeite ihn in Ruhe ab.</p>
-        </header>
+    <StudentPage activePath="/lernen/aufgaben">
+      <div className="ui-page">
+        <PageHeader eyebrow="Von deiner Lehrkraft" title="Meine Aufgaben">
+          Übernimm einen Auftrag und arbeite ihn in Ruhe ab.
+        </PageHeader>
         <StudentAssignments />
       </div>
-    </StudentDashboardShell>
+    </StudentPage>
   );
 }

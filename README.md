@@ -41,16 +41,21 @@ Lehrkrafttoken geschützt.
 ## Oberfläche
 
 Die Oberfläche folgt dem Design „Lernraum UI“ (`docs/design/`, Referenzbilder
-je Screen). Tokens und Grundbausteine stehen in `app/ui/lernraum-ui.css`
-(Klassen mit Präfix `ui-`), die React-Bausteine in `app/ui/`: Grundbausteine
-(`primitives.tsx`), Dialog (`sheet.tsx`), Tiere, Icons sowie Schüler- und
-Lehrerrahmen (`app/ui/shell/`). Neue Screens nutzen ausschließlich diese
-Schicht. `app/globals.css` enthält nur noch Stile, die ältere, noch nicht
-umgebaute Seiteninhalte tatsächlich verwenden (Klassenbereich, Kopfrechnen,
-Lehrer-Unterseiten); sie laufen im Rahmen als `.ui-legacy` und erhalten dort
-die Design-Typografie. Die Bausteinübersicht liegt im Entwicklungsmodus unter
-`/entwicklung/ui`. Der Umbau ist in `docs/umsetzungsplan-lernraum-ui.md`
-beschrieben, Fachwissen zu exemplarisch gefüllten Screens in `docs/inhalte/`.
+je Screen) und besteht aus genau einer Gestaltungsschicht:
+
+- `app/ui/base.css`: Reset (Tailwind-Preflight in der Ebene `base`) und wenige
+  Dokumentregeln. Tailwind-Hilfsklassen werden nicht verwendet.
+- `app/ui/lernraum-ui.css`: Tokens (hell/dunkel) und alle Klassen mit Präfix
+  `ui-`; Zustände heißen `is-*`.
+- `app/ui/`: React-Bausteine (`primitives.tsx`, `sheet.tsx`, `icons.tsx`,
+  Tiere, QR-Scanner, Raumcode-Eingabe, Seitenfuß) sowie Schüler- und
+  Lehrerrahmen in `app/ui/shell/`.
+
+Größere Screens trennen Zustand und Darstellung, zum Beispiel das
+Lehrkraft-Laufdiktat (`app/lehrer/live/`: `useTeacherLiveRoom` plus
+Schritt-Komponenten) und das Schülerspiel (`app/raum/spiel/`). Die
+Bausteinübersicht liegt im Entwicklungsmodus unter `/entwicklung/ui`.
+Fachwissen zu exemplarisch gefüllten Screens steht in `docs/inhalte/`.
 
 ## Häuser
 

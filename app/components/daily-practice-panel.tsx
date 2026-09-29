@@ -8,7 +8,8 @@ import {
 } from "../../src/domain/class-workspace";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
-import { ArrowRightIcon } from "./ui-icons";
+import { Icon } from "../ui/icons";
+import { EmptyState, Pill } from "../ui/primitives";
 
 const PERSONAL_PRACTICE_MODULES: readonly ClassModule[] = [
   "vocabulary",
@@ -55,12 +56,16 @@ export function DailyPracticePanel({
   }, [enabledModules, repository]);
 
   if (loading) {
-    return <p className="today-empty">Deine heutige Auswahl wird geladen …</p>;
+    return (
+      <p className="ui-small ui-muted" role="status">
+        Deine heutige Auswahl wird geladen …
+      </p>
+    );
   }
 
   if (failed) {
     return (
-      <p className="today-empty today-empty--error">
+      <p className="ui-notice ui-notice--bad" role="status">
         Deine Wiederholungen konnten auf diesem Gerät nicht geladen werden.
       </p>
     );
@@ -68,40 +73,42 @@ export function DailyPracticePanel({
 
   if (practice.length === 0) {
     return (
-      <div className="today-empty">
-        <strong>Im Moment ist nichts offen.</strong>
-        <p>
-          Fehlerhafte oder später fällige Inhalte erscheinen automatisch hier.
-        </p>
-      </div>
+      <EmptyState title="Im Moment ist nichts offen.">
+        Fehlerhafte oder später fällige Inhalte erscheinen automatisch hier.
+      </EmptyState>
     );
   }
 
   return (
-    <div className="today-grid">
+    <div className="ui-grid-auto" style={{ ["--min" as string]: "240px" }}>
       {practice.slice(0, maxItems).map((item) => (
-        <Link className="today-card" href={item.route} key={item.id}>
-          <div>
-            <span className="content-type">
-              {CLASS_MODULE_LABELS[item.module]}
-            </span>
-            <span className="reason-label">
+        <Link
+          className="ui-card ui-card--pop ui-card--pad ui-stack ui-today-card"
+          href={item.route}
+          key={item.id}
+        >
+          <span
+            className="ui-row ui-wrap"
+            style={{ ["--gap" as string]: "6px" }}
+          >
+            <Pill>{CLASS_MODULE_LABELS[item.module]}</Pill>
+            <Pill tone={item.reason === "error" ? "bad" : "accent"}>
               {item.reason === "error"
                 ? "Aus deinem letzten Fehler"
                 : item.reason === "due"
                   ? "Heute fällig"
                   : "Dein nächster Schritt"}
-            </span>
-          </div>
-          <h3>{item.title}</h3>
-          <p>{item.detail}</p>
-          <strong>
+            </Pill>
+          </span>
+          <h3 className="ui-h-section">{item.title}</h3>
+          <p className="ui-small ui-muted">{item.detail}</p>
+          <strong className="ui-row ui-today-card__cta">
             {item.reason === "error"
               ? "Fehler jetzt üben"
               : item.reason === "due"
                 ? "Jetzt wiederholen"
-                : "Lernweg fortsetzen"}{" "}
-            <ArrowRightIcon aria-hidden="true" />
+                : "Lernweg fortsetzen"}
+            <Icon name="arrow" size={16} />
           </strong>
         </Link>
       ))}

@@ -9,8 +9,10 @@ beforeEach(() => {
   list.mockReset().mockResolvedValue([]);
 });
 
-vi.mock("../../src/storage/math-practice", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../../src/storage/math-practice")>()),
+vi.mock("../../../src/storage/math-practice", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../../src/storage/math-practice")
+  >()),
   createMathPracticeRepository: () => ({
     put,
     list,

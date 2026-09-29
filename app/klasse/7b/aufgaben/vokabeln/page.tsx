@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { FirstLearningRound } from "../../../../components/first-learning-round";
-import { ArrowLeftIcon } from "../../../../components/ui-icons";
+import { StudentPage } from "../../../../ui/shell/student-page";
 
 export const metadata: Metadata = { title: "School words · Klasse 7b" };
 
 export default function Page() {
   return (
-    <main className="module-page">
-      <header className="class-topbar">
-        <Link href="/klasse/7b" className="back-link">
-          <ArrowLeftIcon aria-hidden="true" /> Klasse 7b
-        </Link>
-        <span className="ranking-note">Zählt zum Klassenfortschritt</span>
-      </header>
+    <StudentPage activePath="/lernen/klasse">
       <FirstLearningRound />
-    </main>
+    </StudentPage>
   );
 }

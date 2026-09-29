@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { TeacherLiveRoom } from "../../components/teacher-live-room";
-import { TeacherCockpitShell } from "../../components/teacher-cockpit-shell";
+import { TeacherLiveRoom } from "./teacher-live-room";
+import { TeacherShell } from "../../ui/shell/teacher-shell";
 
 export const metadata: Metadata = { title: "Live-Unterricht" };
 
@@ -10,8 +10,8 @@ export default function Page() {
   const liveRoomConfig = url && publishableKey ? { url, publishableKey } : null;
 
   return (
-    <TeacherCockpitShell active="live">
+    <TeacherShell active="live">
       <TeacherLiveRoom liveRoomConfig={liveRoomConfig} />
-    </TeacherCockpitShell>
+    </TeacherShell>
   );
 }

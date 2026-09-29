@@ -1,0 +1,75 @@
+/*
+ * Grundlage vor dem Gestaltungssystem: Tailwinds Preflight als Reset (in
+ * der Ebene „base“, damit lernraum-ui.css immer Vorrang hat) und wenige
+ * Dokumentregeln. Tailwind-Hilfsklassen werden nicht verwendet.
+ */
+@import "tailwindcss/preflight.css" layer(base);
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-width: 0;
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  letter-spacing: -0.005em;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+:where(main, section, article, header, footer, nav, div) {
+  min-width: 0;
+}
+
+:where(h1, h2, h3, p, a, li) {
+  overflow-wrap: anywhere;
+}
+
+:where(button, input) {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Berührungsbedienung: Zielgrößen mindestens 44 px. */
+@media (pointer: coarse) {
+  .ui-chip,
+  .ui-seg > *,
+  .ui-btn--sm {
+    min-height: 44px;
+  }
+}
+
+/* Sehr schmale Geräte (z. B. 320 px): weniger Rand, kleinere Überschriften. */
+@media (max-width: 370px) {
+  .ui-page {
+    padding-inline: 12px;
+  }
+  .ui .ui-h-page {
+    font-size: 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-export function StudentRouteFocus({ activePath }: { activePath: string }) {
+export function RouteFocus({ activePath }: { activePath: string }) {
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       const heading = document.querySelector<HTMLElement>(".ui-shell__main h1");

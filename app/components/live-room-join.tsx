@@ -29,20 +29,15 @@ import { AnimalImage } from "../ui/animal";
 import { RoomFrame } from "../ui/room-frame";
 import { useLearnerProfile } from "../ui/use-learner-profile";
 import { useRelease } from "../release/release-context";
-import { LiveRunningDictationGame } from "./live-running-dictation-game";
-import { QrCodeScanner } from "./qr-code-scanner";
+import { LiveRunningDictationGame } from "../raum/spiel/live-game";
+import { QrCodeScanner } from "../ui/qr-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
 import { useHydrated } from "./use-hydrated";
 import { useLiveSessionGuards } from "./use-live-session-guards";
 
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import { LiveVersionNotice } from "./live-version-notice";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  CheckIcon,
-  CloseIcon,
-} from "./ui-icons";
+import { Icon } from "../ui/icons";
 
 type View = "join" | "connecting" | "lobby" | "starting" | "game" | "ended";
 type AttackType = "ink" | "flicker";
@@ -511,12 +506,16 @@ export function LiveRoomJoin({
       <RoomFrame code={code} animal={frameAnimal} subtitle={lobbyName}>
         <section className="ui-card ui-room__card" aria-live="polite">
           <span className="ui-room__mark" aria-hidden="true">
-            {view === "lobby" ? <CheckIcon /> : <ArrowRightIcon />}
+            {view === "lobby" ? (
+              <Icon name="check" size={28} />
+            ) : (
+              <Icon name="arrow" size={28} />
+            )}
           </span>
           <AnimalImage
             animal={room?.animalToken ?? null}
             size={120}
-            className="ui-bob live-room-lobby-avatar"
+            className="ui-bob ui-room__animal"
           />
           <h1 className="ui-room__title">
             {view === "lobby"
@@ -545,7 +544,7 @@ export function LiveRoomJoin({
       <RoomFrame code={code} animal={frameAnimal}>
         <section className="ui-card ui-room__card" aria-live="polite">
           <span className="ui-room__mark ui-room__mark--bad" aria-hidden="true">
-            <CloseIcon />
+            <Icon name="close" size={28} />
           </span>
           <h1 className="ui-room__title">Diese Runde ist beendet.</h1>
           <p className="ui-muted">
@@ -585,8 +584,7 @@ export function LiveRoomJoin({
             className="ui-btn ui-btn--primary ui-btn--block"
             onClick={() => setError("")}
           >
-            <ArrowLeftIcon aria-hidden="true" width={18} height={18} /> Zur
-            Code-Eingabe
+            <Icon name="back" size={18} /> Zur Code-Eingabe
           </button>
         </section>
       </RoomFrame>
@@ -596,7 +594,7 @@ export function LiveRoomJoin({
   return (
     <RoomFrame code="" animal={frameAnimal}>
       <section
-        className="ui-card ui-room__card live-room-join"
+        className="ui-card ui-room__card ui-room__join"
         aria-labelledby="live-room-title"
         data-hydrated={hydrated ? "true" : "false"}
       >

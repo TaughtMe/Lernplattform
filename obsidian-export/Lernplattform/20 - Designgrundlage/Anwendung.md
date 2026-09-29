@@ -19,7 +19,7 @@ Der abgestimmte Startseitenentwurf dient als **visuelle und konzeptionelle Desig
 
 ## Umsetzung im Code
 
-- Tokens und Klassen (Präfix `ui-`) stehen in `app/ui/lernraum-ui.css`, React-Bausteine in `app/ui/` (Knöpfe, Karten, Pillen, Fortschrittsbalken und -ring, Segmentschalter, Hinweise, Leerzustand, Dialog als natives `<dialog>`, Tiere, Icons).
+- Es gibt genau eine Gestaltungsschicht: Reset in `app/ui/base.css`, Tokens und Klassen (Präfix `ui-`, Zustände `is-*`) in `app/ui/lernraum-ui.css`, React-Bausteine in `app/ui/` (Knöpfe, Karten, Pillen, Fortschrittsbalken und -ring, Segmentschalter, Hinweise, Leerzustand, Dialog als natives `<dialog>`, Tiere, Icons).
 - Schülerrahmen: dunkle Leiste mit Lernen, Raum und – nur bei eingeschalteter Motivation – Haus; mobil eine untere Tab-Leiste. Lehrerrahmen: dunkle Seitenleiste mit Klassenliste und Bereichen, mobil als Schublade.
 - Die Startseite folgt Entwurf 2a: Tier und vierstelliger Raumcode, nichts weiter. Die Beschreibung unter „Navigation“ („Mein Lernraum“ und „Freies Üben“ auf der Startseite) ist damit überholt; der persönliche Lernraum ist über das Freigaberegister erreichbar.
 - Kontraste beider Modi prüft ein automatischer Test gegen WCAG AA; jede Oberfläche wird zusätzlich mit axe geprüft.
