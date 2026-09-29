@@ -15,7 +15,7 @@
     "format": "prettier --write app src e2e tests docs *.json *.ts *.mjs",
     "format:check": "prettier --check app src e2e tests docs *.json *.ts *.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node scripts/css-module-types.mjs --check && tsc --noEmit",
     "test": "npm run test:unit && npm run build && npm run test:render",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -25,9 +25,14 @@
     "test:e2e:chromium": "playwright test --project=desktop-chromium --project=mobile-chrome --project=minimum-width",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:database && npm run build && npm run test:render",
-    "quality": "npm run check && npm run test:e2e && npm run test:e2e:live"
+    "quality": "npm run check && npm run test:e2e && npm run test:e2e:live",
+    "css-types": "node scripts/css-module-types.mjs",
+    "design:references": "node scripts/render-design-references.mjs",
+    "test:design": "playwright test --config playwright.design.config.ts"
   },
   "dependencies": {
+    "@fontsource-variable/fredoka": "^5.3.0",
+    "@fontsource-variable/work-sans": "^5.3.0",
     "@supabase/supabase-js": "2.105.4",
     "dexie": "4.4.4",
     "katex": "^0.17.0",
@@ -63,6 +68,8 @@
     "fast-check": "4.9.0",
     "globals": "16.4.0",
     "jsdom": "29.1.1",
+    "postcss": "^8.5.28",
+    "postcss-selector-parser": "^7.1.6",
     "prettier": "3.9.6",
     "react-server-dom-webpack": "19.2.8",
     "tailwindcss": "4.2.1",

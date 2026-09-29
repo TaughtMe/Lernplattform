@@ -1,0 +1,568 @@
+/*
+ * Laufdiktat Schüler: Design 5a (mobil, 390 px) und 5b (Tablet quer/Laptop).
+ * Die Ansicht reagiert auf die Breite ihres Containers, nicht des Fensters.
+ */
+.screen {
+  composes: view from "../parts/parts.module.css";
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+.layout {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 12px 14px 16px;
+}
+
+/* ---------- Kopf ---------- */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.headerAnimal {
+  display: none;
+}
+.titles {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.subtitle {
+  font-size: 12px;
+  color: var(--ink2);
+}
+.wideOnly {
+  display: none;
+}
+
+.progress {
+  display: grid;
+  grid-template-columns: repeat(var(--segments), 1fr);
+  gap: 4px;
+}
+.progress > span {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface2);
+}
+.progress > .reached {
+  background: var(--gold);
+}
+
+.phase {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---------- 1 · Station ---------- */
+.station {
+  gap: 12px;
+}
+.stationHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.question {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink3);
+}
+.tilesScroll {
+  flex: 1;
+  min-height: 0;
+  margin: 0 -2px;
+  padding: 2px;
+  overflow-y: auto;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 8px;
+}
+.tile {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: var(--tile-height);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--tile-font);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+}
+.tile[aria-pressed="true"] {
+  border: 2px solid var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* ---------- 2 · Zwei Finger / 3 · Lesen ---------- */
+.hold,
+.read {
+  flex-direction: row;
+  gap: 10px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.hold {
+  cursor: pointer;
+}
+.edge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  gap: 6px;
+  width: 64px;
+  border-radius: 22px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hold .edge {
+  border: 2px dashed var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.read .edge {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border-radius: 22px;
+  background: var(--surface);
+  text-align: center;
+}
+.hold .card {
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+}
+.read .card {
+  gap: 16px;
+  padding: 18px;
+  border: 2px solid var(--accent);
+}
+.eyeDisc {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.holdTitle {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.holdText {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink2);
+  text-wrap: pretty;
+}
+.sentence {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.releaseHint {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+
+/* ---------- 4 · Schreiben ---------- */
+.write {
+  gap: 10px;
+}
+.writeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.writeTitle {
+  font-size: 15px;
+  font-weight: 700;
+}
+.answer {
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 80px;
+  padding: 14px 16px;
+  border: 2px solid var(--line2);
+  border-radius: 16px;
+  outline: none;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  resize: none;
+}
+.answer:focus {
+  border-color: var(--accent);
+}
+.check {
+  align-self: center;
+}
+
+/* ---------- Battle ---------- */
+.battle {
+  gap: 9px;
+  padding-top: 9px;
+}
+.battleControls,
+.battleText {
+  display: contents;
+}
+.powers {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  gap: 12px;
+}
+.power {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border: 2px solid var(--line2);
+  border-radius: 50%;
+  background: var(--surface);
+  cursor: pointer;
+}
+.ring.ready {
+  border-color: var(--ring-color);
+  box-shadow: 0 0 0 4px var(--accent-bg);
+}
+.ringEmpty,
+.ringFill {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.ringEmpty {
+  filter: grayscale(1);
+  opacity: 0.3;
+}
+.ringFill {
+  clip-path: inset(calc(100% - var(--charge)) 0 0 0);
+}
+.powerLabel {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.charge {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: 5px;
+  width: 200px;
+  height: 50px;
+  text-align: center;
+}
+.chargeLabel {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.chargeTrack {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--surface2);
+}
+.chargeTrack > span {
+  display: block;
+  width: var(--charge);
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gold);
+}
+.chargeTrack.full > span {
+  background: var(--green);
+}
+.copyBox {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.copyText {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+.char {
+  color: var(--ink3);
+}
+.char.right {
+  color: var(--good);
+}
+.char.wrong {
+  color: var(--bad);
+}
+.char.cursor {
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+.readAloud {
+  align-self: center;
+}
+
+/* ---------- Fertig ---------- */
+.done {
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+.doneDisc {
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 0 0 10px var(--gold);
+}
+.stars {
+  font-size: 30px;
+  letter-spacing: 4px;
+  color: var(--gold);
+}
+.doneTitle {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 380px;
+}
+.stat {
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.stat > p {
+  margin: 0;
+}
+.statValue {
+  font-size: 22px;
+  font-weight: 800;
+}
+.statLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+.doneNote {
+  font-size: 13px;
+  color: var(--ink2);
+}
+.doneButton {
+  width: 100%;
+  max-width: 380px;
+}
+
+/* ============ Tablet quer / Laptop (5b) ============ */
+@container (min-width: 900px) {
+  .layout {
+    gap: 18px;
+    padding: 20px 28px 28px;
+  }
+  .header {
+    gap: 14px;
+  }
+  .headerAnimal {
+    display: block;
+  }
+  .titles {
+    flex: none;
+  }
+  .title {
+    font-size: 16px;
+  }
+  .subtitle {
+    font-size: 12.5px;
+  }
+  .wideOnly {
+    display: inline;
+  }
+  .header > :last-child {
+    margin-left: auto;
+  }
+  .progress {
+    gap: 5px;
+  }
+  .progress > span {
+    height: 7px;
+  }
+
+  .station {
+    gap: 14px;
+  }
+  .stationHead {
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .question {
+    align-self: center;
+    font-size: 24px;
+  }
+  .stationHead .count {
+    display: none;
+  }
+  .tilesScroll {
+    display: contents;
+  }
+  .tiles {
+    flex: 1;
+    grid-template-columns: repeat(var(--cols-wide), minmax(0, 1fr));
+    grid-auto-rows: var(--row-wide);
+    align-content: center;
+    gap: 10px;
+    min-height: 0;
+  }
+  .tile {
+    height: auto;
+    font-size: var(--tile-font-wide);
+  }
+
+  .hold,
+  .read {
+    gap: 18px;
+  }
+  .holdTitle {
+    font-size: 24px;
+  }
+  .sentence {
+    font-size: 40px;
+  }
+
+  .write {
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .writeTitle {
+    font-size: 18px;
+  }
+  .answer {
+    flex: none;
+    min-height: 140px;
+    font-size: 24px;
+  }
+
+  .battle {
+    gap: 18px;
+    padding-top: 0;
+  }
+  .powers {
+    justify-content: center;
+    gap: 18px;
+    padding-top: 6px;
+  }
+  .power {
+    width: 86px;
+    height: 98px;
+  }
+  .ring {
+    width: 72px;
+    height: 72px;
+  }
+  .powerLabel {
+    font-size: 12px;
+  }
+  .charge {
+    width: 209px;
+    height: 29px;
+  }
+  .battleText {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 720px;
+    height: 238px;
+    margin: 0 auto;
+  }
+  .copyBox {
+    padding: 20px 22px;
+  }
+  .copyText {
+    font-size: 26px;
+  }
+  .readAloud {
+    margin-top: 14px;
+  }
+
+  .doneDisc {
+    width: 180px;
+    height: 180px;
+  }
+  .doneTitle {
+    font-size: 28px;
+  }
+}

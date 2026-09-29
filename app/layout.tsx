@@ -4,7 +4,10 @@ import { PREVIEW_COOKIE } from "../src/domain/release";
 import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
 import { SiteFooter } from "./ui/site-footer";
+import "@fontsource-variable/work-sans/wght.css";
+import "@fontsource-variable/fredoka/wght.css";
 import "katex/dist/katex.min.css";
+import "./ui/tokens.css";
 import "./ui/base.css";
 import "./ui/lernraum-ui.css";
 
@@ -76,17 +79,6 @@ export default async function RootLayout({
     <html lang="de" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400..700&family=Work+Sans:wght@300..800&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body>
         <ReleaseProvider value={visibility}>

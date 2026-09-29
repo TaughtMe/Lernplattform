@@ -1,0 +1,720 @@
+"use client";
+
+import type { CSSProperties, ReactNode } from "react";
+import { Icon, type IconName } from "../../ui/icons";
+import {
+  Animal,
+  Chip,
+  cx,
+  Eyebrow,
+  GreenButton,
+  PrimaryButton,
+  SquareIconButton,
+  ThemeSwitch,
+  type Theme,
+} from "../parts/parts";
+import styles from "./teacher-dictation-screen.module.css";
+
+export type TeacherStep = "import" | "settings" | "lobby" | "live";
+export type ContentKind = "text" | "vocabulary" | "math";
+export type SplitMode = "satz" | "zeile" | "wort";
+export type DictationMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
+export type DictationOption =
+  "tts" | "shuffle" | "strict" | "stars" | "ink" | "flicker";
+
+export type LiveStudent = {
+  name: string;
+  animal: string;
+  progress: number;
+  total: number;
+  mistakes: number;
+};
+export type StationState = {
+  number: number;
+  state: "done" | "active" | "idle";
+  label: string;
+};
+
+export type TeacherDictationScreenProps = {
+  className: string;
+  roomCode: string;
+  theme: Theme;
+  step: TeacherStep;
+  content: {
+    kind: ContentKind;
+    text: string;
+    split: SplitMode;
+    sections: readonly string[];
+  };
+  mode: DictationMode;
+  options: Record<DictationOption, boolean>;
+  stationCount: number;
+  optionsOpen: boolean;
+  /** QR-Code zum Raum; ohne Angabe erscheint ein Platzhalter. */
+  qr?: ReactNode;
+  lobby: {
+    expected: number;
+    joined: ReadonlyArray<{ name: string; animal: string }>;
+  };
+  live: {
+    active: number;
+    finished: number;
+    overall: number;
+    students: readonly LiveStudent[];
+    stations: readonly StationState[];
+    mistakes: ReadonlyArray<{ word: string; count: number }>;
+  };
+  onToggleTheme?: () => void;
+  onLeave?: () => void;
+  onStep?: (step: TeacherStep) => void;
+  onKind?: (kind: ContentKind) => void;
+  onText?: (text: string) => void;
+  onSplit?: (split: SplitMode) => void;
+  onEditSections?: () => void;
+  onImportFile?: () => void;
+  onMode?: (mode: DictationMode) => void;
+  onToggleOption?: (option: DictationOption) => void;
+  onStationCount?: (count: number) => void;
+  onOpenOptions?: () => void;
+  onCloseOptions?: () => void;
+  onExportCsv?: () => void;
+};
+
+const STEPS: ReadonlyArray<{
+  id: TeacherStep;
+  tab: string;
+  title: string;
+  next: string;
+}> = [
+  {
+    id: "import",
+    tab: "Diktat",
+    title: "Wortliste vorbereiten",
+    next: "Weiter zu Modus",
+  },
+  {
+    id: "settings",
+    tab: "Modus",
+    title: "Modus und Optionen",
+    next: "Raum öffnen",
+  },
+  { id: "lobby", tab: "Lobby", title: "Lobby", next: "Sitzung starten" },
+  { id: "live", tab: "Live", title: "Live-Sitzung", next: "Sitzung beenden" },
+];
+
+const KINDS: ReadonlyArray<[ContentKind, string]> = [
+  ["text", "Text"],
+  ["vocabulary", "Vokabeln"],
+  ["math", "Mathe"],
+];
+const SPLITS: ReadonlyArray<[SplitMode, string]> = [
+  ["satz", "Satz"],
+  ["zeile", "Zeile"],
+  ["wort", "Wort"],
+];
+
+export const MODES: ReadonlyArray<{
+  id: DictationMode;
+  title: string;
+  sub: string;
+  icon: IconName;
+  flow: readonly string[];
+}> = [
+  {
+    id: "LAUFDIKTAT",
+    title: "Laufdiktat",
+    sub: "Mit zwei Fingern einprägen, dann tippen",
+    icon: "run",
+    flow: ["Abschnitt einprägen", "Zum Schreibfeld wechseln", "Eingabe prüfen"],
+  },
+  {
+    id: "UEBUNG",
+    title: "Freie Übung",
+    sub: "Vorlesen und gestufte Buchstaben-Hilfe",
+    icon: "ear",
+    flow: ["Wort anhören", "Wort eintippen", "Bei Fehler Buchstaben-Hilfe"],
+  },
+  {
+    id: "BATTLE",
+    title: "Battle",
+    sub: "Gegeneinander tippen, mit Störangriffen",
+    icon: "swords",
+    flow: [
+      "Beide starten gleichzeitig",
+      "Abtippen, Angriffe einsetzen",
+      "Wer zuerst fertig ist, gewinnt",
+    ],
+  },
+  {
+    id: "STATION",
+    title: "Stationen",
+    sub: "Ohne eigenes Gerät, an nummerierten Stationen",
+    icon: "pin",
+    flow: [
+      "Zur Station laufen",
+      "Abschnitt lesen und merken",
+      "Am Gerät eintippen",
+    ],
+  },
+];
+
+function optionList(mode: DictationMode) {
+  const station = mode === "STATION";
+  return [
+    {
+      id: "tts",
+      label: "Vorlesen erlauben",
+      hint: "Zählt als Spicker",
+      show: true,
+    },
+    {
+      id: "shuffle",
+      label: station
+        ? "Reihenfolge je Schülernummer mischen"
+        : "Reihenfolge pro Schüler mischen",
+      hint: "",
+      show: true,
+    },
+    {
+      id: "strict",
+      label: "Nur getippte Eingaben",
+      hint: "Verhindert Einfügen und Autokorrektur",
+      show: !station,
+    },
+    { id: "stars", label: "Sterne anzeigen", hint: "", show: !station },
+    { id: "ink", label: "Tinten-Angriff", hint: "", show: mode === "BATTLE" },
+    {
+      id: "flicker",
+      label: "Flimmer-Angriff",
+      hint: "",
+      show: mode === "BATTLE",
+    },
+  ].filter((option) => option.show) as Array<{
+    id: DictationOption;
+    label: string;
+    hint: string;
+  }>;
+}
+
+/** Laufdiktat für Lehrkräfte (Design 5c mobil, 5d Desktop). */
+export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
+  const index = STEPS.findIndex((step) => step.id === props.step);
+  const current = STEPS[index] ?? STEPS[0]!;
+  const stepLabel = `Schritt ${index + 1} von ${STEPS.length}`;
+  return (
+    <div className={styles.screen}>
+      <header className={styles.header}>
+        <SquareIconButton
+          label="Zurück zu Inhalte"
+          icon="back"
+          onClick={props.onLeave}
+        />
+        <span className={styles.titles}>
+          <span className={styles.stepLabel}>
+            <span className={styles.narrowOnly}>{stepLabel} · Laufdiktat</span>
+            <span className={styles.wideOnly}>
+              Klasse {props.className} · Laufdiktat · {stepLabel}
+            </span>
+          </span>
+          <h1 className={styles.stepTitle}>{current.title}</h1>
+        </span>
+        <nav className={styles.steps} aria-label="Schritte">
+          {STEPS.map((step, stepIndex) => (
+            <button
+              key={step.id}
+              type="button"
+              className={cx(styles.step, stepIndex < index && styles.done)}
+              aria-current={stepIndex === index ? "step" : undefined}
+              onClick={() => props.onStep?.(step.id)}
+            >
+              <span className={styles.stepDot}>{stepIndex + 1}</span>
+              {step.tab}
+            </button>
+          ))}
+        </nav>
+        <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+      </header>
+
+      <div className={styles.body}>
+        {props.step === "import" ? <ImportStep {...props} /> : null}
+        {props.step === "settings" ? <SettingsStep {...props} /> : null}
+        {props.step === "lobby" ? <LobbyStep {...props} /> : null}
+        {props.step === "live" ? <LiveStep {...props} /> : null}
+      </div>
+
+      <footer className={styles.footer}>
+        {index > 0 ? (
+          <button
+            type="button"
+            className={styles.previous}
+            aria-label="Zurück"
+            onClick={() => props.onStep?.(STEPS[index - 1]!.id)}
+          >
+            <Icon
+              name="back"
+              size={18}
+              strokeWidth={2.2}
+              strokeLinejoin="miter"
+            />
+            <span className={styles.wideOnly}>Zurück</span>
+          </button>
+        ) : null}
+        <span className={styles.footerNote}>
+          Alles wird automatisch unter „Abgelegt&quot; gespeichert.
+        </span>
+        <GreenButton
+          className={styles.next}
+          onClick={() => props.onStep?.(STEPS[Math.min(index + 1, 3)]!.id)}
+        >
+          {current.next}
+        </GreenButton>
+      </footer>
+
+      {props.step === "settings" && props.optionsOpen ? (
+        <>
+          <button
+            type="button"
+            className={styles.backdrop}
+            aria-label="Optionen schließen"
+            tabIndex={-1}
+            onClick={props.onCloseOptions}
+          />
+          <div
+            className={styles.sheet}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Optionen"
+          >
+            <span className={styles.grabber} />
+            <div className={styles.sheetBody}>
+              <button
+                type="button"
+                className={styles.sheetClose}
+                aria-label="Schließen"
+                onClick={props.onCloseOptions}
+              >
+                <Icon
+                  name="close"
+                  size={16}
+                  strokeWidth={2.2}
+                  strokeLinejoin="miter"
+                />
+              </button>
+              <ModeDetails {...props} />
+            </div>
+            <PrimaryButton
+              className={styles.sheetApply}
+              onClick={props.onCloseOptions}
+            >
+              Übernehmen
+            </PrimaryButton>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function ImportStep({
+  content,
+  onKind,
+  onText,
+  onSplit,
+  onEditSections,
+  onImportFile,
+}: TeacherDictationScreenProps) {
+  const count = content.sections.length;
+  return (
+    <div className={styles.stage}>
+      <div className={styles.column}>
+        <div className={styles.chips} role="group" aria-label="Inhaltsart">
+          {KINDS.map(([kind, label]) => (
+            <Chip
+              key={kind}
+              pressed={content.kind === kind}
+              onClick={() => onKind?.(kind)}
+            >
+              {label}
+            </Chip>
+          ))}
+        </div>
+        <textarea
+          className={styles.source}
+          aria-label="Text"
+          value={content.text}
+          onChange={(event) => onText?.(event.target.value)}
+        />
+        <div className={styles.splitRow}>
+          <div className={styles.split} role="group" aria-label="Teilen nach">
+            <span className={styles.label} aria-hidden="true">
+              Teilen nach
+            </span>
+            {SPLITS.map(([split, label]) => (
+              <Chip
+                key={split}
+                pressed={content.split === split}
+                onClick={() => onSplit?.(split)}
+              >
+                {label}
+              </Chip>
+            ))}
+          </div>
+          <button
+            type="button"
+            className={styles.fileButton}
+            onClick={onImportFile}
+          >
+            Datei importieren
+          </button>
+        </div>
+      </div>
+      <div className={styles.column}>
+        <div className={styles.between}>
+          <span className={styles.label}>
+            <span className={styles.narrowOnly}>
+              {count} Abschnitte · ziehen zum Sortieren
+            </span>
+            <span className={styles.wideOnly}>
+              {count} Abschnitte · so sehen es die Schüler
+            </span>
+          </span>
+          <button
+            type="button"
+            className={cx(styles.linkButton, styles.narrowOnly)}
+            onClick={onEditSections}
+          >
+            Bearbeiten
+          </button>
+          <span className={cx(styles.muted, styles.wideOnly)}>
+            ziehen zum Sortieren
+          </span>
+        </div>
+        <ol className={styles.sections}>
+          {content.sections.map((section, sectionIndex) => (
+            <li key={sectionIndex} className={styles.section}>
+              <span className={styles.sectionNumber}>{sectionIndex + 1}</span>
+              <span className={styles.sectionText}>{section}</span>
+              <span className={styles.handle} aria-hidden="true">
+                ⋮⋮
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+function ModeButtons({
+  mode,
+  onMode,
+  onOpenOptions,
+}: TeacherDictationScreenProps) {
+  return (
+    <div className={styles.modeList}>
+      {MODES.map((entry) => (
+        <button
+          key={entry.id}
+          type="button"
+          className={styles.mode}
+          aria-pressed={entry.id === mode}
+          onClick={() => {
+            onMode?.(entry.id);
+            onOpenOptions?.();
+          }}
+        >
+          <span className={styles.modeIcon}>
+            <Icon name={entry.icon} size={22} />
+          </span>
+          <span className={styles.modeText}>
+            <span className={styles.modeTitle}>{entry.title}</span>
+            <span className={styles.modeSub}>{entry.sub}</span>
+          </span>
+          <span className={styles.radio}>
+            <Icon name="check" size={13} strokeWidth={3.4} />
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ModeDetails({
+  mode,
+  options,
+  stationCount,
+  onToggleOption,
+  onStationCount,
+}: TeacherDictationScreenProps) {
+  const current = MODES.find((entry) => entry.id === mode) ?? MODES[0]!;
+  return (
+    <div className={styles.details}>
+      <div className={styles.detailsHead}>
+        <span className={styles.detailsTitle}>{current.title}</span>
+        <span className={styles.detailsSub}>{current.sub}</span>
+      </div>
+      <div className={styles.flow}>
+        <Eyebrow>Ablauf</Eyebrow>
+        <ol className={styles.flow}>
+          {current.flow.map((text, flowIndex) => (
+            <li key={text} className={styles.flowStep}>
+              <span className={styles.flowNumber}>{flowIndex + 1}</span>
+              {text}
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div className={styles.divider} />
+      <div className={styles.options}>
+        <Eyebrow>Optionen</Eyebrow>
+        {mode === "STATION" ? (
+          <div className={styles.stationCount}>
+            Anzahl Stationen
+            <span className={styles.stepper}>
+              <button
+                type="button"
+                aria-label="Weniger"
+                onClick={() => onStationCount?.(stationCount - 1)}
+              >
+                −
+              </button>
+              <output>{stationCount}</output>
+              <button
+                type="button"
+                aria-label="Mehr"
+                onClick={() => onStationCount?.(stationCount + 1)}
+              >
+                +
+              </button>
+            </span>
+          </div>
+        ) : null}
+        {optionList(mode).map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className={styles.option}
+            aria-pressed={options[option.id]}
+            onClick={() => onToggleOption?.(option.id)}
+          >
+            <span className={styles.checkbox}>
+              <Icon name="check" size={13} strokeWidth={3.4} />
+            </span>
+            <span className={styles.optionText}>
+              <span className={styles.optionLabel}>{option.label}</span>
+              {option.hint ? (
+                <span className={styles.optionHint}>{option.hint}</span>
+              ) : null}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SettingsStep(props: TeacherDictationScreenProps) {
+  return (
+    <div className={cx(styles.stage, styles.settings)}>
+      <div className={styles.column}>
+        <span className={cx(styles.label, styles.narrowOnly)}>
+          Modus antippen · Optionen öffnen sich darüber
+        </span>
+        <Eyebrow className={styles.wideOnly}>Spielmodus wählen</Eyebrow>
+        <ModeButtons {...props} />
+      </div>
+      <section className={styles.settingsPanel} aria-label="Optionen">
+        <ModeDetails {...props} />
+      </section>
+    </div>
+  );
+}
+
+function RoomCard({ roomCode, qr }: TeacherDictationScreenProps) {
+  return (
+    <div className={styles.roomCard}>
+      <div className={styles.qr}>{qr}</div>
+      <div className={styles.roomCode}>
+        <span className={styles.roomCodeLabel}>Raumcode</span>
+        <span className={styles.codeTiles} aria-label={`Raumcode ${roomCode}`}>
+          {[...roomCode].map((char, charIndex) => (
+            <span key={charIndex} aria-hidden="true">
+              {char}
+            </span>
+          ))}
+        </span>
+        <span className={styles.roomHint}>
+          lernraum.app · Code eingeben oder scannen
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function LobbyStep(props: TeacherDictationScreenProps) {
+  const { lobby, mode, onOpenOptions } = props;
+  const current = MODES.find((entry) => entry.id === mode) ?? MODES[0]!;
+  return (
+    <div className={cx(styles.stage, styles.lobby)}>
+      <div className={styles.column}>
+        <RoomCard {...props} />
+        <span className={styles.lobbyNote}>
+          {current.title} · Schüler sehen gleich die Lobby, ab „Sitzung
+          starten&quot; den ersten Abschnitt.
+        </span>
+      </div>
+      <div className={styles.column}>
+        <div className={styles.between}>
+          <span className={styles.label}>
+            Beigetreten · {lobby.joined.length} von {lobby.expected}
+          </span>
+          <button
+            type="button"
+            className={cx(styles.linkButton, styles.narrowOnly)}
+            onClick={onOpenOptions}
+          >
+            {current.title} · Optionen
+          </button>
+          <span className={styles.waiting}>
+            <span className={styles.dot} />
+            wartet
+          </span>
+        </div>
+        <ul className={styles.joined}>
+          {lobby.joined.map((student) => (
+            <li key={student.name} className={styles.joinedCard}>
+              <span className={styles.avatar}>
+                <Animal animal={student.animal} size={26} />
+              </span>
+              <span className={styles.name}>{student.name}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function LiveStep({
+  roomCode,
+  mode,
+  live,
+  onExportCsv,
+}: TeacherDictationScreenProps) {
+  const maxMistakes = Math.max(1, ...live.mistakes.map((entry) => entry.count));
+  return (
+    <div className={cx(styles.stage, styles.live)}>
+      <span className={styles.liveBadge}>
+        <span className={styles.dot} />
+        Live · Raum {roomCode}
+      </span>
+      <div className={styles.stats}>
+        <LiveStat label="Aktiv" value={live.active} dot="var(--gold)" />
+        <LiveStat label="Fertig" value={live.finished} dot="var(--green)" />
+        <LiveStat
+          label="Gesamt"
+          value={`${live.overall} %`}
+          dot="var(--ink3)"
+        />
+      </div>
+      <div className={styles.liveGrid}>
+        <div className={styles.liveStudents}>
+          <div className={cx(styles.between, styles.studentsHead)}>
+            <span className={styles.label}>Schüler</span>
+            <button type="button" className={styles.csv} onClick={onExportCsv}>
+              Ergebnisse als CSV
+            </button>
+          </div>
+          {mode === "STATION" ? (
+            <ul className={styles.stations}>
+              {live.stations.map((station) => (
+                <li
+                  key={station.number}
+                  className={cx(
+                    styles.station,
+                    station.state === "done" && styles.stationDone,
+                    station.state === "active" && styles.stationActive,
+                  )}
+                >
+                  <span className={styles.stationNumber}>{station.number}</span>
+                  <span className={styles.stationState}>{station.label}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className={styles.students}>
+              {live.students.map((student) => (
+                <li key={student.name} className={styles.student}>
+                  <span className={styles.studentHead}>
+                    <Animal animal={student.animal} size={26} />
+                    <span className={styles.studentName}>{student.name}</span>
+                  </span>
+                  <span className={styles.studentMeta}>
+                    {student.progress >= student.total ? (
+                      <span className={styles.finished}>Fertig</span>
+                    ) : (
+                      <span className={styles.track}>
+                        <span
+                          style={{
+                            width: `${Math.round((student.progress / student.total) * 100)}%`,
+                          }}
+                        />
+                      </span>
+                    )}
+                    {student.mistakes ? (
+                      <span className={styles.errors}>
+                        {`${student.mistakes}✕`}
+                      </span>
+                    ) : null}
+                    <span className={styles.count}>
+                      {`${student.progress}/${student.total}`}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <section className={styles.mistakes} aria-label="Häufigste Fehler">
+          <Eyebrow>Häufigste Fehler</Eyebrow>
+          {live.mistakes.map((entry) => (
+            <div key={entry.word} className={styles.mistake}>
+              <span className={styles.mistakeWord}>{entry.word}</span>
+              <span className={styles.mistakeBar}>
+                <span
+                  style={{
+                    width: `${Math.round((entry.count / maxMistakes) * 100)}%`,
+                  }}
+                />
+              </span>
+              <span className={styles.mistakeCount}>{entry.count}</span>
+            </div>
+          ))}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function LiveStat({
+  label,
+  value,
+  dot,
+}: {
+  label: string;
+  value: number | string;
+  dot: string;
+}) {
+  return (
+    <div className={styles.stat}>
+      <span className={styles.statLabel}>
+        <span
+          className={styles.dot}
+          style={{ "--dot": dot } as CSSProperties}
+        />
+        {label}
+      </span>
+      <p className={styles.statValue}>{value}</p>
+    </div>
+  );
+}

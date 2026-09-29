@@ -1,12 +1,12 @@
 // @vitest-environment node
 /**
- * Prüft die Farb-Tokens aus lernraum-ui.css gegen WCAG 2.1 AA:
+ * Prüft die Farb-Tokens aus tokens.css gegen WCAG 2.1 AA:
  * Text 4,5 : 1, große Schrift und Bedienelemente 3 : 1.
  */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const css = readFileSync(new URL("./lernraum-ui.css", import.meta.url), "utf8");
+const css = readFileSync(new URL("./tokens.css", import.meta.url), "utf8");
 
 function block(selector: string) {
   const start = css.indexOf(`${selector} {`);
@@ -34,7 +34,7 @@ export function contrast(a: string, b: string) {
 }
 
 const light = block(":root");
-const dark = { ...light, ...block(':root[data-theme="dark"]') };
+const dark = { ...light, ...block('[data-theme="dark"]') };
 const onDark = { ...light, ...block(".ui-on-dark") };
 
 const TEXT_PAIRS: Array<[string, string]> = [

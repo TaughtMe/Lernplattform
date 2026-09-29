@@ -505,3 +505,13 @@ Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendu
 - **Tierprofil:** Ohne eigene Wahl wird beim ersten Start ein zufälliges Tier gespeichert und im Profil änderbar angeboten.
 - **Raumcode:** bleibt vierstellig numerisch, weil der Supabase-Vertrag es so festlegt; das alphanumerische Beispiel im Design wird nicht übernommen.
 - **Inhalte:** Kann der bestehende Code eine im Design gezeigte Funktion bereits, wird sie übernommen. Andernfalls wird der Screen mit gekennzeichneten Beispielinhalten gefüllt und das fachliche Wissen unter `docs/inhalte/` für die spätere Anbindung dokumentiert.
+
+## 48. Oberfläche vom Design aus bauen („Lernraum UI“ v2) – 29. September 2026
+
+**Beschlossen:** Die Umsetzung von Entscheidung 47 wechselt die Richtung. Statt bestehende Seiten ins Design umzubauen, wird jeder Screen der Vorlage zuerst als reine Ansicht nachgebaut und danach Schritt für Schritt an den vorhandenen Kern angebunden. Anlass: Der Umbau der alten Seiten hatte das Design nur angenähert, weil die alte Seitenstruktur das Ergebnis weiter bestimmte. Plan: `docs/umsetzungsplan-lernraum-ui-v2.md`, Branch `claude/lernraum-ui-v2`.
+
+- **Identisch heißt messbar:** Jeder Zustand eines Screens wird automatisch mit einem Referenzbild aus der Vorlage verglichen (`npm run test:design`). Zulässig sind nur Abweichungen durch Kantenglättung und die dokumentierten bewussten Abweichungen.
+- **Kern bleibt:** Lernlogik, Speicherung, Datensicherung, Freigaberegister, Supabase-Verträge und Tests werden übernommen, nicht neu geschrieben.
+- **Abnahme je Screen:** Die Projektverantwortliche Lehrkraft gibt jede Ansicht im Katalog frei, bevor sie angebunden wird.
+- **Schriften lokal:** Work Sans und Fredoka werden aus dem eigenen Paket ausgeliefert statt von Google Fonts. Das dient dem Datenschutz und dem Offlinebetrieb.
+- **Browser-Standards der Vorlage:** Schaltflächen zeigen wie in der Vorlage die Systemschrift des Geräts (Token `--font-control`). Die Entscheidung lässt sich mit einer Zeile auf Work Sans umstellen.

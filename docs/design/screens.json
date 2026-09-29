@@ -1,0 +1,377 @@
+{
+  "$comment": "Referenzzustände aus lernraum-ui.dc.html. Erzeugen: npm run design:references. Geprüft von e2e/design/design-fidelity.spec.ts (nur Status „umgesetzt“).",
+  "screens": [
+    {
+      "id": "1a",
+      "screen": "1a",
+      "width": 390,
+      "height": 836,
+      "status": "offen"
+    },
+    {
+      "id": "1b",
+      "screen": "1b",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "1c",
+      "screen": "1c",
+      "width": 390,
+      "height": 832,
+      "status": "offen"
+    },
+    {
+      "id": "1d",
+      "screen": "1d",
+      "width": 1180,
+      "height": 839,
+      "status": "offen"
+    },
+    {
+      "id": "2a",
+      "screen": "2a",
+      "width": 390,
+      "height": 836,
+      "status": "umgesetzt"
+    },
+    {
+      "id": "2b",
+      "screen": "2b",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "2c",
+      "screen": "2c",
+      "width": 1180,
+      "height": 760,
+      "status": "offen"
+    },
+    {
+      "id": "3a",
+      "screen": "3a",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "3b",
+      "screen": "3b",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "3c",
+      "screen": "3c",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "3d",
+      "screen": "3d",
+      "width": 1180,
+      "height": 700,
+      "status": "offen"
+    },
+    {
+      "id": "4a",
+      "screen": "4a",
+      "width": 390,
+      "height": 805,
+      "status": "offen"
+    },
+    {
+      "id": "4b",
+      "screen": "4b",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "4c",
+      "screen": "4c",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "4d",
+      "screen": "4d",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "4e",
+      "screen": "4e",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "4f",
+      "screen": "4f",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "5a-battle",
+      "screen": "5a",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"battle\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5a-done",
+      "screen": "5a",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"done\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5a-hold",
+      "screen": "5a",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"hold\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5a-read",
+      "screen": "5a",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"read\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5a-station",
+      "screen": "5a",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"station\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5a-write",
+      "screen": "5a",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"write\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5a-write-dark",
+      "screen": "5a",
+      "width": 390,
+      "height": 788,
+      "canvas": [
+        "[id=\"5a\"] button[data-ph=\"write\"]",
+        "[id=\"5a\"] button[aria-label=\"Hell oder dunkel\"]"
+      ],
+      "reset": ["[id=\"5a\"] button[aria-label=\"Hell oder dunkel\"]"],
+      "theme": "dark",
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5b-battle",
+      "screen": "5b",
+      "width": 1180,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"battle\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5b-done",
+      "screen": "5b",
+      "width": 1180,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"done\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5b-hold",
+      "screen": "5b",
+      "width": 1180,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"hold\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5b-read",
+      "screen": "5b",
+      "width": 1180,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"read\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5b-station",
+      "screen": "5b",
+      "width": 1180,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"station\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5b-write",
+      "screen": "5b",
+      "width": 1180,
+      "height": 788,
+      "canvas": ["[id=\"5a\"] button[data-ph=\"write\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5b-write-dark",
+      "screen": "5b",
+      "width": 1180,
+      "height": 788,
+      "canvas": [
+        "[id=\"5a\"] button[data-ph=\"write\"]",
+        "[id=\"5b\"] button[aria-label=\"Hell oder dunkel\"]"
+      ],
+      "reset": ["[id=\"5b\"] button[aria-label=\"Hell oder dunkel\"]"],
+      "theme": "dark",
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5c-import",
+      "screen": "5c",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5c\"] button[data-step=\"import\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5c-live",
+      "screen": "5c",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5c\"] button[data-step=\"live\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5c-live-dark",
+      "screen": "5c",
+      "width": 390,
+      "height": 788,
+      "canvas": [
+        "[id=\"5c\"] button[data-step=\"live\"]",
+        "[id=\"5c\"] button[aria-label=\"Hell oder dunkel\"]"
+      ],
+      "reset": ["[id=\"5c\"] button[aria-label=\"Hell oder dunkel\"]"],
+      "theme": "dark",
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5c-lobby",
+      "screen": "5c",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5c\"] button[data-step=\"lobby\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5c-options",
+      "screen": "5c",
+      "width": 390,
+      "height": 788,
+      "canvas": [
+        "[id=\"5c\"] button[data-step=\"settings\"]",
+        "[id=\"5c\"] button[data-m=\"LAUFDIKTAT\"]"
+      ],
+      "reset": ["[id=\"5c\"] button:has-text(\"Übernehmen\")"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5c-settings",
+      "screen": "5c",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"5c\"] button[data-step=\"settings\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5d-import",
+      "screen": "5d",
+      "width": 1180,
+      "height": 760,
+      "canvas": ["[id=\"5d\"] button[data-step=\"import\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5d-live",
+      "screen": "5d",
+      "width": 1180,
+      "height": 760,
+      "canvas": ["[id=\"5d\"] button[data-step=\"live\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5d-lobby",
+      "screen": "5d",
+      "width": 1180,
+      "height": 760,
+      "canvas": ["[id=\"5d\"] button[data-step=\"lobby\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "5d-settings",
+      "screen": "5d",
+      "width": 1180,
+      "height": 760,
+      "canvas": ["[id=\"5d\"] button[data-step=\"settings\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "6a",
+      "screen": "6a",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "6b",
+      "screen": "6b",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "6c",
+      "screen": "6c",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "7a",
+      "screen": "7a",
+      "width": 390,
+      "height": 1108,
+      "status": "offen"
+    },
+    {
+      "id": "7b",
+      "screen": "7b",
+      "width": 1180,
+      "height": 794,
+      "status": "offen"
+    },
+    {
+      "id": "7c",
+      "screen": "7c",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    }
+  ]
+}

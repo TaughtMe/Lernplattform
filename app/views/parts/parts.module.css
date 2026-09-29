@@ -1,0 +1,131 @@
+/*
+ * Wiederkehrende Bausteine der Design-Screens (Turn 5 ff.). Maße und Farben
+ * sind 1:1 aus docs/design/lernraum-ui.dc.html übernommen.
+ */
+
+/* Grundlage jeder Design-Ansicht: Typografie wie in der Vorlage. */
+.view {
+  font-family: var(--font);
+  line-height: normal;
+  letter-spacing: normal;
+}
+/* Browser-Standard der Vorlage (Chromium, Standardmodus): Buttons und
+   Auswahlfelder messen mit Rahmen, alle übrigen Elemente ohne; Buttons und
+   Felder behalten ihren Standard-Innenabstand und die Systemschrift.
+   :where() hält die Spezifität bei 0, eigene Klassen gehen immer vor. */
+:where(.view) :where(*, ::before, ::after) {
+  box-sizing: content-box;
+}
+:where(.view) :where(button, select) {
+  box-sizing: border-box;
+}
+:where(.view) :where(button) {
+  padding: 1px 6px;
+  font-family: var(--font-control);
+}
+:where(.view) :where(input) {
+  padding: 1px 2px;
+}
+:where(.view) :where(textarea) {
+  padding: 2px;
+}
+
+.squareButton,
+.roundButton {
+  display: grid;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--line2);
+  background: var(--surface);
+  color: var(--ink2);
+  cursor: pointer;
+}
+.squareButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.roundButton {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+.squareButton:hover,
+.roundButton:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.primary,
+.green {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary {
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: 15px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 15.5px;
+}
+.green {
+  min-height: 50px;
+  border-radius: 14px;
+  background: var(--green);
+  color: var(--green-ink);
+  font-size: 15px;
+}
+.primary:hover,
+.green:hover {
+  filter: brightness(1.12);
+}
+
+.chip {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink2);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+
+.animal {
+  flex: none;
+  object-fit: contain;
+}
