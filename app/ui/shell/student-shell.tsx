@@ -16,6 +16,8 @@ type NavItem = {
   icon?: IconName;
   /** Weitere Routen-Präfixe, die zu diesem Eintrag gehören. */
   also?: readonly string[];
+  /** Nur die Route selbst, keine Unterseiten. */
+  exact?: boolean;
 };
 
 /** Hauptnavigation nach Design 3a/2b. */
@@ -34,7 +36,7 @@ const MAIN_NAV: readonly NavItem[] = [
 
 /** Lernbereiche innerhalb von „Lernen“. */
 const LEARN_NAV: readonly NavItem[] = [
-  { href: "/lernen", label: "Heute", area: "lernen" },
+  { href: "/lernen", label: "Heute", area: "lernen", exact: true },
   { href: "/lernbox", label: "LernBox", area: "lernbox" },
   {
     href: "/frei/german/lernwoerter",
@@ -61,7 +63,7 @@ const LEARN_NAV: readonly NavItem[] = [
 function matchLength(item: NavItem, path: string) {
   let best = -1;
   for (const route of [item.href, ...(item.also ?? [])]) {
-    const exact = route === "/lernen";
+    const exact = item.exact && route === item.href;
     const hit = exact
       ? path === route
       : path === route || path.startsWith(`${route}/`);

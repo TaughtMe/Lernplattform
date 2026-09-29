@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createCalendarMonth } from "./student-home";
+import { createCalendarMonth, currentWeek } from "./student-home";
 
 describe("createCalendarMonth", () => {
   it("builds a complete Monday-to-Sunday month including adjacent dates", () => {
@@ -32,5 +32,22 @@ describe("createCalendarMonth", () => {
     expect(days).toHaveLength(35);
     expect(days[0]?.key).toBe("2026-01-26");
     expect(days.at(-1)?.key).toBe("2026-03-01");
+  });
+});
+
+describe("currentWeek", () => {
+  it("returns Monday to Sunday and marks today", () => {
+    const week = currentWeek(new Date(2026, 8, 30));
+    expect(week.map((day) => day.short)).toEqual([
+      "Mo",
+      "Di",
+      "Mi",
+      "Do",
+      "Fr",
+      "Sa",
+      "So",
+    ]);
+    expect(week[0]!.key).toBe("2026-09-28");
+    expect(week.find((day) => day.isToday)?.label).toBe("Mittwoch");
   });
 });
