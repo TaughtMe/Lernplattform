@@ -45,6 +45,7 @@ export function RunningDictationApp() {
   const [errorCounts, setErrorCounts] = useState<Record<string, number>>({});
   const [lastCorrect, setLastCorrect] = useState(false);
   const [transferNotice, setTransferNotice] = useState("");
+  const [transferDeckId, setTransferDeckId] = useState<string>();
   const interactionReady = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -165,6 +166,7 @@ export function RunningDictationApp() {
           : "Vokabeln aus Laufdiktat",
       source: { kind: "running-dictation", sourceId: runId },
     });
+    setTransferDeckId(result.deckId);
     setTransferNotice(
       result.added > 0
         ? `${result.added} Vokabeln sind jetzt in deiner LernBox fällig.`
@@ -314,7 +316,14 @@ export function RunningDictationApp() {
               Neue Runde
             </button>
             {transferNotice && (
-              <Link className="button button--primary" href="/lernbox">
+              <Link
+                className="button button--primary"
+                href={
+                  transferDeckId
+                    ? `/lernbox?stapel=${encodeURIComponent(transferDeckId)}`
+                    : "/lernbox"
+                }
+              >
                 Meine Fehler jetzt üben
               </Link>
             )}
