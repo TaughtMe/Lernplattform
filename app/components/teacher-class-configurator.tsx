@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { notifyTeacherClassesChanged } from "../ui/shell/teacher-classes";
 import { QRCodeSVG } from "qrcode.react";
 import {
   createClassRemovalLink,
@@ -67,7 +68,12 @@ export function TeacherClassConfigurator() {
       .then(([items, archived]) => {
         setClasses(items);
         setArchivedClasses(archived);
-        if (items[0]) setSelectedId(items[0].id);
+        // ?klasse=<id> wählt eine Klasse aus der Seitenleiste vor.
+        const requested = new URLSearchParams(window.location.search).get(
+          "klasse",
+        );
+        const initial = items.find(({ id }) => id === requested) ?? items[0];
+        if (initial) setSelectedId(initial.id);
       })
       .catch(() => setMessage("Die Klassen konnten nicht geladen werden."));
   }, [repository]);
@@ -105,6 +111,7 @@ export function TeacherClassConfigurator() {
     try {
       await repository.put(course);
       setClasses((current) => [...current, course]);
+      notifyTeacherClassesChanged();
       setSelectedId(course.id);
       setMembers([]);
       setShown(undefined);
@@ -129,6 +136,7 @@ export function TeacherClassConfigurator() {
     try {
       await repository.putMember(member);
       setMembers((current) => [...current, member]);
+      notifyTeacherClassesChanged();
       setShown(undefined);
       setStudentName("");
       setMessage("Schüler wurde lokal angelegt.");
@@ -145,6 +153,7 @@ export function TeacherClassConfigurator() {
   async function removeStudent(member: ClassMember) {
     await repository.removeMember(member.id);
     setMembers((current) => current.filter(({ id }) => id !== member.id));
+    notifyTeacherClassesChanged();
     if (shown?.id === member.id) setShown(undefined);
     setMessage(`„${member.displayName}“ wurde aus der Klasse entfernt.`);
     window.dispatchEvent(new Event("teacher-data-changed"));
@@ -155,6 +164,7 @@ export function TeacherClassConfigurator() {
     await repository.archiveClass(selected.id);
     const remaining = classes.filter(({ id }) => id !== selected.id);
     setClasses(remaining);
+    notifyTeacherClassesChanged();
     setArchivedClasses((current) => [
       { ...selected, archivedAt: new Date().toISOString() },
       ...current,
@@ -175,6 +185,7 @@ export function TeacherClassConfigurator() {
       current.filter(({ id }) => id !== course.id),
     );
     setClasses((current) => [...current, restored]);
+    notifyTeacherClassesChanged();
     setSelectedId(course.id);
     setRemovalShown(undefined);
     setMessage(`„${course.name}“ wurde wieder aktiviert.`);

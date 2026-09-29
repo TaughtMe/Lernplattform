@@ -6,6 +6,7 @@ import type { ReleaseAreaId } from "../../../src/domain/release";
 import { useRelease } from "../../release/release-context";
 import { Icon, type IconName } from "../icons";
 import { ThemeButton } from "../theme-button";
+import { TeacherClassList } from "./teacher-classes";
 
 export type TeacherArea =
   | "overview"
@@ -109,6 +110,7 @@ export function TeacherShell({
   children: ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const visibility = useRelease();
   const drawer = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -140,8 +142,9 @@ export function TeacherShell({
     <div className="ui ui-teacher teacher-shell teacher-cockpit">
       <aside className="ui-teacher__side ui-on-dark" aria-label="Lehrerbereich">
         {brand}
+        {visibility.lehrer ? <TeacherClassList /> : null}
         <nav className="ui-teacher__nav" aria-label="Lehrerbereiche">
-          <span className="ui-teacher__label">Unterricht</span>
+          <span className="ui-teacher__label">Bereich</span>
           <NavLinks active={active} />
         </nav>
         <div className="ui-teacher__foot">
@@ -168,7 +171,7 @@ export function TeacherShell({
           <ThemeButton />
         </header>
         <main className="ui-teacher__main">
-          <div className="teacher-cockpit__page">{children}</div>
+          <div className="teacher-cockpit__page ui-legacy">{children}</div>
         </main>
       </div>
 
@@ -196,6 +199,9 @@ export function TeacherShell({
             <Icon name="close" size={18} />
           </button>
         </div>
+        {visibility.lehrer ? (
+          <TeacherClassList onNavigate={() => setMenuOpen(false)} />
+        ) : null}
         <nav className="ui-teacher__nav" aria-label="Lehrerbereiche mobil">
           <NavLinks active={active} onNavigate={() => setMenuOpen(false)} />
         </nav>
