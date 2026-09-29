@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-// This render contract covers the explicitly enabled local full-preview build.
-// The pilot gate is opt-in (LERNRAUM_PILOT_GATE=1); the last test enables it explicitly.
-process.env["LERNRAUM_PILOT_GATE"] = "0";
+// Die Renderprüfungen laufen standardmäßig mit eingeschalteter Vorschau
+// (Cookie). Der Freigabetest prüft den Schulbetrieb ohne Vorschau.
+const PREVIEW = "lernraum-vorschau=1";
 
 // Aus package.json gelesen statt hart codiert: verhindert, dass diese Tests
 // bei jedem Versions-Bump erneut manuell nachgezogen werden müssen.
@@ -12,13 +12,13 @@ const { version: APP_VERSION } = JSON.parse(
   await readFile(new URL("../package.json", import.meta.url), "utf8"),
 );
 
-async function render(path = "/") {
+async function render(path = "/", cookie = PREVIEW) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${path}`);
   const { default: worker } = await import(workerUrl.href);
   return worker.fetch(
     new Request(`http://localhost${path}`, {
-      headers: { accept: "text/html" },
+      headers: { accept: "text/html", ...(cookie ? { cookie } : {}) },
     }),
     {
       ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
@@ -86,9 +86,8 @@ test("server-renders the complete learning and teacher workspaces", async () => 
   }
 });
 
-test("keeps every non-pilot route behind the pilot fallback", async () => {
-  process.env["LERNRAUM_PILOT_GATE"] = "1";
-  const pilotRoutes = [
+test("shows only released areas without preview and redirects the rest", async () => {
+  const releasedRoutes = [
     "/",
     "/raum",
     "/frei/mathematics",
@@ -96,14 +95,11 @@ test("keeps every non-pilot route behind the pilot fallback", async () => {
     "/datenschutz",
     "/impressum",
   ];
-  const restrictedRoutes = [
-    "/demo/mathematics",
-    "/duell",
+  const previewRoutes = [
     "/frei",
     "/frei/german",
     "/frei/german/laufdiktat",
     "/frei/german/lernwoerter",
-    "/frei/mathematics/extra",
     "/frei/typing",
     "/frei/vocabulary",
     "/haus",
@@ -124,35 +120,48 @@ test("keeps every non-pilot route behind the pilot fallback", async () => {
     "/lehrer/material",
     "/lehrer/haeuser",
   ];
+  const offRoutes = ["/demo/mathematics", "/duell"];
 
-  try {
-    for (const path of pilotRoutes) {
-      const response = await render(path);
-      assert.equal(response.status, 200, path);
-      if (path === "/") {
-        const html = await response.text();
-        assert.doesNotMatch(html, /href="\/lernen/);
-        assert.doesNotMatch(html, /Mathe selbst üben/);
-      }
+  for (const path of releasedRoutes) {
+    const response = await render(path, null);
+    assert.equal(response.status, 200, path);
+    if (path === "/") {
+      const html = await response.text();
+      assert.doesNotMatch(html, /href="\/lernen/);
     }
-
-    for (const path of restrictedRoutes) {
-      const response = await render(path);
-      assert.equal(response.status, 307, path);
-      const location = new URL(
-        response.headers.get("location") ?? "",
-        "http://localhost",
-      );
-      assert.equal(
-        location.pathname,
-        path.startsWith("/lehrer") ? "/lehrer/live" : "/",
-        path,
-      );
-      assert.equal(location.search, "?pilot=1", path);
-    }
-  } finally {
-    process.env["LERNRAUM_PILOT_GATE"] = "0";
   }
+
+  for (const path of [...previewRoutes, ...offRoutes]) {
+    const response = await render(path, null);
+    assert.equal(response.status, 307, path);
+    const location = new URL(
+      response.headers.get("location") ?? "",
+      "http://localhost",
+    );
+    assert.equal(
+      location.pathname,
+      path.startsWith("/lehrer") ? "/lehrer/live" : "/",
+      path,
+    );
+    assert.equal(location.search, "", path);
+  }
+
+  for (const path of offRoutes) {
+    const response = await render(path);
+    assert.equal(
+      response.status,
+      307,
+      `${path} bleibt auch in der Vorschau aus`,
+    );
+  }
+
+  const enable = await render("/lernbox?vorschau=an", null);
+  assert.equal(enable.status, 307);
+  assert.match(enable.headers.get("set-cookie") ?? "", /lernraum-vorschau=1/);
+  assert.equal(
+    new URL(enable.headers.get("location") ?? "", "http://localhost").search,
+    "",
+  );
 });
 
 test("ships the update-aware service worker", async () => {

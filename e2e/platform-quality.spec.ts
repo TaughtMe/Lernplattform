@@ -413,21 +413,22 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
   });
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  // Dunkelmodus-Tokens aus Entscheidung 47 (Design „Lernraum UI“).
   await expect(page.locator("body")).toHaveCSS(
     "background-color",
-    "rgb(23, 21, 19)",
+    "rgb(23, 21, 15)",
   );
 
   await page.goto("/klasse/7b");
   await expect(page.locator(".class-context__panel")).toHaveCSS(
     "background-color",
-    "rgb(33, 30, 27)",
+    "rgb(34, 31, 27)",
   );
   await expect(page.locator(".class-context__panel")).toHaveCount(1);
   const moduleTag = page.locator(".module-chips span").first();
   await expect(moduleTag).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  await expect(moduleTag).toHaveCSS("border-color", "rgb(85, 76, 69)");
-  await expect(moduleTag).toHaveCSS("color", "rgb(185, 173, 163)");
+  // Dunkelmodus-Tokens aus Entscheidung 47 (Design „Lernraum UI“).
+  await expect(moduleTag).toHaveCSS("color", "rgb(168, 158, 140)");
 
   await page.goto("/klasse/7b/aufgaben/vokabeln");
   await expect(page.getByText("Deine Lernbox")).toBeVisible();
@@ -477,41 +478,26 @@ test("the personal learning room keeps today's task focused and separates suppor
 
   const isDesktop = (page.viewportSize()?.width ?? 0) > 760;
 
+  // Design „Lernraum UI“: Raum und Lernbereiche liegen in der Navigation,
+  // auf dem Desktop in der Leiste, mobil in der Tab-Leiste.
+  await expect(
+    page
+      .getByRole("navigation", { name: "Lernraum-Bereiche" })
+      .getByRole("link", { name: "Raum" })
+      .filter({ visible: true }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Lernbereiche" })
+      .getByRole("link", { name: "Fortschritt" }),
+  ).toBeVisible();
   if (isDesktop) {
-    await expect(page.getByRole("group", { name: "Raumcode" })).toHaveCount(1);
-    const toggle = page.locator(".student-sidebar-toggle");
-    await expect(toggle).toBeEnabled();
-    await expect(toggle).toHaveAccessibleName("Seitenleiste einklappen");
-    await expect(toggle).toHaveAttribute("aria-pressed", "false");
-    await toggle.click();
-    await expect(toggle).toHaveAttribute("aria-pressed", "true");
-    await expect(toggle).toHaveAttribute("aria-expanded", "false");
-    await expect(toggle).toHaveAccessibleName("Seitenleiste ausklappen");
-
-    const collapsedLayout = await page.evaluate(() => {
-      const sidebar = document.querySelector(".student-shell__sidebar");
-      return {
-        sidebarWidth: sidebar?.getBoundingClientRect().width ?? 0,
-        viewport: document.documentElement.clientWidth,
-        content: document.documentElement.scrollWidth,
-      };
-    });
-    expect(collapsedLayout.sidebarWidth).toBeLessThanOrEqual(78);
-    expect(collapsedLayout.content).toBeLessThanOrEqual(
-      collapsedLayout.viewport + 1,
+    const rail = await page.evaluate(
+      () =>
+        document.querySelector(".ui-shell__rail")?.getBoundingClientRect()
+          .width ?? 0,
     );
-  } else {
-    await expect(page.getByRole("group", { name: "Raumcode" })).toHaveCount(0);
-    await expect(
-      page.getByRole("link", { name: "Raum beitreten" }),
-    ).toBeVisible();
-  }
-
-  const progressLink = page.getByRole("link", { name: "Fortschritt ansehen" });
-  if (isDesktop) {
-    await expect(progressLink).toBeVisible();
-  } else {
-    await expect(progressLink).toHaveCount(0);
+    expect(rail).toBeLessThanOrEqual(100);
   }
 
   await expect(

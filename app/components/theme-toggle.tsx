@@ -55,7 +55,8 @@ function subscribeToPreference(onChange: () => void) {
   };
 }
 
-export function ThemeToggle() {
+/** Gespeicherte Darstellung und Umschalter System → Hell → Dunkel. */
+export function useThemePreference() {
   const preference = useSyncExternalStore<ThemePreference>(
     subscribeToPreference,
     getPreferenceSnapshot,
@@ -73,6 +74,16 @@ export function ThemeToggle() {
     window.dispatchEvent(new Event(CHANGE_EVENT));
   }
 
+  return {
+    preference,
+    label: LABELS[preference],
+    Icon: ICONS[preference],
+    cycleTheme,
+  };
+}
+
+export function ThemeToggle() {
+  const { preference, cycleTheme } = useThemePreference();
   const Icon = ICONS[preference];
 
   return (

@@ -2,10 +2,14 @@ import Link from "next/link";
 import { LandingLearnerAction } from "./components/landing-learner-action";
 import { PilotConnectionNotice } from "./components/pilot-connection-notice";
 import { RoomCodeForm } from "./components/room-code-form";
-import { isPilotGateEnabled } from "../src/pilot-mode";
+import { cookies } from "next/headers";
+import { PREVIEW_COOKIE } from "../src/domain/release";
+import { releaseVisibility } from "./release/release-config";
 
-export default function Home() {
-  const previewEnabled = !isPilotGateEnabled();
+export default async function Home() {
+  const previewEnabled = releaseVisibility(
+    (await cookies()).get(PREVIEW_COOKIE)?.value,
+  ).lernen;
   const configured = Boolean(
     process.env["NEXT_PUBLIC_SUPABASE_URL"] &&
     process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],

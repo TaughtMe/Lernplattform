@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { PREVIEW_COOKIE } from "../src/domain/release";
+import { releaseVisibility } from "./release/release-config";
+import { ReleaseProvider } from "./release/release-context";
 import { SiteMetaActions } from "./components/site-meta-actions";
 import "./globals.css?ui=acceptance-v5";
 import "./student-module-shell.css";
@@ -62,11 +65,14 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const visibility = releaseVisibility(
+    (await cookies()).get(PREVIEW_COOKIE)?.value,
+  );
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
@@ -84,8 +90,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {children}
-        <SiteMetaActions />
+        <ReleaseProvider value={visibility}>
+          {children}
+          <SiteMetaActions />
+        </ReleaseProvider>
       </body>
     </html>
   );
