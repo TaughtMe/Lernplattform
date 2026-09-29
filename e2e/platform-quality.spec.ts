@@ -200,7 +200,7 @@ test("a native Laufdiktat mistake becomes due LernBox practice", async ({
   await page.goto("/frei/german/laufdiktat");
   await expect(page.locator("iframe")).toHaveCount(0);
   await expect(
-    page.getByRole("navigation", { name: "Lernraum-Bereiche" }).first(),
+    page.getByRole("navigation", { name: "Hauptnavigation" }),
   ).toBeAttached();
   const vocabularyMode = page.getByRole("button", { name: "Vokabeln" });
   await vocabularyMode.click();
@@ -452,72 +452,50 @@ test("the personal learning room keeps today's task focused and separates suppor
 }) => {
   await page.goto("/lernen");
 
+  // Design 3a/3b: das Tier in der Mitte, ein Weiter-Knopf.
   await expect(
-    page.getByRole("heading", { name: "Meine Startseite" }),
+    page.getByRole("link", { name: "Weiterlernen" }).last(),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
-  const calendarLayout = await page.evaluate(() => ({
+  const layout = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     content: document.documentElement.scrollWidth,
   }));
-  expect(calendarLayout.content).toBeLessThanOrEqual(
-    calendarLayout.viewport + 1,
-  );
+  expect(layout.content).toBeLessThanOrEqual(layout.viewport + 1);
 
-  const isDesktop = (page.viewportSize()?.width ?? 0) > 760;
-
-  // Design „Lernraum UI“: Raum und Lernbereiche liegen in der Navigation,
-  // auf dem Desktop in der Leiste, mobil in der Tab-Leiste.
+  // Entscheidung 48: Lernen, Üben und Raum in einer Navigation, keine
+  // zweite Reiterreihe; auf dem Desktop als 100 px breite Leiste.
+  const nav = page.getByRole("navigation", { name: "Hauptnavigation" });
+  for (const label of ["Lernen", "Üben", "Raum"]) {
+    await expect(
+      nav.getByRole("link", { name: label, exact: true }),
+    ).toBeVisible();
+  }
   await expect(
-    page
-      .getByRole("navigation", { name: "Lernraum-Bereiche" })
-      .getByRole("link", { name: "Raum" })
-      .filter({ visible: true }),
-  ).toHaveCount(1);
-  await expect(
-    page
-      .getByRole("navigation", { name: "Lernbereiche" })
-      .getByRole("link", { name: "Fortschritt" }),
-  ).toBeVisible();
-  if (isDesktop) {
-    const rail = await page.evaluate(
-      () =>
-        document.querySelector(".ui-shell__rail")?.getBoundingClientRect()
-          .width ?? 0,
-    );
+    page.getByRole("navigation", { name: "Lernbereiche" }),
+  ).toHaveCount(0);
+  if ((page.viewportSize()?.width ?? 0) >= 900) {
+    const rail = (await nav.boundingBox())?.width ?? 0;
     expect(rail).toBeLessThanOrEqual(100);
   }
 
-  await expect(
-    page.getByRole("heading", { name: "Mein Material" }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("heading", { name: "Mein Fortschritt" }),
-  ).toHaveCount(0);
+  // Üben: eine Kachel je Bereich.
+  await nav.getByRole("link", { name: "Üben" }).click();
+  for (const [title, href] of [
+    ["LernBox", "/lernbox"],
+    ["Wortspeicher", "/frei/german/lernwoerter"],
+    ["Tastenwelt", "/frei/typing"],
+    ["Kopfrechnen", "/frei/mathematics"],
+    ["Laufdiktat allein", "/frei/german/laufdiktat"],
+  ] as const) {
+    await expect(
+      page.getByRole("link", { name: new RegExp(`^${title}`) }),
+    ).toHaveAttribute("href", href);
+  }
 
-  await page
-    .locator('a[href="/lernen/material"]:visible')
-    .filter({ hasText: "Lernwerkstatt" })
-    .click();
+  await page.goto("/lernen/material");
   await expect(
     page.getByRole("heading", { name: "Lernwerkstatt" }),
   ).toBeVisible();
-
-  await expect(page.getByRole("link", { name: "Mathematik" })).toHaveAttribute(
-    "href",
-    "/lernen/faecher/mathematik",
-  );
-  await expect(
-    page.getByRole("link", { name: "Meine Laufdiktate" }),
-  ).toHaveAttribute("href", "/frei/german/laufdiktat");
-  await expect(page.getByRole("link", { name: "Tippen" })).toHaveAttribute(
-    "href",
-    "/frei/typing",
-  );
-  await expect(page.getByRole("link", { name: "Vokabeln" })).toHaveAttribute(
-    "href",
-    "/lernbox",
-  );
 
   await page.goto("/lernen/klasse");
   await expect(
@@ -850,9 +828,11 @@ test("a class error becomes practice and disappears after correction", async ({
     page.getByRole("heading", { name: "Noch nicht richtig" }),
   ).toBeVisible();
 
+  // Der letzte Fehler führt die Empfehlung an: „Weiterlernen“ öffnet ihn.
   await page.goto("/lernen");
-  await expect(page.getByText("Aus deinem letzten Fehler")).toBeVisible();
-  await page.getByRole("link", { name: /School words wiederholen/ }).click();
+  const next = page.getByRole("link", { name: "Weiterlernen" }).last();
+  await expect(next).toHaveAttribute("href", /\/klasse\//);
+  await next.click();
   await page.getByRole("button", { name: "Lernrunde starten" }).click();
   await page.getByRole("textbox", { name: "Deine Antwort" }).fill("Bibliothek");
   await page.getByRole("button", { name: "Antwort prüfen" }).click();
@@ -861,5 +841,7 @@ test("a class error becomes practice and disappears after correction", async ({
   ).toBeVisible();
 
   await page.goto("/lernen");
-  await expect(page.getByText("Aus deinem letzten Fehler")).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Weiterlernen" }).last(),
+  ).not.toHaveAttribute("href", /aufgaben\/vokabeln/);
 });

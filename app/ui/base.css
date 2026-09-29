@@ -40,6 +40,11 @@ body {
   outline-offset: 3px;
 }
 
+/* Programmatisch fokussierte Überschriften (Seitenwechsel) ohne Rahmen. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
 /* Berührungsbedienung: Zielgrößen mindestens 44 px. */
 @media (pointer: coarse) {
   .ui-chip,

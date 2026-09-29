@@ -29,4 +29,23 @@ describe("typing session", () => {
     expect(session.position).toBe(0);
     expect(session.corrections).toBe(1);
   });
+
+  it("stops on a wrong key in strict mode and marks the key as corrected", () => {
+    let session = createTypingSession("ab");
+    session = enterTypingCharacter(session, "x", 1, { strict: true });
+    expect(session.position).toBe(0);
+    expect(session.missesHere).toBe(1);
+    expect(session.keystrokes).toHaveLength(1);
+    expect(session.keystrokes[0]).toMatchObject({ correct: false });
+    session = enterTypingCharacter(session, "a", 2, { strict: true });
+    expect(session.position).toBe(1);
+    expect(session.typed[0]).toEqual({
+      char: "a",
+      correct: true,
+      corrected: true,
+    });
+    session = enterTypingCharacter(session, "b", 3, { strict: true });
+    expect(session.typed[1]).toEqual({ char: "b", correct: true });
+    expect(session.finishedAt).toBe(3);
+  });
 });

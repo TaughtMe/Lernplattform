@@ -1,0 +1,359 @@
+/*
+ * Lernen-Startseite: Design 3b/2b (mobil) und 3a (Tablet quer, Laptop).
+ * Das Tier ist die Mitte, rechts steht ab 900 px der Fortschritt.
+ */
+.screen {
+  composes: view from "../parts/parts.module.css";
+  container-type: inline-size;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.layout {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 0;
+}
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.stage {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 470px;
+  margin: auto;
+  padding: 26px 20px;
+}
+.ringWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.ring {
+  position: absolute;
+}
+.disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 236px;
+  height: 236px;
+  border-radius: 50%;
+  background: var(--surface);
+}
+.animal {
+  width: 194px;
+  height: 194px;
+}
+.streak {
+  position: absolute;
+  bottom: -4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--nav);
+  color: var(--nav-accent);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  text-align: center;
+}
+.name > p {
+  margin: 0;
+}
+.animalName {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.today {
+  color: var(--ink2);
+  font-size: 13.5px;
+}
+.actions {
+  display: flex;
+  gap: 11px;
+  width: 100%;
+}
+.continue {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 56px;
+  border-radius: 15px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 15.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.continue:hover {
+  filter: brightness(1.12);
+}
+.duel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 56px;
+  padding: 0 20px;
+  border: 1px solid var(--line2);
+  border-radius: 15px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.duel:hover {
+  border-color: var(--accent);
+}
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  width: 100%;
+}
+.card {
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+.card > p {
+  margin: 0;
+}
+.cardValue {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.cardLabel {
+  margin-top: 2px !important;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+
+/* ---------- Fortschrittsspalte (nur breit) ---------- */
+.side {
+  display: none;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg);
+}
+.panelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.panelTitle {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.panelMeta {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.panelCount {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.day {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.day.active {
+  background: var(--gold);
+  color: #211f1b;
+}
+.day.upcoming {
+  border: 1px dashed var(--line2);
+  background: transparent;
+}
+.day.today {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.bar {
+  height: 9px;
+  border-radius: 999px;
+  background: var(--surface2);
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gold);
+}
+.hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.word {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  background: var(--surface);
+}
+.wordLabel {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.wordMeta {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.practice {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.practice:hover {
+  border-color: var(--accent);
+}
+.badges {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.badgeCount {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* ============ Tablet quer / Laptop (3a) ============ */
+@container (min-width: 900px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 356px;
+  }
+  .head {
+    padding: 22px 34px 0;
+  }
+  .stage {
+    gap: 16px;
+    padding: 30px 34px;
+  }
+  .disc {
+    width: 252px;
+    height: 252px;
+    box-shadow: 0 14px 38px var(--shadow);
+  }
+  .animal {
+    width: 212px;
+    height: 212px;
+  }
+  .streak {
+    bottom: -6px;
+    padding: 7px 14px;
+  }
+  .name {
+    margin-top: 8px;
+  }
+  .animalName {
+    font-size: 25px;
+    letter-spacing: -0.025em;
+  }
+  .today {
+    font-size: 14px;
+  }
+  .actions {
+    margin-top: 6px;
+  }
+  .cards {
+    display: none;
+  }
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 24px 24px;
+    border-left: 1px solid var(--line);
+    background: var(--surface);
+  }
+}

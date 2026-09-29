@@ -30,10 +30,9 @@ test("the profile uses original animals, keeps the choice and supports keyboard 
   await expect(fox).toHaveAttribute("aria-pressed", "true");
   await expect(
     page
-      .getByRole("link", { name: /Profil und Einstellungen, Tier Fuchs/ })
-      .filter({ visible: true })
-      .locator("img"),
-  ).toHaveAttribute("src", "/animals/fuchs.svg");
+      .getByRole("link", { name: "Profileinstellungen" })
+      .filter({ visible: true }),
+  ).toHaveAttribute("aria-current", "page");
 
   const koala = picker.getByRole("button", { name: "Koala", exact: true });
   await koala.focus();

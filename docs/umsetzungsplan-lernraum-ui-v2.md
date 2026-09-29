@@ -54,10 +54,10 @@ Jeder Schritt endet mit grünem Designvergleich, grünen statischen Prüfungen u
 | 3       | 5a/5b Laufdiktat Schüler   | ✅ alle Phasen, hell/dunkel        | offen: Raum-Session, Stationen, Halten/Lesen/Schreiben, Battle, Ergebnis                                           |
 | 4       | 5c/5d Laufdiktat Lehrkraft | ✅ alle Schritte, Optionen-Overlay | ✅ `/lehrer/live`: Text/Vokabeln/Mathe, Satz/Zeile/Wort, Sortieren, Datei, Modi, Optionen, Lobby mit QR, Live, CSV |
 | 5       | 4a–4c LernBox              | offen                              | offen                                                                                                              |
-| 6       | 2b/3a/3b Dashboard         | offen                              | offen                                                                                                              |
+| 6       | 2b/3a/3b Dashboard         | ✅ 3a/3b, Schülerrahmen, Üben      | ✅ `/lernen`: Tagesziel, Woche, heute fällig, schwierige Wörter; `/ueben`: Bereichskacheln                         |
 | 7       | 4d–4f Wortspeicher         | offen                              | offen                                                                                                              |
 | 8       | 1d/2c/3c/3d Lehrerbereich  | offen                              | offen                                                                                                              |
-| 9       | 6a–6c Tastenwelt           | offen                              | offen                                                                                                              |
+| 9       | 6a–6c Tastenwelt           | ✅ Lernweg, Übung, Ergebnis        | ✅ `/frei/typing`: Stationen, Fehler-Stopp, Serie, Sterne, Tasten-Extra                                            |
 | 10      | 7a–7c Häuser               | offen                              | offen                                                                                                              |
 
 Bereiche ohne Vorlage (Klassenverwaltung, Material, Aufgaben, Kopfrechnen) bleiben bis zu einem eigenen Design in ihrer jetzigen Form und werden über das Freigaberegister gesteuert.
@@ -68,7 +68,13 @@ Bereiche ohne Vorlage (Klassenverwaltung, Material, Aufgaben, Kopfrechnen) bleib
 - **Laufdiktat Lehrkraft `/lehrer/live`** nutzt die Ansicht 5c/5d ohne Lehrer-Seitenleiste; Hell/Dunkel sitzt oben rechts. Der Adapter `app/lehrer/live/dictation-adapter.ts` übersetzt zwischen Kern und Ansicht.
 - **Vorerst ausgeblendet, weil der Entwurf sie nicht zeigt:** eigene Trennzeichen, Marker-Modus und manuelle Abschnitte, Abschnitte ausschließen, Mathe-Generator mit Zahlenraum und Lücken, Vokabel-Tabelleneditor mit Groß-/Kleinschreibung und Übernahme in die LernBox, Teilnehmende entfernen, großer QR-Code. Die Logik dafür bleibt im Hook `useTeacherLiveRoom` erhalten und kommt mit eigenem Entwurf zurück.
 - **Freigaben:** Lernbereiche und Lehrerbereich stehen auf `frei` (Entscheidung 48). Motivation und Duell bleiben `aus`.
-- **Noch in alter Oberfläche:** Schüler-Laufdiktat `/raum`, Lernraum `/lernen`, Lehrerbereich `/lehrer` und alle weiteren Seiten, bis ihre Screens an der Reihe sind.
+- **Schülerrahmen:** Seitenleiste (ab 900 px) bzw. Tab-Leiste unten mit Lernen · Üben · Raum; Duell und Haus nur bei Freigabe. Zahnrad → Profileinstellungen. Hell/Dunkel oben rechts im Seitenkopf. Beim ersten Besuch wird ein zufälliges Tier angelegt.
+- **Lernen `/lernen`** nutzt 3a (Desktop) bzw. 3b (mobil): Tagesring, Weiterlernen, Woche, heute fällig, schwierige Wörter. Serie und Duell erscheinen nur, wenn Motivation bzw. Duell freigegeben sind.
+- **Üben `/ueben`**: eine große Kachel je Übungsbereich mit eigenem Symbol.
+- **Tastenwelt `/frei/typing`** nutzt 6c (Lernweg) und 6a/6b (Übung). Falsche Tasten zählen, der Cursor bleibt stehen (Fehler-Stopp). Unsichere Tasten werden als Wärmebild gezeigt und im „Tasten-Extra“ geübt.
+- **Vorerst ausgeblendet (Tastenwelt):** Buchstabenregen, Ziffernblock, Einstellungen zu Tastaturhilfe, XP und Level.
+- **Ohne Navigationseintrag:** Klasse, Material, Aufgaben und Fortschritt sind per Adresse erreichbar, haben aber noch keinen Platz in der neuen Navigation. Ihr Zugang wird mit dem Klassen- und Lehrerentwurf festgelegt.
+- **Noch in alter Oberfläche (im neuen Rahmen):** LernBox, Wortspeicher, Kopfrechnen, Laufdiktat allein, Klassenseiten, Schüler-Laufdiktat `/raum` und Lehrerbereich `/lehrer`, bis ihre Screens an der Reihe sind.
 
 ## Regeln für die Anbindung
 

@@ -5,15 +5,32 @@ import { usePathname } from "next/navigation";
 import { VersionButton } from "./version-button";
 
 /**
- * Vollbild-Screens aus dem Entwurf füllen den Bildschirm ohne Seitenfuß.
- * Die Startseite verlinkt Impressum und Datenschutz selbst.
+ * Vollbild-Screens aus dem Entwurf füllen den Bildschirm ohne Seitenfuß:
+ * Startseite, Live-Raum der Lehrkraft und der Schülerbereich mit eigener
+ * Navigation. Die Startseite verlinkt Impressum und Datenschutz selbst.
  */
 const FULLSCREEN_ROUTES = new Set(["/", "/lehrer/live"]);
+const FULLSCREEN_PREFIXES = [
+  "/lernen",
+  "/ueben",
+  "/lernbox",
+  "/frei",
+  "/klasse",
+];
+
+function isFullscreen(pathname: string) {
+  return (
+    FULLSCREEN_ROUTES.has(pathname) ||
+    FULLSCREEN_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    )
+  );
+}
 
 /** Schlichter Seitenfuß: Name, Rechtliches und Version. */
 export function SiteFooter() {
   const pathname = usePathname();
-  if (FULLSCREEN_ROUTES.has(pathname)) return null;
+  if (isFullscreen(pathname)) return null;
   return (
     <footer className="ui ui-footer">
       <strong>Lernraum</strong>

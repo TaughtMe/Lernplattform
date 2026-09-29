@@ -1,0 +1,133 @@
+/*
+ * Schülerrahmen (Design 3a/6a Seitenleiste, 2b Tab-Leiste unten).
+ * Ab 900 px Breite steht die Navigation links, darunter unten.
+ */
+.frame {
+  composes: view from "../parts/parts.module.css";
+  container-type: inline-size;
+  background: var(--bg);
+  color: var(--ink);
+}
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  /* Platz für die Tab-Leiste unten. */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+/* ---------- Tab-Leiste (mobil, 2b) ---------- */
+.nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 10px 12px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.brand,
+.profile {
+  display: none;
+}
+.item {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  color: var(--ink2);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.item:hover {
+  background: var(--bg);
+}
+.item[aria-current="page"] {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------- Seitenleiste (ab 900 px, 3a) ---------- */
+@container (min-width: 900px) {
+  .layout {
+    flex-direction: row;
+  }
+  .main {
+    padding-bottom: 0;
+  }
+  .nav {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-sizing: border-box;
+    width: 100px;
+    height: 100dvh;
+    padding: 18px 10px;
+    border-top: 0;
+    background: var(--nav);
+    color: var(--nav-ink);
+  }
+  .brand {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background: var(--nav-active);
+    color: var(--nav-accent);
+    font-size: 15px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .item {
+    gap: 6px;
+    width: 100%;
+    padding: 11px 4px;
+    color: var(--nav-ink2);
+    font-size: 11px;
+  }
+  .item:hover {
+    background: var(--nav-line);
+    color: var(--nav-ink);
+  }
+  .item[aria-current="page"] {
+    background: var(--nav-active);
+    color: var(--nav-accent);
+  }
+  .profile {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-top: auto;
+    border: 1px solid var(--nav-line);
+    border-radius: 50%;
+    color: var(--nav-ink2);
+  }
+  .profile:hover,
+  .profile[aria-current="page"] {
+    border-color: var(--nav-accent);
+    color: var(--nav-accent);
+  }
+}

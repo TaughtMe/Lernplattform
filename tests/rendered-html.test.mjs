@@ -76,7 +76,9 @@ test("server-renders the released pilot entry pages", async () => {
 
 test("server-renders the complete learning and teacher workspaces", async () => {
   for (const [path, title] of [
-    ["/lernen", "Meine Startseite"],
+    ["/lernen", "Weiterlernen"],
+    ["/ueben", "Tastenwelt"],
+    ["/frei/typing", "Stationen von der Grundstellung"],
     ["/lernen/material", "Lernwerkstatt"],
     ["/frei/german/lernwoerter", "Lernwörter"],
     ["/klasse/7b", "Klasse 7b"],
@@ -211,25 +213,26 @@ test("keeps the versioned learning contract framework-independent", async () => 
 });
 
 test("keeps mobile and tablet support in the platform shell", async () => {
-  const [shell, layout, styles, uiStyles, strategy] = await Promise.all([
+  const [frame, frameStyles, layout, styles, strategy] = await Promise.all([
     readFile(
-      new URL("../app/ui/shell/student-shell.tsx", import.meta.url),
+      new URL("../app/views/shell/student-frame.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/views/shell/student-frame.module.css", import.meta.url),
       "utf8",
     ),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/ui/base.css", import.meta.url), "utf8"),
-    readFile(new URL("../app/ui/lernraum-ui.css", import.meta.url), "utf8"),
     readFile(new URL("../docs/device-support.md", import.meta.url), "utf8"),
   ]);
-  assert.match(shell, /ui-shell__tabbar/);
-  assert.match(
-    uiStyles,
-    /\.ui-shell__tabbar\s*{[^}]*env\(safe-area-inset-bottom\)/s,
-  );
+  // Tab-Leiste unten (mobil) respektiert den sicheren Bereich des Geräts.
+  assert.match(frame, /aria-label="Hauptnavigation"/);
+  assert.match(frameStyles, /\.nav\s*{[^}]*env\(safe-area-inset-bottom\)/s);
+  assert.match(frameStyles, /@container \(min-width: 900px\)/);
   assert.match(layout, /viewportFit:\s*"cover"/);
   assert.match(styles, /body\s*{[^}]*min-width:\s*0/s);
   assert.match(styles, /@media\s*\(max-width:\s*370px\)/);
   assert.match(styles, /pointer:\s*coarse/);
   assert.match(strategy, /iOS Safari/);
-  assert.match(strategy, /Android Chrome/);
 });

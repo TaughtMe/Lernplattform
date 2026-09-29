@@ -3878,3 +3878,10 @@ body:has(.ui-game.is-active-round) .ui-footer {
   color: var(--accent);
   font-weight: 700;
 }
+
+/* ============ Ältere Schülerseiten im neuen Rahmen ============ */
+.ui-student-page__head {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px 0;
+}

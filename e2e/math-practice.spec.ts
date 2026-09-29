@@ -8,9 +8,10 @@ test("math errors survive reload and practice works offline with keyboard and he
   await page.goto("/");
   await page.getByRole("link", { name: /^Weiter als / }).click();
   await page
-    .getByRole("navigation", { name: "Lernbereiche" })
-    .getByRole("link", { name: "Kopfrechnen" })
+    .getByRole("navigation", { name: "Hauptnavigation" })
+    .getByRole("link", { name: "Üben" })
     .click();
+  await page.getByRole("link", { name: /^Kopfrechnen/ }).click();
   await expect(
     page.getByRole("heading", { name: "Kopfrechnen", exact: true }),
   ).toBeVisible();

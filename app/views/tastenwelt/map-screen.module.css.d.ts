@@ -1,0 +1,37 @@
+// Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
+declare const styles: {
+  readonly buddy: string;
+  readonly canvas: string;
+  readonly continue: string;
+  readonly current: string;
+  readonly done: string;
+  readonly extra: string;
+  readonly eyebrow: string;
+  readonly filled: string;
+  readonly go: string;
+  readonly head: string;
+  readonly label: string;
+  readonly layout: string;
+  readonly locked: string;
+  readonly main: string;
+  readonly map: string;
+  readonly node: string;
+  readonly path: string;
+  readonly raised: string;
+  readonly screen: string;
+  readonly segments: string;
+  readonly side: string;
+  readonly stars: string;
+  readonly station: string;
+  readonly stations: string;
+  readonly subtitle: string;
+  readonly title: string;
+  readonly titles: string;
+  readonly today: string;
+  readonly todayHead: string;
+  readonly todayValue: string;
+  readonly unsure: string;
+  readonly unsureText: string;
+  readonly unsureTitle: string;
+};
+export default styles;

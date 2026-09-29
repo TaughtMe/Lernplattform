@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
-import { TypingApp } from "../../components/typing/typing-app";
+import { StudentPage } from "../../ui/shell/student-page";
+import { TypingWorld } from "./typing-world";
 
-export const metadata: Metadata = { title: "Tipptraining" };
+export const metadata: Metadata = { title: "Tastenwelt" };
 
 export default function TypingPage() {
-  return <TypingApp />;
+  return (
+    <StudentPage activePath="/frei/typing" bare>
+      <TypingWorld />
+    </StudentPage>
+  );
 }

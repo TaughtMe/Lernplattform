@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createCalendarMonth, currentWeek } from "./student-home";
+import { createCalendarMonth, currentWeek, weekStates } from "./dashboard-data";
 
 describe("createCalendarMonth", () => {
   it("builds a complete Monday-to-Sunday month including adjacent dates", () => {
@@ -49,5 +49,22 @@ describe("currentWeek", () => {
     ]);
     expect(week[0]!.key).toBe("2026-09-28");
     expect(week.find((day) => day.isToday)?.label).toBe("Mittwoch");
+  });
+});
+
+describe("weekStates", () => {
+  it("markiert geübte, verpasste und kommende Tage", () => {
+    const today = new Date(2026, 8, 30); // Mittwoch
+    const week = weekStates(["2026-09-28", "2026-09-30"], today);
+    expect(week.map((day) => day.state)).toEqual([
+      "active",
+      "missed",
+      "active",
+      "upcoming",
+      "upcoming",
+      "upcoming",
+      "upcoming",
+    ]);
+    expect(week[2]).toMatchObject({ today: true, label: "Mittwoch" });
   });
 });

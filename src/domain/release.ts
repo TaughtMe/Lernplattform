@@ -50,6 +50,7 @@ export const RELEASE_AREAS = {
     label: "Mein Lernraum",
     routes: [
       "/lernen",
+      "/ueben",
       "/frei",
       "/klasse",
       "/lernen/klasse",

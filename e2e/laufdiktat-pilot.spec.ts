@@ -46,7 +46,7 @@ test("the complete learning and teacher workspaces are reachable", async ({
 }) => {
   await page.goto("/lernen");
   await expect(
-    page.getByRole("heading", { name: "Meine Startseite" }),
+    page.getByRole("link", { name: "Weiterlernen" }).last(),
   ).toBeVisible();
 
   await page.goto("/lehrer/klassen");
