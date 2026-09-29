@@ -27,7 +27,7 @@ Welche Lernbereiche Schüler sehen, steuert `src/domain/release.ts`
 Nicht sichtbare Routen leiten zum Start bzw. zum Lehrkraft-Laufdiktat um, und
 Navigation und Kacheln blenden sie aus. Standard im Schulbetrieb: Laufdiktat
 (Schüler und Lehrkraft) und Kopfrechnen sind `frei`, alles Weitere liegt in der
-`vorschau`, Duell und alte Demo-Seiten sind `aus`.
+`vorschau`. Motivation (Häuser, Serie), Duell und alte Demo-Seiten sind `aus`.
 
 - Stufen ändern: `LERNRAUM_FREIGABE="lernbox=frei,motivation=vorschau"`
 - Vorschau für ein Gerät: `?vorschau=an` an eine beliebige Adresse hängen
@@ -42,14 +42,22 @@ Lehrkrafttoken geschützt.
 
 Die Oberfläche folgt dem Design „Lernraum UI“ (`docs/design/`, Referenzbilder
 je Screen). Tokens und Grundbausteine stehen in `app/ui/lernraum-ui.css`
-(Klassen mit Präfix `ui-`), die React-Bausteine in `app/ui/`. Neue Screens
-nutzen ausschließlich diese Schicht; die älteren Stile in `app/globals.css`
-werden mit dem Umbau schrittweise entfernt (`docs/umsetzungsplan-lernraum-ui.md`).
-Die Bausteinübersicht liegt im Entwicklungsmodus unter `/entwicklung/ui`.
+(Klassen mit Präfix `ui-`), die React-Bausteine in `app/ui/`: Grundbausteine
+(`primitives.tsx`), Dialog (`sheet.tsx`), Tiere, Icons sowie Schüler- und
+Lehrerrahmen (`app/ui/shell/`). Neue Screens nutzen ausschließlich diese
+Schicht. `app/globals.css` enthält nur noch Stile, die ältere, noch nicht
+umgebaute Seiteninhalte tatsächlich verwenden (Klassenbereich, Kopfrechnen,
+Lehrer-Unterseiten); sie laufen im Rahmen als `.ui-legacy` und erhalten dort
+die Design-Typografie. Die Bausteinübersicht liegt im Entwicklungsmodus unter
+`/entwicklung/ui`. Der Umbau ist in `docs/umsetzungsplan-lernraum-ui.md`
+beschrieben, Fachwissen zu exemplarisch gefüllten Screens in `docs/inhalte/`.
 
 ## Häuser
 
-`/haus` (Schüler) und `/lehrer/haeuser` (Lehrkraft) setzen Konzept 10/11 um:
+`/haus` (Schüler) und `/lehrer/haeuser` (Lehrkraft) setzen Konzept 10/11 um.
+Sie sind im Schulbetrieb ausgeschaltet (Freigabebereich `motivation`) und
+lassen sich mit `LERNRAUM_FREIGABE="motivation=vorschau"` für Vorschaugeräte
+einschalten.
 Hauspunkte werden lokal aus den eigenen Lernereignissen berechnet (Tageslimit
 150, keine Minuspunkte). Der Haus-Leistungsbrief ist ein QR-Code mit
 fortlaufender Standnummer, signiert mit dem persönlichen Einschreibe-Schlüssel
@@ -61,8 +69,10 @@ bewusst nicht.
 ## Prüfen
 
 ```bash
-npm test
-npm run lint
+npm run check          # Format, Lint, Typen, Unit- und Datenbanktests, Build, Render-Tests
+npm run test:e2e:live  # Laufdiktat-Räume im Browser
 ```
+
+Die vollständige Plattformsuite läuft mit `ENABLE_PRE_PILOT_E2E=1`.
 
 Die Architekturentscheidungen stehen in [docs/architecture.md](docs/architecture.md), der verbindliche Coding- und Bibliotheksstandard in [docs/engineering-quality.md](docs/engineering-quality.md) und die mobile Teststrategie in [docs/device-support.md](docs/device-support.md). Die vollständige fachliche Konzeption liegt derzeit unter `obsidian-export/Lernplattform`.

@@ -181,7 +181,18 @@ Jede Phase endet mit:
 
 ---
 
-## 5. Arbeitsweise
+## 5. Stand (29. September 2026)
+
+Phasen 0–11 sind auf `claude/lernraum-ui` umgesetzt, jeweils als eigener Commit. Abweichungen vom Plan:
+
+- Phase 9: Klassen, Material, Aufgaben und Einstellungen laufen im neuen Lehrerrahmen, ihre Inhalte aber noch als `.ui-legacy`. Neu im Design sind die Übersicht und die Klassenliste.
+- Phase 11: `app/globals.css` ist auf die tatsächlich genutzten Regeln reduziert, aber noch nicht aufgelöst. Die zweite Stilschicht verschwindet erst, wenn Klassenbereich, Kopfrechnen und Lehrer-Unterseiten umgebaut sind.
+- Motivation steht im Register auf `aus` (Standard laut Entscheidung 47), nicht auf `vorschau`.
+- Der Pull Request gegen `main` wird erst auf ausdrücklichen Wunsch erstellt.
+
+Der Qualitätsbericht steht im Vault unter `21 - Qualitätsgrundlage und Freigabe/Qualitätsbericht - Lernraum UI.md`.
+
+## 6. Arbeitsweise
 
 - Ich arbeite phasenweise auf `claude/lernraum-ui`, mit einem Commit pro abgeschlossenem Schritt. `codex/repair-room-contracts` bleibt unberührt.
 - Datenformate und Supabase-Verträge ändere ich nur, wenn eine Phase es ausdrücklich vorsieht, dann mit Migration und Test.

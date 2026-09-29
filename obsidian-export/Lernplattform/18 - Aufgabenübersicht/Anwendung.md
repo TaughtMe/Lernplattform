@@ -2,6 +2,22 @@
 
 Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidungen stehen in den verlinkten Kapiteln.
 
+## Jetzt: Oberflächenumbau „Lernraum UI“ (Entscheidung 47)
+
+- [x] Design-Canvas und Referenzbilder ablegen, Entscheidung 47 festhalten
+- [x] Gestaltungssystem mit Tokens, Grundbausteinen und automatischer Kontrastprüfung
+- [x] Schüler- und Lehrerrahmen; Freigaberegister (`aus` / `vorschau` / `frei`) ersetzt das Pilot-Gate
+- [x] Einstieg mit zufälligem Tier und Raumcode; Laufdiktat für Schüler und Lehrkraft im Design
+- [x] LernBox, Wortspeicher und Tastenwelt im Design; Fachwissen exemplarischer Inhalte unter `docs/inhalte/`
+- [x] Dashboard „Heute“, Profil mit Tierwahl und persönlicher Datensicherung samt Erinnerung
+- [x] Lehrerbereich mit Übersicht und Klassenliste
+- [x] Häuser im Design, Motivation standardmäßig aus
+- [x] Alte Kopfzeilen, Icons und ungenutzte Stilregeln entfernen
+- [x] Qualitätsbericht „Lernraum UI“ anlegen
+- [ ] Pull Request gegen `main`, vollständige Cross-Browser-Suite in GitHub
+- [ ] Sichtprüfung auf realen Schulgeräten (iPad, Chromebook, kleines Android-Smartphone)
+- [ ] Ältere Seiteninhalte (Klassenbereich, Kopfrechnen, Lehrer-Unterseiten) vollständig auf `ui-`-Bausteine umstellen und `app/globals.css` auflösen
+
 ## Jetzt: Stabilisierung vor Live-Tests
 
 - [x] Vault-Status, Produktprioritäten und aktuellen Code-Stand abgleichen

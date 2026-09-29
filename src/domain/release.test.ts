@@ -31,7 +31,7 @@ describe("Freigaberegister", () => {
     const defaults = resolveStages(undefined);
     expect(defaults.raum).toBe("frei");
     expect(defaults.lernbox).toBe("vorschau");
-    expect(defaults.motivation).toBe("vorschau");
+    expect(defaults.motivation).toBe("aus");
     expect(defaults.duell).toBe("aus");
 
     const custom = resolveStages(" lernbox = frei ,duell=vorschau");

@@ -80,12 +80,26 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/lehrer/material", "Material"],
     ["/lehrer/aufgaben", "Aufgaben"],
     ["/lehrer/einstellungen", "Einstellungen"],
-    ["/haus", "Mein Haus"],
-    ["/lehrer/haeuser", "Häuser"],
   ]) {
     const response = await render(path);
     assert.equal(response.status, 200, path);
     assert.match(await response.text(), new RegExp(title), path);
+  }
+});
+
+test("server-renders the houses once motivation is switched on", async () => {
+  process.env["LERNRAUM_FREIGABE"] = "motivation=vorschau";
+  try {
+    for (const [path, title] of [
+      ["/haus", "Mein Haus"],
+      ["/lehrer/haeuser", "Häuser"],
+    ]) {
+      const response = await render(path);
+      assert.equal(response.status, 200, path);
+      assert.match(await response.text(), new RegExp(title), path);
+    }
+  } finally {
+    delete process.env["LERNRAUM_FREIGABE"];
   }
 });
 
@@ -105,7 +119,6 @@ test("shows only released areas without preview and redirects the rest", async (
     "/frei/german/lernwoerter",
     "/frei/typing",
     "/frei/vocabulary",
-    "/haus",
     "/klasse/7b",
     "/klasse/7b/aufgaben/vokabeln",
     "/lernbox",
@@ -121,9 +134,9 @@ test("shows only released areas without preview and redirects the rest", async (
     "/lehrer/einstellungen",
     "/lehrer/klassen",
     "/lehrer/material",
-    "/lehrer/haeuser",
   ];
-  const offRoutes = ["/demo/mathematics", "/duell"];
+  // Motivation ist nach Entscheidung 47 im Schulbetrieb zunächst aus.
+  const offRoutes = ["/demo/mathematics", "/duell", "/haus", "/lehrer/haeuser"];
 
   for (const path of releasedRoutes) {
     const response = await render(path, null);

@@ -17,6 +17,14 @@ stand: 2026-09-11
 
 Der abgestimmte Startseitenentwurf dient als **visuelle und konzeptionelle Designgrundlage** für Lernraum. Er legt die gewünschte Richtung für Oberfläche, Navigation, Farbwirkung und zentrale Interaktionen fest. Er ist noch kein pixelgenaues finales Design; Details dürfen bei Umsetzung, Responsivität, Barrierefreiheit und Nutzertests angepasst werden.
 
+## Umsetzung im Code
+
+- Tokens und Klassen (Präfix `ui-`) stehen in `app/ui/lernraum-ui.css`, React-Bausteine in `app/ui/` (Knöpfe, Karten, Pillen, Fortschrittsbalken und -ring, Segmentschalter, Hinweise, Leerzustand, Dialog als natives `<dialog>`, Tiere, Icons).
+- Schülerrahmen: dunkle Leiste mit Lernen, Raum und – nur bei eingeschalteter Motivation – Haus; mobil eine untere Tab-Leiste. Lehrerrahmen: dunkle Seitenleiste mit Klassenliste und Bereichen, mobil als Schublade.
+- Die Startseite folgt Entwurf 2a: Tier und vierstelliger Raumcode, nichts weiter. Die Beschreibung unter „Navigation“ („Mein Lernraum“ und „Freies Üben“ auf der Startseite) ist damit überholt; der persönliche Lernraum ist über das Freigaberegister erreichbar.
+- Kontraste beider Modi prüft ein automatischer Test gegen WCAG AA; jede Oberfläche wird zusätzlich mit axe geprüft.
+- Die Bausteinübersicht liegt im Entwicklungsmodus unter `/entwicklung/ui`.
+
 ## Referenzentwurf
 
 ![[Lernraum-Startseite-Referenz.png]]

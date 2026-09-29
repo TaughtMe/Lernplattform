@@ -4,6 +4,8 @@
 
 Der Pilot macht Laufdiktat in seinem vollständigen, im Quellrepository erprobten Umfang zum einzigen sichtbaren Kern des Lernraums. Die vorhandene Plattform bleibt über den Git-Tag `pre-laufdiktat-pilot` vollständig wiederherstellbar; ihre Komponenten, Fachlogik, Tests und Datenmodelle bleiben im Repository.
 
+Technisch ist dieser Umfang die Standardeinstellung des Freigaberegisters `src/domain/release.ts` (Entscheidung 47): Die hier freigegebenen Wege stehen auf `frei`, der übrige Lernraum auf `vorschau`, Häuser und Duelle auf `aus`. Umleitungen erfolgen zentral im Proxy.
+
 ## Freigegebene Nutzerwege
 
 - Öffentliche Startseite mit vierstelligem Raumcode, QR-Scanner, kurzer Hilfe sowie eindeutigen Offline- und Fehlerhinweisen.
@@ -19,7 +21,7 @@ Nicht freigegeben sind persönliches Dashboard, Klassenverwaltung, allgemeine Ma
 ## Abnahmekriterien Schüler
 
 1. Ein vierstelliger Code kann per Tastatur, Einfügen oder QR eingegeben werden.
-2. Das Profil oben rechts bietet die vorhandenen Tierbilder zur Auswahl und speichert Tier und Pseudonym auf dem Gerät. Ohne Auswahl wird ein zufälliges Tier gespeichert. Zum Beitritt reicht der Code; Code-Links und QR-Codes treten direkt bei. Doppelte Pseudonyme erhalten serverseitig eine eindeutige Identität. Beim erneuten Beitritt bleiben Raumidentität und Teilnehmertoken erhalten, auch wenn das Profil inzwischen geändert wurde.
+2. Beim ersten Start wird ein zufälliges Tier gespeichert; die Startseite zeigt es und bietet die vorhandenen Tierbilder zur Änderung an. Tier und Pseudonym bleiben auf dem Gerät. Zum Beitritt reicht der Code; Code-Links und QR-Codes treten direkt bei. Doppelte Pseudonyme erhalten serverseitig eine eindeutige Identität. Beim erneuten Beitritt bleiben Raumidentität und Teilnehmertoken erhalten, auch wenn das Profil inzwischen geändert wurde.
 3. Lobby, noch nicht gestartet, beendet, ungültig, offline und Verbindungsabbruch sind unterscheidbare Zustände.
 4. Nach Neuladen oder kurzer Unterbrechung werden gerätegebundene Identität und erreichbarer Rundenfortschritt wiederverwendet.
 5. Jede Aufgabe zeigt nacheinander Merk- und Schreibphase. Richtiges und falsches Feedback sind eindeutig verschieden.

@@ -16,6 +16,10 @@ Vor einer neuen Fachimplementierung wird immer zuerst im jeweiligen Quellreposit
 
 Die aktuell abgeglichenen Quellstände und die Übernahmeregeln stehen in [upstream-integration.md](upstream-integration.md).
 
+## Oberfläche
+
+Die Oberfläche folgt dem Design „Lernraum UI“ (`docs/design/`, Entscheidung 47). Es gibt genau eine Gestaltungsschicht: Tokens und Klassen mit Präfix `ui-` in `app/ui/lernraum-ui.css`, React-Bausteine in `app/ui/` und die beiden Rahmen in `app/ui/shell/`. Bausteine sind reine Darstellung ohne Speicherzugriff. Ältere Seiteninhalte, die noch nicht umgebaut sind, laufen im neuen Rahmen als `.ui-legacy`; `app/globals.css` enthält nur noch deren tatsächlich verwendete Regeln. Kontraste beider Farbmodi prüft `app/ui/contrast.test.ts` gegen WCAG AA.
+
 ## Datenbereiche
 
 1. **Persönlich:** Vokabeln, Lernereignisse, Projektionen und Einstellungen.
@@ -32,7 +36,7 @@ Der verbindliche Coding-, Bibliotheks- und Teststandard steht in [engineering-qu
 
 ## Aktueller fachlicher Stand
 
-Der sichtbare Produktumfang ist vorübergehend durch den zentralen Laufdiktat-Pilotmodus begrenzt. Öffentlich sind nur Start, Raumbeitritt, klassisches Lehrkraft-Laufdiktat sowie persönliches Matheüben, Datenschutz und Impressum. Alle übrigen Routen werden kontrolliert umgeleitet; ihre Komponenten, Fachlogik, Tests und lokalen Daten bleiben unverändert im Repository. Der Produktvertrag steht in [laufdiktat-pilot-product-contract.md](laufdiktat-pilot-product-contract.md).
+Welche Bereiche sichtbar sind, steuert das Freigaberegister `src/domain/release.ts` (Entscheidung 47). Jeder Bereich steht auf `aus`, `vorschau` oder `frei`; der Proxy (`proxy.ts`) leitet nicht sichtbare Routen um, Navigation und Kacheln blenden sie aus. Im Schulbetrieb sind Start, Raumbeitritt, Lehrkraft-Laufdiktat, Kopfrechnen, Datenschutz und Impressum frei; der übrige Lernraum liegt in der Vorschau, Motivation und Duell sind aus. Damit ist der Umfang aus dem [Pilot-Produktvertrag](laufdiktat-pilot-product-contract.md) die Standardeinstellung, ohne dass Komponenten, Fachlogik, Tests oder lokale Daten entfernt werden. Das Register regelt Sichtbarkeit, nicht Zugriffsrechte.
 
 LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unter gemeinsamen Lernraum-Routen. Lernwörter speichern Merkstufe und Wiederholungsfälligkeit getrennt; Tastschreiben bewertet Genauigkeit vor Geschwindigkeit. LernBox, Lernwörter, Kopfrechnen und Tastschreiben schreiben typisierte Ereignisse in den persönlichen Lernverlauf oder stellen ihre nativen Fälligkeiten über einen Modul-Adapter bereit.
 
@@ -40,7 +44,7 @@ LernBox, Laufdiktat, Kopfrechnen, Lernwörter und Tastschreiben laufen nativ unt
 
 `LearningBundleV1` bleibt das versionierte Austauschformat zwischen Modulen und transportiert beispielsweise fehlerhafte Laufdiktat-Vokabeln dublettenfrei in die persönliche LernBox. Vollständige persönliche Antworten bleiben lokal.
 
-Der nächste fachliche Schritt ist, Lernwortrunden direkt aus den empfohlenen individuellen Merkstufen zusammenzustellen und Tippsequenzen aus den tatsächlich unsicheren Tasten zu erzeugen. Danach werden lokale Klassenmitgliedschaften und versionierte Klassenpakete anstelle der fest eingebauten Demo-Klasse angebunden. Duelle, Häuser oder weitere Motivationsfunktionen bleiben nachgeordnet.
+Der nächste fachliche Schritt ist, Lernwortrunden direkt aus den empfohlenen individuellen Merkstufen zusammenzustellen und Tippsequenzen aus den tatsächlich unsicheren Tasten zu erzeugen. Danach werden lokale Klassenmitgliedschaften und versionierte Klassenpakete anstelle der fest eingebauten Demo-Klasse angebunden. Häuser, Serie und Abzeichen sind gebaut, bleiben aber bis zu einem stabilen Lernkern ausgeschaltet (Entscheidungen 39 und 47); Duelle folgen später.
 
 ## Persönliches Matheüben
 

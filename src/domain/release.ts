@@ -23,7 +23,8 @@ type AreaDefinition = {
 
 /**
  * Standardstufen für den Schulbetrieb: Laufdiktat (Schüler und Lehrkraft)
- * und persönliches Matheüben sind frei, alles Weitere liegt in der Vorschau.
+ * und persönliches Matheüben sind frei, Motivation und Duell sind aus,
+ * alles Weitere liegt in der Vorschau.
  * Abweichungen werden per LERNRAUM_FREIGABE gesetzt, z. B.
  * `lernbox=frei,motivation=vorschau`.
  */
@@ -88,7 +89,8 @@ export const RELEASE_AREAS = {
   motivation: {
     label: "Häuser, Serie und Abzeichen",
     routes: ["/haus", "/lehrer/haeuser"],
-    stage: "vorschau",
+    // Entscheidung 47/39: gebaut, im Schulbetrieb zunächst aus.
+    stage: "aus",
   },
   duell: { label: "Duell", routes: ["/duell"], stage: "aus" },
   demo: { label: "Alte Demo-Seiten", routes: ["/demo"], stage: "aus" },
