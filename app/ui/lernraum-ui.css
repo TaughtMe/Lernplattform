@@ -2046,3 +2046,188 @@ body:has(.ui-landing) .site-meta-actions > span:first-child {
   padding-top: 12px;
   border-top: 1px solid var(--line);
 }
+
+/* ============ Wortspeicher (Design 4d–4f) ============ */
+.ui-ws {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+}
+.ui-ws__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+}
+.ui-ws__hero .ui-muted {
+  color: var(--nav-ink2);
+}
+.ui-ws__hero-count {
+  font-size: 26px;
+  font-weight: 800;
+}
+.ui-ws__hero-label {
+  color: var(--nav-ink2);
+  font-size: 16px;
+  font-weight: 700;
+}
+.ui-ws__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+.ui-ws__set {
+  gap: 6px;
+  min-height: 132px;
+}
+.ui-ws__set strong {
+  font-size: 16px;
+}
+.ui-ws__set-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+}
+.ui-ws__stages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-ws__stages .ui-select-card {
+  height: 100%;
+}
+.ui-ws__stage-number {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+[aria-pressed="true"] > .ui-ws__stage-number {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.ui-ws__words summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--ink2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ui-ws__settings {
+  align-items: flex-end;
+}
+.ui-ws__settings label {
+  min-width: 150px;
+}
+.ui-ws__start {
+  margin-left: auto;
+}
+.ui-ws__session {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.ui-ws__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 26px 18px;
+  border-radius: 22px;
+  text-align: center;
+}
+.ui-ws__recall {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+.ui .ui-ws__prompt {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.ui-ws__memory {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+  font-size: 30px;
+}
+.ui-ws__complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 26px 22px;
+  text-align: center;
+}
+.ui-ws__results article {
+  display: grid;
+  gap: 2px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  background: var(--bg);
+}
+.ui-ws__results strong {
+  font-size: 24px;
+}
+.ui .learning-word-underline-answer {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+.ui .learning-word-underline-answer > span:first-child {
+  color: var(--ink2);
+  font-size: 12.5px;
+}
+.ui .learning-word-letter-slots i {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+}
+@media (min-width: 900px) {
+  .ui-ws {
+    padding: 22px 30px 30px;
+  }
+  .ui-ws__hero {
+    flex-direction: row;
+    align-items: center;
+    padding: 20px 22px;
+  }
+  .ui-ws__card {
+    padding: 30px 26px;
+  }
+  .ui .ui-ws__prompt {
+    font-size: 38px;
+  }
+}
+/* Unsichtbares Eingabefeld über den Längenstrichen (Stufe 4). */
+.ui .learning-word-slot-input {
+  color: transparent;
+  caret-color: transparent;
+  background: transparent;
+}
