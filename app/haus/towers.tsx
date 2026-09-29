@@ -80,7 +80,7 @@ export function Towers({
   );
   return (
     <div>
-      <div className="lr-towers" style={{ gap: z.gap, height }}>
+      <div className="ui-towers" style={{ gap: z.gap, height }}>
         {houses.map((h) => {
           const own = h.id === mine;
           const body = dark
@@ -105,13 +105,13 @@ export function Towers({
           return (
             <div
               key={h.id}
-              className="lr-tower"
+              className="ui-tower"
               role="img"
               aria-label={`${h.name}: ${h.perHead} Punkte pro Kopf`}
             >
               {own && z.tag ? (
                 <span
-                  className="lr-pill lr-pill--dark"
+                  className="ui-pill ui-pill--dark"
                   style={{ marginBottom: 6, fontSize: z.tag }}
                 >
                   {size === "s" ? "du" : "dein Haus"}
@@ -123,7 +123,7 @@ export function Towers({
                 alt=""
                 width={z.crest}
                 height={z.crest}
-                className={own ? "lr-bob" : undefined}
+                className={own ? "ui-bob" : undefined}
                 style={{
                   position: "relative",
                   zIndex: 1,
@@ -164,7 +164,7 @@ export function Towers({
                 {Array.from({ length: count }, (_, i) => (
                   <span
                     key={i}
-                    className="lr-floor"
+                    className="ui-tower__floor"
                     style={{
                       gap: z.wg,
                       padding: `${z.wp}px 0`,
@@ -182,19 +182,25 @@ export function Towers({
           );
         })}
       </div>
-      <div className="lr-ground" style={{ height: size === "l" ? 12 : 9 }} />
-      <div className="lr-towers__labels" style={{ gap: z.gap }}>
+      <div
+        className="ui-towers__ground"
+        style={{ height: size === "l" ? 12 : 9 }}
+      />
+      <div className="ui-towers__labels" style={{ gap: z.gap }}>
         {houses.map((h) => (
           <span key={h.id}>
-            <span className="lr-fun" style={{ fontSize: z.name }}>
+            <span
+              className="ui-fun ui-towers__name"
+              style={{ ["--name" as string]: `${z.name}px` }}
+            >
               {h.name}
             </span>
-            <span className="lr-tiny lr-muted">
+            <span className="ui-tiny ui-muted">
               {h.perHead}
               {size === "s" ? "" : ` pro Kopf · ${h.active}`}
             </span>
             {h.trend ? (
-              <span className="lr-pill lr-pill--good">{h.trend}</span>
+              <span className="ui-pill ui-pill--good">{h.trend}</span>
             ) : null}
           </span>
         ))}

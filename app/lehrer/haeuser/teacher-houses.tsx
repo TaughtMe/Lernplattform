@@ -26,10 +26,10 @@ import {
 } from "../../../src/storage/house";
 import { createTeacherClassRepository } from "../../../src/storage/teacher-class-settings";
 import { QrCodeScanner } from "../../components/qr-code-scanner";
-import { BeamerIcon } from "../../components/ui-icons";
 import { useIsDark } from "../../haus/house-app";
 import { Towers } from "../../haus/towers";
-import "../../haus/house-ui.css";
+import { Icon } from "../../ui/icons";
+import { Button, Card, Pill } from "../../ui/primitives";
 
 const STATUS_TEXT: Record<HouseScanStatus, string> = {
   neu: "übernommen",
@@ -178,14 +178,13 @@ export function TeacherHouses() {
 
   if (classes && classes.length === 0) {
     return (
-      <section className="lr-house">
-        <h1 className="lr-h1">Häuser</h1>
-        <p className="lr-card">
+      <section className="ui ui-page" aria-labelledby="houses-title">
+        <h1 id="houses-title" className="ui-h-page">
+          Häuser
+        </h1>
+        <p className="ui-notice">
           Lege zuerst unter{" "}
-          <Link
-            href="/lehrer/klassen"
-            style={{ color: "var(--accent)", fontWeight: 700 }}
-          >
+          <Link className="ui-house__link" href="/lehrer/klassen">
             Klassen
           </Link>{" "}
           eine Klasse an und schreibe die Schüler ein. Ihre Haus-Leistungsbriefe
@@ -197,42 +196,46 @@ export function TeacherHouses() {
 
   if (beamer) {
     return (
-      <section className="lr-house" style={{ minHeight: "80dvh" }}>
-        <div className="lr-between">
-          <h1 className="lr-h1">
+      <section
+        className="ui ui-page ui-dots"
+        style={{ minHeight: "80dvh" }}
+        aria-labelledby="houses-title"
+      >
+        <div className="ui-between ui-wrap">
+          <h1 id="houses-title" className="ui-h-fun">
             Häuser · {currentClass?.name} · Woche {week.slice(-2)}
           </h1>
-          <button
-            type="button"
-            className="lr-btn lr-btn--ghost"
-            onClick={() => setBeamer(false)}
-          >
+          <Button variant="ghost" onClick={() => setBeamer(false)}>
             Beamer-Ansicht schließen
-          </button>
+          </Button>
         </div>
-        <div className="lr-card" style={{ padding: 24 }}>
+        <Card look="pop" style={{ padding: 24 }}>
           <Towers houses={towers} dark={dark} size="l" height={480} />
-        </div>
+        </Card>
       </section>
     );
   }
 
   return (
-    <section className="lr-house" aria-labelledby="houses-title">
-      <div className="lr-row" style={{ flexWrap: "wrap" }}>
-        <div className="lr-stack lr-grow" style={{ gap: 2 }}>
-          <h1 id="houses-title" className="lr-h1">
+    <section className="ui ui-page" aria-labelledby="houses-title">
+      <div className="ui-row ui-wrap">
+        <div
+          className="ui-stack ui-grow"
+          style={{ ["--gap" as string]: "2px" }}
+        >
+          <h1 id="houses-title" className="ui-h-page">
             Häuser{currentClass ? ` · ${currentClass.name}` : ""}
           </h1>
-          <span className="lr-small lr-muted">
+          <p className="ui-small ui-muted">
             Woche {week.slice(-2)} · Stand liegt nur auf diesem Gerät · keine
             Einzelrangliste
-          </span>
+          </p>
         </div>
         {classes && classes.length > 1 ? (
-          <label className="lr-row lr-small">
+          <label className="ui-row ui-label">
             Klasse
             <select
+              className="ui-input"
               value={classId ?? ""}
               onChange={(e) => setClassId(e.target.value)}
             >
@@ -244,55 +247,52 @@ export function TeacherHouses() {
             </select>
           </label>
         ) : null}
-        <button
-          type="button"
-          className="lr-btn lr-btn--ghost"
-          onClick={() => setBeamer(true)}
-        >
-          <BeamerIcon aria-hidden="true" />
+        <Button variant="ghost" onClick={() => setBeamer(true)}>
+          <Icon name="beamer" size={20} />
           Beamer-Ansicht
-        </button>
+        </Button>
       </div>
 
-      <div className="lr-house-grid">
-        <div
-          className="lr-card lr-stack"
-          style={{ borderRadius: 26, padding: "20px 24px" }}
+      <div className="ui-house__grid">
+        <Card
+          look="pop"
+          className="ui-stack ui-dots"
+          aria-labelledby="standing"
         >
-          <div className="lr-between">
-            <span className="lr-fun" style={{ fontSize: 19 }}>
+          <div className="ui-between">
+            <h2 id="standing" className="ui-h-section">
               Stand der Häuser
-            </span>
+            </h2>
             {best && best.perHead > 0 ? (
-              <span className="lr-pill lr-pill--good">Vorne: {best.name}</span>
+              <Pill tone="good">Vorne: {best.name}</Pill>
             ) : null}
           </div>
           <Towers houses={towers} dark={dark} size="m" height={360} />
           {!delivered ? (
-            <p className="lr-small lr-muted" style={{ margin: 0 }}>
+            <p className="ui-small ui-muted">
               Noch keine Leistungsbriefe diese Woche. Schüler öffnen „Mein Haus“
               → „Leistungsbrief an Lehrkraft“.
             </p>
           ) : null}
-        </div>
-        <div className="lr-stack" style={{ gap: 14 }}>
-          <div className="lr-card lr-card--dark lr-stack">
-            <div className="lr-between">
-              <span className="lr-fun" style={{ fontSize: 17 }}>
+        </Card>
+        <div className="ui-stack">
+          <Card look="dark" className="ui-stack" aria-labelledby="letters">
+            <div className="ui-between">
+              <h2 id="letters" className="ui-h-section">
                 Leistungsbriefe
-              </span>
-              <span className="lr-fun" style={{ color: "var(--nav-accent)" }}>
+              </h2>
+              <span className="ui-fun" style={{ color: "var(--nav-accent)" }}>
                 {delivered} / {members.length || "?"}
               </span>
             </div>
-            <div className="lr-scan" data-state={frame ?? undefined}>
+            <div className="ui-house__scan" data-state={frame ?? undefined}>
               <QrCodeScanner
                 continuous
                 onResult={(value) => void handle(value)}
               />
             </div>
             <form
-              className="lr-row"
+              className="ui-row ui-on-dark"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (manual.trim()) {
@@ -302,51 +302,35 @@ export function TeacherHouses() {
               }}
             >
               <input
-                className="lr-input"
+                className="ui-input"
                 value={manual}
                 onChange={(e) => setManual(e.target.value)}
                 placeholder="Code einfügen (lernraum:house:…)"
                 aria-label="Haus-Leistungsbrief einfügen"
               />
-              <button
-                type="submit"
-                className="lr-btn lr-btn--gold"
-                style={{ minHeight: 42 }}
-              >
+              <Button type="submit" variant="gold" size="sm">
                 Prüfen
-              </button>
+              </Button>
             </form>
-          </div>
-          <div className="lr-card lr-stack" style={{ gap: 8 }}>
-            <span
-              className="lr-tiny lr-muted"
-              style={{ letterSpacing: ".1em", textTransform: "uppercase" }}
-            >
+          </Card>
+          <Card look="pop" className="ui-stack" aria-labelledby="recent">
+            <h2 id="recent" className="ui-eyebrow">
               Zuletzt
-            </span>
+            </h2>
             {inbox.log.length ? (
               inbox.log.slice(0, 6).map((c, i) => (
-                <div
-                  key={`${c.at}-${i}`}
-                  className="lr-row"
-                  style={{ minHeight: 38 }}
-                >
+                <div key={`${c.at}-${i}`} className="ui-house__log">
                   <span
+                    className="ui-house__dot"
                     style={{
-                      width: 12,
-                      height: 12,
-                      flex: "none",
-                      borderRadius: "50%",
                       background: `oklch(0.7 0.14 ${HOUSES.find((h) => h.name === c.house)?.hue ?? 70})`,
                     }}
                   />
-                  <span className="lr-stack lr-grow" style={{ gap: 0 }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 700 }}>
-                      {c.alias}
-                    </span>
+                  <span className="ui-grow">
+                    <strong className="ui-small">{c.alias}</strong>
                     <span
-                      className="lr-tiny lr-muted"
-                      style={{ fontWeight: 500 }}
+                      className="ui-tiny ui-muted"
+                      style={{ display: "block" }}
                     >
                       {c.house} ·{" "}
                       {new Date(c.at).toLocaleTimeString("de-DE", {
@@ -355,23 +339,24 @@ export function TeacherHouses() {
                       })}
                     </span>
                   </span>
-                  <span
-                    className={`lr-pill ${c.status === "neu" || c.status === "aktualisiert" ? "lr-pill--good" : "lr-pill--accent"}`}
+                  <Pill
+                    tone={
+                      c.status === "neu" || c.status === "aktualisiert"
+                        ? "good"
+                        : "accent"
+                    }
                   >
                     {STATUS_TEXT[c.status]}
-                  </span>
+                  </Pill>
                 </div>
               ))
             ) : (
-              <p className="lr-small lr-muted" style={{ margin: 0 }}>
-                Noch nichts gescannt.
-              </p>
+              <p className="ui-small ui-muted">Noch nichts gescannt.</p>
             )}
             {(inbox.log.length || delivered) && classId ? (
-              <button
-                type="button"
-                className="lr-btn lr-btn--ghost"
-                style={{ minHeight: 38, color: "var(--bad)" }}
+              <Button
+                variant="bad"
+                size="sm"
                 onClick={() => {
                   if (
                     window.confirm(
@@ -382,9 +367,9 @@ export function TeacherHouses() {
                 }}
               >
                 Protokoll löschen
-              </button>
+              </Button>
             ) : null}
-          </div>
+          </Card>
         </div>
       </div>
     </section>

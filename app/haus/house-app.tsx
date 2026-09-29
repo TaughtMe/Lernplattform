@@ -24,9 +24,10 @@ import {
 import { createPersonalLearningEventRepository } from "../../src/storage/personal-learning-events";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
 import { StudentDashboardShell } from "../components/student-dashboard-shell";
-import { QrIcon } from "../components/ui-icons";
+import { Icon } from "../ui/icons";
+import { Button, Card, ProgressBar } from "../ui/primitives";
+import { Sheet } from "../ui/sheet";
 import { Towers, type TowerData } from "./towers";
-import "./house-ui.css";
 
 /**
  * Beispielstand der anderen Häuser. Schülergeräte haben bewusst keinen
@@ -74,6 +75,12 @@ const EMPTY_CONTRIBUTION: HouseContribution = {
   correct: 0,
   activeDays: 0,
 };
+
+const SHARE_LABELS = {
+  points: "Hauspunkte",
+  rounds: "Lernrunden",
+  correct: "Richtige Antworten",
+} as const;
 
 /** Mein Haus (Design 7a/7b): Türme, Tagesbeitrag, Missionen, signierter QR-Leistungsbrief. */
 export function HouseApp() {
@@ -184,43 +191,31 @@ export function HouseApp() {
     setQrOpen(true);
   };
 
-  const shareLabels = {
-    points: "Hauspunkte",
-    rounds: "Lernrunden",
-    correct: "Richtige Antworten",
-  } as const;
-
   return (
     <StudentDashboardShell activePath="/haus">
-      <div className="lr-house">
-        <div className="lr-between" style={{ alignItems: "flex-end" }}>
-          <div className="lr-stack" style={{ gap: 4 }}>
-            <h1 className="lr-h1">Mein Haus</h1>
-            <span className="lr-small lr-muted">
-              {enrollment ? `${enrollment.className} · ` : ""}Woche{" "}
-              {week.slice(-2)} · gezählt wird pro aktivem Mitglied
-            </span>
-          </div>
+      <div className="ui-page ui-house ui-dots">
+        <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
+          <h1 className="ui-h-fun">Mein Haus</h1>
+          <p className="ui-small ui-muted">
+            {enrollment ? `${enrollment.className} · ` : ""}Woche{" "}
+            {week.slice(-2)} · gezählt wird pro aktivem Mitglied
+          </p>
         </div>
 
         {!mine ? (
-          <section className="lr-card lr-stack" aria-labelledby="house-choose">
-            <h2
-              id="house-choose"
-              className="lr-fun"
-              style={{ margin: 0, fontSize: 18 }}
-            >
+          <Card look="pop" className="ui-stack" aria-labelledby="house-choose">
+            <h2 id="house-choose" className="ui-h-section">
               Wähle dein Haus
             </h2>
-            <p className="lr-small lr-muted" style={{ margin: 0 }}>
+            <p className="ui-small ui-muted">
               Deine Lehrkraft sagt dir, zu welchem Haus du gehörst.
             </p>
-            <div className="lr-select">
+            <div className="ui-house__choose">
               {HOUSES.map((h) => (
                 <button
                   key={h.id}
                   type="button"
-                  aria-pressed={false}
+                  className="ui-select-card ui-house__option"
                   onClick={() =>
                     writeHouseState((prev) => ({ ...prev, house: h.id }))
                   }
@@ -231,21 +226,17 @@ export function HouseApp() {
                 </button>
               ))}
             </div>
-          </section>
+          </Card>
         ) : null}
 
-        <div className="lr-house-grid">
-          <section
-            className="lr-card lr-stack"
-            style={{ borderRadius: 26 }}
-            aria-label="Alle Häuser"
-          >
-            <div className="lr-between">
-              <span className="lr-fun" style={{ fontSize: 17 }}>
+        <div className="ui-house__grid">
+          <Card look="pop" className="ui-stack" aria-labelledby="all-houses">
+            <div className="ui-between">
+              <h2 id="all-houses" className="ui-h-section">
                 Alle Häuser
-              </span>
-              <span className="lr-tiny lr-muted">
-                1 Stock = 50 Punkte pro Kopf
+              </h2>
+              <span className="ui-tiny ui-muted">
+                diese Woche · 1 Stock = 50 pro Kopf
               </span>
             </div>
             <Towers
@@ -255,19 +246,16 @@ export function HouseApp() {
               size="m"
               height={330}
             />
-            <p
-              className="lr-tiny lr-muted"
-              style={{ margin: 0, fontWeight: 500 }}
-            >
+            <p className="ui-tiny ui-muted">
               Beispielstand. Den echten Wochenstand zeigt deine Lehrkraft am
               Beamer.
             </p>
-          </section>
+          </Card>
 
-          <div className="lr-stack" style={{ gap: 14 }}>
+          <div className="ui-stack">
             {mine ? (
               <div
-                className="lr-hero"
+                className="ui-house__hero"
                 style={
                   dark
                     ? {
@@ -288,143 +276,101 @@ export function HouseApp() {
                   alt=""
                   width={64}
                   height={64}
-                  className="lr-bob"
+                  className="ui-bob"
                 />
-                <span className="lr-stack lr-grow" style={{ gap: 3 }}>
-                  <span
-                    style={{
-                      fontSize: 11.5,
-                      fontWeight: 700,
-                      letterSpacing: ".1em",
-                      textTransform: "uppercase",
-                      opacity: 0.75,
-                    }}
-                  >
-                    Dein Haus
-                  </span>
-                  <span className="lr-fun" style={{ fontSize: 25 }}>
+                <span className="ui-stack ui-grow ui-house__hero-text">
+                  <span className="ui-house__hero-eyebrow">Dein Haus</span>
+                  <span className="ui-fun ui-house__hero-name">
                     {mine.name}
                   </span>
                   <button
                     type="button"
+                    className="ui-house__change"
                     onClick={() =>
                       writeHouseState((prev) => ({ ...prev, house: null }))
                     }
-                    style={{
-                      alignSelf: "flex-start",
-                      padding: 0,
-                      border: 0,
-                      background: "none",
-                      color: "inherit",
-                      font: "inherit",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      textDecoration: "underline",
-                      opacity: 0.8,
-                      cursor: "pointer",
-                    }}
                   >
                     Haus ändern
                   </button>
                 </span>
-                <span
-                  className="lr-stack"
-                  style={{ alignItems: "flex-end", gap: 2 }}
-                >
-                  <span
-                    className="lr-fun"
-                    style={{ fontSize: 30, fontWeight: 700 }}
-                  >
-                    {contribution.weekPoints}
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.8 }}>
-                    Punkte diese Woche
-                  </span>
+                <span className="ui-house__hero-points">
+                  <span className="ui-fun">{contribution.weekPoints}</span>
+                  <span>Punkte diese Woche</span>
                 </span>
               </div>
             ) : null}
-            <div className="lr-card lr-stack" style={{ gap: 8 }}>
-              <div className="lr-between">
-                <span className="lr-fun" style={{ fontSize: 16 }}>
+            <Card look="pop" className="ui-stack" aria-labelledby="today">
+              <div className="ui-between">
+                <h2 id="today" className="ui-h-section">
                   Dein Beitrag heute
-                </span>
-                <span
-                  className="lr-fun"
-                  style={{ fontSize: 16, color: "var(--accent)" }}
-                >
+                </h2>
+                <span className="ui-fun ui-house__today">
                   {contribution.todayPoints} / {DAILY_POINT_LIMIT}
                 </span>
               </div>
-              <span className="lr-bar" style={{ height: 10 }}>
-                <span
-                  style={{
-                    width: `${(contribution.todayPoints / DAILY_POINT_LIMIT) * 100}%`,
-                  }}
-                />
-              </span>
-              <span className="lr-small lr-muted">
+              <ProgressBar
+                value={contribution.todayPoints}
+                max={DAILY_POINT_LIMIT}
+                label="Beitrag heute"
+              />
+              <p className="ui-small ui-muted">
                 {contribution.todayPoints >= DAILY_POINT_LIMIT
                   ? "Tageslimit erreicht – morgen geht es weiter."
                   : `Noch ${DAILY_POINT_LIMIT - contribution.todayPoints} Punkte bis zum Tageslimit.`}{" "}
                 Punkte gibt es für jede geübte Aufgabe, keine Minuspunkte.
-              </span>
-            </div>
+              </p>
+            </Card>
           </div>
         </div>
 
-        <section aria-label="Missionen" className="lr-missions">
-          {missions.map((m) => {
-            const done = m.n >= m.of;
-            return (
-              <div key={m.t} className="lr-card lr-stack" style={{ gap: 10 }}>
-                <div className="lr-between">
-                  <span
-                    className="lr-fun"
-                    style={{
-                      display: "grid",
-                      placeItems: "center",
-                      minWidth: 38,
-                      height: 30,
-                      padding: "0 6px",
-                      borderRadius: 10,
-                      fontSize: done ? 16 : 12,
-                      ...(done
-                        ? {
-                            background: "var(--green)",
-                            color: "var(--green-ink)",
-                          }
-                        : {
-                            background: "var(--accent-bg)",
-                            color: "var(--accent)",
-                          }),
-                    }}
-                  >
-                    {done
-                      ? "✓"
-                      : `${Math.round((Math.min(m.n, m.of) / m.of) * 100)}%`}
-                  </span>
-                  <span className="lr-fun lr-muted" style={{ fontSize: 15 }}>
-                    {Math.min(m.n, m.of)} / {m.of}
-                  </span>
-                </div>
-                <span style={{ fontSize: 13.5, fontWeight: 700 }}>{m.t}</span>
-                <span
-                  className={`lr-bar ${done ? "lr-bar--green" : ""}`}
-                  style={{ height: 7, marginTop: "auto" }}
+        <section className="ui-stack" aria-labelledby="missions">
+          <h2 id="missions" className="ui-h-section">
+            Hausmissionen
+          </h2>
+          <div className="ui-house__missions">
+            {missions.map((m) => {
+              const done = m.n >= m.of;
+              const shown = Math.min(m.n, m.of);
+              return (
+                <div
+                  key={m.t}
+                  className="ui-card ui-card--pop ui-house__mission"
                 >
                   <span
-                    style={{ width: `${Math.min(100, (m.n / m.of) * 100)}%` }}
-                  />
-                </span>
-              </div>
-            );
-          })}
+                    className={`ui-fun ui-house__badge${done ? " is-done" : ""}`}
+                    aria-hidden="true"
+                  >
+                    {done ? (
+                      <Icon name="check" size={18} />
+                    ) : (
+                      `${Math.round((shown / m.of) * 100)}%`
+                    )}
+                  </span>
+                  <span className="ui-stack ui-grow">
+                    <span className="ui-between">
+                      <strong>{m.t}</strong>
+                      <span className="ui-fun ui-muted">
+                        {shown} / {m.of}
+                      </span>
+                    </span>
+                    <ProgressBar
+                      value={m.n}
+                      max={m.of}
+                      label={m.t}
+                      {...(done ? { tone: "green" as const } : {})}
+                    />
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
         {enrollments && enrollments.length > 1 ? (
-          <label className="lr-row lr-small">
+          <label className="ui-stack ui-label">
             Klasse für den Brief
             <select
+              className="ui-input"
               value={enrollment?.membershipId ?? ""}
               onChange={(e) => setMembershipId(e.target.value)}
             >
@@ -438,108 +384,79 @@ export function HouseApp() {
         ) : null}
 
         {enrollment ? (
-          <button
-            type="button"
-            className="lr-btn lr-btn--dark"
+          <Button
+            variant="dark"
+            size="lg"
+            block
+            className="ui-house__letter"
             onClick={openLetter}
             disabled={!mine}
           >
-            <QrIcon aria-hidden="true" />
+            <Icon name="qr" size={20} />
             Leistungsbrief an Lehrkraft
-          </button>
+          </Button>
         ) : (
-          <p className="lr-card lr-small" style={{ margin: 0 }}>
+          <p className="ui-notice">
             Für den Leistungsbrief musst du in einer Klasse eingeschrieben sein.{" "}
-            <Link
-              href="/lernen/klasse"
-              style={{ color: "var(--accent)", fontWeight: 700 }}
-            >
+            <Link className="ui-house__link" href="/lernen/klasse">
               Klasse beitreten
             </Link>
           </p>
         )}
 
-        {qrOpen ? (
-          <>
-            <button
-              type="button"
-              className="lr-scrim"
-              aria-label="Schließen"
-              onClick={() => setQrOpen(false)}
-            />
-            <div
-              className="lr-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="letter-title"
-            >
-              <span className="lr-sheet__grip" />
-              <div className="lr-between" style={{ alignSelf: "stretch" }}>
-                <span
-                  id="letter-title"
-                  className="lr-fun"
-                  style={{ fontSize: 20 }}
-                >
-                  Leistungsbrief
-                </span>
+        <Sheet
+          open={qrOpen}
+          title="Leistungsbrief"
+          onClose={() => setQrOpen(false)}
+        >
+          <div
+            className="ui-row ui-wrap"
+            role="group"
+            aria-label="Diese Werte übertragen"
+            style={{ ["--gap" as string]: "6px" }}
+          >
+            {(Object.keys(SHARE_LABELS) as (keyof typeof SHARE_LABELS)[]).map(
+              (k) => (
                 <button
+                  key={k}
                   type="button"
-                  className="lr-btn lr-btn--soft"
-                  style={{ minHeight: 40 }}
-                  onClick={() => setQrOpen(false)}
+                  className="ui-chip"
+                  aria-pressed={state.share[k]}
+                  onClick={() =>
+                    writeHouseState((prev) => ({
+                      ...prev,
+                      sequence: prev.sequence + 1,
+                      share: { ...prev.share, [k]: !prev.share[k] },
+                    }))
+                  }
                 >
-                  Schließen
+                  {SHARE_LABELS[k]}
                 </button>
-              </div>
-              <div
-                className="lr-row"
-                style={{ flexWrap: "wrap", alignSelf: "stretch", gap: 6 }}
-              >
-                {(Object.keys(shareLabels) as (keyof typeof shareLabels)[]).map(
-                  (k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      className="lr-chip"
-                      aria-pressed={state.share[k]}
-                      onClick={() =>
-                        writeHouseState((prev) => ({
-                          ...prev,
-                          sequence: prev.sequence + 1,
-                          share: { ...prev.share, [k]: !prev.share[k] },
-                        }))
-                      }
-                    >
-                      {shareLabels[k]}
-                    </button>
-                  ),
-                )}
-              </div>
-              {error ? (
-                <p role="alert">{error}</p>
-              ) : code ? (
-                <div className="lr-qr">
-                  <QRCodeSVG
-                    value={code}
-                    size={240}
-                    level="M"
-                    title="QR-Code mit deinem Leistungsbrief"
-                  />
-                </div>
-              ) : (
-                <p className="lr-small lr-muted">Brief wird erstellt …</p>
-              )}
-              <span
-                className="lr-small lr-muted"
-                style={{ textAlign: "center" }}
-              >
-                Halte den Code vor das Lehrergerät. Er bleibt sichtbar, bis du
-                ihn schließt. Die Bestätigung siehst du dort. Übertragen werden
-                nur die markierten Werte, Stand {Math.max(1, state.sequence)}.
-              </span>
+              ),
+            )}
+          </div>
+          {error ? (
+            <p className="ui-notice ui-notice--bad" role="alert">
+              {error}
+            </p>
+          ) : code ? (
+            <div className="ui-house__qr">
+              <QRCodeSVG
+                value={code}
+                size={240}
+                level="M"
+                title="QR-Code mit deinem Leistungsbrief"
+              />
             </div>
-          </>
-        ) : null}
+          ) : (
+            <p className="ui-small ui-muted">Brief wird erstellt …</p>
+          )}
+          <p className="ui-small ui-muted ui-center">
+            Halte den Code vor das Lehrergerät. Er bleibt sichtbar, bis du ihn
+            schließt. Die Bestätigung siehst du dort. Übertragen werden nur die
+            markierten Werte, Stand {Math.max(1, state.sequence)}.
+          </p>
+        </Sheet>
       </div>
     </StudentDashboardShell>
   );
