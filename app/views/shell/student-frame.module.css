@@ -1,9 +1,10 @@
 /*
  * Schülerrahmen (Design 3a/6a Seitenleiste, 2b Tab-Leiste unten).
  * Ab 900 px Breite steht die Navigation links, darunter unten.
+ * Die Grundlage `.view` gilt nur für die Navigation: Seiten im Inhalt
+ * bringen ihre eigene mit, ältere Seiten messen weiter mit border-box.
  */
 .frame {
-  composes: view from "../parts/parts.module.css";
   container-type: inline-size;
   background: var(--bg);
   color: var(--ink);
@@ -24,6 +25,7 @@
 
 /* ---------- Tab-Leiste (mobil, 2b) ---------- */
 .nav {
+  composes: view from "../parts/parts.module.css";
   position: fixed;
   right: 0;
   bottom: 0;

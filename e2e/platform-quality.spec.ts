@@ -508,6 +508,41 @@ test("the personal learning room keeps today's task focused and separates suppor
   ).toBeVisible();
 });
 
+test("practice areas keep their fields inside the student frame", async ({
+  page,
+}) => {
+  for (const route of [
+    "/lernbox",
+    "/frei/german/lernwoerter",
+    "/frei/mathematics",
+    "/frei/german/laufdiktat",
+  ]) {
+    await page.goto(route);
+    await expect(
+      page.getByRole("navigation", { name: "Hauptnavigation" }),
+    ).toBeVisible();
+    const overflowing = await page.evaluate(() =>
+      [...document.querySelectorAll("#inhalt input, #inhalt textarea")]
+        .filter((field) => {
+          const own = field.getBoundingClientRect();
+          const parent = field.parentElement!.getBoundingClientRect();
+          return own.width > 0 && own.right > parent.right + 1;
+        })
+        .map((field) => field.getAttribute("aria-label") ?? field.id),
+    );
+    expect(overflowing, route).toEqual([]);
+  }
+
+  // Auch der Raum-Beitritt liegt im Schülerrahmen, damit man ihn verlassen kann.
+  await page.goto("/raum");
+  const nav = page.getByRole("navigation", { name: "Hauptnavigation" });
+  await expect(
+    nav.getByRole("link", { name: "Raum", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await nav.getByRole("link", { name: "Üben", exact: true }).click();
+  await expect(page).toHaveURL(/\/ueben$/);
+});
+
 test("teacher material and assignment tools share a consistent grid", async ({
   page,
 }) => {

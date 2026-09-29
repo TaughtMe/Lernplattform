@@ -400,9 +400,16 @@
   .narrowOnly {
     display: none;
   }
+  /* Alles mittig und kompakt: Aufgabe so hoch wie ihr Text, die Tastatur
+     wächst mit Breite und Höhe des Fensters. */
   .layout {
-    gap: 18px;
-    padding: 18px 28px 20px;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1320px;
+    margin-inline: auto;
+    gap: clamp(12px, 1.8dvh, 18px);
+    padding: clamp(12px, 1.8dvh, 18px) 28px;
   }
   .head {
     gap: 14px;
@@ -434,7 +441,9 @@
   }
   .body {
     display: grid;
+    flex: none;
     grid-template-columns: minmax(0, 1fr) 250px;
+    align-items: start;
     gap: 20px;
   }
   .coach {
@@ -521,9 +530,10 @@
   }
   .card,
   .done {
+    flex: none;
     order: 1;
-    gap: 14px;
-    padding: 20px 24px;
+    gap: clamp(8px, 1.4dvh, 14px);
+    padding: clamp(14px, 2dvh, 20px) 24px;
     border-radius: 26px;
     box-shadow:
       0 5px 0 var(--line2),
@@ -549,13 +559,15 @@
     color: var(--ink2);
   }
   .tiles {
-    --tile-w: 40px;
-    --tile-h: 58px;
-    --tile-sp: 20px;
-    --tile-r: 13px;
-    --tile-fs: 30px;
+    --tile-h: clamp(40px, 5.4dvh, 58px);
+    --tile-w: calc(var(--tile-h) * 0.69);
+    --tile-sp: calc(var(--tile-h) * 0.34);
+    --tile-r: calc(var(--tile-h) * 0.22);
+    --tile-fs: calc(var(--tile-h) * 0.52);
     --word-gap: 5px;
-    gap: 16px 14px;
+    flex: none;
+    gap: clamp(10px, 1.4dvh, 16px) 14px;
+    padding-block: 6px;
   }
   .track {
     height: 10px;
@@ -597,6 +609,7 @@
   }
   .prompt {
     position: absolute;
+    z-index: 2;
     inset: -6px -10px;
     display: grid;
     place-items: center;

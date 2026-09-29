@@ -1177,8 +1177,8 @@
 /* ============ Laufdiktat-Raum (Design 5a, 5b) ============ */
 .ui-room {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  min-height: 100dvh;
   background: var(--bg);
 }
 .ui-room__head {

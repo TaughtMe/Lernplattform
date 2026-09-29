@@ -16,6 +16,7 @@ const FULLSCREEN_PREFIXES = [
   "/lernbox",
   "/frei",
   "/klasse",
+  "/raum",
 ];
 
 function isFullscreen(pathname: string) {
