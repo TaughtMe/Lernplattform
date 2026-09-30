@@ -7,6 +7,7 @@
  */
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { animalTokenFromDisplayName } from "../../../src/domain/learner-profile";
 import {
   DEFAULT_VOCABULARY_LOCALES,
   parseVocabularyTable,
@@ -1177,11 +1178,14 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     setManualRanges([]);
   }
 
-  /** Tier eines Raumschlüssels für die Bildanzeige. */
+  /**
+   * Tier eines Raumschlüssels für die Bildanzeige. Ältere Raumdienste liefern
+   * kein eigenes Tierfeld, sondern den Tiernamen als Schlüssel („Fuchs 2“).
+   */
   function animalFor(key: string | null | undefined) {
-    return (
-      participants.find((item) => item.studentName === key)?.animalToken ?? null
-    );
+    const participant = participants.find((item) => item.studentName === key);
+    if (participant?.animalToken) return participant.animalToken;
+    return key ? animalTokenFromDisplayName(key) : null;
   }
 
   function jumpToStage(id: Stage) {

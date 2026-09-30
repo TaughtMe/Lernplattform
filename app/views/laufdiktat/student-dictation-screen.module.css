@@ -244,6 +244,23 @@
 .answer:focus {
   border-color: var(--accent);
 }
+/* Feste Größen im Spiel: bleiben über der Bildschirmtastatur sichtbar. */
+.answer.compact,
+.answer.large {
+  flex: none;
+  min-height: 0;
+}
+.answer.compact {
+  height: 60px;
+  padding-block: 13px;
+  font-size: 22px;
+  line-height: 1.4;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.answer.large {
+  height: clamp(96px, 22dvh, 150px);
+}
 .check {
   align-self: center;
 }
@@ -668,6 +685,15 @@
     flex: none;
     min-height: 140px;
     font-size: 24px;
+  }
+  .answer.compact {
+    height: 68px;
+    min-height: 0;
+    font-size: 26px;
+  }
+  .answer.large {
+    height: 150px;
+    min-height: 0;
   }
 
   .battle {

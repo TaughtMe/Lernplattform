@@ -20,6 +20,8 @@ const participants = [
     animal_number: 2,
     last_seen_at: null,
   },
+  // Älterer Raumdienst: kein Tierfeld, der Tiername steckt im Schlüssel.
+  { student_key: "Igel", last_seen_at: null },
 ];
 
 const progress = (key: string, index: number, finished: boolean) => ({
@@ -30,7 +32,7 @@ const progress = (key: string, index: number, finished: boolean) => ({
   errors: finished ? 0 : 1,
   finished,
   duration_ms: null,
-  word_errors: finished ? {} : { Hof: 1 },
+  word_errors: finished ? {} : { Hof: 1, "\\frac{1}{2} + 1": 1 },
   station_number: null,
   app_version: null,
 });
@@ -105,6 +107,12 @@ test("the teacher lobby projects the code and lists joined animals", async ({
   await expect(page.getByText("Fuchs", { exact: true })).toBeVisible();
   await expect(page.getByText("Koala 2", { exact: true })).toBeVisible();
   await expect(page.getByText("participant-a")).toHaveCount(0);
+  // Jedes Tier erscheint mit Bild, auch ohne eigenes Tierfeld.
+  for (const file of ["fuchs", "koala", "igel"]) {
+    await expect(
+      page.locator(`img[src="/animals/${file}.svg"]`).first(),
+    ).toBeVisible();
+  }
   await accessible(page);
   await page.screenshot({
     path: test.info().outputPath("teacher-lobby.png"),
@@ -123,6 +131,13 @@ test("the live view shows progress per animal and the most frequent errors", asy
   await expect(fox.getByText("Fertig")).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Häufigste Fehler" }).getByText("Hof"),
+  ).toBeVisible();
+  // Formeln erscheinen gesetzt, nicht als LaTeX-Code.
+  const mistakes = page.getByRole("region", { name: "Häufigste Fehler" });
+  await expect(mistakes.locator(".katex").first()).toBeVisible();
+  await expect(mistakes.locator(".katex-html .mfrac")).toBeVisible();
+  await expect(
+    page.locator('img[src="/animals/fuchs.svg"]').first(),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Ergebnisse als CSV" }),

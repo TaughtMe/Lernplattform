@@ -13,6 +13,7 @@ declare const styles: {
   readonly chargeLabel: string;
   readonly chargeTrack: string;
   readonly check: string;
+  readonly compact: string;
   readonly copyBox: string;
   readonly copyText: string;
   readonly count: string;
@@ -36,6 +37,7 @@ declare const styles: {
   readonly holdText: string;
   readonly holdTitle: string;
   readonly intro: string;
+  readonly large: string;
   readonly layout: string;
   readonly link: string;
   readonly mistakes: string;

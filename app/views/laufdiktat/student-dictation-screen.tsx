@@ -93,6 +93,11 @@ export type StudentDictationScreenProps = {
     feedback?: { text: string; tone: "good" | "bad" } | null;
     disabled?: boolean;
     placeholder?: string;
+    /**
+     * Größe des Antwortfelds: einzeilig für Mathe und Wörter, mittel für
+     * Sätze. Ohne Angabe füllt es wie in der Vorlage den Platz.
+     */
+    size?: "compact" | "large";
     onReview?: () => void;
     inputRef?: Ref<HTMLTextAreaElement>;
     inputProps?: Omit<
@@ -474,14 +479,14 @@ function WritePhase({
       <textarea
         {...write?.inputProps}
         ref={write?.inputRef}
-        className={styles.answer}
+        className={cx(styles.answer, write?.size && styles[write.size])}
         value={typed}
         disabled={write?.disabled}
         onChange={(event) => onType?.(event.target.value)}
         onKeyDown={onKeyDown}
         placeholder={write?.placeholder ?? "Tippe den Satz aus dem Gedächtnis"}
         aria-label={write ? "Deine Antwort" : "Satz"}
-        rows={3}
+        rows={write?.size === "compact" ? 1 : 3}
         autoComplete="off"
         autoCorrect={write?.inputProps?.autoCorrect ?? "off"}
         autoCapitalize={write?.inputProps?.autoCapitalize ?? "sentences"}

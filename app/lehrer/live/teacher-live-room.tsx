@@ -16,6 +16,7 @@ import {
 } from "../../views/laufdiktat/teacher-dictation-screen";
 import {
   liveOverview,
+  type LiveOverview,
   mathGapRow,
   mathLineParts,
   splitConfigFor,
@@ -108,15 +109,17 @@ export function TeacherLiveRoom({
             animal: t.animalFor(studentName),
           })),
         }}
-        live={liveOverview({
-          students: t.students,
-          connectedNames: t.connectedNames,
-          total: t.words.length,
-          stationMode,
-          stationCount: t.stationCount,
-          labelFor: t.labelFor,
-          animalFor: t.animalFor,
-        })}
+        live={withMathMistakes(
+          liveOverview({
+            students: t.students,
+            connectedNames: t.connectedNames,
+            total: t.words.length,
+            stationMode,
+            stationCount: t.stationCount,
+            labelFor: t.labelFor,
+            animalFor: t.animalFor,
+          }),
+        )}
         nextLabel={nextLabel(t)}
         nextDisabled={t.footerDisabled}
         lockedSteps={lockedSteps(t)}
@@ -148,6 +151,18 @@ export function TeacherLiveRoom({
       />
     </div>
   );
+}
+
+/** Formeln (Brüche, Wurzeln, Potenzen) in „Häufigste Fehler“ setzen. */
+function withMathMistakes(live: LiveOverview) {
+  return {
+    ...live,
+    mistakes: live.mistakes.map((entry) =>
+      /[\\^]/.test(entry.word)
+        ? { ...entry, display: <MathDisplay text={entry.word} isLatex /> }
+        : entry,
+    ),
+  };
 }
 
 function vocabularyProps(t: TeacherLiveModel): VocabularyEditorProps {

@@ -396,9 +396,10 @@ export function LiveRunningDictationGame({
                         Warte kurz, bis dein Ergebnis gesendet wurde.
                       </p>
                     ) : (
-                      <div className="ui-grid2">
+                      <div className="ui-stack">
                         {errors > 0 ? (
                           <ButtonLink
+                            block
                             href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=errors`}
                           >
                             Meine Fehler üben
@@ -406,6 +407,7 @@ export function LiveRunningDictationGame({
                         ) : null}
                         <ButtonLink
                           variant="ghost"
+                          block
                           href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=more`}
                         >
                           Weitere Aufgaben üben
@@ -692,6 +694,8 @@ export function LiveRunningDictationGame({
                 ? { text: answerFeedback, tone: "bad" }
                 : null,
           disabled: savingMath || phase === "correct",
+          // Mathe und einzelne Wörter einzeilig, Sätze mit etwas mehr Platz.
+          size: unit === "Satz" ? "large" : "compact",
           placeholder:
             kind === "math"
               ? "Ergebnis"
@@ -705,6 +709,14 @@ export function LiveRunningDictationGame({
           inputRef: answerRef,
           inputProps: {
             id: "live-game-answer",
+            // Nach dem Öffnen der Bildschirmtastatur ins Sichtfeld holen.
+            onFocus: (event) => {
+              const field = event.currentTarget;
+              window.setTimeout(
+                () => field.scrollIntoView?.({ block: "center" }),
+                300,
+              );
+            },
             inputMode: kind === "math" ? "decimal" : "text",
             maxLength: 2000,
             ...(session.strictTypingMode

@@ -15,6 +15,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Die Bildschirmtastatur verkleinert den Inhalt, statt ihn zu überdecken.
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f6f2e8" },
     { media: "(prefers-color-scheme: dark)", color: "#17150f" },

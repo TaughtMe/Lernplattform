@@ -71,7 +71,12 @@ export type TeacherDictationScreenProps = {
     overall: number;
     students: readonly LiveStudent[];
     stations: readonly StationState[];
-    mistakes: ReadonlyArray<{ word: string; count: number }>;
+    /** `display` ersetzt den Text, z. B. für Formeln. */
+    mistakes: ReadonlyArray<{
+      word: string;
+      count: number;
+      display?: ReactNode;
+    }>;
   };
   /** Beschriftung und Sperre des Weiter-Knopfs (z. B. „Öffnet …“). */
   nextLabel?: string;
@@ -793,7 +798,9 @@ function LiveStep({
           <Eyebrow>Häufigste Fehler</Eyebrow>
           {live.mistakes.map((entry) => (
             <div key={entry.word} className={styles.mistake}>
-              <span className={styles.mistakeWord}>{entry.word}</span>
+              <span className={styles.mistakeWord}>
+                {entry.display ?? entry.word}
+              </span>
               <span className={styles.mistakeBar}>
                 <span
                   style={{

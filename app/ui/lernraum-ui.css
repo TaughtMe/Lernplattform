@@ -1505,8 +1505,19 @@ body:has(.ui-game.is-active-round) .ui-footer {
   }
 }
 .ui-dictation__extras {
+  box-sizing: border-box;
   width: 100%;
   max-width: 380px;
+}
+/* Ältere Bausteine im Design-Screen messen mit border-box wie überall. */
+.ui-dictation__extras *,
+.ui-dictation__extras *::before,
+.ui-dictation__extras *::after,
+.ui-dictation .ui-notice,
+.ui-dictation .ui-btn,
+.ui-dictation .ui-game__copy,
+.ui-dictation .ui-game__copy * {
+  box-sizing: border-box;
 }
 .ui-game__ink {
   position: fixed;

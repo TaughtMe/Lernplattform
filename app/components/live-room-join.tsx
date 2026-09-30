@@ -472,12 +472,19 @@ export function LiveRoomJoin({
     );
 
   // studentName ist ein anonymer Serverschlüssel; angezeigt wird nur das Tier.
+  // Ältere Raumdienste liefern kein Tierfeld; dann gilt der Tiername im
+  // Schlüssel oder das eigene Profiltier.
+  const roomAnimal =
+    room?.animalToken ??
+    (room ? animalTokenFromDisplayName(room.studentName) : null);
   const lobbyName = room?.animalToken
     ? room.animalNumber > 1
       ? `${room.animalToken} ${room.animalNumber}`
       : room.animalToken
-    : null;
-  const frameAnimal = room?.animalToken ?? profile?.animal ?? null;
+    : roomAnimal
+      ? room!.studentName
+      : null;
+  const frameAnimal = roomAnimal ?? profile?.animal ?? null;
 
   if (view === "game" && room && session) {
     return (
@@ -486,7 +493,7 @@ export function LiveRoomJoin({
         code={code}
         studentName={room.studentName}
         displayName={lobbyName}
-        animal={room.animalToken}
+        animal={frameAnimal}
         session={session}
         connectionWarning={connectionWarning}
         deliveryStatus={deliveryStatus}
@@ -513,7 +520,7 @@ export function LiveRoomJoin({
             )}
           </span>
           <AnimalImage
-            animal={room?.animalToken ?? null}
+            animal={frameAnimal}
             size={120}
             className="ui-bob ui-room__animal"
           />
