@@ -1,12 +1,14 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
   readonly avatar: string;
+  readonly away: string;
   readonly backdrop: string;
   readonly between: string;
   readonly body: string;
   readonly checkbox: string;
   readonly chips: string;
   readonly codeTiles: string;
+  readonly codeTilesLarge: string;
   readonly column: string;
   readonly count: string;
   readonly csv: string;
@@ -27,6 +29,9 @@ declare const styles: {
   readonly flowNumber: string;
   readonly flowStep: string;
   readonly footer: string;
+  readonly footerCode: string;
+  readonly footerCodeLabel: string;
+  readonly footerCodeValue: string;
   readonly footerNote: string;
   readonly grabber: string;
   readonly handle: string;
@@ -57,13 +62,20 @@ declare const styles: {
   readonly narrowOnly: string;
   readonly next: string;
   readonly notice: string;
+  readonly offline: string;
   readonly option: string;
   readonly optionHint: string;
   readonly optionLabel: string;
   readonly optionText: string;
   readonly options: string;
+  readonly practice: string;
   readonly previous: string;
   readonly qr: string;
+  readonly qrButton: string;
+  readonly qrClose: string;
+  readonly qrLarge: string;
+  readonly qrMeta: string;
+  readonly qrOverlay: string;
   readonly radio: string;
   readonly roomCard: string;
   readonly roomCode: string;
@@ -95,6 +107,7 @@ declare const styles: {
   readonly stationState: string;
   readonly stations: string;
   readonly stats: string;
+  readonly status: string;
   readonly step: string;
   readonly stepDot: string;
   readonly stepLabel: string;
@@ -111,5 +124,6 @@ declare const styles: {
   readonly track: string;
   readonly waiting: string;
   readonly wideOnly: string;
+  readonly zoomHint: string;
 };
 export default styles;

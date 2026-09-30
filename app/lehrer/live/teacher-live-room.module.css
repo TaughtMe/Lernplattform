@@ -1,8 +1,9 @@
-/* Der Live-Raum füllt den Bildschirm wie im Entwurf (5c/5d). */
+/* Der Live-Raum füllt den Bereich neben der Lehrer-Leiste (5c/5d). */
 .page {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  height: 100dvh;
+  min-height: 0;
 }
 .page > :first-child {
   flex: 1;

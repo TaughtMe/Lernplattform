@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Icon, type IconName } from "../../ui/icons";
 import {
   Animal,
@@ -27,9 +33,13 @@ export type DictationMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
 export type DictationOption =
   "tts" | "shuffle" | "strict" | "stars" | "ink" | "flicker";
 
+/** Verbindung eines Schülers: im Raum, übt allein weiter oder getrennt. */
+export type ParticipantStatus = "online" | "practice" | "offline";
+
 export type LiveStudent = {
   name: string;
   animal: string | null;
+  status?: ParticipantStatus;
   progress: number;
   total: number;
   mistakes: number;
@@ -58,12 +68,21 @@ export type TeacherDictationScreenProps = {
   optionsOpen: boolean;
   /** QR-Code zum Raum; ohne Angabe erscheint ein Platzhalter. */
   qr?: ReactNode;
+  /**
+   * Großer QR-Code zum Beamen. Mit Angabe lässt sich der QR in der Lobby
+   * vergrößern, und im Live-Schritt steht der Raumcode in der Fußzeile.
+   */
+  qrLarge?: ReactNode;
   /** Adresse, unter der Schüler den Code eingeben (z. B. lernraum.app). */
   joinHost: string;
   lobby: {
     /** Erwartete Teilnehmende; ohne Angabe nur die Zahl der Beigetretenen. */
     expected?: number;
-    joined: ReadonlyArray<{ name: string; animal: string | null }>;
+    joined: ReadonlyArray<{
+      name: string;
+      animal: string | null;
+      status?: ParticipantStatus;
+    }>;
   };
   live: {
     active: number;
@@ -226,6 +245,8 @@ function optionList(mode: DictationMode) {
 
 /** Laufdiktat für Lehrkräfte (Design 5c mobil, 5d Desktop). */
 export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
+  const [qrOpen, setQrOpen] = useState(false);
+  const showQr = props.qrLarge && props.roomCode ? () => setQrOpen(true) : null;
   const index = STEPS.findIndex((step) => step.id === props.step);
   const current = STEPS[index] ?? STEPS[0]!;
   const stepLabel = `Schritt ${index + 1} von ${STEPS.length}`;
@@ -268,7 +289,9 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
       <div className={styles.body}>
         {props.step === "import" ? <ImportStep {...props} /> : null}
         {props.step === "settings" ? <SettingsStep {...props} /> : null}
-        {props.step === "lobby" ? <LobbyStep {...props} /> : null}
+        {props.step === "lobby" ? (
+          <LobbyStep {...props} onShowQr={showQr} />
+        ) : null}
         {props.step === "live" ? <LiveStep {...props} /> : null}
         {props.notice ? (
           <p className={styles.notice} role="alert">
@@ -296,9 +319,22 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
             <span className={styles.wideOnly}>Zurück</span>
           </button>
         ) : null}
-        <span className={styles.footerNote}>
-          Alles wird automatisch unter „Abgelegt&quot; gespeichert.
-        </span>
+        {props.step === "live" && showQr ? (
+          <button
+            type="button"
+            className={styles.footerCode}
+            aria-label={`Raumcode ${props.roomCode} und QR-Code zeigen`}
+            onClick={showQr}
+          >
+            <Icon name="qr" size={18} />
+            <span className={styles.footerCodeLabel}>Raum</span>
+            <span className={styles.footerCodeValue}>{props.roomCode}</span>
+          </button>
+        ) : (
+          <span className={styles.footerNote}>
+            Alles wird automatisch unter „Abgelegt&quot; gespeichert.
+          </span>
+        )}
         <GreenButton
           className={styles.next}
           disabled={props.nextDisabled}
@@ -310,6 +346,16 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
           {props.nextLabel ?? current.next}
         </GreenButton>
       </footer>
+
+      {qrOpen && props.qrLarge ? (
+        <QrOverlay
+          roomCode={props.roomCode}
+          joinHost={props.joinHost}
+          joined={props.lobby.joined.length}
+          qr={props.qrLarge}
+          onClose={() => setQrOpen(false)}
+        />
+      ) : null}
 
       {props.step === "settings" && props.optionsOpen ? (
         <>
@@ -640,10 +686,30 @@ function SettingsStep(props: TeacherDictationScreenProps) {
   );
 }
 
-function RoomCard({ roomCode, qr, joinHost }: TeacherDictationScreenProps) {
+function RoomCard({
+  roomCode,
+  qr,
+  joinHost,
+  onShowQr,
+}: TeacherDictationScreenProps & { onShowQr?: (() => void) | null }) {
   return (
     <div className={styles.roomCard}>
-      <div className={styles.qr}>{qr}</div>
+      {onShowQr ? (
+        <button
+          type="button"
+          className={cx(styles.qr, styles.qrButton)}
+          aria-label="QR-Code vergrößern"
+          title="QR-Code vergrößern"
+          onClick={onShowQr}
+        >
+          {qr}
+          <span className={styles.zoomHint} aria-hidden="true">
+            <Icon name="plus" size={16} strokeWidth={2.6} />
+          </span>
+        </button>
+      ) : (
+        <div className={styles.qr}>{qr}</div>
+      )}
       <div className={styles.roomCode}>
         <span className={styles.roomCodeLabel}>Raumcode</span>
         <span
@@ -665,7 +731,9 @@ function RoomCard({ roomCode, qr, joinHost }: TeacherDictationScreenProps) {
   );
 }
 
-function LobbyStep(props: TeacherDictationScreenProps) {
+function LobbyStep(
+  props: TeacherDictationScreenProps & { onShowQr?: (() => void) | null },
+) {
   const { lobby, mode, onOpenOptions } = props;
   const current = MODES.find((entry) => entry.id === mode) ?? MODES[0]!;
   return (
@@ -697,13 +765,20 @@ function LobbyStep(props: TeacherDictationScreenProps) {
         </div>
         <ul className={styles.joined}>
           {lobby.joined.map((student) => (
-            <li key={student.name} className={styles.joinedCard}>
+            <li
+              key={student.name}
+              className={cx(
+                styles.joinedCard,
+                student.status === "offline" && styles.away,
+              )}
+            >
               <span className={styles.avatar}>
                 {student.animal ? (
                   <Animal animal={student.animal} size={26} />
                 ) : null}
               </span>
               <span className={styles.name}>{student.name}</span>
+              <StatusChip status={student.status} />
             </li>
           ))}
         </ul>
@@ -761,12 +836,19 @@ function LiveStep({
           ) : (
             <ul className={styles.students}>
               {live.students.map((student) => (
-                <li key={student.name} className={styles.student}>
+                <li
+                  key={student.name}
+                  className={cx(
+                    styles.student,
+                    student.status === "offline" && styles.away,
+                  )}
+                >
                   <span className={styles.studentHead}>
                     {student.animal ? (
                       <Animal animal={student.animal} size={26} />
                     ) : null}
                     <span className={styles.studentName}>{student.name}</span>
+                    <StatusChip status={student.status} />
                   </span>
                   <span className={styles.studentMeta}>
                     {student.progress >= student.total ? (
@@ -838,4 +920,74 @@ function LiveStat({
       <p className={styles.statValue}>{value}</p>
     </div>
   );
+}
+
+/** Vollbild zum Beamen: großer QR in der Mitte, Code und Zahl darunter. */
+function QrOverlay({
+  roomCode,
+  joinHost,
+  joined,
+  qr,
+  onClose,
+}: {
+  roomCode: string;
+  joinHost: string;
+  joined: number;
+  qr: ReactNode;
+  onClose: () => void;
+}) {
+  const close = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    close.current?.focus();
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div
+      className={styles.qrOverlay}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`QR-Code zum Raum ${roomCode}`}
+    >
+      <button
+        ref={close}
+        type="button"
+        className={styles.qrClose}
+        aria-label="QR-Code schließen"
+        onClick={onClose}
+      >
+        <Icon name="close" size={20} strokeWidth={2.2} />
+      </button>
+      <div className={styles.qrLarge}>{qr}</div>
+      <span
+        className={cx(styles.codeTiles, styles.codeTilesLarge)}
+        role="img"
+        aria-label={`Raumcode ${roomCode}`}
+      >
+        {[...roomCode].map((char, charIndex) => (
+          <span key={charIndex} aria-hidden="true">
+            {char}
+          </span>
+        ))}
+      </span>
+      <span className={styles.qrMeta}>
+        {joinHost} · {joined === 1 ? "1 Schüler" : `${joined} Schüler`}{" "}
+        beigetreten
+      </span>
+    </div>
+  );
+}
+
+/** Nur Abweichungen zeigen: im Raum ist der Normalfall. */
+function StatusChip({ status }: { status: ParticipantStatus | undefined }) {
+  if (status === "practice")
+    return (
+      <span className={cx(styles.status, styles.practice)}>übt weiter</span>
+    );
+  if (status === "offline")
+    return <span className={cx(styles.status, styles.offline)}>getrennt</span>;
+  return null;
 }

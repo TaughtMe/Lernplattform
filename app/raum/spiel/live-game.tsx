@@ -39,6 +39,7 @@ import { MathDisplay } from "../../components/math-display";
 import { useLiveSessionGuards } from "../../components/use-live-session-guards";
 import { Button, ButtonLink } from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
+import { useFullscreenFrame } from "../../ui/shell/fullscreen";
 import { useThemeToggle } from "../../ui/theme";
 import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
 import { CopyGuide, DeliveryNotice, GameWarning } from "./game-parts";
@@ -155,6 +156,8 @@ export function LiveRunningDictationGame({
   const [savingMath, setSavingMath] = useState(false);
   const answerRef = useRef<HTMLTextAreaElement>(null);
   const { theme, toggleTheme } = useThemeToggle();
+  // Während der Runde ohne Schülernavigation (Vollbild wie im Entwurf).
+  useFullscreenFrame();
   const current = session.words[index];
   useLiveSessionGuards(
     phase !== "complete" ||

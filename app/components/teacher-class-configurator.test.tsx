@@ -25,6 +25,48 @@ afterEach(async () => {
 });
 
 describe("TeacherClassConfigurator", () => {
+  it("deletes a class only after two confirmations", async () => {
+    const user = userEvent.setup();
+    render(<TeacherClassConfigurator />);
+    await user.type(
+      screen.getByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8a",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Klasse Klasse 8a löschen" }),
+    );
+    expect(
+      screen.getByRole("alertdialog", { name: "Klasse „Klasse 8a“ löschen?" }),
+    ).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Abbrechen" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Klasse Klasse 8a löschen" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Ja, löschen" }));
+    expect(
+      screen.getByRole("alertdialog", { name: "Wirklich endgültig löschen?" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Klasse 8a, 2026/27" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Endgültig löschen" }));
+    expect(
+      await screen.findByText("„Klasse 8a“ wurde gelöscht."),
+    ).toBeVisible();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Klasse 8a, 2026/27" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
   it("creates a class locally", async () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);

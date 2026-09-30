@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createTeacherClassRepository } from "../../../src/storage/teacher-class-settings";
 import { Icon } from "../icons";
@@ -21,11 +22,9 @@ export function TeacherClassList({
 }) {
   const repository = useMemo(() => createTeacherClassRepository(), []);
   const [rows, setRows] = useState<ClassRow[] | null>(null);
-  const [selected] = useState<string | null>(() =>
-    typeof window === "undefined"
-      ? null
-      : new URLSearchParams(window.location.search).get("klasse"),
-  );
+  const pathname = usePathname();
+  const requested = useSearchParams().get("klasse");
+  const selected = pathname === "/lehrer/klassen" ? requested : null;
 
   useEffect(() => {
     let active = true;

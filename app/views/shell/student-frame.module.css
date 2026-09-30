@@ -22,6 +22,19 @@
   /* Platz für die Tab-Leiste unten. */
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
 }
+.main.bare {
+  padding-bottom: 0;
+}
+/* Inhalt füllt den Platz; der Seitenfuß bleibt darunter im Bild. */
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.nav[hidden] {
+  display: none;
+}
 
 /* ---------- Tab-Leiste (mobil, 2b) ---------- */
 .nav {

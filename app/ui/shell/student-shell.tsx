@@ -63,9 +63,13 @@ function matchLength(item: NavItem, path: string) {
 /** Rahmen für alle Schülerseiten; nicht freigegebene Bereiche erscheinen nicht. */
 export function StudentShell({
   activePath,
+  hideNav = false,
+  footer,
   children,
 }: {
   activePath: string;
+  hideNav?: boolean;
+  footer?: ReactNode;
   children: ReactNode;
 }) {
   const visibility = useRelease();
@@ -96,6 +100,8 @@ export function StudentShell({
       }))}
       profileHref={PROFILE_HREF}
       profileActive={profileActive}
+      hideNav={hideNav}
+      footer={footer}
     >
       {children}
     </StudentFrame>

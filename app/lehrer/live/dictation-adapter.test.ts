@@ -49,8 +49,13 @@ describe("dictation-adapter", () => {
       stationCount: 3,
       labelFor: (name) => name.toUpperCase(),
       animalFor: () => "Fuchs",
+      statusFor: (name) => (name === "b" ? "practice" : "online"),
     });
     expect(overview).toMatchObject({ active: 1, finished: 1, overall: 75 });
+    expect(overview.students.map((entry) => entry.status)).toEqual([
+      "online",
+      "practice",
+    ]);
     expect(overview.students[0]).toMatchObject({
       name: "A",
       progress: 2,

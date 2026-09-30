@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { PREVIEW_COOKIE } from "../src/domain/release";
 import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
+import { AreaFrame } from "./ui/shell/area-frame";
 import { SiteFooter } from "./ui/site-footer";
 import "@fontsource-variable/work-sans/wght.css";
 import "@fontsource-variable/fredoka/wght.css";
@@ -77,6 +78,9 @@ export default async function RootLayout({
   const visibility = releaseVisibility(
     (await cookies()).get(PREVIEW_COOKIE)?.value,
   );
+  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"];
+  const publishableKey = process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"];
+  const liveRoomConfig = url && publishableKey ? { url, publishableKey } : null;
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
@@ -84,7 +88,7 @@ export default async function RootLayout({
       </head>
       <body>
         <ReleaseProvider value={visibility}>
-          {children}
+          <AreaFrame liveRoomConfig={liveRoomConfig}>{children}</AreaFrame>
           <SiteFooter />
         </ReleaseProvider>
       </body>

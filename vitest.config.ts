@@ -7,6 +7,9 @@ export default defineConfig({
       "next/link": fileURLToPath(
         new URL("./tests/next-link-stub.tsx", import.meta.url),
       ),
+      "next/navigation": fileURLToPath(
+        new URL("./tests/next-navigation-stub.ts", import.meta.url),
+      ),
     },
   },
   test: {

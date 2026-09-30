@@ -20,6 +20,7 @@ import {
 import type { MathPreviewPart } from "../../views/laufdiktat/math-editor";
 import type {
   LiveStudent,
+  ParticipantStatus,
   SplitMode,
   StationState,
   TeacherStep,
@@ -86,6 +87,7 @@ export function liveOverview({
   stationCount,
   labelFor,
   animalFor,
+  statusFor,
 }: {
   students: LiveRoomStudent[];
   connectedNames: string[];
@@ -94,6 +96,7 @@ export function liveOverview({
   stationCount: number;
   labelFor: (name: string) => string;
   animalFor: (name: string) => string | null;
+  statusFor?: (name: string) => ParticipantStatus;
 }): LiveOverview {
   const words = Math.max(1, total);
   const tracked = stationMode
@@ -124,6 +127,7 @@ export function liveOverview({
       return {
         name: labelFor(name),
         animal: animalFor(name),
+        ...(statusFor ? { status: statusFor(name) } : {}),
         progress: progressOf(student, words),
         total: words,
         mistakes: student?.errors ?? 0,

@@ -2,36 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { areaOf } from "./shell/areas";
 import { VersionButton } from "./version-button";
 
 /**
- * Vollbild-Screens aus dem Entwurf füllen den Bildschirm ohne Seitenfuß:
- * Startseite, Live-Raum der Lehrkraft und der Schülerbereich mit eigener
- * Navigation. Die Startseite verlinkt Impressum und Datenschutz selbst.
+ * Seitenfuß: Name, Rechtliches und Version mit Update-Hinweis. Schüler- und
+ * Lehrerbereich zeigen ihn kompakt im eigenen Rahmen (`compact`), damit er
+ * ohne Scrollen sichtbar bleibt; die Startseite verlinkt Impressum und
+ * Datenschutz selbst.
  */
-const FULLSCREEN_ROUTES = new Set(["/", "/lehrer/live"]);
-const FULLSCREEN_PREFIXES = [
-  "/lernen",
-  "/ueben",
-  "/lernbox",
-  "/frei",
-  "/klasse",
-  "/raum",
-];
-
-function isFullscreen(pathname: string) {
-  return (
-    FULLSCREEN_ROUTES.has(pathname) ||
-    FULLSCREEN_PREFIXES.some(
-      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-    )
-  );
-}
-
-/** Schlichter Seitenfuß: Name, Rechtliches und Version. */
-export function SiteFooter() {
+export function SiteFooter({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname();
-  if (isFullscreen(pathname)) return null;
+  if (!compact && (pathname === "/" || areaOf(pathname))) return null;
+  if (compact) {
+    return (
+      <footer className="ui ui-footer ui-footer--compact">
+        <nav aria-label="Version und Rechtliches">
+          <Link href="/impressum">Impressum</Link>
+          <Link href="/datenschutz">Datenschutz</Link>
+          <VersionButton />
+        </nav>
+      </footer>
+    );
+  }
   return (
     <footer className="ui ui-footer">
       <strong>Lernraum</strong>

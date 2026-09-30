@@ -1,8 +1,10 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { notifyTeacherClassesChanged } from "../ui/shell/teacher-classes";
 import { QRCodeSVG } from "qrcode.react";
+import { Icon } from "../ui/icons";
 import { Button, EmptyState, Pill } from "../ui/primitives";
 import {
   createClassRemovalLink,
@@ -47,6 +49,11 @@ export function TeacherClassConfigurator() {
   const [shown, setShown] = useState<ClassMember>();
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [removalShown, setRemovalShown] = useState<TeacherClass>();
+  // Löschen mit zwei Bestätigungen: erst fragen, dann endgültig bestätigen.
+  const [pendingDelete, setPendingDelete] = useState<{
+    course: TeacherClass;
+    step: 1 | 2;
+  }>();
   const [message, setMessage] = useState("");
   const selected = classes.find((course) => course.id === selectedId);
   const appOrigin = typeof window === "undefined" ? "" : window.location.origin;
@@ -64,20 +71,27 @@ export function TeacherClassConfigurator() {
       });
   }, [profileRepository]);
 
+  // ?klasse=<id> wählt eine Klasse aus der Seitenleiste; die Leiste bleibt
+  // beim Wechsel stehen, deshalb folgt die Auswahl der Adresse.
+  const requested = useSearchParams().get("klasse");
   useEffect(() => {
     Promise.all([repository.list(), repository.listArchived()])
       .then(([items, archived]) => {
         setClasses(items);
         setArchivedClasses(archived);
-        // ?klasse=<id> wählt eine Klasse aus der Seitenleiste vor.
-        const requested = new URLSearchParams(window.location.search).get(
-          "klasse",
-        );
         const initial = items.find(({ id }) => id === requested) ?? items[0];
-        if (initial) setSelectedId(initial.id);
+        if (initial) {
+          setSelectedId((current) => {
+            if (current !== initial.id) {
+              setMembers([]);
+              setShown(undefined);
+            }
+            return initial.id;
+          });
+        }
       })
       .catch(() => setMessage("Die Klassen konnten nicht geladen werden."));
-  }, [repository]);
+  }, [repository, requested]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -178,6 +192,84 @@ export function TeacherClassConfigurator() {
     );
     window.dispatchEvent(new Event("teacher-data-changed"));
   }
+
+  async function deleteClass(course: TeacherClass) {
+    await repository.removeClass(course.id);
+    const remaining = classes.filter(({ id }) => id !== course.id);
+    setClasses(remaining);
+    setArchivedClasses((current) =>
+      current.filter(({ id }) => id !== course.id),
+    );
+    if (selectedId === course.id) {
+      setSelectedId(remaining[0]?.id ?? "");
+      setMembers([]);
+      setShown(undefined);
+    }
+    setPendingDelete(undefined);
+    notifyTeacherClassesChanged();
+    setMessage(`„${course.name}“ wurde gelöscht.`);
+    window.dispatchEvent(new Event("teacher-data-changed"));
+  }
+
+  function deleteButton(course: TeacherClass) {
+    return (
+      <button
+        type="button"
+        className="ui-icon-btn"
+        aria-label={`Klasse ${course.name} löschen`}
+        title="Klasse löschen"
+        onClick={() => setPendingDelete({ course, step: 1 })}
+      >
+        <Icon name="trash" size={18} />
+      </button>
+    );
+  }
+
+  const deleteConfirmation = pendingDelete ? (
+    <div
+      className="ui-notice ui-notice--bad ui-stack"
+      role="alertdialog"
+      aria-labelledby="class-delete-title"
+      aria-describedby="class-delete-text"
+    >
+      <strong id="class-delete-title">
+        {pendingDelete.step === 1
+          ? `Klasse „${pendingDelete.course.name}“ löschen?`
+          : "Wirklich endgültig löschen?"}
+      </strong>
+      <p id="class-delete-text" className="ui-small">
+        {pendingDelete.step === 1
+          ? "Schüler, Zuteilungen und eingegangene Abgaben dieser Klasse werden auf diesem Gerät entfernt. Archivieren behält alles für später."
+          : "Das lässt sich nicht rückgängig machen. Auf Schülergeräten bleibt die Klasse, bis sie dort mit einem Entfernungscode oder von Hand entfernt wird."}
+      </p>
+      <div className="ui-row ui-wrap">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setPendingDelete(undefined)}
+        >
+          Abbrechen
+        </Button>
+        {pendingDelete.step === 1 ? (
+          <Button
+            size="sm"
+            onClick={() =>
+              setPendingDelete({ course: pendingDelete.course, step: 2 })
+            }
+          >
+            Ja, löschen
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            onClick={() => void deleteClass(pendingDelete.course)}
+          >
+            Endgültig löschen
+          </Button>
+        )}
+      </div>
+    </div>
+  ) : null;
 
   async function restoreClass(course: TeacherClass) {
     await repository.restoreClass(course.id);
@@ -362,8 +454,12 @@ export function TeacherClassConfigurator() {
                   >
                     Klasse archivieren
                   </Button>
+                  {deleteButton(selected)}
                 </div>
               </div>
+              {pendingDelete?.course.id === selected.id
+                ? deleteConfirmation
+                : null}
 
               <form onSubmit={addStudent} className="ui-row ui-classes__add">
                 <label className="ui-labeled ui-grow">
@@ -513,7 +609,11 @@ export function TeacherClassConfigurator() {
                     >
                       Entfernungscode
                     </Button>
+                    {deleteButton(course)}
                   </div>
+                  {pendingDelete?.course.id === course.id
+                    ? deleteConfirmation
+                    : null}
                   {isRemovalShown && removalQrValue ? (
                     <div className="ui-row ui-wrap ui-classes__removal">
                       <div className="ui-qr-box">

@@ -8,6 +8,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { animalTokenFromDisplayName } from "../../../src/domain/learner-profile";
+import type { ParticipantStatus } from "../../views/laufdiktat/teacher-dictation-screen";
 import {
   DEFAULT_VOCABULARY_LOCALES,
   parseVocabularyTable,
@@ -231,6 +232,8 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
   const [room, setRoom] = useState<OpenedLiveRoom | null>(null);
   const [participants, setParticipants] = useState<LiveRoomParticipant[]>([]);
   const [presenceNames, setPresenceNames] = useState<string[]>([]);
+  // Wer die Raumseite verlassen hat und allein weiterübt (Anwesenheit „practice“).
+  const [practicingNames, setPracticingNames] = useState<string[]>([]);
   const [students, setStudents] = useState<LiveRoomStudent[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -600,6 +603,13 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     ]),
   ).sort((a, b) => a.localeCompare(b, "de"));
   const allNames = Array.from(new Set([...registeredNames, ...connectedNames]));
+
+  /** Im Raum, übt allein weiter (Raumseite verlassen) oder nicht verbunden. */
+  function statusFor(name: string): ParticipantStatus {
+    if (practicingNames.includes(name)) return "practice";
+    if (connectedNames.includes(name)) return "online";
+    return "offline";
+  }
   const roomConfig = useMemo(
     () =>
       buildTeacherRoomConfig({
@@ -756,8 +766,19 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       maxWaitMs: 1_000,
     });
     channelRef.current = channel;
-    const syncPresence = () =>
-      setPresenceNames(Object.keys(channel.presenceState()));
+    const syncPresence = () => {
+      const state = channel.presenceState<{ activity?: string }>();
+      setPresenceNames(Object.keys(state));
+      setPracticingNames(
+        Object.entries(state)
+          .filter(
+            ([, metas]) =>
+              metas.length > 0 &&
+              metas.every((meta) => meta.activity === "practice"),
+          )
+          .map(([name]) => name),
+      );
+    };
     channel
       .on("presence", { event: "sync" }, syncPresence)
       .on("presence", { event: "join" }, syncPresence)
@@ -888,6 +909,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       setParticipants([]);
       setStudents([]);
       setPresenceNames([]);
+      setPracticingNames([]);
       setStage("content");
     } catch {
       setError("Der Raum konnte nicht beendet werden.");
@@ -1327,6 +1349,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     removeParticipant,
     labelFor,
     animalFor,
+    statusFor,
     jumpToStage,
     setStage,
     footerDisabled,

@@ -1,6 +1,8 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
+  readonly bare: string;
   readonly brand: string;
+  readonly content: string;
   readonly frame: string;
   readonly item: string;
   readonly layout: string;

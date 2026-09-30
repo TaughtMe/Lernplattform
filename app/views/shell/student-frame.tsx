@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "../../ui/icons";
+import { cx } from "../parts/parts";
 import styles from "./student-frame.module.css";
 
 export type StudentNavItem = {
@@ -18,17 +19,27 @@ export function StudentFrame({
   items,
   profileHref,
   profileActive = false,
+  hideNav = false,
+  footer,
   children,
 }: {
   items: readonly StudentNavItem[];
   profileHref: string;
   profileActive?: boolean;
+  /** Vollbild (z. B. laufende Runde): ohne Navigation. */
+  hideNav?: boolean;
+  /** Seitenfuß am Ende des Inhalts. */
+  footer?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className={styles.frame}>
       <div className={styles.layout}>
-        <nav className={styles.nav} aria-label="Hauptnavigation">
+        <nav
+          className={styles.nav}
+          aria-label="Hauptnavigation"
+          hidden={hideNav}
+        >
           <Link href="/lernen" className={styles.brand} aria-label="Lernraum">
             L
           </Link>
@@ -52,8 +63,9 @@ export function StudentFrame({
             <Icon name="gear" size={20} />
           </Link>
         </nav>
-        <main className={styles.main} id="inhalt">
-          {children}
+        <main className={cx(styles.main, hideNav && styles.bare)} id="inhalt">
+          <div className={styles.content}>{children}</div>
+          {footer}
         </main>
       </div>
     </div>

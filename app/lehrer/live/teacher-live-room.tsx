@@ -103,10 +103,24 @@ export function TeacherLiveRoom({
             />
           ) : null
         }
+        qrLarge={
+          joinUrl ? (
+            <QRCodeCanvas
+              value={joinUrl}
+              size={1024}
+              level="H"
+              marginSize={2}
+              className={styles.qr}
+              role="img"
+              aria-label={`QR-Code zum Raum ${t.room?.code ?? ""}`}
+            />
+          ) : null
+        }
         lobby={{
           joined: t.participants.map(({ studentName }) => ({
             name: t.labelFor(studentName),
             animal: t.animalFor(studentName),
+            status: t.statusFor(studentName),
           })),
         }}
         live={withMathMistakes(
@@ -118,6 +132,7 @@ export function TeacherLiveRoom({
             stationCount: t.stationCount,
             labelFor: t.labelFor,
             animalFor: t.animalFor,
+            statusFor: t.statusFor,
           }),
         )}
         nextLabel={nextLabel(t)}

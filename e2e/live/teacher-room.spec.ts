@@ -118,6 +118,18 @@ test("the teacher lobby projects the code and lists joined animals", async ({
     path: test.info().outputPath("teacher-lobby.png"),
     fullPage: true,
   });
+
+  // QR zum Beamen vergrößern: Code und Zahl der Beigetretenen darunter.
+  await page.getByRole("button", { name: "QR-Code vergrößern" }).click();
+  const dialog = page.getByRole("dialog", { name: "QR-Code zum Raum 4829" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("3 Schüler beigetreten")).toBeVisible();
+  await accessible(page);
+  await page.screenshot({
+    path: test.info().outputPath("teacher-lobby-qr.png"),
+  });
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
 });
 
 test("the live view shows progress per animal and the most frequent errors", async ({
@@ -142,6 +154,14 @@ test("the live view shows progress per animal and the most frequent errors", asy
   await expect(
     page.getByRole("button", { name: "Ergebnisse als CSV" }),
   ).toBeEnabled();
+  // Raumcode in der Fußzeile öffnet den QR für späte Beitritte.
+  await page
+    .getByRole("button", { name: "Raumcode 4829 und QR-Code zeigen" })
+    .click();
+  await expect(
+    page.getByRole("dialog", { name: "QR-Code zum Raum 4829" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "QR-Code schließen" }).click();
   await accessible(page);
   await page.screenshot({
     path: test.info().outputPath("teacher-live.png"),

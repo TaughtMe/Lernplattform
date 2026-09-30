@@ -33,6 +33,11 @@ import { LiveRunningDictationGame } from "../raum/spiel/live-game";
 import { QrCodeScanner } from "../ui/qr-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
 import { useHydrated } from "./use-hydrated";
+import {
+  forgetActiveRoom,
+  rememberActiveRoom,
+  type RoomActivity,
+} from "./room-activity";
 import { useLiveSessionGuards } from "./use-live-session-guards";
 
 import { LIVE_APP_VERSION } from "../../src/app-version";
@@ -169,7 +174,10 @@ export function LiveRoomJoin({
         // Channel was torn down and rebuilt in the meantime (unmount/re-run)
         // — the new channel's own SUBSCRIBED pass will take over instead.
         if (channelRef.current !== channel) return;
-        const result = await channel.track({ name: activeRoom.studentName });
+        const result = await channel.track({
+          name: activeRoom.studentName,
+          activity: "room" satisfies RoomActivity,
+        });
         if (result === "ok") {
           setConnectionWarning("");
           return;
@@ -312,6 +320,8 @@ export function LiveRoomJoin({
     let cancelled = false;
     const beat = () => {
       if (cancelled || document.visibilityState !== "visible") return;
+      // Solange die Raumseite offen ist, läuft die 45-Minuten-Frist neu.
+      rememberActiveRoom(code, activeRoom.studentName);
       void touchLiveParticipant(
         activeConfig,
         activeRoom.roomId,
@@ -326,7 +336,12 @@ export function LiveRoomJoin({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", beat);
     };
-  }, [liveRoomConfig, room]);
+  }, [code, liveRoomConfig, room]);
+
+  // Runde beendet: nicht mehr als „übt weiter“ melden.
+  useEffect(() => {
+    if (view === "ended") forgetActiveRoom();
+  }, [view]);
 
   const {
     status: deliveryStatus,

@@ -5,7 +5,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ReleaseAreaId } from "../../../src/domain/release";
 import { useRelease } from "../../release/release-context";
 import { Icon, type IconName } from "../icons";
-import { ThemeButton } from "../theme-button";
+import { SiteFooter } from "../site-footer";
+import { ThemeToggle } from "../theme-toggle";
 import { TeacherClassList } from "./teacher-classes";
 
 export type TeacherArea =
@@ -101,14 +102,31 @@ function NavLinks({
   );
 }
 
-/** Lehrerrahmen nach Design 2c/3c/3d: dunkle Seitenleiste, mobil als Schublade. */
+/** Bereich zur Adresse: der längste passende Navigationseintrag. */
+export function teacherAreaOf(pathname: string): TeacherArea {
+  let best: (typeof NAV)[number] | undefined;
+  for (const item of NAV) {
+    const hit = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    if (hit && (!best || item.href.length > best.href.length)) best = item;
+  }
+  return best?.area ?? "overview";
+}
+
+/**
+ * Lehrerrahmen nach Design 2c/3c/3d: dunkle Seitenleiste, mobil als
+ * Schublade. Sitzt im Root-Layout (`AreaFrame`) und bleibt beim
+ * Seitenwechsel stehen. Das Laufdiktat füllt den Bereich neben der Leiste
+ * und bringt Kopf, Hell/Dunkel und Fuß selbst mit.
+ */
 export function TeacherShell({
-  active,
+  pathname,
   children,
 }: {
-  active: TeacherArea;
+  pathname: string;
   children: ReactNode;
 }) {
+  const active = teacherAreaOf(pathname);
+  const fill = active === "live";
   const [menuOpen, setMenuOpen] = useState(false);
   const visibility = useRelease();
   const drawer = useRef<HTMLDialogElement>(null);
@@ -152,11 +170,10 @@ export function TeacherShell({
             <Icon name="back" size={18} />
             Zur Startseite
           </Link>
-          <ThemeButton className="ui-shell__rail-theme" />
         </div>
       </aside>
 
-      <div className="ui-teacher__body">
+      <div className={`ui-teacher__body${fill ? " is-fill" : ""}`}>
         <header className="ui-teacher__top">
           <button
             type="button"
@@ -168,9 +185,15 @@ export function TeacherShell({
             <Icon name="menu" size={20} />
           </button>
           <strong className="ui-grow">Lehrerbereich</strong>
-          <ThemeButton />
+          {fill ? null : <ThemeToggle />}
         </header>
+        {fill ? null : (
+          <div className="ui-teacher__theme">
+            <ThemeToggle />
+          </div>
+        )}
         <main className="ui-teacher__main">{children}</main>
+        {fill ? null : <SiteFooter compact />}
       </div>
 
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- Klick auf den Hintergrund ist nur eine Maus-Abkürzung; Tastatur nutzt Escape und den Schließen-Knopf */}
