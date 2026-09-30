@@ -13,6 +13,7 @@ import {
   countMathChainNumbers,
   displayMathNumber,
   evaluateMentalMathExpression,
+  formatMathChainTokens,
   isLatexMathSyntax,
   tokenizeMathChain,
 } from "../../../src/domain/mental-math";
@@ -148,8 +149,10 @@ export function liveOverview({
 /** Anzeige einer Mathe-Zeile: Text oder Formel und das Ergebnis. */
 export function mathLineParts(line: string) {
   const value = evaluateMentalMathExpression(line);
+  const tokens = tokenizeMathChain(line);
   return {
-    text: line,
+    // Gleiche Schreibweise wie bei den Schülern.
+    text: tokens ? formatMathChainTokens(tokens) : line,
     latex: value !== null && isLatexMathSyntax(line),
     result: value === null ? null : displayMathNumber(value),
   };
@@ -175,18 +178,26 @@ export function mathGapRow(
   const numberCount = countMathChainNumbers(tokens);
   const parts: MathPreviewPart[] = [];
   let numberIndex = 0;
-  for (const token of tokens) {
+  tokens.forEach((token, index) => {
     if (token.kind === "symbol") {
       parts.push({ kind: "symbol", text: token.text });
-    } else {
-      parts.push({
-        kind: "number",
-        text: displayMathNumber(token.value),
-        gapIndex: numberIndex,
-      });
-      numberIndex += 1;
+      return;
     }
-  }
+    // Negative Zahlen nach einem Rechenzeichen in Klammern: „-1 − (-4)“.
+    const previous = tokens[index - 1];
+    const bracket =
+      token.value < 0 &&
+      index > 0 &&
+      !(previous?.kind === "symbol" && previous.text === "(");
+    if (bracket) parts.push({ kind: "symbol", text: "(" });
+    parts.push({
+      kind: "number",
+      text: displayMathNumber(token.value),
+      gapIndex: numberIndex,
+    });
+    if (bracket) parts.push({ kind: "symbol", text: ")" });
+    numberIndex += 1;
+  });
   parts.push({ kind: "symbol", text: "=" });
   parts.push({
     kind: "number",

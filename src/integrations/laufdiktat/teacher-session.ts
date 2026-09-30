@@ -9,6 +9,7 @@ import {
 import type { LiveWord, VocabularyTransferChoice } from "./live-session";
 import {
   generateMentalMathTasks,
+  normalizeMathChainInput,
   parseMentalMathTask,
   type MentalMathOperation,
 } from "../../domain/mental-math";
@@ -199,7 +200,10 @@ export function generateMentalMathSource(options: {
     ...(options.gapMode === undefined ? {} : { gapMode: options.gapMode }),
   })
     .map((task) =>
-      task.gap ? `${task.prompt} => ${task.answer}` : task.source,
+      task.gap
+        ? `${task.prompt} => ${task.answer}`
+        : // Einheitliche Schreibweise, negative Zahlen in Klammern: „-1 − (-4)“.
+          (normalizeMathChainInput(task.source) ?? task.source),
     )
     .join("\n");
 }

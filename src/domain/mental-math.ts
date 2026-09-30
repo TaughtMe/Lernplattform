@@ -80,12 +80,18 @@ function compute(left: number, operator: MathOperator, right: number) {
 export function parseMentalMathExpression(
   value: string,
 ): MentalMathExpression | null {
+  // Zahlen dürfen in Klammern stehen, z. B. „-1 − (-4)“.
+  const operand = String.raw`\(\s*-?\d+(?:[.,]\d+)?\s*\)|-?\d+(?:[.,]\d+)?`;
   const match = value
     .trim()
-    .match(/^(-?\d+(?:[.,]\d+)?)\s*([+\-−*×·/:÷])\s*(-?\d+(?:[.,]\d+)?)$/);
+    .match(
+      new RegExp(String.raw`^(${operand})\s*([+\-−*×·/:÷])\s*(${operand})$`),
+    );
   if (!match) return null;
-  const left = Number.parseFloat(match[1]!.replace(",", "."));
-  const right = Number.parseFloat(match[3]!.replace(",", "."));
+  const number = (text: string) =>
+    Number.parseFloat(text.replace(/[()\s]/g, "").replace(",", "."));
+  const left = number(match[1]!);
+  const right = number(match[3]!);
   const raw = match[2]!;
   const operator: MathOperator =
     raw === "+"
@@ -320,15 +326,38 @@ export function tokenizeMathChain(input: string): MathChainToken[] | null {
   const tokens = tokenizeExpression(input.trim());
   if (!tokens?.length) return null;
   const chain: MathChainToken[] = [];
-  for (const token of tokens) {
+  // Ein Vorzeichen steht am Anfang, nach einem Rechenzeichen oder nach „(“:
+  // „-1 − -4“ enthält die Zahlen -1 und -4, nicht vier Rechenzeichen.
+  let expectOperand = true;
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]!;
     if (token.type === "number") {
       chain.push({ kind: "number", value: token.value });
+      expectOperand = false;
     } else if (token.type === "operator" && token.value !== "^") {
+      const next = tokens[index + 1];
+      if (expectOperand) {
+        if (
+          (token.value !== "-" && token.value !== "+") ||
+          next?.type !== "number"
+        )
+          return null;
+        chain.push({
+          kind: "number",
+          value: token.value === "-" ? -next.value : next.value,
+        });
+        index += 1;
+        expectOperand = false;
+        continue;
+      }
       chain.push({ kind: "symbol", text: mathOperatorSymbol(token.value) });
+      expectOperand = true;
     } else if (token.type === "left-paren") {
       chain.push({ kind: "symbol", text: "(" });
+      expectOperand = true;
     } else if (token.type === "right-paren") {
       chain.push({ kind: "symbol", text: ")" });
+      expectOperand = false;
     } else {
       return null;
     }
@@ -340,7 +369,9 @@ export function tokenizeMathChain(input: string): MathChainToken[] | null {
  * Re-serializes chain tokens into a canonically spaced string, e.g.
  * "6+4-2" -> "6 + 4 - 2". Pass `gapIndex` (0-based, counting only number
  * tokens) to blank that numeral as "_" instead of printing its value —
- * used to build a gap task's visible prompt.
+ * used to build a gap task's visible prompt. Negative numbers after an
+ * operator are bracketed ("-1 − (-4)"); at the start or directly after "("
+ * they stay bare.
  */
 export function formatMathChainTokens(
   tokens: MathChainToken[],
@@ -349,12 +380,20 @@ export function formatMathChainTokens(
   let out = "";
   let numberOrdinal = 0;
   let spaceBeforeNext = false;
-  for (const token of tokens) {
+  tokens.forEach((token, index) => {
     let text: string;
     let spaceBefore = spaceBeforeNext;
     let spaceAfter = true;
     if (token.kind === "number") {
-      text = numberOrdinal === gapIndex ? "_" : displayMathNumber(token.value);
+      const previous = tokens[index - 1];
+      const bare =
+        index === 0 || (previous?.kind === "symbol" && previous.text === "(");
+      text =
+        numberOrdinal === gapIndex
+          ? "_"
+          : token.value < 0 && !bare
+            ? `(${displayMathNumber(token.value)})`
+            : displayMathNumber(token.value);
       numberOrdinal += 1;
     } else if (token.text === "(") {
       text = "(";
@@ -367,7 +406,7 @@ export function formatMathChainTokens(
     }
     out += (spaceBefore ? " " : "") + text;
     spaceBeforeNext = spaceAfter;
-  }
+  });
   return out;
 }
 
@@ -491,13 +530,14 @@ export function buildMentalMathTask(
   gap?: MathGapSlot,
 ): MentalMathTask {
   const operation = operatorToOperation[expression.operator];
-  const shownLeft = gap === "left" ? "_" : displayOperand(expression.left);
+  // Die erste Zahl steht ohne Klammern, negative zweite Zahlen mit: „-1 − (-4)“.
+  const shownLeft = gap === "left" ? "_" : displayMathNumber(expression.left);
   const shownRight = gap === "right" ? "_" : displayOperand(expression.right);
   const shownResult =
     gap === "result" ? "_" : displayMathNumber(expression.result);
   const prompt = gap
     ? `${shownLeft} ${mathOperatorSymbol(expression.operator)} ${shownRight} = ${shownResult}`
-    : `${displayOperand(expression.left)} ${mathOperatorSymbol(expression.operator)} ${displayOperand(expression.right)}`;
+    : `${displayMathNumber(expression.left)} ${mathOperatorSymbol(expression.operator)} ${displayOperand(expression.right)}`;
   const answer =
     gap === "left"
       ? expression.left

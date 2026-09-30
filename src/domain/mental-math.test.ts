@@ -130,6 +130,28 @@ describe("manually typed math chains", () => {
     expect(normalizeMathChainInput("6*7")).toBe("6 · 7");
   });
 
+  it("reads a leading minus as a sign and brackets negative numbers", () => {
+    for (const input of ["-1 − -4", "-1--4", "-1 - (-4)", "-1 − ( -4 )"]) {
+      expect(normalizeMathChainInput(input)).toBe("-1 − (-4)");
+    }
+    expect(normalizeMathChainInput("3 + -2")).toBe("3 + (-2)");
+    expect(normalizeMathChainInput("6 · -3")).toBe("6 · (-3)");
+    const tokens = tokenizeMathChain("-1 − -4")!;
+    expect(countMathChainNumbers(tokens)).toBe(2);
+    expect(formatMathChainTokens(tokens, 1)).toBe("-1 − _");
+    expect(tokens.filter((token) => token.kind === "number")).toEqual([
+      { kind: "number", value: -1 },
+      { kind: "number", value: -4 },
+    ]);
+    for (const source of ["-1 − -4", "-1 − (-4)", "(-1) − (-4)"]) {
+      expect(parseMentalMathTask(source, 0)).toMatchObject({
+        prompt: "-1 − (-4)",
+        answer: 3,
+        operation: "subtract",
+      });
+    }
+  });
+
   it("leaves LaTeX-style input (fractions/roots) untouched", () => {
     expect(normalizeMathChainInput("\\frac{1}{2}")).toBeNull();
   });

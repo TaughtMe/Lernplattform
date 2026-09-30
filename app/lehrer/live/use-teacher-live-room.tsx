@@ -478,7 +478,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       result.push({
         id: `math-${index}-expression`,
         kind: "math",
-        prompt: line,
+        prompt: tokens ? formatMathChainTokens(tokens) : line,
         targetWord: String(value),
         ...(isLatexMathSyntax(line) ? { isLatex: true } : {}),
       });
