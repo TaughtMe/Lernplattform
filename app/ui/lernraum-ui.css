@@ -367,15 +367,18 @@
   display: grid;
   flex: 1;
   place-items: center;
+  /* Lange Beschriftungen brechen auf sehr schmalen Bildschirmen um. */
+  min-width: 0;
   min-height: 40px;
-  padding: 0 10px;
+  padding: 4px 10px;
   border: 0;
   border-radius: 10px;
   background: transparent;
   color: var(--ink2);
   font-size: 13px;
   font-weight: 700;
-  white-space: nowrap;
+  line-height: 1.2;
+  text-align: center;
 }
 .ui-seg > [aria-pressed="true"],
 .ui-seg > [aria-current="page"] {
@@ -1089,7 +1092,11 @@
 }
 /* Das Laufdiktat füllt den Bereich neben der Leiste ohne Seiten-Scrollen. */
 .ui-teacher__body.is-fill {
+  /* Mobil liegt der Bereich in einer Flex-Spalte ohne feste Höhe; ohne
+     flex: none würde er auf die Inhaltshöhe wachsen. */
+  flex: none;
   height: 100dvh;
+  max-height: 100dvh;
 }
 .ui-teacher__body.is-fill > .ui-teacher__main {
   display: flex;

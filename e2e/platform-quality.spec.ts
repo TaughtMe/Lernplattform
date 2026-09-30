@@ -92,9 +92,10 @@ test("mobile learners retain direct access to their personal learning room", asy
 }, testInfo) => {
   test.skip(!testInfo.project.name.includes("mobile"));
   await page.goto("/");
-  await expect(
-    page.getByRole("group", { name: /Lernraum öffnen/ }),
-  ).toBeVisible();
+  // Startseite 2a: Das eigene Tier führt direkt in den Lernraum.
+  const room = page.getByRole("link", { name: /^Weiter als / });
+  await expect(room).toBeVisible();
+  await expect(room).toHaveAttribute("href", "/lernen");
 });
 
 test("the native LernBox creates and opens a personal deck", async ({

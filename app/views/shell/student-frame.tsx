@@ -61,6 +61,9 @@ export function StudentFrame({
             aria-current={profileActive ? "page" : undefined}
           >
             <Icon name="gear" size={20} />
+            <span className={styles.profileLabel} aria-hidden="true">
+              Profil
+            </span>
           </Link>
         </nav>
         <main className={cx(styles.main, hideNav && styles.bare)} id="inhalt">

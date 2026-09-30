@@ -52,11 +52,11 @@
   border-top: 1px solid var(--line);
   background: var(--surface);
 }
-.brand,
-.profile {
+.brand {
   display: none;
 }
-.item {
+.item,
+.profile {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -69,13 +69,20 @@
   font-weight: 600;
   text-decoration: none;
 }
-.item:hover {
+.item:hover,
+.profile:hover {
   background: var(--bg);
 }
-.item[aria-current="page"] {
+.item[aria-current="page"],
+.profile[aria-current="page"] {
   background: var(--accent-bg);
   color: var(--accent);
   font-weight: 700;
+}
+
+/* Das Zahnrad ist kleiner als die übrigen Symbole (20 statt 23 px). */
+.profile > svg {
+  margin: 1.5px;
 }
 
 /* ---------- Seitenleiste (ab 900 px, 3a) ---------- */
@@ -130,8 +137,18 @@
     background: var(--nav-active);
     color: var(--nav-accent);
   }
+  .profileLabel {
+    display: none;
+  }
+  .profile > svg {
+    margin: 0;
+  }
   .profile {
     display: grid;
+    gap: 0;
+    padding: 0;
+    background: none;
+    font-size: 0;
     place-items: center;
     width: 44px;
     height: 44px;
@@ -142,6 +159,7 @@
   }
   .profile:hover,
   .profile[aria-current="page"] {
+    background: none;
     border-color: var(--nav-accent);
     color: var(--nav-accent);
   }

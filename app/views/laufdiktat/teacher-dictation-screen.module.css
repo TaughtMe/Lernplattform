@@ -74,6 +74,21 @@
   white-space: nowrap;
   cursor: pointer;
 }
+/* Sehr schmal (unter 380 px) zeigt nur der aktuelle Schritt seinen Namen;
+   die übrigen behalten ihn für Screenreader. */
+@container (max-width: 379.98px) {
+  .step {
+    position: relative;
+  }
+  .step:not([aria-current]) .stepText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 .stepDot {
   display: grid;
   place-items: center;

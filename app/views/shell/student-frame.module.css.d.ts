@@ -9,5 +9,6 @@ declare const styles: {
   readonly main: string;
   readonly nav: string;
   readonly profile: string;
+  readonly profileLabel: string;
 };
 export default styles;

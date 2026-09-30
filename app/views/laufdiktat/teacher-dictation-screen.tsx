@@ -279,7 +279,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
               onClick={() => props.onStep?.(step.id)}
             >
               <span className={styles.stepDot}>{stepIndex + 1}</span>
-              {step.tab}
+              <span className={styles.stepText}>{step.tab}</span>
             </button>
           ))}
         </nav>

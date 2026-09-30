@@ -111,6 +111,7 @@ declare const styles: {
   readonly step: string;
   readonly stepDot: string;
   readonly stepLabel: string;
+  readonly stepText: string;
   readonly stepTitle: string;
   readonly stepper: string;
   readonly steps: string;
