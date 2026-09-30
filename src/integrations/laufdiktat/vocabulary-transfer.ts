@@ -62,7 +62,10 @@ export function buildLiveVocabularyTransfer(
             ? { alternatives: word.acceptedAnswers }
             : {}),
         },
-        tagIds: ["unterrichtsrunde"],
+        // Eigener Tag der Vokabel vor dem Standard-Tag der Lehrkraft.
+        tagIds: [word.tag?.trim() || session.vocabularyTag?.trim()].filter(
+          (tag): tag is string => Boolean(tag),
+        ),
         createdAt,
         updatedAt: createdAt,
       })),

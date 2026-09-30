@@ -69,6 +69,7 @@ import {
 } from "../../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../../src/integrations/laufdiktat/debounce";
 import { useHydrated } from "../../components/use-hydrated";
+import { createTeacherProfileRepository } from "../../../src/storage/teacher-class-settings";
 
 export type Stage = "content" | "settings" | "lobby" | "live";
 
@@ -184,7 +185,8 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       .map((pair) => {
         const side = (value: VocabularyPair["left"]) =>
           [value.primary, ...value.alternatives].filter(Boolean).join("|");
-        return `${side(pair.left)};${side(pair.right)}`;
+        const tag = pair.tag?.trim();
+        return `${side(pair.left)};${side(pair.right)}${tag ? `;${tag}` : ""}`;
       })
       .join("\n");
   const applyVocabularyPairs = (pairs: VocabularyPair[]) => {
@@ -206,6 +208,20 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     useState<VocabularyDirection>("left-to-right");
   const [vocabularyTransfer, setVocabularyTransfer] =
     useState<VocabularyTransferChoice>("none");
+  // Standard-Tag aus den Lehrer-Einstellungen für übernommene Vokabeln.
+  const [lernboxTag, setLernboxTag] = useState("");
+  useEffect(() => {
+    let active = true;
+    void createTeacherProfileRepository()
+      .get()
+      .then((profile) => {
+        if (active && profile?.lernboxTag) setLernboxTag(profile.lernboxTag);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
   const [gameMode, setGameMode] = useState<TeacherGameMode>("LAUFDIKTAT");
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLDivElement>(null);
@@ -617,6 +633,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         source,
         vocabularyDirection: direction,
         vocabularyTransfer,
+        vocabularyTag: lernboxTag,
         gameMode,
         shuffleWords,
         repeatWrongAnswers,
@@ -671,6 +688,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       gameMode,
       repeatWrongAnswers,
       vocabularyTransfer,
+      lernboxTag,
       showStars,
       shuffleWords,
       source,
@@ -1160,6 +1178,19 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     );
   }
 
+  /** Eigener LernBox-Tag einer Vokabel; leer nimmt den Standard-Tag. */
+  function updateVocabularyTag(id: string, tag: string) {
+    applyVocabularyPairs(
+      vocabularyPairs.map((entry) => {
+        if (entry.id !== id) return entry;
+        const next: VocabularyPair = { ...entry };
+        if (tag.trim()) next.tag = tag;
+        else delete next.tag;
+        return next;
+      }),
+    );
+  }
+
   function removeVocabularyPair(id: string) {
     const next = vocabularyPairs.filter((entry) => entry.id !== id);
     applyVocabularyPairs(next.length > 0 ? next : [emptyVocabularyPair()]);
@@ -1255,6 +1286,8 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     setDirection,
     vocabularyTransfer,
     setVocabularyTransfer,
+    lernboxTag,
+    updateVocabularyTag,
     gameMode,
     setGameMode,
     shuffleWords,

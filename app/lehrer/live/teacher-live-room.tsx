@@ -188,6 +188,7 @@ function vocabularyProps(t: TeacherLiveModel): VocabularyEditorProps {
     direction: t.direction,
     caseSensitive: t.vocabularyCaseSensitive,
     transfer: t.vocabularyTransfer,
+    ...(t.lernboxTag ? { defaultTag: t.lernboxTag } : {}),
     tableInput: t.vocabularyTableInput,
     onLocale: (side, locale) =>
       t.setVocabularyLocales((current) => ({ ...current, [side]: locale })),
@@ -200,6 +201,7 @@ function vocabularyProps(t: TeacherLiveModel): VocabularyEditorProps {
     onDirection: t.setDirection,
     onCaseSensitive: t.setVocabularyCaseSensitive,
     onTransfer: t.setVocabularyTransfer,
+    onTag: t.updateVocabularyTag,
     onTableInput: t.setVocabularyTableInput,
     onImportTable: t.importVocabularyTable,
     onImportFile: t.importFile,

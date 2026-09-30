@@ -32,6 +32,7 @@ declare const styles: {
   readonly settings: string;
   readonly spacer: string;
   readonly table: string;
+  readonly tag: string;
   readonly title: string;
 };
 export default styles;

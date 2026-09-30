@@ -59,6 +59,18 @@ describe("live vocabulary transfer", () => {
     expect(transfer?.bundle.stacks[0]?.itemIds).toHaveLength(1);
   });
 
+  it("tags vocabulary with its own tag before the teacher's default tag", () => {
+    const current = { ...session("all"), vocabularyTag: "Buch Klasse 5" };
+    current.words[0] = { ...current.words[0]!, tag: "Unit 3" };
+    const transfer = buildLiveVocabularyTransfer(current, {});
+    expect(transfer?.bundle.vocabulary.map((item) => item.tagIds)).toEqual([
+      ["Unit 3"],
+      ["Buch Klasse 5"],
+    ]);
+    const untagged = buildLiveVocabularyTransfer(session("all"), {});
+    expect(untagged?.bundle.vocabulary[0]?.tagIds).toEqual([]);
+  });
+
   it("does not create an empty transfer", () => {
     expect(buildLiveVocabularyTransfer(session("errors"), {})).toBeUndefined();
   });

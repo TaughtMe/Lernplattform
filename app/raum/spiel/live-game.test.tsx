@@ -218,7 +218,48 @@ describe("LiveRunningDictationGame", () => {
     );
   });
 
-  it("does not transfer vocabulary before the pilot expansion gate", async () => {
+  it("transfers vocabulary with its tag when the teacher switched it on", async () => {
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+              tag: "Unit 3",
+            },
+          ],
+          vocabularyTransfer: "all",
+          vocabularyTag: "Buch Klasse 5",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    revealWithTwoFingers(container);
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "Haus{Enter}",
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Geschafft, Mia!")).toBeVisible(),
+    );
+    await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1));
+    expect(
+      ingestBundle.mock.calls[0]?.[0].bundle.vocabulary[0]?.tagIds,
+    ).toEqual(["Unit 3"]);
+  });
+
+  it("keeps vocabulary out of the LernBox when the teacher switched it off", async () => {
     const user = userEvent.setup();
     ingestBundle.mockClear();
     const { container } = render(
@@ -235,7 +276,7 @@ describe("LiveRunningDictationGame", () => {
               targetWord: "Haus",
             },
           ],
-          vocabularyTransfer: "all",
+          vocabularyTransfer: "none",
         }}
         connectionWarning=""
         initialProgress={null}

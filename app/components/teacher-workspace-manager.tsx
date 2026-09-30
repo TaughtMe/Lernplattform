@@ -120,8 +120,10 @@ export function TeacherProfilePanel() {
 
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
+    const tag = profile.lernboxTag?.trim();
     const next: TeacherProfile = {
       ...profile,
+      lernboxTag: tag || undefined,
       subjects: subjects
         .split(",")
         .map((subject) => subject.trim())
@@ -251,6 +253,26 @@ export function TeacherProfilePanel() {
               onChange={(event) => setSubjects(event.target.value)}
               placeholder="Deutsch, Mathematik, Englisch"
             />
+          </label>
+          <label className="ui-labeled">
+            LernBox-Tag für Laufdiktate
+            <input
+              className="ui-input"
+              disabled={!ready}
+              maxLength={80}
+              value={profile.lernboxTag ?? ""}
+              onChange={(event) =>
+                setProfile((current) => ({
+                  ...current,
+                  lernboxTag: event.target.value,
+                }))
+              }
+              placeholder="z. B. Buch Klasse 5"
+            />
+            <span className="ui-small ui-muted">
+              Gilt für alle übernommenen Vokabeln. Ein Tag an der Vokabel geht
+              vor.
+            </span>
           </label>
           <Button type="submit" disabled={!ready}>
             Informationen speichern

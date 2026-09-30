@@ -517,9 +517,17 @@ export function createLearningBoxRepository(
               .first();
           }
           if (!deck) {
+            const first = input.bundle.vocabulary[0];
             deck = createLearningBoxDeck({
               title: input.title,
               source: input.source,
+              // Sprachen aus dem Laufdiktat, damit Vorlesen und Anzeige passen.
+              ...(first
+                ? {
+                    frontLocale: first.prompt.locale,
+                    backLocale: first.answer.locale,
+                  }
+                : {}),
             });
             await database.learningBoxDecks.add(deck);
           }
@@ -617,7 +625,11 @@ export function createLearningBoxRepository(
               ...createLearningBoxCard({
                 deckId: deck.id,
                 question: item.prompt.text,
-                answer: item.answer.text,
+                // Weitere richtige Antworten stehen wie im Editor mit „|“.
+                answer: [item.answer.text, ...(item.answer.alternatives ?? [])]
+                  .map((text) => text.trim())
+                  .filter(Boolean)
+                  .join(" | "),
                 ...(item.tagIds[0] ? { tag: item.tagIds[0] } : {}),
                 source: input.source,
               }),

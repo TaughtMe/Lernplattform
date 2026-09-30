@@ -9,6 +9,8 @@ export const teacherProfileSchema = z
     school: z.string().trim().max(160),
     email: z.union([z.literal(""), z.email()]),
     subjects: z.array(z.string().trim().min(1).max(80)).max(20),
+    /** Standard-Tag für Vokabeln, die ein Laufdiktat in die LernBox gibt. */
+    lernboxTag: z.string().trim().max(80).optional(),
     updatedAt: z.iso.datetime(),
   })
   .strict();

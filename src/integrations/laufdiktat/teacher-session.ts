@@ -27,6 +27,8 @@ export type TeacherSessionOptions = {
   shuffleWords: boolean;
   repeatWrongAnswers: boolean;
   vocabularyTransfer?: VocabularyTransferChoice;
+  /** Standard-Tag der Lehrkraft für übernommene Vokabeln. */
+  vocabularyTag?: string;
   isTtsEnabled?: boolean;
   uebungMaxAttempts?: number;
   uebungAssistanceEnabled?: boolean;
@@ -51,6 +53,7 @@ export type TeacherRoomConfig = {
   uebungAssistanceEnabled: boolean;
   repeatWrongAnswers: boolean;
   vocabularyTransfer: VocabularyTransferChoice;
+  vocabularyTag?: string;
   showStars: boolean;
   shuffleWords: boolean;
   strictTypingMode: boolean;
@@ -110,6 +113,7 @@ export function buildTeacherWords(
       promptLang: item.promptLocale,
       answerLang: item.answerLocale,
       caseSensitive: item.caseSensitive,
+      ...(item.tag ? { tag: item.tag } : {}),
     }));
   }
   return source
@@ -151,6 +155,9 @@ export function buildTeacherRoomConfig(
       options.contentMode === "vocabulary"
         ? (options.vocabularyTransfer ?? "errors")
         : "none",
+    ...(options.contentMode === "vocabulary" && options.vocabularyTag?.trim()
+      ? { vocabularyTag: options.vocabularyTag.trim() }
+      : {}),
     showStars: options.gameMode !== "STATION" && (options.showStars ?? true),
     shuffleWords: options.gameMode !== "STATION" && options.shuffleWords,
     strictTypingMode:

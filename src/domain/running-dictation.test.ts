@@ -45,6 +45,13 @@ describe("native running dictation core", () => {
     expect(parseVocabularyTable("ungültig\nHaus\thome")).toHaveLength(1);
   });
 
+  it("reads an optional third column as LernBox tag", () => {
+    const pairs = parseVocabularyTable("Haus\thome\tUnit 1\nBaum;tree");
+    expect(pairs.map((pair) => pair.tag)).toEqual(["Unit 1", undefined]);
+    expect(pairs[0]?.right.primary).toBe("home");
+    expect(buildVocabularyItems(pairs, "left-to-right")[0]?.tag).toBe("Unit 1");
+  });
+
   it("uses the chosen languages for reading aloud", () => {
     const pairs = parseVocabularyTable("Haus;maison\nBaum;arbre");
     expect(buildVocabularyItems(pairs, "left-to-right")[0]?.promptLocale).toBe(

@@ -1,78 +1,172 @@
 "use client";
 
-import { StudentPage } from "../ui/shell/student-page";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   evaluateLearningBoxAnswer,
+  filterLearningBoxCards,
   getLearningBoxLevel,
   getLearningBoxPrompt,
   isLearningBoxCardDue,
+  isLearningBoxCardDueFor,
+  learningBoxAlternatives,
+  learningBoxDirectionAt,
+  parseLearningBoxImport,
   processLearningBoxResult,
+  sortLearningBoxCards,
   type LearningBoxCard,
   type LearningBoxDeck,
   type LearningBoxDirection,
+  type LearningBoxFolder,
   type LearningBoxMode,
+  type LearningBoxSessionDirection,
+  type LearningBoxSort,
 } from "../../src/domain/learning-box";
+import { VOCABULARY_LANGUAGES } from "../../src/domain/running-dictation";
 import {
   createLearningBoxRepository,
   migrateLegacyLearningBox,
 } from "../../src/storage/personal-learning-events";
-import { Icon } from "../ui/icons";
-import { Segmented } from "../ui/primitives";
+import { StudentPage } from "../ui/shell/student-page";
+import { useThemeToggle } from "../ui/theme";
+import {
+  LernBoxScreen,
+  type LbDeck,
+  type LbManager,
+  type LbStudy,
+} from "../views/lernbox/lernbox-screen";
 
-/** Ansicht im Hauptbereich (Design 4a–4c): Stapel, Karten verwalten, Lernrunde. */
-type View = "decks" | "deck" | "session";
-
-const LANGUAGES: Record<string, { name: string; into: string }> = {
-  "de-DE": { name: "Deutsch", into: "Auf Deutsch" },
-  "en-US": { name: "Englisch", into: "Auf Englisch" },
-  "fr-FR": { name: "Französisch", into: "Auf Französisch" },
-  "es-ES": { name: "Spanisch", into: "Auf Spanisch" },
-  la: { name: "Latein", into: "Auf Latein" },
+const LANGUAGES: Record<string, { name: string; into: string }> =
+  Object.fromEntries(
+    [...VOCABULARY_LANGUAGES, { locale: "en-US", label: "Englisch" }].map(
+      ({ locale, label }) => [locale, { name: label, into: `Auf ${label}` }],
+    ),
+  );
+const LANGUAGE_CHOICES = VOCABULARY_LANGUAGES.map(({ locale, label }) => ({
+  locale,
+  label,
+}));
+const MODE_LABEL: Record<LearningBoxMode, string> = {
+  writing: "Schreiben",
+  oral: "Mündlich",
 };
+const PANEL_KEY = "lernbox:leiste";
+const FOLDERS_KEY = "lernbox:ordner-zu";
 
+function languageName(locale: string) {
+  return LANGUAGES[locale]?.name ?? locale;
+}
 function languageShort(locale: string) {
-  return (LANGUAGES[locale]?.name ?? locale).slice(0, 2).toUpperCase();
+  return languageName(locale).slice(0, 2).toUpperCase();
+}
+function sourceLabel(deck: LearningBoxDeck) {
+  switch (deck.source.kind) {
+    case "running-dictation":
+      return "aus dem Laufdiktat";
+    case "teacher":
+      return "von der Lehrkraft";
+    case "import":
+      return "importiert";
+    default:
+      return "eigene";
+  }
 }
 
-function dueCount(cards: LearningBoxCard[], direction: LearningBoxDirection) {
-  return cards.filter((card) => isLearningBoxCardDue(card, direction)).length;
+function readStored<T>(key: string, fallback: T): T {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw === null ? fallback : (JSON.parse(raw) as T);
+  } catch {
+    return fallback;
+  }
+}
+function store(key: string, value: unknown) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ohne Speicher gilt die Einstellung nur für diesen Besuch.
+  }
+}
+
+/** Mehrere richtige Antworten („home | house“) lesbar anzeigen. */
+function showAlternatives(text: string) {
+  return learningBoxAlternatives(text).join(" / ");
+}
+
+/** Karte gilt als Fehler, wenn sie schon geübt wurde und wieder in Box 1 liegt. */
+function isMistake(card: LearningBoxCard) {
+  const reviewed = card.lastReviewed > card.createdAt;
+  return (
+    reviewed &&
+    (card.box === 1 || (card.reverseInterval > 0 && card.reverseBox === 1))
+  );
+}
+
+type QueueItem = { card: LearningBoxCard; direction: LearningBoxDirection };
+
+type Session = {
+  title: string;
+  mode: LearningBoxMode;
+  queue: QueueItem[];
+  index: number;
+  answer: string;
+  revealed: boolean;
+  feedback: { correct: boolean; expected: string } | null;
+  stats: { correct: number; wrong: number };
+  roundId: string;
+  finished: boolean;
+};
+
+type View =
+  { kind: "welcome" } | { kind: "deck"; id: string } | { kind: "all" };
+
+/** Reihenfolge und Richtung der Karten einer Runde. */
+function buildQueue(
+  cards: readonly LearningBoxCard[],
+  choice: LearningBoxSessionDirection,
+  onlyDue: boolean,
+): QueueItem[] {
+  const now = Date.now();
+  return cards.map((card, index) => {
+    let direction = learningBoxDirectionAt(choice, index);
+    if (choice === "mixed" && onlyDue) {
+      const forward = isLearningBoxCardDue(card, "forward", now);
+      const reverse = isLearningBoxCardDue(card, "reverse", now);
+      if (forward !== reverse) direction = forward ? "forward" : "reverse";
+    }
+    return { card, direction };
+  });
 }
 
 export function LearningBoxApp() {
   const repository = useMemo(() => createLearningBoxRepository(), []);
-  const [view, setView] = useState<View>("decks");
+  const { theme, toggleTheme } = useThemeToggle();
   const [decks, setDecks] = useState<LearningBoxDeck[]>([]);
-  const [deckCards, setDeckCards] = useState<Record<string, LearningBoxCard[]>>(
-    {},
-  );
-  const [selectedDeckId, setSelectedDeckId] = useState<string>();
+  const [folders, setFolders] = useState<LearningBoxFolder[]>([]);
+  const [cards, setCards] = useState<LearningBoxCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [interactionReady, setInteractionReady] = useState(false);
   const [notice, setNotice] = useState("");
+  const [view, setView] = useState<View>({ kind: "welcome" });
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [collapsed, setCollapsed] = useState<string[]>([]);
   const [mode, setMode] = useState<LearningBoxMode>("writing");
-  const [direction, setDirection] = useState<LearningBoxDirection>("forward");
+  const [direction, setDirection] =
+    useState<LearningBoxSessionDirection>("forward");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<LearningBoxSort>("alphabet");
+  const [session, setSession] = useState<Session | null>(null);
   const refreshRevision = useRef(0);
 
   const refresh = useCallback(async () => {
     const revision = ++refreshRevision.current;
-    const nextDecks = await repository.listDecks();
-    const entries = await Promise.all(
-      nextDecks.map(
-        async (deck) => [deck.id, await repository.listCards(deck.id)] as const,
-      ),
-    );
+    const [nextDecks, nextFolders, nextCards] = await Promise.all([
+      repository.listDecks(),
+      repository.listFolders(),
+      repository.listAllCards(),
+    ]);
     if (revision !== refreshRevision.current) return;
     setDecks(nextDecks);
-    setDeckCards(Object.fromEntries(entries));
+    setFolders(nextFolders);
+    setCards(nextCards);
     setLoading(false);
   }, [repository]);
 
@@ -80,6 +174,8 @@ export function LearningBoxApp() {
     let active = true;
     void migrateLegacyLearningBox().then(async (result) => {
       if (!active) return;
+      setPanelOpen(readStored(PANEL_KEY, true));
+      setCollapsed(readStored<string[]>(FOLDERS_KEY, []));
       if (result.cards > 0) {
         setNotice(
           `${result.cards} vorhandene Karten wurden in den Lernraum übernommen.`,
@@ -90,816 +186,477 @@ export function LearningBoxApp() {
       const requested = new URLSearchParams(window.location.search).get(
         "stapel",
       );
-      if (active && requested) {
-        setSelectedDeckId(requested);
-        setView("deck");
-      }
-      requestAnimationFrame(() => {
-        if (active) setInteractionReady(true);
-      });
+      if (active && requested) setView({ kind: "deck", id: requested });
     });
     return () => {
       active = false;
     };
   }, [refresh]);
 
-  const selectedDeck = decks.find((deck) => deck.id === selectedDeckId);
-  const selectedCards = selectedDeckId ? (deckCards[selectedDeckId] ?? []) : [];
+  const deckById = useMemo(
+    () => new Map(decks.map((deck) => [deck.id, deck])),
+    [decks],
+  );
+  const now = Date.now();
+  const dueCards = cards.filter((card) =>
+    isLearningBoxCardDueFor(card, direction, now),
+  );
+  const mistakes = cards.filter(isMistake);
+  const selectedDeck = view.kind === "deck" ? deckById.get(view.id) : undefined;
+  const labelDeck = selectedDeck ?? decks[0];
+  const directionLabels = labelDeck
+    ? {
+        forward: `${languageShort(labelDeck.frontLocale)} → ${languageShort(labelDeck.backLocale)}`,
+        reverse: `${languageShort(labelDeck.backLocale)} → ${languageShort(labelDeck.frontLocale)}`,
+      }
+    : { forward: "DE → EN", reverse: "EN → DE" };
+  const locked = session !== null && !session.finished;
 
-  function openDeck(id: string) {
-    setSelectedDeckId(id);
-    setView("deck");
-    setNotice("");
+  const lbDecks: LbDeck[] = decks.map((deck) => {
+    const inside = cards.filter((card) => card.deckId === deck.id);
+    const boxes = [0, 0, 0, 0, 0];
+    for (const card of inside)
+      boxes[card.box - 1] = (boxes[card.box - 1] ?? 0) + 1;
+    return {
+      id: deck.id,
+      title: deck.title,
+      folderId: deck.folderId ?? null,
+      total: inside.length,
+      due: inside.filter((card) =>
+        isLearningBoxCardDueFor(card, direction, now),
+      ).length,
+      boxes,
+      sourceLabel: `${languageName(deck.backLocale)} · ${sourceLabel(deck)}`,
+    };
+  });
+
+  function say(text: string, locale: string) {
+    if (!("speechSynthesis" in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.split("|")[0]?.trim());
+    utterance.lang = locale;
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
   }
 
-  function leaveDeck() {
-    setView("decks");
+  function startSession(
+    title: string,
+    pool: readonly LearningBoxCard[],
+    onlyDue: boolean,
+  ) {
+    if (!pool.length) return;
     setNotice("");
+    setSession({
+      title,
+      mode,
+      queue: buildQueue(pool, direction, onlyDue),
+      index: 0,
+      answer: "",
+      revealed: false,
+      feedback: null,
+      stats: { correct: 0, wrong: 0 },
+      roundId: crypto.randomUUID(),
+      finished: false,
+    });
   }
 
-  async function importBackup(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  async function assess(correct: boolean, expected: string) {
+    if (!session) return;
+    const item = session.queue[session.index];
+    if (!item) return;
+    const updated = processLearningBoxResult(item.card, {
+      correct,
+      direction: item.direction,
+      mode: session.mode,
+    });
+    await repository.putCardAndEvent({
+      card: updated,
+      correct,
+      direction: item.direction,
+      mode: session.mode,
+      roundId: session.roundId,
+    });
+    const queue = session.queue.map((entry, index) =>
+      index === session.index ? { ...entry, card: updated } : entry,
+    );
+    const stats = {
+      correct: session.stats.correct + (correct ? 1 : 0),
+      wrong: session.stats.wrong + (correct ? 0 : 1),
+    };
+    if (session.mode === "writing") {
+      setSession({
+        ...session,
+        queue,
+        stats,
+        feedback: { correct, expected: showAlternatives(expected) },
+      });
+    } else {
+      advance({ ...session, queue, stats });
+    }
+  }
+
+  function advance(current: Session) {
+    const index = current.index + 1;
+    setSession({
+      ...current,
+      index,
+      answer: "",
+      revealed: false,
+      feedback: null,
+      finished: index >= current.queue.length,
+    });
+    if (index >= current.queue.length) void refresh();
+  }
+
+  function endSession() {
+    setSession(null);
+    void refresh();
+  }
+
+  async function run(action: () => Promise<unknown>, message?: string) {
+    try {
+      await action();
+      if (message !== undefined) setNotice(message);
+    } catch {
+      setNotice("Das hat nicht geklappt. Bitte versuche es noch einmal.");
+    }
+    await refresh();
+  }
+
+  function downloadBackup(value: unknown) {
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }),
+    );
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `LernBox-Sicherung-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importBackup(file: File) {
     try {
       const value = JSON.parse(await file.text()) as {
         decks?: LearningBoxDeck[];
         cards?: LearningBoxCard[];
+        folders?: LearningBoxFolder[];
       };
       if (!Array.isArray(value.decks) || !Array.isArray(value.cards)) {
         throw new Error("invalid");
       }
-      await repository.importBackup({ decks: value.decks, cards: value.cards });
+      await repository.importBackup({
+        decks: value.decks,
+        cards: value.cards,
+        ...(Array.isArray(value.folders) ? { folders: value.folders } : {}),
+      });
       setNotice("Sicherung wurde importiert.");
       await refresh();
     } catch {
       setNotice("Diese Datei ist keine gültige LernBox-Sicherung.");
-    } finally {
-      event.target.value = "";
     }
   }
 
-  const mainOpen = view !== "decks" && Boolean(selectedDeck);
+  // ---------- Hauptbereich ----------
+  let main: Parameters<typeof LernBoxScreen>[0]["main"] = { kind: "welcome" };
+  if (session) {
+    const item = session.queue[session.index];
+    const deck = item ? deckById.get(item.card.deckId) : undefined;
+    const prompt = item
+      ? getLearningBoxPrompt(item.card, item.direction)
+      : null;
+    const answerLocale = deck
+      ? item?.direction === "forward"
+        ? deck.backLocale
+        : deck.frontLocale
+      : "";
+    const remaining = session.queue.length - session.index;
+    const study: LbStudy = {
+      title: session.title,
+      subtitle: `${remaining} übrig · ${MODE_LABEL[session.mode]}`,
+      progress: session.queue.length ? session.index / session.queue.length : 1,
+      eyebrow: LANGUAGES[answerLocale]?.into ?? "Antwort",
+      box: item ? getLearningBoxLevel(item.card, item.direction) : 1,
+      question: showAlternatives(prompt?.question ?? ""),
+      mode: session.mode,
+      answer: session.answer,
+      revealed: session.revealed,
+      revealedAnswer: showAlternatives(prompt?.answer ?? ""),
+      feedback: session.feedback,
+      done: session.finished ? session.stats : null,
+      canSpeak: typeof window !== "undefined" && "speechSynthesis" in window,
+    };
+    main = { kind: "study", study };
+  } else if (view.kind === "all" || selectedDeck) {
+    const pool = selectedDeck
+      ? cards.filter((card) => card.deckId === selectedDeck.id)
+      : cards;
+    const activeSort = selectedDeck && sort === "deck" ? "alphabet" : sort;
+    const shown = sortLearningBoxCards(
+      filterLearningBoxCards(pool, query),
+      activeSort,
+      (id) => deckById.get(id)?.title ?? "",
+    );
+    const summary = selectedDeck
+      ? lbDecks.find((deck) => deck.id === selectedDeck.id)
+      : undefined;
+    const manager: LbManager = {
+      title: selectedDeck?.title ?? "Alle Vokabeln",
+      subtitle: selectedDeck
+        ? `${languageName(selectedDeck.frontLocale)} → ${languageName(selectedDeck.backLocale)} · ${sourceLabel(selectedDeck)}`
+        : `${cards.length} Karten in ${decks.length} Stapeln`,
+      deck:
+        selectedDeck && summary
+          ? {
+              id: selectedDeck.id,
+              folderId: selectedDeck.folderId ?? null,
+              frontLabel: languageName(selectedDeck.frontLocale),
+              backLabel: languageName(selectedDeck.backLocale),
+              due: summary.due,
+              total: summary.total,
+              boxes: summary.boxes,
+            }
+          : null,
+      cards: shown.map((card) => ({
+        id: card.id,
+        question: card.question,
+        answer: card.answer,
+        tag: card.tag ?? null,
+        box: card.box,
+        deckTitle: deckById.get(card.deckId)?.title ?? "",
+      })),
+      query,
+      sort: activeSort,
+    };
+    main = { kind: "manager", manager };
+  }
+
+  const cardsOf = (ids: readonly string[]) =>
+    cards.filter((card) => ids.includes(card.id));
 
   return (
-    <StudentPage activePath="/lernbox">
-      <div className={`ui-lb${mainOpen ? " ui-lb--main" : ""}`}>
-        <DeckPanel
-          decks={decks}
-          cards={deckCards}
-          selectedId={selectedDeckId}
-          loading={loading}
-          interactionReady={interactionReady}
-          notice={view === "decks" ? notice : ""}
-          mode={mode}
-          direction={direction}
-          onMode={setMode}
-          onDirection={setDirection}
-          onCreate={async (input) => {
-            const deck = await repository.createDeck(input);
-            setDecks((current) => [deck, ...current]);
-            setDeckCards((current) => ({ ...current, [deck.id]: [] }));
-          }}
-          onDelete={async (id) => {
-            await repository.deleteDeck(id);
-            if (id === selectedDeckId) {
-              setSelectedDeckId(undefined);
-              setView("decks");
+    <StudentPage activePath="/lernbox" bare>
+      <LernBoxScreen
+        theme={theme}
+        panelOpen={panelOpen}
+        loading={loading}
+        notice={notice}
+        folders={folders.map(({ id, title }) => ({ id, title }))}
+        decks={lbDecks}
+        collapsedFolders={collapsed}
+        selectedDeckId={selectedDeck?.id ?? null}
+        mode={session?.mode ?? mode}
+        direction={direction}
+        directionLabels={directionLabels}
+        locked={locked}
+        dueTotal={dueCards.length}
+        errorCount={mistakes.length}
+        languages={LANGUAGE_CHOICES}
+        main={main}
+        onToggleTheme={toggleTheme}
+        onTogglePanel={() => {
+          setPanelOpen(!panelOpen);
+          store(PANEL_KEY, !panelOpen);
+        }}
+        onToggleFolder={(id) => {
+          const next = collapsed.includes(id)
+            ? collapsed.filter((entry) => entry !== id)
+            : [...collapsed, id];
+          setCollapsed(next);
+          store(FOLDERS_KEY, next);
+        }}
+        onSelectDeck={(id) => {
+          if (locked) return;
+          setSession(null);
+          setView({ kind: "deck", id });
+          setQuery("");
+          setNotice("");
+        }}
+        onShowAll={() => {
+          if (locked) return;
+          setSession(null);
+          setView({ kind: "all" });
+          setQuery("");
+          setNotice("");
+        }}
+        onDeleteDeck={(id) => {
+          const deck = lbDecks.find((entry) => entry.id === id);
+          if (
+            deck &&
+            deck.total > 0 &&
+            !window.confirm(
+              `Stapel „${deck.title}“ mit ${deck.total} Karten löschen?`,
+            )
+          ) {
+            return;
+          }
+          if (view.kind === "deck" && view.id === id)
+            setView({ kind: "welcome" });
+          void run(() => repository.deleteDeck(id));
+        }}
+        onDeleteFolder={(id) =>
+          void run(
+            () => repository.deleteFolder(id),
+            "Ordner gelöscht. Seine Stapel liegen jetzt ohne Ordner.",
+          )
+        }
+        onCreateDeck={(input) =>
+          void run(async () => {
+            const deck = await repository.createDeck({
+              title: input.title,
+              folderId: input.folderId ?? undefined,
+              frontLocale: input.frontLocale,
+              backLocale: input.backLocale,
+            });
+            if (input.folderId) {
+              const next = collapsed.filter(
+                (entry) => entry !== input.folderId,
+              );
+              setCollapsed(next);
+              store(FOLDERS_KEY, next);
             }
-            await refresh();
-          }}
-          onOpen={openDeck}
-          onStart={(id) => {
-            setSelectedDeckId(id);
-            setView("session");
-          }}
-          onExport={async () => {
-            downloadJson(await repository.exportBackup(), "LernBox-Sicherung");
-          }}
-          onImport={(event) => void importBackup(event)}
-        />
-
-        <section className="ui-lb__main" aria-live="polite">
-          {view === "deck" && selectedDeck ? (
-            <DeckDetail
-              deck={selectedDeck}
-              cards={selectedCards}
-              direction={direction}
-              notice={notice}
-              onBack={leaveDeck}
-              onAdd={async (input) => {
-                const result = await repository.addCard({
-                  deckId: selectedDeck.id,
-                  ...input,
-                });
-                setNotice(
-                  result.added
-                    ? "Karte wurde hinzugefügt."
-                    : "Diese Karte ist bereits in der LernBox.",
-                );
-                await refresh();
-              }}
-              onDelete={async (id) => {
-                await repository.deleteCard(id);
-                await refresh();
-              }}
-              onStart={() => setView("session")}
-            />
-          ) : view === "session" && selectedDeck ? (
-            <LearningSession
-              key={`${selectedDeck.id}-${mode}-${direction}`}
-              deck={selectedDeck}
-              cards={selectedCards}
-              mode={mode}
-              direction={direction}
-              onSave={async (card, result) => {
-                await repository.putCardAndEvent({ card, ...result });
-                await refresh();
-              }}
-              onClose={() => setView("deck")}
-            />
-          ) : (
-            <div className="ui-lb__welcome">
-              <Icon name="cards" size={34} />
-              <p className="ui-h-section">
-                {decks.length
-                  ? "Wähle links einen Stapel."
-                  : "Lege links deinen ersten Stapel an."}
-              </p>
-              <p className="ui-small ui-muted">
-                Eigene Vokabeln und Fehler aus dem Laufdiktat landen hier und
-                kommen wieder, wenn sie fällig sind.
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
+            return deck;
+          })
+        }
+        onCreateFolder={(title) =>
+          void run(
+            () => repository.createFolder(title),
+            `Ordner „${title}“ angelegt.`,
+          )
+        }
+        onMode={(value) => {
+          if (!locked) setMode(value);
+        }}
+        onDirection={(value) => {
+          if (!locked) setDirection(value);
+        }}
+        onLearnDue={() => startSession("Alle fälligen Karten", dueCards, true)}
+        onLearnErrors={() => startSession("Meine Fehler", mistakes, false)}
+        onBack={() => {
+          if (session) endSession();
+          else setView({ kind: "welcome" });
+        }}
+        onExport={() => void repository.exportBackup().then(downloadBackup)}
+        onImportBackup={(file) => void importBackup(file)}
+        onStartDeck={() => {
+          if (!selectedDeck) return;
+          const pool = cards.filter((card) => card.deckId === selectedDeck.id);
+          const due = pool.filter((card) =>
+            isLearningBoxCardDueFor(card, direction),
+          );
+          startSession(
+            selectedDeck.title,
+            due.length ? due : pool,
+            due.length > 0,
+          );
+        }}
+        onMoveDeck={(folderId) => {
+          if (selectedDeck)
+            void run(() => repository.moveDeck(selectedDeck.id, folderId));
+        }}
+        onAddCard={(input) => {
+          if (!selectedDeck) return;
+          void run(async () => {
+            const result = await repository.addCard({
+              deckId: selectedDeck.id,
+              question: input.question,
+              answer: input.answer,
+              ...(input.tag.trim() ? { tag: input.tag } : {}),
+            });
+            setNotice(
+              result.added
+                ? "Karte wurde hinzugefügt."
+                : "Diese Karte ist bereits in der LernBox.",
+            );
+          });
+        }}
+        onImportCards={(text) => {
+          if (!selectedDeck) return;
+          const { rows, skipped } = parseLearningBoxImport(text);
+          void run(async () => {
+            const result = await repository.importCards(selectedDeck.id, rows);
+            const parts = [`${result.added} Vokabeln importiert`];
+            if (result.duplicates)
+              parts.push(`${result.duplicates} schon vorhanden`);
+            if (skipped.length)
+              parts.push(
+                `Zeile ${skipped.join(", ")} ohne zwei Spalten übersprungen`,
+              );
+            setNotice(`${parts.join(" · ")}.`);
+          });
+        }}
+        onQuery={setQuery}
+        onSort={setSort}
+        onEditCard={(id, input) =>
+          void run(
+            () =>
+              repository.editCard(id, {
+                question: input.question,
+                answer: input.answer,
+                tag: input.tag.trim() || null,
+              }),
+            "Karte gespeichert.",
+          )
+        }
+        onPracticeCards={(ids) =>
+          startSession("Ausgewählte Vokabeln", cardsOf(ids), false)
+        }
+        onMoveCards={(ids, deckId) =>
+          void run(
+            () => repository.moveCards(ids, deckId),
+            `${ids.length} Karten nach „${deckById.get(deckId)?.title ?? ""}“ verschoben.`,
+          )
+        }
+        onTagCards={(ids, tag) =>
+          void run(
+            () => repository.setCardsTag(ids, tag),
+            tag.trim()
+              ? `Tag „${tag.trim()}“ für ${ids.length} Karten gesetzt.`
+              : `Tag bei ${ids.length} Karten entfernt.`,
+          )
+        }
+        onDeleteCards={(ids) =>
+          void run(
+            () => repository.deleteCards(ids),
+            ids.length === 1
+              ? "Karte gelöscht."
+              : `${ids.length} Karten gelöscht.`,
+          )
+        }
+        onAnswer={(value) =>
+          session && setSession({ ...session, answer: value })
+        }
+        onCheck={() => {
+          const item = session?.queue[session.index];
+          if (!session || !item || !session.answer.trim()) return;
+          const result = evaluateLearningBoxAnswer(
+            item.card,
+            session.answer,
+            item.direction,
+          );
+          void assess(result.accepted, result.expectedAnswer);
+        }}
+        onReveal={() => session && setSession({ ...session, revealed: true })}
+        onAssess={(correct) => {
+          const item = session?.queue[session.index];
+          if (!item) return;
+          void assess(
+            correct,
+            getLearningBoxPrompt(item.card, item.direction).answer,
+          );
+        }}
+        onNext={() => session && advance(session)}
+        onSpeak={(side) => {
+          const item = session?.queue[session.index];
+          const deck = item ? deckById.get(item.card.deckId) : undefined;
+          if (!item || !deck) return;
+          const prompt = getLearningBoxPrompt(item.card, item.direction);
+          const forward = item.direction === "forward";
+          if (side === "question")
+            say(prompt.question, forward ? deck.frontLocale : deck.backLocale);
+          else say(prompt.answer, forward ? deck.backLocale : deck.frontLocale);
+        }}
+        onEndSession={endSession}
+      />
     </StudentPage>
   );
-}
-
-function DeckPanel({
-  decks,
-  cards,
-  selectedId,
-  loading,
-  interactionReady,
-  notice,
-  mode,
-  direction,
-  onMode,
-  onDirection,
-  onCreate,
-  onDelete,
-  onOpen,
-  onStart,
-  onExport,
-  onImport,
-}: {
-  decks: LearningBoxDeck[];
-  cards: Record<string, LearningBoxCard[]>;
-  selectedId: string | undefined;
-  loading: boolean;
-  interactionReady: boolean;
-  notice: string;
-  mode: LearningBoxMode;
-  direction: LearningBoxDirection;
-  onMode: (mode: LearningBoxMode) => void;
-  onDirection: (direction: LearningBoxDirection) => void;
-  onCreate: (input: {
-    title: string;
-    frontLocale: string;
-    backLocale: string;
-  }) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  onOpen: (id: string) => void;
-  onStart: (id: string) => void;
-  onExport: () => Promise<void>;
-  onImport: (event: ChangeEvent<HTMLInputElement>) => void;
-}) {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const selected = decks.find((deck) => deck.id === selectedId) ?? decks[0];
-  const creating = showCreate || (!loading && decks.length === 0);
-  const front = selected ? languageShort(selected.frontLocale) : "DE";
-  const back = selected ? languageShort(selected.backLocale) : "EN";
-
-  async function createFromForm() {
-    if (!formRef.current) return;
-    const formData = new FormData(formRef.current);
-    const submittedTitle = String(formData.get("title") ?? "").trim();
-    if (!submittedTitle) return;
-    await onCreate({
-      title: submittedTitle,
-      frontLocale: String(formData.get("frontLocale") ?? "de-DE"),
-      backLocale: String(formData.get("backLocale") ?? "en-US"),
-    });
-    formRef.current.reset();
-    setShowCreate(false);
-  }
-
-  return (
-    <aside className="ui-lb__panel" aria-labelledby="learning-box-title">
-      <h1 id="learning-box-title" className="ui-h-page">
-        LernBox
-      </h1>
-
-      <div className="ui-between">
-        <span className="ui-label">Stapel</span>
-        <button
-          type="button"
-          className="ui-btn ui-btn--link"
-          aria-expanded={creating}
-          onClick={() => setShowCreate((value) => !value)}
-        >
-          + Neuer Stapel
-        </button>
-      </div>
-
-      {creating ? (
-        <form
-          ref={formRef}
-          className="ui-card ui-card--pad ui-stack ui-lb__create"
-          style={{ ["--gap" as string]: "10px" }}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void createFromForm();
-          }}
-        >
-          <input
-            className="ui-input"
-            name="title"
-            aria-label="Name der neuen Lernbox"
-            placeholder="z. B. Englisch 7b"
-            maxLength={80}
-          />
-          <div className="ui-grid2">
-            <label className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-              <span className="ui-tiny ui-muted">Vorderseite</span>
-              <select
-                className="ui-input"
-                name="frontLocale"
-                defaultValue="de-DE"
-              >
-                {Object.entries(LANGUAGES).map(([value, { name }]) => (
-                  <option key={value} value={value}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-              <span className="ui-tiny ui-muted">Rückseite</span>
-              <select
-                className="ui-input"
-                name="backLocale"
-                defaultValue="en-US"
-              >
-                {Object.entries(LANGUAGES).map(([value, { name }]) => (
-                  <option key={value} value={value}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <button
-            type="button"
-            className="ui-btn ui-btn--primary ui-btn--sm"
-            disabled={loading || !interactionReady}
-            onClick={() => void createFromForm()}
-          >
-            Erstellen
-          </button>
-        </form>
-      ) : null}
-
-      {notice ? (
-        <p className="ui-notice" role="status">
-          {notice}
-        </p>
-      ) : null}
-
-      {loading ? (
-        <p className="ui-small ui-muted">LernBox wird geladen …</p>
-      ) : decks.length === 0 ? (
-        <div className="ui-empty ui-small">
-          <strong>Noch keine Lernbox vorhanden</strong>
-          <p>
-            Lege deine erste Box an oder übernimm später Fehler direkt aus einem
-            Laufdiktat.
-          </p>
-        </div>
-      ) : (
-        <ul className="ui-lb__decks">
-          {decks.map((deck) => {
-            const list = cards[deck.id] ?? [];
-            const due = dueCount(list, direction);
-            return (
-              <li key={deck.id}>
-                <button
-                  type="button"
-                  className="ui-select-card ui-lb__deck"
-                  aria-current={deck.id === selectedId ? "true" : undefined}
-                  onClick={() => onOpen(deck.id)}
-                >
-                  <span className="ui-between" style={{ width: "100%" }}>
-                    <strong className="ui-truncate">{deck.title}</strong>
-                    {list.length === 0 ? null : due > 0 ? (
-                      <span className="ui-pill ui-pill--accent">
-                        {due} fällig
-                      </span>
-                    ) : (
-                      <span className="ui-pill ui-pill--good">erledigt</span>
-                    )}
-                  </span>
-                  <span className="ui-small ui-muted">
-                    {deck.source.kind === "running-dictation"
-                      ? "Aus dem Laufdiktat"
-                      : deck.source.kind === "teacher"
-                        ? "Von der Lehrkraft"
-                        : "Eigener Stapel"}{" "}
-                    · {list.length} Karten
-                  </span>
-                  <BoxDistribution cards={list} />
-                </button>
-                <button
-                  type="button"
-                  className="ui-lb__delete"
-                  aria-label={`${deck.title} löschen`}
-                  title="Stapel löschen"
-                  onClick={() => void onDelete(deck.id)}
-                >
-                  <Icon name="trash" size={16} />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {decks.length ? (
-        <>
-          <p className="ui-tiny ui-muted ui-between">
-            <span>Box 1 · neu</span>
-            <span>Box 5 · sitzt</span>
-          </p>
-          <span className="ui-label">Modus</span>
-          <Segmented
-            label="Modus"
-            value={mode}
-            onChange={onMode}
-            options={[
-              { value: "writing", label: "Schreiben" },
-              { value: "oral", label: "Karteikarten" },
-            ]}
-          />
-          <Segmented
-            label="Richtung"
-            value={direction}
-            onChange={onDirection}
-            options={[
-              { value: "forward", label: `${front} → ${back}` },
-              { value: "reverse", label: `${back} → ${front}` },
-            ]}
-          />
-          {selected ? (
-            <button
-              type="button"
-              className="ui-btn ui-btn--primary ui-btn--block"
-              disabled={(cards[selected.id] ?? []).length === 0}
-              onClick={() => onStart(selected.id)}
-            >
-              „{selected.title}“ lernen
-            </button>
-          ) : null}
-        </>
-      ) : null}
-      <div className="ui-lb__backup">
-        <span className="ui-tiny ui-muted">Datensicherung</span>
-        <div className="ui-grid2">
-          <button
-            type="button"
-            className="ui-btn ui-btn--ghost ui-btn--sm"
-            onClick={() => void onExport()}
-            disabled={decks.length === 0}
-          >
-            Sicherung speichern
-          </button>
-          <label className="ui-btn ui-btn--ghost ui-btn--sm ui-file">
-            Sicherung laden
-            <input type="file" accept="application/json" onChange={onImport} />
-          </label>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function DeckDetail({
-  deck,
-  cards,
-  direction,
-  notice,
-  onBack,
-  onAdd,
-  onDelete,
-  onStart,
-}: {
-  deck: LearningBoxDeck;
-  cards: LearningBoxCard[];
-  direction: LearningBoxDirection;
-  notice: string;
-  onBack: () => void;
-  onAdd: (input: {
-    question: string;
-    answer: string;
-    tag?: string;
-  }) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  onStart: () => void;
-}) {
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [tag, setTag] = useState("");
-  const due = dueCount(cards, direction);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!question.trim() || !answer.trim()) return;
-    await onAdd({ question, answer, ...(tag.trim() ? { tag } : {}) });
-    setQuestion("");
-    setAnswer("");
-  }
-
-  return (
-    <div
-      className="ui-lb__detail ui-stack"
-      style={{ ["--gap" as string]: "16px" }}
-    >
-      <button
-        type="button"
-        className="ui-btn ui-btn--link ui-lb__back"
-        onClick={onBack}
-      >
-        <Icon name="back" size={16} /> Alle Stapel
-      </button>
-      <div className="ui-card ui-card--pad ui-lb__hero ui-center">
-        <h1 className="ui-h-page">{deck.title}</h1>
-        <p className="ui-muted">
-          {due} von {cards.length} Karten fällig
-        </p>
-        <BoxDistribution cards={cards} large />
-        <div className="ui-row ui-wrap" style={{ justifyContent: "center" }}>
-          <button
-            type="button"
-            className="ui-btn ui-btn--primary"
-            onClick={onStart}
-            disabled={cards.length === 0}
-          >
-            Lernrunde starten
-          </button>
-        </div>
-        <div className="ui-lb__boxes" aria-label="Verteilung auf fünf Boxen">
-          {[1, 2, 3, 4, 5].map((box) => (
-            <div key={box}>
-              <span className="ui-tiny ui-muted">Box {box}</span>
-              <strong>{cards.filter((card) => card.box === box).length}</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <form className="ui-card ui-card--pad ui-stack" onSubmit={submit}>
-        <h2 className="ui-h-section">Neue Karte</h2>
-        <div className="ui-grid-auto" style={{ ["--min" as string]: "180px" }}>
-          <label className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-            <span className="ui-tiny ui-muted">
-              {LANGUAGES[deck.frontLocale]?.name ?? deck.frontLocale}
-            </span>
-            <input
-              className="ui-input"
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              placeholder="Vorderseite"
-            />
-          </label>
-          <label className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-            <span className="ui-tiny ui-muted">
-              {LANGUAGES[deck.backLocale]?.name ?? deck.backLocale}
-            </span>
-            <input
-              className="ui-input"
-              value={answer}
-              onChange={(event) => setAnswer(event.target.value)}
-              placeholder="Rückseite"
-            />
-          </label>
-          <label className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-            <span className="ui-tiny ui-muted">Tag</span>
-            <input
-              className="ui-input"
-              value={tag}
-              onChange={(event) => setTag(event.target.value)}
-              placeholder="z. B. Unit 3"
-            />
-          </label>
-        </div>
-        <button className="ui-btn ui-btn--green ui-btn--sm" type="submit">
-          Karte hinzufügen
-        </button>
-      </form>
-
-      {notice ? (
-        <p className="ui-notice" role="status">
-          {notice}
-        </p>
-      ) : null}
-
-      <div className="ui-stack">
-        <div className="ui-between">
-          <h2 className="ui-h-section">Vokabelübersicht</h2>
-          <span className="ui-small ui-muted">{cards.length} Karten</span>
-        </div>
-        {cards.length === 0 ? (
-          <p className="ui-empty ui-small">Noch keine Karten in dieser Box.</p>
-        ) : (
-          <div className="ui-list">
-            {cards.map((card) => (
-              <article key={card.id} className="ui-lb__row">
-                <div className="ui-grow">
-                  <strong>{card.question}</strong>
-                  <span className="ui-small ui-muted"> · {card.answer}</span>
-                </div>
-                <span className="ui-pill">{card.tag ?? "Ohne Tag"}</span>
-                <span className="ui-pill ui-pill--accent">Box {card.box}</span>
-                <button
-                  type="button"
-                  className="ui-lb__delete"
-                  aria-label={`${card.question} löschen`}
-                  onClick={() => void onDelete(card.id)}
-                >
-                  <Icon name="trash" size={16} />
-                </button>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function LearningSession({
-  deck,
-  cards,
-  mode,
-  direction,
-  onSave,
-  onClose,
-}: {
-  deck: LearningBoxDeck;
-  cards: LearningBoxCard[];
-  mode: LearningBoxMode;
-  direction: LearningBoxDirection;
-  onSave: (
-    card: LearningBoxCard,
-    result: {
-      correct: boolean;
-      direction: LearningBoxDirection;
-      mode: LearningBoxMode;
-      roundId: string;
-    },
-  ) => Promise<void>;
-  onClose: () => void;
-}) {
-  // Die Runde nimmt beim Start die fälligen Karten (sonst alle) und bleibt dann fest.
-  const [queue] = useState<LearningBoxCard[]>(() => {
-    const due = cards.filter((card) => isLearningBoxCardDue(card, direction));
-    return due.length ? due : cards;
-  });
-  const [index, setIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const [answer, setAnswer] = useState("");
-  const [feedback, setFeedback] = useState<{
-    correct: boolean;
-    expected: string;
-  }>();
-  const [stats, setStats] = useState({ correct: 0, wrong: 0 });
-  const roundId = useRef(crypto.randomUUID());
-  const answerRef = useRef<HTMLInputElement>(null);
-  const current = queue[index];
-  const prompt = current ? getLearningBoxPrompt(current, direction) : undefined;
-  const answerLocale =
-    direction === "forward" ? deck.backLocale : deck.frontLocale;
-
-  useEffect(() => {
-    if (mode === "writing" && !feedback) answerRef.current?.focus();
-  }, [index, feedback, mode]);
-
-  async function assess(correct: boolean, expected: string) {
-    if (!current) return;
-    const updated = processLearningBoxResult(current, {
-      correct,
-      direction,
-      mode,
-    });
-    await onSave(updated, {
-      correct,
-      direction,
-      mode,
-      roundId: roundId.current,
-    });
-    setFeedback({ correct, expected });
-    setStats((value) => ({
-      correct: value.correct + (correct ? 1 : 0),
-      wrong: value.wrong + (correct ? 0 : 1),
-    }));
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!current || !answer.trim()) return;
-    const result = evaluateLearningBoxAnswer(current, answer, direction);
-    await assess(result.accepted, result.expectedAnswer);
-  }
-
-  function next() {
-    setIndex((value) => value + 1);
-    setAnswer("");
-    setRevealed(false);
-    setFeedback(undefined);
-  }
-
-  if (!current || !prompt) {
-    return (
-      <div className="ui-lb__session">
-        <div className="ui-card ui-card--raised ui-lb__done ui-center">
-          <p className="ui-eyebrow">Runde abgeschlossen</p>
-          <h1 className="ui-h-fun">Gut gearbeitet</h1>
-          <p className="ui-muted">
-            {stats.correct} gewusst · {stats.wrong} noch zu üben
-          </p>
-          <button
-            type="button"
-            className="ui-btn ui-btn--primary"
-            onClick={onClose}
-          >
-            Zur Lernbox
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const remaining = queue.length - index;
-  return (
-    <div className="ui-lb__session">
-      <header className="ui-between ui-lb__session-head">
-        <div>
-          <h1 className="ui-h-section">{deck.title}</h1>
-          <p className="ui-small ui-muted">
-            {remaining} übrig ·{" "}
-            {mode === "writing" ? "Schreiben" : "Karteikarten"}
-          </p>
-        </div>
-        <button type="button" className="ui-btn ui-btn--link" onClick={onClose}>
-          Runde beenden
-        </button>
-      </header>
-      <div
-        className="ui-bar"
-        role="progressbar"
-        aria-label="Fortschritt der Runde"
-        aria-valuemin={0}
-        aria-valuemax={queue.length}
-        aria-valuenow={index}
-        aria-valuetext={`${index + 1} / ${queue.length}`}
-      >
-        <span style={{ width: `${(index / queue.length) * 100}%` }} />
-      </div>
-
-      <article className="ui-card ui-card--raised ui-lb__card">
-        <div className="ui-between">
-          <span className="ui-eyebrow">
-            {LANGUAGES[answerLocale]?.into ?? "Antwort"}
-          </span>
-          <span className="ui-pill">
-            Box {getLearningBoxLevel(current, direction)}
-          </span>
-        </div>
-        <h2 className="ui-lb__question">{prompt.question}</h2>
-      </article>
-
-      {feedback ? (
-        <div
-          className={`ui-feedback ${feedback.correct ? "ui-feedback--good" : "ui-feedback--bad"}`}
-        >
-          <strong>{feedback.correct ? "Richtig" : "Noch nicht richtig"}</strong>
-          <p className="ui-small">
-            {feedback.correct
-              ? "Die Karte rückt nach den LernBox-Regeln weiter."
-              : `Die passende Antwort ist „${feedback.expected}“.`}
-          </p>
-          <button
-            type="button"
-            className="ui-btn ui-btn--primary"
-            onClick={next}
-          >
-            {index + 1 < queue.length ? "Nächste Karte" : "Runde abschließen"}
-          </button>
-        </div>
-      ) : mode === "writing" ? (
-        <form className="ui-lb__answer" onSubmit={submit}>
-          <label className="ui-grow">
-            <span className="ui-sr-only">Deine Antwort</span>
-            <input
-              ref={answerRef}
-              className="ui-field"
-              value={answer}
-              placeholder="Antwort tippen"
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              onChange={(event) => setAnswer(event.target.value)}
-            />
-          </label>
-          <button className="ui-btn ui-btn--primary ui-btn--lg" type="submit">
-            Antwort prüfen
-          </button>
-        </form>
-      ) : revealed ? (
-        <div className="ui-card ui-card--pad ui-stack ui-center">
-          <span className="ui-eyebrow">Antwort</span>
-          <strong className="ui-lb__reveal">{prompt.answer}</strong>
-          <div className="ui-grid2">
-            <button
-              type="button"
-              className="ui-btn ui-btn--bad"
-              onClick={() => void assess(false, prompt.answer)}
-            >
-              Noch üben
-            </button>
-            <button
-              type="button"
-              className="ui-btn ui-btn--green"
-              onClick={() => void assess(true, prompt.answer)}
-            >
-              Gewusst
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className="ui-btn ui-btn--primary ui-btn--lg"
-          onClick={() => setRevealed(true)}
-        >
-          Antwort aufdecken
-        </button>
-      )}
-    </div>
-  );
-}
-
-const BOX_COLORS = ["#c7674a", "#d98a3d", "#e0a83a", "#7a9e5a", "#2f6b4f"];
-
-/** Boxverteilung als farbige Leiste (Design: Box 1 · neu … Box 5 · sitzt). */
-function BoxDistribution({
-  cards,
-  large = false,
-}: {
-  cards: LearningBoxCard[];
-  large?: boolean;
-}) {
-  const counts = [1, 2, 3, 4, 5].map(
-    (box) => cards.filter((card) => card.box === box).length,
-  );
-  return (
-    <div
-      className={`ui-lb__dist${large ? " ui-lb__dist--large" : ""}`}
-      role="img"
-      aria-label={`Boxverteilung: ${counts.map((count, index) => `Box ${index + 1}: ${count}`).join(", ")}`}
-    >
-      {counts.map((count, index) => (
-        <span
-          key={index}
-          style={{
-            flexGrow: Math.max(1, count),
-            background: BOX_COLORS[index],
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function downloadJson(value: unknown, prefix: string) {
-  const url = URL.createObjectURL(
-    new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }),
-  );
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${prefix}-${new Date().toISOString().slice(0, 10)}.json`;
-  anchor.click();
-  URL.revokeObjectURL(url);
 }

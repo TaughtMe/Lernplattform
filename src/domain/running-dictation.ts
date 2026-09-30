@@ -11,12 +11,16 @@ export type RunningDictationItem = {
   promptLocale?: string;
   answerLocale?: string;
   caseSensitive?: boolean;
+  /** Tag für die LernBox, wenn die Vokabel übernommen wird. */
+  tag?: string;
 };
 
 export type VocabularyPair = {
   id: string;
   left: { primary: string; alternatives: string[] };
   right: { primary: string; alternatives: string[] };
+  /** Eigener LernBox-Tag; überschreibt den Standard-Tag der Lehrkraft. */
+  tag?: string;
 };
 
 // Ported from TaughtMe/Laufdiktat (6c2ade4): stable FNV-1a + fmix ordering.
@@ -154,9 +158,18 @@ export function parseVocabularyTable(input: string): VocabularyPair[] {
         return { primary, alternatives };
       };
       const left = side(cells[0] ?? "");
-      const right = side(cells.slice(1).join(";"));
+      const right = side(cells[1] ?? "");
+      // Optionale dritte Spalte: Tag für die LernBox.
+      const tag = cells[2]?.trim();
       if (!left.primary || !right.primary) return [];
-      return [{ id: `vocabulary-${index}-${hashString(line)}`, left, right }];
+      return [
+        {
+          id: `vocabulary-${index}-${hashString(line)}`,
+          left,
+          right,
+          ...(tag ? { tag } : {}),
+        },
+      ];
     });
 }
 
@@ -211,6 +224,7 @@ export function buildVocabularyItems(
         promptLocale: askLeft ? locales.left : locales.right,
         answerLocale: askLeft ? locales.right : locales.left,
         caseSensitive,
+        ...(pair.tag ? { tag: pair.tag } : {}),
       },
     ];
   });

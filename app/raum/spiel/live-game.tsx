@@ -260,7 +260,8 @@ export function LiveRunningDictationGame({
   }, [incomingAttack, session.gameMode]);
 
   useEffect(() => {
-    if (LAUFDIKTAT_PILOT || phase !== "complete" || session.stationMode) return;
+    // Die Lehrkraft entscheidet im Vokabelheft, ob Vokabeln übernommen werden.
+    if (phase !== "complete" || session.stationMode) return;
     const transfer = buildLiveVocabularyTransfer(session, wordErrors);
     if (!transfer || transferStartedFor.current === session.sessionId) return;
     transferStartedFor.current = session.sessionId;

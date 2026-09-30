@@ -12,6 +12,8 @@ export type VocabularyRow = {
   id: string;
   left: VocabularySideValue;
   right: VocabularySideValue;
+  /** Eigener LernBox-Tag; leer gilt der Standard-Tag. */
+  tag?: string | undefined;
 };
 export type VocabularyDirectionChoice =
   "left-to-right" | "right-to-left" | "mixed";
@@ -25,6 +27,8 @@ export type VocabularyEditorProps = {
   direction: VocabularyDirectionChoice;
   caseSensitive: boolean;
   transfer: VocabularyTransfer;
+  /** Standard-Tag aus den Einstellungen für übernommene Vokabeln. */
+  defaultTag?: string;
   tableInput: string;
   onLocale?: (side: Side, locale: string) => void;
   onPrimary?: (id: string, side: Side, value: string) => void;
@@ -34,6 +38,7 @@ export type VocabularyEditorProps = {
   onDirection?: (direction: VocabularyDirectionChoice) => void;
   onCaseSensitive?: (value: boolean) => void;
   onTransfer?: (value: VocabularyTransfer) => void;
+  onTag?: (id: string, value: string) => void;
   onTableInput?: (value: string) => void;
   onImportTable?: () => void;
   onImportFile?: (file: File | undefined) => void;
@@ -139,6 +144,22 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
               >
                 <Icon name="trash" size={17} />
               </button>
+              {props.transfer !== "none" ? (
+                <input
+                  className={cx(styles.input, styles.tag)}
+                  aria-label={`LernBox-Tag Vokabel ${index + 1}`}
+                  placeholder={
+                    props.defaultTag
+                      ? `Tag: ${props.defaultTag}`
+                      : "Tag für die LernBox (optional)"
+                  }
+                  maxLength={80}
+                  value={pair.tag ?? ""}
+                  onChange={(event) =>
+                    props.onTag?.(pair.id, event.target.value)
+                  }
+                />
+              ) : null}
             </li>
           ))}
         </ol>
@@ -214,6 +235,11 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
             In die LernBox übernehmen
             <span className={styles.choiceHint}>
               Nach der Runde landen die Vokabeln in der persönlichen LernBox.
+              {props.transfer !== "none"
+                ? props.defaultTag
+                  ? ` Tag: „${props.defaultTag}“, je Vokabel änderbar.`
+                  : " Tag je Vokabel oder allgemein in den Einstellungen."
+                : ""}
             </span>
           </span>
         </label>

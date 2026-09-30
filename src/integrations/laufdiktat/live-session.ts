@@ -13,6 +13,7 @@ const liveWordSchema = z
     promptLang: z.string().max(35).optional(),
     answerLang: z.string().max(35).optional(),
     isLatex: z.boolean().optional(),
+    tag: z.string().trim().max(80).optional(),
   })
   .passthrough();
 
@@ -31,6 +32,7 @@ const liveSessionConfigSchema = z
     uebungAssistanceEnabled: z.boolean().default(false),
     repeatWrongAnswers: z.boolean().default(false),
     vocabularyTransfer: z.enum(["errors", "all", "none"]).default("errors"),
+    vocabularyTag: z.string().trim().max(80).optional(),
     showStars: z.boolean().default(true),
     shuffleWords: z.boolean().default(false),
     strictTypingMode: z.boolean().default(false),

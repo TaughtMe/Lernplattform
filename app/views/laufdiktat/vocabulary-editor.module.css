@@ -107,6 +107,12 @@
   font-size: 15px;
   font-weight: 600;
 }
+.tag {
+  grid-column: 1 / -1;
+  min-height: 34px;
+  font-size: 13px;
+  font-weight: 500;
+}
 .alternatives {
   min-height: 36px;
   border-style: dashed;

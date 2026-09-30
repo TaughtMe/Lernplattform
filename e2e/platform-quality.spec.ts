@@ -172,6 +172,7 @@ test("a downloaded LernBox backup restores a deleted deck", async ({
     page.getByText("Sicherungsprobe", { exact: true }),
   ).toBeVisible();
 
+  await page.getByText("Datensicherung").click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Sicherung speichern" }).click();
   const download = await downloadPromise;
@@ -192,6 +193,50 @@ test("a downloaded LernBox backup restores a deleted deck", async ({
   await expect(
     page.getByText("Sicherungsprobe", { exact: true }),
   ).toBeVisible();
+});
+
+test("the LernBox imports, filters and locks the mode during a round", async ({
+  page,
+}) => {
+  await page.goto("/lernbox");
+  await page
+    .getByRole("textbox", { name: "Name der neuen Lernbox" })
+    .fill("Importprobe");
+  await page.getByRole("button", { name: "Erstellen" }).click();
+  await page.getByText("Importprobe", { exact: true }).click();
+  await page.getByText("Viele Vokabeln importieren").click();
+  await page
+    .getByRole("textbox", { name: "Vokabeln zum Importieren" })
+    .fill("Haus\thome | house\tNomen\nlaufen;to run;Verben");
+  await page.getByRole("button", { name: "Importieren", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("2 Vokabeln importiert.");
+
+  await page
+    .getByRole("searchbox", { name: "Vokabeln durchsuchen" })
+    .fill("verben");
+  await expect(
+    page.getByRole("checkbox", { name: "laufen auswählen" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("checkbox", { name: "Haus auswählen" }),
+  ).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "laufen auswählen" }).check();
+  await page.getByRole("button", { name: "Auswahl üben" }).click();
+
+  await expect(page.getByRole("heading", { name: "laufen" })).toBeVisible();
+  // Die Leiste mit Modus und Richtung steht nur auf breiten Bildschirmen neben der Runde.
+  const wide = (page.viewportSize()?.width ?? 0) >= 1100;
+  const oral = page.getByRole("button", { name: "Mündlich" }).last();
+  if (wide) await expect(oral).toBeDisabled();
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("to run");
+  await page.getByRole("button", { name: /Prüfen/ }).click();
+  await expect(page.getByText("Richtig", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Weiter" }).click();
+  await page.getByRole("button", { name: "Zur LernBox" }).click();
+  if (!wide) {
+    await page.getByRole("button", { name: "Zurück zu den Stapeln" }).click();
+  }
+  await expect(oral).toBeEnabled();
 });
 
 test("a native Laufdiktat mistake becomes due LernBox practice", async ({
