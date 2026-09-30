@@ -44,8 +44,19 @@ function latestEvents(events: readonly LearningEventV1[]) {
 function eventCandidates(
   events: readonly LearningEventV1[],
   now: string,
+  cardIds: ReadonlySet<string> = new Set(),
 ): LearningRecommendationCandidate[] {
-  const latest = latestEvents(events.filter((event) => !event.math));
+  // Antworten zu vorhandenen LernBox-Karten zählen über die Karten (siehe
+  // unten), nicht doppelt.
+  const latest = latestEvents(
+    events.filter(
+      (event) =>
+        !event.math &&
+        !(
+          event.source === "learning-box" && cardIds.has(event.learningObjectId)
+        ),
+    ),
+  );
   const candidates: LearningRecommendationCandidate[] = [];
 
   for (const learningModule of ["vocabulary", "mathematics"] as const) {
@@ -133,7 +144,11 @@ export function createLearningRecommendationRepository(
       const checkedEvents = events.map((event) =>
         learningEventV1Schema.parse(event),
       );
-      const candidates = eventCandidates(checkedEvents, now);
+      const candidates = eventCandidates(
+        checkedEvents,
+        now,
+        new Set(cards.map((card) => card.id)),
+      );
       const mathDue = mathReviews(checkedEvents).filter(
         (review) => review.dueAt <= now,
       );
@@ -154,10 +169,13 @@ export function createLearningRecommendationRepository(
           dueAt: mathDue[0]!.dueAt,
         });
 
+      // Die Rückrichtung zählt erst, wenn sie schon einmal geübt wurde –
+      // sonst bliebe jede nur vorwärts gelernte Karte „fällig“.
       const dueCards = cards.filter(
         (card) =>
           isLearningBoxCardDue(card, "forward", nowMs) ||
-          isLearningBoxCardDue(card, "reverse", nowMs),
+          (card.reverseInterval > 0 &&
+            isLearningBoxCardDue(card, "reverse", nowMs)),
       );
       if (dueCards.length > 0) {
         const errorCards = dueCards.filter(

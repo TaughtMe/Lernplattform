@@ -1,9 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   createLearningBoxCard,
+  createLearningBoxDeck,
+  createLearningBoxFolder,
+  editLearningBoxCard,
   evaluateLearningBoxAnswer,
+  filterLearningBoxCards,
   isLearningBoxCardDue,
+  isLearningBoxCardDueFor,
+  learningBoxDirectionAt,
+  parseLearningBoxImport,
   processLearningBoxResult,
+  sortLearningBoxCards,
 } from "./learning-box";
 
 vi.stubGlobal("crypto", { randomUUID: () => "fixed-id" });
@@ -81,5 +89,110 @@ describe("integrated learning box domain", () => {
     expect(recovered.box).toBe(3);
     expect(recovered.writingStreak).toBe(0);
     expect(failed.box).toBe(1);
+  });
+});
+
+describe("LernBox extensions", () => {
+  const card = (question: string, answer: string, extra = {}) => ({
+    ...createLearningBoxCard({ deckId: "d", question, answer }),
+    ...extra,
+  });
+
+  it("accepts every alternative separated by |", () => {
+    const house = card("Haus", "home | house");
+    expect(evaluateLearningBoxAnswer(house, "House", "forward").accepted).toBe(
+      true,
+    );
+    expect(evaluateLearningBoxAnswer(house, "home", "forward").accepted).toBe(
+      true,
+    );
+    expect(evaluateLearningBoxAnswer(house, "", "forward").accepted).toBe(
+      false,
+    );
+    expect(evaluateLearningBoxAnswer(house, "flat", "forward").accepted).toBe(
+      false,
+    );
+  });
+
+  it("alternates directions in mixed rounds", () => {
+    expect(
+      [0, 1, 2].map((index) => learningBoxDirectionAt("mixed", index)),
+    ).toEqual(["forward", "reverse", "forward"]);
+    expect(learningBoxDirectionAt("reverse", 0)).toBe("reverse");
+    const now = Date.now();
+    const onlyReverseDue = card("a", "b", {
+      nextReview: now + 86_400_000 * 3,
+      interval: 3,
+      reverseNextReview: now,
+    });
+    expect(isLearningBoxCardDueFor(onlyReverseDue, "forward", now)).toBe(false);
+    expect(isLearningBoxCardDueFor(onlyReverseDue, "mixed", now)).toBe(true);
+  });
+
+  it("parses mass imports from spreadsheets and semicolon lists", () => {
+    expect(
+      parseLearningBoxImport(
+        "Haus\thome | house\tUnit 1\r\nBaum;tree\n\nkaputt\nSonne ; sun ; ",
+      ),
+    ).toEqual({
+      rows: [
+        { question: "Haus", answer: "home | house", tag: "Unit 1" },
+        { question: "Baum", answer: "tree" },
+        { question: "Sonne", answer: "sun" },
+      ],
+      skipped: [4],
+    });
+  });
+
+  it("sorts, searches and edits cards without losing progress", () => {
+    const cards = [
+      card("Zebra", "zebra", { box: 3, tag: "Tiere", createdAt: 1 }),
+      card("Apfel", "apple", { box: 1, createdAt: 3 }),
+      card("Baum", "tree", { box: 2, tag: "Natur", createdAt: 2 }),
+    ];
+    const names = (list: typeof cards) => list.map((entry) => entry.question);
+    expect(names(sortLearningBoxCards(cards, "alphabet"))).toEqual([
+      "Apfel",
+      "Baum",
+      "Zebra",
+    ]);
+    expect(names(sortLearningBoxCards(cards, "box"))).toEqual([
+      "Apfel",
+      "Baum",
+      "Zebra",
+    ]);
+    expect(names(sortLearningBoxCards(cards, "tag"))).toEqual([
+      "Baum",
+      "Zebra",
+      "Apfel",
+    ]);
+    expect(names(sortLearningBoxCards(cards, "date"))).toEqual([
+      "Apfel",
+      "Baum",
+      "Zebra",
+    ]);
+    expect(names(filterLearningBoxCards(cards, "TRE"))).toEqual(["Baum"]);
+    expect(names(filterLearningBoxCards(cards, "tiere"))).toEqual(["Zebra"]);
+    expect(filterLearningBoxCards(cards, " ")).toHaveLength(3);
+
+    const edited = editLearningBoxCard(cards[0]!, {
+      question: " Zebra ",
+      answer: "zebra | zebras",
+      tag: null,
+    });
+    expect(edited).toMatchObject({ question: "Zebra", box: 3 });
+    expect(edited.tag).toBeUndefined();
+    expect(edited.fingerprint).not.toBe(cards[0]!.fingerprint);
+  });
+
+  it("creates folders and decks inside folders", () => {
+    const folder = createLearningBoxFolder({ title: " Buch Klasse 5 " });
+    expect(folder.title).toBe("Buch Klasse 5");
+    expect(
+      createLearningBoxDeck({ title: "Unit 1", folderId: folder.id }).folderId,
+    ).toBe(folder.id);
+    expect(createLearningBoxDeck({ title: "Lose" })).not.toHaveProperty(
+      "folderId",
+    );
   });
 });

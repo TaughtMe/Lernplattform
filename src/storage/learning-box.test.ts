@@ -508,3 +508,59 @@ describe("learning box repository", () => {
     ]);
   });
 });
+
+describe("learning box folders and bulk actions", () => {
+  it("organizes decks in folders and edits many cards at once", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const folder = await repository.createFolder("Buch Klasse 5");
+    const unit1 = await repository.createDeck({
+      title: "Unit 1",
+      folderId: folder.id,
+    });
+    const unit2 = await repository.createDeck({ title: "Unit 2" });
+    expect(await repository.listFolders()).toHaveLength(1);
+
+    const imported = await repository.importCards(unit1.id, [
+      { question: "Haus", answer: "house", tag: "Unit 1" },
+      { question: "Baum", answer: "tree" },
+      { question: "Haus", answer: "house" },
+    ]);
+    expect(imported).toEqual({ added: 2, duplicates: 1 });
+
+    const cards = await repository.listCards(unit1.id);
+    const ids = cards.map((card) => card.id);
+    await repository.setCardsTag(ids, "Klasse 5");
+    expect(
+      (await repository.listCards(unit1.id)).map((card) => card.tag),
+    ).toEqual(["Klasse 5", "Klasse 5"]);
+    await repository.setCardsTag(ids, " ");
+    expect(
+      (await repository.listCards(unit1.id)).every((card) => !card.tag),
+    ).toBe(true);
+
+    const edited = await repository.editCard(ids[0]!, {
+      question: "Haus",
+      answer: "house | home",
+    });
+    expect(edited?.answer).toBe("house | home");
+
+    await repository.moveCards([ids[1]!], unit2.id);
+    expect(await repository.listCards(unit2.id)).toHaveLength(1);
+
+    await repository.moveDeck(unit2.id, folder.id);
+    expect((await repository.getDeck(unit2.id))?.folderId).toBe(folder.id);
+    await repository.renameFolder(folder.id, "Buch 5");
+    await repository.deleteFolder(folder.id);
+    expect(await repository.listFolders()).toHaveLength(0);
+    expect((await repository.getDeck(unit1.id))?.folderId).toBeUndefined();
+
+    const backup = await repository.exportBackup();
+    expect(backup.folders).toEqual([]);
+    await repository.deleteCards(ids);
+    expect(await repository.listAllCards()).toHaveLength(0);
+  });
+});

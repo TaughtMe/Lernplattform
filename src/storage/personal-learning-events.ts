@@ -16,6 +16,8 @@ import { updateLearningWordProgress } from "../domain/learning-word-progress";
 import type {
   LearningBoxCard,
   LearningBoxDeck,
+  LearningBoxFolder,
+  LearningBoxImportRow,
   LearningBoxDirection,
   LearningBoxMode,
   LearningBoxSource,
@@ -24,6 +26,8 @@ import type {
 import {
   createLearningBoxCard,
   createLearningBoxDeck,
+  createLearningBoxFolder,
+  editLearningBoxCard,
   learningBoxFingerprint,
 } from "../domain/learning-box";
 import type { LearningBundleV1 } from "../domain/learning-bundle";
@@ -39,6 +43,7 @@ export class PersonalLearningDatabase extends Dexie {
   learningEvents!: Table<LearningEventV1, string>;
   learningBoxDecks!: Table<LearningBoxDeck, string>;
   learningBoxCards!: Table<LearningBoxCard, string>;
+  learningBoxFolders!: Table<LearningBoxFolder, string>;
   learningWordProgress!: Table<LearningWordProgress, string>;
   typingProgress!: Table<TypingLessonProgress, string>;
 
@@ -58,6 +63,17 @@ export class PersonalLearningDatabase extends Dexie {
       learningBoxDecks: "id, title, createdAt, source.kind, source.sourceId",
       learningBoxCards:
         "id, deckId, fingerprint, [deckId+fingerprint], nextReview, reverseNextReview, createdAt, source.kind, source.sourceId",
+      learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
+      typingProgress: "id, completed, lastPracticedAt",
+    });
+    // Ordner für Stapel (z. B. „Buch Klasse 5“).
+    this.version(4).stores({
+      learningEvents: "id, learningObjectId, occurredAt, roundId",
+      learningBoxDecks:
+        "id, title, createdAt, folderId, source.kind, source.sourceId",
+      learningBoxCards:
+        "id, deckId, fingerprint, [deckId+fingerprint], nextReview, reverseNextReview, createdAt, source.kind, source.sourceId",
+      learningBoxFolders: "id, title, createdAt",
       learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
       typingProgress: "id, completed, lastPracticedAt",
     });
@@ -327,19 +343,143 @@ export function createLearningBoxRepository(
       return { card, added: true };
     },
     deleteCard: (id: string) => database.learningBoxCards.delete(id),
+
+    // ---------- Ordner ----------
+    listFolders: () =>
+      database.learningBoxFolders.orderBy("createdAt").toArray(),
+    createFolder: async (title: string) => {
+      const folder = createLearningBoxFolder({ title });
+      await database.learningBoxFolders.add(folder);
+      return folder;
+    },
+    renameFolder: (id: string, title: string) =>
+      database.learningBoxFolders.update(id, {
+        title: title.trim(),
+        updatedAt: Date.now(),
+      }),
+    /** Ordner löschen; seine Stapel bleiben erhalten und liegen danach lose. */
+    deleteFolder: (id: string) =>
+      database.transaction(
+        "rw",
+        database.learningBoxFolders,
+        database.learningBoxDecks,
+        async () => {
+          const decks = await database.learningBoxDecks
+            .where("folderId")
+            .equals(id)
+            .toArray();
+          for (const deck of decks) {
+            const next: LearningBoxDeck = { ...deck, updatedAt: Date.now() };
+            delete next.folderId;
+            await database.learningBoxDecks.put(next);
+          }
+          await database.learningBoxFolders.delete(id);
+        },
+      ),
+    moveDeck: async (deckId: string, folderId: string | null) => {
+      const deck = await database.learningBoxDecks.get(deckId);
+      if (!deck) return;
+      const next: LearningBoxDeck = { ...deck, updatedAt: Date.now() };
+      if (folderId) next.folderId = folderId;
+      else delete next.folderId;
+      await database.learningBoxDecks.put(next);
+    },
+    renameDeck: (id: string, title: string) =>
+      database.learningBoxDecks.update(id, {
+        title: title.trim(),
+        updatedAt: Date.now(),
+      }),
+
+    // ---------- Karten bearbeiten und Massenaktionen ----------
+    listAllCards: () => database.learningBoxCards.toArray(),
+    editCard: async (
+      id: string,
+      input: { question: string; answer: string; tag?: string | null },
+    ) => {
+      const card = await database.learningBoxCards.get(id);
+      if (!card) return undefined;
+      const next = editLearningBoxCard(card, input);
+      await database.learningBoxCards.put(next);
+      return next;
+    },
+    moveCards: (ids: readonly string[], deckId: string) =>
+      database.transaction("rw", database.learningBoxCards, async () => {
+        const now = Date.now();
+        for (const id of ids) {
+          await database.learningBoxCards.update(id, {
+            deckId,
+            updatedAt: now,
+          });
+        }
+      }),
+    /** Tag für mehrere Karten setzen; leer entfernt den Tag. */
+    setCardsTag: (ids: readonly string[], tag: string) =>
+      database.transaction("rw", database.learningBoxCards, async () => {
+        for (const id of ids) {
+          const card = await database.learningBoxCards.get(id);
+          if (!card) continue;
+          await database.learningBoxCards.put(
+            editLearningBoxCard(card, {
+              question: card.question,
+              answer: card.answer,
+              tag: tag.trim() || null,
+            }),
+          );
+        }
+      }),
+    deleteCards: (ids: readonly string[]) =>
+      database.learningBoxCards.bulkDelete([...ids]),
+    /** Massenimport in einen Stapel; Doppelte werden übersprungen. */
+    importCards: (deckId: string, rows: readonly LearningBoxImportRow[]) =>
+      database.transaction("rw", database.learningBoxCards, async () => {
+        let added = 0;
+        let duplicates = 0;
+        const seen = new Set(
+          (
+            await database.learningBoxCards
+              .where("deckId")
+              .equals(deckId)
+              .toArray()
+          ).map((card) => card.fingerprint),
+        );
+        for (const row of rows) {
+          const fingerprint = learningBoxFingerprint(row.question, row.answer);
+          if (seen.has(fingerprint)) {
+            duplicates += 1;
+            continue;
+          }
+          seen.add(fingerprint);
+          await database.learningBoxCards.add(
+            createLearningBoxCard({
+              deckId,
+              question: row.question,
+              answer: row.answer,
+              ...(row.tag ? { tag: row.tag } : {}),
+            }),
+          );
+          added += 1;
+        }
+        return { added, duplicates };
+      }),
     exportBackup: async () => ({
       decks: await database.learningBoxDecks.toArray(),
       cards: await database.learningBoxCards.toArray(),
+      folders: await database.learningBoxFolders.toArray(),
     }),
     importBackup: async (input: {
       decks: LearningBoxDeck[];
       cards: LearningBoxCard[];
+      folders?: LearningBoxFolder[];
     }) => {
       await database.transaction(
         "rw",
         database.learningBoxDecks,
         database.learningBoxCards,
+        database.learningBoxFolders,
         async () => {
+          for (const folder of input.folders ?? []) {
+            await database.learningBoxFolders.put(folder);
+          }
           for (const deck of input.decks) {
             await database.learningBoxDecks.put(deck);
           }

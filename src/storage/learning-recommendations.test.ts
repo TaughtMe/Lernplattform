@@ -3,9 +3,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createLearningBoxCard,
   createLearningBoxDeck,
+  processLearningBoxResult,
 } from "../domain/learning-box";
 import { createLearningRecommendationRepository } from "./learning-recommendations";
 import {
+  createLearningBoxRepository,
   createLearningWordProgressRepository,
   createPersonalLearningEventRepository,
   createTypingProgressRepository,
@@ -292,5 +294,52 @@ describe("shared learning recommendations", () => {
       reason: "next-step",
       title: "Grundstellung: nur Mittelfinger beginnen",
     });
+  });
+
+  it("closes a card for today once it was answered, without counting it twice", async () => {
+    const database = new PersonalLearningDatabase(
+      `recommendations-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const nowMs = new Date("2026-08-24T12:00:00.000Z").getTime();
+    const repository = createLearningBoxRepository(database);
+    const deck = createLearningBoxDeck({ title: "Englisch", now: nowMs });
+    await database.learningBoxDecks.put(deck);
+    const cards = ["Haus;house", "Baum;tree"].map((line) => {
+      const [question, answer] = line.split(";");
+      return createLearningBoxCard({
+        deckId: deck.id,
+        question: question!,
+        answer: answer!,
+        now: nowMs,
+      });
+    });
+    await database.learningBoxCards.bulkPut(cards);
+    const open = async (at: number) =>
+      (
+        await createLearningRecommendationRepository(database).list({
+          enabledModules: ["vocabulary"],
+          now: new Date(at).toISOString(),
+        })
+      )
+        .filter((item) => item.reason === "due" || item.reason === "error")
+        .reduce((sum, item) => sum + item.amount, 0);
+    expect(await open(nowMs + 1000)).toBe(2);
+
+    // Eine Karte vorwärts richtig beantwortet: Rückrichtung bleibt ungeübt.
+    await repository.putCardAndEvent({
+      card: processLearningBoxResult(cards[0]!, {
+        correct: true,
+        direction: "forward",
+        mode: "writing",
+        now: nowMs + 2000,
+      }),
+      correct: true,
+      direction: "forward",
+      mode: "writing",
+      roundId: "round-1",
+      now: new Date(nowMs + 2000).toISOString(),
+    });
+    expect(await open(nowMs + 3000)).toBe(1);
   });
 });

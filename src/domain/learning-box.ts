@@ -1,6 +1,8 @@
 import { normalizeVocabularyText } from "./learning-bundle";
 
 export type LearningBoxDirection = "forward" | "reverse";
+/** Richtung einer Lernrunde: fest oder gemischt (abwechselnd je Karte). */
+export type LearningBoxSessionDirection = LearningBoxDirection | "mixed";
 export type LearningBoxMode = "oral" | "writing";
 export type LearningBoxLevel = 1 | 2 | 3 | 4 | 5;
 
@@ -18,9 +20,19 @@ export type LearningBoxSourceLink = {
   answerLocale: string;
 };
 
+/** Ordner fasst Stapel zusammen, z. B. „Buch Klasse 5“. */
+export type LearningBoxFolder = {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type LearningBoxDeck = {
   id: string;
   title: string;
+  /** Ordner, in dem der Stapel liegt; ohne Angabe liegt er lose. */
+  folderId?: string | undefined;
   frontLocale: string;
   backLocale: string;
   source: LearningBoxSource;
@@ -55,8 +67,22 @@ export function learningBoxFingerprint(question: string, answer: string) {
   return `${normalizeVocabularyText(question)}::${normalizeVocabularyText(answer)}`;
 }
 
+export function createLearningBoxFolder(input: {
+  title: string;
+  now?: number;
+}): LearningBoxFolder {
+  const now = input.now ?? Date.now();
+  return {
+    id: crypto.randomUUID(),
+    title: input.title.trim(),
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export function createLearningBoxDeck(input: {
   title: string;
+  folderId?: string | undefined;
   frontLocale?: string;
   backLocale?: string;
   source?: LearningBoxSource;
@@ -66,6 +92,7 @@ export function createLearningBoxDeck(input: {
   return {
     id: crypto.randomUUID(),
     title: input.title.trim(),
+    ...(input.folderId ? { folderId: input.folderId } : {}),
     frontLocale: input.frontLocale ?? "de-DE",
     backLocale: input.backLocale ?? "en-US",
     source: input.source ?? { kind: "self" },
@@ -116,17 +143,145 @@ export function getLearningBoxPrompt(
     : { question: card.answer, answer: card.question };
 }
 
+/** Mehrere richtige Antworten stehen mit „|“ getrennt: „home | house“. */
+export function learningBoxAlternatives(text: string) {
+  return text
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 export function evaluateLearningBoxAnswer(
   card: LearningBoxCard,
   input: string,
   direction: LearningBoxDirection,
 ) {
   const prompt = getLearningBoxPrompt(card, direction);
+  const given = normalizeVocabularyText(input);
   return {
     accepted:
-      normalizeVocabularyText(input) === normalizeVocabularyText(prompt.answer),
+      given !== "" &&
+      learningBoxAlternatives(prompt.answer).some(
+        (answer) => normalizeVocabularyText(answer) === given,
+      ),
     expectedAnswer: prompt.answer,
   };
+}
+
+/** Richtung der n-ten Karte einer Runde; gemischt wechselt sie ab. */
+export function learningBoxDirectionAt(
+  choice: LearningBoxSessionDirection,
+  index: number,
+): LearningBoxDirection {
+  if (choice !== "mixed") return choice;
+  return index % 2 === 0 ? "forward" : "reverse";
+}
+
+/** Fällig in der gewählten Richtung; gemischt, wenn eine Richtung fällig ist. */
+export function isLearningBoxCardDueFor(
+  card: LearningBoxCard,
+  choice: LearningBoxSessionDirection,
+  now = Date.now(),
+) {
+  if (choice !== "mixed") return isLearningBoxCardDue(card, choice, now);
+  return (
+    isLearningBoxCardDue(card, "forward", now) ||
+    isLearningBoxCardDue(card, "reverse", now)
+  );
+}
+
+export type LearningBoxImportRow = {
+  question: string;
+  answer: string;
+  tag?: string;
+};
+
+/**
+ * Massenimport: eine Vokabel pro Zeile, Spalten mit Tabulator (aus Excel oder
+ * Sheets kopiert) oder Semikolon getrennt, optional dritte Spalte als Tag.
+ * Weitere richtige Antworten mit „|“.
+ */
+export function parseLearningBoxImport(text: string) {
+  const rows: LearningBoxImportRow[] = [];
+  const skipped: number[] = [];
+  text
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .forEach((line, index) => {
+      if (!line.trim()) return;
+      const parts = (
+        line.includes("\t") ? line.split("\t") : line.split(";")
+      ).map((part) => part.trim());
+      const [question, answer, tag] = parts;
+      if (!question || !answer) {
+        skipped.push(index + 1);
+        return;
+      }
+      rows.push({ question, answer, ...(tag ? { tag } : {}) });
+    });
+  return { rows, skipped };
+}
+
+export type LearningBoxSort = "alphabet" | "box" | "tag" | "date" | "deck";
+
+/** Sortiert Karten für die Vokabelliste; Gleichstand alphabetisch. */
+export function sortLearningBoxCards(
+  cards: readonly LearningBoxCard[],
+  sort: LearningBoxSort,
+  deckTitle: (deckId: string) => string = () => "",
+) {
+  const alphabet = (left: LearningBoxCard, right: LearningBoxCard) =>
+    left.question.localeCompare(right.question, "de", { sensitivity: "base" });
+  const compare: Record<
+    LearningBoxSort,
+    (left: LearningBoxCard, right: LearningBoxCard) => number
+  > = {
+    alphabet,
+    box: (left, right) => left.box - right.box,
+    tag: (left, right) =>
+      (left.tag ?? "\uffff").localeCompare(right.tag ?? "\uffff", "de"),
+    date: (left, right) => right.createdAt - left.createdAt,
+    deck: (left, right) =>
+      deckTitle(left.deckId).localeCompare(deckTitle(right.deckId), "de"),
+  };
+  return [...cards].sort(
+    (left, right) => compare[sort](left, right) || alphabet(left, right),
+  );
+}
+
+/** Suche in Vorder- und Rückseite und Tag, ohne Groß-/Kleinschreibung. */
+export function filterLearningBoxCards(
+  cards: readonly LearningBoxCard[],
+  query: string,
+) {
+  const needle = normalizeVocabularyText(query);
+  if (!needle) return [...cards];
+  return cards.filter((card) =>
+    [card.question, card.answer, card.tag ?? ""].some((text) =>
+      normalizeVocabularyText(text).includes(needle),
+    ),
+  );
+}
+
+/** Karte bearbeiten: Texte und Tag ändern, Lernstand bleibt. */
+export function editLearningBoxCard(
+  card: LearningBoxCard,
+  input: { question: string; answer: string; tag?: string | null },
+  now = Date.now(),
+): LearningBoxCard {
+  const question = input.question.trim();
+  const answer = input.answer.trim();
+  const next: LearningBoxCard = {
+    ...card,
+    question,
+    answer,
+    fingerprint: learningBoxFingerprint(question, answer),
+    updatedAt: now,
+  };
+  const tag = input.tag === undefined ? card.tag : input.tag?.trim();
+  if (tag) next.tag = tag;
+  else delete next.tag;
+  return next;
 }
 
 export function getLearningBoxLevel(

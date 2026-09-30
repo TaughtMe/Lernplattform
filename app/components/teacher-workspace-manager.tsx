@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "../ui/icons";
 import { QRCodeSVG } from "qrcode.react";
 import {
   useCallback,
@@ -278,24 +279,28 @@ export function TeacherProfilePanel() {
               Aufgaben
             </div>
           </div>
-          <p className="ui-small ui-muted">
-            Kein Serverkonto erforderlich. Export und Cloud-Sicherung werden
-            später als getrennte Sicherungswege ergänzt.
-          </p>
-          <div className="ui-grid2">
+          <p className="ui-small ui-muted">Ohne Konto. Sicherung als Datei.</p>
+          <div
+            className="ui-grid-auto"
+            style={{ ["--min" as string]: "130px" }}
+          >
             <Button
               variant="soft"
               size="sm"
+              title="Lehrerdatenbank als Datei sichern"
               onClick={() => void exportDatabase()}
             >
-              Datenbank exportieren
+              <Icon name="download" size={16} />
+              Exportieren
             </Button>
             <Button
               variant="ghost"
               size="sm"
+              title="Lehrerdatenbank aus einer Datei laden"
               onClick={() => importInput.current?.click()}
             >
-              Datenbank importieren
+              <Icon name="upload" size={16} />
+              Importieren
             </Button>
             <input
               ref={importInput}
