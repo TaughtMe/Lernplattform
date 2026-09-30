@@ -48,6 +48,6 @@ describe("LiveStationGame", () => {
       expect.objectContaining({ stationNumber: 3, currentIndex: 0 }),
     );
     await user.click(screen.getByRole("button", { name: "Nächste Aufgabe" }));
-    expect(screen.getByRole("heading", { name: "Aufgabe 2" })).toBeVisible();
+    expect(screen.getByText(/Nummer 3 · Aufgabe 2 \//)).toBeVisible();
   });
 });

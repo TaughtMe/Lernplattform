@@ -1406,6 +1406,13 @@ body:has(.ui-game.is-active-round) .ui-footer {
   font-weight: 700;
   white-space: nowrap;
 }
+/* Im Design-Spiel darf die Vorlage umbrechen, damit ganze Sätze sichtbar bleiben. */
+.ui-dictation .ui-game__copy-text {
+  font-size: clamp(20px, 5vw, 30px);
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .ui-game__copy-text .is-copied {
   color: var(--good);
   text-decoration: underline;
@@ -1478,6 +1485,28 @@ body:has(.ui-game.is-active-round) .ui-footer {
 .ui-game__targets {
   align-items: center;
   --gap: 8px;
+}
+/* Laufdiktat im Raum: Design-Ansicht 5a/5b im Vollbild. */
+.ui-dictation {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.ui-dictation > :first-child {
+  flex: 1;
+}
+.ui-dictation.is-flickering > :first-child {
+  animation: ui-flicker 0.38s steps(2, end) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-dictation.is-flickering > :first-child {
+    animation: none;
+    opacity: 0.62;
+  }
+}
+.ui-dictation__extras {
+  width: 100%;
+  max-width: 380px;
 }
 .ui-game__ink {
   position: fixed;

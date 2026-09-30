@@ -126,7 +126,7 @@ describe("original Laufdiktat workflows", () => {
     fireEvent.touchEnd(stage, { touches: [] });
     expect(screen.queryByText("Haus")).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(3000));
-    expect(screen.getByText("Wähle deine Nummer")).toBeVisible();
+    expect(screen.getByText("Welche Nummer bist du?")).toBeVisible();
     await act(async () =>
       fireEvent.click(screen.getByRole("button", { name: "1" })),
     );

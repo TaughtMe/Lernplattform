@@ -47,18 +47,18 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
 
 Jeder Schritt endet mit grünem Designvergleich, grünen statischen Prüfungen und Freigabe der Ansicht durch die Projektverantwortliche Lehrkraft im Katalog, bevor die Anbindung beginnt.
 
-| Schritt | Screens                    | Ansicht                            | Anbindung                                                                                                          |
-| ------- | -------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1       | Grundlage                  | ✅ Tokens, Schriften, Vergleich    | –                                                                                                                  |
-| 2       | 2a Startseite              | ✅                                 | ✅ `/`: Tierprofil, Raumcode, QR-Scanner; Tier → eigener Lernraum                                                  |
-| 3       | 5a/5b Laufdiktat Schüler   | ✅ alle Phasen, hell/dunkel        | offen: Raum-Session, Stationen, Halten/Lesen/Schreiben, Battle, Ergebnis                                           |
-| 4       | 5c/5d Laufdiktat Lehrkraft | ✅ alle Schritte, Optionen-Overlay | ✅ `/lehrer/live`: Text/Vokabeln/Mathe, Satz/Zeile/Wort, Sortieren, Datei, Modi, Optionen, Lobby mit QR, Live, CSV |
-| 5       | 4a–4c LernBox              | offen                              | offen                                                                                                              |
-| 6       | 2b/3a/3b Dashboard         | ✅ 3a/3b, Schülerrahmen, Üben      | ✅ `/lernen`: Tagesziel, Woche, heute fällig, schwierige Wörter; `/ueben`: Bereichskacheln                         |
-| 7       | 4d–4f Wortspeicher         | offen                              | offen                                                                                                              |
-| 8       | 1d/2c/3c/3d Lehrerbereich  | offen                              | offen                                                                                                              |
-| 9       | 6a–6c Tastenwelt           | ✅ Lernweg, Übung, Ergebnis        | ✅ `/frei/typing`: Stationen, Fehler-Stopp, Serie, Sterne, Tasten-Extra                                            |
-| 10      | 7a–7c Häuser               | offen                              | offen                                                                                                              |
+| Schritt | Screens                    | Ansicht                            | Anbindung                                                                                                           |
+| ------- | -------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1       | Grundlage                  | ✅ Tokens, Schriften, Vergleich    | –                                                                                                                   |
+| 2       | 2a Startseite              | ✅                                 | ✅ `/`: Tierprofil, Raumcode, QR-Scanner; Tier → eigener Lernraum                                                   |
+| 3       | 5a/5b Laufdiktat Schüler   | ✅ alle Phasen, hell/dunkel        | ✅ `/raum`: Stationen, Halten/Lesen/Schreiben, Hilfen, Battle-Leiste, Ergebnis; Beitritt und Lobby im Schülerrahmen |
+| 4       | 5c/5d Laufdiktat Lehrkraft | ✅ alle Schritte, Optionen-Overlay | ✅ `/lehrer/live`: Text/Vokabeln/Mathe, Satz/Zeile/Wort, Sortieren, Datei, Modi, Optionen, Lobby mit QR, Live, CSV  |
+| 5       | 4a–4c LernBox              | offen                              | offen                                                                                                               |
+| 6       | 2b/3a/3b Dashboard         | ✅ 3a/3b, Schülerrahmen, Üben      | ✅ `/lernen`: Tagesziel, Woche, heute fällig, schwierige Wörter; `/ueben`: Bereichskacheln                          |
+| 7       | 4d–4f Wortspeicher         | offen                              | offen                                                                                                               |
+| 8       | 1d/2c/3c/3d Lehrerbereich  | offen                              | offen                                                                                                               |
+| 9       | 6a–6c Tastenwelt           | ✅ Lernweg, Übung, Ergebnis        | ✅ `/frei/typing`: Stationen, Fehler-Stopp, Serie, Sterne, Tasten-Extra                                             |
+| 10      | 7a–7c Häuser               | offen                              | offen                                                                                                               |
 
 Bereiche ohne Vorlage (Klassenverwaltung, Material, Aufgaben, Kopfrechnen) bleiben bis zu einem eigenen Design in ihrer jetzigen Form und werden über das Freigaberegister gesteuert.
 
@@ -74,7 +74,9 @@ Bereiche ohne Vorlage (Klassenverwaltung, Material, Aufgaben, Kopfrechnen) bleib
 - **Tastenwelt `/frei/typing`** nutzt 6c (Lernweg) und 6a/6b (Übung). Falsche Tasten zählen, der Cursor bleibt stehen (Fehler-Stopp). Unsichere Tasten werden als Wärmebild gezeigt und im „Tasten-Extra“ geübt. Auf dem Desktop ist die Aufgabe so hoch wie ihr Text; Tastatur und Buchstaben wachsen mit Breite und Höhe des Fensters (Tastatur bis 1240 px), damit die Übung ohne Scrollen auf den Bildschirm passt.
 - **Vorerst ausgeblendet (Tastenwelt):** Buchstabenregen, Ziffernblock, Einstellungen zu Tastaturhilfe, XP und Level.
 - **Ohne Navigationseintrag:** Klasse, Material, Aufgaben und Fortschritt sind per Adresse erreichbar, haben aber noch keinen Platz in der neuen Navigation. Ihr Zugang wird mit dem Klassen- und Lehrerentwurf festgelegt.
-- **Noch in alter Oberfläche (im neuen Rahmen):** LernBox, Wortspeicher, Kopfrechnen, Laufdiktat allein, Klassenseiten, Schüler-Laufdiktat `/raum` und Lehrerbereich `/lehrer`, bis ihre Screens an der Reihe sind.
+- **Laufdiktat Schüler `/raum`** nutzt 5a/5b für das laufende Spiel. Die Ansicht hat dafür optionale Ergänzungen, die ohne Angabe genau die Vorlage zeigen: Bezeichnung Satz/Wort/Aufgabe, Formeln, Zähler, Vorlesen, Hinweise, Aufdecken per Knopf, Buchstabenhilfe und Abschreibvorlage, Rückmeldung, strenger Tippmodus, Stationen blättern und Ergebnis mit Sternen und Links. Per Knopf Aufgedecktes bleibt sichtbar, bis „Jetzt schreiben“ kommt; Halten mit zwei Fingern oder der Maus wie im Original.
+- **Battle:** Die Vorlage zeigt Battle als eigenen Abschnitt mit Abschreibtext. Im Spiel bleibt es beim Ablauf des Originals (Halten, Lesen, Schreiben); Ladung, Tinte, Flimmern, Schild und Zielauswahl stehen als Leiste darüber.
+- **Noch in alter Oberfläche (im neuen Rahmen):** LernBox, Wortspeicher, Kopfrechnen, Laufdiktat allein, Klassenseiten und Lehrerbereich `/lehrer`, bis ihre Screens an der Reihe sind.
 
 ## Regeln für die Anbindung
 

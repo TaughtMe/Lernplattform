@@ -1,6 +1,15 @@
 "use client";
 
-import type { CSSProperties, PointerEvent, TouchEvent } from "react";
+import Link from "next/link";
+import type {
+  CSSProperties,
+  KeyboardEvent,
+  PointerEvent,
+  ReactNode,
+  Ref,
+  TextareaHTMLAttributes,
+  TouchEvent,
+} from "react";
 import { BoltIcon, Icon, InkIcon, ShieldIcon } from "../../ui/icons";
 import {
   Animal,
@@ -18,9 +27,18 @@ export type StudentDictationPhase =
 
 export type BattlePower = "ink" | "flicker";
 
+/** Wie ein Abschnitt heißt: Text in Sätzen, Vokabeln als Wort, Mathe als Aufgabe. */
+export type DictationUnit = "Satz" | "Wort" | "Aufgabe";
+
+const PLURAL: Record<DictationUnit, string> = {
+  Satz: "Sätze",
+  Wort: "Wörter",
+  Aufgabe: "Aufgaben",
+};
+
 export type StudentDictationScreenProps = {
   roomCode: string;
-  animal: string;
+  animal: string | null;
   className: string;
   theme: Theme;
   phase: StudentDictationPhase;
@@ -37,6 +55,79 @@ export type StudentDictationScreenProps = {
     hints: number;
     points: number;
     savedWords: readonly string[];
+  };
+  /*
+   * Ab hier optional: was das laufende Spiel zusätzlich braucht. Ohne diese
+   * Angaben zeigt die Ansicht genau die Vorlage.
+   */
+  unit?: DictationUnit;
+  /** Ersetzt die Unterzeile im Kopf (sonst „Tier · Klasse …“). */
+  subtitle?: string;
+  /** Ersetzt den Abschnittstext, z. B. für Formeln. */
+  prompt?: ReactNode;
+  /** Spicker- und Fehlerzähler im Kopf. */
+  counters?: { hints?: number; mistakes: number };
+  /** Vorlesen im Kopf anbieten (außerhalb von Battle). */
+  readAloud?: boolean;
+  /** Hinweise zu Verbindung und Speicherung unter dem Fortschritt. */
+  notices?: ReactNode;
+  hold?: {
+    /** Aufdecken ohne Geste (Tastatur, Maus, Hilfsmittel). */
+    onShow?: () => void;
+    disabled?: boolean;
+    /** Ersetzt „Satz 1“ im Hinweis, z. B. an Stationen. */
+    title?: string;
+    text?: string;
+    error?: { text: string; onRetry: () => void };
+  };
+  read?: {
+    onWriteNow?: () => void;
+    writeNowLabel?: string;
+    releaseHint?: string;
+  };
+  write?: {
+    /** Vorgabe bei Vokabeln und Mathe (Frage statt Gedächtnis). */
+    question?: ReactNode;
+    /** Buchstabenhilfe oder Abschreibvorlage. */
+    help?: ReactNode;
+    feedback?: { text: string; tone: "good" | "bad" } | null;
+    disabled?: boolean;
+    placeholder?: string;
+    onReview?: () => void;
+    inputRef?: Ref<HTMLTextAreaElement>;
+    inputProps?: Omit<
+      TextareaHTMLAttributes<HTMLTextAreaElement>,
+      "value" | "onChange" | "className" | "disabled" | "placeholder"
+    >;
+  };
+  /** Battle-Leiste über dem Spiel (Ladung, Tinte, Flimmern, Schild). */
+  battleBar?: {
+    powers: readonly BattlePower[];
+    picking: BattlePower | null;
+    targets: readonly string[];
+    message: string;
+    onPickTarget?: (name: string) => void;
+    onCancelPick?: () => void;
+  };
+  /** Stationen: blättern zwischen den Aufgaben einer Nummer. */
+  stationNav?: {
+    canPrev: boolean;
+    canNext: boolean;
+    isLast: boolean;
+    onPrev?: () => void;
+    onNext?: () => void;
+    onDone?: () => void;
+    onToStations?: () => void;
+    note?: string;
+  };
+  stationIntro?: string;
+  done?: {
+    title?: string;
+    stars?: { value: number; max: number } | null;
+    pointsLabel?: string;
+    extras?: ReactNode;
+    finishLabel?: string;
+    finishHref?: string;
   };
   onToggleTheme?: () => void;
   onLeave?: () => void;
@@ -55,6 +146,12 @@ export type StudentDictationScreenProps = {
 export function StudentDictationScreen(props: StudentDictationScreenProps) {
   const { phase, sentenceIndex, sentenceCount } = props;
   const showProgress = phase !== "station" && phase !== "done";
+  const showBar =
+    props.battleBar &&
+    (phase === "hold" || phase === "read" || phase === "write");
+  const extras =
+    props.counters ||
+    (props.readAloud && phase !== "battle" && phase !== "done");
   return (
     <div className={styles.screen}>
       <div className={styles.layout}>
@@ -64,20 +161,59 @@ export function StudentDictationScreen(props: StudentDictationScreenProps) {
             icon="back"
             onClick={props.onLeave}
           />
-          <Animal
-            animal={props.animal}
-            size={40}
-            className={styles.headerAnimal}
-          />
+          {props.animal ? (
+            <Animal
+              animal={props.animal}
+              size={40}
+              className={styles.headerAnimal}
+            />
+          ) : null}
           <span className={styles.titles}>
             <span className={styles.title}>
               Laufdiktat · Raum {props.roomCode}
             </span>
             <span className={styles.subtitle}>
-              {props.animal} · <span className={styles.wideOnly}>Klasse </span>
-              {props.className}
+              {props.subtitle ?? (
+                <>
+                  {props.animal} ·{" "}
+                  <span className={styles.wideOnly}>Klasse </span>
+                  {props.className}
+                </>
+              )}
             </span>
           </span>
+          {extras ? (
+            <span className={styles.headerExtras}>
+              {props.readAloud && phase !== "battle" && phase !== "done" ? (
+                <SquareIconButton
+                  label="Vorlesen"
+                  title="Vorlesen (zählt als Spicker)"
+                  icon="speaker"
+                  iconSize={19}
+                  strokeWidth={2}
+                  roundJoins
+                  onClick={props.onReadAloud}
+                />
+              ) : null}
+              {props.counters ? (
+                <>
+                  {props.counters.hints !== undefined ? (
+                    <span className={styles.hintsPill}>
+                      <Pill>Spicker {props.counters.hints}</Pill>
+                    </span>
+                  ) : null}
+                  <span
+                    className={cx(
+                      styles.mistakes,
+                      props.counters.mistakes > 0 && styles.bad,
+                    )}
+                  >
+                    Fehler {props.counters.mistakes}
+                  </span>
+                </>
+              ) : null}
+            </span>
+          ) : null}
           <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
         </header>
 
@@ -96,12 +232,19 @@ export function StudentDictationScreen(props: StudentDictationScreenProps) {
           </div>
         ) : null}
 
+        {props.notices}
+        {showBar ? <BattleBar {...props} /> : null}
+
         {phase === "station" ? <StationPhase {...props} /> : null}
         {phase === "hold" ? <HoldPhase {...props} /> : null}
         {phase === "read" ? <ReadPhase {...props} /> : null}
         {phase === "write" ? <WritePhase {...props} /> : null}
         {phase === "battle" ? <BattlePhase {...props} /> : null}
         {phase === "done" ? <DonePhase {...props} /> : null}
+
+        {props.stationNav && (phase === "hold" || phase === "read") ? (
+          <StationNav nav={props.stationNav} />
+        ) : null}
       </div>
     </div>
   );
@@ -125,7 +268,11 @@ function stationGrid(count: number): CSSProperties {
   } as CSSProperties;
 }
 
-function StationPhase({ station, onPickStation }: StudentDictationScreenProps) {
+function StationPhase({
+  station,
+  stationIntro,
+  onPickStation,
+}: StudentDictationScreenProps) {
   return (
     <section
       className={cx(styles.phase, styles.station)}
@@ -137,6 +284,7 @@ function StationPhase({ station, onPickStation }: StudentDictationScreenProps) {
         </h1>
         <span className={styles.count}>{station.count} Schüler</span>
       </div>
+      {stationIntro ? <p className={styles.intro}>{stationIntro}</p> : null}
       <div className={styles.tilesScroll}>
         <div className={styles.tiles} style={stationGrid(station.count)}>
           {Array.from({ length: station.count }, (_, index) => index + 1).map(
@@ -181,13 +329,16 @@ function Edge({ label }: { label: string }) {
 
 function HoldPhase({
   sentenceIndex,
+  unit = "Satz",
+  hold,
   onHoldStart,
 }: StudentDictationScreenProps) {
+  const title = hold?.title ?? `${unit} ${sentenceIndex + 1}`;
   return (
     <section
       className={cx(styles.phase, styles.hold)}
       aria-labelledby="dictation-hold"
-      {...holdHandlers(onHoldStart)}
+      {...holdHandlers(hold?.disabled ? undefined : onHoldStart)}
     >
       <Edge label="hier" />
       <div className={styles.card}>
@@ -198,13 +349,36 @@ function HoldPhase({
           Mit zwei Fingern an beiden Rändern halten
         </h1>
         <p className={styles.holdText}>
-          Solange du hältst, siehst du Satz {sentenceIndex + 1}. Loslassen
-          öffnet das Schreibfeld.
+          {hold?.text ??
+            `Solange du hältst, siehst du ${title}. Loslassen öffnet das Schreibfeld.`}
           <span className={styles.wideOnly}>
             {" "}
             Am Laptop: Maustaste auf der Fläche gedrückt halten.
           </span>
         </p>
+        {hold?.error ? (
+          <div className={styles.alert} role="alert">
+            <p>{hold.error.text}</p>
+            <button
+              type="button"
+              className={styles.ghost}
+              onClick={hold.error.onRetry}
+            >
+              Erneut laden
+            </button>
+          </div>
+        ) : null}
+        {hold?.onShow ? (
+          <button
+            type="button"
+            className={styles.ghost}
+            disabled={hold.disabled}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={hold.onShow}
+          >
+            Aufgabe zeigen
+          </button>
+        ) : null}
       </div>
       <Edge label="hier" />
     </section>
@@ -213,14 +387,17 @@ function HoldPhase({
 
 function ReadPhase({
   sentence,
+  prompt,
   sentenceIndex,
   sentenceCount,
+  unit = "Satz",
+  read,
   onHoldEnd,
 }: StudentDictationScreenProps) {
   return (
     <section
       className={cx(styles.phase, styles.read)}
-      aria-label="Satz lesen"
+      aria-label={`${unit} lesen`}
       onTouchEnd={onHoldEnd}
       onPointerUp={onHoldEnd}
       onPointerLeave={onHoldEnd}
@@ -228,10 +405,22 @@ function ReadPhase({
       <Edge label="halten" />
       <div className={styles.card}>
         <Pill>
-          Satz {sentenceIndex + 1} von {sentenceCount}
+          {unit} {sentenceIndex + 1} von {sentenceCount}
         </Pill>
-        <p className={styles.sentence}>{sentence}</p>
-        <span className={styles.releaseHint}>Loslassen, um zu schreiben</span>
+        <p className={styles.sentence}>{prompt ?? sentence}</p>
+        <span className={styles.releaseHint}>
+          {read?.releaseHint ?? "Loslassen, um zu schreiben"}
+        </span>
+        {read?.onWriteNow ? (
+          <button
+            type="button"
+            className={styles.ghost}
+            onPointerUp={(event) => event.stopPropagation()}
+            onClick={read.onWriteNow}
+          >
+            {read.writeNowLabel ?? "Jetzt schreiben"}
+          </button>
+        ) : null}
       </div>
       <Edge label="halten" />
     </section>
@@ -243,9 +432,19 @@ function WritePhase({
   sentenceCount,
   hintsUsed,
   typed,
+  unit = "Satz",
+  write,
   onType,
   onCheck,
 }: StudentDictationScreenProps) {
+  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    write?.inputProps?.onKeyDown?.(event);
+    // Eine Zeile genügt: Enter prüft wie im Original-Laufdiktat.
+    if (event.key === "Enter" && !event.shiftKey && !event.defaultPrevented) {
+      event.preventDefault();
+      onCheck?.();
+    }
+  }
   return (
     <section
       className={cx(styles.phase, styles.write)}
@@ -253,25 +452,53 @@ function WritePhase({
     >
       <div className={styles.writeHead}>
         <h1 id="dictation-write" className={styles.writeTitle}>
-          Satz {sentenceIndex + 1} von {sentenceCount} schreiben
+          {unit} {sentenceIndex + 1} von {sentenceCount} schreiben
         </h1>
         <Pill>Spicker {hintsUsed}</Pill>
       </div>
+      {write?.question ? (
+        <p className={styles.question2}>{write.question}</p>
+      ) : null}
+      {write?.help}
+      {write?.feedback ? (
+        <p
+          className={cx(
+            styles.feedback,
+            write.feedback.tone === "good" ? styles.good : styles.bad,
+          )}
+          role="status"
+        >
+          {write.feedback.text}
+        </p>
+      ) : null}
       <textarea
+        {...write?.inputProps}
+        ref={write?.inputRef}
         className={styles.answer}
         value={typed}
+        disabled={write?.disabled}
         onChange={(event) => onType?.(event.target.value)}
-        placeholder="Tippe den Satz aus dem Gedächtnis"
-        aria-label="Satz"
+        onKeyDown={onKeyDown}
+        placeholder={write?.placeholder ?? "Tippe den Satz aus dem Gedächtnis"}
+        aria-label={write ? "Deine Antwort" : "Satz"}
         rows={3}
         autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="sentences"
+        autoCorrect={write?.inputProps?.autoCorrect ?? "off"}
+        autoCapitalize={write?.inputProps?.autoCapitalize ?? "sentences"}
         spellCheck={false}
       />
-      <PrimaryButton className={styles.check} onClick={onCheck}>
+      <PrimaryButton
+        className={styles.check}
+        onClick={onCheck}
+        disabled={write?.disabled}
+      >
         Prüfen
       </PrimaryButton>
+      {write?.onReview ? (
+        <button type="button" className={styles.link} onClick={write.onReview}>
+          {unit} nochmal ansehen
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -286,14 +513,17 @@ const POWERS = [
   },
 ] as const;
 
-function BattlePhase({
-  sentence,
-  typed,
+function PowerRings({
   battle,
+  powers,
   onPower,
   onShield,
-  onReadAloud,
-}: StudentDictationScreenProps) {
+}: {
+  battle: StudentDictationScreenProps["battle"];
+  powers: readonly BattlePower[];
+  onPower?: ((power: BattlePower) => void) | undefined;
+  onShield?: (() => void) | undefined;
+}) {
   const charge = Math.min(100, Math.max(0, battle.charge));
   const ready = charge >= 100;
   const fill = { "--charge": `${charge}%` } as CSSProperties;
@@ -302,66 +532,136 @@ function BattlePhase({
     "--ring-color": battle.shieldActive ? "var(--green)" : "#c7674a",
   } as CSSProperties;
   return (
-    <section className={cx(styles.phase, styles.battle)} aria-label="Battle">
-      <div className={styles.battleControls}>
-        <div className={styles.powers}>
-          {POWERS.map((power) => (
-            <div key={power.id} className={styles.power}>
-              <button
-                type="button"
-                aria-label={power.aria}
-                className={cx(styles.ring, ready && styles.ready)}
-                style={
-                  { ...fill, "--ring-color": power.color } as CSSProperties
-                }
-                onClick={() => onPower?.(power.id)}
-              >
-                <span className={styles.ringEmpty}>
-                  {power.id === "ink" ? <InkIcon /> : <BoltIcon />}
-                </span>
-                <span className={styles.ringFill}>
-                  {power.id === "ink" ? <InkIcon /> : <BoltIcon />}
-                </span>
-              </button>
-              <span className={styles.powerLabel}>{power.label}</span>
-            </div>
-          ))}
-          <div className={styles.power}>
+    <div className={styles.battleControls}>
+      <div className={styles.powers}>
+        {POWERS.filter((power) => powers.includes(power.id)).map((power) => (
+          <div key={power.id} className={styles.power}>
             <button
               type="button"
-              aria-label="Schild"
-              aria-pressed={battle.shieldActive}
-              className={cx(
-                styles.ring,
-                (ready || battle.shieldActive) && styles.ready,
-              )}
-              style={shieldFill}
-              onClick={onShield}
+              aria-label={power.aria}
+              className={cx(styles.ring, ready && styles.ready)}
+              style={{ ...fill, "--ring-color": power.color } as CSSProperties}
+              onClick={() => onPower?.(power.id)}
             >
               <span className={styles.ringEmpty}>
-                <ShieldIcon />
+                {power.id === "ink" ? <InkIcon /> : <BoltIcon />}
               </span>
               <span className={styles.ringFill}>
-                <ShieldIcon />
+                {power.id === "ink" ? <InkIcon /> : <BoltIcon />}
               </span>
             </button>
-            <span className={styles.powerLabel}>
-              {battle.shieldActive ? "aktiv" : "Schild"}
-            </span>
+            <span className={styles.powerLabel}>{power.label}</span>
           </div>
-        </div>
-        <div className={styles.charge}>
-          <span className={styles.chargeLabel}>
-            Ladung · {ready ? "Aufgeladen" : `${charge} %`}
-          </span>
-          <span
-            className={cx(styles.chargeTrack, ready && styles.full)}
-            style={fill}
+        ))}
+        <div className={styles.power}>
+          <button
+            type="button"
+            aria-label="Schild"
+            aria-pressed={battle.shieldActive}
+            className={cx(
+              styles.ring,
+              (ready || battle.shieldActive) && styles.ready,
+            )}
+            style={shieldFill}
+            onClick={onShield}
           >
-            <span />
+            <span className={styles.ringEmpty}>
+              <ShieldIcon />
+            </span>
+            <span className={styles.ringFill}>
+              <ShieldIcon />
+            </span>
+          </button>
+          <span className={styles.powerLabel}>
+            {battle.shieldActive ? "aktiv" : "Schild"}
           </span>
         </div>
       </div>
+      <div className={styles.charge}>
+        <span className={styles.chargeLabel}>
+          Ladung · {ready ? "Aufgeladen" : `${charge} %`}
+        </span>
+        <span
+          className={cx(styles.chargeTrack, ready && styles.full)}
+          style={fill}
+        >
+          <span />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Battle im laufenden Spiel: Ladung und Angriffe über Halten und Schreiben. */
+function BattleBar({
+  battle,
+  battleBar,
+  onPower,
+  onShield,
+}: StudentDictationScreenProps) {
+  if (!battleBar) return null;
+  return (
+    <section className={styles.battleBar} aria-label="Battle-Aktionen">
+      <PowerRings
+        battle={battle}
+        powers={battleBar.powers}
+        onPower={onPower}
+        onShield={onShield}
+      />
+      {battleBar.picking ? (
+        <div className={styles.targets}>
+          <strong>Wen möchtest du treffen?</strong>
+          <div className={styles.targetList}>
+            {battleBar.targets.map((name) => (
+              <button
+                key={name}
+                type="button"
+                className={styles.ghost}
+                onClick={() => battleBar.onPickTarget?.(name)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+          {!battleBar.targets.length ? (
+            <p className={styles.small}>
+              Noch kein Mitspieler als Ziel sichtbar.
+            </p>
+          ) : null}
+          <button
+            type="button"
+            className={styles.link}
+            onClick={battleBar.onCancelPick}
+          >
+            Abbrechen
+          </button>
+        </div>
+      ) : null}
+      {battleBar.message ? (
+        <p className={styles.small} role="status">
+          {battleBar.message}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function BattlePhase({
+  sentence,
+  typed,
+  battle,
+  onPower,
+  onShield,
+  onReadAloud,
+}: StudentDictationScreenProps) {
+  return (
+    <section className={cx(styles.phase, styles.battle)} aria-label="Battle">
+      <PowerRings
+        battle={battle}
+        powers={["ink", "flicker"]}
+        onPower={onPower}
+        onShield={onShield}
+      />
       <div className={styles.battleText}>
         <div className={styles.copyBox}>
           <p className={styles.copyText} aria-label={sentence}>
@@ -376,7 +676,7 @@ function BattlePhase({
                   index === typed.length && styles.cursor,
                 )}
               >
-                {char === " " ? " " : char}
+                {char === " " ? " " : char}
               </span>
             ))}
           </p>
@@ -395,31 +695,96 @@ function BattlePhase({
   );
 }
 
+function StationNav({
+  nav,
+}: {
+  nav: NonNullable<StudentDictationScreenProps["stationNav"]>;
+}) {
+  return (
+    <div className={styles.stationNav}>
+      <div className={styles.stationButtons}>
+        <button
+          type="button"
+          className={styles.ghost}
+          disabled={!nav.canPrev}
+          onClick={nav.onPrev}
+        >
+          Zurück
+        </button>
+        {nav.isLast ? (
+          <button
+            type="button"
+            className={styles.next}
+            disabled={!nav.canNext}
+            onClick={nav.onDone}
+          >
+            Fertig · nächste Nummer
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={styles.next}
+            disabled={!nav.canNext}
+            onClick={nav.onNext}
+          >
+            Nächste Aufgabe
+          </button>
+        )}
+      </div>
+      <button type="button" className={styles.link} onClick={nav.onToStations}>
+        Zur Nummernauswahl
+      </button>
+      {nav.note ? <p className={styles.small}>{nav.note}</p> : null}
+    </div>
+  );
+}
+
 function DonePhase({
   animal,
   sentenceCount,
+  unit = "Satz",
   result,
+  done,
   onFinish,
 }: StudentDictationScreenProps) {
   const words = result.savedWords.map((word) => `„${word}"`);
+  const stars = done?.stars;
   return (
     <section
       className={cx(styles.phase, styles.done)}
       aria-labelledby="dictation-done"
     >
-      <div className={styles.doneDisc}>
-        <Animal animal={animal} size={120} label="Dein Tier" />
-      </div>
-      <span className={styles.stars} aria-hidden="true">
-        ★★★
-      </span>
+      {animal ? (
+        <div className={styles.doneDisc}>
+          <Animal animal={animal} size={120} label="Dein Tier" />
+        </div>
+      ) : null}
+      {stars === undefined ? (
+        <span className={styles.stars} aria-hidden="true">
+          ★★★
+        </span>
+      ) : stars ? (
+        <span
+          className={styles.stars}
+          role="img"
+          aria-label={`${stars.value} von ${stars.max} Sternen`}
+        >
+          {"★".repeat(stars.value)}
+          <span className={styles.starsOff}>
+            {"★".repeat(Math.max(0, stars.max - stars.value))}
+          </span>
+        </span>
+      ) : null}
       <h1 id="dictation-done" className={styles.doneTitle}>
-        Alle {sentenceCount} Sätze geschafft
+        {done?.title ?? `Alle ${sentenceCount} ${PLURAL[unit]} geschafft`}
       </h1>
       <div className={styles.stats}>
         <Stat value={result.mistakes} label="Fehler" />
         <Stat value={result.hints} label="Spicker" />
-        <Stat value={`+${result.points}`} label="Streak-Punkte" />
+        <Stat
+          value={`+${result.points}`}
+          label={done?.pointsLabel ?? "Streak-Punkte"}
+        />
       </div>
       {words.length ? (
         <p className={styles.doneNote}>
@@ -427,9 +792,19 @@ function DonePhase({
           in deinem Wortspeicher.
         </p>
       ) : null}
-      <PrimaryButton className={styles.doneButton} onClick={onFinish}>
-        Zurück zum Lernraum
-      </PrimaryButton>
+      {done?.extras}
+      {done?.finishHref ? (
+        <Link
+          className={cx(styles.primaryLink, styles.doneButton)}
+          href={done.finishHref}
+        >
+          {done.finishLabel ?? "Zurück zum Lernraum"}
+        </Link>
+      ) : (
+        <PrimaryButton className={styles.doneButton} onClick={onFinish}>
+          {done?.finishLabel ?? "Zurück zum Lernraum"}
+        </PrimaryButton>
+      )}
     </section>
   );
 }

@@ -7,7 +7,7 @@ import { LiveRunningDictationGame } from "./live-game";
 // Ersetzt den Button-Klick aus der alten Oberfläche: das Original-Laufdiktat
 // deckt die Aufgabe per Zwei-Finger-Rand-Geste auf, die hier simuliert wird.
 function revealWithTwoFingers(container: HTMLElement) {
-  const stage = container.querySelector(".ui-game") as HTMLElement;
+  const stage = container.querySelector("[data-game-surface]") as HTMLElement;
   fireEvent.touchStart(stage, { touches: [{}, {}] });
   fireEvent.touchEnd(stage, { touches: [] });
 }

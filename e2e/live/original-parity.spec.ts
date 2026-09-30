@@ -89,7 +89,7 @@ test("original practice hints and visible copy correction", async ({
   await expect(
     page.getByRole("heading", { name: "Geschafft, Mia!" }),
   ).toBeVisible();
-  await expect(page.getByText(/Tempo: .* Punkte/)).toBeVisible();
+  await expect(page.getByText("Tempo-Punkte")).toBeVisible();
 });
 test("station hides on touch release and returns to number selection", async ({
   page,
@@ -121,7 +121,7 @@ test("station hides on touch release and returns to number selection", async ({
   });
   await expect(page.getByText("Haus", { exact: true })).not.toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Wähle deine Nummer" }),
+    page.getByRole("heading", { name: "Welche Nummer bist du?" }),
   ).toBeVisible({ timeout: 6000 });
 });
 test("mismatched versions block the round with an understandable action", async ({

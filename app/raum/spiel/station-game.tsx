@@ -6,13 +6,13 @@ import type { LiveSession } from "../../../src/integrations/laufdiktat/live-sess
 import type { ProgressDeliveryStatus } from "../../../src/integrations/laufdiktat/progress-delivery";
 import type { LiveProgress } from "../../../src/integrations/laufdiktat/room-api";
 import { MathDisplay } from "../../components/math-display";
-import { useAutoFitFontSize } from "../../components/use-auto-fit-font-size";
-import { Icon } from "../../ui/icons";
-import { Button, Pill } from "../../ui/primitives";
-import { DeliveryNotice, GameHeader, GameWarning } from "./game-parts";
+import { useThemeToggle } from "../../ui/theme";
+import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
+import { DeliveryNotice, GameWarning } from "./game-parts";
 
 type Props = {
   code: string;
+  animal?: string | null;
   session: LiveSession;
   connectionWarning: string;
   deliveryStatus?: ProgressDeliveryStatus;
@@ -23,6 +23,7 @@ type Props = {
 
 export function LiveStationGame({
   code,
+  animal = null,
   session,
   connectionWarning,
   onProgress,
@@ -40,6 +41,13 @@ export function LiveStationGame({
   const [loadError, setLoadError] = useState("");
   const [activity, setActivity] = useState(0);
   const request = useRef(0);
+  const revealing = useRef(false);
+  // Per Knopf aufgedeckt: bleibt sichtbar, bis „wieder verdecken“ kommt.
+  const shownByButton = useRef(false);
+  useEffect(() => {
+    if (!revealed) revealing.current = false;
+  }, [revealed]);
+  const { theme, toggleTheme } = useThemeToggle();
   const reachedIndex = useRef(0);
 
   const words = useMemo(() => {
@@ -52,10 +60,6 @@ export function LiveStationGame({
 
   const seenKey = stationNumber + ":" + index;
   const currentPrompt = words[index]?.prompt ?? words[index]?.targetWord ?? "";
-  const { containerRef, textRef, fontSize } = useAutoFitFontSize(
-    currentPrompt,
-    { min: 28, max: 72 },
-  );
   useEffect(() => {
     if (stationNumber === null || loading || revealed || loadError) return;
     const timer = window.setTimeout(() => {
@@ -114,7 +118,9 @@ export function LiveStationGame({
   }
 
   function reveal(show = true) {
-    if (loading || loadError || revealed) return;
+    // Geste und Knopf können im selben Moment auslösen: nur einmal zählen.
+    if (loading || loadError || revealed || revealing.current) return;
+    if (show) revealing.current = true;
     const wasSeen = seen.has(seenKey);
     const nextPeeks = wasSeen ? peeks + 1 : peeks;
     const done = finished || index === words.length - 1;
@@ -126,44 +132,53 @@ export function LiveStationGame({
     report(index, nextPeeks, done);
   }
 
+  const readAloud = () => {
+    const current = words[index];
+    if (!current || !("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(currentPrompt);
+    utterance.lang = current.promptLang ?? "de-DE";
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    reveal(false);
+  };
+  const notices =
+    deliveryStatus !== "idle" || connectionWarning ? (
+      <div className="ui-stack">
+        <DeliveryNotice status={deliveryStatus} onRetry={onRetryProgress} />
+        {connectionWarning ? (
+          <GameWarning>{connectionWarning}</GameWarning>
+        ) : null}
+      </div>
+    ) : null;
+  const common = {
+    roomCode: code,
+    animal,
+    className: "",
+    theme,
+    onToggleTheme: toggleTheme,
+    sentenceCount: words.length,
+    hintsUsed: peeks,
+    typed: "",
+    station: { count: session.stationCount, selected: stationNumber },
+    battle: { charge: 0, shieldActive: false },
+    result: { mistakes: 0, hints: peeks, points: 0, savedWords: [] },
+    unit: "Aufgabe" as const,
+    notices,
+  };
+
   if (stationNumber === null) {
     return (
-      <div className="ui ui-game">
-        <GameHeader code={code} subtitle="Stationen" />
-        <section
-          className="ui-stack ui-game__stations"
-          aria-labelledby="station-title"
-        >
-          <div className="ui-between">
-            <h1 id="station-title" className="ui-h-page">
-              Wähle deine Nummer
-            </h1>
-            <span className="ui-small ui-muted">
-              {session.stationCount} Schüler
-            </span>
-          </div>
-          <p className="ui-small ui-muted">
-            Tippe deine Nummer an und merke dir die Aufgaben an der Station.
-          </p>
-          <div className="ui-game__numbers">
-            {Array.from(
-              { length: session.stationCount },
-              (_, item) => item + 1,
-            ).map((number) => (
-              <button
-                key={number}
-                type="button"
-                onClick={() => void chooseStation(number)}
-              >
-                {number}
-              </button>
-            ))}
-          </div>
-          <DeliveryNotice status={deliveryStatus} onRetry={onRetryProgress} />
-          {connectionWarning ? (
-            <GameWarning>{connectionWarning}</GameWarning>
-          ) : null}
-        </section>
+      <div className="ui-dictation">
+        <StudentDictationScreen
+          {...common}
+          phase="station"
+          onLeave={() => window.location.assign("/lernen")}
+          subtitle="Stationen"
+          sentenceIndex={0}
+          sentence=""
+          stationIntro="Tippe deine Nummer an und merke dir die Aufgaben an der Station."
+          onPickStation={(number) => void chooseStation(number)}
+        />
       </div>
     );
   }
@@ -171,154 +186,105 @@ export function LiveStationGame({
   const current = words[index];
   if (!current) return null;
   const blocked = loading || Boolean(loadError);
+  const hide = () => {
+    shownByButton.current = false;
+    setRevealed(false);
+    setActivity((value) => value + 1);
+  };
   return (
     <div
-      className="ui ui-game is-active-round"
+      className="ui-dictation is-active-round"
+      data-game-surface=""
       onTouchStart={(event) => {
         if (event.touches.length >= 2) reveal();
       }}
       onTouchEnd={(event) => {
-        if (event.touches.length < 2) {
-          setRevealed(false);
-          setActivity((value) => value + 1);
-        }
+        if (event.touches.length < 2) hide();
       }}
-      onTouchCancel={() => {
-        setRevealed(false);
-        setActivity((value) => value + 1);
-      }}
+      onTouchCancel={hide}
     >
-      <GameHeader
-        code={code}
+      <StudentDictationScreen
+        {...common}
+        phase={revealed ? "read" : "hold"}
         subtitle={`Nummer ${stationNumber} · Aufgabe ${index + 1} / ${words.length}`}
-      >
-        {session.isTtsEnabled ? (
-          <button
-            type="button"
-            className="ui-icon-btn"
-            disabled={blocked}
-            aria-label="Vorlesen"
-            onClick={() => {
-              if (!("speechSynthesis" in window)) return;
-              const utterance = new SpeechSynthesisUtterance(currentPrompt);
-              utterance.lang = current.promptLang ?? "de-DE";
-              window.speechSynthesis.cancel();
-              window.speechSynthesis.speak(utterance);
-              reveal(false);
-            }}
-          >
-            <Icon name="speaker" size={18} />
-          </button>
-        ) : null}
-      </GameHeader>
-      <main className="ui-game__stage" aria-live="polite">
-        <div className={`ui-game__card${revealed ? " is-revealed" : ""}`}>
-          {loadError ? (
-            <div className="ui-notice ui-notice--bad ui-stack" role="alert">
-              <p>{loadError}</p>
-              <Button
-                size="sm"
-                onClick={() => void chooseStation(stationNumber)}
-              >
-                Erneut laden
-              </Button>
-            </div>
-          ) : null}
-          {loading ? (
-            <p className="ui-small ui-muted">Dein Stand wird geladen …</p>
-          ) : revealed ? (
-            <>
-              <Pill>Merken und auf Papier schreiben</Pill>
-              <div ref={containerRef} className="ui-game__reveal">
-                <h1
-                  ref={textRef}
-                  className="ui-game__prompt"
-                  style={{ fontSize }}
-                >
-                  <MathDisplay
-                    text={current.prompt ?? current.targetWord}
-                    isLatex={current.isLatex ?? false}
-                  />
-                </h1>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRevealed(false)}
-              >
-                Aufgabe wieder verdecken
-              </Button>
-            </>
-          ) : (
-            <>
-              <Pill>Bereit?</Pill>
-              <h1 className="ui-h-fun">Aufgabe {index + 1}</h1>
-              <Button disabled={blocked} onClick={() => reveal()}>
-                Aufgabe zeigen
-              </Button>
-            </>
-          )}
-        </div>
-        <div className="ui-between ui-game__station-nav">
-          <Button
-            variant="ghost"
-            disabled={index === 0 || blocked}
-            onClick={() => {
-              setActivity((value) => value + 1);
-              const next = index - 1;
-              setIndex(next);
-              setRevealed(false);
-              report(next, peeks, finished);
-            }}
-          >
-            Zurück
-          </Button>
-          {index < words.length - 1 ? (
-            <Button
-              disabled={!seen.has(seenKey) || blocked}
-              onClick={() => {
-                setActivity((value) => value + 1);
-                const next = index + 1;
-                reachedIndex.current = Math.max(reachedIndex.current, next);
-                setIndex(next);
-                setRevealed(false);
-                report(next, peeks, finished);
-              }}
-            >
-              Nächste Aufgabe
-            </Button>
-          ) : (
-            <Button
-              variant="green"
-              disabled={!seen.has(seenKey) || blocked}
-              onClick={() => {
-                setStationNumber(null);
-                setIndex(0);
-                setRevealed(false);
-              }}
-            >
-              Fertig · nächste Nummer
-            </Button>
-          )}
-        </div>
-        <DeliveryNotice status={deliveryStatus} onRetry={onRetryProgress} />
-        {connectionWarning ? (
-          <GameWarning>{connectionWarning}</GameWarning>
-        ) : null}
-        <Button
-          variant="link"
-          onClick={() => {
+        sentenceIndex={index}
+        sentence={currentPrompt}
+        prompt={
+          <MathDisplay
+            text={current.prompt ?? current.targetWord}
+            isLatex={current.isLatex ?? false}
+          />
+        }
+        readAloud={session.isTtsEnabled && !blocked}
+        onReadAloud={readAloud}
+        hold={{
+          onShow: () => {
+            shownByButton.current = true;
+            reveal();
+          },
+          disabled: blocked,
+          title: `Aufgabe ${index + 1}`,
+          text: loading
+            ? "Dein Stand wird geladen …"
+            : `Solange du hältst, siehst du Aufgabe ${index + 1}. Merke sie dir und schreibe sie auf Papier.`,
+          ...(loadError
+            ? {
+                error: {
+                  text: loadError,
+                  onRetry: () => void chooseStation(stationNumber),
+                },
+              }
+            : {}),
+        }}
+        read={{
+          onWriteNow: hide,
+          writeNowLabel: "Aufgabe wieder verdecken",
+          releaseHint: "Merken und auf Papier schreiben",
+        }}
+        onHoldStart={() => {
+          shownByButton.current = false;
+          reveal();
+        }}
+        onHoldEnd={() => {
+          if (!shownByButton.current) hide();
+        }}
+        stationNav={{
+          canPrev: index > 0 && !blocked,
+          canNext: seen.has(seenKey) && !blocked,
+          isLast: index >= words.length - 1,
+          onPrev: () => {
+            setActivity((value) => value + 1);
+            const next = index - 1;
+            setIndex(next);
+            setRevealed(false);
+            report(next, peeks, finished);
+          },
+          onNext: () => {
+            setActivity((value) => value + 1);
+            const next = index + 1;
+            reachedIndex.current = Math.max(reachedIndex.current, next);
+            setIndex(next);
+            setRevealed(false);
+            report(next, peeks, finished);
+          },
+          onDone: () => {
+            setStationNumber(null);
+            setIndex(0);
+            setRevealed(false);
+          },
+          onToStations: () => {
             request.current++;
             setStationNumber(null);
             setRevealed(false);
-          }}
-        >
-          Zur Nummernauswahl
-        </Button>
-        <p className="ui-tiny ui-muted ui-center">
-          Erstes Ansehen ist frei. Erneutes Öffnen zählt als Spicker.
-        </p>
-      </main>
+          },
+          note: "Erstes Ansehen ist frei. Erneutes Öffnen zählt als Spicker.",
+        }}
+        onLeave={() => {
+          request.current++;
+          setStationNumber(null);
+          setRevealed(false);
+        }}
+      />
     </div>
   );
 }

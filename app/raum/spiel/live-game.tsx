@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  FormEvent,
-  TouchEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
   battleChargeGain,
@@ -43,20 +36,12 @@ import {
   createPersonalLearningEventRepository,
 } from "../../../src/storage/personal-learning-events";
 import { MathDisplay } from "../../components/math-display";
-import { useAutoFitFontSize } from "../../components/use-auto-fit-font-size";
 import { useLiveSessionGuards } from "../../components/use-live-session-guards";
-import { AnimalImage } from "../../ui/animal";
-import { Icon } from "../../ui/icons";
-import { Button, ButtonLink, Pill, ProgressBar } from "../../ui/primitives";
+import { Button, ButtonLink } from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
-import {
-  CopyGuide,
-  DeliveryNotice,
-  GameHeader,
-  GameWarning,
-  HoldEdges,
-  ProgressSegments,
-} from "./game-parts";
+import { useThemeToggle } from "../../ui/theme";
+import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
+import { CopyGuide, DeliveryNotice, GameWarning } from "./game-parts";
 import { LiveStationGame } from "./station-game";
 
 type Phase = "idle" | "revealed" | "write" | "correct" | "complete";
@@ -116,6 +101,12 @@ export function LiveRunningDictationGame({
   const [phase, setPhase] = useState<Phase>(
     initialProgress?.finished ? "complete" : "idle",
   );
+  // Spiegel der Phase für Gesten, die im selben Ereignis mehrfach auslösen.
+  const phaseRef = useRef<Phase>(phase);
+  const shownByButton = useRef(false);
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
   const [wrongCount, setWrongCount] = useState(0);
   const [answerFeedback, setAnswerFeedback] = useState("");
   const [finalDuration, setFinalDuration] = useState(
@@ -153,7 +144,6 @@ export function LiveRunningDictationGame({
   const [battleMessage, setBattleMessage] = useState("");
   const [transferNotice, setTransferNotice] = useState("");
   const [localSaveWarning, setLocalSaveWarning] = useState("");
-  const [lastAnswerCorrect, setLastAnswerCorrect] = useState(true);
   const [transferStatus, setTransferStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
@@ -163,7 +153,8 @@ export function LiveRunningDictationGame({
   const mathSaving = useRef(false);
   const pendingMath = useRef<LearningEventV1 | null>(null);
   const [savingMath, setSavingMath] = useState(false);
-  const answerRef = useRef<HTMLInputElement>(null);
+  const answerRef = useRef<HTMLTextAreaElement>(null);
+  const { theme, toggleTheme } = useThemeToggle();
   const current = session.words[index];
   useLiveSessionGuards(
     phase !== "complete" ||
@@ -174,11 +165,6 @@ export function LiveRunningDictationGame({
   const kind = current ? liveWordKind(current) : "text";
   const prompt = current ? (current.prompt ?? current.targetWord) : "";
   const isLatexPrompt = current?.isLatex ?? false;
-  const {
-    containerRef: revealContainerRef,
-    textRef: revealTextRef,
-    fontSize: revealFontSize,
-  } = useAutoFitFontSize(prompt, { min: 28, max: 88 });
 
   useEffect(() => {
     if (phase !== "correct") return;
@@ -308,6 +294,7 @@ export function LiveRunningDictationGame({
     return onLoadProgress ? (
       <LiveStationGame
         code={code}
+        animal={animal}
         session={session}
         connectionWarning={connectionWarning}
         onProgress={onProgress}
@@ -318,116 +305,124 @@ export function LiveRunningDictationGame({
     ) : null;
   }
 
+  const stars = computeRunningDictationStars(errors, session.words.length);
+  const tempo = speedPoints(
+    session.words.reduce((sum, word) => sum + word.targetWord.length, 0),
+    finalDuration,
+  );
+  const exitSheet = (
+    <Sheet
+      open={showExitConfirm}
+      title="Spiel verlassen?"
+      onClose={() => setShowExitConfirm(false)}
+    >
+      <p className="ui-small">
+        Dein bisheriger Fortschritt in dieser Runde bleibt erhalten.
+      </p>
+      <div className="ui-grid2">
+        <Button variant="ghost" onClick={() => setShowExitConfirm(false)}>
+          Weiter üben
+        </Button>
+        {exitCountdown > 0 ? (
+          <Button disabled>Zum Lernraum ({exitCountdown})</Button>
+        ) : (
+          <ButtonLink href="/lernen">Zum persönlichen Lernraum</ButtonLink>
+        )}
+      </div>
+    </Sheet>
+  );
+  const common = {
+    roomCode: code,
+    animal,
+    className: "",
+    theme,
+    onToggleTheme: toggleTheme,
+    sentenceCount: session.words.length,
+    typed: answer,
+    station: { count: session.stationCount, selected: null },
+    battle: { charge, shieldActive: shield },
+    result: { mistakes: errors, hints: peeks, points: tempo, savedWords: [] },
+  };
+
   if (phase === "complete") {
-    const stars = computeRunningDictationStars(errors, session.words.length);
     const hasMath = session.words.some((word) => liveWordKind(word) === "math");
     return (
-      <div className="ui ui-game">
-        <section className="ui-game__done" aria-live="polite">
-          <span className="ui-game__done-ring">
-            {animal ? (
-              <AnimalImage animal={animal} size={112} />
-            ) : (
-              <Icon name="trophy" size={56} />
-            )}
-          </span>
-          <p className="ui-eyebrow">Raum {code} · Runde abgeschlossen</p>
-          {session.showStars ? (
-            <p
-              className="ui-game__stars"
-              role="img"
-              aria-label={`${stars} von 5 Sternen`}
-            >
-              {"★".repeat(stars)}
-              <span className="ui-faint">{"★".repeat(5 - stars)}</span>
-            </p>
-          ) : null}
-          <h1 className="ui-h-fun">
-            {displayName ? `Geschafft, ${displayName}!` : "Geschafft!"}
-          </h1>
-          <div className="ui-grid3 ui-game__tiles">
-            <span>
-              <strong>{session.words.length}</strong> Aufgaben
-            </span>
-            <span>
-              <strong>{errors}</strong> Fehlversuche
-            </span>
-            <span>
-              <strong>{peeks}</strong> Spicker
-            </span>
-          </div>
-          {session.showStars ? (
-            <p className="ui-small ui-muted">
-              Tempo:{" "}
-              {speedPoints(
-                session.words.reduce(
-                  (sum, word) => sum + word.targetWord.length,
-                  0,
-                ),
-                finalDuration,
-              )}{" "}
-              Punkte
-            </p>
-          ) : null}
-          <DeliveryNotice
-            status={
-              deliveryStatus === "idle" && initialProgress?.finished
-                ? "saved"
-                : deliveryStatus
-            }
-            onRetry={onRetryProgress}
-          />
-          {connectionWarning ? (
-            <GameWarning>{connectionWarning}</GameWarning>
-          ) : null}
-          {localSaveWarning ? (
-            <GameWarning alert>{localSaveWarning}</GameWarning>
-          ) : null}
-          {transferNotice ? (
-            <p className="ui-notice ui-notice--good" role="status">
-              {transferNotice}
-            </p>
-          ) : null}
-          {hasMath ? (
-            <div className="ui-stack">
-              <p className="ui-small">
-                Du kannst jetzt allein weiterüben. Dein Unterrichtsergebnis
-                bleibt gleich.
-              </p>
-              {deliveryStatus === "saving" || deliveryStatus === "error" ? (
-                <p className="ui-small ui-muted">
-                  Warte kurz, bis dein Ergebnis gesendet wurde.
-                </p>
-              ) : (
-                <div className="ui-grid2">
-                  {errors > 0 ? (
-                    <ButtonLink
-                      href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=errors`}
-                    >
-                      Meine Fehler üben
-                    </ButtonLink>
-                  ) : null}
-                  <ButtonLink
-                    variant="ghost"
-                    href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=more`}
-                  >
-                    Weitere Aufgaben üben
+      <div className="ui-dictation">
+        <StudentDictationScreen
+          {...common}
+          phase="done"
+          onLeave={() => window.location.assign("/lernen")}
+          subtitle={`${displayName ? `${displayName} · ` : ""}Runde abgeschlossen`}
+          sentenceIndex={session.words.length - 1}
+          sentence=""
+          hintsUsed={peeks}
+          unit={unitOf(session.words[0])}
+          done={{
+            ...(displayName ? { title: `Geschafft, ${displayName}!` } : {}),
+            stars: session.showStars ? { value: stars, max: 5 } : null,
+            pointsLabel: "Tempo-Punkte",
+            finishLabel: "Zum persönlichen Lernraum",
+            finishHref: "/lernen",
+            extras: (
+              <div className="ui-stack ui-dictation__extras">
+                <DeliveryNotice
+                  status={
+                    deliveryStatus === "idle" && initialProgress?.finished
+                      ? "saved"
+                      : deliveryStatus
+                  }
+                  onRetry={onRetryProgress}
+                />
+                {connectionWarning ? (
+                  <GameWarning>{connectionWarning}</GameWarning>
+                ) : null}
+                {localSaveWarning ? (
+                  <GameWarning alert>{localSaveWarning}</GameWarning>
+                ) : null}
+                {transferNotice ? (
+                  <p className="ui-notice ui-notice--good" role="status">
+                    {transferNotice}
+                  </p>
+                ) : null}
+                {hasMath ? (
+                  <div className="ui-stack">
+                    <p className="ui-small">
+                      Du kannst jetzt allein weiterüben. Dein
+                      Unterrichtsergebnis bleibt gleich.
+                    </p>
+                    {deliveryStatus === "saving" ||
+                    deliveryStatus === "error" ? (
+                      <p className="ui-small ui-muted">
+                        Warte kurz, bis dein Ergebnis gesendet wurde.
+                      </p>
+                    ) : (
+                      <div className="ui-grid2">
+                        {errors > 0 ? (
+                          <ButtonLink
+                            href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=errors`}
+                          >
+                            Meine Fehler üben
+                          </ButtonLink>
+                        ) : null}
+                        <ButtonLink
+                          variant="ghost"
+                          href={`/frei/mathematics?round=${encodeURIComponent(session.sessionId)}&mode=more`}
+                        >
+                          Weitere Aufgaben üben
+                        </ButtonLink>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+                {transferStatus === "success" ? (
+                  <ButtonLink href="/lernbox" variant="ghost" block>
+                    Übernommene Vokabeln üben
                   </ButtonLink>
-                </div>
-              )}
-            </div>
-          ) : null}
-          <div className="ui-stack">
-            <ButtonLink href="/lernen" size="lg" block>
-              Zum persönlichen Lernraum
-            </ButtonLink>
-            {transferStatus === "success" ? (
-              <ButtonLink href="/lernbox" variant="ghost" block>
-                Übernommene Vokabeln üben
-              </ButtonLink>
-            ) : null}
-          </div>
-        </section>
+                ) : null}
+              </div>
+            ),
+          }}
+        />
       </div>
     );
   }
@@ -452,14 +447,12 @@ export function LiveRunningDictationGame({
     studentName,
     index,
   );
-  const objectLabel =
-    kind === "math"
-      ? "die Aufgabe"
-      : kind === "vocabulary"
-        ? "das Wort"
-        : "den Satz";
 
   function revealWord() {
+    // Geste und Knopf können im selben Moment auslösen: nur einmal zählen.
+    if (phaseRef.current === "revealed" || phaseRef.current === "correct")
+      return;
+    phaseRef.current = "revealed";
     if (startedAt.current === 0) startedAt.current = Date.now();
     if (revealedCurrentWord) {
       setPeeks((value) => value + 1);
@@ -469,19 +462,34 @@ export function LiveRunningDictationGame({
     setPhase("revealed");
   }
 
+  // Per Knopf aufgedeckt: bleibt sichtbar, bis „Jetzt schreiben“ kommt.
+  function showWithButton() {
+    shownByButton.current = true;
+    revealWord();
+  }
+
+  function holdWithMouse() {
+    shownByButton.current = false;
+    revealWord();
+  }
+
+  function releaseHold() {
+    if (!shownByButton.current) startWriting();
+  }
+
+  function startWriting() {
+    if (phaseRef.current !== "revealed") return;
+    shownByButton.current = false;
+    phaseRef.current = "write";
+    setPhase("write");
+  }
+
   function onTouchStart(event: TouchEvent<HTMLDivElement>) {
-    if (phase === "complete") return;
-    if (
-      event.touches.length >= 2 &&
-      phase !== "revealed" &&
-      phase !== "correct"
-    )
-      revealWord();
+    if (event.touches.length >= 2) revealWord();
   }
 
   function onTouchEnd(event: TouchEvent<HTMLDivElement>) {
-    if (phase === "complete") return;
-    if (event.touches.length < 2 && phase === "revealed") setPhase("write");
+    if (event.touches.length < 2) startWriting();
   }
 
   function readPromptAloud() {
@@ -501,8 +509,7 @@ export function LiveRunningDictationGame({
     setPeeks((value) => value + 1);
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submit() {
     if (phase !== "write" || !answer.trim() || mathSaving.current) return;
     if (kind === "math") {
       const task = mathTaskFromPrompt(prompt, activeWord.targetWord, index);
@@ -574,12 +581,12 @@ export function LiveRunningDictationGame({
         );
     }
     if (isCorrect) {
-      setLastAnswerCorrect(true);
       if (session.gameMode === "BATTLE") {
         setCharge((value) =>
           Math.min(100, value + battleChargeGain(roster, studentName, index)),
         );
       }
+      phaseRef.current = "correct";
       setPhase("correct");
       return;
     }
@@ -608,138 +615,172 @@ export function LiveRunningDictationGame({
     answerRef.current?.focus();
   }
 
-  const unit =
-    kind === "math" ? "Aufgabe" : kind === "vocabulary" ? "Vokabel" : "Satz";
-  const position = `${unit} ${index + 1} von ${session.words.length}`;
+  const unit = unitOf(activeWord);
+  const promptNode =
+    kind === "text" ? undefined : (
+      <MathDisplay text={prompt} isLatex={isLatexPrompt} />
+    );
+  const battlePowers = (["ink", "flicker"] as const).filter(
+    (power) => session.battleOptions[power],
+  );
+  const viewPhase =
+    phase === "idle" ? "hold" : phase === "revealed" ? "read" : "write";
 
   return (
     <div
-      className={`ui ui-game is-active-round${activeAttack === "flicker" ? " is-flickering" : ""}`}
+      className={`ui-dictation is-active-round${activeAttack === "flicker" ? " is-flickering" : ""}`}
+      data-game-surface=""
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       onTouchCancel={onTouchEnd}
     >
-      <GameHeader
-        code={code}
-        animal={animal}
+      <StudentDictationScreen
+        {...common}
+        phase={viewPhase}
         subtitle={`${displayName ? `${displayName} · ` : ""}${index + 1} / ${session.words.length}`}
-        onBack={() => {
-          setExitCountdown(3);
-          setShowExitConfirm(true);
+        sentenceIndex={index}
+        sentence={prompt}
+        {...(promptNode ? { prompt: promptNode } : {})}
+        unit={unit}
+        hintsUsed={peeks}
+        counters={
+          viewPhase === "write"
+            ? { mistakes: errors }
+            : { hints: peeks, mistakes: errors }
+        }
+        readAloud={session.isTtsEnabled}
+        onReadAloud={readPromptAloud}
+        notices={
+          connectionWarning ||
+          deliveryStatus === "error" ||
+          localSaveWarning ? (
+            <div className="ui-stack">
+              {connectionWarning ? (
+                <GameWarning>{connectionWarning}</GameWarning>
+              ) : null}
+              {deliveryStatus === "error" ? (
+                <DeliveryNotice
+                  status={deliveryStatus}
+                  onRetry={onRetryProgress}
+                />
+              ) : null}
+              {localSaveWarning ? (
+                <GameWarning alert>{localSaveWarning}</GameWarning>
+              ) : null}
+            </div>
+          ) : null
+        }
+        hold={{ onShow: showWithButton }}
+        read={{ onWriteNow: startWriting }}
+        onHoldStart={holdWithMouse}
+        onHoldEnd={releaseHold}
+        write={{
+          ...(kind === "vocabulary" || kind === "math"
+            ? { question: promptNode }
+            : {}),
+          help: copyMode ? (
+            <CopyGuide target={activeWord.targetWord} answer={answer} />
+          ) : hint ? (
+            <p className="ui-game__hint" aria-label="Buchstabenhilfe">
+              {hint}
+            </p>
+          ) : null,
+          feedback:
+            phase === "correct"
+              ? { text: "Richtig", tone: "good" }
+              : answerFeedback
+                ? { text: answerFeedback, tone: "bad" }
+                : null,
+          disabled: savingMath || phase === "correct",
+          placeholder:
+            kind === "math"
+              ? "Ergebnis"
+              : kind === "vocabulary"
+                ? "Übersetzung"
+                : "Tippe aus dem Gedächtnis",
+          onReview: () => {
+            phaseRef.current = "idle";
+            setPhase("idle");
+          },
+          inputRef: answerRef,
+          inputProps: {
+            id: "live-game-answer",
+            inputMode: kind === "math" ? "decimal" : "text",
+            maxLength: 2000,
+            ...(session.strictTypingMode
+              ? {
+                  autoCorrect:
+                    STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCorrect,
+                  autoCapitalize:
+                    STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCapitalize,
+                }
+              : {}),
+            onBeforeInput: (event) => {
+              if (
+                session.strictTypingMode &&
+                isBlockedRunningDictationInput(
+                  (event.nativeEvent as InputEvent).inputType,
+                )
+              ) {
+                event.preventDefault();
+              }
+            },
+            onPaste: (event) => {
+              if (session.strictTypingMode) event.preventDefault();
+            },
+            onDrop: (event) => {
+              if (session.strictTypingMode) event.preventDefault();
+            },
+          },
         }}
-      >
-        {session.isTtsEnabled ? (
-          <button
-            type="button"
-            className="ui-icon-btn"
-            onClick={readPromptAloud}
-            title="Vorlesen (zählt als Spicker)"
-            aria-label="Vorlesen"
-          >
-            <Icon name="speaker" size={18} />
-          </button>
-        ) : null}
-        <span className="ui-row ui-game__counters">
-          <Pill>Spicker {peeks}</Pill>
-          <Pill {...(errors ? { tone: "bad" as const } : {})}>
-            Fehler {errors}
-          </Pill>
-        </span>
-      </GameHeader>
-      <ProgressSegments total={session.words.length} current={index} />
-
-      {connectionWarning ? (
-        <GameWarning>{connectionWarning}</GameWarning>
-      ) : null}
-      {deliveryStatus === "error" ? (
-        <DeliveryNotice status={deliveryStatus} onRetry={onRetryProgress} />
-      ) : null}
-      {localSaveWarning ? (
-        <GameWarning alert>{localSaveWarning}</GameWarning>
-      ) : null}
-
-      {session.gameMode === "BATTLE" ? (
-        <section className="ui-game__battle" aria-label="Battle-Aktionen">
-          <div className="ui-row ui-game__attacks">
-            {session.battleOptions.ink ? (
-              <button
-                type="button"
-                className="ui-game__attack"
-                disabled={charge < 100}
-                onClick={() => setPicker("ink")}
-              >
-                <Icon name="drop" size={22} />
-                Tinte
-              </button>
-            ) : null}
-            {session.battleOptions.flicker ? (
-              <button
-                type="button"
-                className="ui-game__attack"
-                disabled={charge < 100}
-                onClick={() => setPicker("flicker")}
-              >
-                <Icon name="bolt" size={22} />
-                Flimmern
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="ui-game__attack"
-              disabled={charge < 100}
-              aria-pressed={shield}
-              onClick={() => {
+        onType={(value) => {
+          let next = value.replace(/\n/g, "");
+          if (session.strictTypingMode && kind === "math") {
+            next = sanitizeStrictMathAnswer(next);
+          }
+          if (
+            session.strictTypingMode &&
+            isSuspiciousRunningDictationInsert(answer, next)
+          ) {
+            return;
+          }
+          pendingMath.current = null;
+          setAnswer(next);
+        }}
+        onCheck={() => void submit()}
+        {...(session.gameMode === "BATTLE"
+          ? {
+              battleBar: {
+                powers: battlePowers,
+                picking: picker,
+                targets: battleCandidates.map(({ name }) => name),
+                message: battleMessage,
+                onPickTarget: (name: string) => {
+                  if (picker && onSendAttack?.(name, picker)) {
+                    setCharge(0);
+                    setPicker(null);
+                    setBattleMessage(`Angriff auf ${name} gestartet.`);
+                  }
+                },
+                onCancelPick: () => setPicker(null),
+              },
+              onPower: (power: AttackType) => {
+                if (charge >= 100) setPicker(power);
+              },
+              onShield: () => {
+                if (charge < 100) return;
                 setShield(true);
                 setCharge(0);
                 setPicker(null);
                 setBattleMessage("Schild aktiviert.");
-              }}
-            >
-              <Icon name="shield" size={22} />
-              Schild
-            </button>
-          </div>
-          <span className="ui-tiny ui-muted">Ladung · {charge} %</span>
-          <ProgressBar value={charge} max={100} label="Battle-Ladung" />
-          {picker ? (
-            <div className="ui-stack ui-game__targets">
-              <strong>Wen möchtest du treffen?</strong>
-              <div className="ui-row ui-wrap">
-                {battleCandidates.map(({ name }) => (
-                  <Button
-                    key={name}
-                    variant="soft"
-                    size="sm"
-                    onClick={() => {
-                      if (onSendAttack?.(name, picker)) {
-                        setCharge(0);
-                        setPicker(null);
-                        setBattleMessage(`Angriff auf ${name} gestartet.`);
-                      }
-                    }}
-                  >
-                    {name}
-                  </Button>
-                ))}
-              </div>
-              {!Object.keys(roster).some((name) => name !== studentName) ? (
-                <p className="ui-small ui-muted">
-                  Noch kein Mitspieler als Ziel sichtbar.
-                </p>
-              ) : null}
-              <Button variant="link" onClick={() => setPicker(null)}>
-                Abbrechen
-              </Button>
-            </div>
-          ) : null}
-          {battleMessage ? (
-            <p className="ui-small" role="status">
-              {battleMessage}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-
+              },
+            }
+          : {})}
+        onLeave={() => {
+          setExitCountdown(3);
+          setShowExitConfirm(true);
+        }}
+      />
       {activeAttack === "ink" ? (
         <div className="ui-game__ink" aria-hidden="true">
           <i />
@@ -747,173 +788,17 @@ export function LiveRunningDictationGame({
           <i />
         </div>
       ) : null}
-
-      <main
-        className={`ui-game__stage${phase === "idle" || phase === "revealed" ? " is-holdable" : ""}${phase === "write" ? " is-writing" : ""}`}
-      >
-        {phase === "idle" || phase === "revealed" ? (
-          <HoldEdges holding={phase === "revealed"} />
-        ) : null}
-
-        {phase === "idle" ? (
-          <div className="ui-game__card">
-            <span className="ui-game__card-icon" aria-hidden="true">
-              <Icon name="hand" size={26} />
-            </span>
-            <h1 className="ui-h-section ui-game__card-title">
-              Mit zwei Fingern an beiden Rändern halten
-            </h1>
-            <p className="ui-small ui-muted">
-              Solange du hältst, siehst du {objectLabel}. Loslassen öffnet das
-              Schreibfeld.
-            </p>
-            <Button variant="ghost" size="sm" onClick={revealWord}>
-              Aufgabe zeigen
-            </Button>
-          </div>
-        ) : null}
-
-        {phase === "revealed" ? (
-          <div className="ui-game__card is-revealed">
-            <Pill>{position}</Pill>
-            <div ref={revealContainerRef} className="ui-game__reveal">
-              <h1
-                ref={revealTextRef}
-                className="ui-game__prompt"
-                style={{ fontSize: `${revealFontSize}px` }}
-              >
-                <MathDisplay text={prompt} isLatex={isLatexPrompt} />
-              </h1>
-            </div>
-            <p className="ui-small ui-muted">Loslassen, um zu schreiben</p>
-            <Button variant="ghost" size="sm" onClick={() => setPhase("write")}>
-              Jetzt schreiben
-            </Button>
-          </div>
-        ) : null}
-
-        {phase === "write" ? (
-          <form className="ui-game__write" onSubmit={submit}>
-            <h2 className="ui-h-section">{position} schreiben</h2>
-            {kind === "vocabulary" || kind === "math" ? (
-              <p className="ui-game__question">
-                <MathDisplay text={prompt} isLatex={isLatexPrompt} />
-              </p>
-            ) : (
-              <p className="ui-small ui-muted">Was hast du dir gemerkt?</p>
-            )}
-            {copyMode ? (
-              <CopyGuide target={activeWord.targetWord} answer={answer} />
-            ) : hint ? (
-              <p className="ui-game__hint" aria-label="Buchstabenhilfe">
-                {hint}
-              </p>
-            ) : null}
-            {answerFeedback ? (
-              <p className="ui-notice ui-notice--bad" role="status">
-                {answerFeedback}
-              </p>
-            ) : null}
-            <input
-              ref={answerRef}
-              id="live-game-answer"
-              className="ui-field ui-game__answer"
-              aria-label="Deine Antwort"
-              placeholder={
-                kind === "math"
-                  ? "Ergebnis"
-                  : kind === "vocabulary"
-                    ? "Übersetzung"
-                    : "Tippe aus dem Gedächtnis"
-              }
-              inputMode={kind === "math" ? "decimal" : "text"}
-              autoComplete="off"
-              spellCheck={false}
-              disabled={savingMath}
-              maxLength={2000}
-              value={answer}
-              {...(session.strictTypingMode
-                ? {
-                    autoCorrect:
-                      STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCorrect,
-                    autoCapitalize:
-                      STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCapitalize,
-                  }
-                : {})}
-              onBeforeInput={(event) => {
-                if (
-                  session.strictTypingMode &&
-                  isBlockedRunningDictationInput(
-                    (event.nativeEvent as InputEvent).inputType,
-                  )
-                ) {
-                  event.preventDefault();
-                }
-              }}
-              onPaste={(event) => {
-                if (session.strictTypingMode) event.preventDefault();
-              }}
-              onDrop={(event) => {
-                if (session.strictTypingMode) event.preventDefault();
-              }}
-              onChange={(event) => {
-                let next = event.target.value;
-                if (session.strictTypingMode && kind === "math") {
-                  next = sanitizeStrictMathAnswer(next);
-                }
-                if (
-                  session.strictTypingMode &&
-                  isSuspiciousRunningDictationInsert(answer, next)
-                ) {
-                  return;
-                }
-                pendingMath.current = null;
-                setAnswer(next);
-              }}
-            />
-            <div className="ui-row ui-wrap">
-              <Button type="submit" disabled={savingMath}>
-                <Icon name="check" size={18} />
-                Prüfen
-              </Button>
-              <Button variant="link" onClick={() => setPhase("idle")}>
-                {unit} nochmal ansehen
-              </Button>
-            </div>
-          </form>
-        ) : null}
-
-        {phase === "correct" ? (
-          <div
-            className={`ui-game__verdict ${lastAnswerCorrect ? "is-correct" : "is-wrong"}`}
-          >
-            <span aria-hidden="true">
-              <Icon name={lastAnswerCorrect ? "check" : "close"} size={44} />
-            </span>
-            <p>{lastAnswerCorrect ? "Richtig" : "Nicht richtig"}</p>
-          </div>
-        ) : null}
-      </main>
-
-      <Sheet
-        open={showExitConfirm}
-        title="Spiel verlassen?"
-        onClose={() => setShowExitConfirm(false)}
-      >
-        <p className="ui-small">
-          Dein bisheriger Fortschritt in dieser Runde bleibt erhalten.
-        </p>
-        <div className="ui-grid2">
-          <Button variant="ghost" onClick={() => setShowExitConfirm(false)}>
-            Weiter üben
-          </Button>
-          {exitCountdown > 0 ? (
-            <Button disabled>Zum Lernraum ({exitCountdown})</Button>
-          ) : (
-            <ButtonLink href="/lernen">Zum persönlichen Lernraum</ButtonLink>
-          )}
-        </div>
-      </Sheet>
+      {exitSheet}
     </div>
   );
+}
+
+/** Bezeichnung eines Abschnitts: Mathe als Aufgabe, Vokabeln und Einzelwörter als Wort. */
+function unitOf(word: LiveSession["words"][number] | undefined) {
+  if (!word) return "Satz" as const;
+  const kind = liveWordKind(word);
+  if (kind === "math") return "Aufgabe" as const;
+  if (kind === "vocabulary" || !/\s/.test(word.targetWord.trim()))
+    return "Wort" as const;
+  return "Satz" as const;
 }
