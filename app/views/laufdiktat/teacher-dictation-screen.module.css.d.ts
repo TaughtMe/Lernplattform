@@ -18,6 +18,7 @@ declare const styles: {
   readonly done: string;
   readonly dot: string;
   readonly dragging: string;
+  readonly editorStage: string;
   readonly errors: string;
   readonly fileButton: string;
   readonly fileInput: string;

@@ -1,0 +1,401 @@
+/*
+ * Mathe-Aufgaben im Lehrer-Laufdiktat (Schritt „Diktat“, Inhalt Mathe).
+ * Oben Rechenarten, Zahlenraum und Anzahl; darunter Aufgabenliste und
+ * Vorschau, die per Zahnrad zu Zahlenraum und Regeln umschaltet.
+ */
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.operators,
+.tables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.operator {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink2);
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.operator[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.fieldLabel {
+  font-size: 13.5px;
+  font-weight: 800;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.stepper > button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.stepper > button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stepperValue {
+  box-sizing: border-box;
+  width: 52px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.stepperValue::-webkit-inner-spin-button,
+.stepperValue::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+.generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-left: auto;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 220px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.panelTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.gear {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink2);
+  cursor: pointer;
+}
+.gearOn {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px 8px;
+  color: var(--ink3);
+  font-size: 12.5px;
+  text-align: center;
+}
+.empty > strong {
+  margin-top: 6px;
+  color: var(--ink2);
+  font-size: 14px;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 6px 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.number {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 800;
+}
+.line,
+.previewLine {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+}
+.line {
+  min-height: 36px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  cursor: text;
+}
+.line:hover {
+  background: var(--surface2);
+}
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink3);
+  cursor: pointer;
+}
+.icon:hover {
+  background: var(--surface2);
+  color: var(--ink);
+}
+.danger:hover {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.append {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: auto;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.editRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.editLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.editInput {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line2);
+  border-radius: 10px;
+  outline: none;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+.editInput:focus {
+  border-color: var(--accent);
+}
+.result {
+  flex: none;
+  color: var(--good);
+  font-size: 15px;
+  font-weight: 800;
+}
+.invalid {
+  color: var(--bad);
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.token {
+  min-width: 38px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg);
+}
+.groupTitle {
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.groupTitle:first-child {
+  margin-top: 0;
+}
+.range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.check > input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.gaps {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.gapNumber {
+  min-width: 36px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.gapNumber[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+@container (min-width: 900px) {
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 22px;
+  }
+  .panel {
+    min-height: 420px;
+    padding: 18px 20px;
+    border-radius: 24px;
+  }
+}

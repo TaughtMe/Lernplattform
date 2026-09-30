@@ -625,15 +625,23 @@ test("teachers can prepare every native live-room content type", async ({
     "true",
   );
 
+  // Vokabelheft: Paare von Hand, Sprachen wählbar.
   await page.getByRole("button", { name: "Vokabeln", exact: true }).click();
-  await page.getByRole("textbox", { name: "Vokabeln" }).fill("Hund;dog");
-  await expect(page.getByText("Hund → dog")).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Vokabel 1", exact: true })
+    .fill("Hund");
+  await page
+    .getByRole("textbox", { name: "Übersetzung 1", exact: true })
+    .fill("dog");
+  await expect(page.getByText("1 Vokabel", { exact: true })).toBeVisible();
 
+  // Mathe: Aufgaben erzeugen und eine eigene ergänzen.
   await page.getByRole("button", { name: "Mathe", exact: true }).click();
-  await page.getByRole("textbox", { name: "Mathe" }).fill("7 + 5");
-  await expect(
-    page.getByText("1 Abschnitte · so sehen es die Schüler"),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Aufgabe hinzufügen" }).click();
+  await page.getByRole("textbox", { name: "Aufgabe", exact: true }).fill("7+5");
+  await expect(page.getByText("= 12", { exact: true })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("1 Aufgaben", { exact: true })).toBeVisible();
   await expect.poll(() => runtimeErrors).toEqual([]);
 
   await page.getByRole("button", { name: "Weiter zu Modus" }).click();

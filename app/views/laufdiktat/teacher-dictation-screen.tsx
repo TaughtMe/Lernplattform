@@ -13,7 +13,12 @@ import {
   ThemeSwitch,
   type Theme,
 } from "../parts/parts";
+import { MathEditor, type MathEditorProps } from "./math-editor";
 import styles from "./teacher-dictation-screen.module.css";
+import {
+  VocabularyEditor,
+  type VocabularyEditorProps,
+} from "./vocabulary-editor";
 
 export type TeacherStep = "import" | "settings" | "lobby" | "live";
 export type ContentKind = "text" | "vocabulary" | "math";
@@ -75,6 +80,10 @@ export type TeacherDictationScreenProps = {
   lockedSteps?: readonly TeacherStep[];
   /** Fehler oder Hinweis unter dem Inhalt. */
   notice?: string;
+  /** Vokabelheft statt Textfeld, wenn Inhaltsart Vokabeln. */
+  vocabulary?: VocabularyEditorProps;
+  /** Aufgaben-Generator statt Textfeld, wenn Inhaltsart Mathe. */
+  math?: MathEditorProps;
   onToggleTheme?: () => void;
   onLeave?: () => void;
   onStep?: (step: TeacherStep) => void;
@@ -348,32 +357,54 @@ const PLACEHOLDERS: Record<ContentKind, string> = {
   math: "Eine Aufgabe pro Zeile, z. B. 7 + 5",
 };
 
-function ImportStep({
-  content,
-  onKind,
-  onText,
-  onSplit,
-  onEditSections,
-  onImportFile,
-  onMoveSection,
-}: TeacherDictationScreenProps) {
+function KindChips({ content, onKind }: TeacherDictationScreenProps) {
+  return (
+    <div className={styles.chips} role="group" aria-label="Inhaltsart">
+      {KINDS.map(([kind, label]) => (
+        <Chip
+          key={kind}
+          pressed={content.kind === kind}
+          onClick={() => onKind?.(kind)}
+        >
+          {label}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+
+function ImportStep(props: TeacherDictationScreenProps) {
+  const {
+    content,
+    onText,
+    onSplit,
+    onEditSections,
+    onImportFile,
+    onMoveSection,
+  } = props;
   const count = content.sections.length;
   const [dragged, setDragged] = useState<number | null>(null);
   const sortable = Boolean(onMoveSection) && content.kind === "text";
+  if (content.kind === "vocabulary" && props.vocabulary) {
+    return (
+      <div className={styles.editorStage}>
+        <KindChips {...props} />
+        <VocabularyEditor {...props.vocabulary} />
+      </div>
+    );
+  }
+  if (content.kind === "math" && props.math) {
+    return (
+      <div className={styles.editorStage}>
+        <KindChips {...props} />
+        <MathEditor {...props.math} />
+      </div>
+    );
+  }
   return (
     <div className={styles.stage}>
       <div className={styles.column}>
-        <div className={styles.chips} role="group" aria-label="Inhaltsart">
-          {KINDS.map(([kind, label]) => (
-            <Chip
-              key={kind}
-              pressed={content.kind === kind}
-              onClick={() => onKind?.(kind)}
-            >
-              {label}
-            </Chip>
-          ))}
-        </div>
+        <KindChips {...props} />
         <textarea
           className={styles.source}
           aria-label={KINDS.find(([kind]) => kind === content.kind)?.[1]}

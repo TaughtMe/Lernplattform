@@ -45,6 +45,26 @@ describe("native running dictation core", () => {
     expect(parseVocabularyTable("ungültig\nHaus\thome")).toHaveLength(1);
   });
 
+  it("uses the chosen languages for reading aloud", () => {
+    const pairs = parseVocabularyTable("Haus;maison\nBaum;arbre");
+    expect(buildVocabularyItems(pairs, "left-to-right")[0]?.promptLocale).toBe(
+      "de-DE",
+    );
+    const mixed = buildVocabularyItems(pairs, "mixed", false, {
+      left: "de-DE",
+      right: "fr-FR",
+    });
+    expect(
+      mixed.map(({ promptLocale, answerLocale }) => [
+        promptLocale,
+        answerLocale,
+      ]),
+    ).toEqual([
+      ["de-DE", "fr-FR"],
+      ["fr-FR", "de-DE"],
+    ]);
+  });
+
   it("checks text exactly after trimming", () => {
     const [item] = parseRunningDictationText("Das Haus.");
     expect(checkRunningDictationAnswer(item!, "  Das Haus.  ")).toBe(true);

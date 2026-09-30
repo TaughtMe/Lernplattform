@@ -4,6 +4,7 @@ import {
   parseRunningDictationText,
   parseVocabularyTable,
   type VocabularyDirection,
+  type VocabularyLocales,
 } from "../../domain/running-dictation";
 import type { LiveWord, VocabularyTransferChoice } from "./live-session";
 import {
@@ -84,6 +85,7 @@ export function buildTeacherWords(
   source: string,
   vocabularyDirection: VocabularyDirection,
   vocabularyCaseSensitive = false,
+  vocabularyLocales?: VocabularyLocales,
 ): LiveWord[] {
   if (mode === "text") {
     return parseRunningDictationText(source).map((item) => ({
@@ -97,6 +99,7 @@ export function buildTeacherWords(
       parseVocabularyTable(source),
       vocabularyDirection,
       vocabularyCaseSensitive,
+      vocabularyLocales,
     ).map((item) => ({
       id: item.id,
       kind: "vocabulary",

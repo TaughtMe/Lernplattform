@@ -31,12 +31,61 @@ describe("TeacherLiveRoom (Design 5c/5d)", () => {
     expect(screen.getAllByText(/4 Abschnitte/)[0]).toBeInTheDocument();
   });
 
-  it("nimmt Vokabeln zeilenweise auf", async () => {
+  it("füllt das Vokabelheft von Hand und per Tabelle", async () => {
     const { user } = await renderRoom();
     await user.click(screen.getByRole("button", { name: "Vokabeln" }));
-    const table = screen.getByRole("textbox", { name: "Vokabeln" });
-    await user.type(table, "Hund;dog");
-    expect(screen.getByText("Hund → dog")).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: "Vokabel 1" }), "Hund");
+    await user.type(
+      screen.getByRole("textbox", { name: "Übersetzung 1" }),
+      "dog",
+    );
+    expect(screen.getByText("1 Vokabel")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Weiter zu Modus" }),
+    ).toBeEnabled();
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Sprache rechts" }),
+      "fr-FR",
+    );
+    expect(
+      screen.getByRole("radio", { name: "Französisch → Deutsch" }),
+    ).toBeInTheDocument();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Tabelle einfügen" }),
+      "Haus;maison{Enter}Baum;arbre",
+    );
+    await user.click(screen.getByRole("button", { name: "Liste übernehmen" }));
+    expect(screen.getByRole("textbox", { name: "Vokabel 2" })).toHaveValue(
+      "Baum",
+    );
+    expect(screen.getByText("2 Vokabeln")).toBeInTheDocument();
+  });
+
+  it("erzeugt Mathe-Aufgaben und stellt Regeln ein", async () => {
+    const { user } = await renderRoom();
+    await user.click(screen.getByRole("button", { name: "Mathe" }));
+    expect(screen.getByText("0 Aufgaben")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Aufgaben erzeugen" }));
+    expect(screen.getByText("10 Aufgaben")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Zahlenraum und Regeln" }),
+    );
+    await user.click(screen.getByRole("checkbox", { name: "Lückenaufgaben" }));
+    await user.click(
+      screen.getByRole("button", { name: "Zahlenraum und Regeln" }),
+    );
+    expect(screen.getByText(/Tippe die Zahl an/)).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Aufgabe hinzufügen" }),
+    );
+    await user.type(screen.getByRole("textbox", { name: "Aufgabe" }), "6+4");
+    expect(screen.getByText("= 10")).toBeInTheDocument();
+    await user.keyboard("{Enter}");
+    expect(screen.getByText("11 Aufgaben")).toBeInTheDocument();
   });
 
   it("führt zu den Modi und zeigt Optionen je Modus", async () => {

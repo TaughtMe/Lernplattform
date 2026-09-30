@@ -1,0 +1,37 @@
+// Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
+declare const styles: {
+  readonly add: string;
+  readonly alternatives: string;
+  readonly apply: string;
+  readonly book: string;
+  readonly bookActions: string;
+  readonly bookHead: string;
+  readonly cell: string;
+  readonly check: string;
+  readonly checkbox: string;
+  readonly choice: string;
+  readonly choiceHint: string;
+  readonly choiceText: string;
+  readonly count: string;
+  readonly divider: string;
+  readonly editor: string;
+  readonly file: string;
+  readonly fileInput: string;
+  readonly group: string;
+  readonly groupTitle: string;
+  readonly hint: string;
+  readonly input: string;
+  readonly languages: string;
+  readonly paste: string;
+  readonly pasteTitle: string;
+  readonly radio: string;
+  readonly remove: string;
+  readonly row: string;
+  readonly rows: string;
+  readonly select: string;
+  readonly settings: string;
+  readonly spacer: string;
+  readonly table: string;
+  readonly title: string;
+};
+export default styles;

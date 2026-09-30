@@ -8,8 +8,10 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  DEFAULT_VOCABULARY_LOCALES,
   parseVocabularyTable,
   type VocabularyDirection,
+  type VocabularyLocales,
   type VocabularyPair,
 } from "../../../src/domain/running-dictation";
 import {
@@ -171,6 +173,9 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     emptyVocabularyPair(),
   ]);
   const [vocabularyCaseSensitive, setVocabularyCaseSensitive] = useState(false);
+  const [vocabularyLocales, setVocabularyLocales] = useState<VocabularyLocales>(
+    DEFAULT_VOCABULARY_LOCALES,
+  );
   const [vocabularyTableInput, setVocabularyTableInput] = useState("");
   const serializeVocabularyPairs = (pairs: VocabularyPair[]) =>
     pairs
@@ -496,6 +501,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
               source,
               direction,
               vocabularyCaseSensitive,
+              vocabularyLocales,
             ),
     [
       contentMode,
@@ -504,6 +510,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       orderedTextSections,
       source,
       vocabularyCaseSensitive,
+      vocabularyLocales,
     ],
   );
 
@@ -1206,6 +1213,8 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     vocabularyPairs,
     vocabularyCaseSensitive,
     setVocabularyCaseSensitive,
+    vocabularyLocales,
+    setVocabularyLocales,
     vocabularyTableInput,
     setVocabularyTableInput,
     applyVocabularyPairs,

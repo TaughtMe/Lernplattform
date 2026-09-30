@@ -152,6 +152,11 @@
 }
 
 /* 1 · Diktat */
+.editorStage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .source {
   box-sizing: border-box;
   width: 100%;

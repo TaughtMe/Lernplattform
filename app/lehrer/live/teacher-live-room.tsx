@@ -2,8 +2,13 @@
 
 import { QRCodeCanvas } from "qrcode.react";
 import { useState } from "react";
+import { MULTIPLICATION_TABLES } from "../../../src/domain/mental-math";
+import { VOCABULARY_LANGUAGES } from "../../../src/domain/running-dictation";
 import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
+import { MathDisplay } from "../../components/math-display";
 import { useThemeToggle } from "../../ui/theme";
+import type { MathEditorProps } from "../../views/laufdiktat/math-editor";
+import type { VocabularyEditorProps } from "../../views/laufdiktat/vocabulary-editor";
 import {
   TeacherDictationScreen,
   type DictationOption,
@@ -11,6 +16,8 @@ import {
 } from "../../views/laufdiktat/teacher-dictation-screen";
 import {
   liveOverview,
+  mathGapRow,
+  mathLineParts,
   splitConfigFor,
   splitModeOf,
   STAGE_OF_STEP,
@@ -24,16 +31,17 @@ import styles from "./teacher-live-room.module.css";
 
 /**
  * Laufdiktat für Lehrkräfte (Design 5c/5d): verbindet den Live-Raum-Kern
- * mit der Design-Ansicht. Funktionen ohne Entwurf (eigene Trenner,
- * Marker-Modus, Generator-Einstellungen, Teilnehmende entfernen) sind
- * vorerst nicht sichtbar; sie kommen mit eigenem Entwurf zurück.
+ * mit der Design-Ansicht. Vokabeln und Mathe haben eigene Editoren
+ * (Vokabelheft, Aufgaben-Generator). Funktionen ohne Entwurf (eigene
+ * Trenner, Marker-Modus, Teilnehmende entfernen) sind vorerst nicht
+ * sichtbar; sie kommen mit eigenem Entwurf zurück.
  */
 export function TeacherLiveRoom({
   liveRoomConfig,
 }: {
   liveRoomConfig: LiveRoomConfig | null;
 }) {
-  const [t] = useTeacherLiveRoom(liveRoomConfig);
+  const [t, refs] = useTeacherLiveRoom(liveRoomConfig);
   const { theme, toggleTheme } = useThemeToggle();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const stationMode = t.gameMode === "STATION";
@@ -115,6 +123,8 @@ export function TeacherLiveRoom({
         {...(t.error || t.connectionWarning
           ? { notice: t.error || t.connectionWarning }
           : {})}
+        vocabulary={vocabularyProps(t)}
+        math={mathProps(t, refs.mathEditInputRef)}
         onToggleTheme={toggleTheme}
         onLeave={() => window.location.assign("/lehrer")}
         onStep={(step: TeacherStep) => t.jumpToStage(STAGE_OF_STEP[step])}
@@ -138,6 +148,102 @@ export function TeacherLiveRoom({
       />
     </div>
   );
+}
+
+function vocabularyProps(t: TeacherLiveModel): VocabularyEditorProps {
+  return {
+    pairs: t.vocabularyPairs,
+    languages: VOCABULARY_LANGUAGES,
+    locales: t.vocabularyLocales,
+    direction: t.direction,
+    caseSensitive: t.vocabularyCaseSensitive,
+    transfer: t.vocabularyTransfer,
+    tableInput: t.vocabularyTableInput,
+    onLocale: (side, locale) =>
+      t.setVocabularyLocales((current) => ({ ...current, [side]: locale })),
+    onPrimary: (id, side, value) =>
+      t.updateVocabularyPair(id, side, { primary: value }),
+    onAlternatives: (id, side, values) =>
+      t.updateVocabularyPair(id, side, { alternatives: values }),
+    onRemove: t.removeVocabularyPair,
+    onAdd: t.addVocabularyPair,
+    onDirection: t.setDirection,
+    onCaseSensitive: t.setVocabularyCaseSensitive,
+    onTransfer: t.setVocabularyTransfer,
+    onTableInput: t.setVocabularyTableInput,
+    onImportTable: t.importVocabularyTable,
+    onImportFile: t.importFile,
+  };
+}
+
+/** Mathe-Zeile mit Ergebnis; Brüche, Wurzeln und Potenzen per KaTeX. */
+function MathLine({ line }: { line: string }) {
+  const { text, latex, result } = mathLineParts(line);
+  if (result === null) return <>{text}</>;
+  if (!latex) return <>{`${text} = ${result}`}</>;
+  return (
+    <>
+      <MathDisplay text={text} isLatex /> = {result}
+    </>
+  );
+}
+
+function mathProps(
+  t: TeacherLiveModel,
+  inputRef: MathEditorProps["inputRef"],
+): MathEditorProps {
+  const draftResult =
+    t.mathDraft.trim() === ""
+      ? ""
+      : t.mathDraftResult === null
+        ? "ungültig"
+        : `= ${String(t.mathDraftResult).replace(".", ",")}`;
+  return {
+    operators: t.mathOps,
+    min: t.mathMin,
+    max: t.mathMax,
+    count: t.mathCount,
+    allowNegative: t.mathAllowNegative,
+    excludeZeroOperand: t.mathExcludeZeroOperand,
+    excludeZeroResult: t.mathExcludeZeroResult,
+    gap: t.mathGap,
+    tables: { all: MULTIPLICATION_TABLES, active: t.mathTables },
+    settingsOpen: t.mathSettingsOpen,
+    lines: t.mathLines.map((line, index) => (
+      <MathLine key={index} line={line} />
+    )),
+    preview: t.mathLines.map((line, index) => {
+      const gaps = t.mathGap ? mathGapRow(line, t.mathGaps[index]) : null;
+      return gaps ?? { kind: "plain", content: <MathLine line={line} /> };
+    }),
+    edit: {
+      index: t.mathEditIndex,
+      draft: t.mathDraft,
+      result: draftResult,
+      invalid: t.mathDraft.trim() !== "" && t.mathDraftResult === null,
+    },
+    ...(inputRef ? { inputRef } : {}),
+    onToggleOperator: t.toggleMathOperation,
+    onMin: t.setMathMin,
+    onMax: t.setMathMax,
+    onCount: t.setMathCount,
+    onAllowNegative: t.setMathAllowNegative,
+    onExcludeZeroOperand: t.setMathExcludeZeroOperand,
+    onExcludeZeroResult: t.setMathExcludeZeroResult,
+    onGap: t.setMathGap,
+    onToggleTable: t.toggleMathTable,
+    onToggleSettings: () => t.setMathSettingsOpen(!t.mathSettingsOpen),
+    onGenerate: t.generateMathTasks,
+    onEdit: t.startEditMathRow,
+    onReroll: t.rerollMathLine,
+    onDelete: t.deleteMathLine,
+    onAppend: t.startAppendMathLine,
+    onDraft: t.setMathDraft,
+    onCommit: t.commitMathEdit,
+    onCancel: t.cancelMathEdit,
+    onInsert: t.insertAtMathCursor,
+    onChooseGap: t.setMathLineGap,
+  };
 }
 
 function sectionsOf(t: TeacherLiveModel): string[] {

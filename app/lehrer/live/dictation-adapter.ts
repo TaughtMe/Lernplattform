@@ -9,6 +9,14 @@ import {
   DEFAULT_TEXT_SPLIT_CONFIG,
   type TextSplitConfig,
 } from "../../../src/domain/running-dictation-sections";
+import {
+  countMathChainNumbers,
+  displayMathNumber,
+  evaluateMentalMathExpression,
+  isLatexMathSyntax,
+  tokenizeMathChain,
+} from "../../../src/domain/mental-math";
+import type { MathPreviewPart } from "../../views/laufdiktat/math-editor";
 import type {
   LiveStudent,
   SplitMode,
@@ -134,5 +142,61 @@ export function liveOverview({
     mistakes: aggregateWordErrors(students)
       .slice(0, 5)
       .map(([word, count]) => ({ word, count })),
+  };
+}
+
+/** Anzeige einer Mathe-Zeile: Text oder Formel und das Ergebnis. */
+export function mathLineParts(line: string) {
+  const value = evaluateMentalMathExpression(line);
+  return {
+    text: line,
+    latex: value !== null && isLatexMathSyntax(line),
+    result: value === null ? null : displayMathNumber(value),
+  };
+}
+
+export type MathGapRow = {
+  kind: "gaps";
+  parts: MathPreviewPart[];
+  active: number;
+};
+
+/**
+ * Vorschau einer Lückenaufgabe: jede Zahl und das Ergebnis lassen sich als
+ * Lücke wählen. `null`, wenn die Zeile keine einfache Rechenkette ist.
+ */
+export function mathGapRow(
+  line: string,
+  chosen: number | undefined,
+): MathGapRow | null {
+  const tokens = tokenizeMathChain(line);
+  const value = evaluateMentalMathExpression(line);
+  if (!tokens || value === null) return null;
+  const numberCount = countMathChainNumbers(tokens);
+  const parts: MathPreviewPart[] = [];
+  let numberIndex = 0;
+  for (const token of tokens) {
+    if (token.kind === "symbol") {
+      parts.push({ kind: "symbol", text: token.text });
+    } else {
+      parts.push({
+        kind: "number",
+        text: displayMathNumber(token.value),
+        gapIndex: numberIndex,
+      });
+      numberIndex += 1;
+    }
+  }
+  parts.push({ kind: "symbol", text: "=" });
+  parts.push({
+    kind: "number",
+    text: displayMathNumber(value),
+    gapIndex: numberCount,
+  });
+  return {
+    kind: "gaps",
+    parts,
+    // Wie im Original: ohne Wahl wird die letzte Rechenzahl zur Lücke.
+    active: chosen ?? Math.max(0, numberCount - 1),
   };
 }

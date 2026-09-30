@@ -160,10 +160,40 @@ export function parseVocabularyTable(input: string): VocabularyPair[] {
     });
 }
 
+/** Sprachen des Vokabelhefts; die Kennung steuert das Vorlesen. */
+export const VOCABULARY_LANGUAGES = [
+  { locale: "de-DE", label: "Deutsch" },
+  { locale: "en-GB", label: "Englisch" },
+  { locale: "fr-FR", label: "Französisch" },
+  { locale: "es-ES", label: "Spanisch" },
+  { locale: "it-IT", label: "Italienisch" },
+  { locale: "la", label: "Latein" },
+  { locale: "tr-TR", label: "Türkisch" },
+  { locale: "pl-PL", label: "Polnisch" },
+  { locale: "ru-RU", label: "Russisch" },
+  { locale: "uk-UA", label: "Ukrainisch" },
+  { locale: "ar", label: "Arabisch" },
+] as const;
+
+export type VocabularyLocales = { left: string; right: string };
+
+export const DEFAULT_VOCABULARY_LOCALES: VocabularyLocales = {
+  left: "de-DE",
+  right: "en-GB",
+};
+
+export function vocabularyLanguageLabel(locale: string) {
+  return (
+    VOCABULARY_LANGUAGES.find((language) => language.locale === locale)
+      ?.label ?? locale
+  );
+}
+
 export function buildVocabularyItems(
   pairs: VocabularyPair[],
   direction: VocabularyDirection,
   caseSensitive = false,
+  locales: VocabularyLocales = DEFAULT_VOCABULARY_LOCALES,
 ) {
   return pairs.flatMap((pair, index): RunningDictationItem[] => {
     const askLeft =
@@ -178,8 +208,8 @@ export function buildVocabularyItems(
         prompt: prompt.primary,
         target: answer.primary,
         acceptedAnswers: answer.alternatives,
-        promptLocale: askLeft ? "de-DE" : "en-GB",
-        answerLocale: askLeft ? "en-GB" : "de-DE",
+        promptLocale: askLeft ? locales.left : locales.right,
+        answerLocale: askLeft ? locales.right : locales.left,
         caseSensitive,
       },
     ];
