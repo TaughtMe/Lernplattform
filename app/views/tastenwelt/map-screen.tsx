@@ -1,60 +1,122 @@
-import type { CSSProperties } from "react";
 import { Icon } from "../../ui/icons";
 import { Animal, cx, type Theme } from "../parts/parts";
 import { Keyboard } from "./keyboard";
 import styles from "./map-screen.module.css";
 
-export type MapStation = {
+export type MapMedal = "gold" | "silver" | "bronze";
+
+export type MapLesson = {
+  /** Kurzer Name, z. B. „Nur Zeigefinger“. */
   title: string;
-  state: "done" | "current" | "locked";
-  /** 0–3 Sterne aus der besten Genauigkeit. */
-  stars: number;
+  /** Neue Tasten der Lektion, z. B. „f und j“; ohne neue Tasten `null`. */
+  keys: string | null;
+  state: "done" | "current" | "open" | "locked";
+  /** Medaille aus der besten Genauigkeit, nur bei geschafften Lektionen. */
+  medal: MapMedal | null;
 };
+
+export type MapArea = { title: string; lessons: readonly MapLesson[] };
 
 export type MapScreenProps = {
   animal: string | null;
   theme: Theme;
-  stations: readonly MapStation[];
+  areas: readonly MapArea[];
   today: { done: number; total: number; nextLabel: string | null };
   unsure: {
     keys: readonly string[];
     heat: Readonly<Record<string, number>>;
   };
   onToggleTheme?: () => void;
-  onStation?: (index: number) => void;
+  /** Lektion nach laufender Nummer über alle Bereiche (ab 0). */
+  onLesson?: (index: number) => void;
   onContinue?: () => void;
   onExtra?: () => void;
 };
 
-/** Stützpunkte des Pfads im Koordinatenraum 670 × 540 (Design 6c). */
-const POINTS: ReadonlyArray<readonly [number, number]> = [
-  [70, 92],
-  [230, 66],
-  [395, 100],
-  [570, 78],
-  [600, 262],
-  [425, 290],
-  [245, 252],
-  [88, 420],
-  [310, 462],
-  [560, 440],
-];
-const HUES = [25, 60, 95, 140, 185, 245, 295, 345, 25, 60];
+const MEDAL_LABEL: Record<MapMedal, string> = {
+  gold: "Gold",
+  silver: "Silber",
+  bronze: "Bronze",
+};
+const MEDAL_STARS: Record<MapMedal, number> = { gold: 3, silver: 2, bronze: 1 };
 
-/** Glatter Pfad (Catmull-Rom) von Station `from` bis `to`. */
-function pathBetween(from: number, to: number) {
-  const pts = POINTS.slice(0, Math.max(1, Math.min(POINTS.length, to + 1)));
-  let d = `M${pts[from]![0]} ${pts[from]![1]}`;
-  for (let i = from; i < pts.length - 1; i += 1) {
-    const p0 = pts[i - 1] ?? pts[i]!;
-    const p1 = pts[i]!;
-    const p2 = pts[i + 1]!;
-    const p3 = pts[i + 2] ?? p2;
-    d += ` C${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6} ${
-      p2[0] - (p3[0] - p1[0]) / 6
-    } ${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]} ${p2[1]}`;
-  }
-  return d;
+const SPARKLE =
+  "M15 3 L17.5 12.5 L27 15 L17.5 17.5 L15 27 L12.5 17.5 L3 15 L12.5 12.5 Z";
+
+/** Glanz-Muster je Ecke; vier Varianten wechseln von Karte zu Karte. */
+function Gloss({ variant }: { variant: number }) {
+  const left =
+    variant === 0 ? (
+      <path
+        d="M5 22 L22 8"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+    ) : variant === 1 ? (
+      <path
+        d="M5 27 A18 18 0 0 1 24 5"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    ) : variant === 2 ? (
+      <path
+        d={SPARKLE}
+        fill="currentColor"
+        transform="translate(3 3) scale(0.8)"
+      />
+    ) : null;
+  const right =
+    variant === 1 ? (
+      <circle cx="22" cy="8" r="3.5" fill="currentColor" />
+    ) : variant === 2 ? (
+      <>
+        <circle cx="18" cy="7" r="3" fill="currentColor" />
+        <circle cx="25" cy="15" r="2.2" fill="currentColor" />
+      </>
+    ) : variant === 3 ? (
+      <>
+        <path
+          d={SPARKLE}
+          fill="currentColor"
+          transform="translate(6 0) scale(0.8)"
+        />
+        <path
+          d={SPARKLE}
+          fill="currentColor"
+          transform="translate(0 15) scale(0.45)"
+        />
+      </>
+    ) : (
+      <path
+        d={SPARKLE}
+        fill="currentColor"
+        transform="translate(9 1) scale(0.6)"
+      />
+    );
+  return (
+    <>
+      {left ? (
+        <svg
+          className={cx(styles.gloss, styles.glossLeft)}
+          viewBox="0 0 30 30"
+          fill="none"
+          aria-hidden="true"
+        >
+          {left}
+        </svg>
+      ) : null}
+      <svg
+        className={cx(styles.gloss, styles.glossRight)}
+        viewBox="0 0 30 30"
+        fill="none"
+        aria-hidden="true"
+      >
+        {right}
+      </svg>
+    </>
+  );
 }
 
 function listKeys(keys: readonly string[]) {
@@ -69,14 +131,19 @@ function listKeys(keys: readonly string[]) {
   return `${shown.slice(0, -1).join(", ")} und ${shown.at(-1)}`;
 }
 
-/** Lernweg der Tastenwelt (Design 6c). */
+/** Übersicht der Tastenwelt: alle Lektionen als Karten, nach Bereichen. */
 export function MapScreen(props: MapScreenProps) {
-  const { stations, today, unsure } = props;
-  const current = stations.findIndex((station) => station.state === "current");
-  const reached = current < 0 ? stations.length - 1 : current;
-  const onPath = stations.length <= POINTS.length;
+  const { areas, today, unsure } = props;
+  const lessons = areas.flatMap((area) => area.lessons);
+  const done = lessons.filter((lesson) => lesson.state === "done").length;
+  // Laufende Nummer der ersten Lektion je Bereich.
+  const offsets = areas.map((_, areaIndex) =>
+    areas
+      .slice(0, areaIndex)
+      .reduce((sum, area) => sum + area.lessons.length, 0),
+  );
   return (
-    <div className={styles.screen}>
+    <div className={styles.screen} lang="de">
       <div className={styles.layout}>
         <section className={styles.main} aria-labelledby="tw-title">
           <header className={styles.head}>
@@ -85,7 +152,7 @@ export function MapScreen(props: MapScreenProps) {
                 Tastenwelt
               </h1>
               <span className={styles.subtitle}>
-                {stations.length} Stationen von der Grundstellung bis zum freien
+                {areas.length} Bereiche von der Grundstellung bis zum freien
                 Abschreiben
               </span>
             </span>
@@ -99,89 +166,110 @@ export function MapScreen(props: MapScreenProps) {
             </button>
           </header>
 
-          <div className={styles.map}>
-            <div className={styles.canvas}>
-              {onPath ? (
-                <svg
-                  className={styles.path}
-                  viewBox="0 0 670 540"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d={pathBetween(reached, stations.length - 1)}
-                    stroke="var(--line2)"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray="2 14"
-                  />
-                  <path
-                    d={pathBetween(0, reached)}
-                    stroke="var(--gold)"
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              ) : null}
-              <ol className={styles.stations} aria-label="Lernweg">
-                {stations.map((station, index) => {
-                  const point = POINTS[index] ?? POINTS.at(-1)!;
-                  return (
-                    <li
-                      key={station.title}
-                      className={cx(styles.station, styles[station.state])}
-                      style={
-                        {
-                          "--x": `${(point[0] / 670) * 100}%`,
-                          "--y": `${(point[1] / 540) * 100}%`,
-                          "--hue": HUES[index % HUES.length],
-                        } as CSSProperties
-                      }
-                    >
-                      {station.state === "current" && props.animal ? (
-                        <Animal
-                          animal={props.animal}
-                          size={70}
-                          fluid
-                          className={styles.buddy}
-                        />
-                      ) : null}
-                      <button
-                        type="button"
-                        className={styles.node}
-                        disabled={station.state === "locked"}
-                        aria-label={`Station ${index + 1}: ${station.title}${
-                          station.state === "done"
-                            ? `, ${station.stars} von 3 Sternen`
-                            : station.state === "locked"
-                              ? ", noch gesperrt"
-                              : ", aktuelle Station"
-                        }`}
-                        onClick={() => props.onStation?.(index)}
-                      >
-                        {index + 1}
-                      </button>
-                      <span className={styles.label}>{station.title}</span>
-                      {station.state === "done" ? (
-                        <span className={styles.stars} aria-hidden="true">
-                          {"★".repeat(station.stars)}
-                          {"☆".repeat(3 - station.stars)}
-                        </span>
-                      ) : null}
-                      {station.state === "current" ? (
+          <div className={styles.board}>
+            <div className={styles.boardHead}>
+              <p className={styles.count}>
+                {done} von {lessons.length} Lektionen geschafft
+              </p>
+              <p className={styles.legend}>
+                {(
+                  [
+                    ["bronze", "Bronze ab 90 %"],
+                    ["silver", "Silber ab 94 %"],
+                    ["gold", "Gold ab 97 %"],
+                  ] as const
+                ).map(([medal, label]) => (
+                  <span key={medal} className={styles.legendItem}>
+                    <span className={cx(styles.legendDot, styles[medal])} />
+                    {label}
+                  </span>
+                ))}
+              </p>
+            </div>
+            {areas.map((area, areaIndex) => (
+              <section
+                key={area.title}
+                className={styles.area}
+                aria-label={area.title}
+              >
+                <h2 className={styles.areaTitle}>{area.title}</h2>
+                <ol className={styles.cards}>
+                  {area.lessons.map((lesson, lessonIndex) => {
+                    const index = (offsets[areaIndex] ?? 0) + lessonIndex;
+                    const main = lesson.keys ?? lesson.title;
+                    return (
+                      <li key={index} className={styles.cardItem}>
                         <button
                           type="button"
-                          className={styles.go}
-                          onClick={() => props.onStation?.(index)}
+                          className={cx(
+                            styles.card,
+                            styles[
+                              lesson.medal ??
+                                (lesson.state === "done"
+                                  ? "gold"
+                                  : lesson.state)
+                            ],
+                          )}
+                          disabled={lesson.state === "locked"}
+                          aria-label={`Lektion ${index + 1}: ${lesson.title}${
+                            lesson.keys ? ` (${lesson.keys})` : ""
+                          }${
+                            lesson.medal
+                              ? `, geschafft mit ${MEDAL_LABEL[lesson.medal]}`
+                              : lesson.state === "current"
+                                ? ", hier geht es weiter"
+                                : lesson.state === "locked"
+                                  ? ", noch gesperrt"
+                                  : ""
+                          }`}
+                          aria-current={
+                            lesson.state === "current" ? "step" : undefined
+                          }
+                          onClick={() => props.onLesson?.(index)}
                         >
-                          Weiter üben
+                          {lesson.state === "locked" ? null : (
+                            <Gloss variant={index % 4} />
+                          )}
+                          <span className={styles.cardText}>
+                            <span
+                              className={cx(
+                                styles.cardMain,
+                                lesson.keys && styles.cardKeys,
+                              )}
+                            >
+                              {main}
+                            </span>
+                            {lesson.keys ? (
+                              <span className={styles.cardSub}>
+                                {lesson.title}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className={styles.cardFoot}>
+                            <span className={styles.cardNumber}>
+                              {index + 1}
+                            </span>
+                            {lesson.medal ? (
+                              <span className={styles.medal} aria-hidden="true">
+                                {"★".repeat(MEDAL_STARS[lesson.medal])}
+                              </span>
+                            ) : null}
+                          </span>
                         </button>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
+                        {lesson.state === "current" && props.animal ? (
+                          <Animal
+                            animal={props.animal}
+                            size={52}
+                            fluid
+                            className={styles.buddy}
+                          />
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ))}
           </div>
         </section>
 
@@ -196,10 +284,15 @@ export function MapScreen(props: MapScreenProps) {
               {today.done} von {today.total} Lektionen
             </span>
             <div className={styles.segments} aria-hidden="true">
-              {stations.map((station, index) => (
+              {Array.from({ length: 10 }, (_, index) => (
                 <span
                   key={index}
-                  className={cx(station.state === "done" && styles.filled)}
+                  className={cx(
+                    index <
+                      Math.round(
+                        (today.done / Math.max(1, today.total)) * 10,
+                      ) && styles.filled,
+                  )}
                 />
               ))}
             </div>

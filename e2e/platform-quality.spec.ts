@@ -240,6 +240,27 @@ test("the LernBox imports, filters and locks the mode during a round", async ({
   await expect(oral).toBeEnabled();
 });
 
+test("the typing world lists every lesson and starts the current one", async ({
+  page,
+}) => {
+  await page.goto("/frei/typing");
+  await expect(page.getByText(/^0 von \d+ Lektionen geschafft$/)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^Lektion 2: .*noch gesperrt$/ }),
+  ).toBeDisabled();
+  // Vor dem Laden der Seite gehen Klicks verloren; bis zur Übung wiederholen.
+  await expect(async () => {
+    await page
+      .getByRole("button", { name: /^Lektion 1: .*hier geht es weiter$/ })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Zur Übersicht" }),
+    ).toBeVisible({
+      timeout: 1_000,
+    });
+  }).toPass();
+});
+
 test("a native Laufdiktat mistake becomes due LernBox practice", async ({
   page,
 }) => {

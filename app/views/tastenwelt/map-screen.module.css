@@ -1,4 +1,4 @@
-/* Tastenwelt Lernweg (Design 6c). */
+/* Tastenwelt: alle Lektionen als Karten mit Medaille (Bronze/Silber/Gold). */
 .screen {
   composes: view from "../parts/parts.module.css";
   container-type: inline-size;
@@ -56,109 +56,225 @@
   cursor: pointer;
 }
 
-/* ---------- Karte mit Pfad ---------- */
-.map {
-  position: relative;
-  flex: 1;
-  padding: 18px 12px;
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at 1px 1px, var(--line) 1.3px, transparent 0) 0 0 /
-      22px 22px,
-    var(--surface);
-  box-shadow: 0 5px 0 var(--line2);
-  overflow: hidden;
-}
-.path {
-  display: none;
-}
-.stations {
+/* ---------- Kartenübersicht ---------- */
+.board {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
+  padding: 18px 14px 22px;
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: 0 5px 0 var(--line2);
+}
+.boardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+}
+.count {
   margin: 0;
-  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid #211f1b;
+  border-radius: 4px;
+}
+.area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.areaTitle {
+  margin: 0;
+  font-family: var(--font-fun);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 112px), 1fr));
+  gap: 16px 14px;
+  margin: 0;
+  padding: 0 4px 6px 0;
   list-style: none;
 }
-.station {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 4px 14px;
+.cardItem {
+  position: relative;
+  display: flex;
+  min-width: 0;
 }
-.node {
-  display: grid;
-  grid-row: span 3;
-  place-items: center;
-  width: 62px;
-  height: 62px;
-  border: 0;
-  border-radius: 20px;
-  font-family: var(--font-fun);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-}
-.done .node {
-  background: oklch(0.86 0.1 var(--hue));
-  box-shadow: 0 6px 0 oklch(0.62 0.12 var(--hue));
-  color: #211f1b;
-}
-[data-theme="dark"] .done .node {
-  background: oklch(0.5 0.1 var(--hue));
-  box-shadow: 0 6px 0 oklch(0.34 0.08 var(--hue));
-  color: #fff;
-}
-.current .node {
-  width: 84px;
-  height: 84px;
-  border-radius: 28px;
-  background: var(--gold);
-  box-shadow:
-    0 7px 0 color-mix(in oklch, var(--gold) 55%, #000),
-    0 0 0 9px color-mix(in oklch, var(--gold) 26%, transparent);
-  color: #211f1b;
-  font-size: 34px;
-}
-.locked .node {
+/* Jede Karte misst sich selbst, damit die Schrift mit ihrer Breite wächst
+   und lange Namen in der Karte bleiben. */
+.card {
+  --face: #f5cf5c;
+  --edge: #211f1b;
+  --face-ink: #2a2014;
+  position: relative;
+  container-type: inline-size;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
   box-sizing: border-box;
-  border: 2px dashed var(--line2);
-  background: var(--surface2);
-  color: var(--ink3);
+  min-width: 0;
+  min-height: 124px;
+  padding: 10px 10px 8px 12px;
+  overflow: hidden;
+  border: 2.5px solid var(--edge);
+  border-radius: 18px;
+  background: var(--face);
+  box-shadow: 4px 5px 0 var(--edge);
+  color: var(--face-ink);
+  font-family: var(--font-fun);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.card:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.gold {
+  --face: #f5cf5c;
+}
+.silver {
+  --face: #dde1ea;
+  --face-ink: #262a33;
+}
+.bronze {
+  --face: #e4a477;
+  --face-ink: #2e1a0c;
+}
+.legendDot.gold,
+.legendDot.silver,
+.legendDot.bronze {
+  background: var(--face);
+}
+.open {
+  --face: #f6efdc;
+}
+.current {
+  --face: #f2ead6;
+  box-shadow:
+    4px 5px 0 var(--edge),
+    0 0 0 7px color-mix(in oklch, var(--gold) 45%, transparent);
+}
+.locked {
+  --face: var(--surface2);
+  --edge: var(--line2);
+  --face-ink: var(--ink3);
+  border-width: 2px;
+  box-shadow: 3px 4px 0 var(--edge);
   cursor: default;
 }
-.label {
-  font-family: var(--font-fun);
-  font-size: 13.5px;
+/* Dunkel: Kante in der Kartenfarbe abgedunkelt, damit sie sichtbar bleibt. */
+[data-theme="dark"] .card:not(.locked) {
+  --edge: color-mix(in oklch, var(--face) 38%, #000);
+}
+.gloss {
+  position: absolute;
+  top: 6px;
+  width: 26px;
+  height: 26px;
+  color: rgba(255, 255, 255, 0.88);
+  pointer-events: none;
+}
+.glossLeft {
+  left: 8px;
+}
+.glossRight {
+  right: 8px;
+}
+.cardText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  /* Platz für den Glanz oben in den Ecken. */
+  padding-top: 24px;
+}
+.cardMain,
+.cardSub {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+.cardMain {
+  -webkit-line-clamp: 3;
+  font-size: clamp(13px, 12.5cqi, 19px);
+  font-weight: 600;
+  line-height: 1.12;
+}
+.cardKeys {
+  -webkit-line-clamp: 2;
+  font-size: clamp(15px, 15cqi, 23px);
+}
+.cardSub {
+  -webkit-line-clamp: 2;
+  font-family: var(--font);
+  font-size: clamp(10.5px, 9cqi, 12.5px);
   font-weight: 600;
   line-height: 1.2;
+  opacity: 0.85;
 }
-.current .label {
-  font-size: 15px;
+.cardFoot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 26px;
 }
-.locked .label {
-  color: var(--ink3);
-}
-.stars {
-  font-size: 14px;
-  letter-spacing: 2px;
-  line-height: 1;
-  color: var(--gold);
-}
-.go {
-  justify-self: start;
-  padding: 8px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--nav);
-  color: var(--nav-accent);
-  font-size: 12.5px;
+.cardNumber {
+  font-size: clamp(18px, 18cqi, 26px);
   font-weight: 700;
-  cursor: pointer;
+  line-height: 1;
 }
+.medal {
+  font-size: 13px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+/* Das eigene Tier sitzt auf der aktuellen Karte und wippt leicht. */
 .buddy {
-  display: none;
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  width: 52px;
+  height: 52px;
+  pointer-events: none;
+  animation: bob 2.4s ease-in-out infinite;
 }
 
 /* ---------- Seitenkarten ---------- */
@@ -257,52 +373,16 @@
   cursor: pointer;
 }
 
-/* ============ Pfad-Karte ab 700 px, Seitenspalte ab 1000 px ============ */
+/* ============ Seitenspalte ab 1000 px ============ */
 @container (min-width: 700px) {
-  .map {
-    min-height: 560px;
-    padding: 14px 12px;
+  .board {
+    padding: 22px 22px 26px;
   }
-  .canvas {
-    position: relative;
-    width: min(100%, 670px);
-    aspect-ratio: 670 / 540;
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
   }
-  .path {
-    position: absolute;
-    inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  .stations {
-    position: absolute;
-    inset: 0;
-    display: block;
-  }
-  .station {
-    position: absolute;
-    left: var(--x);
-    top: var(--y);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 7px;
-    width: 150px;
-    transform: translate(-50%, -31px);
-    text-align: center;
-  }
-  .station.current {
-    transform: translate(-50%, -42px);
-  }
-  .buddy {
-    position: absolute;
-    top: -66px;
-    left: 40px;
-    display: block;
-    width: 70px;
-    height: 70px;
-    animation: bob 2.4s ease-in-out infinite;
+  .card {
+    min-height: 138px;
   }
 }
 @container (min-width: 1000px) {

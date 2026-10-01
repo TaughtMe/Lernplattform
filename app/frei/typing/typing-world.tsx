@@ -26,12 +26,24 @@ import {
 import { createTypingProgressRepository } from "../../../src/storage/personal-learning-events";
 import { useThemeToggle } from "../../ui/theme";
 import { useLearnerProfile } from "../../ui/use-learner-profile";
-import { MapScreen, type MapStation } from "../../views/tastenwelt/map-screen";
+import {
+  MapScreen,
+  type MapArea,
+  type MapLesson,
+} from "../../views/tastenwelt/map-screen";
 import {
   PracticeScreen,
   type PracticeTile,
 } from "../../views/tastenwelt/practice-screen";
-import { coachSay, keyCodeOf, keyTarget, starsFor } from "./typing-coach";
+import {
+  coachSay,
+  keyCodeOf,
+  keyTarget,
+  lessonKeys,
+  medalFor,
+  shortLessonTitle,
+  starsFor,
+} from "./typing-coach";
 
 type Round = {
   lesson: LessonDef;
@@ -119,18 +131,6 @@ export function TypingWorld() {
     setRound(newRound(lesson, stationIndex));
   }
 
-  function startStation(index: number) {
-    const entry = states[index];
-    if (!entry || entry.state === "locked") return;
-    const lesson =
-      entry.next ??
-      entry.station.lessons.find((item) =>
-        isTypingLessonUnlocked(item.id, completed),
-      ) ??
-      entry.station.lessons[0];
-    if (lesson) start(lesson, index);
-  }
-
   function type(char: string) {
     setRound((current) => {
       if (!current || current.stats) return current;
@@ -185,39 +185,58 @@ export function TypingWorld() {
           practiceKeys: [...unsure.map((item) => item.char), " "],
         }
       : null;
-    const mapStations: MapStation[] = states.map((entry) => {
-      const tried = entry.station.lessons
-        .map((lesson) => progress[lesson.id]?.bestAccuracy)
-        .filter((value): value is number => value !== undefined);
-      const average = tried.length
-        ? tried.reduce((sum, value) => sum + value, 0) / tried.length
-        : 0;
-      return {
-        title: entry.station.title,
-        state:
-          entry.state === "done"
+    // Alle Lektionen der Reihe nach; die erste offene ist die aktuelle.
+    const flat = stations.flatMap((station, stationIndex) =>
+      station.lessons.map((lesson) => ({ lesson, stationIndex })),
+    );
+    const currentEntry = flat.find(
+      ({ lesson }) =>
+        !completed.has(lesson.id) &&
+        isTypingLessonUnlocked(lesson.id, completed),
+    );
+    const currentLesson = currentEntry?.lesson;
+    const areas: MapArea[] = stations.map((station) => ({
+      title: station.title,
+      lessons: station.lessons.map((lesson): MapLesson => {
+        const best = progress[lesson.id]?.bestAccuracy;
+        const done = completed.has(lesson.id);
+        return {
+          title: shortLessonTitle(lesson.title),
+          keys: lessonKeys(lesson),
+          state: done
             ? "done"
-            : entry.state === "current"
+            : lesson === currentLesson
               ? "current"
-              : "locked",
-        stars: entry.state === "done" ? starsFor(average) : 0,
-      };
-    });
+              : isTypingLessonUnlocked(lesson.id, completed)
+                ? "open"
+                : "locked",
+          medal: done ? medalFor(best ?? 0) : null,
+        };
+      }),
+    }));
     return (
       <MapScreen
         animal={profile?.animal ?? null}
         theme={theme}
         onToggleTheme={toggleTheme}
-        stations={mapStations}
+        areas={areas}
         today={{
           done: TYPING_LESSONS.filter((lesson) => completed.has(lesson.id))
             .length,
           total: TYPING_LESSONS.length,
-          nextLabel: current >= 0 ? `Weiter mit Stufe ${current + 1}` : null,
+          nextLabel: currentEntry
+            ? `Weiter mit Lektion ${flat.indexOf(currentEntry) + 1}`
+            : null,
         }}
         unsure={{ keys: unsure.slice(0, 4).map((item) => item.char), heat }}
-        onStation={startStation}
-        onContinue={() => current >= 0 && startStation(current)}
+        onLesson={(index) => {
+          const entry = flat[index];
+          if (entry && isTypingLessonUnlocked(entry.lesson.id, completed))
+            start(entry.lesson, entry.stationIndex);
+        }}
+        onContinue={() =>
+          currentEntry && start(currentEntry.lesson, currentEntry.stationIndex)
+        }
         {...(extra
           ? { onExtra: () => start(extra, Math.max(0, current)) }
           : {})}

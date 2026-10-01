@@ -78,7 +78,7 @@ test("server-renders the complete learning and teacher workspaces", async () => 
   for (const [path, title] of [
     ["/lernen", "Weiterlernen"],
     ["/ueben", "Tastenwelt"],
-    ["/frei/typing", "Stationen von der Grundstellung"],
+    ["/frei/typing", "Bereiche von der Grundstellung"],
     ["/lernen/material", "Lernwerkstatt"],
     ["/frei/german/lernwoerter", "Lernwörter"],
     ["/klasse/7b", "Klasse 7b"],

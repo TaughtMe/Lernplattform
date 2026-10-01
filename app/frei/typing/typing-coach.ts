@@ -50,6 +50,33 @@ export function starsFor(accuracy: number) {
   return accuracy >= 97 ? 3 : accuracy >= 90 ? 2 : 1;
 }
 
+/**
+ * Medaille der Lektionskarte. Geschafft ist eine Lektion ab 90 %; darüber
+ * gibt es Bronze, ab 94 % Silber und ab 97 % Gold.
+ */
+export function medalFor(accuracy: number) {
+  return accuracy >= 97 ? "gold" : accuracy >= 94 ? "silver" : "bronze";
+}
+
+/** Kartenname ohne Reihen-Vorsilbe, die schon im Bereichstitel steht. */
+export function shortLessonTitle(title: string) {
+  const short = title
+    .replace(
+      /^(Grundstellung|Obere Reihe|Untere Reihe|Oben|Unten|Zahlen):\s*/,
+      "",
+    )
+    .trim();
+  return short.charAt(0).toLocaleUpperCase("de-DE") + short.slice(1);
+}
+
+/** Neue Tasten der Lektion als Kartenaufschrift, z. B. „f und j“. */
+export function lessonKeys(lesson: { newKeys: readonly string[] }) {
+  const keys = lesson.newKeys.map((key) => (key === " " ? "Leertaste" : key));
+  if (keys.length === 0 || keys.length > 4) return null;
+  if (keys.length === 1) return keys[0] ?? null;
+  return `${keys.slice(0, -1).join(", ")} und ${keys.at(-1)}`;
+}
+
 const quote = (char: string) => (char === " " ? "die Leertaste" : `„${char}“`);
 
 /** Kommentar des Tiers während und nach der Übung. */

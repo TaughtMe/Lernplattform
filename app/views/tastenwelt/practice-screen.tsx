@@ -99,7 +99,7 @@ export function PracticeScreen(props: PracticeScreenProps) {
           <button
             type="button"
             className={styles.raised}
-            aria-label="Zum Lernweg"
+            aria-label="Zur Übersicht"
             onClick={props.onBack}
           >
             <Icon
