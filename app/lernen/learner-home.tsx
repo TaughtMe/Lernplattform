@@ -7,9 +7,6 @@ import { HomeScreen } from "../views/lernen/home-screen";
 import { weekStates } from "./dashboard-data";
 import { useLearnerDashboard } from "./use-learner-dashboard";
 
-/** Tagesziel in Aufgaben; der Ring füllt sich damit über den Tag. */
-const DAILY_TARGET = 20;
-
 /** Lernen-Startseite (Design 3a/3b): verbindet Lernstand und Ansicht. */
 export function LearnerHome() {
   const snapshot = useLearnerDashboard();
@@ -34,8 +31,9 @@ export function LearnerHome() {
       animal={profile?.animal ?? null}
       theme={theme}
       onToggleTheme={toggleTheme}
+      // Tagesziel und „Heute fällig“ zählen dieselben Aufgaben.
       done={snapshot.completedToday}
-      target={DAILY_TARGET}
+      target={snapshot.completedToday + dueOpen}
       continueHref={primary?.route ?? "/ueben"}
       week={weekStates(snapshot.activeDays)}
       due={{

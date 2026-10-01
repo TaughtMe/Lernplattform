@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { learnerProfileRepository } from "../../../src/storage/learner-profile";
 import { useHydrated } from "../../components/use-hydrated";
 import { useLearnerProfile } from "../use-learner-profile";
@@ -79,12 +79,17 @@ export function StudentShell({
   useEffect(() => {
     if (hydrated && !profile) learnerProfileRepository.ensure();
   }, [hydrated, profile]);
+  // Getippter Eintrag gilt sofort als aktiv, bis die neue Seite da ist; so
+  // reagiert die Leiste auch bei langsamer Verbindung ohne Verzögerung.
+  const [pending, setPending] = useState<{ href: string; from: string }>();
+  const waiting = pending !== undefined && pending.from === activePath;
+  const shownPath = waiting ? pending.href : activePath;
   const items = NAV.filter((item) => item.areas.some((a) => visibility[a]));
-  const profileActive = activePath.startsWith(PROFILE_HREF);
+  const profileActive = shownPath.startsWith(PROFILE_HREF);
   let active: NavItem | null = null;
   let length = -1;
   for (const item of items) {
-    const current = matchLength(item, activePath);
+    const current = matchLength(item, shownPath);
     if (current > length) {
       active = item;
       length = current;
@@ -101,6 +106,13 @@ export function StudentShell({
       profileHref={PROFILE_HREF}
       profileActive={profileActive}
       hideNav={hideNav}
+      pending={waiting}
+      onNavigate={(href) => {
+        if (href === activePath) return;
+        setPending({ href, from: activePath });
+        // Bricht der Wechsel ab, verschwindet der Ladezustand von selbst.
+        window.setTimeout(() => setPending(undefined), 8000);
+      }}
       footer={footer}
     >
       {children}

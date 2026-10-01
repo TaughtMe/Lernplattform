@@ -270,8 +270,8 @@ export function TeacherProfilePanel() {
               placeholder="z. B. Buch Klasse 5"
             />
             <span className="ui-small ui-muted">
-              Gilt für alle übernommenen Vokabeln. Ein Tag an der Vokabel geht
-              vor.
+              Vorschlag für den Tag jeder Runde, im Vokabelheft änderbar. Ein
+              Tag an der Vokabel geht vor.
             </span>
           </label>
           <Button type="submit" disabled={!ready}>

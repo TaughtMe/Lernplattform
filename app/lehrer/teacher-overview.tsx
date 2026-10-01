@@ -81,7 +81,7 @@ export function TeacherOverview() {
       detail: counts
         ? `${counts.assignments} Aufgaben`
         : "Aufträge und Abgabenachweise",
-      visible: visibility.lehrer,
+      visible: visibility["lehrer-aufgaben"],
     },
     {
       href: "/lehrer/haeuser",

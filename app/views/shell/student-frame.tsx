@@ -20,6 +20,8 @@ export function StudentFrame({
   profileHref,
   profileActive = false,
   hideNav = false,
+  pending = false,
+  onNavigate,
   footer,
   children,
 }: {
@@ -28,6 +30,9 @@ export function StudentFrame({
   profileActive?: boolean;
   /** Vollbild (z. B. laufende Runde): ohne Navigation. */
   hideNav?: boolean;
+  /** Eine angetippte Seite lädt noch. */
+  pending?: boolean;
+  onNavigate?: (href: string) => void;
   /** Seitenfuß am Ende des Inhalts. */
   footer?: ReactNode;
   children: ReactNode;
@@ -40,7 +45,8 @@ export function StudentFrame({
           aria-label="Hauptnavigation"
           hidden={hideNav}
         >
-          <Link href="/lernen" className={styles.brand} aria-label="Lernraum">
+          {/* Das L führt zur Startseite (Raumcode, Lehrer-Login). */}
+          <Link href="/" className={styles.brand} aria-label="Zur Startseite">
             L
           </Link>
           {items.map((item) => (
@@ -49,6 +55,10 @@ export function StudentFrame({
               href={item.href}
               className={styles.item}
               aria-current={item.active ? "page" : undefined}
+              onClick={(event) => {
+                if (!event.metaKey && !event.ctrlKey && !event.shiftKey)
+                  onNavigate?.(item.href);
+              }}
             >
               <Icon name={item.icon} size={23} strokeLinejoin="miter" />
               {item.label}
@@ -59,6 +69,10 @@ export function StudentFrame({
             className={styles.profile}
             aria-label="Profileinstellungen"
             aria-current={profileActive ? "page" : undefined}
+            onClick={(event) => {
+              if (!event.metaKey && !event.ctrlKey && !event.shiftKey)
+                onNavigate?.(profileHref);
+            }}
           >
             <Icon name="gear" size={20} />
             <span className={styles.profileLabel} aria-hidden="true">
@@ -66,6 +80,13 @@ export function StudentFrame({
             </span>
           </Link>
         </nav>
+        {pending ? (
+          <span
+            className={styles.loading}
+            role="progressbar"
+            aria-label="Seite wird geladen"
+          />
+        ) : null}
         <main className={cx(styles.main, hideNav && styles.bare)} id="inhalt">
           <div className={styles.content}>{children}</div>
           {footer}

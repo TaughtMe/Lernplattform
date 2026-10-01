@@ -33,6 +33,8 @@ declare const styles: {
   readonly spacer: string;
   readonly table: string;
   readonly tag: string;
+  readonly tagField: string;
+  readonly tagInput: string;
   readonly title: string;
 };
 export default styles;

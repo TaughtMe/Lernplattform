@@ -36,7 +36,8 @@ const RING = { size: 290, radius: 132, stroke: 11 };
 export function HomeScreen(props: HomeScreenProps) {
   const { done, target, due, difficult, week } = props;
   const length = 2 * Math.PI * RING.radius;
-  const ratio = target > 0 ? Math.min(1, done / target) : 0;
+  // Ohne fällige Aufgaben ist der Tag erledigt (Ring voll, wenn geübt wurde).
+  const ratio = target > 0 ? Math.min(1, done / target) : done > 0 ? 1 : 0;
   const open = Math.max(0, due.total - due.done);
   const activeDays = week.filter((day) => day.state === "active").length;
   return (
@@ -105,9 +106,13 @@ export function HomeScreen(props: HomeScreenProps) {
                 {props.animal ?? "Dein Lernraum"}
               </p>
               <p className={styles.today}>
-                {done >= target
-                  ? "Tagesziel geschafft – alles Weitere ist ein Extra"
-                  : `${done} von ${target} Aufgaben heute`}
+                {target === 0
+                  ? done > 0
+                    ? "Alles Fällige erledigt – alles Weitere ist ein Extra"
+                    : "Heute ist nichts fällig – frei üben"
+                  : done >= target
+                    ? "Tagesziel geschafft – alles Weitere ist ein Extra"
+                    : `${done} von ${target} Aufgaben heute`}
               </p>
             </div>
             <div className={styles.actions}>

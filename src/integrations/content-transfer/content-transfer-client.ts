@@ -42,6 +42,17 @@ function downloadPayload(row: TransferDownloadRow): DownloadedEncryptedBundle {
   };
 }
 
+/** Verständliche Meldung statt roher Datenbankfehler. */
+export function transferErrorMessage(message: string) {
+  if (/permission denied/i.test(message)) {
+    return "Die Übertragung ist auf dem Server noch nicht freigeschaltet (fehlende Datenbankrechte). Bitte die aktuelle Supabase-Migration einspielen.";
+  }
+  if (/failed to fetch|network/i.test(message)) {
+    return "Keine Verbindung zum Server. Bitte Internetverbindung prüfen und erneut versuchen.";
+  }
+  return message;
+}
+
 export async function publishLearningBundle(
   client: SupabaseClient,
   bundle: LearningBundleV1,
@@ -53,7 +64,8 @@ export async function publishLearningBundle(
     p_content_version: bundle.revision,
     p_ttl_minutes: ttlMinutes,
   });
-  if (reservation.error) throw new Error(reservation.error.message);
+  if (reservation.error)
+    throw new Error(transferErrorMessage(reservation.error.message));
   const capability = firstRow<{
     transfer_id: string;
     upload_token: string;
@@ -77,7 +89,7 @@ export async function publishLearningBundle(
     p_wrapped_key_manual: encrypted.wrappedKeyManual,
     p_crypto_metadata: encrypted.cryptoMetadata,
   });
-  if (upload.error) throw new Error(upload.error.message);
+  if (upload.error) throw new Error(transferErrorMessage(upload.error.message));
   if (upload.data !== true)
     throw new Error("Das verschlüsselte Paket wurde nicht übernommen.");
 
@@ -101,7 +113,8 @@ export async function retrieveLearningBundleByQr(
     p_transfer_id: payload.transferId,
     p_retrieval_token: payload.retrievalToken,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error)
+    throw new Error(transferErrorMessage(response.error.message));
   const row = firstRow<TransferDownloadRow>(response.data);
   if (!row) throw new Error("Das Paket ist ungültig oder bereits abgelaufen.");
   return decryptLearningBundle(downloadPayload(row), {
@@ -117,7 +130,8 @@ export async function retrieveLearningBundleByCode(
   const response = await client.rpc("retrieve_content_transfer_by_code", {
     p_transfer_code: transferCode,
   });
-  if (response.error) throw new Error(response.error.message);
+  if (response.error)
+    throw new Error(transferErrorMessage(response.error.message));
   const row = firstRow<TransferDownloadRow>(response.data);
   if (!row) throw new Error("Der Code ist ungültig, gesperrt oder abgelaufen.");
   return decryptLearningBundle(downloadPayload(row), {

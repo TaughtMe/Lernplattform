@@ -87,6 +87,12 @@ export const RELEASE_AREAS = {
     routes: ["/lehrer"],
     stage: "frei",
   },
+  "lehrer-aufgaben": {
+    label: "Aufgaben der Lehrkraft",
+    routes: ["/lehrer/aufgaben"],
+    // Kommt später; bis dahin nur mit Vorschau auf dem Gerät.
+    stage: "vorschau",
+  },
   motivation: {
     label: "Häuser, Serie und Abzeichen",
     routes: ["/haus", "/lehrer/haeuser"],

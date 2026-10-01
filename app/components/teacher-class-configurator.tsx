@@ -342,7 +342,6 @@ export function TeacherClassConfigurator() {
             Namen und Zuordnungen bleiben ausschließlich auf diesem Lehrergerät.
           </p>
         </div>
-        <Pill>Lokal auf diesem Lehrergerät</Pill>
       </div>
 
       <form

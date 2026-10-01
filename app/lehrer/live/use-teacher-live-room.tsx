@@ -210,6 +210,9 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     useState<VocabularyTransferChoice>("none");
   // Standard-Tag aus den Lehrer-Einstellungen für übernommene Vokabeln.
   const [lernboxTag, setLernboxTag] = useState("");
+  // Tag dieser Runde; leer gilt der Standard-Tag aus den Einstellungen.
+  const [roundTag, setRoundTag] = useState("");
+  const vocabularyTag = roundTag.trim() || lernboxTag;
   useEffect(() => {
     let active = true;
     void createTeacherProfileRepository()
@@ -633,7 +636,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         source,
         vocabularyDirection: direction,
         vocabularyTransfer,
-        vocabularyTag: lernboxTag,
+        vocabularyTag,
         gameMode,
         shuffleWords,
         repeatWrongAnswers,
@@ -688,7 +691,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       gameMode,
       repeatWrongAnswers,
       vocabularyTransfer,
-      lernboxTag,
+      vocabularyTag,
       showStars,
       shuffleWords,
       source,
@@ -761,6 +764,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         setStationShuffle(restored.stationShuffle);
         setRepeatWrongAnswers(restored.repeatWrongAnswers);
         setVocabularyTransfer(restored.vocabularyTransfer);
+        setRoundTag(restored.vocabularyTag ?? "");
         setAssistance(restored.uebungAssistanceEnabled);
         setAttempts(restored.uebungMaxAttempts);
         setTts(restored.isTtsEnabled);
@@ -1287,6 +1291,8 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     vocabularyTransfer,
     setVocabularyTransfer,
     lernboxTag,
+    roundTag,
+    setRoundTag,
     updateVocabularyTag,
     gameMode,
     setGameMode,

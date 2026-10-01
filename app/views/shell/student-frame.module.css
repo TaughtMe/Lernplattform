@@ -36,6 +36,40 @@
   display: none;
 }
 
+/* Ladebalken oben, solange eine angetippte Seite lädt. */
+.loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: color-mix(in oklch, var(--gold) 30%, transparent);
+}
+.loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--gold);
+  animation: loading 0.9s ease-in-out infinite;
+}
+@keyframes loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading::after {
+    width: 100%;
+    animation: none;
+  }
+}
+
 /* ---------- Tab-Leiste (mobil, 2b) ---------- */
 .nav {
   composes: view from "../parts/parts.module.css";

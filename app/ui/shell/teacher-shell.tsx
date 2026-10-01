@@ -58,7 +58,7 @@ const NAV: readonly {
     href: "/lehrer/aufgaben",
     label: "Aufgaben",
     icon: "list",
-    release: "lehrer",
+    release: "lehrer-aufgaben",
   },
   {
     area: "houses",

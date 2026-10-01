@@ -622,7 +622,8 @@ test("teacher material and assignment tools share a consistent grid", async ({
     page.getByRole("button", { name: "Datei importieren" }),
   ).toBeVisible();
 
-  await page.goto("/lehrer/aufgaben");
+  // Aufgaben sind noch in der Vorschau.
+  await page.goto("/lehrer/aufgaben?vorschau=an");
   const layout = await page.evaluate(() => {
     const boxes = [
       'form[aria-labelledby="assignment-form-title"]',
@@ -806,7 +807,9 @@ test("the local teacher workspace manages classes, students, assignments and QR 
     .click();
   await expect(studentPanel.getByText("Alex")).toBeVisible();
 
-  await page.goto("/lehrer/aufgaben", { waitUntil: "networkidle" });
+  await page.goto("/lehrer/aufgaben?vorschau=an", {
+    waitUntil: "networkidle",
+  });
   const assignmentForm = page.getByRole("form", {
     name: "Aufgabe erstellen",
   });

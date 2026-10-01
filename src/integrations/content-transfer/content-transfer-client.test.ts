@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import { buildTeacherVocabularyBundle } from "../../domain/teacher-content-transfer";
 import {
+  publishLearningBundle,
   retrieveLearningBundleByCode,
   retrieveLearningBundleByQr,
 } from "./content-transfer-client";
@@ -30,7 +31,21 @@ describe("content transfer client failures", () => {
         clientWithRpc({ data: null, error: { message: "Failed to fetch" } }),
         manualCode,
       ),
-    ).rejects.toThrow("Failed to fetch");
+    ).rejects.toThrow("Keine Verbindung zum Server");
+  });
+
+  it("explains missing database rights instead of the raw error", async () => {
+    await expect(
+      publishLearningBundle(
+        clientWithRpc({
+          data: null,
+          error: {
+            message: "permission denied for function reserve_content_transfer",
+          },
+        }),
+        bundle,
+      ),
+    ).rejects.toThrow("Supabase-Migration");
   });
 
   it("rejects expired or locked manual codes", async () => {

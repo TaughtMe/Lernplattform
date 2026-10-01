@@ -6,6 +6,7 @@ declare const styles: {
   readonly frame: string;
   readonly item: string;
   readonly layout: string;
+  readonly loading: string;
   readonly main: string;
   readonly nav: string;
   readonly profile: string;

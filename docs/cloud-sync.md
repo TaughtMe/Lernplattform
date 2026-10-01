@@ -1,0 +1,41 @@
+# Cloud-Synchronisation (Grundlage)
+
+Schüler und Lehrkräfte können ihre lokalen Daten über einen Cloudspeicher
+zwischen Geräten abgleichen. Pro Rolle gibt es genau eine Datei:
+
+| Rolle     | Datei                        | Inhalt                                     |
+| --------- | ---------------------------- | ------------------------------------------ |
+| Schüler   | `lernraum-schueler-v1.json`  | Persönliche Sicherung (LernBox, Lernstand) |
+| Lehrkraft | `lernraum-lehrkraft-v1.json` | Klassen, Inhalte, Einstellungen            |
+
+Beim **Holen** wird zusammengeführt (vorhandene Sicherungslogik), nichts wird
+blind überschrieben. Code: `src/integrations/cloud-sync/`, Oberfläche:
+`app/components/cloud-sync-panel.tsx` (Profil bzw. Lehrer-Einstellungen).
+
+## Anbieter
+
+- **WebDAV** (z. B. Nextcloud, ownCloud): sofort nutzbar mit Adresse,
+  Benutzername und App-Passwort. Dateien liegen im Ordner `Lernraum`. Das
+  Passwort wird nicht gespeichert. Der Server muss Zugriffe von der
+  Lernraum-Adresse erlauben (CORS: `Authorization`, `Content-Type`; Methoden
+  `GET`, `PUT`, `MKCOL`).
+- **Microsoft OneDrive**: App-Ordner (`Files.ReadWrite.AppFolder`), Anmeldung
+  per OAuth 2.0 mit PKCE ohne Client-Secret.
+- **Google Drive**: versteckter App-Datenordner (`drive.appdata`), ebenfalls
+  OAuth 2.0 mit PKCE.
+
+## Konten einrichten (noch offen)
+
+1. OneDrive: App-Registrierung in Microsoft Entra ID als „Single-page
+   application“, Redirect-URI der Lernraum-Adresse, Berechtigung
+   `Files.ReadWrite.AppFolder`. Client-ID als
+   `NEXT_PUBLIC_ONEDRIVE_CLIENT_ID` hinterlegen.
+2. Google Drive: OAuth-Client in der Google Cloud Console, Scope
+   `https://www.googleapis.com/auth/drive.appdata`, Redirect-URI der
+   Lernraum-Adresse. Client-ID als `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID`.
+3. Danach fehlen nur noch die Rückleitungsseite (Code gegen Token tauschen,
+   `tokenRequest`) und der Verbinden-Knopf; Dateizugriff
+   (`createOneDriveTarget`, `createGoogleDriveTarget`) und Abgleich sind fertig.
+
+Solange keine Client-ID gesetzt ist, zeigen die Einstellungen „Konto noch
+nicht eingerichtet“.

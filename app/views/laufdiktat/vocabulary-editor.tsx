@@ -27,7 +27,9 @@ export type VocabularyEditorProps = {
   direction: VocabularyDirectionChoice;
   caseSensitive: boolean;
   transfer: VocabularyTransfer;
-  /** Standard-Tag aus den Einstellungen für übernommene Vokabeln. */
+  /** Tag dieser Runde für Vokabeln ohne eigenen Tag. */
+  roundTag?: string;
+  /** Vorschlag aus den Einstellungen, solange kein Runden-Tag gesetzt ist. */
   defaultTag?: string;
   tableInput: string;
   onLocale?: (side: Side, locale: string) => void;
@@ -39,6 +41,7 @@ export type VocabularyEditorProps = {
   onCaseSensitive?: (value: boolean) => void;
   onTransfer?: (value: VocabularyTransfer) => void;
   onTag?: (id: string, value: string) => void;
+  onRoundTag?: (value: string) => void;
   onTableInput?: (value: string) => void;
   onImportTable?: () => void;
   onImportFile?: (file: File | undefined) => void;
@@ -56,6 +59,8 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
     ["right-to-left", `${right} → ${left}`],
     ["mixed", "Beide Richtungen gemischt"],
   ];
+  // Der Runden-Tag; ohne Eingabe gilt der Vorschlag aus den Einstellungen.
+  const roundTag = props.roundTag?.trim() || props.defaultTag?.trim() || "";
   const filled = props.pairs.filter(
     (pair) => pair.left.primary.trim() && pair.right.primary.trim(),
   ).length;
@@ -149,9 +154,9 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
                   className={cx(styles.input, styles.tag)}
                   aria-label={`LernBox-Tag Vokabel ${index + 1}`}
                   placeholder={
-                    props.defaultTag
-                      ? `Tag: ${props.defaultTag}`
-                      : "Tag für die LernBox (optional)"
+                    roundTag
+                      ? `Tag: ${roundTag} (eigener Tag geht vor)`
+                      : "Eigener Tag (optional)"
                   }
                   maxLength={80}
                   value={pair.tag ?? ""}
@@ -235,11 +240,6 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
             In die LernBox übernehmen
             <span className={styles.choiceHint}>
               Nach der Runde landen die Vokabeln in der persönlichen LernBox.
-              {props.transfer !== "none"
-                ? props.defaultTag
-                  ? ` Tag: „${props.defaultTag}“, je Vokabel änderbar.`
-                  : " Tag je Vokabel oder allgemein in den Einstellungen."
-                : ""}
             </span>
           </span>
         </label>
@@ -255,6 +255,23 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
             <option value="errors">Nur fehlerhafte Vokabeln</option>
             <option value="all">Alle Vokabeln</option>
           </select>
+        ) : null}
+        {props.transfer !== "none" ? (
+          <label className={styles.tagField}>
+            <span className={styles.choiceText}>
+              Tag für diese Runde
+              <span className={styles.choiceHint}>
+                Gilt für alle Vokabeln ohne eigenen Tag.
+              </span>
+            </span>
+            <input
+              className={cx(styles.input, styles.tagInput)}
+              maxLength={80}
+              placeholder={props.defaultTag || "z. B. Unit 3"}
+              value={props.roundTag ?? ""}
+              onChange={(event) => props.onRoundTag?.(event.target.value)}
+            />
+          </label>
         ) : null}
 
         <hr className={styles.divider} />

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useId,
   useRef,
   type CSSProperties,
@@ -73,6 +74,29 @@ export function PracticeScreen(props: PracticeScreenProps) {
   const textId = useId();
   const focusInput = () => input.current?.focus();
   const { tiles, result } = props;
+  const onCharRef = useRef(props.onChar);
+  useEffect(() => {
+    onCharRef.current = props.onChar;
+  });
+
+  // Gleich lostippen: Das Tippfeld hat beim Öffnen den Fokus, und Tasten
+  // außerhalb anderer Eingabefelder gehen ebenfalls in die Übung.
+  useEffect(() => {
+    if (result) return;
+    input.current?.focus({ preventScroll: true });
+    function onWindowKey(event: globalThis.KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target === input.current) return;
+      if (target?.closest("input, textarea, select, [contenteditable]")) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key.length !== 1) return;
+      event.preventDefault();
+      input.current?.focus({ preventScroll: true });
+      onCharRef.current?.(event.key);
+    }
+    window.addEventListener("keydown", onWindowKey);
+    return () => window.removeEventListener("keydown", onWindowKey);
+  }, [result]);
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -314,7 +338,7 @@ export function PracticeScreen(props: PracticeScreenProps) {
               >
                 <span className={styles.promptLabel}>
                   <Icon name="pointer" size={18} />
-                  Hier klicken und lostippen
+                  Einfach lostippen
                 </span>
               </button>
             ) : null}

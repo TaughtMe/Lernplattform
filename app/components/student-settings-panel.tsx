@@ -18,6 +18,7 @@ import {
   serializePersonalLearningBackupFromDatabase,
 } from "../../src/storage/personal-backup";
 import { AnimalImage } from "../ui/animal";
+import { CloudSyncPanel } from "./cloud-sync-panel";
 import { AnimalPicker } from "../ui/animal-picker";
 import { Segmented } from "../ui/primitives";
 import { useLearnerProfile } from "../ui/use-learner-profile";
@@ -121,6 +122,7 @@ export function StudentSettingsPanel() {
             </Link>
           </nav>
         </section>
+        <CloudSyncPanel area="student" />
       </div>
     </div>
   );
