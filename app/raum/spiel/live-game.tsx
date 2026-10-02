@@ -183,8 +183,9 @@ export function LiveRunningDictationGame({
           wrongCount / session.uebungMaxAttempts,
         )
       : "";
-  // Hilfe zählt erst, wenn Buchstabenhilfe oder Abschreibvorlage wirklich da ist.
-  const helpShown = kind === "vocabulary" && (copyMode || hint !== "");
+  // Als Hilfe zählt nur die Abschreibvorlage (Lösung sichtbar). Die
+  // Buchstabenhilfe erscheint im Üben schon nach einem Tippfehler und zählt nicht.
+  const helpShown = kind === "vocabulary" && copyMode;
   // Abgeleiteter Zustand: während des Renderns nachziehen, nicht per Effekt.
   if (helpShown && errorKey && !wordHelps[errorKey]) {
     setWordHelps({ ...wordHelps, [errorKey]: true });

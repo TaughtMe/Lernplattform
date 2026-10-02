@@ -286,17 +286,27 @@ test("a second round with help puts a known card back into box 1 without a dupli
     { question: "tree", box: 2, reverseBox: 1 },
   ]);
 
-  // Runde 2: bei „house“ erscheint die Buchstabenhilfe.
+  // Runde 2: „house“ dreimal falsch (Abschreibvorlage), „tree“ ein Tippfehler
+  // mit Buchstabenhilfe. Nur „house“ fällt zurück in Box 1.
   state.sessionId = sessions.three;
   state.gameMode = "UEBUNG";
   await page.goto("/raum?code=4829");
   await answerWord(page, "Hous");
-  await expect(page.getByLabel("Buchstabenhilfe")).toBeVisible();
   const field = page.getByRole("textbox", { name: "Deine Antwort" });
+  for (const wrong of ["Hau", "Hu"]) {
+    await field.fill(wrong);
+    await field.press("Enter");
+  }
+  await expect(page.getByLabel("Lösung: Haus")).toBeVisible();
   await field.fill("Haus");
   await field.press("Enter");
-  await answerWord(page, "Baum");
-  await expect(page.getByText("1 Vokabel üben wir noch einmal.")).toBeVisible();
+  await answerWord(page, "Bam");
+  await expect(page.getByLabel("Buchstabenhilfe")).toBeVisible();
+  await field.fill("Baum");
+  await field.press("Enter");
+  await expect(
+    page.getByText("2 Vokabeln üben wir noch einmal."),
+  ).toBeVisible();
 
   expect(await readCards(page)).toEqual([
     { question: "house", box: 1, reverseBox: 1 },

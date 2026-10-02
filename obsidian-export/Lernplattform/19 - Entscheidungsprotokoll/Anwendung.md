@@ -529,7 +529,7 @@ Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendu
 **Begriffe** (nur Vokabeln in einer Live-Runde ohne Stationsmodus):
 
 - **Fehlversuch:** abgeschickte, falsche Antwort.
-- **Hilfe:** Buchstabenhilfe oder Abschreibvorlage wurde tatsächlich angezeigt. Aufdecken, erneutes Aufdecken und Vorlesen sind keine Hilfe. Im Modus „Üben“ erscheint die Buchstabenhilfe nach dem ersten Fehlversuch automatisch und gilt als Hilfe.
+- **Hilfe:** Die Abschreibvorlage (Lösung sichtbar) wurde tatsächlich angezeigt. Aufdecken, erneutes Aufdecken, Vorlesen und die Buchstabenhilfe sind keine Hilfe. Die Buchstabenhilfe erscheint im Modus „Üben“ schon nach dem ersten Fehlversuch; würde sie zählen, setzte ein einzelner Tippfehler ein Wort auf Box 1. Das wurde nach Rückmeldung der Lehrkraft am 2. Oktober 2026 als zu streng verworfen.
 - **Sicher gewusst:** richtig, 0 Fehlversuche, keine Hilfe.
 
 **Ergebnis pro Wort und Platzierung** (gilt für die abgefragte Richtung, `reverse` bleibt unberührt beziehungsweise startet in Box 1):
@@ -547,5 +547,5 @@ Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendu
 
 **Datenschutz:** Hilfen pro Wort und Platzierungen bleiben auf dem Gerät (`sessionStorage`) und gehen nicht an den Server. `wordErrors` geht wie bisher mit dem Fortschritt an den Raum. Keine Datenbankänderung.
 
-**Bekannte Grenzen:** Schließt ein Kind die Seite vor dem Ende, wird nichts übernommen (Sitzungsspeicher). Liegt eine Vokabel in der LernBox in umgekehrter Richtung vor, erkennt der Fingerprint sie nicht als Dublette (bestehendes Verhalten). Im Modus „Üben“ führt schon ein einzelner Tippfehler zu `reset`, weil die Buchstabenhilfe automatisch erscheint; die Grenzwerte werden nach dem Probedurchlauf kalibriert.
+**Bekannte Grenzen:** Schließt ein Kind die Seite vor dem Ende, wird nichts übernommen (Sitzungsspeicher). Liegt eine Vokabel in der LernBox in umgekehrter Richtung vor, erkennt der Fingerprint sie nicht als Dublette (bestehendes Verhalten).
 

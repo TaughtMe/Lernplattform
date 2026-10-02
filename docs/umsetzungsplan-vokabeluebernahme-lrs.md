@@ -2,6 +2,10 @@
 
 Stand: 02.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `e23f96d`
 
+> **Fortschritt:** Teil 1 ist umgesetzt und geprüft (Branch `ccr-9abaa942-i94ooe`), einschließlich
+> der Korrektur vom 02.10.2026: Die Buchstabenhilfe zählt nicht mehr als Hilfe (siehe 1.1). Teil 2
+> baut auf diesem Stand auf. Der Probedurchlauf (Teil 3) steht für beide Teile noch aus.
+
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Die fachlichen Entscheidungen
 in Abschnitt 1 sind mit der projektverantwortlichen Lehrkraft abgestimmt und **verbindlich**.
 Wo der Code etwas anderes nahelegt, gilt dieser Plan. Bei echten Widersprüchen erst nachfragen und
@@ -39,12 +43,15 @@ Alle Begriffe gelten für Wörter vom Typ `vocabulary` in einer Live-Runde ohne 
 
 - **Fehlversuch:** eine abgeschickte, falsche Antwort zu einem Wort. Wird heute schon in
   `wordErrors[liveWordErrorKey(word)]` gezählt.
-- **Hilfe:** Das Kind hat zu diesem Wort **die Buchstabenhilfe** (`hint` in `live-game.tsx`) oder
-  **die Abschreibvorlage** (`copyMode` → `CopyGuide`) tatsächlich angezeigt bekommen.
+- **Hilfe:** Das Kind hat zu diesem Wort **die Abschreibvorlage** (`copyMode` → `CopyGuide`, zeigt
+  die Lösung) tatsächlich angezeigt bekommen.
   - **Keine** Hilfe ist: das erste Aufdecken, erneutes Aufdecken (`peeks`) und Vorlesen. Im
     Vokabelmodus zeigt das Aufdecken nur die Frage (`sentence={prompt}`), nicht die Lösung.
-  - Hinweis: Im Modus `UEBUNG` erscheint die Buchstabenhilfe nach dem ersten Fehlversuch
-    automatisch. Das ist gewollt und gilt als Hilfe (siehe 6. Kalibrierung).
+  - **Keine** Hilfe ist außerdem die Buchstabenhilfe (`hint`). Sie erscheint im Modus `UEBUNG`
+    schon nach dem ersten Fehlversuch automatisch. Würde sie zählen, setzte ein einzelner Tippfehler
+    ein Wort auf Box 1. Das ist zu streng (Entscheidung der Lehrkraft, 02.10.2026). Streng wird es
+    erst ab 3 Fehlversuchen; dann erscheint im Standard (`uebungMaxAttempts = 3`) auch die
+    Abschreibvorlage.
 - **Sicher gewusst:** richtig gelöst, 0 Fehlversuche, keine Hilfe.
 - **Nicht erreicht:** Das Wort wurde nicht abschließend beantwortet, weil die Lehrkraft die Runde
   vorzeitig beendet hat. Dabei gilt:
@@ -127,7 +134,9 @@ Niemals „zurückgestuft“, „Strafe“ oder Ähnliches. Vorschläge:
   2. Ein so angenommenes Wort gilt für die Platzierung als `practice` (kein Zurücksetzen, aber
      sofort fällig), nicht als `known`.
   3. `reset` erst ab **5** Fehlversuchen statt 3.
-  4. Die **Buchstabenhilfe zählt nicht als Hilfe**. Die Abschreibvorlage zählt weiterhin.
+  4. Auch die **Abschreibvorlage zählt nicht als Hilfe**. Sie erscheint im Standard schon nach 3
+     Fehlversuchen und würde sonst die Grenze von 5 aushebeln. Mit Schreiberleichterung entscheidet
+     also allein die Zahl der Fehlversuche.
 - Die Lehrkraft sieht in der Live-Übersicht ein tolerant angenommenes Wort als richtig. Es wird
   keine LRS-Information an Server, Raum oder andere Geräte übertragen.
 - Gültigkeit gegenüber `strictTypingMode`: Der strenge Tippmodus blockiert falsche Tasten bereits bei
@@ -268,7 +277,7 @@ In `app/raum/spiel/live-game.tsx`:
 
 - Unit: 2.1, 2.2 (Schnappschuss), 2.3, 2.4 wie beschrieben.
 - Komponenten:
-  - `app/raum/spiel/live-game.test.tsx`: Buchstabenhilfe angezeigt → Wort gilt als `reset`.
+  - `app/raum/spiel/live-game.test.tsx`: nur Buchstabenhilfe → `practice`; Abschreibvorlage → `reset`.
   - `app/components/live-room-join.test.tsx` (anlegen, falls nicht vorhanden): Runde wird mitten im
     Spiel beendet → Übernahme mit `unseen` und Meldung auf dem Ende-Bildschirm.
 - E2E: `e2e/live/vocabulary-transfer.spec.ts` erweitern:
@@ -348,7 +357,8 @@ Neue Datei `src/domain/class-seal.ts` mit Tests:
   - Danach `checkLiveAnswer` um eine Toleranzvariante ergänzen (neue reine Funktion in
     `src/integrations/laufdiktat/live-session.ts` oder `src/domain`, mit Tests), dazu die Rückmeldung
     „Richtig! So schreibt man es: …“.
-  - `PlacementRules` mit `resetAfterErrors: 5` übergeben, Buchstabenhilfe nicht als Hilfe zählen.
+  - `PlacementRules` mit `resetAfterErrors: 5` übergeben. Die Abschreibvorlage nicht als Hilfe zählen
+    (`helpShown` in `live-game.tsx` ist dann immer `false`).
   - Tolerant angenommene Wörter im Schnappschuss markieren (`toleratedSpelling`), damit sie als
     `practice` platziert werden. `classifyLiveVocabulary` entsprechend erweitern.
 - Kein sichtbares LRS-Etikett auf dem Schülerbildschirm, keins in der Lehrer-Live-Übersicht.
@@ -391,11 +401,14 @@ Nach Teil 1 bzw. Teil 2 auf einer Vorschau-Bereitstellung des Arbeitsbranches. A
 **Teil 1 – Vokabelübernahme (ca. 15 Minuten)**
 
 1. Vokabelheft mit 5 Vokabeln, Modus „Üben“, Option „Nur Übungsbedarf“. Raum starten und beitreten.
-2. Am Handy: Wort 1 sicher richtig, Wort 2 einmal falsch, Wort 3 so lange falsch, bis die Buchstabenhilfe
-   erscheint. Danach Runde zu Ende spielen.
+2. Am Handy: Wort 1 sicher richtig, Wort 2 einmal falsch, Wort 3 dreimal falsch, bis die Lösung als
+   Abschreibvorlage erscheint. Danach Runde zu Ende spielen.
    → LernBox: Wort 2 und 3 in Box 1, Wort 1 nicht übernommen.
 3. Neue Runde mit denselben Vokabeln, Option „Alle Vokabeln“. Alles sicher richtig.
    → Wörter 1, 4, 5 neu in Box 2. Wörter 2 und 3 bleiben, wo sie waren. Keine doppelten Karten.
+   3b. Karten aus Schritt 3 in der LernBox auf Box 3 hochüben (oder mehrere Tage später). Dann eine Runde
+   „Üben“: bei Wort 1 ein Tippfehler, bei Wort 4 dreimal falsch.
+   → Wort 1 bleibt in seiner Box und ist heute fällig. Wort 4 ist zurück in Box 1.
 4. Neue Runde, nach dem zweiten Wort am Laptop beenden.
    → Handy zeigt „Diese Runde ist beendet“ und eine Übernahme-Meldung. Nicht erreichte Wörter sind
    in der LernBox.
@@ -445,8 +458,7 @@ Pro Teil ein eigener Commit-Block. Danach:
 
 ## 6. Später zu kalibrieren (nach dem Probedurchlauf)
 
-- Im Modus „Üben“ erscheint die Buchstabenhilfe nach dem ersten Fehlversuch automatisch. Ein einzelner
-  Tippfehler führt dort deshalb zu `reset`. Die Zeile „1–2 Fehlversuche → bleibt in der Box“ wirkt
-  praktisch nur in den Modi Laufdiktat und Battle. Die Lehrkraft entscheidet nach dem Test, ob das so
-  bleibt.
+- Erledigt (02.10.2026): Die Buchstabenhilfe zählt nicht mehr als Hilfe; ein einzelner Tippfehler
+  setzt ein Wort nicht mehr auf Box 1. Achtung: Stellt die Lehrkraft „Versuche bis zur Lösung“ unter 3,
+  erscheint die Abschreibvorlage früher und führt dann früher zu `reset`. Das ist gewollt.
 - Grenzwerte der Schreiberleichterung (Abstand 1, 5 Versuche).

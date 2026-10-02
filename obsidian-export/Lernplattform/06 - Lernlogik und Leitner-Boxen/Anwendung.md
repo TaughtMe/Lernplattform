@@ -35,7 +35,7 @@ Die Platzierung beim Übernehmen aus dem Laufdiktat gilt für die abgefragte Ric
 |---|---|---|
 | Sicher gewusst (0 Fehlversuche, keine Hilfe) | Box 2, morgen fällig | unverändert |
 | 1–2 Fehlversuche, keine Hilfe | Box 1, sofort fällig | Box bleibt, sofort fällig |
-| Hilfe genutzt oder ab 3 Fehlversuchen | Box 1, sofort fällig | Box 1, sofort fällig |
+| Abschreibvorlage (Lösung) angezeigt oder ab 3 Fehlversuchen | Box 1, sofort fällig | Box 1, sofort fällig |
 | Nicht erreicht (vorzeitiges Ende) | Box 1, sofort fällig | unverändert |
 
 ## Lernstand und Leistungswertung

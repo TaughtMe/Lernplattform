@@ -30,7 +30,7 @@ Der persönliche Deutschbereich öffnet stattdessen direkt die Lernwörter. Die 
 - Persönlicher Lernfortschritt bleibt lokal.
 - Ein Fehler oder eine Hilfe beeinflusst den Lernstand nach denselben Regeln wie in der LernBox.
 - Im Test falsch beantwortete Vokabeln werden als fällig markiert. Eine mit Hilfe gelöste Vokabel steigt nicht auf und wird kurzfristig erneut abgefragt.
-- Bei der Übernahme aus einer Live-Runde gilt die Tabelle aus Entscheidung 49: sicher gewusst → Box 2 (neu) beziehungsweise unverändert (vorhanden); 1–2 Fehlversuche → Box 1 beziehungsweise Box bleibt, sofort fällig; Hilfe oder ab 3 Fehlversuchen → Box 1; nicht erreicht → Box 1 (neu) beziehungsweise unverändert. Hilfen werden nur lokal im Sitzungsspeicher gemerkt.
+- Bei der Übernahme aus einer Live-Runde gilt die Tabelle aus Entscheidung 49: sicher gewusst → Box 2 (neu) beziehungsweise unverändert (vorhanden); 1–2 Fehlversuche → Box 1 beziehungsweise Box bleibt, sofort fällig; Abschreibvorlage oder ab 3 Fehlversuchen → Box 1 (die Buchstabenhilfe zählt nicht als Hilfe); nicht erreicht → Box 1 (neu) beziehungsweise unverändert. Hilfen werden nur lokal im Sitzungsspeicher gemerkt.
 - Eine Vokabel kann innerhalb einer Runde höchstens einmal aufsteigen.
 
 ## Spätere Übernahme aus Texten

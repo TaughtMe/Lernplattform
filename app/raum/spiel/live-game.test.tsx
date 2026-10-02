@@ -301,7 +301,7 @@ describe("LiveRunningDictationGame", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("places a word as reset when the letter hint was shown", async () => {
+  it("places a word as practice when only the letter hint was shown", async () => {
     window.sessionStorage.clear();
     const user = userEvent.setup();
     ingestBundle.mockClear();
@@ -334,13 +334,56 @@ describe("LiveRunningDictationGame", () => {
     expect(await screen.findByLabelText("Buchstabenhilfe")).toBeVisible();
     await user.type(field, "Haus{Enter}");
     await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1));
+    // Ein Tippfehler mit Buchstabenhilfe ist noch kein Grund für Box 1.
     expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
-      "live-session-hint-house": "reset",
+      "live-session-hint-house": "practice",
+    });
+  });
+
+  it("places a word as reset when the copy guide was shown", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-copy",
+          uebungMaxAttempts: 2,
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+            },
+          ],
+          vocabularyTransfer: "all",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    revealWithTwoFingers(container);
+    const field = screen.getByRole("textbox", { name: "Deine Antwort" });
+    await user.type(field, "Hous{Enter}");
+    await user.type(field, "Hau{Enter}");
+    // Nach zwei Fehlversuchen zeigt die Abschreibvorlage die Lösung.
+    expect(await screen.findByLabelText("Lösung: Haus")).toBeVisible();
+    await user.clear(field);
+    await user.type(field, "Haus{Enter}");
+    await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1));
+    expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+      "live-session-copy-house": "reset",
     });
     // Hilfen bleiben auf dem Gerät: Schnappschuss nur im sessionStorage.
     expect(
-      window.sessionStorage.getItem("lernraum:live-trace:session-hint"),
-    ).toContain('"wordHelps"');
+      window.sessionStorage.getItem("lernraum:live-trace:session-copy"),
+    ).toContain('"wordHelps":{"house → Haus":true}');
   });
 
   it("places a clean answer as known and shows the child-friendly notice", async () => {
