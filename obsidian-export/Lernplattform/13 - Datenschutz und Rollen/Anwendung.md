@@ -32,6 +32,10 @@ Ein zusätzlicher Lernraum-Login ist für die lokale Einzelplatznutzung nicht vo
 
 Die Lehrkraft kann eine feste pseudonyme Mitgliedschaft ausschließlich lokal einem Klarnamen zuordnen. Übertragen wird keine Hardwarekennung. Bei QR-Abgaben erhält das Lehrergerät standardmäßig nur aggregierte Werte und den Abgabestatus, nicht die vollständige persönliche Lernhistorie.
 
+## Schreiberleichterung (LRS) und Klassenstempel
+
+Die Schreiberleichterung ist eine Information über ein Kind und bleibt deshalb lokal: Nur die Lehrkraft setzt sie per Haken in der Klassenliste. Sie reist ausschließlich im persönlichen Einschreibe-QR des Kindes, signiert mit dem Schlüssel der Klasse. In Räumen steht nur der Stempelabdruck der Klasse; Server, Raum und andere Geräte erfahren weder Klasse noch Namen noch LRS-Status. Toleranz und Platzierung entstehen auf dem Gerät des Kindes. Die Lehrkraft sieht ein tolerant angenommenes Wort als richtig. Es gibt kein Schalter im Schülerprofil. Restrisiken (selbst gehostete Runden, Schlüssel nur auf dem Lehrergerät) stehen in Entscheidung 50 und im Sicherheitsrisikoregister (SR-002).
+
 ## Persönliche Sicherungsziele
 
 Bei einer freiwilligen Sicherung stellt die Plattform nur den technischen Anschluss an ein lokales Verzeichnis, Google Drive, Microsoft OneDrive oder einen vom Nutzer angegebenen WebDAV-Speicher bereit. Der Nutzer beziehungsweise die zuständige Schule entscheidet über Anbieter, Konto, Speicherort, Freigaben, Aufbewahrung und Löschung und trägt die Verantwortung für das bewusste Teilen sensibler Daten. Die Oberfläche muss diese Verantwortung vor der Aktivierung verständlich anzeigen.

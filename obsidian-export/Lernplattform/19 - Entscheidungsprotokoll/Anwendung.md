@@ -549,3 +549,36 @@ Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendu
 
 **Bekannte Grenzen:** Schließt ein Kind die Seite vor dem Ende, wird nichts übernommen (Sitzungsspeicher). Liegt eine Vokabel in der LernBox in umgekehrter Richtung vor, erkennt der Fingerprint sie nicht als Dublette (bestehendes Verhalten).
 
+## 50. Schreiberleichterung über Klassenstempel ohne Lehrerlogin – 2. Oktober 2026
+
+**Beschlossen:** Kinder mit Lese-Rechtschreib-Schwäche (LRS) erhalten in Live-Runden ihrer Klasse eine Schreiberleichterung. Nur die Lehrkraft vergibt sie, und sie wirkt nur in Runden, die die Lehrkraft für genau diese Klasse startet. Es gibt keinen Schalter im Schülerprofil.
+
+**Regeln** (nur Vokabeln, `kind === "vocabulary"`):
+
+1. **Fast richtig zählt als richtig.** Ein Buchstabe falsch, fehlend, zusätzlich oder zwei benachbarte vertauscht (Damerau-Levenshtein-Abstand ≤ 1) zu einer akzeptierten Lösung wird angenommen. Das Kind sieht „Richtig! So schreibt man es: …“. Normalisierung und Groß-/Kleinschreibung (`caseSensitive`) wie bisher. Ist die Lösung höchstens 3 Zeichen lang, gilt keine Toleranz.
+2. **Platzierung:** Ein so angenommenes Wort gilt als `practice` (Box bleibt beziehungsweise Box 1, sofort fällig), nie als `known`.
+3. **`reset` erst ab 5 Fehlversuchen** statt ab 3.
+4. **Die Abschreibvorlage zählt nicht als Hilfe.** Sie erscheint im Standard schon nach 3 Fehlversuchen und höbe sonst die Grenze von 5 aus. Mit Schreiberleichterung entscheidet allein die Zahl der Fehlversuche.
+5. **Strenger Tippmodus:** Er sperrt nur Einfügen, Ziehen, Autokorrektur und mehrbuchstabige Einfügungen, nicht einzelne falsche Tasten. Beides kollidiert deshalb nicht: Die Toleranz gilt auch im strengen Tippmodus.
+
+Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als richtig. Es wird keine LRS-Information an Server, Raum oder andere Geräte übertragen; Toleranz und Platzierung entstehen lokal.
+
+**Mechanik Klassenstempel** (kein Login, keine Fälschungsfreiheit an sich; Ziel: Eine selbst ausgestellte Freigabe wirkt im Raum der echten Lehrkraft nicht):
+
+- Jede Klasse erhält beim Anlegen ein eigenes Schlüsselpaar (ECDSA P-256, WebCrypto, privater Schlüssel als JWK nur im Lehrer-Datenbereich). Bestehende Klassen erhalten es beim ersten Bedarf (Öffnen der Klasse, Haken setzen, Klassenwahl beim Raumstart); eine asynchrone Migration in Dexie ist nicht zuverlässig möglich, weil die Upgrade-Transaktion bei WebCrypto schließt.
+- **Stempelabdruck** = SHA-256 über den öffentlichen Schlüssel (SPKI), base64url.
+- **Freigabe** = signiertes Objekt `{ v: 1, classId, membershipId, writingRelief: true, issuedAt }`. Sie steht mit öffentlichem Schlüssel und Signatur im Einschreibe-QR (zehntes Element des kompakten Tupels; alte Codes mit 8 oder 9 Elementen bleiben gültig). Im QR trägt die Freigabe nur `issuedAt`; Klasse und Mitgliedschaft stehen schon im Tupel und werden beim Lesen eingesetzt. Die Signatur wird einmal beim Setzen des Hakens erzeugt und am Kind gespeichert.
+- **Raumstart:** Die Lehrkraft wählt optional eine Klasse (zuletzt gewählte wird in den Lehrer-Einstellungen gemerkt). Der Raum trägt dann `config.classSeal = <Stempelabdruck>`. Weder Klassen-ID noch Name noch Schlüssel kommen in den Raum.
+- **Schülergerät:** Die Erleichterung ist aktiv, wenn eine gespeicherte Mitgliedschaft existiert, deren Freigabe (1) mit dem mitgelieferten öffentlichen Schlüssel gültig signiert ist, (2) zu Mitgliedschaft und Klasse passt und (3) deren Schlüsselabdruck gleich `session.classSeal` ist. Ohne Stempel im Raum gelten immer die Standardregeln.
+- **Zurücknehmen:** Erneutes Scannen derselben Mitgliedschaft ersetzt die gespeicherte. Ein QR ohne Freigabe nimmt die Erleichterung also zurück; das Kind muss dafür neu scannen.
+- **Sicherung:** Klassenschlüssel und Freigaben gehören zum Gesamt-Export/-Import des Lehrerbereichs; ältere Exportdateien bleiben importierbar. Geht der Schlüssel verloren, stellt die Lehrkraft den LRS-Kindern neue QR-Codes aus.
+
+**Begründung:** Datensparsamkeit (keine LRS-Information online, kein Personenbezug im Raum), kein Verifikationsprozess für Lehrkräfte, kein Login.
+
+**Bewusst akzeptierte Restrisiken:**
+
+1. Ein Kind kann sich in einer selbst gehosteten Runde mit selbst angelegter Klasse Erleichterung geben. Ohne verifizierte Lehrkräfte lässt sich das nicht verhindern, und es verschafft keinen Vorteil gegenüber anderen.
+2. Der Schlüssel liegt nur auf dem Lehrergerät beziehungsweise in dessen Sicherung.
+
+**Bekannte Grenze:** Der QR-Code mit Freigabe ist länger (ca. Version 19 statt 13). Er wird im Einzelfall größer angezeigt; im Klassen-QR-Bogen bleibt die Größe unverändert und ist im Probedurchlauf zu prüfen.
+

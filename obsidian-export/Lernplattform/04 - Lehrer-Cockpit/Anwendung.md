@@ -50,6 +50,12 @@ Der Start folgt demselben Sicherheitsvertrag wie Laufdiktat `6c2ade4`: Zuerst wi
 
 Die Lehrkraft stellt einen gemeinsamen fachlichen Ausgangsinhalt bereit. Nach der lokalen Übernahme erzeugt Lernraum aus Fälligkeiten, Fehlern und Hilfen für jeden Schüler einen individuellen Übungsweg in **Heute üben**. Die vollständigen persönlichen Fehler und Wiederholungspläne bleiben auf dem Schülergerät.
 
+## Schreiberleichterung und Klassenwahl
+
+In der Klassenliste hat jedes Kind den Haken **Schreiberleichterung** („Wirkt nur in Laufdiktaten, die du für diese Klasse startest“). Nach dem Ändern zeigt das Cockpit den QR des Kindes neu an; das Kind muss ihn neu scannen. Ein QR ohne Haken nimmt die Erleichterung zurück. Jede Klasse erhält beim Anlegen (ältere beim ersten Öffnen) einen eigenen Klassenstempel.
+
+Beim Raumstart wählt die Lehrkraft im Modus-Schritt unter **Klasse (optional)** die Klasse, für die die Runde gilt. Gemerkt wird die zuletzt gewählte Klasse, sobald ein Lehrerprofil gespeichert ist. Nur dann tragen Räume den Stempelabdruck, und nur dort wirkt die Erleichterung: Tippfehler mit einem Buchstaben Abstand werden bei Vokabeln angenommen (nicht bei Lösungen bis 3 Zeichen), erst ab 5 Fehlversuchen kommt ein Wort zurück in Box 1, und die Abschreibvorlage zählt nicht als Hilfe. Ohne Klassenwahl gelten die Standardregeln (Entscheidung 50). Klassenschlüssel und Freigaben gehören zur Gesamtsicherung des Lehrerbereichs.
+
 ## Lokaler Klassenbriefkasten
 
 Für einen Turnus oder ein Aufgabenpaket startet die Lehrkraft eine Abgaberunde. Das Dashboard zeigt die erwarteten Klassenmitglieder und aktualisiert beim fortlaufenden Scannen unmittelbar den Status:

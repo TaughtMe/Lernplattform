@@ -4,7 +4,8 @@ Stand: 02.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `e23f96d`
 
 > **Fortschritt:** Teil 1 ist umgesetzt und geprüft (Branch `ccr-9abaa942-i94ooe`), einschließlich
 > der Korrektur vom 02.10.2026: Die Buchstabenhilfe zählt nicht mehr als Hilfe (siehe 1.1). Teil 2
-> baut auf diesem Stand auf. Der Probedurchlauf (Teil 3) steht für beide Teile noch aus.
+> baut auf diesem Stand auf. Teil 2 ist umgesetzt (Branch `ccr-42344396-8lmioe`, abgezweigt von
+> `ccr-9abaa942-i94ooe`). Der Probedurchlauf (Teil 3) steht für beide Teile noch aus.
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Die fachlichen Entscheidungen
 in Abschnitt 1 sind mit der projektverantwortlichen Lehrkraft abgestimmt und **verbindlich**.

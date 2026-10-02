@@ -65,7 +65,8 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Probedurchlauf der Vokabelübernahme mit Laptop und Handy (Teil 3, Schritte 1–6 des Umsetzungsplans)
 - [x] Buchstabenhilfe nicht als Hilfe werten, damit ein einzelner Tippfehler nicht zu Box 1 führt
 - [ ] Probedurchlauf der Vokabelübernahme auf realen Geräten
-- [ ] Teil 2: Schreiberleichterung mit Klassenstempel (Entscheidung 50)
+- [x] Teil 2: Schreiberleichterung mit Klassenstempel (Entscheidung 50): Klassenschlüssel, signierte Freigabe im Einschreibe-QR, Klassenwahl beim Raumstart, Toleranz „fast richtig“, `reset` erst ab 5 Fehlversuchen
+- [ ] Probedurchlauf der Schreiberleichterung mit Laptop und Handy (Teil 3, Schritte 7–11 des Umsetzungsplans)
 - [x] Schaltfläche **„Meine Fehler jetzt üben“** nach persönlichen Vokabelrunden umsetzen
 - [x] Nach Hilfen einen verdeckten Abruf erzwingen
 - [x] Tagesauswahl aus Fälligkeiten und kurzfristigen Fehlerwiederholungen ergänzen
