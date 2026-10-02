@@ -29,6 +29,8 @@ export type TeacherSessionOptions = {
   vocabularyTransfer?: VocabularyTransferChoice;
   /** Standard-Tag der Lehrkraft für übernommene Vokabeln. */
   vocabularyTag?: string;
+  /** Abdruck des Klassenstempels, wenn die Runde für eine Klasse startet. */
+  classSeal?: string;
   isTtsEnabled?: boolean;
   uebungMaxAttempts?: number;
   uebungAssistanceEnabled?: boolean;
@@ -54,6 +56,7 @@ export type TeacherRoomConfig = {
   repeatWrongAnswers: boolean;
   vocabularyTransfer: VocabularyTransferChoice;
   vocabularyTag?: string;
+  classSeal?: string;
   showStars: boolean;
   shuffleWords: boolean;
   strictTypingMode: boolean;
@@ -158,6 +161,7 @@ export function buildTeacherRoomConfig(
     ...(options.contentMode === "vocabulary" && options.vocabularyTag?.trim()
       ? { vocabularyTag: options.vocabularyTag.trim() }
       : {}),
+    ...(options.classSeal ? { classSeal: options.classSeal } : {}),
     showStars: options.gameMode !== "STATION" && (options.showStars ?? true),
     shuffleWords: options.gameMode !== "STATION" && options.shuffleWords,
     strictTypingMode:

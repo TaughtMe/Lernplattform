@@ -1,7 +1,9 @@
 import type { LiveVocabularyTransferChoice } from "../../domain/live-vocabulary-placement";
 import { mathOptionsSchema } from "../../domain/math-practice";
 import { z } from "zod";
+import { classSealFingerprintSchema } from "../../domain/class-seal";
 import { deterministicOrder } from "../../domain/running-dictation";
+import { toleratesSpelling } from "../../domain/spelling-tolerance";
 
 const liveWordSchema = z
   .object({
@@ -34,6 +36,8 @@ const liveSessionConfigSchema = z
     repeatWrongAnswers: z.boolean().default(false),
     vocabularyTransfer: z.enum(["errors", "all", "none"]).default("errors"),
     vocabularyTag: z.string().trim().max(80).optional(),
+    /** Abdruck des Klassenstempels; nur dann kann eine Freigabe wirken. */
+    classSeal: classSealFingerprintSchema.optional(),
     showStars: z.boolean().default(true),
     shuffleWords: z.boolean().default(false),
     strictTypingMode: z.boolean().default(false),
@@ -81,35 +85,46 @@ function normalizeAnswer(
     : normalized.toLocaleLowerCase(locale ?? "de-DE");
 }
 
-export function checkLiveAnswer(word: LiveWord, input: string) {
+export type LiveAnswerResult = "correct" | "tolerated" | "wrong";
+
+/**
+ * Bewertet eine Antwort. Mit `tolerance` zählt bei Vokabeln „fast richtig“
+ * (ein Buchstabe falsch, fehlend, zusätzlich oder vertauscht) als `tolerated`.
+ */
+export function evaluateLiveAnswer(
+  word: LiveWord,
+  input: string,
+  options: { tolerance?: boolean } = {},
+): LiveAnswerResult {
   const kind = word.kind ?? (word.prompt ? "math" : "text");
   const value = input.trim();
-  if (!value) return false;
+  if (!value) return "wrong";
   if (kind === "math") {
     const actual = Number(value.replace(",", "."));
     const expected = Number(word.targetWord);
-    return (
-      Number.isFinite(actual) &&
+    return Number.isFinite(actual) &&
       Number.isFinite(expected) &&
       Math.abs(actual - expected) < NUMERIC_TOLERANCE
-    );
+      ? "correct"
+      : "wrong";
   }
   if (kind === "vocabulary") {
-    const actual = normalizeAnswer(
-      value,
-      word.caseSensitive ?? false,
-      word.answerLang,
+    const caseSensitive = word.caseSensitive ?? false;
+    const actual = normalizeAnswer(value, caseSensitive, word.answerLang);
+    const accepted = [word.targetWord, ...(word.acceptedAnswers ?? [])].map(
+      (answer) => normalizeAnswer(answer, caseSensitive, word.answerLang),
     );
-    return [word.targetWord, ...(word.acceptedAnswers ?? [])].some(
-      (answer) =>
-        normalizeAnswer(
-          answer,
-          word.caseSensitive ?? false,
-          word.answerLang,
-        ) === actual,
-    );
+    if (accepted.includes(actual)) return "correct";
+    return options.tolerance &&
+      accepted.some((answer) => toleratesSpelling(actual, answer))
+      ? "tolerated"
+      : "wrong";
   }
-  return value === word.targetWord;
+  return value === word.targetWord ? "correct" : "wrong";
+}
+
+export function checkLiveAnswer(word: LiveWord, input: string) {
+  return evaluateLiveAnswer(word, input) === "correct";
 }
 
 export function liveWordKind(word: LiveWord) {

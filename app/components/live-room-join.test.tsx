@@ -1,6 +1,13 @@
+import "fake-indexeddb/auto";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  classSealFingerprint,
+  createClassSealKeyPair,
+  signWritingReliefGrant,
+} from "../../src/domain/class-seal";
+import { createStudentClassesRepository } from "../../src/storage/student-classes";
 import { LiveRoomJoin } from "./live-room-join";
 
 const mocks = vi.hoisted(() => ({
@@ -105,7 +112,18 @@ describe("LiveRoomJoin", () => {
       mocks.getLiveRoomState.mockReset().mockResolvedValue(liveState);
     });
 
-    async function endRoundAfterFirstWord() {
+    async function endRoundAfterFirstWord(
+      options: {
+        classSeal?: string;
+        wordErrors?: Record<string, number>;
+      } = {},
+    ) {
+      if (options.classSeal) {
+        mocks.getLiveRoomState.mockResolvedValue({
+          ...liveState,
+          config: { ...liveState.config, classSeal: options.classSeal },
+        });
+      }
       render(
         <LiveRoomJoin
           initialCode="4829"
@@ -123,7 +141,7 @@ describe("LiveRoomJoin", () => {
           sessionId: "session-early",
           currentIndex: 1,
           finished: false,
-          wordErrors: {},
+          wordErrors: options.wordErrors ?? {},
           wordHelps: {},
         }),
       );
@@ -167,6 +185,56 @@ describe("LiveRoomJoin", () => {
         ),
       ).toBeVisible();
       expect(mocks.ingestBundle).not.toHaveBeenCalled();
+    });
+
+    it("wertet beim vorzeitigen Ende die Schreiberleichterung des Kindes aus", async () => {
+      const seal = await createClassSealKeyPair();
+      const classId = "123e4567-e89b-42d3-a456-426614174001";
+      const membershipId = "123e4567-e89b-42d3-a456-426614174002";
+      const grant = {
+        v: 1 as const,
+        classId,
+        membershipId,
+        writingRelief: true as const,
+        issuedAt: "2026-10-02T08:00:00.000Z",
+      };
+      await createStudentClassesRepository().put({
+        version: 1,
+        classId,
+        membershipId,
+        className: "7b",
+        teacherName: "Frau Test",
+        schoolYear: "2026/27",
+        displayName: "Alex",
+        enrollmentToken: "0123456789abcdef0123456789abcdef",
+        issuedAt: "2026-08-30T10:05:00.000Z",
+        sealPublicKey: seal.publicKey,
+        writingReliefGrant: grant,
+        writingReliefSignature: await signWritingReliefGrant(
+          seal.privateJwk,
+          grant,
+        ),
+      });
+      // 4 Fehlversuche: ohne Erleichterung Box 1, mit Erleichterung „üben“.
+      await endRoundAfterFirstWord({
+        classSeal: await classSealFingerprint(seal.publicKey),
+        wordErrors: { "house → Haus": 4 },
+      });
+      await waitFor(() => expect(mocks.ingestBundle).toHaveBeenCalledTimes(1));
+      expect(mocks.ingestBundle.mock.calls[0]![0].placements).toEqual({
+        "live-session-early-a": "practice",
+        "live-session-early-b": "unseen",
+        "live-session-early-c": "unseen",
+      });
+      await createStudentClassesRepository().removeClass(classId);
+    });
+
+    it("nutzt ohne Klassenstempel die Standardregeln", async () => {
+      await endRoundAfterFirstWord({ wordErrors: { "house → Haus": 4 } });
+      await waitFor(() => expect(mocks.ingestBundle).toHaveBeenCalledTimes(1));
+      expect(mocks.ingestBundle.mock.calls[0]![0].placements).toMatchObject({
+        "live-session-early-a": "reset",
+      });
     });
   });
 });

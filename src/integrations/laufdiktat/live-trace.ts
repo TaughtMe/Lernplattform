@@ -10,9 +10,11 @@ const liveTraceSchema = z.object({
   finished: z.boolean(),
   wordErrors: z.record(z.string(), z.number().int().min(0)),
   wordHelps: z.record(z.string(), z.literal(true)),
+  /** Mit Schreiberleichterung tolerant angenommene Wörter; nur lokal. */
+  wordTolerated: z.record(z.string(), z.literal(true)).default({}),
 });
 
-export type LiveTrace = z.infer<typeof liveTraceSchema>;
+export type LiveTrace = z.output<typeof liveTraceSchema>;
 
 const traceKey = (sessionId: string) => `lernraum:live-trace:${sessionId}`;
 const transferDoneKey = (sessionId: string) =>
@@ -39,7 +41,7 @@ export function readLiveTrace(sessionId: string): LiveTrace | undefined {
   }
 }
 
-export function writeLiveTrace(trace: LiveTrace) {
+export function writeLiveTrace(trace: z.input<typeof liveTraceSchema>) {
   try {
     storage()?.setItem(traceKey(trace.sessionId), JSON.stringify(trace));
   } catch {

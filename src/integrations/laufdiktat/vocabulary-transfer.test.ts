@@ -91,6 +91,20 @@ describe("live vocabulary transfer", () => {
     expect(outcome(5)).toBe("practice");
   });
 
+  it("ordnet tolerant angenommene Wörter als „üben“ ein, nie als sicher gewusst", () => {
+    const trace = done({ wordTolerated: { "house → Haus": true } });
+    const outcomes = selectVocabularyForTransfer(session("all"), trace, {
+      resetAfterErrors: 5,
+    }).map((entry) => entry.outcome);
+    expect(outcomes).toEqual(["practice", "known"]);
+    // Mit „Nur Übungsbedarf“ wird das tolerierte Wort übernommen.
+    expect(
+      selectVocabularyForTransfer(session("errors"), trace, {
+        resetAfterErrors: 5,
+      }).map((entry) => entry.word.id),
+    ).toEqual(["one"]);
+  });
+
   it("baut ein gültiges Bundle mit Platzierungen, Alternativen und ohne Text", () => {
     const current = session("errors");
     current.words[0] = { ...current.words[0]!, acceptedAnswers: ["Gebäude"] };

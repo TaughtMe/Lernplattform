@@ -21,8 +21,19 @@ afterEach(() => {
 
 describe("live trace storage", () => {
   it("schreibt und liest den Schnappschuss", () => {
-    writeLiveTrace(trace);
-    expect(readLiveTrace("s1")).toEqual(trace);
+    writeLiveTrace({ ...trace, wordTolerated: { "a → b": true } });
+    expect(readLiveTrace("s1")).toEqual({
+      ...trace,
+      wordTolerated: { "a → b": true },
+    });
+  });
+
+  it("liest Schnappschüsse ohne tolerierte Wörter (ältere Geräte)", () => {
+    window.sessionStorage.setItem(
+      "lernraum:live-trace:s1",
+      JSON.stringify(trace),
+    );
+    expect(readLiveTrace("s1")).toEqual({ ...trace, wordTolerated: {} });
   });
 
   it("liefert nichts für fremde oder fehlende Runden", () => {

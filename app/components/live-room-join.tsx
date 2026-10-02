@@ -23,6 +23,7 @@ import {
   parseLiveSession,
   type LiveSession,
 } from "../../src/integrations/laufdiktat/live-session";
+import { placementRulesFor } from "../../src/domain/live-vocabulary-placement";
 import { readLiveTrace } from "../../src/integrations/laufdiktat/live-trace";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
 import { animalTokenFromDisplayName } from "../../src/domain/learner-profile";
@@ -41,6 +42,7 @@ import {
 } from "./room-activity";
 import { useLiveSessionGuards } from "./use-live-session-guards";
 import { useLiveVocabularyTransfer } from "./use-live-vocabulary-transfer";
+import { useWritingRelief } from "./use-writing-relief";
 
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import { LiveVersionNotice } from "./live-version-notice";
@@ -101,7 +103,8 @@ export function LiveRoomJoin({
   // Letzte bekannte Runde: nach dem Ende wird `session` geleert, die Übernahme
   // der Vokabeln braucht sie aber noch.
   const lastSessionRef = useRef<LiveSession | null>(null);
-  const endedSessionRef = useRef<LiveSession | null>(null);
+  // Die beendete Runde als Zustand: Die Schreiberleichterung wird danach geprüft.
+  const [endedSession, setEndedSession] = useState<LiveSession | null>(null);
   const vocabularyTransfer = useLiveVocabularyTransfer();
   const [initialProgress, setInitialProgress] = useState<LiveProgress | null>(
     null,
@@ -137,7 +140,7 @@ export function LiveRoomJoin({
           participantToken: activeRoom.participantToken,
         });
         if (!state || state.status === "ended") {
-          endedSessionRef.current = lastSessionRef.current;
+          setEndedSession(lastSessionRef.current);
           lastSessionRef.current = null;
           setSession(null);
           setView("ended");
@@ -355,19 +358,21 @@ export function LiveRoomJoin({
 
   // Vorzeitiges Ende: Vokabeln genauso übernehmen, nicht erreichte als „unseen“.
   const { transfer: transferVocabulary } = vocabularyTransfer;
+  const endedRelief = useWritingRelief(endedSession?.classSeal);
   useEffect(() => {
-    const ended = endedSessionRef.current;
-    if (view !== "ended" || !ended) return;
+    if (view !== "ended" || !endedSession || endedRelief === undefined) return;
     transferVocabulary(
-      ended,
-      readLiveTrace(ended.sessionId) ?? {
+      endedSession,
+      readLiveTrace(endedSession.sessionId) ?? {
         currentIndex: 0,
         finished: false,
         wordErrors: {},
         wordHelps: {},
+        wordTolerated: {},
       },
+      placementRulesFor(endedRelief),
     );
-  }, [view, transferVocabulary]);
+  }, [view, endedSession, endedRelief, transferVocabulary]);
 
   const {
     status: deliveryStatus,

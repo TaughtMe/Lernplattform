@@ -24,6 +24,7 @@ export type LiveTransferTrace = {
   finished: boolean;
   wordErrors: Readonly<Record<string, number>>;
   wordHelps: Readonly<Record<string, true>>;
+  wordTolerated?: Readonly<Record<string, true>>;
 };
 
 /** Titel des Stapels vor der Umbenennung; vorhandene Stapel werden weiter gefunden. */
@@ -43,6 +44,7 @@ export function selectVocabularyForTransfer(
       {
         errors: trace.wordErrors[key] ?? 0,
         usedHelp: trace.wordHelps[key] === true,
+        toleratedSpelling: trace.wordTolerated?.[key] === true,
         // Das aktuelle Wort gilt erst als beantwortet, wenn die Runde fertig ist.
         answered: trace.finished || index < trace.currentIndex,
       },
