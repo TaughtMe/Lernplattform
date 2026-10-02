@@ -26,17 +26,16 @@ import {
 import type { ProgressDeliveryStatus } from "../../../src/integrations/laufdiktat/progress-delivery";
 import type { LiveProgress } from "../../../src/integrations/laufdiktat/room-api";
 import {
-  buildLiveVocabularyTransfer,
-  liveWordErrorKey,
-} from "../../../src/integrations/laufdiktat/vocabulary-transfer";
+  readLiveTrace,
+  writeLiveTrace,
+} from "../../../src/integrations/laufdiktat/live-trace";
+import { liveWordErrorKey } from "../../../src/integrations/laufdiktat/vocabulary-transfer";
 import { LAUFDIKTAT_PILOT } from "../../../src/pilot-mode";
 import { createMathAttempt } from "../../../src/storage/math-practice";
-import {
-  createLearningBoxRepository,
-  createPersonalLearningEventRepository,
-} from "../../../src/storage/personal-learning-events";
+import { createPersonalLearningEventRepository } from "../../../src/storage/personal-learning-events";
 import { MathDisplay } from "../../components/math-display";
 import { useLiveSessionGuards } from "../../components/use-live-session-guards";
+import { useLiveVocabularyTransfer } from "../../components/use-live-vocabulary-transfer";
 import { Button, ButtonLink } from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
 import { useFullscreenFrame } from "../../ui/shell/fullscreen";
@@ -86,10 +85,6 @@ export function LiveRunningDictationGame({
   const displayName =
     displayNameProp ??
     (studentName.startsWith("participant-") ? null : studentName);
-  const learningBoxRepository = useMemo(
-    () => createLearningBoxRepository(),
-    [],
-  );
   const learningEventRepository = useMemo(
     () => createPersonalLearningEventRepository(),
     [],
@@ -117,8 +112,14 @@ export function LiveRunningDictationGame({
   const [attempts, setAttempts] = useState(initialProgress?.attempts ?? 0);
   const [peeks, setPeeks] = useState(initialProgress?.peeks ?? 0);
   const [errors, setErrors] = useState(initialProgress?.errors ?? 0);
-  const [wordErrors, setWordErrors] = useState<Record<string, number>>(
-    initialProgress?.wordErrors ?? {},
+  // Lokaler Schnappschuss (sessionStorage) überlebt ein Neuladen der Seite.
+  const [restoredTrace] = useState(() => readLiveTrace(session.sessionId));
+  const [wordErrors, setWordErrors] = useState<Record<string, number>>(() =>
+    mergeWordErrors(initialProgress?.wordErrors, restoredTrace?.wordErrors),
+  );
+  // Hilfen pro Wort bleiben auf dem Gerät und gehen nie an den Server.
+  const [wordHelps, setWordHelps] = useState<Record<string, true>>(
+    restoredTrace?.wordHelps ?? {},
   );
   const [revealedCurrentWord, setRevealedCurrentWord] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -143,14 +144,14 @@ export function LiveRunningDictationGame({
   }, [shield]);
   useEffect(() => () => window.clearTimeout(attackTimer.current), []);
   const [battleMessage, setBattleMessage] = useState("");
-  const [transferNotice, setTransferNotice] = useState("");
   const [localSaveWarning, setLocalSaveWarning] = useState("");
-  const [transferStatus, setTransferStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
+  const {
+    status: transferStatus,
+    notice: transferNotice,
+    transfer,
+  } = useLiveVocabularyTransfer();
   const startedAt = useRef(0);
   const lastAttackId = useRef(0);
-  const transferStartedFor = useRef("");
   const mathSaving = useRef(false);
   const pendingMath = useRef<LearningEventV1 | null>(null);
   const [savingMath, setSavingMath] = useState(false);
@@ -168,6 +169,39 @@ export function LiveRunningDictationGame({
   const kind = current ? liveWordKind(current) : "text";
   const prompt = current ? (current.prompt ?? current.targetWord) : "";
   const isLatexPrompt = current?.isLatex ?? false;
+  const errorKey = current ? liveWordErrorKey(current) : "";
+  const copyMode =
+    session.gameMode === "UEBUNG" && wrongCount >= session.uebungMaxAttempts;
+  const hint =
+    current &&
+    session.gameMode === "UEBUNG" &&
+    wrongCount > 0 &&
+    !copyMode &&
+    kind !== "math"
+      ? buildRunningDictationHint(
+          current.targetWord,
+          wrongCount / session.uebungMaxAttempts,
+        )
+      : "";
+  // Hilfe zählt erst, wenn Buchstabenhilfe oder Abschreibvorlage wirklich da ist.
+  const helpShown = kind === "vocabulary" && (copyMode || hint !== "");
+  useEffect(() => {
+    if (!helpShown || !errorKey) return;
+    setWordHelps((value) =>
+      value[errorKey] ? value : { ...value, [errorKey]: true },
+    );
+  }, [helpShown, errorKey]);
+
+  // Schnappschuss für Neuladen und vorzeitiges Ende; nur lokal gespeichert.
+  useEffect(() => {
+    writeLiveTrace({
+      sessionId: session.sessionId,
+      currentIndex: phase === "correct" ? index + 1 : index,
+      finished: phase === "complete",
+      wordErrors,
+      wordHelps,
+    });
+  }, [index, phase, session.sessionId, wordErrors, wordHelps]);
 
   useEffect(() => {
     if (phase !== "correct") return;
@@ -262,37 +296,13 @@ export function LiveRunningDictationGame({
   useEffect(() => {
     // Die Lehrkraft entscheidet im Vokabelheft, ob Vokabeln übernommen werden.
     if (phase !== "complete" || session.stationMode) return;
-    const transfer = buildLiveVocabularyTransfer(session, wordErrors);
-    if (!transfer || transferStartedFor.current === session.sessionId) return;
-    transferStartedFor.current = session.sessionId;
-    learningBoxRepository
-      .ingestBundle({
-        bundle: transfer.bundle,
-        title: transfer.title,
-        source: {
-          kind: "running-dictation",
-          sourceId: session.sessionId,
-        },
-      })
-      .then((result) => {
-        setTransferStatus("success");
-        setTransferNotice(
-          result.added > 0
-            ? result.added === 1
-              ? "1 Vokabel wurde in deine LernBox übernommen."
-              : `${result.added} Vokabeln wurden in deine LernBox übernommen.`
-            : result.reused === 1
-              ? "1 vorhandene Vokabel wurde wieder fällig markiert."
-              : `${result.reused} vorhandene Vokabeln wurden wieder fällig markiert.`,
-        );
-      })
-      .catch(() => {
-        setTransferStatus("error");
-        setTransferNotice(
-          "Die Vokabeln konnten auf diesem Gerät nicht übernommen werden.",
-        );
-      });
-  }, [learningBoxRepository, phase, session, wordErrors]);
+    transfer(session, {
+      currentIndex: session.words.length - 1,
+      finished: true,
+      wordErrors,
+      wordHelps,
+    });
+  }, [phase, session, transfer, wordErrors, wordHelps]);
 
   if (session.stationMode) {
     return onLoadProgress ? (
@@ -435,19 +445,6 @@ export function LiveRunningDictationGame({
 
   if (!current) return null;
   const activeWord = current;
-  const errorKey = liveWordErrorKey(activeWord);
-  const copyMode =
-    session.gameMode === "UEBUNG" && wrongCount >= session.uebungMaxAttempts;
-  const hint =
-    session.gameMode === "UEBUNG" &&
-    wrongCount > 0 &&
-    !copyMode &&
-    kind !== "math"
-      ? buildRunningDictationHint(
-          activeWord.targetWord,
-          wrongCount / session.uebungMaxAttempts,
-        )
-      : "";
   const battleCandidates = pickRunningDictationBattleCandidates(
     roster,
     studentName,
@@ -817,4 +814,16 @@ function unitOf(word: LiveSession["words"][number] | undefined) {
   if (kind === "vocabulary" || !/\s/.test(word.targetWord.trim()))
     return "Wort" as const;
   return "Satz" as const;
+}
+
+/** Serverstand und lokaler Schnappschuss: pro Wort gilt der höhere Wert. */
+function mergeWordErrors(
+  server: Record<string, number> | undefined,
+  local: Record<string, number> | undefined,
+) {
+  const merged = { ...server };
+  for (const [key, count] of Object.entries(local ?? {})) {
+    merged[key] = Math.max(merged[key] ?? 0, count);
+  }
+  return merged;
 }

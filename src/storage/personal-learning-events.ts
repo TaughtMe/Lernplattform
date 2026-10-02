@@ -29,7 +29,9 @@ import {
   createLearningBoxFolder,
   editLearningBoxCard,
   learningBoxFingerprint,
+  placeLiveVocabularyCard,
 } from "../domain/learning-box";
+import type { LiveVocabularyOutcome } from "../domain/live-vocabulary-placement";
 import type { LearningBundleV1 } from "../domain/learning-bundle";
 import {
   LOCAL_DATA_AREAS,
@@ -84,6 +86,8 @@ export type RunningDictationImportResult = {
   deckId: string;
   added: number;
   reused: number;
+  /** Vorhandene Karten, die nach einer Unterrichtsrunde noch einmal geübt werden. */
+  practiceAgain: number;
 };
 
 type LegacyDeck = {
@@ -496,7 +500,11 @@ export function createLearningBoxRepository(
     ingestBundle: async (input: {
       bundle: LearningBundleV1;
       title: string;
+      /** Frühere Titel desselben Stapels, damit kein zweiter Stapel entsteht. */
+      alternativeTitles?: readonly string[];
       source: LearningBoxSource;
+      /** Ergebnis je Bundle-Eintrag aus einer Unterrichtsrunde (Platzierung). */
+      placements?: Readonly<Record<string, LiveVocabularyOutcome>>;
     }): Promise<RunningDictationImportResult> =>
       database.transaction(
         "rw",
@@ -513,7 +521,11 @@ export function createLearningBoxRepository(
             deck = await database.learningBoxDecks
               .where("source.kind")
               .equals(input.source.kind)
-              .filter((candidate) => candidate.title === input.title)
+              .filter(
+                (candidate) =>
+                  candidate.title === input.title ||
+                  (input.alternativeTitles ?? []).includes(candidate.title),
+              )
               .first();
           }
           if (!deck) {
@@ -535,6 +547,7 @@ export function createLearningBoxRepository(
           const cards = await database.learningBoxCards.toArray();
           let added = 0;
           let reused = 0;
+          let practiceAgain = 0;
           for (const item of input.bundle.vocabulary) {
             const itemId = bundleItemId(item);
             const incomingRevision = bundleItemRevision(item, input.bundle);
@@ -583,11 +596,18 @@ export function createLearningBoxRepository(
                         : link,
                     )
                   : [...links, sourceLink];
+                const outcome = input.placements?.[itemId];
+                // Ohne Platzierung gilt das alte Verhalten: beide Richtungen fällig.
+                const placement = outcome
+                  ? placeLiveVocabularyCard(existing, outcome, now)
+                  : { nextReview: now };
+                if (outcome === "practice" || outcome === "reset")
+                  practiceAgain += 1;
                 const nextCard: LearningBoxCard = {
                   ...existing,
+                  ...placement,
+                  ...(outcome ? {} : { reverseNextReview: now }),
                   sourceLinks: nextLinks,
-                  nextReview: now,
-                  reverseNextReview: now,
                   updatedAt: now,
                 };
                 await database.learningBoxCards.put(nextCard);
@@ -621,6 +641,7 @@ export function createLearningBoxRepository(
               continue;
             }
 
+            const newOutcome = input.placements?.[itemId];
             const card: LearningBoxCard = {
               ...createLearningBoxCard({
                 deckId: deck.id,
@@ -635,12 +656,16 @@ export function createLearningBoxRepository(
               }),
               fingerprint: bundleItemFingerprint(item),
               sourceLinks: [sourceLink],
+              // Neue Karte: Platzierung nach Ergebnis, `reverse` startet in Box 1.
+              ...(newOutcome
+                ? placeLiveVocabularyCard(undefined, newOutcome)
+                : {}),
             };
             await database.learningBoxCards.add(card);
             cards.push(card);
             added += 1;
           }
-          return { deckId: deck.id, added, reused };
+          return { deckId: deck.id, added, reused, practiceAgain };
         },
       ),
   };

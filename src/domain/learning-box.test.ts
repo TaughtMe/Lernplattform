@@ -10,6 +10,7 @@ import {
   isLearningBoxCardDueFor,
   learningBoxDirectionAt,
   parseLearningBoxImport,
+  placeLiveVocabularyCard,
   processLearningBoxResult,
   sortLearningBoxCards,
 } from "./learning-box";
@@ -195,4 +196,61 @@ describe("LernBox extensions", () => {
       "folderId",
     );
   });
+});
+
+describe("placeLiveVocabularyCard", () => {
+  const now = 1_000_000;
+  const advanced = {
+    ...createLearningBoxCard({ deckId: "d", question: "a", answer: "b" }),
+    box: 4 as const,
+    level: 4 as const,
+    interval: 1,
+    nextReview: now + 5 * 86_400_000,
+  };
+
+  it("legt neue sicher gewusste Vokabeln in Box 2, morgen fällig", () => {
+    expect(placeLiveVocabularyCard(undefined, "known", now)).toEqual({
+      box: 2,
+      level: 2,
+      interval: 1,
+      nextReview: now + 86_400_000,
+    });
+  });
+
+  it.each(["practice", "reset", "unseen"] as const)(
+    "legt neue Vokabeln mit Ergebnis %s in Box 1, sofort fällig",
+    (outcome) => {
+      expect(placeLiveVocabularyCard(undefined, outcome, now)).toEqual({
+        box: 1,
+        level: 1,
+        interval: 1,
+        nextReview: now,
+      });
+    },
+  );
+
+  it("setzt vorhandene Karten bei reset in Box 1 zurück", () => {
+    expect(placeLiveVocabularyCard(advanced, "reset", now)).toEqual({
+      box: 1,
+      level: 1,
+      interval: 1,
+      nextReview: now,
+    });
+  });
+
+  it("macht vorhandene Karten bei practice nur sofort fällig", () => {
+    expect(placeLiveVocabularyCard(advanced, "practice", now)).toEqual({
+      box: 4,
+      level: 4,
+      interval: 1,
+      nextReview: now,
+    });
+  });
+
+  it.each(["known", "unseen"] as const)(
+    "lässt vorhandene Karten bei %s unverändert",
+    (outcome) => {
+      expect(placeLiveVocabularyCard(advanced, outcome, now)).toBeUndefined();
+    },
+  );
 });

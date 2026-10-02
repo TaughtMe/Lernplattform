@@ -1,3 +1,4 @@
+import type { LiveVocabularyTransferChoice } from "../../domain/live-vocabulary-placement";
 import { mathOptionsSchema } from "../../domain/math-practice";
 import { z } from "zod";
 import { deterministicOrder } from "../../domain/running-dictation";
@@ -47,7 +48,7 @@ const liveSessionConfigSchema = z
   .passthrough();
 
 export type LiveWord = z.infer<typeof liveWordSchema>;
-export type VocabularyTransferChoice = "errors" | "all" | "none";
+export type VocabularyTransferChoice = LiveVocabularyTransferChoice;
 export type LiveSession = z.infer<typeof liveSessionConfigSchema> & {
   sessionId: string;
 };
