@@ -93,6 +93,29 @@ export function TeacherClassConfigurator() {
       .catch(() => setMessage("Die Klassen konnten nicht geladen werden."));
   }, [repository, requested]);
 
+  // Ältere Klassen erhalten ihren Stempel beim ersten Öffnen.
+  const selectedHasSeal = Boolean(selected?.seal);
+  useEffect(() => {
+    if (!selectedId || !selected || selectedHasSeal) return;
+    let isCurrent = true;
+    repository
+      .ensureSeal(selectedId)
+      .then((seal) => {
+        if (!isCurrent || !seal) return;
+        setClasses((current) =>
+          current.map((course) =>
+            course.id === selectedId ? { ...course, seal } : course,
+          ),
+        );
+      })
+      .catch(() =>
+        setMessage("Der Klassenstempel konnte nicht erstellt werden."),
+      );
+    return () => {
+      isCurrent = false;
+    };
+  }, [repository, selected, selectedHasSeal, selectedId]);
+
   useEffect(() => {
     if (!selectedId) return;
     let isCurrent = true;
@@ -125,6 +148,9 @@ export function TeacherClassConfigurator() {
     };
     try {
       await repository.put(course);
+      // Jede Klasse bekommt ihren Klassenstempel gleich beim Anlegen.
+      const seal = await repository.ensureSeal(course.id);
+      if (seal) course.seal = seal;
       setClasses((current) => [...current, course]);
       notifyTeacherClassesChanged();
       setSelectedId(course.id);
@@ -172,6 +198,28 @@ export function TeacherClassConfigurator() {
     if (shown?.id === member.id) setShown(undefined);
     setMessage(`„${member.displayName}“ wurde aus der Klasse entfernt.`);
     window.dispatchEvent(new Event("teacher-data-changed"));
+  }
+
+  async function toggleWritingRelief(member: ClassMember) {
+    const enabled = !member.writingRelief;
+    try {
+      const updated = await repository.setWritingRelief(member.id, enabled);
+      // Der Stempel kann dabei neu entstanden sein: Klasse neu laden.
+      const refreshed = await repository.list();
+      setClasses(refreshed);
+      setMembers((current) =>
+        current.map((entry) => (entry.id === member.id ? updated : entry)),
+      );
+      setShown(updated);
+      setMessage(
+        enabled
+          ? `Schreiberleichterung für „${member.displayName}“ ist gesetzt. Das Kind muss den neuen QR-Code scannen.`
+          : `Schreiberleichterung für „${member.displayName}“ ist entzogen. Das Kind muss den neuen QR-Code scannen.`,
+      );
+      window.dispatchEvent(new Event("teacher-data-changed"));
+    } catch {
+      setMessage("Die Schreiberleichterung konnte nicht gespeichert werden.");
+    }
   }
 
   async function archiveSelectedClass() {
@@ -520,6 +568,22 @@ export function TeacherClassConfigurator() {
                             Entfernen
                           </Button>
                         </div>
+                        <label className="ui-row">
+                          <input
+                            type="checkbox"
+                            aria-label={`Schreiberleichterung für ${member.displayName}`}
+                            checked={member.writingRelief === true}
+                            onChange={() => void toggleWritingRelief(member)}
+                          />
+                          <span>
+                            Schreiberleichterung
+                            <span className="ui-tiny ui-muted">
+                              {" "}
+                              Wirkt nur in Laufdiktaten, die du für diese Klasse
+                              startest.
+                            </span>
+                          </span>
+                        </label>
                         {isShown && qrValue ? (
                           <div
                             className="ui-stack ui-center"
@@ -531,7 +595,8 @@ export function TeacherClassConfigurator() {
                             <div className="ui-qr-box">
                               <QRCodeSVG
                                 value={qrValue}
-                                size={220}
+                                // Mit Freigabe ist der Code dichter: größer zeigen.
+                                size={member.writingRelief ? 280 : 220}
                                 role="img"
                                 aria-label={`Einschreibungs-QR-Code für ${member.displayName}`}
                               />

@@ -88,6 +88,11 @@ export function TeacherLiveRoom({
         }}
         mode={t.gameMode}
         options={options}
+        classChoice={{
+          options: t.liveClasses,
+          value: t.classChoice,
+          onChange: (id) => void t.setClassChoice(id),
+        }}
         stationCount={t.stationCount}
         optionsOpen={optionsOpen}
         qr={

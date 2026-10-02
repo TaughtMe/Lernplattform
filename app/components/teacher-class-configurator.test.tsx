@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LOCAL_DATA_AREAS } from "../../src/storage/local-data-boundaries";
+import { parseEnrollmentLink } from "../../src/domain/class-enrollment";
 import { TeacherClassConfigurator } from "./teacher-class-configurator";
 
 vi.mock("qrcode.react", () => ({
@@ -163,5 +164,62 @@ describe("TeacherClassConfigurator", () => {
     ).toHaveLength(2);
     expect(screen.getByText("Alex")).toBeVisible();
     expect(screen.getByText("Sam")).toBeVisible();
+  });
+
+  it("gives a student writing relief and puts a signed grant into the new QR code", async () => {
+    const user = userEvent.setup();
+    render(<TeacherClassConfigurator />);
+    await user.type(
+      screen.getByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8a",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.type(
+      await screen.findByRole("textbox", { name: "Name oder Alias" }),
+      "Alex",
+    );
+    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    const relief = await screen.findByRole("checkbox", {
+      name: "Schreiberleichterung für Alex",
+    });
+    expect(relief).not.toBeChecked();
+    expect(
+      screen.getAllByText(/Wirkt nur in Laufdiktaten, die du für diese Klasse/),
+    ).not.toHaveLength(0);
+
+    await user.click(relief);
+    expect(
+      await screen.findByText(
+        /Schreiberleichterung für „Alex“ ist gesetzt. Das Kind muss den neuen QR-Code scannen./,
+      ),
+    ).toBeVisible();
+    expect(relief).toBeChecked();
+    const link = (
+      await screen.findByRole("img", {
+        name: "Einschreibungs-QR-Code für Alex",
+      })
+    ).getAttribute("data-qr-value")!;
+    const enrollment = parseEnrollmentLink(link).enrollment;
+    expect(enrollment.sealPublicKey).toBeTruthy();
+    expect(enrollment.writingReliefGrant).toMatchObject({
+      writingRelief: true,
+    });
+    expect(enrollment.writingReliefSignature).toBeTruthy();
+
+    await user.click(relief);
+    expect(
+      await screen.findByText(/ist entzogen. Das Kind muss den neuen QR-Code/),
+    ).toBeVisible();
+    const withdrawn = parseEnrollmentLink(
+      screen
+        .getByRole("img", { name: "Einschreibungs-QR-Code für Alex" })
+        .getAttribute("data-qr-value")!,
+    ).enrollment;
+    expect(withdrawn.sealPublicKey).toBe(enrollment.sealPublicKey);
+    expect(withdrawn.writingReliefGrant).toBeUndefined();
   });
 });
