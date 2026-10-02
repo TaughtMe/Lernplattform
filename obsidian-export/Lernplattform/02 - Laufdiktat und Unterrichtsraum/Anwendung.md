@@ -12,7 +12,7 @@ Der Unterrichtsraum ermöglicht gemeinsame, von der Lehrkraft gesteuerte Aktivit
 4. Aufgaben erscheinen auf den Schülergeräten.
 5. Die Lehrkraft verfolgt aggregierten Live-Fortschritt.
 6. Nach der Abgabe erscheint die Auswertung ohne vorheriges direktes Feedback.
-7. Je nach Einstellung werden alle, nur fehlerhafte oder keine Vokabeln an die persönliche LernBox übergeben.
+7. Je nach Einstellung werden alle, nur Vokabeln mit Übungsbedarf oder keine Vokabeln an die persönliche LernBox übergeben. Die Platzierung folgt dem Ergebnis der Runde (Entscheidung 49); beendet die Lehrkraft die Runde vorzeitig, wird genauso übernommen.
 8. Der Schüler kann über **„Meine Fehler jetzt üben“** unmittelbar eine persönliche Übungsrunde starten.
 
 ## Einstieg im Lernraum
@@ -30,6 +30,7 @@ Der persönliche Deutschbereich öffnet stattdessen direkt die Lernwörter. Die 
 - Persönlicher Lernfortschritt bleibt lokal.
 - Ein Fehler oder eine Hilfe beeinflusst den Lernstand nach denselben Regeln wie in der LernBox.
 - Im Test falsch beantwortete Vokabeln werden als fällig markiert. Eine mit Hilfe gelöste Vokabel steigt nicht auf und wird kurzfristig erneut abgefragt.
+- Bei der Übernahme aus einer Live-Runde gilt die Tabelle aus Entscheidung 49: sicher gewusst → Box 2 (neu) beziehungsweise unverändert (vorhanden); 1–2 Fehlversuche → Box 1 beziehungsweise Box bleibt, sofort fällig; Hilfe oder ab 3 Fehlversuchen → Box 1; nicht erreicht → Box 1 (neu) beziehungsweise unverändert. Hilfen werden nur lokal im Sitzungsspeicher gemerkt.
 - Eine Vokabel kann innerhalb einer Runde höchstens einmal aufsteigen.
 
 ## Spätere Übernahme aus Texten
@@ -47,7 +48,7 @@ Im persönlichen Deutschbereich ist der erste vollständige Laufdiktat-Weg nativ
 - Texte werden in Sätze und Zeilen zerlegt und über Ansehen, Verdecken und Schreiben geübt.
 - Vokabeltabellen unterstützen Alternativantworten sowie beide Richtungen und eine gemischte Runde.
 - Klassisches Laufdiktat und freies Üben mit stufenweisen Tipps sind getrennt auswählbar.
-- Nach einer Vokabelrunde werden je nach Auswahl alle, nur fehlerhafte oder keine Vokabeln über `LearningBundleV1` in die gemeinsame persönliche LernBox übergeben.
+- Nach einer Vokabelrunde werden je nach Auswahl alle, nur Vokabeln mit Übungsbedarf oder keine Vokabeln über `LearningBundleV1` in die gemeinsame persönliche LernBox übergeben. Sicher Gewusstes startet in Box 2, Übungsbedarf in Box 1 (siehe Entscheidung 49).
 - **Meine Fehler jetzt üben** öffnet anschließend direkt die LernBox; vorhandene Karten werden nicht dupliziert, sondern wieder fällig markiert.
 
 Der Live-Raum und das vollständige Lehrerdashboard sind inzwischen ebenfalls nativ integriert:

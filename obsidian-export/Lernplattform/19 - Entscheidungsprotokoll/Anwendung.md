@@ -521,3 +521,31 @@ Der verbindliche Übergangsrahmen steht unter [[../17 - Entwicklungsplan/Anwendu
 - **Üben:** Der Eintrag „Üben“ führt zu einer Übersicht mit einer großen Kachel je Übungsbereich (LernBox, Wortspeicher, Tastenwelt, Kopfrechnen, Laufdiktat allein), jeweils mit eigenem Symbol und eigener Farbe.
 - **Hell/Dunkel:** Der Schalter sitzt mobil oben rechts; auf dem Desktop steht er im Kopf der jeweiligen Seite, damit er nicht mit dem Wochenbericht kollidiert.
 - **Tastenwelt mit Fehler-Stopp:** Eine falsche Taste wird gezählt, der Cursor bleibt aber stehen, bis die richtige Taste kommt (Design 6a/6b).
+
+## 49. Vokabelübernahme aus dem Laufdiktat: Platzierung nach Ergebnis – 2. Oktober 2026
+
+**Beschlossen:** Alle Kinder erhalten die Vokabeln der Lehrkraft in ihrer LernBox. Wo sie dort starten, hängt vom Ergebnis in der Unterrichtsrunde ab. Die Runde dient als ehrliche Kontrolle: Wer ein Wort sicher kann, startet höher; wer sich schwergetan hat, übt es bald wieder. Reines Aufdecken in der LernBox hätte diese Kontrolle nicht.
+
+**Begriffe** (nur Vokabeln in einer Live-Runde ohne Stationsmodus):
+
+- **Fehlversuch:** abgeschickte, falsche Antwort.
+- **Hilfe:** Buchstabenhilfe oder Abschreibvorlage wurde tatsächlich angezeigt. Aufdecken, erneutes Aufdecken und Vorlesen sind keine Hilfe. Im Modus „Üben“ erscheint die Buchstabenhilfe nach dem ersten Fehlversuch automatisch und gilt als Hilfe.
+- **Sicher gewusst:** richtig, 0 Fehlversuche, keine Hilfe.
+
+**Ergebnis pro Wort und Platzierung** (gilt für die abgefragte Richtung, `reverse` bleibt unberührt beziehungsweise startet in Box 1):
+
+| Ergebnis | Bedingung | Neue Vokabel | Vokabel schon in der LernBox |
+|---|---|---|---|
+| `known` | sicher gewusst | Box 2, morgen fällig | unverändert |
+| `practice` | 1–2 Fehlversuche, keine Hilfe | Box 1, sofort fällig | Box bleibt, sofort fällig |
+| `reset` | Hilfe genutzt oder ab 3 Fehlversuchen | Box 1, sofort fällig | Box 1, sofort fällig |
+| `unseen` | nicht erreicht (vorzeitiges Ende) | Box 1, sofort fällig | unverändert |
+
+**Optionen der Lehrkraft** (Werte unverändert `all`, `errors`, `none`): „Alle Vokabeln übernehmen“ (jede Vokabel, platziert nach Tabelle), „Nur Übungsbedarf übernehmen“ (`practice`, `reset`, `unseen`; Standard), „Nichts übernehmen“. Der Stationsmodus übernimmt nie, weil sich dort mehrere Kinder ein Gerät teilen. Der Stapel heißt jetzt „Übungsbedarf aus Unterrichtsrunde“; der frühere Titel „Fehler aus Unterrichtsrunde“ wird weiter gefunden, damit kein zweiter Stapel entsteht.
+
+**Vorzeitiges Ende:** Beendet die Lehrkraft die Runde, bevor das Kind fertig ist, wird genauso übernommen; nicht erreichte Wörter gelten als `unseen`. Die Übernahme wirkt pro Runde und Gerät nur einmal. Das aktuelle Wort zählt als nicht erreicht, solange es weder Fehlversuch noch Hilfe hat.
+
+**Datenschutz:** Hilfen pro Wort und Platzierungen bleiben auf dem Gerät (`sessionStorage`) und gehen nicht an den Server. `wordErrors` geht wie bisher mit dem Fortschritt an den Raum. Keine Datenbankänderung.
+
+**Bekannte Grenzen:** Schließt ein Kind die Seite vor dem Ende, wird nichts übernommen (Sitzungsspeicher). Liegt eine Vokabel in der LernBox in umgekehrter Richtung vor, erkennt der Fingerprint sie nicht als Dublette (bestehendes Verhalten). Im Modus „Üben“ führt schon ein einzelner Tippfehler zu `reset`, weil die Buchstabenhilfe automatisch erscheint; die Grenzwerte werden nach dem Probedurchlauf kalibriert.
+

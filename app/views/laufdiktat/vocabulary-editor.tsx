@@ -252,9 +252,16 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
               props.onTransfer?.(event.target.value as VocabularyTransfer)
             }
           >
-            <option value="errors">Nur fehlerhafte Vokabeln</option>
-            <option value="all">Alle Vokabeln</option>
+            <option value="errors">Nur Übungsbedarf übernehmen</option>
+            <option value="all">Alle Vokabeln übernehmen</option>
           </select>
+        ) : null}
+        {props.transfer !== "none" ? (
+          <p className={styles.hint}>
+            {props.transfer === "all"
+              ? "Sicher gewusste Vokabeln starten in Box 2. Alle anderen starten in Box 1 und sind sofort fällig."
+              : "Übernommen werden Vokabeln mit Fehlern oder Hilfe sowie nicht erreichte Vokabeln. Sicher gewusste bleiben draußen."}
+          </p>
         ) : null}
         {props.transfer !== "none" ? (
           <label className={styles.tagField}>

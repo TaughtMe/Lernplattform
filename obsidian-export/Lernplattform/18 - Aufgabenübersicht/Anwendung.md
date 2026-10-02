@@ -61,6 +61,10 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Dublettenfreien LernBox-Eingangsadapter für Laufdiktat-Fehler umsetzen
 - [x] Persönlichen Laufdiktat-Ergebnisfluss an den gemeinsamen LernBox-Eingangsadapter anschließen
 - [x] Falsche Vokabeln aus persönlichen Laufdiktat-Runden automatisch als fällig markieren
+- [x] Vokabelübernahme aus Live-Runden: Platzierung nach Ergebnis (Box 2 / Box 1 / sofort fällig), Hilfen lokal mitschreiben, Übernahme auch bei vorzeitigem Ende (Entscheidung 49)
+- [ ] Probedurchlauf der Vokabelübernahme mit Laptop und Handy (Teil 3, Schritte 1–6 des Umsetzungsplans)
+- [ ] Grenzwerte der Vokabelübernahme nach dem Probedurchlauf kalibrieren (Üben-Modus: Buchstabenhilfe ab dem ersten Fehlversuch)
+- [ ] Teil 2: Schreiberleichterung mit Klassenstempel (Entscheidung 50)
 - [x] Schaltfläche **„Meine Fehler jetzt üben“** nach persönlichen Vokabelrunden umsetzen
 - [x] Nach Hilfen einen verdeckten Abruf erzwingen
 - [x] Tagesauswahl aus Fälligkeiten und kurzfristigen Fehlerwiederholungen ergänzen
