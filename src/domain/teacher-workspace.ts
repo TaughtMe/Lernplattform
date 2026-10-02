@@ -11,6 +11,8 @@ export const teacherProfileSchema = z
     subjects: z.array(z.string().trim().min(1).max(80)).max(20),
     /** Standard-Tag für Vokabeln, die ein Laufdiktat in die LernBox gibt. */
     lernboxTag: z.string().trim().max(80).optional(),
+    /** Zuletzt beim Raumstart gewählte Klasse (für den Klassenstempel). */
+    lastLiveClassId: z.string().uuid().optional(),
     updatedAt: z.iso.datetime(),
   })
   .strict();

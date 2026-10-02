@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyLiveVocabulary,
   DEFAULT_PLACEMENT_RULES,
+  placementRulesFor,
   shouldTransfer,
   type LiveVocabularyOutcome,
   type LiveVocabularyTransferChoice,
@@ -61,6 +62,24 @@ describe("classifyLiveVocabulary", () => {
       "reset",
     ],
     [
+      "tolerant angenommen ohne Fehler zählt nicht als sicher",
+      { errors: 0, usedHelp: false, answered: true, toleratedSpelling: true },
+      strict,
+      "practice",
+    ],
+    [
+      "tolerant angenommen nach 4 Fehlversuchen",
+      { errors: 4, usedHelp: false, answered: true, toleratedSpelling: true },
+      strict,
+      "practice",
+    ],
+    [
+      "tolerant angenommen nach 5 Fehlversuchen",
+      { errors: 5, usedHelp: false, answered: true, toleratedSpelling: true },
+      strict,
+      "reset",
+    ],
+    [
       "nicht erreicht",
       { errors: 0, usedHelp: false, answered: false },
       DEFAULT_PLACEMENT_RULES,
@@ -87,6 +106,13 @@ describe("classifyLiveVocabulary", () => {
   ];
   it.each(cases)("%s", (_name, trace, rules, expected) => {
     expect(classifyLiveVocabulary(trace, rules)).toBe(expected);
+  });
+});
+
+describe("placementRulesFor", () => {
+  it("wählt 3 bzw. 5 Fehlversuche je nach Schreiberleichterung", () => {
+    expect(placementRulesFor(false)).toEqual({ resetAfterErrors: 3 });
+    expect(placementRulesFor(true)).toEqual({ resetAfterErrors: 5 });
   });
 });
 
