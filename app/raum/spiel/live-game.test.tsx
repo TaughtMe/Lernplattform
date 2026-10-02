@@ -13,9 +13,12 @@ function revealWithTwoFingers(container: HTMLElement) {
 }
 
 const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
-  ingestBundle: vi
-    .fn()
-    .mockResolvedValue({ deckId: "deck-1", added: 1, reused: 0 }),
+  ingestBundle: vi.fn().mockResolvedValue({
+    deckId: "deck-1",
+    added: 1,
+    reused: 0,
+    practiceAgain: 0,
+  }),
   putLearningEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -296,6 +299,89 @@ describe("LiveRunningDictationGame", () => {
     expect(
       screen.queryByText("1 Vokabel wurde in deine LernBox übernommen."),
     ).not.toBeInTheDocument();
+  });
+
+  it("places a word as reset when the letter hint was shown", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-hint",
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+            },
+          ],
+          vocabularyTransfer: "all",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    revealWithTwoFingers(container);
+    const field = screen.getByRole("textbox", { name: "Deine Antwort" });
+    await user.type(field, "Hous{Enter}");
+    expect(await screen.findByLabelText("Buchstabenhilfe")).toBeVisible();
+    await user.type(field, "Haus{Enter}");
+    await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1));
+    expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+      "live-session-hint-house": "reset",
+    });
+    // Hilfen bleiben auf dem Gerät: Schnappschuss nur im sessionStorage.
+    expect(
+      window.sessionStorage.getItem("lernraum:live-trace:session-hint"),
+    ).toContain('"wordHelps"');
+  });
+
+  it("places a clean answer as known and shows the child-friendly notice", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-known",
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+            },
+          ],
+          vocabularyTransfer: "all",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+    revealWithTwoFingers(container);
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "Haus{Enter}",
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText("1 neue Vokabel ist jetzt in deiner LernBox."),
+      ).toBeVisible(),
+    );
+    expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+      "live-session-known-house": "known",
+    });
   });
 });
 
