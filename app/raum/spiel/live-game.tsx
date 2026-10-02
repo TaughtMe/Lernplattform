@@ -185,12 +185,10 @@ export function LiveRunningDictationGame({
       : "";
   // Hilfe zählt erst, wenn Buchstabenhilfe oder Abschreibvorlage wirklich da ist.
   const helpShown = kind === "vocabulary" && (copyMode || hint !== "");
-  useEffect(() => {
-    if (!helpShown || !errorKey) return;
-    setWordHelps((value) =>
-      value[errorKey] ? value : { ...value, [errorKey]: true },
-    );
-  }, [helpShown, errorKey]);
+  // Abgeleiteter Zustand: während des Renderns nachziehen, nicht per Effekt.
+  if (helpShown && errorKey && !wordHelps[errorKey]) {
+    setWordHelps({ ...wordHelps, [errorKey]: true });
+  }
 
   // Schnappschuss für Neuladen und vorzeitiges Ende; nur lokal gespeichert.
   useEffect(() => {
