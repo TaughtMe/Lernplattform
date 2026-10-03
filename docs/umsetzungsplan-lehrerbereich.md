@@ -5,8 +5,9 @@ Stand: 03.10.2026 · Ausgangsstand `bbb4702` (nach PR #4)
 Dieser Plan ist die Arbeitsgrundlage für Schritt 8 aus
 [umsetzungsplan-lernraum-ui-v2.md](umsetzungsplan-lernraum-ui-v2.md). Er folgt dem v2-Prinzip:
 **zuerst die reine Ansicht, messbar identisch zur Vorlage, danach die Anbindung in getesteten
-Scheiben.** Die Entscheidungen in Abschnitt 3 sind Vorschläge der technischen Planung und
-müssen vor Beginn von Scheibe 8.3 von der projektverantwortlichen Lehrkraft bestätigt werden
+Scheiben.** Die Entscheidungen in Abschnitt 3 sind Vorschläge der technischen Planung. E4
+(Ablage nach Klassen) und E9 (Code gilt 45 Minuten) sind mit der projektverantwortlichen
+Lehrkraft abgestimmt. E1 und E2 müssen vor Beginn von Scheibe 8.3 noch bestätigt werden
 (Abschnitt 9).
 
 ## 0. Arbeitsweise
@@ -16,8 +17,9 @@ müssen vor Beginn von Scheibe 8.3 von der projektverantwortlichen Lehrkraft bes
 - Regeln: `AGENTS.md`, `docs/engineering-quality.md`, `docs/umsetzungsplan-lernraum-ui-v2.md`
   (Abschnitt „Regeln für die Anbindung“). Ansichten in `app/views/` bleiben rein: kein Speicher,
   kein Supabase, keine Zeit- oder Zufallsquellen.
-- Keine neuen Abhängigkeiten. **Keine Supabase-Änderung.** Keine neue Dexie-Version (neue Felder
-  sind keine Indizes, wie beim Klassenstempel).
+- Keine neuen Abhängigkeiten. Keine neue Dexie-Version (neue Felder sind keine Indizes, wie
+  beim Klassenstempel). **Genau eine Supabase-Änderung:** die Beitrittsfrist von 45 Minuten
+  (E9, Scheibe 8.6). Sonst bleiben alle Supabase-Verträge unverändert.
 - Während der Arbeit gezielte Tests (`npx vitest run <datei>`). Vor jedem Push:
   `npm run check`, `npm run test:design` und die fokussierten E2E-Tests aus Abschnitt 6.
 - Jede Scheibe endet grün und lauffähig. Alte Lehrer-Screens und ihre Stile werden erst
@@ -52,6 +54,13 @@ müssen vor Beginn von Scheibe 8.3 von der projektverantwortlichen Lehrkraft bes
   (`app/lehrer/live/use-teacher-live-room.tsx`). Der Live-Raum kann keinen abgelegten Inhalt
   laden und nichts ablegen.
 - Die Klassenwahl für den Raum ist schon da (`lastLiveClassId` im Lehrerprofil, Entscheidung 50).
+- **Laufzeit eines Raums:** Es gibt heute keine feste Gültigkeit des Codes. Ein Raum endet erst
+  3 Stunden nach der letzten Aktivität (Aufräumfunktion in
+  `supabase/migrations/20260825124001_migrate_laufdiktat_live_rooms.sql`). Solange er offen ist,
+  kann man mit dem Code beitreten. Ein Gerät, das schon beigetreten ist, kommt mit seinem
+  Teilnehmertoken zurück, ohne den Code neu zu prüfen (`join_room_secure`, zuletzt in
+  `20260920120000_room_identity_contract.sql`). Die Angabe „Code gilt 90 Minuten“ aus der
+  Vorlage stimmt also nicht.
 - Es gibt keinen Lehrer-Login (Entscheidung 43). Die Vorlage zeigt „T. Bryson · Abmelden“.
 - Designvergleich: Die Registry `app/entwicklung/screens/registry.tsx` kennt bisher nur 2a und
   5a–5d. Für Schritt 8 werden die Lehrer-Screens dort ergänzt und in `screens.json` auf
@@ -87,13 +96,16 @@ als zentrierter Dialog). Es zeigt Titel, Klasse, die **vier echten Modi** (Laufd
 - „Jetzt starten“ öffnet direkt die Lobby mit den Standardoptionen des Modus und der aktiven
   Klasse.
 - „Alle Optionen“ öffnet den Schritt „Einstellungen“ (5c/5d) mit geladenem Inhalt.
+- Unter dem Titel steht „Klassen: 7b, 9a · ändern“ bzw. „Nicht zugeordnet · zuordnen“. Das
+  öffnet die Klassenzuordnung (E4).
 - Bewusste Abweichung: Die Vorlage zeigt drei vereinfachte Modi (Laufdiktat/Test/Üben) und
   Schalter (Buchstaben, Selbstkorrektur, Vorlesen, Punkte), die es fachlich so nicht gibt.
   „Selbstkorrektur“ existiert nicht, „Punkte“ hängt an der Motivation (`aus`). Die Fußnote in 2c
   sagt selbst „Modi beim Öffnen: Laufdiktat · Freies Üben · Battle · Stationen — wie im
   bestehenden Laufdiktat“.
 - Der Raumcode erscheint erst in der Lobby, weil er beim Erstellen des Raums entsteht. Die
-  Vorlage zeigt ihn schon im Overlay.
+  Vorlage zeigt ihn schon im Overlay. Statt „Code gilt 90 Minuten“ steht dort „Code gilt
+  45 Minuten“ (E9).
 
 **E3 – Navigation.** Bereich „Inhalte“ → `/lehrer`, „Räume“ → `/lehrer/live` (offener Raum
 oder neuer Raum). „Auswertung“ wird **nicht angezeigt**, bis es dafür einen Entwurf gibt
@@ -104,23 +116,46 @@ in alter Oberfläche (v2-Plan: „Bereiche ohne Vorlage bleiben …“). Die Üb
 `teacher-overview.tsx` entfällt. Ihr Hinweis „Dieses Gerät ist die Schutzgrenze“ wandert auf die
 Einstellungsseite und erscheint einmalig in der Ablage, solange kein Lehrerprofil gespeichert ist.
 
-**E4 – Aktive Klasse.** Ein Klick auf eine Klasse in der Leiste wählt sie als **aktive Klasse**
-(Kopf „Klasse 7b · Inhalte“, Panel „… für Klasse 7b“, Klasse beim Raumstart). Es gibt dafür
-kein neues Feld: Es wird `lastLiveClassId` aus Entscheidung 50 verwendet, weil die aktive Klasse
-genau die Klasse des nächsten Raums ist. Zusätzlich steht sie in der Adresse (`/lehrer?klasse=…`),
-damit sie auch ohne gespeichertes Lehrerprofil gilt. Die Verwaltung der Klasse (Schüler, QR,
-Schreiberleichterung) bleibt unter `/lehrer/klassen?klasse=…`. Das „+“ neben „Klassen“ und
-„Klasse anlegen“ führen dorthin. Ohne Klasse heißt der Kopf „Alle Inhalte“.
+**E4 – Ablage nach Klassen, mit „Nicht zugeordnet“ (abgestimmt).** Die Ablage ist nach
+Klassen gegliedert:
+
+- **Leiste:** Unter den Klassen steht ein zusätzlicher Eintrag **„Nicht zugeordnet“** mit der
+  Zahl der Inhalte ohne Klasse. Er erscheint nur, wenn es solche Inhalte gibt. Das ist eine
+  bewusste Ergänzung zur Vorlage.
+- **Klasse gewählt:** Die Ablage zeigt **nur** die Inhalte dieser Klasse (Kopf „Klasse 7b ·
+  Inhalte“). Neue Inhalte, die hier angelegt werden, gehören automatisch zu dieser Klasse (Panel
+  „Text anlegen für Klasse 7b“).
+- **„Nicht zugeordnet“ gewählt:** Die Ablage zeigt die Inhalte ohne Klasse. Dort neu angelegte
+  Inhalte bleiben ohne Klasse. Jede Zeile hat zusätzlich den Knopf **„Zuordnen“**.
+- **Nachträglich zuordnen:** Der Dialog „Klassen zuordnen“ zeigt alle aktiven Klassen als
+  Häkchenliste. Ein Inhalt kann zu **mehreren** Klassen gehören, zum Beispiel „Irregular verbs“
+  für 7b und 7c. Erreichbar ist der Dialog über „Zuordnen“ (Ansicht „Nicht zugeordnet“) und
+  über „Klassen … ändern“ im Start-Overlay (E2), also auch mobil. Werden alle Häkchen
+  entfernt, landet der Inhalt wieder unter „Nicht zugeordnet“.
+- **Bestand:** Alle heute abgelegten Vokabelpakete haben keine Klasse und stehen nach dem
+  Update unter „Nicht zugeordnet“. Es gibt keine automatische Migration und keinen
+  Datenverlust.
+- **Archivierte Klassen:** Ihre IDs zählen nicht mehr. Hat ein Inhalt nur noch archivierte
+  Klassen, erscheint er unter „Nicht zugeordnet“. Das Archivieren einer Klasse löscht keine
+  Inhalte.
+- **Aktive Klasse:** Die gewählte Klasse ist zugleich die Klasse des nächsten Raums. Dafür gibt
+  es kein neues Feld: Es wird `lastLiveClassId` aus Entscheidung 50 verwendet, zusätzlich steht
+  die Wahl in der Adresse (`/lehrer?klasse=<id>` bzw. `/lehrer?klasse=ohne`), damit sie auch
+  ohne gespeichertes Lehrerprofil gilt. Ohne gültige Wahl öffnet `/lehrer` die zuletzt genutzte
+  Klasse, sonst die erste Klasse, sonst „Nicht zugeordnet“. Ein Raum aus „Nicht zugeordnet“
+  startet ohne Klasse, also mit den Standardregeln (keine Schreiberleichterung).
+- **Verwaltung:** Schüler, QR und Schreiberleichterung bleiben unter
+  `/lehrer/klassen?klasse=…`. Das „+“ neben „Klassen“ und „Klasse anlegen“ führen dorthin.
 
 **E5 – Ablage für alle Inhaltsarten.** Das bestehende Schema wird rückwärtskompatibel
 erweitert, statt eine zweite Ablage zu bauen. Alle neuen Felder sind optional:
 
-| Feld         | Typ                                | Bedeutung                                                                 |
-| ------------ | ---------------------------------- | ------------------------------------------------------------------------- |
-| `kind`       | `"vocabulary" \| "text" \| "math"` | fehlt = `vocabulary` (alle Altbestände sind Vokabelpakete)                |
-| `classIds`   | `string[]` (UUIDs, max. 50)        | Klassen, für die der Inhalt angelegt wurde; leer/fehlt = für alle Klassen |
-| `lastUsedAt` | ISO-Zeit                           | letzter Raumstart mit diesem Inhalt                                       |
-| `textSplit`  | `"satz" \| "zeile" \| "wort"`      | nur Text: Zerlegung in Stationen                                          |
+| Feld         | Typ                                | Bedeutung                                                  |
+| ------------ | ---------------------------------- | ---------------------------------------------------------- |
+| `kind`       | `"vocabulary" \| "text" \| "math"` | fehlt = `vocabulary` (alle Altbestände sind Vokabelpakete) |
+| `classIds`   | `string[]` (UUIDs, max. 50)        | zugeordnete Klassen; leer/fehlt = „Nicht zugeordnet“       |
+| `lastUsedAt` | ISO-Zeit                           | letzter Raumstart mit diesem Inhalt                        |
+| `textSplit`  | `"satz" \| "zeile" \| "wort"`      | nur Text: Zerlegung in Stationen                           |
 
 - `source` bleibt die einzige Inhaltsquelle: Vokabeln im bisherigen Tabellenformat, Text als
   Rohtext, Mathe als eine Aufgabe je Zeile (wie `mathLines` im Live-Raum).
@@ -129,8 +164,9 @@ erweitert, statt eine zweite Ablage zu bauen. Alle neuen Felder sind optional:
   Grenze und wird dokumentiert.
 - Die **Freigabe an Schüler** (24-h-Übergabe) bietet nur `kind = vocabulary` an. Supabase-Verträge
   bleiben unverändert.
-- Die Ablage zeigt die Inhalte der aktiven Klasse und die Inhalte ohne Klasse, sortiert nach
-  `lastUsedAt ?? updatedAt` (neueste zuerst). Das Datum in der Zeile ist dieser Wert.
+- Die Ablage zeigt die Inhalte der gewählten Klasse bzw. die nicht zugeordneten (E4), sortiert
+  nach `lastUsedAt ?? updatedAt` (neueste zuerst). Das Datum in der Zeile ist dieser Wert. Die
+  Zahl rechts („14 Inhalte“) bezieht sich auf diese Auswahl.
 - Die Metazeile („42 Vokabeln · Englisch“, „6 Abschnitte · 38 Wörter“, „30 Aufgaben“) wird
   aus `source` abgeleitet, nicht gespeichert. „Generator“ entfällt, solange die Herkunft nicht
   gespeichert wird.
@@ -157,6 +193,31 @@ Namen öffnet `/lehrer/einstellungen`. Das ist eine bewusste Abweichung wegen En
 rechts neben dem Seitentitel. Der Rahmen zeigt weiter den kompakten Seitenfuß (Impressum,
 Datenschutz, Version). Im Designvergleich fehlt er, weil der Katalog nur die Ansicht rendert.
 
+**E9 – Code gilt 45 Minuten (abgestimmt).** Neue Beitritte mit Raumcode oder QR sind
+**45 Minuten nach dem Öffnen des Raums** möglich, danach nicht mehr. 45 Minuten entsprechen
+einer Unterrichtsstunde. Der Code wird außerdem früher wieder frei, was bei nur vierstelligen
+Codes Kollisionen verringert.
+
+- **Nur neue Beitritte enden.** Geräte, die schon im Raum sind, kommen mit ihrem
+  Teilnehmertoken auch nach 45 Minuten zurück, etwa nach einem Verbindungsabbruch. Die laufende
+  Runde, die Live-Ansicht und der CSV-Export laufen weiter. Das Ende des Raums bleibt wie bisher
+  (Lehrkraft beendet, sonst nach 3 Stunden ohne Aktivität).
+- **Durchsetzung auf dem Server:** In `join_room_secure` wird im Zweig für neue Beitritte
+  (nach dem Token-Zweig) zusätzlich `r.created_at > now() - interval '45 minutes'` geprüft. Die
+  Antwort bleibt leer wie bei einem unbekannten Code. Die Form des Vertrags ändert sich nicht.
+- **Anzeige:** In der Lobby und in der Fußzeile des Live-Schritts steht „Code gilt bis
+  HH:MM“. Die Uhrzeit wird beim Erstellen des Raums lokal berechnet und dient nur der Anzeige;
+  maßgeblich ist der Server. Nach Ablauf ersetzt „Beitritt geschlossen · neuen Raum öffnen“
+  Code und QR, und der vergrößerte QR lässt sich nicht mehr öffnen.
+- **Schüler:** Die Meldung bei einem abgelaufenen Code lautet „Raumcode ungültig oder
+  abgelaufen“ (gleiche Meldung wie bei einem falschen Code).
+- **Eine Konstante:** `ROOM_JOIN_WINDOW_MINUTES = 45` in `src/integrations/laufdiktat/`. Der
+  Datenbank-Vertragstest prüft, dass die Migration denselben Wert nutzt.
+- **Bekannte Grenze:** Eine zweite Runde im selben Raum nach mehr als 45 Minuten nimmt keine
+  neuen Kinder mehr auf. In einer Doppelstunde öffnet die Lehrkraft dafür einen neuen Raum.
+- Das ist eine Abweichung vom Original-Laufdiktat. Sie wird in `docs/laufdiktat-parity.md`
+  eingetragen.
+
 ## 4. Architektur
 
 ```
@@ -164,15 +225,18 @@ app/views/lehrer/
   teacher-frame.tsx (+ .module.css)      reine Ansicht Rahmen 3c/3d: Leiste, Schublade, Kopf
   content-library-screen.tsx (+ css)     reine Ansicht „Inhalte“: Neu anlegen, Panel, Ablage
   start-sheet.tsx (+ css)                reine Ansicht Start-Overlay (E2)
+  class-assign-dialog.tsx (+ css)        reine Ansicht „Klassen zuordnen“ (E4)
   demo.ts                                Beispieldaten der Vorlage (7b/9a/6c, vier Inhalte)
 src/domain/teacher-content-library.ts    Schema erweitert (E5)
 src/domain/teacher-content-summary.ts    rein: Metazeile, Filter nach Klasse, Sortierung, Titelvorschlag
-src/storage/teacher-class-settings.ts    Repository: markUsed(id, at), listForClass(classId?)
+src/storage/teacher-class-settings.ts    Repository: markUsed(id, at), listForClass(classId | "ohne"),
+                                         assignClasses(id, classIds)
 app/lehrer/use-content-library.ts        Hook: Ablage + aktive Klasse → Props der Ansicht
 app/lehrer/content-adapter.ts            rein: Paket ↔ Live-Raum-Zustand (je Art)
 app/lehrer/page.tsx                      bindet Ansicht und Hook
 app/ui/shell/teacher-shell.tsx           wird Adapter: liefert Props für teacher-frame.tsx
 app/lehrer/live/use-teacher-live-room.tsx  liest `inhalt`/`neu`/`schritt`/Start-Absicht, legt ab
+supabase/migrations/2026…_room_join_window.sql  Beitrittsfrist 45 Minuten (E9)
 ```
 
 - **Start-Absicht statt Seiteneffekt per URL:** „Jetzt starten“ schreibt
@@ -194,7 +258,9 @@ app/lehrer/live/use-teacher-live-room.tsx  liest `inhalt`/`neu`/`schritt`/Start-
 
 ### 8.1 Ansichten und Designvergleich (ohne Anbindung)
 
-1. `app/views/lehrer/teacher-frame.tsx`, `content-library-screen.tsx`, `start-sheet.tsx` mit CSS-Modulen.
+1. `app/views/lehrer/teacher-frame.tsx`, `content-library-screen.tsx`, `start-sheet.tsx`,
+   `class-assign-dialog.tsx` mit CSS-Modulen. Eintrag „Nicht zugeordnet“ in der Leiste und
+   Knopf „Zuordnen“ sind optionale Props; ohne sie zeigt die Ansicht genau die Vorlage.
    Container-Query ab 900 px für 3d, darunter 3c. Grundlage `.view` aus `app/views/parts`.
    Tokens aus `app/ui/tokens.css`, keine neuen Farben.
 2. Schublade mobil als `<dialog>` (Fokusfalle, Escape, Schließen-Knopf, Klick auf Hintergrund).
@@ -220,14 +286,18 @@ hat.
 1. Schema erweitern (E5) und `teacher-content-summary.ts` mit Metazeile, Klassenfilter,
    Sortierung und Titelvorschlag schreiben. Zählen über `parseVocabularyTable` /
    `parseTeacherVocabularyPairs`, `buildRunningDictationSections` und Zeilen für Mathe.
-2. Repository: `markUsed(id, at)`, `listForClass(classId?)`. Gesamtsicherung und Import der
-   Lehrerdatenbank mit neuen Feldern.
+2. Repository: `markUsed(id, at)`, `listForClass(classId | "ohne")`,
+   `assignClasses(id, classIds)` (ändert keine Revision, nur `updatedAt`). Gesamtsicherung und
+   Import der Lehrerdatenbank mit neuen Feldern.
 3. Freigabe an Schüler filtert auf `kind = vocabulary` (Liste und `buildTeacherVocabularyBundle`-Aufruf).
 4. Tests:
    - Altpaket ohne `kind` wird als Vokabeln gelesen.
    - Ungültige `classIds` werden abgewiesen.
    - Roundtrip Export/Import mit und ohne neue Felder.
    - Metazeile je Art, Filter und Sortierung.
+   - Filter: Inhalt mit zwei Klassen erscheint in beiden; ohne Klasse und mit nur archivierten
+     Klassen erscheint er unter „Nicht zugeordnet“.
+   - Zuordnen und Entfernen aller Klassen wechseln korrekt zwischen den Ansichten.
    - Freigabe bietet keine Text- und Mathe-Pakete an.
 
 ### 8.3 Rahmen anbinden
@@ -243,16 +313,19 @@ hat.
 
 ### 8.4 Inhalte-Seite `/lehrer` anbinden
 
-1. Hook `use-content-library.ts`: lädt die Ablage, liest die aktive Klasse (`?klasse` vor
-   `lastLiveClassId`) und speichert eine geänderte Wahl in `lastLiveClassId`, wenn ein Profil
-   existiert. Er liefert Props für `ContentLibraryScreen`.
+1. Hook `use-content-library.ts`: lädt die Ablage, liest die Wahl (`?klasse` vor
+   `lastLiveClassId`, Rückfall nach E4) und speichert eine geänderte Klassenwahl in
+   `lastLiveClassId`, wenn ein Profil existiert. Er liefert Props für `ContentLibraryScreen`,
+   den Zähler für „Nicht zugeordnet“ und die Aktion „Klassen zuordnen“. Neue Inhalte erhalten
+   die gewählte Klasse.
 2. `app/lehrer/page.tsx` bindet Ansicht und Hook. `teacher-overview.tsx` wird gelöscht. Der
    Schutzhinweis folgt E3.
 3. Anlegen-Kacheln: auf 3d führt ein Klick direkt zum Editor. Auf 3c wählt der Klick die Art,
    und das Panel „Weiter“ öffnet den Editor (E6). „Bearbeiten“ und „Öffnen“ verhalten sich nach
    E2/E6.
-4. Tests: Hook (Filter nach Klasse, Wahl merken mit und ohne Profil), Route rendert „Inhalte“,
-   Links tragen die richtigen Parameter.
+4. Tests: Hook (Filter nach Klasse und „Nicht zugeordnet“, Wahl merken mit und ohne Profil,
+   Rückfall bei gelöschter Klasse, Zuordnen aktualisiert Liste und Zähler), Route rendert
+   „Inhalte“, Links tragen die richtigen Parameter.
 
 ### 8.5 Live-Raum: Inhalt laden, ablegen, Start-Overlay
 
@@ -276,7 +349,22 @@ hat.
    - Hook: Bei offenem Raum wird nichts überschrieben
    - Bestehende Tests `teacher-live-room*.test.tsx` bleiben grün
 
-### 8.6 Aufräumen und Dokumentation
+### 8.6 Beitrittsfrist 45 Minuten (E9)
+
+Diese Scheibe hängt nicht an 8.1–8.5 und darf zuerst umgesetzt werden.
+
+1. Neue Migration: `join_room_secure` mit der Frist im Zweig für neue Beitritte neu anlegen.
+   Rechte (`grant`) wie in der letzten Fassung übernehmen. Token-Zweig unverändert.
+2. `ROOM_JOIN_WINDOW_MINUTES` anlegen. Lobby und Live-Fußzeile zeigen „Code gilt bis HH:MM“
+   bzw. nach Ablauf „Beitritt geschlossen“ (Hook berechnet, Ansicht erhält Text über optionale
+   Props; ohne Props bleibt 5c/5d wie die Vorlage).
+3. Schülerseite: Meldung „Raumcode ungültig oder abgelaufen“.
+4. Tests:
+   - `npm run test:database`: neuer Beitritt nach 45 Minuten wird abgewiesen; Rückkehr mit
+     Token nach 45 Minuten klappt; neuer Beitritt vor Ablauf klappt; Migration nutzt 45.
+   - Komponententest: Anzeige vor und nach Ablauf (Uhr im Hook injiziert, nicht in der Ansicht).
+
+### 8.7 Aufräumen und Dokumentation
 
 1. Ungenutzte Stile und Komponenten der alten Übersicht entfernen. `npm run css-types` ausführen.
 2. Erwartungen in `tests/rendered-html.test.mjs` („Übersicht“ → „Inhalte“) und
@@ -295,10 +383,14 @@ e2e/laufdiktat-pilot.spec.ts` und ein neuer Test `e2e/teacher-content.spec.ts`:
   2. „Bearbeiten“ öffnet den Text im Editor. Nach einer Änderung und „Ablegen“ steht der neue
      Titel in der Ablage.
   3. Mobil: Menü öffnen, Klasse wählen. Der Kopf zeigt die Klasse, und die Ablage ist gefiltert.
-  4. Axe ohne Verstöße auf `/lehrer` mobil und Desktop, auch mit offenem Sheet und offener
-     Schublade. Touch-Ziele mindestens 44 px.
-- **Live (mit Supabase-Konfiguration):** `e2e/live/teacher-room.spec.ts` um einen Fall ergänzen:
-  „Öffnen → Jetzt starten“ erzeugt eine Lobby, und ein Neuladen zeigt denselben Raumcode.
+  4. „Nicht zugeordnet“ wählen, einen Inhalt der Klasse 7b zuordnen. Er verschwindet dort und
+     erscheint unter 7b.
+  5. Axe ohne Verstöße auf `/lehrer` mobil und Desktop, auch mit offenem Sheet und offener
+     Schublade und offenem Zuordnen-Dialog. Touch-Ziele mindestens 44 px.
+- **Datenbank:** `npm run test:database` mit den Fällen aus 8.6.
+- **Live (mit Supabase-Konfiguration):** `e2e/live/teacher-room.spec.ts` um zwei Fälle ergänzen:
+  „Öffnen → Jetzt starten“ erzeugt eine Lobby, und ein Neuladen zeigt denselben Raumcode. Die
+  Lobby zeigt „Code gilt bis HH:MM“.
 - Die vollständige Cross-Browser-Suite läuft in GitHub (AGENTS.md).
 
 ## 7. Dokumentation
@@ -311,7 +403,9 @@ e2e/laufdiktat-pilot.spec.ts` und ein neuer Test `e2e/teacher-content.spec.ts`:
 - Vault:
   - `04 - Lehrer-Cockpit/Anwendung.md`: Ablage für Text, Mathe und Vokabeln, aktive Klasse, Startweg
   - `19 - Entscheidungsprotokoll`: neue Entscheidung 51 „Lehrerbereich: Ablage aller
-    Inhaltsarten und ein Startweg“
+    Inhaltsarten nach Klassen und ein Startweg“ und Entscheidung 52 „Raumcode gilt 45 Minuten
+    für neue Beitritte“
+- `docs/laufdiktat-parity.md`: Abweichung Beitrittsfrist (E9).
   - `18 - Aufgabenübersicht`: erledigte Punkte
 
 ## 8. Nicht Teil dieses Plans
@@ -321,19 +415,23 @@ e2e/laufdiktat-pilot.spec.ts` und ein neuer Test `e2e/teacher-content.spec.ts`:
 - Mehrere gleichzeitig offene Räume oder eine Raumliste unter „Räume“.
 - Lehrer-Login oder Kontotrennung (Entscheidung 43).
 - Speichern von Mathe-Generator-Einstellungen und der Herkunft „Generator/von Hand“.
-- Änderungen an Supabase, an der Freigabe an Schüler (außer dem Filter auf Vokabeln) und an
-  CSV-Export oder Spiellogik.
+- Weitere Änderungen an Supabase (außer E9), an der Freigabe an Schüler (außer dem Filter auf
+  Vokabeln) und an CSV-Export oder Spiellogik.
+- Eine einstellbare Beitrittsfrist je Raum (z. B. Doppelstunde).
 
 ## 9. Offene Fragen an die Lehrkraft (vor 8.3 klären)
 
+Geklärt am 03.10.2026: Ablage nach Klassen mit „Nicht zugeordnet“ und nachträglichem Zuordnen
+(E4). Code gilt 45 statt 90 Minuten (E9).
+
+Offen:
+
 1. E1: Sind 3c/3d verbindlich, und sind 1d/2c nur Referenz?
 2. E2: Ist das Start-Overlay mit den vier echten Modi statt Laufdiktat/Test/Üben in Ordnung?
-3. E4: Soll die Ablage die Inhalte der aktiven Klasse **und** die Inhalte ohne Klasse zeigen,
-   oder nur die der Klasse?
-4. Die Vorlage nennt „Code gilt 90 Minuten“. Gegen die tatsächliche Raumlaufzeit des
-   Laufdiktat-Vertrags prüfen. Der Text erscheint nur, wenn er stimmt.
+3. E9: Gilt die Frist wie vorgeschlagen nur für **neue** Beitritte (bereits beigetretene Geräte
+   und die laufende Runde bleiben), oder soll der ganze Raum nach 45 Minuten enden?
 
-## 10. Abnahme durch die Lehrkraft (10 Minuten)
+## 10. Abnahme durch die Lehrkraft (15 Minuten)
 
 1. Am Laptop `/lehrer` öffnen. Leiste mit Klassen, „Inhalte“ wie im Entwurf 3d, hell und dunkel.
 2. Klasse wählen, „Text“ anlegen, einen kurzen Text einfügen, Titel vergeben, „Ablegen“. Der
@@ -342,5 +440,9 @@ e2e/laufdiktat-pilot.spec.ts` und ein neuer Test `e2e/teacher-content.spec.ts`:
    laden: derselbe Raum.
 4. Am Handy `/lehrer` öffnen. Wie 3c: Menü, Klassenwahl, großer Knopf „Raum öffnen“; ein Tippen
    auf einen Inhalt öffnet das Start-Overlay.
-5. Ein Vokabelpaket unter „Verwalten → Freigabe an Schüler“ freigeben. Text- und Mathe-Inhalte
+5. In der Leiste „Nicht zugeordnet“ wählen. Die bisherigen Vokabelpakete stehen dort. Eines
+   über „Zuordnen“ zwei Klassen zuordnen; es erscheint danach in beiden Klassen.
+6. Ein Vokabelpaket unter „Verwalten → Freigabe an Schüler“ freigeben. Text- und Mathe-Inhalte
    erscheinen dort nicht.
+7. Lobby zeigt „Code gilt bis …“. Nach 45 Minuten mit einem neuen Gerät beitreten: abgewiesen.
+   Ein schon beigetretenes Gerät neu laden: Es ist weiter im Raum.
