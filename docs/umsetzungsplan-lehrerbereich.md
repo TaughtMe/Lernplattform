@@ -1,6 +1,6 @@
 # Umsetzungsplan: Schritt 8 „Lehrerbereich“ (1d/2c/3c/3d) im Lernraum
 
-Stand: 03.10.2026 · Ausgangsstand `bbb4702` (nach PR #4)
+Stand: 03.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `bbb4702` (nach PR #4)
 
 Dieser Plan ist die Arbeitsgrundlage für Schritt 8 aus
 [umsetzungsplan-lernraum-ui-v2.md](umsetzungsplan-lernraum-ui-v2.md). Er folgt dem v2-Prinzip:
@@ -11,7 +11,8 @@ Planung im Rahmen der bestehenden Entscheidungen.
 
 ## 0. Arbeitsweise
 
-- Eigener Branch je Scheibe oder ein Branch für Schritt 8 mit einem Commit je Scheibe. Übernahme
+- Eigener Branch, abgezweigt von `claude/lernraum-ui-v2` (Hauptbranch; `main` ist veraltet), mit
+  einem Commit je Scheibe. Übernahme
   per Pull Request.
 - Regeln: `AGENTS.md`, `docs/engineering-quality.md`, `docs/umsetzungsplan-lernraum-ui-v2.md`
   (Abschnitt „Regeln für die Anbindung“). Ansichten in `app/views/` bleiben rein: kein Speicher,
