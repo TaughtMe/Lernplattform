@@ -31,8 +31,19 @@ export type TeacherProfile = {
   name: string;
   /** Zweite Zeile, z. B. „Abmelden“ bzw. „Zur Startseite“. */
   sub: string;
-  href: string;
+  /** Ziel des Namens (die Einstellungen); ohne Angabe ist er nur Text. */
+  href?: string;
+  /** Ziel der zweiten Zeile; ohne Angabe ist sie nur Text. */
+  subHref?: string;
 };
+
+/**
+ * Wie die Inhaltsfläche aufgebaut ist:
+ * - `titled`: Seitentitel mit Klasse darüber (Vorlage 3c/3d)
+ * - `plain`: Seiten in alter Oberfläche; eigener Titel im Inhalt, nur Hell/Dunkel oben
+ * - `fill`: der Inhalt füllt die Fläche und bringt Kopf und Hell/Dunkel selbst mit
+ */
+export type TeacherFrameLayout = "titled" | "plain" | "fill";
 
 export type TeacherFrameProps = {
   /** Zeile über dem Seitentitel, z. B. „Klasse 7b“. */
@@ -53,6 +64,10 @@ export type TeacherFrameProps = {
    */
   addClass?: { href: string; plusOnDesktop?: boolean };
   profile: TeacherProfile;
+  /** Standard: `titled`. */
+  layout?: TeacherFrameLayout;
+  /** Seitenfuß am Ende der Inhaltsfläche. */
+  footer?: ReactNode;
   /** Schublade (mobil) offen? */
   navOpen: boolean;
   onNavOpen?: () => void;
@@ -82,11 +97,12 @@ export function TeacherFrame(props: TeacherFrameProps) {
     return () => observer.disconnect();
   }, [onNavClose]);
 
+  const layout = props.layout ?? "titled";
   const activeClass =
     props.classes.find((item) => item.active) ?? props.unassigned;
   return (
     <div className={styles.frame} ref={root}>
-      <div className={styles.layout}>
+      <div className={cx(styles.layout, layout !== "titled" && styles[layout])}>
         <nav className={styles.sidebar} aria-label="Lehrerbereich">
           <NavContent {...props} variant="sidebar" />
         </nav>
@@ -107,21 +123,37 @@ export function TeacherFrame(props: TeacherFrameProps) {
               <span className={styles.barClass}>
                 {activeClass?.name ?? props.eyebrow}
               </span>
-              <h1 className={styles.barTitle}>{props.title}</h1>
+              {layout === "titled" ? (
+                <h1 className={styles.barTitle}>{props.title}</h1>
+              ) : (
+                <span className={styles.barTitle}>{props.title}</span>
+              )}
             </span>
-            <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+            {layout === "fill" ? null : (
+              <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+            )}
           </header>
 
           <main className={styles.main} id="inhalt">
-            <div className={styles.head}>
-              <div>
-                <p className={styles.eyebrow}>{props.eyebrow}</p>
-                <h1 className={styles.title}>{props.title}</h1>
+            {layout === "fill" ? null : (
+              <div className={styles.head}>
+                {layout === "titled" ? (
+                  <div>
+                    <p className={styles.eyebrow}>{props.eyebrow}</p>
+                    <h1 className={styles.title}>{props.title}</h1>
+                  </div>
+                ) : null}
+                <span className={styles.headTheme}>
+                  <ThemeSwitch
+                    theme={props.theme}
+                    onToggle={props.onToggleTheme}
+                  />
+                </span>
               </div>
-              <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
-            </div>
+            )}
             {props.children}
           </main>
+          {props.footer}
         </div>
       </div>
 
@@ -224,15 +256,35 @@ function NavContent({
         </div>
       ) : null}
 
-      <Link href={profile.href} className={styles.profile} onClick={close}>
+      <div className={styles.profile}>
         <span className={styles.avatar} aria-hidden="true">
           {profile.initials}
         </span>
         <span className={styles.profileText}>
-          <span className={styles.profileName}>{profile.name}</span>
-          <span className={styles.profileSub}>{profile.sub}</span>
+          {profile.href ? (
+            <Link
+              href={profile.href}
+              className={styles.profileName}
+              onClick={close}
+            >
+              {profile.name}
+            </Link>
+          ) : (
+            <span className={styles.profileName}>{profile.name}</span>
+          )}
+          {profile.subHref ? (
+            <Link
+              href={profile.subHref}
+              className={styles.profileSub}
+              onClick={close}
+            >
+              {profile.sub}
+            </Link>
+          ) : (
+            <span className={styles.profileSub}>{profile.sub}</span>
+          )}
         </span>
-      </Link>
+      </div>
     </>
   );
 }

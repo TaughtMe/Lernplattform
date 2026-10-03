@@ -9,6 +9,7 @@ import {
   describeContent,
   filterByClass,
   isUnassigned,
+  resolveClassSelection,
   shortDate,
   sortForLibrary,
   suggestTitle,
@@ -168,5 +169,50 @@ describe("Sortierung und Datum", () => {
     expect(
       shortDate({ updatedAt: "2026-09-02T10:00:00.000Z" }, "Europe/Berlin"),
     ).toBe("02.09.");
+  });
+});
+
+describe("Klassenwahl", () => {
+  const classIds = [CLASS_A, CLASS_B];
+
+  it("nimmt die Adresse, wenn sie zu einer aktiven Klasse passt", () => {
+    expect(
+      resolveClassSelection({
+        requested: CLASS_B,
+        lastClassId: CLASS_A,
+        classIds,
+      }),
+    ).toBe(CLASS_B);
+    expect(
+      resolveClassSelection({
+        requested: UNASSIGNED,
+        lastClassId: CLASS_A,
+        classIds,
+      }),
+    ).toBe(UNASSIGNED);
+  });
+
+  it("fällt auf die zuletzt genutzte, dann die erste Klasse, dann „ohne“ zurück", () => {
+    expect(
+      resolveClassSelection({
+        requested: ARCHIVED,
+        lastClassId: CLASS_B,
+        classIds,
+      }),
+    ).toBe(CLASS_B);
+    expect(
+      resolveClassSelection({
+        requested: null,
+        lastClassId: ARCHIVED,
+        classIds,
+      }),
+    ).toBe(CLASS_A);
+    expect(
+      resolveClassSelection({
+        requested: undefined,
+        lastClassId: undefined,
+        classIds: [],
+      }),
+    ).toBe(UNASSIGNED);
   });
 });

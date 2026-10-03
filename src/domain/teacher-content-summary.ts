@@ -140,3 +140,22 @@ export function shortDate(
     { day: "2-digit", month: "2-digit", ...(timeZone ? { timeZone } : {}) },
   );
 }
+
+/**
+ * Welche Klasse (oder „Nicht zugeordnet“) gerade gewählt ist. Reihenfolge:
+ * die Adresse, wenn sie zu einer aktiven Klasse bzw. „ohne“ passt, dann die
+ * zuletzt genutzte Klasse, dann die erste Klasse, sonst „Nicht zugeordnet“.
+ * „ohne“ aus der Adresse gilt immer; es ist eine bewusste Wahl.
+ */
+export function resolveClassSelection(input: {
+  requested: string | null | undefined;
+  lastClassId: string | null | undefined;
+  /** Aktive Klassen in der Reihenfolge der Leiste. */
+  classIds: readonly string[];
+}): string {
+  const { requested, lastClassId, classIds } = input;
+  if (requested === UNASSIGNED) return UNASSIGNED;
+  if (requested && classIds.includes(requested)) return requested;
+  if (lastClassId && classIds.includes(lastClassId)) return lastClassId;
+  return classIds[0] ?? UNASSIGNED;
+}

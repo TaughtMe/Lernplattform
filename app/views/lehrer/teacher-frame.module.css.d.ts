@@ -24,13 +24,16 @@ declare const styles: {
   readonly drawerHead: string;
   readonly drawerInner: string;
   readonly eyebrow: string;
+  readonly fill: string;
   readonly frame: string;
   readonly group: string;
   readonly groupLabel: string;
   readonly head: string;
+  readonly headTheme: string;
   readonly layout: string;
   readonly main: string;
   readonly menuButton: string;
+  readonly plain: string;
   readonly plus: string;
   readonly profile: string;
   readonly profileName: string;
