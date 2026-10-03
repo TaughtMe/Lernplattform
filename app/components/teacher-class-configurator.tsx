@@ -148,9 +148,20 @@ export function TeacherClassConfigurator() {
     };
     try {
       await repository.put(course);
-      // Jede Klasse bekommt ihren Klassenstempel gleich beim Anlegen.
+    } catch {
+      setMessage("Die Klasse konnte nicht gespeichert werden.");
+      return;
+    }
+    // Jede Klasse bekommt ihren Klassenstempel gleich beim Anlegen. Scheitert
+    // das, ist die Klasse trotzdem gespeichert; der Stempel wird beim ersten
+    // Öffnen nachgeholt.
+    try {
       const seal = await repository.ensureSeal(course.id);
       if (seal) course.seal = seal;
+    } catch {
+      // siehe oben
+    }
+    try {
       setClasses((current) => [...current, course]);
       notifyTeacherClassesChanged();
       setSelectedId(course.id);
