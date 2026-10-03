@@ -3,6 +3,10 @@ import * as z from "zod";
 import { classModuleSchema, type ClassModule } from "../domain/class-workspace";
 import { LOCAL_DATA_AREAS } from "./local-data-boundaries";
 import {
+  filterByClass,
+  sortForLibrary,
+} from "../domain/teacher-content-summary";
+import {
   classMemberSchema,
   teacherClassSchema,
   type ClassMember,
@@ -246,6 +250,47 @@ export function createTeacherContentLibraryRepository(
     },
     remove: async (id: string) => {
       await database.contentPackages.delete(id);
+    },
+    /**
+     * Inhalte einer Klasse bzw. (`"ohne"`) die ohne aktive Klasse, neueste
+     * zuerst. Archivierte Klassen zählen nicht; ihre Inhalte stehen unter
+     * „Nicht zugeordnet“.
+     */
+    listForClass: async (selection: string) => {
+      const [entries, classes] = await Promise.all([
+        database.contentPackages.toArray(),
+        database.classes.toArray(),
+      ]);
+      const active = new Set(
+        classes.filter(({ archivedAt }) => !archivedAt).map(({ id }) => id),
+      );
+      return sortForLibrary(filterByClass(entries, selection, active));
+    },
+    /** Merkt den letzten Raumstart; Titel, Quelle und Revision bleiben. */
+    markUsed: async (id: string, at: string) => {
+      const lastUsedAt = teacherContentPackageSchema.shape.lastUsedAt
+        .unwrap()
+        .parse(at);
+      return (await database.contentPackages.update(id, { lastUsedAt })) > 0;
+    },
+    /**
+     * Ordnet den Inhalt Klassen zu (leer = „Nicht zugeordnet“). Ändert nur
+     * `updatedAt`, nicht die Revision: Der Inhalt selbst bleibt gleich.
+     */
+    assignClasses: async (
+      id: string,
+      classIds: readonly string[],
+      at = new Date().toISOString(),
+    ) => {
+      const parsed = teacherContentPackageSchema.shape.classIds
+        .unwrap()
+        .parse([...new Set(classIds)]);
+      return (
+        (await database.contentPackages.update(id, {
+          classIds: parsed,
+          updatedAt: at,
+        })) > 0
+      );
     },
   };
 }
