@@ -11,5 +11,6 @@ declare const styles: {
   readonly nav: string;
   readonly profile: string;
   readonly profileLabel: string;
+  readonly topbar: string;
 };
 export default styles;

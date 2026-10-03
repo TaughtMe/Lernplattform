@@ -14,6 +14,7 @@ declare const styles: {
   readonly column: string;
   readonly count: string;
   readonly csv: string;
+  readonly csvNarrow: string;
   readonly details: string;
   readonly detailsHead: string;
   readonly detailsSub: string;

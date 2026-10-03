@@ -256,7 +256,8 @@
       "width": 390,
       "height": 788,
       "canvas": ["[id=\"5c\"] button[data-step=\"live\"]"],
-      "status": "umgesetzt"
+      "status": "umgesetzt",
+      "hide": ["button:has-text(\"Ergebnisse als CSV\")"]
     },
     {
       "id": "5c-live-dark",
@@ -269,7 +270,8 @@
       ],
       "reset": ["[id=\"5c\"] button[aria-label=\"Hell oder dunkel\"]"],
       "theme": "dark",
-      "status": "umgesetzt"
+      "status": "umgesetzt",
+      "hide": ["button:has-text(\"Ergebnisse als CSV\")"]
     },
     {
       "id": "5c-lobby",

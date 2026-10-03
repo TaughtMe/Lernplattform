@@ -902,6 +902,13 @@ function LiveStep({
               ))}
             </ul>
           )}
+          <button
+            type="button"
+            className={cx(styles.csv, styles.csvNarrow)}
+            onClick={onExportCsv}
+          >
+            Ergebnisse als CSV
+          </button>
         </div>
         <section className={styles.mistakes} aria-label="Häufigste Fehler">
           <Eyebrow>Häufigste Fehler</Eyebrow>

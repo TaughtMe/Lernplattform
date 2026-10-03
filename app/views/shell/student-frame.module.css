@@ -32,6 +32,24 @@
   flex-direction: column;
   min-width: 0;
 }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.topbar[hidden] {
+  display: none;
+}
 .nav[hidden] {
   display: none;
 }
@@ -121,6 +139,9 @@
 
 /* ---------- Seitenleiste (ab 900 px, 3a) ---------- */
 @container (min-width: 900px) {
+  .topbar {
+    display: none;
+  }
   .layout {
     flex-direction: row;
   }

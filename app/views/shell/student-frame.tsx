@@ -80,6 +80,15 @@ export function StudentFrame({
             </span>
           </Link>
         </nav>
+        {/* Mobil gibt es keine Seitenleiste: „Lernraum“ oben führt zur Startseite. */}
+        <Link
+          href="/"
+          className={styles.topbar}
+          hidden={hideNav}
+          aria-label="Lernraum – zur Startseite"
+        >
+          Lernraum
+        </Link>
         {pending ? (
           <span
             className={styles.loading}
