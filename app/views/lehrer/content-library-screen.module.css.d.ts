@@ -13,6 +13,7 @@ declare const styles: {
   readonly metaLine: string;
   readonly narrowList: string;
   readonly next: string;
+  readonly notice: string;
   readonly openBottom: string;
   readonly openButton: string;
   readonly openTop: string;

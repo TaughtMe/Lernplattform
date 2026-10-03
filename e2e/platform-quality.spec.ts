@@ -672,14 +672,17 @@ test("teachers can prepare every native live-room content type", async ({
   });
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Übersicht" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Inhalte" })).toBeVisible();
   await expect(
     page.getByText("Dieses Gerät ist die Schutzgrenze."),
   ).toHaveCount(1);
   await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Unterrichtsrunde starten" }),
-  ).toHaveAttribute("href", "/lehrer/live");
+  // Der große Knopf „Raum öffnen“ führt zum Laufdiktat (mobil oben, am Desktop unten).
+  await expect(async () => {
+    await page.getByRole("button", { name: "Raum öffnen" }).first().click();
+    await expect(page).toHaveURL(/\/lehrer\/live$/, { timeout: 1500 });
+  }).toPass();
+  await page.goBack();
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),
   ).toHaveCount(0);

@@ -64,6 +64,8 @@ export type ContentLibraryScreenProps = {
   footnote?: string;
   /** Text, wenn nichts abgelegt ist. */
   emptyText?: string;
+  /** Hinweis am Ende der Seite, z. B. zum Schutz der lokalen Daten. */
+  notice?: string;
   onKind?: (kind: LibraryKind) => void;
   /** „Weiter“ im Panel: den gewählten Typ anlegen. */
   onCreate?: (kind: LibraryKind) => void;
@@ -87,6 +89,7 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
     createFor,
     footnote,
     emptyText,
+    notice,
     onKind,
     onCreate,
     onOpen,
@@ -235,6 +238,11 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
       </section>
 
       <OpenRoomButton className={styles.openBottom} onClick={onOpenRoom} />
+      {notice ? (
+        <aside className={styles.notice} aria-label="Hinweis">
+          {notice}
+        </aside>
+      ) : null}
     </div>
   );
 }

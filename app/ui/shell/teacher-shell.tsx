@@ -97,8 +97,12 @@ export function TeacherShell({
   return (
     <div style={{ height: "100dvh" }}>
       <TeacherFrame
-        layout={fill ? "fill" : "plain"}
-        eyebrow={activeClass?.name ?? "Lehrerbereich"}
+        layout={fill ? "fill" : area === "content" ? "titled" : "plain"}
+        eyebrow={
+          selection === UNASSIGNED
+            ? "Nicht zugeordnet"
+            : (activeClass?.name ?? "Lehrerbereich")
+        }
         title={teacherAreaTitle(area)}
         theme={theme}
         classes={visibility.lehrer ? classes : []}

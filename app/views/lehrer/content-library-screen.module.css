@@ -219,6 +219,15 @@
   line-height: 1.5;
   color: var(--ink2);
 }
+.notice {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--accent-bg);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
 .footnote {
   margin: 0;
   font-size: 12px;
