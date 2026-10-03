@@ -69,7 +69,11 @@ import {
 } from "../../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../../src/integrations/laufdiktat/debounce";
 import { useHydrated } from "../../components/use-hydrated";
-import { createTeacherProfileRepository } from "../../../src/storage/teacher-class-settings";
+import { classSealFingerprint } from "../../../src/domain/class-seal";
+import {
+  createTeacherClassRepository,
+  createTeacherProfileRepository,
+} from "../../../src/storage/teacher-class-settings";
 
 export type Stage = "content" | "settings" | "lobby" | "live";
 
@@ -225,6 +229,51 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       active = false;
     };
   }, []);
+  // Optionale Klasse: Der Raum trägt dann nur den Abdruck ihres Stempels, damit
+  // Freigaben der Schreiberleichterung genau in diesem Raum wirken.
+  const [liveClasses, setLiveClasses] = useState<
+    { id: string; name: string; fingerprint?: string }[]
+  >([]);
+  const [classChoice, setClassChoiceState] = useState("");
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const repository = createTeacherClassRepository();
+      const classes = await repository.list();
+      const withPrint = await Promise.all(
+        classes.map(async ({ id, name, seal }) => ({
+          id,
+          name,
+          ...(seal
+            ? { fingerprint: await classSealFingerprint(seal.publicKey) }
+            : {}),
+        })),
+      );
+      if (!active) return;
+      setLiveClasses(withPrint);
+      const last = (await createTeacherProfileRepository().get())
+        ?.lastLiveClassId;
+      if (active && last && withPrint.some(({ id }) => id === last)) {
+        setClassChoiceState((current) => current || last);
+      }
+    })().catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+  // Nach dem Wiederöffnen eines Raums die Klasse aus dem Abdruck zurückfinden,
+  // sonst ginge die Wahl beim Start der Runde verloren.
+  const [restoredClassSeal, setRestoredClassSeal] = useState<string>();
+  const activeClass =
+    classChoice ||
+    (restoredClassSeal
+      ? liveClasses.find(({ fingerprint }) => fingerprint === restoredClassSeal)
+          ?.id
+      : undefined) ||
+    "";
+  const classSeal = liveClasses.find(
+    ({ id }) => id === activeClass,
+  )?.fingerprint;
   const [gameMode, setGameMode] = useState<TeacherGameMode>("LAUFDIKTAT");
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLDivElement>(null);
@@ -614,6 +663,42 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     );
   }
 
+  async function setClassChoice(id: string) {
+    setRestoredClassSeal(undefined);
+    setClassChoiceState(id);
+    if (!id) {
+      await rememberClass(undefined);
+      return;
+    }
+    // Ältere Klassen erhalten ihren Stempel beim ersten Bedarf.
+    try {
+      const seal = await createTeacherClassRepository().ensureSeal(id);
+      if (!seal) return;
+      const fingerprint = await classSealFingerprint(seal.publicKey);
+      setLiveClasses((current) =>
+        current.map((entry) =>
+          entry.id === id ? { ...entry, fingerprint } : entry,
+        ),
+      );
+      await rememberClass(id);
+    } catch {
+      setClassChoiceState("");
+      setError("Für diese Klasse konnte kein Klassenstempel erstellt werden.");
+    }
+  }
+  async function rememberClass(id: string | undefined) {
+    try {
+      const repository = createTeacherProfileRepository();
+      const profile = await repository.get();
+      if (!profile || profile.lastLiveClassId === id) return;
+      await repository.put({
+        ...profile,
+        ...(id ? { lastLiveClassId: id } : { lastLiveClassId: undefined }),
+      });
+    } catch {
+      // Die Auswahl gilt trotzdem; nur das Merken für das nächste Mal entfällt.
+    }
+  }
   const registeredNames = participants.map(({ studentName }) => studentName);
   const connectedNames = Array.from(
     new Set([
@@ -637,6 +722,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         vocabularyDirection: direction,
         vocabularyTransfer,
         vocabularyTag,
+        ...(classSeal ? { classSeal } : {}),
         gameMode,
         shuffleWords,
         repeatWrongAnswers,
@@ -692,6 +778,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       repeatWrongAnswers,
       vocabularyTransfer,
       vocabularyTag,
+      classSeal,
       showStars,
       shuffleWords,
       source,
@@ -765,6 +852,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         setRepeatWrongAnswers(restored.repeatWrongAnswers);
         setVocabularyTransfer(restored.vocabularyTransfer);
         setRoundTag(restored.vocabularyTag ?? "");
+        setRestoredClassSeal(restored.classSeal);
         setAssistance(restored.uebungAssistanceEnabled);
         setAttempts(restored.uebungMaxAttempts);
         setTts(restored.isTtsEnabled);
@@ -1291,6 +1379,9 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     vocabularyTransfer,
     setVocabularyTransfer,
     lernboxTag,
+    liveClasses,
+    classChoice: activeClass,
+    setClassChoice,
     roundTag,
     setRoundTag,
     updateVocabularyTag,

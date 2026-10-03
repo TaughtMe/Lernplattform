@@ -295,7 +295,12 @@ describe("learning box repository", () => {
         title: "Unit 1",
         source,
       }),
-    ).resolves.toEqual({ deckId: deck.id, added: 0, reused: 1 });
+    ).resolves.toEqual({
+      deckId: deck.id,
+      added: 0,
+      reused: 1,
+      practiceAgain: 0,
+    });
 
     const updated = (await repository.listCards(deck.id))[0]!;
     expect(updated).toMatchObject({
@@ -562,5 +567,206 @@ describe("learning box folders and bulk actions", () => {
     expect(backup.folders).toEqual([]);
     await repository.deleteCards(ids);
     expect(await repository.listAllCards()).toHaveLength(0);
+  });
+});
+
+describe("Vokabelübernahme aus Unterrichtsrunden", () => {
+  const createdAt = "2026-10-02T08:00:00.000Z";
+  function roundBundle(sessionId: string, words: [string, string, string][]) {
+    return parseLearningBundleV1({
+      schemaVersion: LEARNING_BUNDLE_VERSION,
+      id: `live-transfer-${sessionId}`,
+      revision: 1,
+      createdAt,
+      source: { kind: "teacher", id: sessionId },
+      vocabulary: words.map(([id, prompt, answer]) => ({
+        kind: "vocabulary",
+        id: `live-${sessionId}-${id}`,
+        prompt: { text: prompt, locale: "en" },
+        answer: { text: answer, locale: "de" },
+        tagIds: [],
+        createdAt,
+        updatedAt: createdAt,
+      })),
+      stacks: [
+        {
+          id: `stack-${sessionId}`,
+          title: "Runde",
+          itemIds: words.map(([id]) => `live-${sessionId}-${id}`),
+          tagIds: [],
+        },
+      ],
+    });
+  }
+  const words: [string, string, string][] = [
+    ["a", "house", "Haus"],
+    ["b", "tree", "Baum"],
+  ];
+
+  async function setup() {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    return createLearningBoxRepository(database);
+  }
+  const source = (sessionId: string) => ({
+    kind: "running-dictation" as const,
+    sourceId: sessionId,
+  });
+
+  it("legt neue Karten nach Ergebnis ab", async () => {
+    const repository = await setup();
+    const before = Date.now();
+    const result = await repository.ingestBundle({
+      bundle: roundBundle("r1", words),
+      title: "Runde",
+      source: source("r1"),
+      placements: { "live-r1-a": "known", "live-r1-b": "unseen" },
+    });
+    expect(result).toMatchObject({ added: 2, reused: 0, practiceAgain: 0 });
+    const cards = await repository.listCards(result.deckId);
+    const known = cards.find((card) => card.question === "house")!;
+    const unseen = cards.find((card) => card.question === "tree")!;
+    expect(known).toMatchObject({ box: 2, level: 2, interval: 1 });
+    expect(known.nextReview).toBeGreaterThanOrEqual(before + 86_400_000);
+    expect(unseen).toMatchObject({ box: 1, level: 1, interval: 1 });
+    expect(unseen.nextReview).toBeLessThanOrEqual(Date.now());
+    // Rückrichtung startet immer in Box 1.
+    expect(known.reverseBox).toBe(1);
+  });
+
+  async function existingAdvanced() {
+    const repository = await setup();
+    const deck = await repository.createDeck({ title: "Eigene" });
+    const { card } = await repository.addCard({
+      deckId: deck.id,
+      question: "house",
+      answer: "Haus",
+    });
+    const advanced = {
+      ...card,
+      box: 4 as const,
+      level: 4 as const,
+      interval: 1,
+      nextReview: Date.now() + 5 * 86_400_000,
+      reverseBox: 3 as const,
+      reverseInterval: 1,
+      reverseNextReview: Date.now() + 3 * 86_400_000,
+    };
+    await repository.putCard(advanced);
+    return { repository, advanced };
+  }
+
+  it.each([
+    ["known", { box: 4, same: true }],
+    ["unseen", { box: 4, same: true }],
+    ["practice", { box: 4, same: false }],
+    ["reset", { box: 1, same: false }],
+  ] as const)(
+    "behandelt vorhandene Karte bei %s richtig und lässt die Rückrichtung",
+    async (outcome, expected) => {
+      const { repository, advanced } = await existingAdvanced();
+      const result = await repository.ingestBundle({
+        bundle: roundBundle("r2", [words[0]!]),
+        title: "Runde",
+        source: source("r2"),
+        placements: { "live-r2-a": outcome },
+      });
+      expect(result.added).toBe(0);
+      expect(result.reused).toBe(1);
+      expect(result.practiceAgain).toBe(
+        outcome === "practice" || outcome === "reset" ? 1 : 0,
+      );
+      const stored = (await repository.listCards(advanced.deckId))[0]!;
+      expect(stored.box).toBe(expected.box);
+      expect(stored.nextReview === advanced.nextReview).toBe(expected.same);
+      expect(stored.reverseBox).toBe(3);
+      expect(stored.reverseNextReview).toBe(advanced.reverseNextReview);
+      // Der Quell-Link wird in jedem Fall ergänzt.
+      expect(stored.sourceLinks).toHaveLength(1);
+      if (!expected.same) {
+        expect(stored.nextReview).toBeLessThanOrEqual(Date.now());
+      }
+    },
+  );
+
+  it("erkennt Dubletten über den Fingerprint ohne zweite Karte", async () => {
+    const { repository, advanced } = await existingAdvanced();
+    await repository.ingestBundle({
+      bundle: roundBundle("r3", words),
+      title: "Runde",
+      source: source("r3"),
+      placements: { "live-r3-a": "known", "live-r3-b": "known" },
+    });
+    const cards = await repository.listCards(advanced.deckId);
+    expect(cards.filter((card) => card.question === "house")).toHaveLength(1);
+  });
+
+  it("ist bei doppelter Übernahme derselben Runde idempotent", async () => {
+    const repository = await setup();
+    const input = {
+      bundle: roundBundle("r4", words),
+      title: "Runde",
+      source: source("r4"),
+      placements: {
+        "live-r4-a": "known",
+        "live-r4-b": "reset",
+      } as const,
+    };
+    const first = await repository.ingestBundle(input);
+    const snapshot = (await repository.listCards(first.deckId)).map(
+      ({ question, box, level, interval, reverseBox }) => ({
+        question,
+        box,
+        level,
+        interval,
+        reverseBox,
+      }),
+    );
+    const second = await repository.ingestBundle(input);
+    expect(second.added).toBe(0);
+    const again = await repository.listCards(first.deckId);
+    expect(again).toHaveLength(2);
+    expect(
+      again.map(({ question, box, level, interval, reverseBox }) => ({
+        question,
+        box,
+        level,
+        interval,
+        reverseBox,
+      })),
+    ).toEqual(snapshot);
+  });
+
+  it("verwendet den alten Stapeltitel weiter", async () => {
+    const repository = await setup();
+    const first = await repository.ingestBundle({
+      bundle: roundBundle("r5", [words[0]!]),
+      title: "Fehler aus Unterrichtsrunde",
+      source: { kind: "running-dictation" },
+    });
+    const second = await repository.ingestBundle({
+      bundle: roundBundle("r6", [words[1]!]),
+      title: "Übungsbedarf aus Unterrichtsrunde",
+      alternativeTitles: ["Fehler aus Unterrichtsrunde"],
+      source: { kind: "running-dictation" },
+      placements: { "live-r6-b": "reset" },
+    });
+    expect(second.deckId).toBe(first.deckId);
+    expect(await repository.listDecks()).toHaveLength(1);
+  });
+
+  it("macht ohne Platzierung weiterhin beide Richtungen fällig", async () => {
+    const { repository, advanced } = await existingAdvanced();
+    await repository.ingestBundle({
+      bundle: roundBundle("r7", [words[0]!]),
+      title: "Runde",
+      source: source("r7"),
+    });
+    const stored = (await repository.listCards(advanced.deckId))[0]!;
+    expect(stored.box).toBe(4);
+    expect(stored.nextReview).toBeLessThanOrEqual(Date.now());
+    expect(stored.reverseNextReview).toBeLessThanOrEqual(Date.now());
   });
 });

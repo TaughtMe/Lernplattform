@@ -1,4 +1,5 @@
 import { normalizeVocabularyText } from "./learning-bundle";
+import type { LiveVocabularyOutcome } from "./live-vocabulary-placement";
 
 export type LearningBoxDirection = "forward" | "reverse";
 /** Richtung einer Lernrunde: fest oder gemischt (abwechselnd je Karte). */
@@ -366,4 +367,44 @@ export function processLearningBoxResult(
     lastReviewed: now,
     updatedAt: now,
   };
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export type LiveVocabularyPlacement = Pick<
+  LearningBoxCard,
+  "box" | "level" | "interval" | "nextReview"
+>;
+
+/**
+ * Platzierung einer Vokabel aus einer Unterrichtsrunde. Gilt nur für die
+ * abgefragte Richtung (`forward`); `reverse` bleibt unberührt.
+ * Ohne `card` ist die Vokabel neu. Rückgabe `undefined`: Karte bleibt unverändert.
+ */
+export function placeLiveVocabularyCard(
+  card: LearningBoxCard | undefined,
+  outcome: LiveVocabularyOutcome,
+  now = Date.now(),
+): LiveVocabularyPlacement | undefined {
+  const restart: LiveVocabularyPlacement = {
+    box: 1,
+    level: 1,
+    interval: 1,
+    nextReview: now,
+  };
+  if (!card) {
+    return outcome === "known"
+      ? { box: 2, level: 2, interval: 1, nextReview: now + DAY_MS }
+      : restart;
+  }
+  if (outcome === "reset") return restart;
+  if (outcome === "practice") {
+    return {
+      box: card.box,
+      level: card.level,
+      interval: card.interval,
+      nextReview: now,
+    };
+  }
+  return undefined;
 }

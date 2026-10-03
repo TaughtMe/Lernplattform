@@ -64,6 +64,12 @@ export type TeacherDictationScreenProps = {
   };
   mode: DictationMode;
   options: Record<DictationOption, boolean>;
+  /** Optionale Klassenwahl; nur mit Klasse wirken Freigaben der Schreiberleichterung. */
+  classChoice?: {
+    options: ReadonlyArray<{ id: string; name: string }>;
+    value: string;
+    onChange: (id: string) => void;
+  };
   stationCount: number;
   optionsOpen: boolean;
   /** QR-Code zum Raum; ohne Angabe erscheint ein Platzhalter. */
@@ -598,6 +604,7 @@ function ModeButtons({
 function ModeDetails({
   mode,
   options,
+  classChoice,
   stationCount,
   onToggleOption,
   onStationCount,
@@ -664,6 +671,26 @@ function ModeDetails({
             </span>
           </button>
         ))}
+        {classChoice && classChoice.options.length > 0 ? (
+          <label className={styles.classPick}>
+            <span className={styles.optionLabel}>Klasse (optional)</span>
+            <select
+              className={styles.classSelect}
+              value={classChoice.value}
+              onChange={(event) => classChoice.onChange(event.target.value)}
+            >
+              <option value="">Keine Klasse</option>
+              {classChoice.options.map(({ id, name }) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <span className={styles.optionHint}>
+              Nur in Runden für diese Klasse wirkt die Schreiberleichterung.
+            </span>
+          </label>
+        ) : null}
       </div>
     </div>
   );

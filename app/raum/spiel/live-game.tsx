@@ -18,25 +18,26 @@ import {
   sanitizeStrictMathAnswer,
   STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES,
 } from "../../../src/domain/running-dictation-input";
+import { placementRulesFor } from "../../../src/domain/live-vocabulary-placement";
 import {
-  checkLiveAnswer,
+  evaluateLiveAnswer,
   liveWordKind,
   type LiveSession,
 } from "../../../src/integrations/laufdiktat/live-session";
 import type { ProgressDeliveryStatus } from "../../../src/integrations/laufdiktat/progress-delivery";
 import type { LiveProgress } from "../../../src/integrations/laufdiktat/room-api";
 import {
-  buildLiveVocabularyTransfer,
-  liveWordErrorKey,
-} from "../../../src/integrations/laufdiktat/vocabulary-transfer";
+  readLiveTrace,
+  writeLiveTrace,
+} from "../../../src/integrations/laufdiktat/live-trace";
+import { liveWordErrorKey } from "../../../src/integrations/laufdiktat/vocabulary-transfer";
 import { LAUFDIKTAT_PILOT } from "../../../src/pilot-mode";
 import { createMathAttempt } from "../../../src/storage/math-practice";
-import {
-  createLearningBoxRepository,
-  createPersonalLearningEventRepository,
-} from "../../../src/storage/personal-learning-events";
+import { createPersonalLearningEventRepository } from "../../../src/storage/personal-learning-events";
 import { MathDisplay } from "../../components/math-display";
 import { useLiveSessionGuards } from "../../components/use-live-session-guards";
+import { useLiveVocabularyTransfer } from "../../components/use-live-vocabulary-transfer";
+import { useWritingRelief } from "../../components/use-writing-relief";
 import { Button, ButtonLink } from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
 import { useFullscreenFrame } from "../../ui/shell/fullscreen";
@@ -86,10 +87,6 @@ export function LiveRunningDictationGame({
   const displayName =
     displayNameProp ??
     (studentName.startsWith("participant-") ? null : studentName);
-  const learningBoxRepository = useMemo(
-    () => createLearningBoxRepository(),
-    [],
-  );
   const learningEventRepository = useMemo(
     () => createPersonalLearningEventRepository(),
     [],
@@ -117,9 +114,21 @@ export function LiveRunningDictationGame({
   const [attempts, setAttempts] = useState(initialProgress?.attempts ?? 0);
   const [peeks, setPeeks] = useState(initialProgress?.peeks ?? 0);
   const [errors, setErrors] = useState(initialProgress?.errors ?? 0);
-  const [wordErrors, setWordErrors] = useState<Record<string, number>>(
-    initialProgress?.wordErrors ?? {},
+  // Lokaler Schnappschuss (sessionStorage) überlebt ein Neuladen der Seite.
+  const [restoredTrace] = useState(() => readLiveTrace(session.sessionId));
+  const [wordErrors, setWordErrors] = useState<Record<string, number>>(() =>
+    mergeWordErrors(initialProgress?.wordErrors, restoredTrace?.wordErrors),
   );
+  // Hilfen pro Wort bleiben auf dem Gerät und gehen nie an den Server.
+  const [wordHelps, setWordHelps] = useState<Record<string, true>>(
+    restoredTrace?.wordHelps ?? {},
+  );
+  // Mit Schreiberleichterung tolerant angenommene Wörter, ebenfalls nur lokal.
+  const [wordTolerated, setWordTolerated] = useState<Record<string, true>>(
+    restoredTrace?.wordTolerated ?? {},
+  );
+  // Ohne Klassenstempel im Raum gelten immer die Standardregeln.
+  const writingRelief = useWritingRelief(session.classSeal);
   const [revealedCurrentWord, setRevealedCurrentWord] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [exitCountdown, setExitCountdown] = useState(3);
@@ -143,14 +152,14 @@ export function LiveRunningDictationGame({
   }, [shield]);
   useEffect(() => () => window.clearTimeout(attackTimer.current), []);
   const [battleMessage, setBattleMessage] = useState("");
-  const [transferNotice, setTransferNotice] = useState("");
   const [localSaveWarning, setLocalSaveWarning] = useState("");
-  const [transferStatus, setTransferStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
+  const {
+    status: transferStatus,
+    notice: transferNotice,
+    transfer,
+  } = useLiveVocabularyTransfer();
   const startedAt = useRef(0);
   const lastAttackId = useRef(0);
-  const transferStartedFor = useRef("");
   const mathSaving = useRef(false);
   const pendingMath = useRef<LearningEventV1 | null>(null);
   const [savingMath, setSavingMath] = useState(false);
@@ -168,7 +177,45 @@ export function LiveRunningDictationGame({
   const kind = current ? liveWordKind(current) : "text";
   const prompt = current ? (current.prompt ?? current.targetWord) : "";
   const isLatexPrompt = current?.isLatex ?? false;
+  const errorKey = current ? liveWordErrorKey(current) : "";
+  const copyMode =
+    session.gameMode === "UEBUNG" && wrongCount >= session.uebungMaxAttempts;
+  const hint =
+    current &&
+    session.gameMode === "UEBUNG" &&
+    wrongCount > 0 &&
+    !copyMode &&
+    kind !== "math"
+      ? buildRunningDictationHint(
+          current.targetWord,
+          wrongCount / session.uebungMaxAttempts,
+        )
+      : "";
+  // Als Hilfe zählt nur die Abschreibvorlage (Lösung sichtbar). Die
+  // Buchstabenhilfe erscheint im Üben schon nach einem Tippfehler und zählt nicht.
+  // Mit Schreiberleichterung zählt auch die Abschreibvorlage nicht: Sie
+  // erscheint schon nach 3 Fehlversuchen und höbe sonst die Grenze von 5 aus.
+  const helpShown = kind === "vocabulary" && copyMode && writingRelief !== true;
+  // Abgeleiteter Zustand: während des Renderns nachziehen, nicht per Effekt.
+  if (helpShown && errorKey && !wordHelps[errorKey]) {
+    setWordHelps({ ...wordHelps, [errorKey]: true });
+  }
 
+  // Schnappschuss für Neuladen und vorzeitiges Ende; nur lokal gespeichert.
+  useEffect(() => {
+    writeLiveTrace({
+      sessionId: session.sessionId,
+      currentIndex: phase === "correct" ? index + 1 : index,
+      finished: phase === "complete",
+      wordErrors,
+      wordHelps,
+      wordTolerated,
+    });
+  }, [index, phase, session.sessionId, wordErrors, wordHelps, wordTolerated]);
+
+  // Ein tolerant angenommenes Wort bleibt länger stehen: Das Kind soll die
+  // richtige Schreibweise lesen können.
+  const correctDelay = wordTolerated[errorKey] ? 2500 : 550;
   useEffect(() => {
     if (phase !== "correct") return;
     const timer = window.setTimeout(() => {
@@ -210,10 +257,11 @@ export function LiveRunningDictationGame({
         finished: false,
         wordErrors,
       });
-    }, 550);
+    }, correctDelay);
     return () => window.clearTimeout(timer);
   }, [
     attempts,
+    correctDelay,
     errors,
     index,
     initialProgress?.durationMs,
@@ -261,38 +309,29 @@ export function LiveRunningDictationGame({
 
   useEffect(() => {
     // Die Lehrkraft entscheidet im Vokabelheft, ob Vokabeln übernommen werden.
+    // Die Regeln hängen von der Schreiberleichterung ab: erst nach deren Prüfung.
     if (phase !== "complete" || session.stationMode) return;
-    const transfer = buildLiveVocabularyTransfer(session, wordErrors);
-    if (!transfer || transferStartedFor.current === session.sessionId) return;
-    transferStartedFor.current = session.sessionId;
-    learningBoxRepository
-      .ingestBundle({
-        bundle: transfer.bundle,
-        title: transfer.title,
-        source: {
-          kind: "running-dictation",
-          sourceId: session.sessionId,
-        },
-      })
-      .then((result) => {
-        setTransferStatus("success");
-        setTransferNotice(
-          result.added > 0
-            ? result.added === 1
-              ? "1 Vokabel wurde in deine LernBox übernommen."
-              : `${result.added} Vokabeln wurden in deine LernBox übernommen.`
-            : result.reused === 1
-              ? "1 vorhandene Vokabel wurde wieder fällig markiert."
-              : `${result.reused} vorhandene Vokabeln wurden wieder fällig markiert.`,
-        );
-      })
-      .catch(() => {
-        setTransferStatus("error");
-        setTransferNotice(
-          "Die Vokabeln konnten auf diesem Gerät nicht übernommen werden.",
-        );
-      });
-  }, [learningBoxRepository, phase, session, wordErrors]);
+    if (writingRelief === undefined) return;
+    transfer(
+      session,
+      {
+        currentIndex: session.words.length - 1,
+        finished: true,
+        wordErrors,
+        wordHelps,
+        wordTolerated,
+      },
+      placementRulesFor(writingRelief),
+    );
+  }, [
+    phase,
+    session,
+    transfer,
+    wordErrors,
+    wordHelps,
+    wordTolerated,
+    writingRelief,
+  ]);
 
   if (session.stationMode) {
     return onLoadProgress ? (
@@ -435,19 +474,6 @@ export function LiveRunningDictationGame({
 
   if (!current) return null;
   const activeWord = current;
-  const errorKey = liveWordErrorKey(activeWord);
-  const copyMode =
-    session.gameMode === "UEBUNG" && wrongCount >= session.uebungMaxAttempts;
-  const hint =
-    session.gameMode === "UEBUNG" &&
-    wrongCount > 0 &&
-    !copyMode &&
-    kind !== "math"
-      ? buildRunningDictationHint(
-          activeWord.targetWord,
-          wrongCount / session.uebungMaxAttempts,
-        )
-      : "";
   const battleCandidates = pickRunningDictationBattleCandidates(
     roster,
     studentName,
@@ -554,7 +580,12 @@ export function LiveRunningDictationGame({
     if (!startedAt.current) startedAt.current = Date.now();
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
-    const isCorrect = checkLiveAnswer(activeWord, answer);
+    // Die Toleranz gilt auch im strengen Tippmodus: Er sperrt nur Einfügen und
+    // Autokorrektur, nicht einzelne falsche Tasten.
+    const verdict = evaluateLiveAnswer(activeWord, answer, {
+      tolerance: writingRelief === true && kind === "vocabulary",
+    });
+    const isCorrect = verdict !== "wrong";
     if (!LAUFDIKTAT_PILOT && kind !== "math") {
       void learningEventRepository
         .put({
@@ -591,6 +622,10 @@ export function LiveRunningDictationGame({
         setCharge((value) =>
           Math.min(100, value + battleChargeGain(roster, studentName, index)),
         );
+      }
+      if (verdict === "tolerated" && errorKey) {
+        // Richtig angenommen, in der LernBox aber nur „üben“ (nicht „sicher“).
+        setWordTolerated((value) => ({ ...value, [errorKey]: true }));
       }
       phaseRef.current = "correct";
       setPhase("correct");
@@ -693,7 +728,12 @@ export function LiveRunningDictationGame({
           ) : null,
           feedback:
             phase === "correct"
-              ? { text: "Richtig", tone: "good" }
+              ? {
+                  text: wordTolerated[errorKey]
+                    ? `Richtig! So schreibt man es: ${activeWord.targetWord}`
+                    : "Richtig",
+                  tone: "good",
+                }
               : answerFeedback
                 ? { text: answerFeedback, tone: "bad" }
                 : null,
@@ -817,4 +857,16 @@ function unitOf(word: LiveSession["words"][number] | undefined) {
   if (kind === "vocabulary" || !/\s/.test(word.targetWord.trim()))
     return "Wort" as const;
   return "Satz" as const;
+}
+
+/** Serverstand und lokaler Schnappschuss: pro Wort gilt der höhere Wert. */
+function mergeWordErrors(
+  server: Record<string, number> | undefined,
+  local: Record<string, number> | undefined,
+) {
+  const merged = { ...server };
+  for (const [key, count] of Object.entries(local ?? {})) {
+    merged[key] = Math.max(merged[key] ?? 0, count);
+  }
+  return merged;
 }

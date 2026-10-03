@@ -99,13 +99,15 @@ export function StudentClassEnrollment() {
       const alreadyStored = items.some(
         ({ membershipId }) => membershipId === candidate.membershipId,
       );
-      if (!alreadyStored) await repository.put(candidate);
+      // Erneutes Scannen ersetzt die Mitgliedschaft samt Freigabe; ein QR ohne
+      // Freigabe nimmt die Schreiberleichterung also wieder zurück.
+      await repository.put(candidate);
       setItems(await repository.list());
       setCode("");
       setCandidate(undefined);
       setMessage(
         alreadyStored
-          ? `${candidate.className} ist bereits in deinem Lernraum.`
+          ? `${candidate.className} ist bereits in deinem Lernraum. Die Angaben deiner Lehrkraft sind aktualisiert.`
           : `${candidate.className} wurde deinem Lernraum hinzugefügt.`,
       );
       window.dispatchEvent(new Event("student-classes-changed"));

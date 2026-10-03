@@ -7,11 +7,22 @@ import {
   createTeacherAssignmentRepository,
   createTeacherProfileRepository,
   createTeacherSubmissionRepository,
+  createTeacherWorkspaceRepository,
   TeacherClassDatabase,
   toggleClassModule,
   type TeacherClassSettings,
 } from "./teacher-class-settings";
 import { createStudentPerformanceCode } from "../domain/teacher-workspace";
+import {
+  createEnrollmentCode,
+  parseEnrollmentCode,
+  type ClassMember,
+  type TeacherClass,
+} from "../domain/class-enrollment";
+import {
+  classSealFingerprint,
+  isWritingReliefActive,
+} from "../domain/class-seal";
 
 const databases: TeacherClassDatabase[] = [];
 
@@ -204,5 +215,144 @@ describe("teacher class settings", () => {
         classIds: ["123e4567-e89b-42d3-a456-426614174001"],
       },
     ]);
+  });
+
+  describe("Klassenstempel und Schreiberleichterung", () => {
+    const course: TeacherClass = {
+      id: "123e4567-e89b-42d3-a456-426614174001",
+      name: "7b",
+      teacherName: "Frau Test",
+      schoolYear: "2026/27",
+      enabledModules: ["vocabulary"],
+      createdAt: "2026-08-25T10:00:00.000Z",
+      updatedAt: "2026-08-25T10:00:00.000Z",
+    };
+    const member: ClassMember = {
+      id: "123e4567-e89b-42d3-a456-426614174002",
+      classId: course.id,
+      displayName: "Alex",
+      enrollmentToken: "0123456789abcdef0123456789abcdef",
+      createdAt: "2026-08-25T10:05:00.000Z",
+    };
+    async function open() {
+      const database = new TeacherClassDatabase(
+        `teacher-${crypto.randomUUID()}`,
+      );
+      databases.push(database);
+      const repository = createTeacherClassRepository(database);
+      await repository.put(course);
+      await repository.putMember(member);
+      return { database, repository };
+    }
+
+    it("gibt einer älteren Klasse beim ersten Bedarf einen Stempel und behält ihn", async () => {
+      const { repository } = await open();
+      const [first, second] = await Promise.all([
+        repository.ensureSeal(course.id),
+        repository.ensureSeal(course.id),
+      ]);
+      expect(first?.publicKey).toBeTruthy();
+      // Parallele Aufrufer bekommen denselben Schlüssel.
+      expect(second?.publicKey).toBe(first?.publicKey);
+      expect((await repository.ensureSeal(course.id))?.publicKey).toBe(
+        first?.publicKey,
+      );
+      await expect(repository.list()).resolves.toMatchObject([
+        { seal: { publicKey: first?.publicKey } },
+      ]);
+      await expect(
+        repository.ensureSeal("123e4567-e89b-42d3-a456-426614174099"),
+      ).resolves.toBeUndefined();
+    });
+
+    it("stellt eine Freigabe aus, die im Raum der Klasse wirkt, und entzieht sie wieder", async () => {
+      const { repository } = await open();
+      const relieved = await repository.setWritingRelief(member.id, true);
+      expect(relieved.writingRelief).toBe(true);
+      const [stored] = await repository.list();
+      const code = createEnrollmentCode(stored!, relieved);
+      const fingerprint = await classSealFingerprint(stored!.seal!.publicKey);
+      expect(
+        await isWritingReliefActive([parseEnrollmentCode(code)], fingerprint),
+      ).toBe(true);
+
+      const withdrawn = await repository.setWritingRelief(member.id, false);
+      expect(withdrawn).not.toHaveProperty("writingRelief");
+      expect(withdrawn).not.toHaveProperty("writingReliefSignature");
+      expect(
+        await isWritingReliefActive(
+          [parseEnrollmentCode(createEnrollmentCode(stored!, withdrawn))],
+          fingerprint,
+        ),
+      ).toBe(false);
+    });
+
+    it("meldet unbekannte Kinder und Klassen", async () => {
+      const { database } = await open();
+      const repository = createTeacherClassRepository(database);
+      await expect(
+        repository.setWritingRelief(
+          "123e4567-e89b-42d3-a456-426614174099",
+          true,
+        ),
+      ).rejects.toThrow("nicht in der Klasse");
+      await database.members.put({
+        ...member,
+        id: "123e4567-e89b-42d3-a456-426614174077",
+        classId: "123e4567-e89b-42d3-a456-426614174098",
+      });
+      await expect(
+        repository.setWritingRelief(
+          "123e4567-e89b-42d3-a456-426614174077",
+          true,
+        ),
+      ).rejects.toThrow("existiert nicht mehr");
+    });
+
+    it("nimmt Stempel und Freigaben in Export und Import mit", async () => {
+      const { database, repository } = await open();
+      await repository.setWritingRelief(member.id, true);
+      const workspace = createTeacherWorkspaceRepository(database);
+      const backup = await workspace.exportData();
+      expect(backup.classes[0]?.seal).toBeTruthy();
+      expect(backup.members[0]?.writingRelief).toBe(true);
+
+      const other = new TeacherClassDatabase(`teacher-${crypto.randomUUID()}`);
+      databases.push(other);
+      await createTeacherWorkspaceRepository(other).importData(backup);
+      await expect(
+        createTeacherClassRepository(other).listMembers(course.id),
+      ).resolves.toMatchObject([
+        {
+          writingRelief: true,
+          writingReliefSignature: backup.members[0]?.writingReliefSignature,
+        },
+      ]);
+      await expect(
+        createTeacherClassRepository(other).list(),
+      ).resolves.toMatchObject([{ seal: backup.classes[0]?.seal }]);
+    });
+
+    it("importiert Sicherungen ohne Stempel und Freigaben weiterhin", async () => {
+      const database = new TeacherClassDatabase(
+        `teacher-${crypto.randomUUID()}`,
+      );
+      databases.push(database);
+      const workspace = createTeacherWorkspaceRepository(database);
+      await workspace.importData({
+        version: 1,
+        exportedAt: "2026-08-25T10:00:00.000Z",
+        profile: null,
+        classes: [course],
+        members: [member],
+        materials: [],
+        assignments: [],
+      });
+      const repository = createTeacherClassRepository(database);
+      await expect(repository.list()).resolves.toEqual([course]);
+      await expect(repository.listMembers(course.id)).resolves.toEqual([
+        member,
+      ]);
+    });
   });
 });

@@ -9,6 +9,11 @@ import {
   type TeacherClass,
 } from "../domain/class-enrollment";
 import {
+  createClassSealKeyPair,
+  signWritingReliefGrant,
+  type ClassSeal,
+} from "../domain/class-seal";
+import {
   teacherContentPackageSchema,
   type TeacherContentPackage,
 } from "../domain/teacher-content-library";
@@ -245,6 +250,31 @@ export function createTeacherContentLibraryRepository(
   };
 }
 
+/**
+ * Gibt der Klasse ihren Stempel, falls sie noch keinen hat. Nicht im
+ * Dexie-Upgrade, weil WebCrypto asynchron ist und die Upgrade-Transaktion
+ * dabei schließen würde; stattdessen beim Anlegen und beim ersten Bedarf.
+ * Eine neue Dexie-Version ist nicht nötig, `seal` ist kein Index.
+ */
+async function ensureClassSeal(
+  database: TeacherClassDatabase,
+  id: string,
+): Promise<ClassSeal | undefined> {
+  const course = await database.classes.get(id);
+  if (!course) return undefined;
+  if (course.seal) return course.seal;
+  const seal = await createClassSealKeyPair();
+  // Erst nach dem Schlüsselerzeugen erneut lesen: parallele Aufrufer dürfen
+  // sich nicht gegenseitig den Schlüssel überschreiben.
+  return database.transaction("rw", database.classes, async () => {
+    const latest = await database.classes.get(id);
+    if (!latest) return undefined;
+    if (latest.seal) return latest.seal;
+    await database.classes.put(teacherClassSchema.parse({ ...latest, seal }));
+    return seal;
+  });
+}
+
 export function createTeacherClassRepository(
   database = new TeacherClassDatabase(),
 ) {
@@ -276,6 +306,46 @@ export function createTeacherClassRepository(
         archivedAt: null,
         updatedAt: new Date().toISOString(),
       });
+    },
+    ensureSeal: (id: string) => ensureClassSeal(database, id),
+    /**
+     * Setzt oder entzieht die Schreiberleichterung. Beim Setzen wird die
+     * Freigabe einmal signiert und am Kind gespeichert, damit der QR weiter
+     * synchron entsteht.
+     */
+    setWritingRelief: async (memberId: string, enabled: boolean) => {
+      const member = await database.members.get(memberId);
+      if (!member) throw new Error("Das Kind ist nicht in der Klasse.");
+      const rest = Object.fromEntries(
+        Object.entries(member).filter(
+          ([key]) =>
+            key !== "writingRelief" &&
+            key !== "writingReliefIssuedAt" &&
+            key !== "writingReliefSignature",
+        ),
+      );
+      if (!enabled) {
+        await database.members.put(classMemberSchema.parse(rest));
+        return classMemberSchema.parse(rest);
+      }
+      const seal = await ensureClassSeal(database, member.classId);
+      if (!seal) throw new Error("Die Klasse existiert nicht mehr.");
+      const issuedAt = new Date().toISOString();
+      const signature = await signWritingReliefGrant(seal.privateJwk, {
+        v: 1,
+        classId: member.classId,
+        membershipId: member.id,
+        writingRelief: true,
+        issuedAt,
+      });
+      const updated = classMemberSchema.parse({
+        ...rest,
+        writingRelief: true,
+        writingReliefIssuedAt: issuedAt,
+        writingReliefSignature: signature,
+      });
+      await database.members.put(updated);
+      return updated;
     },
     removeMember: (id: string) =>
       database.transaction(

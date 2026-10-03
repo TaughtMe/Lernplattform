@@ -23,6 +23,8 @@ import {
   parseLiveSession,
   type LiveSession,
 } from "../../src/integrations/laufdiktat/live-session";
+import { placementRulesFor } from "../../src/domain/live-vocabulary-placement";
+import { readLiveTrace } from "../../src/integrations/laufdiktat/live-trace";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
 import { animalTokenFromDisplayName } from "../../src/domain/learner-profile";
 import { AnimalImage } from "../ui/animal";
@@ -39,6 +41,8 @@ import {
   type RoomActivity,
 } from "./room-activity";
 import { useLiveSessionGuards } from "./use-live-session-guards";
+import { useLiveVocabularyTransfer } from "./use-live-vocabulary-transfer";
+import { useWritingRelief } from "./use-writing-relief";
 
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import { LiveVersionNotice } from "./live-version-notice";
@@ -96,6 +100,12 @@ export function LiveRoomJoin({
       !requiredVersion,
   );
   const [session, setSession] = useState<LiveSession | null>(null);
+  // Letzte bekannte Runde: nach dem Ende wird `session` geleert, die Übernahme
+  // der Vokabeln braucht sie aber noch.
+  const lastSessionRef = useRef<LiveSession | null>(null);
+  // Die beendete Runde als Zustand: Die Schreiberleichterung wird danach geprüft.
+  const [endedSession, setEndedSession] = useState<LiveSession | null>(null);
+  const vocabularyTransfer = useLiveVocabularyTransfer();
   const [initialProgress, setInitialProgress] = useState<LiveProgress | null>(
     null,
   );
@@ -130,6 +140,8 @@ export function LiveRoomJoin({
           participantToken: activeRoom.participantToken,
         });
         if (!state || state.status === "ended") {
+          setEndedSession(lastSessionRef.current);
+          lastSessionRef.current = null;
           setSession(null);
           setView("ended");
           return;
@@ -153,6 +165,7 @@ export function LiveRoomJoin({
           }
           setRequiredVersion(null);
           setInitialProgress(progress);
+          lastSessionRef.current = nextSession;
           setSession(nextSession);
           setView("game");
         }
@@ -342,6 +355,24 @@ export function LiveRoomJoin({
   useEffect(() => {
     if (view === "ended") forgetActiveRoom();
   }, [view]);
+
+  // Vorzeitiges Ende: Vokabeln genauso übernehmen, nicht erreichte als „unseen“.
+  const { transfer: transferVocabulary } = vocabularyTransfer;
+  const endedRelief = useWritingRelief(endedSession?.classSeal);
+  useEffect(() => {
+    if (view !== "ended" || !endedSession || endedRelief === undefined) return;
+    transferVocabulary(
+      endedSession,
+      readLiveTrace(endedSession.sessionId) ?? {
+        currentIndex: 0,
+        finished: false,
+        wordErrors: {},
+        wordHelps: {},
+        wordTolerated: {},
+      },
+      placementRulesFor(endedRelief),
+    );
+  }, [view, endedSession, endedRelief, transferVocabulary]);
 
   const {
     status: deliveryStatus,
@@ -572,6 +603,22 @@ export function LiveRoomJoin({
           <p className="ui-muted">
             Die Lehrkraft hat die Unterrichtsrunde geschlossen.
           </p>
+          {vocabularyTransfer.notice ? (
+            <p
+              className={`ui-notice${vocabularyTransfer.status === "success" ? " ui-notice--good" : ""}`}
+              role="status"
+            >
+              {vocabularyTransfer.notice}
+            </p>
+          ) : null}
+          {vocabularyTransfer.status === "success" && visibility.lernen ? (
+            <Link
+              className="ui-btn ui-btn--primary ui-btn--block"
+              href="/lernbox"
+            >
+              Zur LernBox
+            </Link>
+          ) : null}
           {visibility.lernen ? (
             <Link
               className="ui-btn ui-btn--primary ui-btn--block"

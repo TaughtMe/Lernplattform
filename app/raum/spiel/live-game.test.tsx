@@ -1,7 +1,14 @@
+import "fake-indexeddb/auto";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import {
+  classSealFingerprint,
+  createClassSealKeyPair,
+  signWritingReliefGrant,
+} from "../../../src/domain/class-seal";
+import { createStudentClassesRepository } from "../../../src/storage/student-classes";
 import { LiveRunningDictationGame } from "./live-game";
 
 // Ersetzt den Button-Klick aus der alten Oberfläche: das Original-Laufdiktat
@@ -13,9 +20,12 @@ function revealWithTwoFingers(container: HTMLElement) {
 }
 
 const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
-  ingestBundle: vi
-    .fn()
-    .mockResolvedValue({ deckId: "deck-1", added: 1, reused: 0 }),
+  ingestBundle: vi.fn().mockResolvedValue({
+    deckId: "deck-1",
+    added: 1,
+    reused: 0,
+    practiceAgain: 0,
+  }),
   putLearningEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -296,6 +306,321 @@ describe("LiveRunningDictationGame", () => {
     expect(
       screen.queryByText("1 Vokabel wurde in deine LernBox übernommen."),
     ).not.toBeInTheDocument();
+  });
+
+  it("places a word as practice when only the letter hint was shown", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-hint",
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+            },
+          ],
+          vocabularyTransfer: "all",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    revealWithTwoFingers(container);
+    const field = screen.getByRole("textbox", { name: "Deine Antwort" });
+    await user.type(field, "Hous{Enter}");
+    expect(await screen.findByLabelText("Buchstabenhilfe")).toBeVisible();
+    await user.type(field, "Haus{Enter}");
+    await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1));
+    // Ein Tippfehler mit Buchstabenhilfe ist noch kein Grund für Box 1.
+    expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+      "live-session-hint-house": "practice",
+    });
+  });
+
+  it("places a word as reset when the copy guide was shown", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-copy",
+          uebungMaxAttempts: 2,
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+            },
+          ],
+          vocabularyTransfer: "all",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+
+    revealWithTwoFingers(container);
+    const field = screen.getByRole("textbox", { name: "Deine Antwort" });
+    await user.type(field, "Hous{Enter}");
+    await user.type(field, "Hau{Enter}");
+    // Nach zwei Fehlversuchen zeigt die Abschreibvorlage die Lösung.
+    expect(await screen.findByLabelText("Lösung: Haus")).toBeVisible();
+    await user.clear(field);
+    await user.type(field, "Haus{Enter}");
+    await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1));
+    expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+      "live-session-copy-house": "reset",
+    });
+    // Hilfen bleiben auf dem Gerät: Schnappschuss nur im sessionStorage.
+    expect(
+      window.sessionStorage.getItem("lernraum:live-trace:session-copy"),
+    ).toContain('"wordHelps":{"house → Haus":true}');
+  });
+
+  describe("Schreiberleichterung", () => {
+    const classId = "123e4567-e89b-42d3-a456-426614174001";
+    const membershipId = "123e4567-e89b-42d3-a456-426614174002";
+    const houseWord = {
+      id: "house",
+      kind: "vocabulary" as const,
+      prompt: "house",
+      targetWord: "Haus",
+    };
+
+    /** Speichert eine Mitgliedschaft mit Freigabe, die der Schlüssel `signer` ausgestellt hat. */
+    async function storeMembership(signer: {
+      privateJwk: Awaited<
+        ReturnType<typeof createClassSealKeyPair>
+      >["privateJwk"];
+      publicKey: string;
+    }) {
+      const grant = {
+        v: 1 as const,
+        classId,
+        membershipId,
+        writingRelief: true as const,
+        issuedAt: "2026-10-02T08:00:00.000Z",
+      };
+      await createStudentClassesRepository().put({
+        version: 1,
+        classId,
+        membershipId,
+        className: "7b",
+        teacherName: "Frau Test",
+        schoolYear: "2026/27",
+        displayName: "Alex",
+        enrollmentToken: "0123456789abcdef0123456789abcdef",
+        issuedAt: "2026-08-30T10:05:00.000Z",
+        sealPublicKey: signer.publicKey,
+        writingReliefGrant: grant,
+        writingReliefSignature: await signWritingReliefGrant(
+          signer.privateJwk,
+          grant,
+        ),
+      });
+    }
+
+    function renderRound(id: string, extra: Partial<LiveSession> = {}) {
+      ingestBundle.mockClear();
+      const onProgress = vi.fn();
+      const view = render(
+        <LiveRunningDictationGame
+          code="4829"
+          studentName="Mia"
+          session={{
+            ...session,
+            sessionId: id,
+            words: [houseWord],
+            vocabularyTransfer: "all",
+            ...extra,
+          }}
+          connectionWarning=""
+          initialProgress={null}
+          onProgress={onProgress}
+        />,
+      );
+      revealWithTwoFingers(view.container);
+      return { ...view, onProgress };
+    }
+
+    afterEach(async () => {
+      window.sessionStorage.clear();
+      await createStudentClassesRepository().removeClass(classId);
+    });
+
+    it("nimmt mit Freigabe im passenden Raum einen Tippfehler an und zeigt die richtige Schreibweise", async () => {
+      window.sessionStorage.clear();
+      const seal = await createClassSealKeyPair();
+      await storeMembership(seal);
+      const user = userEvent.setup();
+      const { onProgress } = renderRound("relief-ok", {
+        classSeal: await classSealFingerprint(seal.publicKey),
+      });
+      await user.type(
+        screen.getByRole("textbox", { name: "Deine Antwort" }),
+        "Hous{Enter}",
+      );
+      expect(
+        await screen.findByText("Richtig! So schreibt man es: Haus"),
+      ).toBeVisible();
+      await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1), {
+        timeout: 4000,
+      });
+      // Für die Lehrkraft richtig: kein Fehlversuch, nichts über die Freigabe.
+      expect(onProgress).toHaveBeenCalledTimes(1);
+      expect(onProgress.mock.calls[0]?.[0]).toMatchObject({
+        errors: 0,
+        finished: true,
+      });
+      expect(JSON.stringify(onProgress.mock.calls)).not.toMatch(
+        /tolerat|relief|seal/i,
+      );
+      // In der LernBox aber „üben“, nicht „sicher gewusst“.
+      expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+        "live-relief-ok-house": "practice",
+      });
+    });
+
+    it("nimmt denselben Tippfehler in einem Raum ohne Klasse nicht an", async () => {
+      window.sessionStorage.clear();
+      await storeMembership(await createClassSealKeyPair());
+      const user = userEvent.setup();
+      renderRound("relief-no-class");
+      await user.type(
+        screen.getByRole("textbox", { name: "Deine Antwort" }),
+        "Hous{Enter}",
+      );
+      expect(
+        await screen.findByText("Noch nicht richtig. Versuche es erneut."),
+      ).toBeVisible();
+      expect(screen.queryByText(/So schreibt man es/)).not.toBeInTheDocument();
+    });
+
+    it("Schummeltest: selbst ausgestellte Freigabe wirkt nicht im Raum der echten Klasse", async () => {
+      window.sessionStorage.clear();
+      const real = await createClassSealKeyPair();
+      await storeMembership(await createClassSealKeyPair());
+      const user = userEvent.setup();
+      renderRound("relief-fake", {
+        classSeal: await classSealFingerprint(real.publicKey),
+      });
+      await user.type(
+        screen.getByRole("textbox", { name: "Deine Antwort" }),
+        "Hous{Enter}",
+      );
+      expect(
+        await screen.findByText("Noch nicht richtig. Versuche es erneut."),
+      ).toBeVisible();
+    });
+
+    it("lässt bei Abstand 2 keine Toleranz zu", async () => {
+      window.sessionStorage.clear();
+      const seal = await createClassSealKeyPair();
+      await storeMembership(seal);
+      const user = userEvent.setup();
+      renderRound("relief-strict", {
+        classSeal: await classSealFingerprint(seal.publicKey),
+      });
+      await user.type(
+        screen.getByRole("textbox", { name: "Deine Antwort" }),
+        "Hxxs{Enter}",
+      );
+      expect(
+        await screen.findByText("Noch nicht richtig. Versuche es erneut."),
+      ).toBeVisible();
+    });
+
+    it.each([
+      [4, "practice"],
+      [5, "reset"],
+    ])(
+      "zählt nach %i Fehlversuchen als %s und die Abschreibvorlage zählt nicht als Hilfe",
+      async (wrong, outcome) => {
+        window.sessionStorage.clear();
+        const seal = await createClassSealKeyPair();
+        await storeMembership(seal);
+        const user = userEvent.setup();
+        renderRound(`relief-${wrong}`, {
+          classSeal: await classSealFingerprint(seal.publicKey),
+          uebungMaxAttempts: 2,
+        });
+        const field = screen.getByRole("textbox", { name: "Deine Antwort" });
+        for (let attempt = 0; attempt < wrong; attempt += 1) {
+          if (attempt === 2) {
+            // Nach zwei Fehlversuchen steht die Abschreibvorlage da.
+            expect(await screen.findByLabelText("Lösung: Haus")).toBeVisible();
+            await user.clear(field);
+          }
+          await user.type(field, "Zzzz{Enter}");
+        }
+        await user.clear(field);
+        await user.type(field, "Haus{Enter}");
+        await waitFor(() => expect(ingestBundle).toHaveBeenCalledTimes(1));
+        expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+          [`live-relief-${wrong}-house`]: outcome,
+        });
+        expect(
+          window.sessionStorage.getItem(`lernraum:live-trace:relief-${wrong}`),
+        ).toContain('"wordHelps":{}');
+      },
+    );
+  });
+
+  it("places a clean answer as known and shows the child-friendly notice", async () => {
+    window.sessionStorage.clear();
+    const user = userEvent.setup();
+    ingestBundle.mockClear();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-known",
+          words: [
+            {
+              id: "house",
+              kind: "vocabulary",
+              prompt: "house",
+              targetWord: "Haus",
+            },
+          ],
+          vocabularyTransfer: "all",
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+    revealWithTwoFingers(container);
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "Haus{Enter}",
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText("1 neue Vokabel ist jetzt in deiner LernBox."),
+      ).toBeVisible(),
+    );
+    expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
+      "live-session-known-house": "known",
+    });
   });
 });
 

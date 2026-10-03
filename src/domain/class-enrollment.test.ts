@@ -107,6 +107,102 @@ describe("class enrollment links", () => {
     expect(parseEnrollmentCode(legacy)).not.toHaveProperty("enabledModules");
   });
 
+  describe("Klassenstempel im Einschreibe-QR", () => {
+    const publicKey = "A".repeat(122);
+    const signature = "B".repeat(86);
+    const sealed: TeacherClass = {
+      ...course,
+      seal: {
+        privateJwk: {
+          kty: "EC",
+          crv: "P-256",
+          x: "x",
+          y: "y",
+          d: "d",
+        },
+        publicKey,
+      },
+    };
+    const relieved: ClassMember = {
+      ...member,
+      writingRelief: true,
+      writingReliefIssuedAt: "2026-10-02T08:00:00.000Z",
+      writingReliefSignature: signature,
+    };
+
+    it("trägt Schlüssel, Freigabe und Signatur im zehnten Element", () => {
+      const parsed = parseEnrollmentCode(
+        createEnrollmentCode(sealed, relieved),
+      );
+      expect(parsed).toMatchObject({
+        sealPublicKey: publicKey,
+        writingReliefSignature: signature,
+        writingReliefGrant: {
+          v: 1,
+          classId: course.id,
+          membershipId: member.id,
+          writingRelief: true,
+          issuedAt: "2026-10-02T08:00:00.000Z",
+        },
+      });
+    });
+
+    it("trägt ohne Haken nur den Schlüssel, so entzieht ein neuer QR die Freigabe", () => {
+      const parsed = parseEnrollmentCode(createEnrollmentCode(sealed, member));
+      expect(parsed.sealPublicKey).toBe(publicKey);
+      expect(parsed).not.toHaveProperty("writingReliefGrant");
+      expect(parsed).not.toHaveProperty("writingReliefSignature");
+    });
+
+    it("lässt das Tupel ohne Klassenstempel bei neun Elementen (alte QR-Codes)", () => {
+      const code = createEnrollmentCode(course, relieved);
+      const encoded = code.slice("lernraum:c2:".length);
+      const padding = "=".repeat((4 - (encoded.length % 4)) % 4);
+      const payload = JSON.parse(
+        atob(encoded.replaceAll("-", "+").replaceAll("_", "/") + padding),
+      ) as unknown[];
+      expect(payload).toHaveLength(9);
+      expect(parseEnrollmentCode(code)).not.toHaveProperty("sealPublicKey");
+    });
+
+    it("bleibt für den echten QR-Code unter einer lesbaren Länge", () => {
+      const code = createEnrollmentCode(sealed, relieved);
+      const link = createEnrollmentLink("https://lernraum.example", code);
+      expect(link.length).toBeLessThan(900);
+    });
+
+    it("lehnt ein kaputtes zehntes Element ab", () => {
+      const encode = (value: unknown) =>
+        `lernraum:c2:${btoa(JSON.stringify(value))
+          .replaceAll("+", "-")
+          .replaceAll("/", "_")
+          .replace(/=+$/, "")}`;
+      const base = [
+        course.id,
+        member.id,
+        course.name,
+        course.teacherName,
+        course.schoolYear,
+        member.displayName,
+        member.enrollmentToken,
+        member.createdAt,
+        course.enabledModules,
+      ];
+      expect(() =>
+        parseEnrollmentCode(encode([...base, { k: "***", g: null, s: null }])),
+      ).toThrow();
+      // Nur eine Hälfte der Freigabe gilt als keine Freigabe.
+      expect(
+        parseEnrollmentCode(
+          encode([
+            ...base,
+            { k: publicKey, g: "2026-10-02T08:00:00.000Z", s: null },
+          ]),
+        ),
+      ).not.toHaveProperty("writingReliefGrant");
+    });
+  });
+
   it("rejects malformed class-removal codes and links", () => {
     expect(() => parseClassRemovalCode("kein-code")).toThrow(
       "Kein gültiger Lernraum-Entfernungscode",

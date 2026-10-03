@@ -7,6 +7,8 @@ declare const styles: {
   readonly body: string;
   readonly checkbox: string;
   readonly chips: string;
+  readonly classPick: string;
+  readonly classSelect: string;
   readonly codeTiles: string;
   readonly codeTilesLarge: string;
   readonly column: string;

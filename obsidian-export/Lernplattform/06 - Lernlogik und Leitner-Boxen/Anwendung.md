@@ -27,6 +27,17 @@ In der einfachen Schüleransicht können daraus zwei Werte werden: **Bedeutung**
 | Nach einem Fehler doch richtig | bleibt in Box 1 |
 | Mehrfach in derselben Runde richtig | höchstens ein Aufstieg |
 
+### Vokabeln aus einer Unterrichtsrunde (Entscheidung 49)
+
+Die Platzierung beim Übernehmen aus dem Laufdiktat gilt für die abgefragte Richtung; die Rückrichtung bleibt unberührt beziehungsweise startet in Box 1.
+
+| Ergebnis in der Runde | Neue Vokabel | Vokabel schon vorhanden |
+|---|---|---|
+| Sicher gewusst (0 Fehlversuche, keine Hilfe) | Box 2, morgen fällig | unverändert |
+| 1–2 Fehlversuche, keine Hilfe | Box 1, sofort fällig | Box bleibt, sofort fällig |
+| Abschreibvorlage (Lösung) angezeigt oder ab 3 Fehlversuchen | Box 1, sofort fällig | Box 1, sofort fällig |
+| Nicht erreicht (vorzeitiges Ende) | Box 1, sofort fällig | unverändert |
+
 ## Lernstand und Leistungswertung
 
 Der fachliche Lernstand beantwortet, ob die endgültige Antwort richtig war. Die Leistungswertung berücksichtigt zusätzlich Selbstkorrekturen, Hilfen und Merkspanne. Eine vor dem Absenden korrigierte Eingabe gilt daher als richtig, kann aber keinen Perfektionsbonus erhalten. Geschwindigkeit wird zunächst nur informativ angezeigt.

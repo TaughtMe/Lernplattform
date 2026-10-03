@@ -1,4 +1,10 @@
 import * as z from "zod";
+import {
+  base64UrlSchema,
+  classSealSchema,
+  writingReliefGrantSchema,
+  type WritingReliefGrant,
+} from "./class-seal";
 import { classModuleSchema } from "./class-workspace";
 
 export const teacherClassSchema = z
@@ -9,6 +15,8 @@ export const teacherClassSchema = z
     schoolYear: z.string().trim().min(1).max(40),
     enabledModules: z.array(classModuleSchema).min(1),
     archivedAt: z.iso.datetime().nullable().optional(),
+    /** Klassenstempel; ältere Klassen erhalten ihn beim ersten Bedarf. */
+    seal: classSealSchema.optional(),
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
   })
@@ -19,6 +27,10 @@ export const classMemberSchema = z
     classId: z.string().uuid(),
     displayName: z.string().trim().min(1).max(80),
     enrollmentToken: z.string().regex(/^[0-9a-f]{32}$/),
+    /** Schreiberleichterung; Zeitpunkt und Signatur der Freigabe liegen dabei. */
+    writingRelief: z.boolean().optional(),
+    writingReliefIssuedAt: z.iso.datetime().optional(),
+    writingReliefSignature: base64UrlSchema.optional(),
     createdAt: z.iso.datetime(),
   })
   .strict();
@@ -34,6 +46,10 @@ export const classEnrollmentSchema = z
     enrollmentToken: z.string().regex(/^[0-9a-f]{32}$/),
     issuedAt: z.iso.datetime(),
     enabledModules: z.array(classModuleSchema).min(1).optional(),
+    /** Öffentlicher Klassenschlüssel und signierte Freigabe (optional). */
+    sealPublicKey: base64UrlSchema.optional(),
+    writingReliefGrant: writingReliefGrantSchema.optional(),
+    writingReliefSignature: base64UrlSchema.optional(),
   })
   .strict();
 export type TeacherClass = z.infer<typeof teacherClassSchema>;
@@ -66,10 +82,35 @@ function decodeCompactPayload(value: string) {
   );
 }
 
+/**
+ * Die Freigabe der Schreiberleichterung eines Kindes; ohne Haken oder ohne
+ * gespeicherte Signatur gibt es keine.
+ */
+function memberGrant(member: ClassMember) {
+  if (
+    !member.writingRelief ||
+    !member.writingReliefIssuedAt ||
+    !member.writingReliefSignature
+  ) {
+    return undefined;
+  }
+  return {
+    grant: {
+      v: 1,
+      classId: member.classId,
+      membershipId: member.id,
+      writingRelief: true,
+      issuedAt: member.writingReliefIssuedAt,
+    } satisfies WritingReliefGrant,
+    signature: member.writingReliefSignature,
+  };
+}
+
 export function createEnrollmentCode(
   course: TeacherClass,
   member: ClassMember,
 ) {
+  const { grant, signature } = memberGrant(member) ?? {};
   const enrollment = classEnrollmentSchema.parse({
     version: 1,
     classId: course.id,
@@ -81,8 +122,12 @@ export function createEnrollmentCode(
     enrollmentToken: member.enrollmentToken,
     issuedAt: member.createdAt,
     enabledModules: course.enabledModules,
+    ...(course.seal ? { sealPublicKey: course.seal.publicKey } : {}),
+    ...(course.seal && grant
+      ? { writingReliefGrant: grant, writingReliefSignature: signature }
+      : {}),
   });
-  return `lernraum:c2:${encodeCompactPayload([
+  const base = [
     enrollment.classId,
     enrollment.membershipId,
     enrollment.className,
@@ -92,7 +137,21 @@ export function createEnrollmentCode(
     enrollment.enrollmentToken,
     enrollment.issuedAt,
     enrollment.enabledModules,
-  ])}`;
+  ];
+  // Das Tupel wächst nur, wenn die Klasse einen Stempel hat. Die Freigabe
+  // trägt nur ihren Zeitpunkt, Klasse und Kind stehen schon im Tupel.
+  return `lernraum:c2:${encodeCompactPayload(
+    enrollment.sealPublicKey
+      ? [
+          ...base,
+          {
+            k: enrollment.sealPublicKey,
+            g: enrollment.writingReliefGrant?.issuedAt ?? null,
+            s: enrollment.writingReliefSignature ?? null,
+          },
+        ]
+      : base,
+  )}`;
 }
 export function parseEnrollmentCode(value: string) {
   const normalized = value.trim();
@@ -121,6 +180,22 @@ export function parseEnrollmentCode(value: string) {
           z.string(),
           z.array(classModuleSchema).min(1),
         ]),
+        z.tuple([
+          z.string().uuid(),
+          z.string().uuid(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.string(),
+          z.array(classModuleSchema).min(1),
+          z.object({
+            k: base64UrlSchema,
+            g: z.iso.datetime().nullable(),
+            s: base64UrlSchema.nullable(),
+          }),
+        ]),
       ])
       .parse(decodeCompactPayload(normalized.slice(compactPrefix.length)));
     return classEnrollmentSchema.parse({
@@ -133,7 +208,25 @@ export function parseEnrollmentCode(value: string) {
       displayName: payload[5],
       enrollmentToken: payload[6],
       issuedAt: payload[7],
-      ...(payload.length === 9 ? { enabledModules: payload[8] } : {}),
+      ...(payload.length >= 9 ? { enabledModules: payload[8] } : {}),
+      ...(payload.length === 10
+        ? {
+            sealPublicKey: payload[9].k,
+            // Fehlt eine Hälfte der Freigabe, gilt sie als nicht vorhanden.
+            ...(payload[9].g && payload[9].s
+              ? {
+                  writingReliefGrant: {
+                    v: 1,
+                    classId: payload[0],
+                    membershipId: payload[1],
+                    writingRelief: true,
+                    issuedAt: payload[9].g,
+                  },
+                  writingReliefSignature: payload[9].s,
+                }
+              : {}),
+          }
+        : {}),
     });
   }
   const legacyPrefix = "lernraum:class:";

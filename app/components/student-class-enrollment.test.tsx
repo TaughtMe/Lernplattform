@@ -109,4 +109,50 @@ describe("StudentClassEnrollment", () => {
       screen.getByText("Der Einschreibecode ist ungültig oder unvollständig."),
     ).toBeVisible();
   });
+
+  it("replaces the stored membership when the same child scans a new code", async () => {
+    const user = userEvent.setup();
+    const sealed: TeacherClass = {
+      ...course,
+      seal: {
+        privateJwk: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "d" },
+        publicKey: "A".repeat(122),
+      },
+    };
+    const relieved: ClassMember = {
+      ...member,
+      writingRelief: true,
+      writingReliefIssuedAt: "2026-10-02T08:00:00.000Z",
+      writingReliefSignature: "B".repeat(86),
+    };
+    const { createStudentClassesRepository } =
+      await import("../../src/storage/student-classes");
+    const repository = createStudentClassesRepository();
+    render(<StudentClassEnrollment />);
+
+    await user.type(
+      await screen.findByRole("textbox", { name: "Einschreibecode" }),
+      createEnrollmentCode(sealed, relieved),
+    );
+    await user.click(screen.getByRole("button", { name: "Code prüfen" }));
+    await user.click(screen.getByRole("button", { name: "Ja, ich bin Léa" }));
+    await waitFor(async () =>
+      expect((await repository.list())[0]?.writingReliefGrant).toBeDefined(),
+    );
+
+    // Neuer QR ohne Freigabe: Die Erleichterung ist wieder weg.
+    await user.type(
+      await screen.findByRole("textbox", { name: "Einschreibecode" }),
+      createEnrollmentCode(sealed, member),
+    );
+    await user.click(screen.getByRole("button", { name: "Code prüfen" }));
+    await user.click(screen.getByRole("button", { name: "Ja, ich bin Léa" }));
+    expect(
+      await screen.findByText(/ist bereits in deinem Lernraum/),
+    ).toBeVisible();
+    const stored = await repository.list();
+    expect(stored).toHaveLength(1);
+    expect(stored[0]?.writingReliefGrant).toBeUndefined();
+    expect(stored[0]?.sealPublicKey).toBe("A".repeat(122));
+  });
 });
