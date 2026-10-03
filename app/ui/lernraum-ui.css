@@ -3968,3 +3968,7 @@ body:has(.ui-game.is-active-round) .ui-footer {
   justify-content: space-between;
   padding: 16px 20px 0;
 }
+/* Hell/Dunkel bleibt rechts, auch wenn das L (nur mobil) ausgeblendet ist. */
+.ui-student-page__head > :last-child {
+  margin-left: auto;
+}
