@@ -192,7 +192,8 @@ function TeacherDemo({ variant, theme }: { variant: string; theme: Theme }) {
         <StartSheet
           open={sheetOpen}
           title="Present Perfect · Unit 3"
-          classLabel="Klassen: 7b, 9a"
+          classLabel="Zugeordnet zu Klassen 7b, 9a"
+          roomFor="Klasse 7b"
           classAction="ändern"
           modes={MODES}
           mode={mode}

@@ -293,7 +293,10 @@ describe("Inhalte-Seite: Start-Overlay", () => {
   it("zeigt Titel, Klassen und die vier echten Modi", async () => {
     const { dialog } = await openSheet();
     expect(within(dialog).getByText("Tiere")).toBeInTheDocument();
-    expect(within(dialog).getByText(/Klassen: 7b, 9a/)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/Zugeordnet zu Klassen 7b, 9a/),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText("Raum für Klasse 7b")).toBeInTheDocument();
     for (const mode of ["Laufdiktat", "Freie Übung", "Battle", "Stationen"]) {
       expect(
         within(dialog).getByRole("button", { name: new RegExp(`^${mode}`) }),
@@ -331,6 +334,10 @@ describe("Inhalte-Seite: Start-Overlay", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Raum öffnen" });
     expect(within(dialog).getByText(/Nicht zugeordnet/)).toBeInTheDocument();
+    expect(within(dialog).getByText("Raum ohne Klasse")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/keine Schreiberleichterung/),
+    ).toBeInTheDocument();
     await user.click(
       within(dialog).getByRole("button", { name: /^Jetzt starten/ }),
     );

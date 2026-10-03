@@ -78,9 +78,9 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  margin-left: auto;
+  width: 44px;
+  height: 44px;
+  margin: -4px -4px 0 auto;
   border: 1px solid var(--line2);
   border-radius: 10px;
   background: var(--surface);
@@ -89,6 +89,19 @@
 }
 .close:hover {
   border-color: var(--accent);
+}
+.roomFor {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--ink);
+}
+.roomForNone {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-bg);
 }
 .group {
   display: flex;

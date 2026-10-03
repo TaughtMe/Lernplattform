@@ -46,8 +46,10 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  /* 44 px Tippfläche; der negative Rand hält das Maß der Vorlage (40 px) im Layout. */
+  width: 44px;
+  height: 44px;
+  margin: -2px;
   border: 1px solid var(--line2);
   border-radius: 12px;
   background: var(--bg);
@@ -85,6 +87,13 @@
 }
 .head {
   display: none;
+}
+/* Hell/Dunkel: 44 px Tippfläche statt 38 px, das Layout bleibt gleich. */
+.bar button[aria-label="Hell oder dunkel"],
+.headTheme button[aria-label="Hell oder dunkel"] {
+  width: 44px;
+  height: 44px;
+  margin: -3px;
 }
 .headTheme {
   display: inline-flex;
@@ -359,8 +368,9 @@ a.profileSub:hover {
   display: grid;
   flex: none;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
+  margin: -5px;
   border: 1px solid var(--nav-line);
   border-radius: 10px;
   background: transparent;
@@ -375,6 +385,10 @@ a.profileSub:hover {
 }
 .drawerInner .profile {
   padding-top: 12px;
+}
+.drawerInner a.profileName,
+.drawerInner a.profileSub {
+  min-height: 44px;
 }
 
 /* ---------- Desktop ---------- */

@@ -16,6 +16,8 @@ declare const styles: {
   readonly openRoom: string;
   readonly openRoomTitle: string;
   readonly options: string;
+  readonly roomFor: string;
+  readonly roomForNone: string;
   readonly sheet: string;
   readonly start: string;
   readonly subtitle: string;

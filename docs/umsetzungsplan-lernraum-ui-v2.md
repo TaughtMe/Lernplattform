@@ -48,6 +48,9 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
   - Ergänzungen ohne Vorlage: Eintrag „Nicht zugeordnet“ in der Leiste, Knopf „Zuordnen“ in der Ablage, Dialog „Klassen zuordnen“, Gruppe „Verwalten“ unter „Bereich“. Alle sind optionale Props; ohne sie zeigt die Ansicht genau die Vorlage.
   - Statt „T. Bryson · Abmelden“ steht das lokale Lehrerprofil mit „Zur Startseite“, weil es keinen Lehrer-Login gibt (Entscheidung 43).
   - Zeilenhöhe des Hinweistexts im Panel (mobil): 16,5 px statt 1,4 (16,8 px). Das Referenzbild liegt auf Teilpixeln; ganzzahlige Höhen halten Linien und Zeilen auf dem Pixelraster. Optisch gleich, die Abweichung zum Referenzbild sinkt von 1,25 % auf 0,2 %.
+  - Tippflächen mindestens 44 × 44 px: Menüknopf (Vorlage 40 px), Hell/Dunkel (38 px), Schließen-Knopf der Schublade (34 px) und „Weiter“ (40 px) sind größer als in der Vorlage. Negative Außenabstände halten das Layout gleich; sichtbar wird nur der Rand des Knopfs etwas größer. Der Test `e2e/teacher-content.spec.ts` prüft 44 px.
+  - Dunkel: „Öffnen“ in der Ablage nutzt `--good` statt `--green` für Schrift und Rand. Das Grün der Vorlage (`#2f6b4f`) hat auf dunklem Grund zu wenig Kontrast (Axe `color-contrast`); wie bei `--ink3` weicht der Wert minimal ab.
+  - Das Start-Overlay nennt immer die Klasse des Raums („Raum für Klasse 7b“) bzw. „Raum ohne Klasse (keine Schreiberleichterung)“, weil „Nicht zugeordnet“ die gemerkte Klasse löscht und der Raum dann ohne Schreiberleichterung startet.
   - Die Schublade ist 324 px breit (296 px Inhalt plus 14 px Innenabstand je Seite), wie die Vorlage sie misst.
   - Der Hinweis unter der Liste („Tippen öffnet die Einstellungen als Overlay …“) ist Entwurfstext und steht nur in den Beispieldaten.
 - **Schülerbereich mobil:** Eine schmale Kopfzeile „Lernraum“ führt zur Startseite, weil die Seitenleiste mit dem Logo unter 900 px fehlt.

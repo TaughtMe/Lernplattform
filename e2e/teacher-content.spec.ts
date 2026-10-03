@@ -153,54 +153,6 @@ test("ein nicht zugeordneter Inhalt wandert in die gewählte Klasse", async ({
   ).toBeVisible();
 });
 
-test("die Seite Inhalte hat keine Barrieren, auch mit offener Schublade und offenem Zuordnen-Dialog", async ({
-  page,
-}) => {
-  await seed(page);
-  await page.goto(`/lehrer?klasse=${CLASS_A}`);
-  await expect(
-    page.getByRole("button", { name: "Text für 7b öffnen" }).first(),
-  ).toBeVisible();
-  const scan = async () =>
-    (await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()).violations;
-
-  expect(await scan()).toEqual([]);
-
-  if (isMobile(page)) {
-    await page.getByRole("button", { name: "Klassen und Bereiche" }).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    expect(await scan()).toEqual([]);
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).toHaveCount(0);
-  } else {
-    await page.goto("/lehrer?klasse=ohne");
-    await page
-      .getByRole("button", { name: "Altes Vokabelpaket zuordnen" })
-      .click();
-    await expect(
-      page.getByRole("dialog", { name: "Klassen zuordnen" }),
-    ).toBeVisible();
-    expect(await scan()).toEqual([]);
-  }
-});
-
-test("Touch-Ziele der Ablage sind mindestens 44 Pixel hoch", async ({
-  page,
-}) => {
-  test.skip(!isMobile(page), "mobiler Ablauf");
-  await seed(page);
-  await page.goto(`/lehrer?klasse=${CLASS_A}`);
-  for (const name of [
-    "Klassen und Bereiche",
-    "Weiter",
-    "Raum öffnen",
-    "Text für 7b öffnen",
-  ]) {
-    const box = await page.getByRole("button", { name }).first().boundingBox();
-    expect(box?.height ?? 0, name).toBeGreaterThanOrEqual(40);
-  }
-});
-
 test("Text anlegen, ablegen, wiederfinden und per Bearbeiten umbenennen", async ({
   page,
 }) => {
@@ -258,11 +210,46 @@ test("Text anlegen, ablegen, wiederfinden und per Bearbeiten umbenennen", async 
   ).toHaveCount(0);
 });
 
-test("das Start-Overlay hat keine Barrieren und schließt per Escape", async ({
-  page,
-}) => {
-  await seed(page);
-  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+/**
+ * Bedienelemente unter 44 × 44 px. Der Seitenfuß (Impressum, Datenschutz,
+ * Version) gehört zur gemeinsamen Hülle und ist hier ausgenommen; Häkchen
+ * zählen über ihre Zeile (Beschriftung).
+ */
+async function smallTargets(page: Page) {
+  return page.evaluate(() => {
+    const seen: string[] = [];
+    const candidates = document.querySelectorAll<HTMLElement>(
+      "button, a[href], select, input:not([type=checkbox]), label",
+    );
+    for (const element of candidates) {
+      if (element.closest("footer")) continue;
+      if (
+        element.tagName === "LABEL" &&
+        !element.querySelector("input[type=checkbox]")
+      )
+        continue;
+      const style = getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      if (style.visibility === "hidden" || box.width === 0 || box.height === 0)
+        continue;
+      // Verdeckt durch ein modales Fenster darunter? Dann zählt nur das Fenster.
+      const modal = document.querySelector("dialog[open]");
+      if (modal && !modal.contains(element)) continue;
+      if (box.width < 44 || box.height < 44) {
+        const name =
+          element.getAttribute("aria-label") ??
+          element.textContent?.trim().slice(0, 30) ??
+          element.tagName;
+        seen.push(
+          `${name} (${Math.round(box.width)}×${Math.round(box.height)})`,
+        );
+      }
+    }
+    return seen;
+  });
+}
+
+async function openSheet(page: Page) {
   const sheet = page.getByRole("dialog", { name: "Raum öffnen" });
   await expect(async () => {
     await page
@@ -271,29 +258,65 @@ test("das Start-Overlay hat keine Barrieren und schließt per Escape", async ({
       .click();
     await expect(sheet).toBeVisible({ timeout: 1500 });
   }).toPass();
-  await expect(sheet.getByRole("button", { name: /^Stationen/ })).toBeVisible();
-  const violations = (
-    await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
-  ).violations;
-  expect(violations).toEqual([]);
-  await page.keyboard.press("Escape");
-  await expect(sheet).toHaveCount(0);
-});
+  return sheet;
+}
 
-test("die Seite Inhalte hat auch im dunklen Modus keine Barrieren", async ({
-  page,
-}) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("theme-preference", "dark"),
-  );
-  await seed(page);
-  await page.goto(`/lehrer?klasse=${CLASS_A}`);
-  await expect(
-    page.getByRole("button", { name: "Text für 7b öffnen" }).first(),
-  ).toBeVisible();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  const violations = (
-    await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
-  ).violations;
-  expect(violations.map(({ id, nodes }) => [id, nodes.length])).toEqual([]);
-});
+for (const theme of ["light", "dark"] as const) {
+  test.describe(`Barrierefreiheit der Seite Inhalte (${theme})`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(
+        (value) => localStorage.setItem("theme-preference", value),
+        theme,
+      );
+      await seed(page);
+      await page.goto(`/lehrer?klasse=${CLASS_A}`);
+      await expect(
+        page.getByRole("button", { name: "Text für 7b öffnen" }).first(),
+      ).toBeVisible();
+      await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    });
+
+    const scan = async (page: Page) =>
+      (
+        await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+      ).violations.map(({ id, nodes }) => [id, nodes.length]);
+
+    test("Ablage", async ({ page }) => {
+      expect(await scan(page)).toEqual([]);
+      if (isMobile(page)) expect(await smallTargets(page)).toEqual([]);
+    });
+
+    test("offene Schublade", async ({ page }) => {
+      test.skip(!isMobile(page), "Schublade nur mobil");
+      const drawer = page.getByRole("dialog", { name: "Klassen und Bereiche" });
+      await expect(async () => {
+        await page
+          .getByRole("button", { name: "Klassen und Bereiche" })
+          .click();
+        await expect(drawer).toBeVisible({ timeout: 1000 });
+      }).toPass();
+      expect(await scan(page)).toEqual([]);
+      expect(await smallTargets(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+      await expect(drawer).toHaveCount(0);
+    });
+
+    test("offenes Startfenster", async ({ page }) => {
+      const sheet = await openSheet(page);
+      await expect(sheet.getByText("Raum für Klasse 7b")).toBeVisible();
+      expect(await scan(page)).toEqual([]);
+      if (isMobile(page)) expect(await smallTargets(page)).toEqual([]);
+      await page.keyboard.press("Escape");
+      await expect(sheet).toHaveCount(0);
+    });
+
+    test("offener Zuordnen-Dialog", async ({ page }) => {
+      const sheet = await openSheet(page);
+      await sheet.getByRole("button", { name: /ändern/ }).click();
+      const dialog = page.getByRole("dialog", { name: "Klassen zuordnen" });
+      await expect(dialog).toBeVisible();
+      expect(await scan(page)).toEqual([]);
+      if (isMobile(page)) expect(await smallTargets(page)).toEqual([]);
+    });
+  });
+}

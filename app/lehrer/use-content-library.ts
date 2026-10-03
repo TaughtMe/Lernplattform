@@ -266,8 +266,9 @@ export function useContentLibrary(): {
       title: startTarget?.title ?? "",
       classLabel:
         startClassNames.length > 0
-          ? `${startClassNames.length === 1 ? "Klasse" : "Klassen"}: ${startClassNames.join(", ")}`
+          ? `Zugeordnet zu ${startClassNames.length === 1 ? "Klasse" : "Klassen"} ${startClassNames.join(", ")}`
           : "Nicht zugeordnet",
+      roomFor: selectedClass?.name ?? null,
       classAction: startClassNames.length > 0 ? "ändern" : "zuordnen",
       modes: MODES,
       mode: startMode,

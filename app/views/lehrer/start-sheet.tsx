@@ -15,10 +15,15 @@ export type StartSheetProps = {
   open: boolean;
   /** Titel des Inhalts, der geöffnet wird. */
   title: string;
-  /** Zeile unter dem Titel, z. B. „Klassen: 7b, 9a“ oder „Nicht zugeordnet“. */
+  /** Zeile unter dem Titel: wozu der Inhalt gehört, z. B. „Zugeordnet zu 7b, 9a“. */
   classLabel: string;
   /** Beschriftung des Knopfs dahinter, z. B. „ändern“ oder „zuordnen“. */
   classAction: string;
+  /**
+   * Klasse, für die der Raum startet (z. B. „Klasse 7b“); `null` startet ohne
+   * Klasse, also ohne Schreiberleichterung. Wird immer deutlich gezeigt.
+   */
+  roomFor: string | null;
   modes: readonly StartMode[];
   mode: string;
   /** Der Raumcode erscheint erst in der Lobby; diese Zeile erklärt es. */
@@ -72,6 +77,23 @@ export function StartSheet(props: StartSheetProps) {
             <Icon name="close" size={16} strokeWidth={2.2} />
           </button>
         </div>
+
+        <p
+          className={cx(
+            styles.roomFor,
+            props.roomFor === null && styles.roomForNone,
+          )}
+        >
+          {props.roomFor === null ? (
+            <>
+              <strong>Raum ohne Klasse</strong> (keine Schreiberleichterung)
+            </>
+          ) : (
+            <>
+              <strong>Raum für {props.roomFor}</strong>
+            </>
+          )}
+        </p>
 
         {props.roomOpen ? (
           <div className={styles.openRoom} role="status">
