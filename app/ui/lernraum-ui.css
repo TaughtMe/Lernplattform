@@ -3965,6 +3965,6 @@ body:has(.ui-game.is-active-round) .ui-footer {
 /* ============ Ältere Schülerseiten im neuen Rahmen ============ */
 .ui-student-page__head {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 16px 20px 0;
 }

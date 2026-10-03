@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { Icon } from "../../ui/icons";
-import { cx, ThemeSwitch, type Theme } from "../parts/parts";
+import { cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./lernbox-screen.module.css";
 
 export type LbMode = "writing" | "oral";
@@ -185,9 +185,12 @@ function Panel(props: LernBoxScreenProps) {
   return (
     <aside className={styles.panel} aria-labelledby="lernbox-title">
       <div className={styles.panelHead}>
-        <h1 id="lernbox-title" className={styles.panelTitle}>
-          Lernen
-        </h1>
+        <span className={styles.panelStart}>
+          <HomeLink />
+          <h1 id="lernbox-title" className={styles.panelTitle}>
+            Lernen
+          </h1>
+        </span>
         <span className={styles.narrowOnly}>
           <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
         </span>

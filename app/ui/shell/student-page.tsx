@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { HomeLink } from "../../views/parts/parts";
 import { ThemeToggle } from "../theme-toggle";
 import { RouteFocus } from "./route-focus";
 
@@ -26,6 +27,7 @@ export function StudentPage({
       ) : (
         <div className="ui ui-student-page">
           <div className="ui-student-page__head">
+            <HomeLink />
             <ThemeToggle />
           </div>
           {children}

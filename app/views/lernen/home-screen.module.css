@@ -26,6 +26,11 @@
   gap: 12px;
   padding: 20px 20px 0;
 }
+.headStart {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .title {
   margin: 0;
   font-size: 15px;

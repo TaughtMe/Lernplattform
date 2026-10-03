@@ -17,6 +17,11 @@
   justify-content: space-between;
   gap: 16px;
 }
+.headStart {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
 .title {
   margin: 0;
   font-family: var(--font-fun);

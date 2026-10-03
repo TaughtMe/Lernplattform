@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Icon } from "../../ui/icons";
-import { Animal, cx, ThemeSwitch, type Theme } from "../parts/parts";
+import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./home-screen.module.css";
 
 export type WeekDay = {
@@ -45,9 +45,12 @@ export function HomeScreen(props: HomeScreenProps) {
       <div className={styles.layout}>
         <section className={styles.main} aria-labelledby="home-title">
           <header className={styles.head}>
-            <h1 id="home-title" className={styles.title}>
-              {props.title}
-            </h1>
+            <div className={styles.headStart}>
+              <HomeLink />
+              <h1 id="home-title" className={styles.title}>
+                {props.title}
+              </h1>
+            </div>
             <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
           </header>
           <div className={styles.stage}>

@@ -10,9 +10,14 @@
   color: var(--ink);
 }
 .layout {
+  /* Mobil zeigen die Seitenköpfe das L zur Startseite (`HomeLink`). */
+  --student-home-link: grid;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+}
+.layout.noNav {
+  --student-home-link: none;
 }
 .main {
   display: flex;
@@ -31,24 +36,6 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-}
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 16px;
-  font-weight: 800;
-  text-decoration: none;
-}
-.topbar[hidden] {
-  display: none;
 }
 .nav[hidden] {
   display: none;
@@ -139,10 +126,8 @@
 
 /* ---------- Seitenleiste (ab 900 px, 3a) ---------- */
 @container (min-width: 900px) {
-  .topbar {
-    display: none;
-  }
   .layout {
+    --student-home-link: none;
     flex-direction: row;
   }
   .main {

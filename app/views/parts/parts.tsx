@@ -2,6 +2,7 @@
  * Bausteine der Design-Screens. Reine Darstellung: Zustand und Aktionen
  * kommen immer über Props.
  */
+import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { animalFileName } from "../../../src/domain/learner-profile";
 import { Icon, type IconName } from "../../ui/icons";
@@ -66,6 +67,19 @@ export function ThemeSwitch({
     >
       <Icon name={theme === "dark" ? "sun" : "moon"} size={19} />
     </button>
+  );
+}
+
+/**
+ * Das L der Seitenleiste als Link zur Startseite, links im Seitenkopf.
+ * Sichtbar nur im Schülerrahmen unter 900 px (dort fehlt die Seitenleiste);
+ * der Rahmen steuert das über `--student-home-link`, sonst bleibt es verborgen.
+ */
+export function HomeLink() {
+  return (
+    <Link href="/" className={styles.homeLink} aria-label="Zur Startseite">
+      L
+    </Link>
   );
 }
 

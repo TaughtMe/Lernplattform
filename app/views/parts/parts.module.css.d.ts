@@ -4,6 +4,7 @@ declare const styles: {
   readonly chip: string;
   readonly eyebrow: string;
   readonly green: string;
+  readonly homeLink: string;
   readonly pill: string;
   readonly primary: string;
   readonly roundButton: string;

@@ -93,6 +93,7 @@ declare const styles: {
   readonly panelCard: string;
   readonly panelClosed: string;
   readonly panelHead: string;
+  readonly panelStart: string;
   readonly panelTitle: string;
   readonly primary: string;
   readonly primaryHead: string;

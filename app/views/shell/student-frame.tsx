@@ -39,7 +39,7 @@ export function StudentFrame({
 }) {
   return (
     <div className={styles.frame}>
-      <div className={styles.layout}>
+      <div className={cx(styles.layout, hideNav && styles.noNav)}>
         <nav
           className={styles.nav}
           aria-label="Hauptnavigation"
@@ -80,15 +80,6 @@ export function StudentFrame({
             </span>
           </Link>
         </nav>
-        {/* Mobil gibt es keine Seitenleiste: „Lernraum“ oben führt zur Startseite. */}
-        <Link
-          href="/"
-          className={styles.topbar}
-          hidden={hideNav}
-          aria-label="Lernraum – zur Startseite"
-        >
-          Lernraum
-        </Link>
         {pending ? (
           <span
             className={styles.loading}

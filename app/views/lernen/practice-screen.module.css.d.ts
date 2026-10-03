@@ -2,6 +2,7 @@
 declare const styles: {
   readonly go: string;
   readonly head: string;
+  readonly headStart: string;
   readonly screen: string;
   readonly subtitle: string;
   readonly symbol: string;
