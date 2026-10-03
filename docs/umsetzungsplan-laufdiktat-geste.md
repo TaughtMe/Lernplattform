@@ -121,9 +121,10 @@ Der Ablauf im aktiven Spiel entspricht dem Original:
 4. **Nochmal ansehen:** Zwei Finger funktionieren auch im Schreibzustand; die angefangene
    Antwort bleibt erhalten. Der Link „nochmal ansehen“ führt zum schlichten Wartezustand.
 5. **Kein Zoom, kein Scrollen** auf der Spielfläche, solange gewartet oder gelesen wird.
-6. **Laptop:** Maustaste auf der Fläche gedrückt halten zeigt das Wort, Loslassen öffnet das
-   Schreibfeld (heutiges Verhalten, bleibt). Das ist keine Schaltfläche, sondern dieselbe
-   Halte-Mechanik mit der Maus.
+6. **PC und Laptop:** Die Tasten **A und L gleichzeitig gedrückt halten** zeigt das Wort,
+   Loslassen einer der beiden Tasten öffnet das Schreibfeld. Das entspricht den zwei Fingern:
+   Beide Hände sind beim Ansehen belegt, eine Maus wird nicht gebraucht. Das bisherige
+   Gedrückthalten der Maustaste entfällt.
 
 Stationen folgen demselben Muster. Nummernwahl, Blättern, Spickerzählung und die Rückkehr nach
 drei Sekunden bleiben unverändert.
@@ -131,18 +132,21 @@ drei Sekunden bleiben unverändert.
 ## 4. Entscheidungen (abgestimmt)
 
 1. **Kein Knopf zum Aufdecken.** „Aufgabe zeigen“, „Jetzt schreiben“ und „Aufgabe wieder
-   verdecken“ entfallen ersatzlos, auch nicht klein am Rand. Aufgedeckt wird nur durch Halten
-   (zwei Finger oder Maustaste). Barrierefreiheits-Ergänzungen für die Geste (Ein-Zeiger-
-   Alternative nach WCAG 2.5.1, Tastaturbedienung, Ansage per `aria-live`) sind nicht Teil
-   dieses Plans. Folge: Per Tastatur allein lässt sich das Wort nicht mehr aufdecken; die
-   Zusicherung in `docs/laufdiktat-parity.md` wird entsprechend angepasst (Paket 5).
-   Die bestehenden axe-Prüfungen der Seiten (Kontrast, Beschriftungen, Rollen) bleiben als
-   Quality Gate bestehen.
+   verdecken“ entfallen ersatzlos, auch nicht klein am Rand. Aufgedeckt wird nur durch Halten:
+   zwei Finger (Touch) oder die Tasten A und L (Tastatur). Weitere Barrierefreiheits-
+   Ergänzungen für die Geste (Ein-Zeiger-Alternative nach WCAG 2.5.1, Ansage per
+   `aria-live`) sind nicht Teil dieses Plans. Die bestehenden axe-Prüfungen der Seiten
+   (Kontrast, Beschriftungen, Rollen) bleiben als Quality Gate bestehen.
 2. **Zoom nur auf der Spielfläche sperren** (`touch-action`), **nicht** global per
    `user-scalable=no` im Viewport. Zoom bleibt in allen anderen Bereichen erhalten.
 3. **Bewusste Abweichung von der Designvorlage 5a/5b** für Warten und Lesen. Wird in
    `docs/umsetzungsplan-lernraum-ui-v2.md` dokumentiert; die Design-Referenzbilder für „hold“
    und „read“ werden neu festgelegt.
+4. **Am Computer A + L statt Maus.** Gleichzeitiges Halten von A und L deckt auf; die Maus hat
+   keine Aufdeck-Funktion mehr.
+5. **Erklärung vor dem ersten Aufdecken genügt.** Der Hinweis im Wartezustand sagt vor jedem
+   Aufdecken, was zu tun ist. Ein zusätzlicher Ersatzweg für Kinder, die die Geste nicht
+   kennen, ist nicht nötig.
 
 ## 5. Umsetzung in Paketen
 
@@ -166,25 +170,51 @@ größten Probleme mit kleinstem Risiko.
   iPad prüfen, ob es zusätzlich zu `touch-action: none` nötig ist; sonst weglassen.
 - Allein damit verschwinden Zoom und das Abbrechen beim Verrutschen (2.1, 2.2).
 
-### Paket 2 – Eine Gestenquelle statt vieler Handler
+### Paket 2 – Eine Halte-Quelle statt vieler Handler
 
-- Neuer Hook `app/raum/spiel/use-two-finger-hold.ts`:
-  - Signatur: `useTwoFingerHold(surfaceRef, { enabled, onReveal, onRelease })`.
+- Neuer Hook `app/raum/spiel/use-hold-to-reveal.ts` mit zwei Eingängen (zwei Finger, Tasten
+  A + L), die dasselbe „zeigen“/„verdecken“ melden:
+  - Signatur: `useHoldToReveal(surfaceRef, { enabled, phase, onReveal, onRelease })`.
+
+  **Zwei Finger:**
   - Native Pointer-Listener am **dauerhaften** Spielflächen-Container (`data-game-surface`),
     Capture-Phase. Aktive Kontakte in einem `Set` von `pointerId` zählen.
   - Ab zwei Kontakten: `surface.setPointerCapture(id)` für alle aktiven Kontakte, dann
     `onReveal()`. Ab jetzt landen `pointerup`/`pointercancel` immer an der Spielfläche, auch
     wenn das berührte Element beim Aufdecken ersetzt wird (in Chromium nachgemessen).
   - Unter zwei Kontakten (`pointerup`, `pointercancel`, `lostpointercapture`): `onRelease()`.
-  - Maus: `pointerdown` mit `pointerType === "mouse"` auf der freien Fläche (nicht auf Kopf,
-    Links oder Antwortfeld) zählt als Halten, `pointerup` als Loslassen.
+  - Mauszeiger (`pointerType === "mouse"`) werden nicht gezählt; die Maus deckt nicht auf.
   - Einzelne Taps auf Kopf-Knöpfe (Zurück, Vorlesen, Hell/Dunkel), Battle-Knöpfe und das
     Antwortfeld bleiben unberührt: Capture erst ab zwei Kontakten, sonst würde der Klick an
     der Spielfläche statt am Knopf landen.
+
+  **Tasten A + L:**
+
+  - `keydown`/`keyup` am `window`, solange die Spielfläche aktiv ist. Erkennung über
+    `event.code` (`KeyA`, `KeyL`), damit Groß-/Kleinschreibung und Tastaturbelegung keine
+    Rolle spielen. Ereignisse mit Strg, Alt oder Meta und `event.repeat` werden ignoriert.
+  - Sind beide Tasten unten → `onReveal()`. Geht eine davon hoch → `onRelease()`.
+  - Im Warte- und Lesezustand `preventDefault` für A und L, damit nichts getippt oder
+    gescrollt wird.
+  - **Im Schreibzustand deckt A + L nur auf, wenn der Fokus nicht im Antwortfeld liegt.**
+    Sonst würde schnelles Tippen von Wörtern wie „alle“ oder „Ball“ (Taste A noch unten,
+    während L gedrückt wird) das Wort aufdecken. Zum erneuten Ansehen per Tastatur: `Esc`
+    verlässt das Antwortfeld und führt in den Wartezustand (wie „nochmal ansehen“), dann
+    A + L. Die angefangene Antwort bleibt erhalten.
+  - Nach dem Loslassen das Antwortfeld erst fokussieren, wenn **beide** Tasten oben sind.
+    Sonst schreibt die noch gehaltene Taste per Tastenwiederholung „llll“ ins Feld. Bis dahin
+    `keydown` von A/L abfangen.
+  - Verliert das Fenster den Fokus (`blur`, `visibilitychange`), gilt das als Loslassen; sonst
+    bliebe das Wort nach einem Fensterwechsel stehen, weil das `keyup` fehlt.
+
+  **Gemeinsam:**
+
   - Zustandsfrei gegenüber dem Spiel: Der Hook meldet nur „zeigen“/„verdecken“. Peek-Zählung
-    bleibt in `live-game.tsx` bzw. `station-game.tsx`.
-  - Reine Logik (Kontaktzählung, Übergänge) als testbare Funktion in
-    `src/domain/two-finger-hold.ts`, der Hook verdrahtet nur DOM-Ereignisse.
+    bleibt in `live-game.tsx` bzw. `station-game.tsx`. Kommen Finger und Tasten gleichzeitig,
+    zählt das als ein Aufdecken.
+  - Reine Logik (Kontakt- und Tastenzählung, Übergänge) als testbare Funktion in
+    `src/domain/hold-to-reveal.ts`, der Hook verdrahtet nur DOM-Ereignisse.
+
 - `live-game.tsx`: `onTouchStart`/`onTouchEnd`/`onTouchCancel`, `holdWithMouse`,
   `releaseHold`, `showWithButton` und `shownByButton` entfernen und durch den Hook ersetzen.
   `revealWord` und `startWriting` bleiben die einzigen Zustandswechsel. `phaseRef` bleibt als
@@ -202,9 +232,11 @@ größten Probleme mit kleinstem Risiko.
 
 - `HoldPhase`: Karte, Augen-Symbol, Überschrift, Erklärabsatz und Knopf entfallen. Stattdessen
   eine Zeile Hinweis in der Mitte und zwei schmale Randleisten (ca. 6 × 96 px, Akzentfarbe,
-  Deckkraft 25–40 %, an beiden Rändern mittig), `aria-hidden`. Auf Geräten mit Maus lautet der
-  Hinweis „Maustaste auf der Fläche gedrückt halten“ (`@media (hover: hover) and
-(pointer: fine)`). Ladezustand und Fehler mit „Erneut laden“ bleiben (Stationen); „Erneut
+  Deckkraft 25–40 %, an beiden Rändern mittig), `aria-hidden`. Auf Geräten mit Maus/Touchpad
+  (`@media (hover: hover) and (pointer: fine)`) lautet der Hinweis „Halte **A** und **L**
+  gleichzeitig gedrückt, um {Satz|Wort|Aufgabe} {n} zu sehen.“, die beiden Buchstaben als
+  Tastenkappen (`<kbd>`) links und rechts statt der Randleisten. Tablets mit Tastatur zeigen den
+  Finger-Hinweis; A + L funktioniert dort trotzdem. Ladezustand und Fehler mit „Erneut laden“ bleiben (Stationen); „Erneut
   laden“ ist keine Aufdeck-Schaltfläche und bleibt deshalb.
 - `ReadPhase`: nur das Wort, zentriert, ohne Karte, ohne Pill, ohne Randflächen, ohne Knopf,
   ohne „Loslassen …“-Hinweis. Randleisten blenden mit 200 ms aus (`prefers-reduced-motion`:
@@ -226,11 +258,11 @@ durch Halten ersetzt:
 - Live-Tests: `e2e/live/original-parity.spec.ts`, `math-continuation.spec.ts`,
   `progress-delivery.spec.ts`, `vocabulary-transfer.spec.ts`, `writing-relief.spec.ts`.
   Gemeinsamer Helfer `e2e/live/hold.ts` mit `revealByHold(page)` und `release(page)`:
-  Maus drücken bzw. loslassen auf der freien Spielfläche (`page.mouse`, funktioniert in allen
-  sieben Profilen). Prüfungen auf „Aufgabe zeigen“ als Hinweis auf einen bedienbaren Zustand
+  `page.keyboard.down("a")` + `page.keyboard.down("l")` bzw. `page.keyboard.up("l")` +
+  `page.keyboard.up("a")` (funktioniert in allen sieben Profilen). Prüfungen auf „Aufgabe zeigen“ als Hinweis auf einen bedienbaren Zustand
   (z. B. Versionskonflikt: „not.toBeVisible“) auf den Hinweistext umstellen.
 - Komponententests: `app/raum/spiel/live-parity.test.tsx`, `station-game.test.tsx` von
-  Knopf-Klicks auf Pointer-Ereignisse an der Spielfläche umstellen.
+  Knopf-Klicks auf Pointer-Ereignisse an der Spielfläche bzw. A + L umstellen.
 - Nicht betroffen: gleichnamige Texte in `teacher-dictation-screen.tsx`,
   `learning-box-app.tsx` und `lernbox-screen.tsx` gehören zu anderen Bereichen und bleiben.
 
@@ -238,22 +270,28 @@ durch Halten ersetzt:
 
 - `docs/laufdiktat-parity.md`: Zeilen „Erneutes Nachschauen“ und „Stationen“ um „robust gegen
   Verrutschen, kein Zoom“ ergänzen; den Satz „Maus- und Tastaturbedienung bleiben zusätzlich
-  zur Zwei-Finger-Bedienung möglich“ ersetzen durch „Am Laptop deckt Gedrückthalten der
-  Maustaste auf. Eine Schaltfläche zum Aufdecken gibt es bewusst nicht (wie im Original).“
+  zur Zwei-Finger-Bedienung möglich“ ersetzen durch „Am Computer decken die gleichzeitig
+  gehaltenen Tasten A und L auf. Eine Schaltfläche zum Aufdecken gibt es bewusst nicht (wie im
+  Original).“
 - `docs/umsetzungsplan-lernraum-ui-v2.md`: bewusste Abweichung von Vorlage 5a/5b (Warten und
   Lesen, kein Aufdeck-Knopf) mit Begründung festhalten.
 - Vault: kurze Notiz unter „Qualitätsgrundlage“ zu den neuen Gestentests.
 
 ## 6. Tests
 
-- **Unit** (`src/domain/two-finger-hold.test.ts`): zwei Kontakte → zeigen; einer hebt ab →
+- **Unit** (`src/domain/hold-to-reveal.test.ts`): zwei Kontakte → zeigen; einer hebt ab →
   verdecken; drei Kontakte und wieder zwei → bleibt gezeigt; `pointercancel` zählt als
-  Abheben; Maus drücken/loslassen; doppelte `pointerdown`-IDs werden nicht doppelt gezählt.
+  Abheben; Mauszeiger zählt nicht; doppelte `pointerdown`-IDs werden nicht doppelt gezählt.
+  A + L → zeigen; A oder L hoch → verdecken; nur A oder nur L → nichts; Tastenwiederholung
+  und Strg/Alt/Meta ignoriert; `blur` → verdecken; im Schreibzustand mit Fokus im Antwortfeld
+  löst A + L nicht aus.
 - **Komponenten** (`live-game.test.tsx`, `live-parity.test.tsx`, `station-game.test.tsx`):
   Wort bleibt nach `pointermove` beider Kontakte sichtbar; Antwort bleibt nach erneutem
   Aufdecken aus dem Schreibzustand erhalten; erstes Ansehen zählt nicht, zweites zählt einen
   Spicker (unverändert); im Warte- und Lesezustand gibt es keine Schaltfläche zum Aufdecken
-  oder Verdecken; ein Tap auf „Vorlesen“ deckt nicht auf.
+  oder Verdecken; ein Tap auf „Vorlesen“ deckt nicht auf; Tippen von „alle“ im Antwortfeld
+  deckt nicht auf; nach A + L enthält das Antwortfeld kein „a“ oder „l“; `Esc` im Antwortfeld
+  führt in den Wartezustand und behält die Antwort.
 - **Browser, neue Datei `e2e/live/two-finger-gesture.spec.ts`**, nur Chromium-Projekte, mit
   echten Mehrfinger-Eingaben über `page.context().newCDPSession(page)` und
   `Input.dispatchTouchEvent`:
@@ -272,15 +310,16 @@ durch Halten ersetzt:
 
 ## 7. Risiken
 
-| Risiko                                                                                          | Gegenmaßnahme                                                                                    |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `touch-action: none` verhindert Scrollen im Schreibzustand mit Bildschirmtastatur               | Schreibbereich mit `pan-y` und eigenem Scrollbereich; Test auf 360 × 640 mit offener Tastatur    |
-| iOS ignoriert die Sperre in Einzelfällen                                                        | `gesturestart` abfangen (Paket 1), echte iPad-Abnahme                                            |
-| Pointer-Capture stört Klicks auf Knöpfe                                                         | Capture erst ab zwei Kontakten; Komponententest „Prüfen“ und „Vorlesen“ per Tap                  |
-| Ohne Knopf bleibt ein Kind hängen, das die Geste nicht kennt                                    | Einzeiler bleibt immer sichtbar; Lehrkraft erklärt die Geste wie beim Original einmal vorab      |
-| Viele Live-Tests brechen, weil sie „Aufgabe zeigen“ klicken                                     | Paket 4 im selben Pull Request wie Paket 2/3; gemeinsamer Helfer statt Einzelanpassungen         |
-| Battle: Tinte/Flimmern überlagern die Fläche                                                    | Overlays bleiben `pointer-events: none` (heute schon); im Gestentest Battle-Runde mitprüfen      |
-| Bildschirmtastatur schließt beim Aufdecken aus dem Schreibzustand und lässt das Layout springen | Verhalten wie im Original akzeptieren; Fokus nach dem Loslassen wieder ins Antwortfeld (besteht) |
+| Risiko                                                                                          | Gegenmaßnahme                                                                                       |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `touch-action: none` verhindert Scrollen im Schreibzustand mit Bildschirmtastatur               | Schreibbereich mit `pan-y` und eigenem Scrollbereich; Test auf 360 × 640 mit offener Tastatur       |
+| iOS ignoriert die Sperre in Einzelfällen                                                        | `gesturestart` abfangen (Paket 1), echte iPad-Abnahme                                               |
+| Pointer-Capture stört Klicks auf Knöpfe                                                         | Capture erst ab zwei Kontakten; Komponententest „Prüfen“ und „Vorlesen“ per Tap                     |
+| Ohne Knopf bleibt ein Kind hängen, das die Geste nicht kennt                                    | Gering: Der Hinweis im Wartezustand erklärt vor jedem Aufdecken, was zu tun ist (Finger bzw. A + L) |
+| A + L löst beim Tippen im Antwortfeld aus oder hinterlässt Buchstaben im Feld                   | Kein Auslösen bei Fokus im Antwortfeld; Fokus erst, wenn beide Tasten oben sind; Komponententests   |
+| Viele Live-Tests brechen, weil sie „Aufgabe zeigen“ klicken                                     | Paket 4 im selben Pull Request wie Paket 2/3; gemeinsamer Helfer statt Einzelanpassungen            |
+| Battle: Tinte/Flimmern überlagern die Fläche                                                    | Overlays bleiben `pointer-events: none` (heute schon); im Gestentest Battle-Runde mitprüfen         |
+| Bildschirmtastatur schließt beim Aufdecken aus dem Schreibzustand und lässt das Layout springen | Verhalten wie im Original akzeptieren; Fokus nach dem Loslassen wieder ins Antwortfeld (besteht)    |
 
 ## 8. Fertig, wenn
 
@@ -289,6 +328,7 @@ durch Halten ersetzt:
 - Im Warte- und Lesezustand gibt es keine Schaltfläche zum Aufdecken oder Verdecken.
 - Während des Haltens ist nur das Wort zu sehen, groß und ohne Randflächen oder Knöpfe.
 - Verrutschen, Nachgreifen und Pinch beenden das Halten nicht und zoomen die Seite nicht.
-- Am Laptop deckt Gedrückthalten der Maustaste auf.
+- Am Computer deckt gleichzeitiges Halten von A und L auf, ohne Maus; im Antwortfeld landen
+  dabei keine Buchstaben.
 - Stationen verhalten sich gleich; Spickerzählung, Fortschritt und Wertung sind unverändert.
 - Alle Prüfungen aus Abschnitt 0 und 6 sind grün, die Geräteabnahme ist dokumentiert.
