@@ -1,6 +1,6 @@
 # Umsetzungsplan: Zwei-Finger-Aufdecken im Lernraum-Laufdiktat wie im Original
 
-Stand: 03.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `bbb4702` · Vergleich mit
+Stand: 03.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `e3cd7a5` · Vergleich mit
 `TaughtMe/Laufdiktat` (Standardbranch, `src/pages/Game.tsx`, `src/pages/StationGame.tsx`)
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Er ändert nur das Schülerspiel
@@ -53,11 +53,11 @@ Diese Unterschiede erklären die gemeldeten Eindrücke:
 
 ### 2.1 Spielfläche ist zoom- und scrollbar
 
-- `app/ui/lernraum-ui.css:1277` setzt `touch-action: none`, `height: 100dvh`,
+- `app/ui/lernraum-ui.css:1111` setzt `touch-action: none`, `height: 100dvh`,
   `overflow: hidden` und `user-select: none` nur für `.ui-game.is-active-round`.
 - Seit `0185083` („Laufdiktat Schüler im Design 5a/5b angebunden“) heißt die Spielfläche
   `.ui-dictation is-active-round` (`app/raum/spiel/live-game.tsx:672`,
-  `app/raum/spiel/station-game.tsx:196`). Für `.ui-dictation` (`lernraum-ui.css:1519`) gibt es
+  `app/raum/spiel/station-game.tsx:196`). Für `.ui-dictation` (`lernraum-ui.css:1353`) gibt es
   keine dieser Regeln. Die Sperre ging bei der Umstellung verloren.
 - Messung: Pinch mit zwei Fingern auf der Spielfläche → `visualViewport.scale = 3,55`.
   Gleiche Geste im Laufdiktat-Muster (`touch-none` am Wurzelcontainer) → `1`.
