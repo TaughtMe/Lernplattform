@@ -8,6 +8,11 @@ import {
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import {
+  revealWithTwoFingers,
+  twoFingersDown,
+  twoFingersUp,
+} from "./hold-test-utils";
 import { LiveRunningDictationGame } from "./live-game";
 import { LiveStationGame } from "./station-game";
 
@@ -29,11 +34,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-function touch(container: HTMLElement) {
-  const stage = container.querySelector(".is-active-round")!;
-  fireEvent.touchStart(stage, { touches: [{}, {}] });
-  fireEvent.touchEnd(stage, { touches: [] });
-}
+const touch = revealWithTwoFingers;
 
 describe("original Laufdiktat workflows", () => {
   it("reveals progressive hints, enters copy mode, and resets help for the next word", async () => {
@@ -61,9 +62,7 @@ describe("original Laufdiktat workflows", () => {
     expect(screen.getByLabelText("Lösung: Haus")).toBeVisible();
     await user.type(input, "Haus{Enter}");
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Aufgabe zeigen" }),
-      ).toBeVisible(),
+      expect(screen.getByText(/Mit zwei Fingern an den Rändern/)).toBeVisible(),
     );
     touch(container);
     expect(screen.queryByLabelText("Buchstabenhilfe")).not.toBeInTheDocument();
@@ -119,11 +118,11 @@ describe("original Laufdiktat workflows", () => {
       fireEvent.click(screen.getByRole("button", { name: "1" })),
     );
     const stage = container.querySelector(".is-active-round")!;
-    fireEvent.touchStart(stage, { touches: [{}, {}] });
+    twoFingersDown(stage);
     expect(screen.getByText("Haus")).toBeVisible();
     act(() => vi.advanceTimersByTime(4000));
     expect(screen.getByText("Haus")).toBeVisible();
-    fireEvent.touchEnd(stage, { touches: [] });
+    twoFingersUp(stage);
     expect(screen.queryByText("Haus")).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(3000));
     expect(screen.getByText("Welche Nummer bist du?")).toBeVisible();
@@ -144,7 +143,7 @@ describe("original Laufdiktat workflows", () => {
       .fn()
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce({ currentIndex: 1, peeks: 4, finished: false });
-    render(
+    const { container } = render(
       <LiveStationGame
         code="1234"
         session={session}
@@ -155,12 +154,13 @@ describe("original Laufdiktat workflows", () => {
     );
     await user.click(screen.getByRole("button", { name: "1" }));
     expect(screen.getByRole("alert")).toHaveTextContent("nicht geladen");
-    expect(
-      screen.getByRole("button", { name: "Aufgabe zeigen" }),
-    ).toBeDisabled();
+    const stage = container.querySelector(".is-active-round")!;
+    twoFingersDown(stage);
+    expect(screen.queryByText("Haus")).not.toBeInTheDocument();
+    twoFingersUp(stage);
     expect(progress).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Erneut laden" }));
-    await user.click(screen.getByRole("button", { name: "Aufgabe zeigen" }));
+    twoFingersDown(stage);
     expect(screen.getByText("Baum")).toBeVisible();
     expect(progress).toHaveBeenLastCalledWith(
       expect.objectContaining({ currentIndex: 1, peeks: 4, finished: true }),

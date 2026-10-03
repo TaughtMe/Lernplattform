@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
@@ -9,15 +9,8 @@ import {
   signWritingReliefGrant,
 } from "../../../src/domain/class-seal";
 import { createStudentClassesRepository } from "../../../src/storage/student-classes";
+import { revealWithTwoFingers } from "./hold-test-utils";
 import { LiveRunningDictationGame } from "./live-game";
-
-// Ersetzt den Button-Klick aus der alten Oberfläche: das Original-Laufdiktat
-// deckt die Aufgabe per Zwei-Finger-Rand-Geste auf, die hier simuliert wird.
-function revealWithTwoFingers(container: HTMLElement) {
-  const stage = container.querySelector("[data-game-surface]") as HTMLElement;
-  fireEvent.touchStart(stage, { touches: [{}, {}] });
-  fireEvent.touchEnd(stage, { touches: [] });
-}
 
 const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
   ingestBundle: vi.fn().mockResolvedValue({

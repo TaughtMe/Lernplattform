@@ -1,6 +1,6 @@
 "use client";
 
-import { TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
   battleChargeGain,
@@ -44,6 +44,7 @@ import { useFullscreenFrame } from "../../ui/shell/fullscreen";
 import { useThemeToggle } from "../../ui/theme";
 import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
 import { CopyGuide, DeliveryNotice, GameWarning } from "./game-parts";
+import { useHoldToReveal } from "./use-hold-to-reveal";
 import { LiveStationGame } from "./station-game";
 
 type Phase = "idle" | "revealed" | "write" | "correct" | "complete";
@@ -101,7 +102,6 @@ export function LiveRunningDictationGame({
   );
   // Spiegel der Phase für Gesten, die im selben Ereignis mehrfach auslösen.
   const phaseRef = useRef<Phase>(phase);
-  const shownByButton = useRef(false);
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
@@ -273,12 +273,6 @@ export function LiveRunningDictationGame({
   ]);
 
   useEffect(() => {
-    if (phase !== "write") return;
-    const timer = window.setTimeout(() => answerRef.current?.focus(), 10);
-    return () => window.clearTimeout(timer);
-  }, [phase]);
-
-  useEffect(() => {
     if (!incomingAttack || session.gameMode !== "BATTLE") return;
     if (lastAttackId.current === incomingAttack.id) return;
     lastAttackId.current = incomingAttack.id;
@@ -332,6 +326,60 @@ export function LiveRunningDictationGame({
     wordTolerated,
     writingRelief,
   ]);
+
+  function revealWord() {
+    // Finger und Tasten können im selben Moment auslösen: nur einmal zählen.
+    if (phaseRef.current === "revealed" || phaseRef.current === "correct")
+      return;
+    phaseRef.current = "revealed";
+    if (startedAt.current === 0) startedAt.current = Date.now();
+    if (revealedCurrentWord) {
+      setPeeks((value) => value + 1);
+    } else {
+      setRevealedCurrentWord(true);
+    }
+    setPhase("revealed");
+  }
+
+  function startWriting() {
+    if (phaseRef.current !== "revealed") return;
+    phaseRef.current = "write";
+    setPhase("write");
+  }
+
+  function reviewAgain() {
+    phaseRef.current = "idle";
+    setPhase("idle");
+  }
+
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const hold = useHoldToReveal(surfaceRef, {
+    enabled:
+      !session.stationMode &&
+      phase !== "complete" &&
+      phase !== "correct" &&
+      !showExitConfirm,
+    phase: phase === "idle" ? "wait" : phase === "revealed" ? "read" : "write",
+    onReveal: revealWord,
+    onRelease: startWriting,
+  });
+
+  useEffect(() => {
+    if (phase !== "write") return;
+    // Nach A + L erst fokussieren, wenn beide Tasten oben sind: Eine noch
+    // gehaltene Taste würde sonst per Wiederholung ins Feld schreiben.
+    let timer = 0;
+    const focusField = () => {
+      if (hold.keysHeld()) {
+        timer = window.setTimeout(focusField, 40);
+        return;
+      }
+      answerRef.current?.focus();
+    };
+    timer = window.setTimeout(focusField, 10);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   if (session.stationMode) {
     return onLoadProgress ? (
@@ -480,50 +528,6 @@ export function LiveRunningDictationGame({
     index,
   );
 
-  function revealWord() {
-    // Geste und Knopf können im selben Moment auslösen: nur einmal zählen.
-    if (phaseRef.current === "revealed" || phaseRef.current === "correct")
-      return;
-    phaseRef.current = "revealed";
-    if (startedAt.current === 0) startedAt.current = Date.now();
-    if (revealedCurrentWord) {
-      setPeeks((value) => value + 1);
-    } else {
-      setRevealedCurrentWord(true);
-    }
-    setPhase("revealed");
-  }
-
-  // Per Knopf aufgedeckt: bleibt sichtbar, bis „Jetzt schreiben“ kommt.
-  function showWithButton() {
-    shownByButton.current = true;
-    revealWord();
-  }
-
-  function holdWithMouse() {
-    shownByButton.current = false;
-    revealWord();
-  }
-
-  function releaseHold() {
-    if (!shownByButton.current) startWriting();
-  }
-
-  function startWriting() {
-    if (phaseRef.current !== "revealed") return;
-    shownByButton.current = false;
-    phaseRef.current = "write";
-    setPhase("write");
-  }
-
-  function onTouchStart(event: TouchEvent<HTMLDivElement>) {
-    if (event.touches.length >= 2) revealWord();
-  }
-
-  function onTouchEnd(event: TouchEvent<HTMLDivElement>) {
-    if (event.touches.length < 2) startWriting();
-  }
-
   function readPromptAloud() {
     if (!("speechSynthesis" in window) || !prompt) return;
     window.speechSynthesis.cancel();
@@ -671,9 +675,8 @@ export function LiveRunningDictationGame({
     <div
       className={`ui-dictation is-active-round${activeAttack === "flicker" ? " is-flickering" : ""}`}
       data-game-surface=""
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchEnd}
+      ref={surfaceRef}
+      onContextMenu={(event) => event.preventDefault()}
     >
       <StudentDictationScreen
         {...common}
@@ -711,10 +714,6 @@ export function LiveRunningDictationGame({
             </div>
           ) : null
         }
-        hold={{ onShow: showWithButton }}
-        read={{ onWriteNow: startWriting }}
-        onHoldStart={holdWithMouse}
-        onHoldEnd={releaseHold}
         write={{
           ...(kind === "vocabulary" || kind === "math"
             ? { question: promptNode }
@@ -746,10 +745,7 @@ export function LiveRunningDictationGame({
               : kind === "vocabulary"
                 ? "Übersetzung"
                 : "Tippe aus dem Gedächtnis",
-          onReview: () => {
-            phaseRef.current = "idle";
-            setPhase("idle");
-          },
+          onReview: reviewAgain,
           inputRef: answerRef,
           inputProps: {
             id: "live-game-answer",
@@ -771,6 +767,13 @@ export function LiveRunningDictationGame({
                     STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES.autoCapitalize,
                 }
               : {}),
+            onKeyDown: (event) => {
+              // Esc verlässt das Feld; die Antwort bleibt für A + L erhalten.
+              if (event.key !== "Escape") return;
+              event.preventDefault();
+              event.currentTarget.blur();
+              reviewAgain();
+            },
             onBeforeInput: (event) => {
               if (
                 session.strictTypingMode &&

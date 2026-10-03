@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import { twoFingersDown, twoFingersUp } from "./hold-test-utils";
 import { LiveStationGame } from "./station-game";
 
 const session: LiveSession = {
@@ -30,7 +31,7 @@ describe("LiveStationGame", () => {
     const user = userEvent.setup();
     const onProgress = vi.fn();
     const onLoadProgress = vi.fn().mockResolvedValue(null);
-    render(
+    const { container } = render(
       <LiveStationGame
         code="4829"
         session={session}
@@ -42,11 +43,13 @@ describe("LiveStationGame", () => {
 
     await user.click(screen.getByRole("button", { name: "3" }));
     expect(onLoadProgress).toHaveBeenCalledWith("station-3");
-    await user.click(screen.getByRole("button", { name: "Aufgabe zeigen" }));
+    const stage = container.querySelector("[data-game-surface]")!;
+    twoFingersDown(stage);
     expect(screen.getByText("Schulweg")).toBeVisible();
     expect(onProgress).toHaveBeenLastCalledWith(
       expect.objectContaining({ stationNumber: 3, currentIndex: 0 }),
     );
+    twoFingersUp(stage);
     await user.click(screen.getByRole("button", { name: "Nächste Aufgabe" }));
     expect(screen.getByText(/Nummer 3 · Aufgabe 2 \//)).toBeVisible();
   });

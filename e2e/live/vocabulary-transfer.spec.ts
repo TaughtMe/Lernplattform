@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { revealAndRelease } from "./hold";
 
 type RoundState = {
   sessionId: string;
@@ -98,10 +99,7 @@ async function mockRealtime(page: Page) {
 }
 
 async function answerWord(page: Page, answer: string) {
-  await page
-    .getByRole("button", { name: "Aufgabe zeigen", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Jetzt schreiben" }).click();
+  await revealAndRelease(page);
   const field = page.getByRole("textbox", { name: "Deine Antwort" });
   await field.fill(answer);
   await field.press("Enter");
@@ -185,10 +183,7 @@ for (const gameMode of ["LAUFDIKTAT", "UEBUNG"] as const)
     await page.goto("/raum?code=4829");
 
     for (const answer of ["Haus", "Baum"]) {
-      await page
-        .getByRole("button", { name: "Aufgabe zeigen", exact: true })
-        .click();
-      await page.getByRole("button", { name: "Jetzt schreiben" }).click();
+      await revealAndRelease(page);
       const field = page.getByRole("textbox", { name: "Deine Antwort" });
       await field.fill(answer);
       await field.press("Enter");

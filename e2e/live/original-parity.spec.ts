@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { revealAndRelease } from "./hold";
 const LIVE_APP_VERSION = `lernraum-${JSON.parse(readFileSync("package.json", "utf8")).version}`;
 
 async function join(
@@ -69,10 +70,7 @@ test("original practice hints and visible copy correction", async ({
   page,
 }) => {
   await join(page, { gameMode: "UEBUNG", uebungMaxAttempts: 2 });
-  await page
-    .getByRole("button", { name: "Aufgabe zeigen", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Jetzt schreiben" }).click();
+  await revealAndRelease(page);
   const answer = page.getByRole("textbox", { name: "Deine Antwort" });
   await answer.fill("x");
   await answer.press("Enter");
@@ -97,27 +95,35 @@ test("station hides on touch release and returns to number selection", async ({
   await join(page, { stationMode: true, stationCount: 2 });
   await page.getByRole("button", { name: "1", exact: true }).click();
   const stage = page.locator(".is-active-round");
-  await expect(
-    page.getByRole("button", { name: "Aufgabe zeigen" }),
-  ).toBeEnabled();
+  await expect(page.getByRole("heading", { name: /zu sehen\./ })).toBeVisible();
+  expect(
+    await stage.evaluate((element) => getComputedStyle(element).touchAction),
+  ).toBe("none");
   await stage.evaluate((element) => {
     // WebKit/Firefox do not expose constructible Touch objects on all devices.
-    // Supply the same two-contact event payload to the actual React handler.
-    const event = new Event("touchstart", { bubbles: true });
-    Object.defineProperty(event, "touches", {
-      value: [
-        { identifier: 0, target: element },
-        { identifier: 1, target: element },
-      ],
-    });
-    element.dispatchEvent(event);
+    // Two pointer contacts are what the gesture hook counts.
+    for (const pointerId of [1, 2]) {
+      element.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          pointerId,
+          pointerType: "touch",
+          bubbles: true,
+        }),
+      );
+    }
   });
   await expect(page.getByText("Haus", { exact: true })).toBeVisible();
   await accessible(page, "station-reveal.png");
   await stage.evaluate((element) => {
-    const event = new Event("touchend", { bubbles: true });
-    Object.defineProperty(event, "touches", { value: [] });
-    element.dispatchEvent(event);
+    for (const pointerId of [1, 2]) {
+      element.dispatchEvent(
+        new PointerEvent("pointerup", {
+          pointerId,
+          pointerType: "touch",
+          bubbles: true,
+        }),
+      );
+    }
   });
   await expect(page.getByText("Haus", { exact: true })).not.toBeVisible();
   await expect(
@@ -137,7 +143,7 @@ test("mismatched versions block the round with an understandable action", async 
     page.getByRole("button", { name: "Aktualisierung erneut prüfen" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Aufgabe zeigen" }),
+    page.getByRole("heading", { name: /zu sehen\./ }),
   ).not.toBeVisible();
   await accessible(page, "version-mismatch.png");
 });
@@ -146,9 +152,7 @@ test("resumes the room after an update even when the code was entered manually",
   page,
 }) => {
   await join(page, { gameMode: "LAUFDIKTAT" }, true);
-  await expect(
-    page.getByRole("button", { name: "Aufgabe zeigen", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /zu sehen\./ })).toBeVisible();
   expect(
     await page.evaluate(() => sessionStorage.getItem("lernraum-live-resume")),
   ).toBeNull();

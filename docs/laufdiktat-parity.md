@@ -13,17 +13,17 @@ Die gemeinsame Oberfläche, Speicherung und Aktualisierungsverwaltung bleiben
 die der Lernplattform. Die übrigen persönlichen Lernmodule bleiben vom
 Laufdiktat-Pilot getrennt.
 
-| Bereich                | Angleichung                                                                                                                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Freie Übung            | Schrittweise Buchstaben-/Worthilfe, anschließend sichtbare Abschreibvorlage; korrekte Zeichen werden hervorgehoben. Eingaben bleiben bei Korrekturen in dieser Phase stehen. |
-| Klassisches Laufdiktat | Falsche Antworten führen nicht mehr zur nächsten Aufgabe. Erst eine richtige Antwort schließt die Aufgabe ab.                                                                |
-| Erneutes Nachschauen   | Zwei Finger decken die Aufgabe auch während des Schreibens auf; die angefangene Antwort bleibt erhalten.                                                                     |
-| Stationen              | Zwei-Finger-Aufdecken, Verdecken beim Loslassen, Rückkehr nach drei Sekunden Untätigkeit, Vorlesen und Erinnerung an angesehene Aufgaben je Nummer.                          |
-| Stationsfehler         | Fehlgeschlagene Wiederherstellung verhindert neue Fortschrittsmeldungen, bis der Stand erfolgreich geladen wurde.                                                            |
-| Abschluss              | Sterne und längenbezogene Tempo-Punkte. Tempo verändert keinen persönlichen Lernstand.                                                                                       |
-| Battle                 | Aufholbonus wie im Original erst bei mindestens der Hälfte der Teilnehmer voraus; laufende Angriffe werden nicht durch weitere verlängert.                                   |
-| Versionen              | Abweichende Unterrichtsversion verhindert den Start. Ältere Schülergeräte suchen eine Aktualisierung; neuere Geräte verweisen an die Lehrkraft.                              |
-| Speicherung            | Die bereits geprüften Abschluss-, Wiederaufnahme-, Wiederholungs- und Berechtigungsreparaturen bleiben erhalten.                                                             |
+| Bereich                | Angleichung                                                                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freie Übung            | Schrittweise Buchstaben-/Worthilfe, anschließend sichtbare Abschreibvorlage; korrekte Zeichen werden hervorgehoben. Eingaben bleiben bei Korrekturen in dieser Phase stehen.             |
+| Klassisches Laufdiktat | Falsche Antworten führen nicht mehr zur nächsten Aufgabe. Erst eine richtige Antwort schließt die Aufgabe ab.                                                                            |
+| Erneutes Nachschauen   | Zwei Finger decken die Aufgabe auch während des Schreibens auf; X                                                                                                                        |
+| Stationen              | Zwei-Finger-Aufdecken, Verdecken beim Loslassen, Rückkehr nach drei Sekunden Untätigkeit, Vorlesen und Erinnerung an angesehene Aufgaben je Nummer; robust gegen Verrutschen, kein Zoom. |
+| Stationsfehler         | Fehlgeschlagene Wiederherstellung verhindert neue Fortschrittsmeldungen, bis der Stand erfolgreich geladen wurde.                                                                        |
+| Abschluss              | Sterne und längenbezogene Tempo-Punkte. Tempo verändert keinen persönlichen Lernstand.                                                                                                   |
+| Battle                 | Aufholbonus wie im Original erst bei mindestens der Hälfte der Teilnehmer voraus; laufende Angriffe werden nicht durch weitere verlängert.                                               |
+| Versionen              | Abweichende Unterrichtsversion verhindert den Start. Ältere Schülergeräte suchen eine Aktualisierung; neuere Geräte verweisen an die Lehrkraft.                                          |
+| Speicherung            | Die bereits geprüften Abschluss-, Wiederaufnahme-, Wiederholungs- und Berechtigungsreparaturen bleiben erhalten.                                                                         |
 
 Text-, Vokabel- und Matheimport, Bearbeitung von Abschnitten und Lücken,
 Lobby, Ergebnisübersicht und Tabellenausgabe stammen aus dem zusammengeführten
@@ -61,7 +61,7 @@ Datenbank-Vertragstest prüft, dass die Migration dieselben nutzt.
 
 ## Erhaltene Verbesserungen und Prüfgrenzen
 
-Maus- und Tastaturbedienung bleiben zusätzlich zur Zwei-Finger-Bedienung möglich.
+Am Computer decken die gleichzeitig gehaltenen Tasten A und L auf. Eine Schaltfläche zum Aufdecken gibt es bewusst nicht (wie im Original).
 Fehlermeldungen, Wiederholungsversand und Laufzeitvalidierung werden nicht
 zugunsten einer Nachbildung von Fehlern des Originals entfernt.
 

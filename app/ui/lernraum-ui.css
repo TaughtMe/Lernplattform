@@ -1114,7 +1114,23 @@
   touch-action: none;
   user-select: none;
 }
-body:has(.ui-game.is-active-round) .ui-footer {
+/* Auch die Design-Ansicht des Laufdiktats: kein Zoomen, kein Scrollen, kein Menü. */
+.ui-dictation.is-active-round {
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+/* iOS Safari erbt die Auswahlsperre sonst auf das Antwortfeld. */
+.ui-dictation.is-active-round textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+body:has(.ui-game.is-active-round) .ui-footer,
+body:has(.ui-dictation.is-active-round) .ui-footer {
   display: none;
 }
 .ui-game__head,
