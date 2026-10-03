@@ -44,6 +44,13 @@ declare const styles: {
   readonly joined: string;
   readonly joinedCard: string;
   readonly label: string;
+  readonly libraryBar: string;
+  readonly libraryButton: string;
+  readonly libraryConfirm: string;
+  readonly libraryDanger: string;
+  readonly libraryInput: string;
+  readonly libraryNotice: string;
+  readonly libraryTitle: string;
   readonly linkButton: string;
   readonly live: string;
   readonly liveBadge: string;

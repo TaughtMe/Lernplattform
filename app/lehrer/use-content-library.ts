@@ -24,6 +24,14 @@ import type {
   LibraryKind,
 } from "../views/lehrer/content-library-screen";
 import type { ClassAssignDialogProps } from "../views/lehrer/class-assign-dialog";
+import type { StartSheetProps } from "../views/lehrer/start-sheet";
+import {
+  MODES,
+  type DictationMode,
+} from "../views/laufdiktat/teacher-dictation-screen";
+import { readTeacherLiveRoom } from "../../src/integrations/laufdiktat/room-api";
+import { ROOM_JOIN_WINDOW_MINUTES } from "../../src/integrations/laufdiktat/room-limits";
+import { writeLiveIntent } from "./live-intent";
 
 /** Breite, ab der die Kacheln direkt zum Editor führen (wie der Rahmen). */
 const DESKTOP_QUERY = "(min-width: 900px)";
@@ -67,6 +75,7 @@ export function useContentLibrary(): {
   selection: string;
   screen: ContentLibraryScreenProps;
   assign: ClassAssignDialogProps;
+  start: StartSheetProps;
 } {
   const router = useRouter();
   const requested = useSearchParams().get("klasse");
@@ -80,6 +89,8 @@ export function useContentLibrary(): {
   const [assignId, setAssignId] = useState<string | null>(null);
   const [assignChecked, setAssignChecked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [startId, setStartId] = useState<string | null>(null);
+  const [startMode, setStartMode] = useState<DictationMode>("LAUFDIKTAT");
 
   async function reload() {
     const [classes, packages, profile] = await Promise.all([
@@ -159,12 +170,34 @@ export function useContentLibrary(): {
   );
   const selectedClass = loaded?.classes.find(({ id }) => id === selection);
 
+  // Die gewählte Klasse reist mit: Neue Inhalte gehören dazu, und sie ist die
+  // Klasse des nächsten Raums, auch wenn noch kein Lehrerprofil existiert.
+  const classParam = `klasse=${encodeURIComponent(selection)}`;
+  // Solange die Ablage lädt, ist die Klasse noch nicht bekannt: nichts auslösen.
   const edit = (id: string) =>
-    router.push(`/lehrer/live?inhalt=${encodeURIComponent(id)}&schritt=inhalt`);
+    loaded &&
+    router.push(
+      `/lehrer/live?inhalt=${encodeURIComponent(id)}&schritt=inhalt&${classParam}`,
+    );
   const create = (value: LibraryKind) =>
-    router.push(`/lehrer/live?neu=${EDITOR_PARAM[value]}`);
+    loaded &&
+    router.push(`/lehrer/live?neu=${EDITOR_PARAM[value]}&${classParam}`);
 
   const assignTarget = loaded?.packages.find(({ id }) => id === assignId);
+  const startTarget = loaded?.packages.find(({ id }) => id === startId);
+
+  function openAssign(id: string) {
+    const entry = loaded?.packages.find((item) => item.id === id);
+    setAssignChecked(
+      (entry?.classIds ?? []).filter((value) => activeIds.has(value)),
+    );
+    setAssignId(id);
+  }
+
+  const startClassNames = (startTarget?.classIds ?? [])
+    .map((id) => loaded?.classes.find((course) => course.id === id)?.name)
+    .filter((name): name is string => Boolean(name))
+    .map((name) => name.replace(/^Klasse\s+/i, ""));
 
   async function saveAssignment() {
     if (!assignId) return;
@@ -213,7 +246,7 @@ export function useContentLibrary(): {
       // die Art und „Weiter“ öffnet den Editor.
       onKind: (value) => (isDesktop() ? create(value) : setKind(value)),
       onCreate: create,
-      onOpen: edit,
+      onOpen: setStartId,
       onEdit: edit,
       ...(unassignedView
         ? {
@@ -227,6 +260,43 @@ export function useContentLibrary(): {
           }
         : {}),
       onOpenRoom: () => router.push("/lehrer/live"),
+    },
+    start: {
+      open: startTarget !== undefined,
+      title: startTarget?.title ?? "",
+      classLabel:
+        startClassNames.length > 0
+          ? `${startClassNames.length === 1 ? "Klasse" : "Klassen"}: ${startClassNames.join(", ")}`
+          : "Nicht zugeordnet",
+      classAction: startClassNames.length > 0 ? "ändern" : "zuordnen",
+      modes: MODES,
+      mode: startMode,
+      note: `Der Raumcode erscheint in der Lobby · Code gilt ${ROOM_JOIN_WINDOW_MINUTES} Minuten`,
+      ...(readTeacherLiveRoom() ? { roomOpen: { href: "/lehrer/live" } } : {}),
+      onClose: () => setStartId(null),
+      onMode: (id) => {
+        const mode = MODES.find((entry) => entry.id === id);
+        if (mode) setStartMode(mode.id);
+      },
+      onClasses: () => {
+        if (!startId) return;
+        const id = startId;
+        setStartId(null);
+        openAssign(id);
+      },
+      onStart: () => {
+        if (!startId) return;
+        // Die gewählte Klasse gilt für den Raum; „Nicht zugeordnet“ startet ohne.
+        const classId = selection === UNASSIGNED ? "" : selection;
+        writeLiveIntent({ contentId: startId, mode: startMode, classId });
+        router.push("/lehrer/live");
+      },
+      onAllOptions: () => {
+        if (!startId) return;
+        router.push(
+          `/lehrer/live?inhalt=${encodeURIComponent(startId)}&schritt=einstellungen&modus=${startMode}&${classParam}`,
+        );
+      },
     },
     assign: {
       open: assignTarget !== undefined,

@@ -1,5 +1,11 @@
 import "fake-indexeddb/auto";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TeacherContentPackage } from "../../src/domain/teacher-content-library";
@@ -10,6 +16,7 @@ import {
   createTeacherProfileRepository,
 } from "../../src/storage/teacher-class-settings";
 import { ContentLibrary } from "./content-library";
+import { LIVE_INTENT_KEY } from "./live-intent";
 import { PROTECTION_NOTICE } from "./use-content-library";
 
 const CLASS_A = "123e4567-e89b-42d3-a456-426614174001";
@@ -78,6 +85,7 @@ afterEach(async () => {
     request.onblocked = () => resolve();
   });
   window.history.replaceState(null, "", "/");
+  window.sessionStorage.clear();
 });
 
 describe("Inhalte-Seite: Filter nach Klasse", () => {
@@ -246,7 +254,9 @@ describe("Inhalte-Seite: Wege", () => {
     await user.click(
       await screen.findByRole("button", { name: "x bearbeiten" }),
     );
-    expect(window.location.search).toBe("?inhalt=x&schritt=inhalt");
+    expect(window.location.search).toBe(
+      `?inhalt=x&schritt=inhalt&klasse=${CLASS_A}`,
+    );
 
     window.history.replaceState(null, "", `/lehrer?klasse=${CLASS_A}`);
     // Mobil (jsdom): die Kachel wählt nur die Art, „Weiter“ öffnet den Editor.
@@ -254,7 +264,7 @@ describe("Inhalte-Seite: Wege", () => {
     expect(window.location.pathname).toBe("/lehrer");
     await user.click(screen.getByRole("button", { name: "Weiter" }));
     expect(window.location.pathname + window.location.search).toBe(
-      "/lehrer/live?neu=math",
+      `/lehrer/live?neu=math&klasse=${CLASS_A}`,
     );
 
     window.history.replaceState(null, "", `/lehrer?klasse=${CLASS_A}`);
@@ -262,5 +272,103 @@ describe("Inhalte-Seite: Wege", () => {
       screen.getAllByRole("button", { name: "Raum öffnen" })[0]!,
     );
     expect(window.location.pathname).toBe("/lehrer/live");
+  });
+});
+
+describe("Inhalte-Seite: Start-Overlay", () => {
+  async function openSheet() {
+    await createTeacherContentLibraryRepository().put(
+      entry("x", { title: "Tiere", classIds: [CLASS_A, CLASS_B] }),
+    );
+    renderAt(`?klasse=${CLASS_A}`);
+    const user = userEvent.setup();
+    const open = await screen.findAllByRole("button", { name: "Tiere öffnen" });
+    await user.click(open[0]!);
+    return {
+      user,
+      dialog: await screen.findByRole("dialog", { name: "Raum öffnen" }),
+    };
+  }
+
+  it("zeigt Titel, Klassen und die vier echten Modi", async () => {
+    const { dialog } = await openSheet();
+    expect(within(dialog).getByText("Tiere")).toBeInTheDocument();
+    expect(within(dialog).getByText(/Klassen: 7b, 9a/)).toBeInTheDocument();
+    for (const mode of ["Laufdiktat", "Freie Übung", "Battle", "Stationen"]) {
+      expect(
+        within(dialog).getByRole("button", { name: new RegExp(`^${mode}`) }),
+      ).toBeInTheDocument();
+    }
+    expect(
+      within(dialog).getByText(/Code gilt 90 Minuten/),
+    ).toBeInTheDocument();
+  });
+
+  it("„Jetzt starten“ schreibt die Absicht einmalig und geht zum Laufdiktat", async () => {
+    const { user, dialog } = await openSheet();
+    await user.click(within(dialog).getByRole("button", { name: /^Battle/ }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Jetzt starten · Battle" }),
+    );
+    expect(window.location.pathname).toBe("/lehrer/live");
+    expect(JSON.parse(window.sessionStorage.getItem(LIVE_INTENT_KEY)!)).toEqual(
+      {
+        contentId: "x",
+        mode: "BATTLE",
+        classId: CLASS_A,
+      },
+    );
+  });
+
+  it("startet aus „Nicht zugeordnet“ ohne Klasse", async () => {
+    await createTeacherContentLibraryRepository().put(
+      entry("y", { title: "Frei" }),
+    );
+    renderAt("?klasse=ohne");
+    const user = userEvent.setup();
+    await user.click(
+      (await screen.findAllByRole("button", { name: "Frei öffnen" }))[0]!,
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Raum öffnen" });
+    expect(within(dialog).getByText(/Nicht zugeordnet/)).toBeInTheDocument();
+    await user.click(
+      within(dialog).getByRole("button", { name: /^Jetzt starten/ }),
+    );
+    expect(
+      JSON.parse(window.sessionStorage.getItem(LIVE_INTENT_KEY)!),
+    ).toMatchObject({
+      contentId: "y",
+      classId: "",
+    });
+  });
+
+  it("„Alle Optionen“ öffnet den Schritt Einstellungen mit dem Inhalt", async () => {
+    const { user, dialog } = await openSheet();
+    await user.click(
+      within(dialog).getByRole("button", { name: "Alle Optionen" }),
+    );
+    expect(window.location.pathname + window.location.search).toBe(
+      `/lehrer/live?inhalt=x&schritt=einstellungen&modus=LAUFDIKTAT&klasse=${CLASS_A}`,
+    );
+    expect(window.sessionStorage.getItem(LIVE_INTENT_KEY)).toBeNull();
+  });
+
+  it("öffnet über „ändern“ den Zuordnen-Dialog", async () => {
+    const { user, dialog } = await openSheet();
+    await user.click(within(dialog).getByRole("button", { name: /ändern/ }));
+    expect(
+      await screen.findByRole("dialog", { name: "Klassen zuordnen" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Raum öffnen" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("schließt per Escape", async () => {
+    const { dialog } = await openSheet();
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
   });
 });

@@ -349,4 +349,9 @@
   .openButton:hover {
     background: var(--accent-bg);
   }
+  /* Dunkel: Das Grün der Vorlage hätte auf dunklem Grund zu wenig Kontrast. */
+  :global([data-theme="dark"]) .openButton {
+    border-color: var(--good);
+    color: var(--good);
+  }
 }

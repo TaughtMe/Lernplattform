@@ -200,3 +200,100 @@ test("Touch-Ziele der Ablage sind mindestens 44 Pixel hoch", async ({
     expect(box?.height ?? 0, name).toBeGreaterThanOrEqual(40);
   }
 });
+
+test("Text anlegen, ablegen, wiederfinden und per Bearbeiten umbenennen", async ({
+  page,
+}) => {
+  await seed(page);
+  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+
+  await expect(async () => {
+    await page.getByRole("button", { name: /^Text/ }).first().click();
+    if (isMobile(page))
+      await page.getByRole("button", { name: "Weiter" }).click();
+    await expect(page).toHaveURL(/\/lehrer\/live/, { timeout: 1500 });
+  }).toPass();
+  await expect(
+    page.getByRole("heading", { name: "Wortliste vorbereiten" }),
+  ).toBeVisible();
+  // Die Adresse ist nach dem Lesen aufgeräumt.
+  await expect(page).toHaveURL(/\/lehrer\/live$/);
+
+  await page
+    .getByRole("textbox", { name: "Text" })
+    .fill("Am Morgen scheint die Sonne.");
+  await page.getByRole("textbox", { name: "Titel" }).fill("Sonne am Morgen");
+  await page.getByRole("button", { name: "Ablegen" }).click();
+  await expect(page.getByText("„Sonne am Morgen“ ist abgelegt.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Zurück zu Inhalte" }).click();
+  await expect(page).toHaveURL(/\/lehrer$/);
+  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+  await expect(
+    page.getByRole("button", { name: "Sonne am Morgen öffnen" }).first(),
+  ).toBeVisible();
+
+  // Bearbeiten gibt es am Desktop in der Zeile; mobil führt „Alle Optionen“ zum Inhalt.
+  if (isMobile(page)) return;
+  await page
+    .getByRole("button", { name: "Sonne am Morgen bearbeiten" })
+    .click();
+  await expect(page).toHaveURL(/\/lehrer\/live$/);
+  await expect(page.getByRole("textbox", { name: "Titel" })).toHaveValue(
+    "Sonne am Morgen",
+  );
+  await expect(page.getByRole("textbox", { name: "Text" })).toHaveValue(
+    "Am Morgen scheint die Sonne.",
+  );
+  await page.getByRole("textbox", { name: "Titel" }).fill("Morgensonne");
+  await page.getByRole("button", { name: "Ablegen" }).click();
+  await expect(page.getByText("„Morgensonne“ ist abgelegt.")).toBeVisible();
+  await page.getByRole("button", { name: "Zurück zu Inhalte" }).click();
+  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+  await expect(
+    page.getByRole("button", { name: "Morgensonne öffnen" }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Sonne am Morgen öffnen" }),
+  ).toHaveCount(0);
+});
+
+test("das Start-Overlay hat keine Barrieren und schließt per Escape", async ({
+  page,
+}) => {
+  await seed(page);
+  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+  const sheet = page.getByRole("dialog", { name: "Raum öffnen" });
+  await expect(async () => {
+    await page
+      .getByRole("button", { name: "Text für 7b öffnen" })
+      .last()
+      .click();
+    await expect(sheet).toBeVisible({ timeout: 1500 });
+  }).toPass();
+  await expect(sheet.getByRole("button", { name: /^Stationen/ })).toBeVisible();
+  const violations = (
+    await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+  ).violations;
+  expect(violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+});
+
+test("die Seite Inhalte hat auch im dunklen Modus keine Barrieren", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("theme-preference", "dark"),
+  );
+  await seed(page);
+  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+  await expect(
+    page.getByRole("button", { name: "Text für 7b öffnen" }).first(),
+  ).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const violations = (
+    await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
+  ).violations;
+  expect(violations.map(({ id, nodes }) => [id, nodes.length])).toEqual([]);
+});

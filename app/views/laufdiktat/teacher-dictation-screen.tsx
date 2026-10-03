@@ -121,6 +121,17 @@ export type TeacherDictationScreenProps = {
     }>;
   };
   roomTimes?: RoomTimes;
+  /**
+   * Ablage im Schritt „Inhalt“ (optional, ohne Angabe zeigt die Ansicht genau
+   * die Vorlage): Titelfeld, „Ablegen“ und beim Bearbeiten „Aus der Ablage
+   * löschen“ mit Bestätigung.
+   */
+  title?: string;
+  titlePlaceholder?: string;
+  libraryNotice?: string;
+  onTitle?: (title: string) => void;
+  onSave?: () => void;
+  onDelete?: () => void;
   /** Beschriftung und Sperre des Weiter-Knopfs (z. B. „Öffnet …“). */
   nextLabel?: string;
   nextDisabled?: boolean;
@@ -461,6 +472,78 @@ function KindChips({ content, onKind }: TeacherDictationScreenProps) {
   );
 }
 
+/** Titel, „Ablegen“ und „Aus der Ablage löschen“ (nur mit den Ablage-Props). */
+function LibraryBar(props: TeacherDictationScreenProps) {
+  const [confirming, setConfirming] = useState(false);
+  if (!props.onTitle && !props.onSave) return null;
+  return (
+    <div className={styles.libraryBar}>
+      <label className={styles.libraryTitle}>
+        <span className={styles.label}>Titel</span>
+        <input
+          type="text"
+          className={styles.libraryInput}
+          value={props.title ?? ""}
+          maxLength={300}
+          placeholder={
+            props.titlePlaceholder ?? "Wird aus dem Text vorgeschlagen"
+          }
+          onChange={(event) => props.onTitle?.(event.target.value)}
+        />
+      </label>
+      {props.onSave ? (
+        <button
+          type="button"
+          className={styles.libraryButton}
+          onClick={props.onSave}
+        >
+          Ablegen
+        </button>
+      ) : null}
+      {props.onDelete && !confirming ? (
+        <button
+          type="button"
+          className={styles.libraryButton}
+          onClick={() => setConfirming(true)}
+        >
+          Aus der Ablage löschen
+        </button>
+      ) : null}
+      {props.onDelete && confirming ? (
+        <span
+          className={styles.libraryConfirm}
+          role="group"
+          aria-label="Löschen bestätigen"
+        >
+          <span>Wirklich aus der Ablage löschen?</span>
+          <button
+            type="button"
+            className={cx(styles.libraryButton, styles.libraryDanger)}
+            onClick={() => {
+              setConfirming(false);
+              props.onDelete?.();
+            }}
+          >
+            Ja, löschen
+          </button>
+          <button
+            type="button"
+            className={styles.libraryButton}
+            onClick={() => setConfirming(false)}
+          >
+            Abbrechen
+          </button>
+        </span>
+      ) : null}
+      {props.libraryNotice ? (
+        <p className={styles.libraryNotice} role="status">
+          {props.libraryNotice}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function ImportStep(props: TeacherDictationScreenProps) {
   const {
     content,
@@ -477,6 +560,7 @@ function ImportStep(props: TeacherDictationScreenProps) {
     return (
       <div className={styles.editorStage}>
         <KindChips {...props} />
+        <LibraryBar {...props} />
         <VocabularyEditor {...props.vocabulary} />
       </div>
     );
@@ -485,6 +569,7 @@ function ImportStep(props: TeacherDictationScreenProps) {
     return (
       <div className={styles.editorStage}>
         <KindChips {...props} />
+        <LibraryBar {...props} />
         <MathEditor {...props.math} />
       </div>
     );
@@ -493,6 +578,7 @@ function ImportStep(props: TeacherDictationScreenProps) {
     <div className={styles.stage}>
       <div className={styles.column}>
         <KindChips {...props} />
+        <LibraryBar {...props} />
         <textarea
           className={styles.source}
           aria-label={KINDS.find(([kind]) => kind === content.kind)?.[1]}

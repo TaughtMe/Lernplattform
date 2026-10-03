@@ -147,6 +147,11 @@ export function TeacherLiveRoom({
           }),
         )}
         {...(roomTimes ? { roomTimes } : {})}
+        title={t.title}
+        onTitle={t.setTitle}
+        onSave={() => void t.saveContent()}
+        {...(t.contentId ? { onDelete: () => void t.deleteContent() } : {})}
+        {...(t.libraryNotice ? { libraryNotice: t.libraryNotice } : {})}
         nextLabel={nextLabel(t)}
         nextDisabled={t.footerDisabled}
         lockedSteps={lockedSteps(t)}

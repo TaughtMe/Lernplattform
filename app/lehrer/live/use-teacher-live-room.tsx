@@ -6,6 +6,7 @@
  * die Darstellung liegt in den Schritt-Komponenten dieses Ordners.
  */
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { animalTokenFromDisplayName } from "../../../src/domain/learner-profile";
 import type { ParticipantStatus } from "../../views/laufdiktat/teacher-dictation-screen";
@@ -76,8 +77,13 @@ import { useHydrated } from "../../components/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
 import {
   createTeacherClassRepository,
+  createTeacherContentLibraryRepository,
   createTeacherProfileRepository,
 } from "../../../src/storage/teacher-class-settings";
+import { liveContentToPackage, packageToLiveContent } from "../content-adapter";
+import { takeLiveIntent } from "../live-intent";
+import { splitModeOf } from "./dictation-adapter";
+import type { TeacherContentPackage } from "../../../src/domain/teacher-content-library";
 
 export type Stage = "content" | "settings" | "lobby" | "live";
 
@@ -171,6 +177,8 @@ export function useTeacherLiveRoom(
   clock: () => number = Date.now,
 ) {
   const hydrated = useHydrated();
+  const router = useRouter();
+  const params = useSearchParams();
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [markerMode, setMarkerMode] = useState(false);
@@ -270,7 +278,11 @@ export function useTeacherLiveRoom(
       if (active && last && withPrint.some(({ id }) => id === last)) {
         setClassChoiceState((current) => current || last);
       }
-    })().catch(() => undefined);
+    })()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setClassesLoaded(true);
+      });
     return () => {
       active = false;
     };
@@ -311,6 +323,14 @@ export function useTeacherLiveRoom(
   const [mathExcludeZeroResult, setMathExcludeZeroResult] = useState(false);
   const [mathGap, setMathGap] = useState(false);
   const [mathTables, setMathTables] = useState<number[]>([]);
+  // Abgelegter Inhalt, der gerade bearbeitet wird (null = noch nicht abgelegt).
+  const [contentId, setContentId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [libraryNotice, setLibraryNotice] = useState("");
+  // Die Wiederaufnahme eines offenen Raums hat Vorrang vor Adressen und Absicht.
+  const [restoreChecked, setRestoreChecked] = useState(false);
+  const [classesLoaded, setClassesLoaded] = useState(false);
+  const [startRequested, setStartRequested] = useState(false);
   const [room, setRoom] = useState<OpenedLiveRoom | null>(null);
   // Raum ist zu Ende (Frist oder Server), die letzten Ergebnisse bleiben sichtbar.
   const [roomClosed, setRoomClosed] = useState(false);
@@ -938,13 +958,18 @@ export function useTeacherLiveRoom(
   useEffect(() => {
     if (!hydrated || !liveRoomConfig || room) return;
     const stored = readTeacherLiveRoom();
-    if (!stored) return;
+    if (!stored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+      setRestoreChecked(true);
+      return;
+    }
     getLiveRoomState(liveRoomConfig, stored.roomId, {
       accessToken: stored.accessToken,
     })
       .then((state) => {
         if (!state || state.status === "ended") {
           clearTeacherLiveRoom();
+          setRestoreChecked(true);
           return;
         }
         const restored = parseLiveSession(
@@ -997,8 +1022,12 @@ export function useTeacherLiveRoom(
         // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
         setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(clock) });
         setStage(state.status === "live" ? "live" : "lobby");
+        setRestoreChecked(true);
       })
-      .catch(() => clearTeacherLiveRoom());
+      .catch(() => {
+        clearTeacherLiveRoom();
+        setRestoreChecked(true);
+      });
   }, [clock, hydrated, liveRoomConfig, room]);
 
   useEffect(() => {
@@ -1070,6 +1099,175 @@ export function useTeacherLiveRoom(
     };
   }, [liveRoomConfig, refresh, room, roomClosed, stage]);
 
+  // Ohne Raumdienst gibt es nichts wiederherzustellen.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+    if (hydrated && !liveRoomConfig) setRestoreChecked(true);
+  }, [hydrated, liveRoomConfig]);
+
+  function applyLoadedContent(entry: TeacherContentPackage) {
+    const loaded = packageToLiveContent(entry);
+    setContentMode(loaded.contentMode);
+    setSources((current) => ({
+      ...current,
+      [loaded.contentMode]: loaded.source,
+    }));
+    setTitle(loaded.title);
+    setContentId(entry.id);
+    if (loaded.contentMode === "text") {
+      setSplitConfig(loaded.textSplitConfig);
+      setManualRanges([]);
+      setExcludedSectionIds([]);
+      setSectionOrder([]);
+    }
+    if (loaded.contentMode === "vocabulary") {
+      const parsed = parseVocabularyTable(loaded.source);
+      setVocabularyPairs(parsed.length > 0 ? parsed : [emptyVocabularyPair()]);
+      setVocabularyLocales(loaded.vocabularyLocales);
+      setShuffleWords(true);
+    }
+  }
+
+  // Adresse (`inhalt`, `neu`, `schritt`, `modus`) und Start-Absicht werten wir
+  // genau einmal aus. Beides löst nur Laden und Anzeigen aus; einen Raum
+  // erstellt allein „Jetzt starten“, und die Absicht ist dann schon gelöscht.
+  const paramsHandled = useRef(false);
+  useEffect(() => {
+    if (paramsHandled.current) return;
+    if (!hydrated || !restoreChecked || !classesLoaded) return;
+    paramsHandled.current = true;
+    const contentParam = params.get("inhalt");
+    const newParam = params.get("neu");
+    const stepParam = params.get("schritt");
+    const modeParam = params.get("modus");
+    const classParam = params.get("klasse");
+    const intent = takeLiveIntent();
+    const hasParams = Boolean(contentParam || newParam || stepParam);
+    if (!hasParams && !intent) return;
+    if (hasParams) router.replace("/lehrer/live");
+    if (room) {
+      // Ein offener Raum hat Vorrang; nichts wird überschrieben.
+      if (contentParam || newParam || intent)
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+        setError(
+          "Es ist schon ein Raum offen. Beende ihn zuerst, um einen anderen Inhalt zu laden.",
+        );
+      return;
+    }
+    void (async () => {
+      const id = intent?.contentId ?? contentParam;
+      if (id) {
+        const entry = await createTeacherContentLibraryRepository().get(id);
+        if (!entry) {
+          setError("Dieser Inhalt ist nicht mehr in der Ablage.");
+          return;
+        }
+        applyLoadedContent(entry);
+      } else if (
+        newParam === "text" ||
+        newParam === "math" ||
+        newParam === "vocabulary"
+      ) {
+        chooseContentMode(newParam);
+        setContentId(null);
+        setTitle("");
+      }
+      const mode =
+        intent?.mode ?? ALL_MODES.find(({ id }) => id === modeParam)?.id;
+      if (mode) setGameMode(mode);
+      // Die Klasse der Ablage gilt auch für neue Inhalte und den nächsten Raum.
+      if (
+        !intent &&
+        classParam &&
+        (classParam === "ohne" ||
+          liveClasses.some(({ id }) => id === classParam))
+      ) {
+        await setClassChoice(classParam === "ohne" ? "" : classParam);
+      }
+      if (stepParam === "inhalt") setStage("content");
+      if (stepParam === "einstellungen") setStage("settings");
+      if (intent) {
+        const known = liveClasses.some(({ id }) => id === intent.classId);
+        await setClassChoice(known ? intent.classId : "");
+        setStage("settings");
+        setStartRequested(true);
+      }
+    })().catch(() =>
+      setError("Der Inhalt konnte nicht aus der Ablage geladen werden."),
+    );
+    // Läuft einmal; die Funktionen lesen nur den Stand dieses Renderns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classesLoaded, hydrated, params, restoreChecked, room, router]);
+
+  // „Jetzt starten“: Sobald Inhalt, Modus und Klasse übernommen sind, öffnet
+  // sich die Lobby mit den Standardoptionen des Modus.
+  useEffect(() => {
+    if (!startRequested || busy || room) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+    setStartRequested(false);
+    void openLobby();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startRequested]);
+
+  /** Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. */
+  async function storeContent(markUsed: boolean) {
+    const repository = createTeacherContentLibraryRepository();
+    const existing = contentId ? await repository.get(contentId) : undefined;
+    const entry = liveContentToPackage({
+      draft: {
+        contentMode,
+        source,
+        title,
+        textSplit: splitModeOf(splitConfig),
+        vocabularyLocales,
+      },
+      existing,
+      newId: `teacher-package-${crypto.randomUUID()}`,
+      now: new Date(clock()).toISOString(),
+      classId: activeClass || undefined,
+      markUsed,
+    });
+    await repository.put(entry);
+    setContentId(entry.id);
+    setTitle(entry.title);
+    window.dispatchEvent(new Event("teacher-data-changed"));
+    return entry;
+  }
+
+  async function saveContent() {
+    setError("");
+    if (!source.trim()) {
+      setLibraryNotice("Gib zuerst etwas ein, das abgelegt werden kann.");
+      return;
+    }
+    try {
+      const entry = await storeContent(false);
+      setLibraryNotice(`„${entry.title}“ ist abgelegt.`);
+    } catch {
+      setLibraryNotice(
+        "Der Inhalt konnte nicht abgelegt werden. Bitte versuche es noch einmal.",
+      );
+    }
+  }
+
+  async function deleteContent() {
+    if (!contentId) return;
+    try {
+      const repository = createTeacherContentLibraryRepository();
+      const entry = await repository.get(contentId);
+      await repository.remove(contentId);
+      setContentId(null);
+      setLibraryNotice(
+        entry
+          ? `„${entry.title}“ wurde aus der Ablage gelöscht.`
+          : "Der Inhalt wurde aus der Ablage gelöscht.",
+      );
+      window.dispatchEvent(new Event("teacher-data-changed"));
+    } catch {
+      setLibraryNotice("Der Inhalt konnte nicht gelöscht werden.");
+    }
+  }
+
   function importFile(file: File | undefined) {
     if (!file) return;
     const reader = new FileReader();
@@ -1107,6 +1305,13 @@ export function useTeacherLiveRoom(
       setRoom(opened);
       setNowMs(clock());
       setStage("lobby");
+      // Beim Öffnen der Lobby wird der Inhalt abgelegt, ohne die Lobby
+      // aufzuhalten; ein Fehler hier stoppt den Raum nicht.
+      void storeContent(true).catch(() =>
+        setError(
+          "Der Raum ist offen, aber der Inhalt konnte nicht abgelegt werden.",
+        ),
+      );
     } catch {
       setError(
         "Der Raum konnte nicht geöffnet werden. Bitte prüfe die Verbindung.",
@@ -1231,6 +1436,8 @@ export function useTeacherLiveRoom(
   }
 
   function chooseContentMode(mode: TeacherContentMode) {
+    // Ein anderer Typ ist ein anderer Inhalt: nicht über das Paket schreiben.
+    if (mode !== contentMode) setContentId(null);
     setContentMode(mode);
     if (mode === "vocabulary") {
       setShuffleWords(true);
@@ -1563,6 +1770,12 @@ export function useTeacherLiveRoom(
     mathGap,
     setMathGap,
     mathTables,
+    title,
+    setTitle,
+    contentId,
+    libraryNotice,
+    saveContent,
+    deleteContent,
     room,
     roomClosed,
     roomTimeline: timeline,
