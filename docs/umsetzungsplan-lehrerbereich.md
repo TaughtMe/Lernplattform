@@ -5,10 +5,9 @@ Stand: 03.10.2026 · Ausgangsstand `bbb4702` (nach PR #4)
 Dieser Plan ist die Arbeitsgrundlage für Schritt 8 aus
 [umsetzungsplan-lernraum-ui-v2.md](umsetzungsplan-lernraum-ui-v2.md). Er folgt dem v2-Prinzip:
 **zuerst die reine Ansicht, messbar identisch zur Vorlage, danach die Anbindung in getesteten
-Scheiben.** Die Entscheidungen in Abschnitt 3 sind Vorschläge der technischen Planung. E4
-(Ablage nach Klassen) und E9 (Code gilt 45 Minuten) sind mit der projektverantwortlichen
-Lehrkraft abgestimmt. E1 und E2 müssen vor Beginn von Scheibe 8.3 noch bestätigt werden
-(Abschnitt 9).
+Scheiben.** Die Entscheidungen E1, E2, E4 und E9 in Abschnitt 3 sind am 03.10.2026 mit der
+projektverantwortlichen Lehrkraft abgestimmt. Die übrigen sind Festlegungen der technischen
+Planung im Rahmen der bestehenden Entscheidungen.
 
 ## 0. Arbeitsweise
 
@@ -18,8 +17,9 @@ Lehrkraft abgestimmt. E1 und E2 müssen vor Beginn von Scheibe 8.3 noch bestäti
   (Abschnitt „Regeln für die Anbindung“). Ansichten in `app/views/` bleiben rein: kein Speicher,
   kein Supabase, keine Zeit- oder Zufallsquellen.
 - Keine neuen Abhängigkeiten. Keine neue Dexie-Version (neue Felder sind keine Indizes, wie
-  beim Klassenstempel). **Genau eine Supabase-Änderung:** die Beitrittsfrist von 45 Minuten
-  (E9, Scheibe 8.6). Sonst bleiben alle Supabase-Verträge unverändert.
+  beim Klassenstempel). **Genau eine Supabase-Änderung:** Beitrittsfrist 90 Minuten und
+  automatisches Schließen nach 120 Minuten (E9, Scheibe 8.6). Sonst bleiben alle
+  Supabase-Verträge unverändert.
 - Während der Arbeit gezielte Tests (`npx vitest run <datei>`). Vor jedem Push:
   `npm run check`, `npm run test:design` und die fokussierten E2E-Tests aus Abschnitt 6.
 - Jede Scheibe endet grün und lauffähig. Alte Lehrer-Screens und ihre Stile werden erst
@@ -60,7 +60,7 @@ Lehrkraft abgestimmt. E1 und E2 müssen vor Beginn von Scheibe 8.3 noch bestäti
   kann man mit dem Code beitreten. Ein Gerät, das schon beigetreten ist, kommt mit seinem
   Teilnehmertoken zurück, ohne den Code neu zu prüfen (`join_room_secure`, zuletzt in
   `20260920120000_room_identity_contract.sql`). Die Angabe „Code gilt 90 Minuten“ aus der
-  Vorlage stimmt also nicht.
+  Vorlage stimmt heute also nicht (siehe E9).
 - Es gibt keinen Lehrer-Login (Entscheidung 43). Die Vorlage zeigt „T. Bryson · Abmelden“.
 - Designvergleich: Die Registry `app/entwicklung/screens/registry.tsx` kennt bisher nur 2a und
   5a–5d. Für Schritt 8 werden die Lehrer-Screens dort ergänzt und in `screens.json` auf
@@ -77,9 +77,9 @@ und kann jeden Inhalt erneut bearbeiten. Rahmen und Inhalte-Seite entsprechen 3c
 3d (Desktop) pixelgenau, hell und dunkel. Der vorhandene Laufdiktat-Ablauf 5c/5d bleibt der
 einzige Weg, einen Raum zu betreiben.
 
-## 3. Entscheidungen (Vorschlag, von der Lehrkraft zu bestätigen)
+## 3. Entscheidungen
 
-**E1 – Verbindliche Screens.** 3c und 3d sind die Ziel-Screens (neueste Fassung). 2c und 1d
+**E1 – Verbindliche Screens (abgestimmt).** 3c und 3d sind die Ziel-Screens (neueste Fassung). 2c und 1d
 gelten wie 1a–1c als Referenz und erhalten in `screens.json` den Status `referenz`:
 
 - Aus 2c wird das Panel „Text anlegen für Klasse 7b · Weiter“ für mobil übernommen (es steht
@@ -88,7 +88,7 @@ gelten wie 1a–1c als Referenz und erhalten in `screens.json` den Status `refer
   zum Projizieren und „Beigetreten x von y“. Ein eigener 1d-Startbildschirm entsteht **nicht**,
   weil er die Einstellungen aus 5c/5d doppeln würde.
 
-**E2 – Ein Startweg.** Räume werden weiter nur über `/lehrer/live` (5c/5d) erstellt.
+**E2 – Ein Startweg (abgestimmt).** Räume werden weiter nur über `/lehrer/live` (5c/5d) erstellt.
 „Öffnen“ in der Ablage öffnet das **Start-Overlay** aus 3c (mobil als Bottom-Sheet, ab 900 px
 als zentrierter Dialog). Es zeigt Titel, Klasse, die **vier echten Modi** (Laufdiktat, Freie
 Übung, Battle, Stationen) und „Jetzt starten · ‹Modus›“ sowie „Alle Optionen“.
@@ -104,8 +104,8 @@ als zentrierter Dialog). Es zeigt Titel, Klasse, die **vier echten Modi** (Laufd
   sagt selbst „Modi beim Öffnen: Laufdiktat · Freies Üben · Battle · Stationen — wie im
   bestehenden Laufdiktat“.
 - Der Raumcode erscheint erst in der Lobby, weil er beim Erstellen des Raums entsteht. Die
-  Vorlage zeigt ihn schon im Overlay. Statt „Code gilt 90 Minuten“ steht dort „Code gilt
-  45 Minuten“ (E9).
+  Vorlage zeigt ihn schon im Overlay. Der Hinweis „Code gilt 90 Minuten“ bleibt und stimmt
+  dann auch (E9).
 
 **E3 – Navigation.** Bereich „Inhalte“ → `/lehrer`, „Räume“ → `/lehrer/live` (offener Raum
 oder neuer Raum). „Auswertung“ wird **nicht angezeigt**, bis es dafür einen Entwurf gibt
@@ -193,28 +193,45 @@ Namen öffnet `/lehrer/einstellungen`. Das ist eine bewusste Abweichung wegen En
 rechts neben dem Seitentitel. Der Rahmen zeigt weiter den kompakten Seitenfuß (Impressum,
 Datenschutz, Version). Im Designvergleich fehlt er, weil der Katalog nur die Ansicht rendert.
 
-**E9 – Code gilt 45 Minuten (abgestimmt).** Neue Beitritte mit Raumcode oder QR sind
-**45 Minuten nach dem Öffnen des Raums** möglich, danach nicht mehr. 45 Minuten entsprechen
-einer Unterrichtsstunde. Der Code wird außerdem früher wieder frei, was bei nur vierstelligen
-Codes Kollisionen verringert.
+**E9 – Code gilt 90 Minuten, Raum schließt nach 120 Minuten (abgestimmt).** Ein Laufdiktat
+oder eine Runde Kopfrechnen dauert nur wenige Minuten. Ein Raum muss deshalb nicht lange offen
+sein. Bisher gibt es keine feste Frist (Abschnitt 1).
 
-- **Nur neue Beitritte enden.** Geräte, die schon im Raum sind, kommen mit ihrem
-  Teilnehmertoken auch nach 45 Minuten zurück, etwa nach einem Verbindungsabbruch. Die laufende
-  Runde, die Live-Ansicht und der CSV-Export laufen weiter. Das Ende des Raums bleibt wie bisher
-  (Lehrkraft beendet, sonst nach 3 Stunden ohne Aktivität).
-- **Durchsetzung auf dem Server:** In `join_room_secure` wird im Zweig für neue Beitritte
-  (nach dem Token-Zweig) zusätzlich `r.created_at > now() - interval '45 minutes'` geprüft. Die
-  Antwort bleibt leer wie bei einem unbekannten Code. Die Form des Vertrags ändert sich nicht.
-- **Anzeige:** In der Lobby und in der Fußzeile des Live-Schritts steht „Code gilt bis
-  HH:MM“. Die Uhrzeit wird beim Erstellen des Raums lokal berechnet und dient nur der Anzeige;
-  maßgeblich ist der Server. Nach Ablauf ersetzt „Beitritt geschlossen · neuen Raum öffnen“
-  Code und QR, und der vergrößerte QR lässt sich nicht mehr öffnen.
+- **Beitritt 90 Minuten:** Neue Beitritte mit Raumcode oder QR sind bis 90 Minuten nach dem
+  Öffnen des Raums möglich. Geräte, die schon im Raum sind, kommen mit ihrem Teilnehmertoken
+  auch danach zurück, etwa nach einem Verbindungsabbruch.
+- **Automatisch schließen nach 120 Minuten:** 120 Minuten nach dem Öffnen endet der Raum
+  automatisch, genau wie beim Beenden durch die Lehrkraft. Die bisherige Regel „3 Stunden ohne
+  Aktivität“ bleibt als Rückfall bestehen, greift aber praktisch nicht mehr.
+- **Durchsetzung auf dem Server:**
+  - In `join_room_secure` wird im Zweig für neue Beitritte (nach dem Token-Zweig) zusätzlich
+    `r.created_at > now() - interval '90 minutes'` geprüft. Die Antwort bleibt leer wie bei
+    einem unbekannten Code. Die Form des Vertrags ändert sich nicht.
+  - `cleanup_abandoned_rooms()` beendet zusätzlich Räume mit
+    `created_at < now() - interval '120 minutes'`. Der Cron-Job läuft dafür alle 5 statt alle
+    15 Minuten, damit ein Raum höchstens 5 Minuten zu spät schließt.
+  - Ist das Gerät der Lehrkraft offen, beendet es den Raum bei 120 Minuten selbst über den
+    vorhandenen Aufruf zum Beenden. Dann gilt der Zeitpunkt genau, und die Schülergeräte
+    erhalten wie gewohnt das Ende-Signal. Der Server-Job ist nur die Absicherung.
+- **Was beim Schließen passiert:** Für Schüler ist es dasselbe wie das Beenden durch die
+  Lehrkraft: Rundenende, Übernahme in die LernBox (Entscheidung 49) und Ergebnisansicht. Auch
+  wenn der Raum über den Server-Job endet, muss die Übernahme laufen. Das wird getestet.
+- **Anzeige für die Lehrkraft:**
+  - In der Lobby und in der Fußzeile des Live-Schritts steht „Code gilt bis HH:MM“, nach Ablauf
+    „Beitritt geschlossen“. Code und QR verschwinden dann, der vergrößerte QR lässt sich nicht
+    mehr öffnen.
+  - Ab 110 Minuten erscheint „Raum schließt um HH:MM · Ergebnisse jetzt als CSV sichern“.
+  - Nach dem Schließen bleiben die letzten Ergebnisse sichtbar, mit „Raum geschlossen“ und
+    weiter nutzbarem CSV-Export, bis die Lehrkraft einen neuen Raum öffnet. Heute würde ein
+    beendeter Raum beim Neuladen stillschweigend verworfen; daran ändert sich nichts, deshalb
+    der CSV-Hinweis vorher.
+  - Die Uhrzeiten werden beim Erstellen des Raums lokal berechnet und dienen nur der Anzeige.
+    Maßgeblich ist der Server.
 - **Schüler:** Die Meldung bei einem abgelaufenen Code lautet „Raumcode ungültig oder
   abgelaufen“ (gleiche Meldung wie bei einem falschen Code).
-- **Eine Konstante:** `ROOM_JOIN_WINDOW_MINUTES = 45` in `src/integrations/laufdiktat/`. Der
-  Datenbank-Vertragstest prüft, dass die Migration denselben Wert nutzt.
-- **Bekannte Grenze:** Eine zweite Runde im selben Raum nach mehr als 45 Minuten nimmt keine
-  neuen Kinder mehr auf. In einer Doppelstunde öffnet die Lehrkraft dafür einen neuen Raum.
+- **Konstanten:** `ROOM_JOIN_WINDOW_MINUTES = 90` und `ROOM_MAX_MINUTES = 120` in
+  `src/integrations/laufdiktat/`. Der Datenbank-Vertragstest prüft, dass die Migration dieselben
+  Werte nutzt.
 - Das ist eine Abweichung vom Original-Laufdiktat. Sie wird in `docs/laufdiktat-parity.md`
   eingetragen.
 
@@ -236,7 +253,7 @@ app/lehrer/content-adapter.ts            rein: Paket ↔ Live-Raum-Zustand (je A
 app/lehrer/page.tsx                      bindet Ansicht und Hook
 app/ui/shell/teacher-shell.tsx           wird Adapter: liefert Props für teacher-frame.tsx
 app/lehrer/live/use-teacher-live-room.tsx  liest `inhalt`/`neu`/`schritt`/Start-Absicht, legt ab
-supabase/migrations/2026…_room_join_window.sql  Beitrittsfrist 45 Minuten (E9)
+supabase/migrations/2026…_room_time_limits.sql  Beitritt 90 Min., Schließen nach 120 Min. (E9)
 ```
 
 - **Start-Absicht statt Seiteneffekt per URL:** „Jetzt starten“ schreibt
@@ -349,20 +366,37 @@ hat.
    - Hook: Bei offenem Raum wird nichts überschrieben
    - Bestehende Tests `teacher-live-room*.test.tsx` bleiben grün
 
-### 8.6 Beitrittsfrist 45 Minuten (E9)
+### 8.6 Beitrittsfrist und automatisches Schließen (E9)
 
 Diese Scheibe hängt nicht an 8.1–8.5 und darf zuerst umgesetzt werden.
 
-1. Neue Migration: `join_room_secure` mit der Frist im Zweig für neue Beitritte neu anlegen.
-   Rechte (`grant`) wie in der letzten Fassung übernehmen. Token-Zweig unverändert.
-2. `ROOM_JOIN_WINDOW_MINUTES` anlegen. Lobby und Live-Fußzeile zeigen „Code gilt bis HH:MM“
-   bzw. nach Ablauf „Beitritt geschlossen“ (Hook berechnet, Ansicht erhält Text über optionale
-   Props; ohne Props bleibt 5c/5d wie die Vorlage).
-3. Schülerseite: Meldung „Raumcode ungültig oder abgelaufen“.
-4. Tests:
-   - `npm run test:database`: neuer Beitritt nach 45 Minuten wird abgewiesen; Rückkehr mit
-     Token nach 45 Minuten klappt; neuer Beitritt vor Ablauf klappt; Migration nutzt 45.
-   - Komponententest: Anzeige vor und nach Ablauf (Uhr im Hook injiziert, nicht in der Ansicht).
+1. Neue Migration `…_room_time_limits.sql`:
+   - `join_room_secure` mit der 90-Minuten-Frist im Zweig für neue Beitritte neu anlegen.
+     Rechte (`grant`) wie in der letzten Fassung übernehmen. Token-Zweig unverändert.
+   - `cleanup_abandoned_rooms()` um die 120-Minuten-Regel ergänzen.
+   - Cron-Job `cleanup-abandoned-rooms` auf `*/5 * * * *` umstellen (`unschedule` + `schedule`
+     wie in der Ausgangsmigration).
+2. Konstanten `ROOM_JOIN_WINDOW_MINUTES` und `ROOM_MAX_MINUTES` anlegen.
+3. `use-teacher-live-room.tsx`:
+   - Uhrzeiten für „Code gilt bis“ und „Raum schließt um“ berechnen.
+   - Bei 120 Minuten den Raum über den vorhandenen Aufruf beenden.
+   - Endet der Raum durch den Server, die letzten Ergebnisse und den CSV-Export behalten.
+   - Die Uhr wird injiziert, damit die Tests ohne Warten laufen.
+4. `teacher-dictation-screen.tsx`: Texte über optionale Props (Code-Frist, Schließ-Hinweis,
+   „Raum geschlossen“). Ohne Props bleibt 5c/5d wie die Vorlage.
+5. Schülerseite: Meldung „Raumcode ungültig oder abgelaufen“.
+6. Tests:
+   - `npm run test:database`:
+     - neuer Beitritt vor 90 Minuten klappt, danach wird er abgewiesen
+     - Rückkehr mit Token nach 90 Minuten klappt
+     - Aufräumen beendet einen Raum nach 120 Minuten und lässt einen jüngeren offen
+     - Migration nutzt 90 und 120
+   - Hook:
+     - Hinweis ab 110 Minuten
+     - Beenden bei 120 Minuten genau einmal
+     - CSV bleibt nach Server-Ende verfügbar
+   - Schüler: Ende durch den Server löst Rundenende und LernBox-Übernahme aus wie das Beenden
+     durch die Lehrkraft.
 
 ### 8.7 Aufräumen und Dokumentation
 
@@ -403,10 +437,10 @@ e2e/laufdiktat-pilot.spec.ts` und ein neuer Test `e2e/teacher-content.spec.ts`:
 - Vault:
   - `04 - Lehrer-Cockpit/Anwendung.md`: Ablage für Text, Mathe und Vokabeln, aktive Klasse, Startweg
   - `19 - Entscheidungsprotokoll`: neue Entscheidung 51 „Lehrerbereich: Ablage aller
-    Inhaltsarten nach Klassen und ein Startweg“ und Entscheidung 52 „Raumcode gilt 45 Minuten
-    für neue Beitritte“
-- `docs/laufdiktat-parity.md`: Abweichung Beitrittsfrist (E9).
+    Inhaltsarten nach Klassen und ein Startweg“ und Entscheidung 52 „Raumcode gilt 90 Minuten,
+    Raum schließt nach 120 Minuten“
   - `18 - Aufgabenübersicht`: erledigte Punkte
+- `docs/laufdiktat-parity.md`: Abweichung Beitrittsfrist und automatisches Schließen (E9).
 
 ## 8. Nicht Teil dieses Plans
 
@@ -417,19 +451,16 @@ e2e/laufdiktat-pilot.spec.ts` und ein neuer Test `e2e/teacher-content.spec.ts`:
 - Speichern von Mathe-Generator-Einstellungen und der Herkunft „Generator/von Hand“.
 - Weitere Änderungen an Supabase (außer E9), an der Freigabe an Schüler (außer dem Filter auf
   Vokabeln) und an CSV-Export oder Spiellogik.
-- Eine einstellbare Beitrittsfrist je Raum (z. B. Doppelstunde).
+- Einstellbare Fristen je Raum.
 
-## 9. Offene Fragen an die Lehrkraft (vor 8.3 klären)
+## 9. Abgestimmte Fragen
 
-Geklärt am 03.10.2026: Ablage nach Klassen mit „Nicht zugeordnet“ und nachträglichem Zuordnen
-(E4). Code gilt 45 statt 90 Minuten (E9).
+Am 03.10.2026 mit der Lehrkraft geklärt; offen ist nichts mehr.
 
-Offen:
-
-1. E1: Sind 3c/3d verbindlich, und sind 1d/2c nur Referenz?
-2. E2: Ist das Start-Overlay mit den vier echten Modi statt Laufdiktat/Test/Üben in Ordnung?
-3. E9: Gilt die Frist wie vorgeschlagen nur für **neue** Beitritte (bereits beigetretene Geräte
-   und die laufende Runde bleiben), oder soll der ganze Raum nach 45 Minuten enden?
+1. E1: 3c/3d werden umgesetzt, 2c/1d dienen als Vorlage für Ideen.
+2. E2: Start-Overlay mit den vier echten Modi.
+3. E4: Ablage nach Klassen, mit „Nicht zugeordnet“ und nachträglichem Zuordnen.
+4. E9: Code gilt 90 Minuten, der Raum schließt automatisch nach 120 Minuten.
 
 ## 10. Abnahme durch die Lehrkraft (15 Minuten)
 
@@ -444,5 +475,6 @@ Offen:
    über „Zuordnen“ zwei Klassen zuordnen; es erscheint danach in beiden Klassen.
 6. Ein Vokabelpaket unter „Verwalten → Freigabe an Schüler“ freigeben. Text- und Mathe-Inhalte
    erscheinen dort nicht.
-7. Lobby zeigt „Code gilt bis …“. Nach 45 Minuten mit einem neuen Gerät beitreten: abgewiesen.
-   Ein schon beigetretenes Gerät neu laden: Es ist weiter im Raum.
+7. Die Lobby zeigt „Code gilt bis …“ (90 Minuten nach dem Öffnen) und ab 110 Minuten den
+   Hinweis zum Schließen. Die Zeiten lassen sich im Unterricht nicht abwarten; sie sind durch
+   die Tests aus 8.6 abgedeckt. Kurz prüfen: Uhrzeiten stimmen, und der Text ist verständlich.
