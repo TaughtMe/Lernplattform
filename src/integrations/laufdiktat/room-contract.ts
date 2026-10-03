@@ -50,6 +50,8 @@ export const storedTeacherRoomSchema = z.object({
   roomId: openedRoomSchema.shape.room_id,
   code: openedRoomSchema.shape.code,
   accessToken: openedRoomSchema.shape.access_token,
+  /** Lokale Öffnungszeit; nur für die Anzeige der Fristen (Entscheidung 52). */
+  openedAt: z.iso.datetime({ offset: true }).optional(),
 });
 export const storedIdentitySchema = z.object({
   code: openedRoomSchema.shape.code,

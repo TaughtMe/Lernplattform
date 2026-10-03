@@ -70,6 +70,8 @@ export type OpenedLiveRoom = {
   roomId: string;
   code: string;
   accessToken: string;
+  /** Lokal gemerkte Öffnungszeit (ISO); der Server zählt mit seiner eigenen Uhr. */
+  openedAt?: string | undefined;
 };
 
 export type LiveRoomParticipant = {

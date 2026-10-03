@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   classSealFingerprint,
   createClassSealKeyPair,
@@ -14,7 +14,18 @@ const mocks = vi.hoisted(() => ({
   handlers: {} as Record<string, () => void>,
   ingestBundle: vi.fn(),
   getLiveRoomState: vi.fn(),
+  joinLiveRoom: vi.fn(),
 }));
+
+const joinedRoom = {
+  roomId: "room-1",
+  stationMode: false,
+  status: "live",
+  studentName: "participant-1",
+  participantToken: "token",
+  animalToken: null,
+  animalNumber: 1,
+};
 
 vi.mock("../../src/integrations/laufdiktat/live-room-client", () => {
   const channel = {
@@ -38,15 +49,7 @@ vi.mock("../../src/integrations/laufdiktat/live-room-client", () => {
 
 vi.mock("../../src/integrations/laufdiktat/room-api", async (original) => ({
   ...(await original<object>()),
-  joinLiveRoom: async () => ({
-    roomId: "room-1",
-    stationMode: false,
-    status: "live",
-    studentName: "participant-1",
-    participantToken: "token",
-    animalToken: null,
-    animalNumber: 1,
-  }),
+  joinLiveRoom: (...args: unknown[]) => mocks.joinLiveRoom(...args),
   getLiveRoomState: mocks.getLiveRoomState,
   getLiveProgress: async () => null,
   touchLiveParticipant: async () => undefined,
@@ -74,6 +77,23 @@ const liveState = {
 };
 
 describe("LiveRoomJoin", () => {
+  beforeEach(() => {
+    mocks.joinLiveRoom.mockReset().mockResolvedValue(joinedRoom);
+  });
+
+  it("sagt bei einem abgelaufenen oder falschen Code dasselbe", async () => {
+    mocks.joinLiveRoom.mockResolvedValue(null);
+    render(
+      <LiveRoomJoin
+        initialCode="4829"
+        liveRoomConfig={{ url: "https://x.test", publishableKey: "key" }}
+      />,
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Raumcode ungültig oder abgelaufen",
+    );
+  });
+
   it("prefills the room code and uses an icon-only camera action", () => {
     render(<LiveRoomJoin initialCode="4829" liveRoomConfig={null} />);
 
@@ -100,7 +120,24 @@ describe("LiveRoomJoin", () => {
   });
 
   describe("vorzeitiges Ende der Runde", () => {
+    // Die 30-Sekunden-Prüfung auf ein Raumende wird von Hand ausgelöst, damit
+    // die Abfragen der Testbibliothek ihre eigene Uhr behalten.
+    const endWatchers: Array<() => void> = [];
+    let intervalSpy: { mockRestore: () => void } | undefined;
+    afterEach(() => intervalSpy?.mockRestore());
     beforeEach(() => {
+      endWatchers.length = 0;
+      const realSetInterval = window.setInterval.bind(window);
+      intervalSpy = vi.spyOn(window, "setInterval").mockImplementation(((
+        handler: TimerHandler,
+        timeout?: number,
+      ) => {
+        if (timeout === 30_000) {
+          endWatchers.push(handler as () => void);
+          return 0;
+        }
+        return realSetInterval(handler, timeout);
+      }) as typeof window.setInterval);
       window.sessionStorage.clear();
       window.localStorage.clear();
       mocks.ingestBundle.mockReset().mockResolvedValue({
@@ -116,6 +153,8 @@ describe("LiveRoomJoin", () => {
       options: {
         classSeal?: string;
         wordErrors?: Record<string, number>;
+        /** Schließt der Server den Raum, gibt es kein Signal der Lehrkraft. */
+        endedByServer?: boolean;
       } = {},
     ) {
       if (options.classSeal) {
@@ -150,7 +189,13 @@ describe("LiveRoomJoin", () => {
         sessionId: "session-early",
         config: {},
       });
-      mocks.handlers["session-ended"]!();
+      if (options.endedByServer) {
+        await act(async () => {
+          for (const watch of endWatchers) watch();
+        });
+      } else {
+        mocks.handlers["session-ended"]!();
+      }
     }
 
     it("übernimmt nicht erreichte Wörter und zeigt die Meldung", async () => {
@@ -171,6 +216,30 @@ describe("LiveRoomJoin", () => {
           "3 neue Vokabeln sind jetzt in deiner LernBox.",
         ),
       ).toBeVisible();
+    });
+
+    it("übernimmt auch dann, wenn der Server den Raum nach 120 Minuten schließt", async () => {
+      {
+        await endRoundAfterFirstWord({ endedByServer: true });
+        expect(
+          await screen.findByRole("heading", {
+            name: "Diese Runde ist beendet.",
+          }),
+        ).toBeVisible();
+        await waitFor(() =>
+          expect(mocks.ingestBundle).toHaveBeenCalledTimes(1),
+        );
+        expect(mocks.ingestBundle.mock.calls[0]![0].placements).toEqual({
+          "live-session-early-a": "known",
+          "live-session-early-b": "unseen",
+          "live-session-early-c": "unseen",
+        });
+        expect(
+          await screen.findByText(
+            "3 neue Vokabeln sind jetzt in deiner LernBox.",
+          ),
+        ).toBeVisible();
+      }
     });
 
     it("übernimmt nichts, wenn die Runde schon abgeschlossen übernommen wurde", async () => {

@@ -27,7 +27,7 @@
       "screen": "1d",
       "width": 1180,
       "height": 839,
-      "status": "offen"
+      "status": "referenz"
     },
     {
       "id": "2a",
@@ -48,7 +48,7 @@
       "screen": "2c",
       "width": 1180,
       "height": 760,
-      "status": "offen"
+      "status": "referenz"
     },
     {
       "id": "3a",
@@ -69,14 +69,34 @@
       "screen": "3c",
       "width": 390,
       "height": 788,
-      "status": "offen"
+      "status": "umgesetzt"
+    },
+    {
+      "id": "3c-nav",
+      "screen": "3c",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"3c\"] button[aria-label=\"Klassen und Bereiche\"]"],
+      "reset": ["[id=\"3c\"] button[aria-label=\"Leiste schließen\"]"],
+      "ready": "dialog[open]",
+      "status": "umgesetzt"
     },
     {
       "id": "3d",
       "screen": "3d",
       "width": 1180,
       "height": 700,
-      "status": "offen"
+      "status": "umgesetzt"
+    },
+    {
+      "id": "3d-dark",
+      "screen": "3d",
+      "width": 1180,
+      "height": 700,
+      "canvas": ["[id=\"3d\"] button[aria-label=\"Hell oder dunkel\"]"],
+      "reset": ["[id=\"3d\"] button[aria-label=\"Hell oder dunkel\"]"],
+      "theme": "dark",
+      "status": "umgesetzt"
     },
     {
       "id": "4a",

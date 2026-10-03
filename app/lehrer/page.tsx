@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { TeacherOverview } from "./teacher-overview";
+import { ContentLibrary } from "./content-library";
 
-export const metadata: Metadata = { title: "Lehrerbereich" };
+export const metadata: Metadata = { title: "Inhalte" };
 
 export default function Page() {
-  return <TeacherOverview />;
+  return <ContentLibrary />;
 }

@@ -5,10 +5,7 @@
  */
 import type { LiveRoomStudent } from "../../../src/integrations/laufdiktat/room-api";
 import { aggregateWordErrors } from "../../../src/integrations/laufdiktat/teacher-results";
-import {
-  DEFAULT_TEXT_SPLIT_CONFIG,
-  type TextSplitConfig,
-} from "../../../src/domain/running-dictation-sections";
+import type { TextSplitConfig } from "../../../src/domain/running-dictation-sections";
 import {
   countMathChainNumbers,
   displayMathNumber,
@@ -17,17 +14,17 @@ import {
   isLatexMathSyntax,
   tokenizeMathChain,
 } from "../../../src/domain/mental-math";
+import { textSplitConfigFor } from "../../../src/domain/teacher-content-summary";
 import type { MathPreviewPart } from "../../views/laufdiktat/math-editor";
 import type {
   LiveStudent,
   ParticipantStatus,
+  RoomTimes,
   SplitMode,
   StationState,
   TeacherStep,
 } from "../../views/laufdiktat/teacher-dictation-screen";
 import type { Stage } from "./use-teacher-live-room";
-
-const WORD_DELIMITER = { id: "wort", value: " " };
 
 export const STEP_OF_STAGE: Record<Stage, TeacherStep> = {
   content: "import",
@@ -51,17 +48,7 @@ export function splitModeOf(config: TextSplitConfig): SplitMode {
 
 /** Trenn-Konfiguration für Satz (Satzzeichen), Zeile oder Wort. */
 export function splitConfigFor(mode: SplitMode): TextSplitConfig {
-  if (mode === "satz") return { ...DEFAULT_TEXT_SPLIT_CONFIG };
-  if (mode === "zeile") {
-    return { ...DEFAULT_TEXT_SPLIT_CONFIG, punctuationEnabled: false };
-  }
-  // Eigene Trenner wirken nur bei aktiven Trennzeichen; Satzzeichen bleiben
-  // dabei am Wort.
-  return {
-    ...DEFAULT_TEXT_SPLIT_CONFIG,
-    punctuation: [],
-    customDelimiters: [WORD_DELIMITER],
-  };
+  return textSplitConfigFor(mode);
 }
 
 function progressOf(student: LiveRoomStudent | undefined, total: number) {
@@ -213,5 +200,22 @@ export function mathGapRow(
     parts,
     // Wie im Original: ohne Wahl wird die letzte Rechenzahl zur Lücke.
     active: chosen ?? Math.max(0, numberCount - 1),
+  };
+}
+
+/** Fristen des Raums in der Form, die die Ansicht erwartet (Entscheidung 52). */
+export function roomTimesView(
+  timeline: { joinUntil: Date; closesAt: Date } | null,
+  state: "open" | "join-closed" | "closing-soon" | "closed" | null,
+): RoomTimes | undefined {
+  if (!timeline || !state) return undefined;
+  const clockTime = (date: Date) =>
+    date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return {
+    joinOpen: state === "open",
+    joinUntil: clockTime(timeline.joinUntil),
+    closesAt: clockTime(timeline.closesAt),
+    closingSoon: state === "closing-soon",
+    closed: state === "closed",
   };
 }

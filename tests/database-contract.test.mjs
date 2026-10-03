@@ -663,3 +663,138 @@ test("makes expired transfers unreadable and deletes them with the scheduled cle
   );
   assert.equal(remaining.count, 0);
 });
+
+async function backdateRoom(roomId, minutes) {
+  await db.query(
+    `update public.rooms
+     set created_at=now()-($2::int * interval '1 minute'),
+         last_activity_at=now()
+     where id=$1`,
+    [roomId, minutes],
+  );
+}
+
+test("keeps the room time limits in the migration and the TypeScript constants identical", async () => {
+  const limits = await readFile(
+    "src/integrations/laufdiktat/room-limits.ts",
+    "utf8",
+  );
+  const joinMinutes = Number(
+    limits.match(/ROOM_JOIN_WINDOW_MINUTES\s*=\s*(\d+)/)?.[1],
+  );
+  const maxMinutes = Number(limits.match(/ROOM_MAX_MINUTES\s*=\s*(\d+)/)?.[1]);
+  assert.equal(joinMinutes, 90);
+  assert.equal(maxMinutes, 120);
+  const migration = await readFile(
+    "supabase/migrations/20261003120000_room_time_limits.sql",
+    "utf8",
+  );
+  assert.ok(
+    migration.includes(`now() - interval '${joinMinutes} minutes'`),
+    "join window in migration",
+  );
+  assert.ok(
+    migration.includes(`now()-interval '${maxMinutes} minutes'`),
+    "closing limit in migration",
+  );
+});
+
+test("accepts new joins within 90 minutes and rejects them afterwards", async () => {
+  const opened = await room("192.0.2.90");
+  await backdateRoom(opened.room_id, 89);
+  const [early] = await rpc(
+    "select * from public.join_room_secure($1,'Fuchs')",
+    [opened.code],
+    "192.0.2.91",
+  );
+  assert.equal(early.room_id, opened.room_id);
+
+  await backdateRoom(opened.room_id, 91);
+  assert.deepEqual(
+    await rpc(
+      "select * from public.join_room_secure($1,'Fuchs')",
+      [opened.code],
+      "192.0.2.92",
+    ),
+    [],
+  );
+  // The answer looks like an unknown code and still counts against the limit.
+  const { rows } = await db.query(
+    "select count(*)::int as n from private.request_limits where scope='join_room' and key_hash=encode(extensions.digest('192.0.2.92','sha256'),'hex')",
+  );
+  assert.equal(rows[0].n, 1);
+});
+
+test("lets a joined device return with its token after the join window", async () => {
+  const opened = await room("192.0.2.93");
+  const [joined] = await rpc(
+    "select * from public.join_room_secure($1,'Mia')",
+    [opened.code],
+    "192.0.2.94",
+  );
+  await backdateRoom(opened.room_id, 100);
+  const [again] = await rpc(
+    "select * from public.join_room_secure($1,'Mia',$2)",
+    [opened.code, joined.participant_token],
+    "192.0.2.94",
+  );
+  assert.equal(again.participant_token, joined.participant_token);
+  assert.equal(again.assigned_student_key, joined.assigned_student_key);
+  // A second device without a token is turned away.
+  assert.deepEqual(
+    await rpc(
+      "select * from public.join_room_secure($1,'Mia')",
+      [opened.code],
+      "192.0.2.95",
+    ),
+    [],
+  );
+});
+
+test("closes rooms 120 minutes after opening and keeps younger rooms open", async () => {
+  const old = await room("192.0.2.96");
+  const young = await room("192.0.2.97");
+  const [joined] = await rpc(
+    "select * from public.join_room_secure($1,'Mia')",
+    [old.code],
+    "192.0.2.98",
+  );
+  await backdateRoom(old.room_id, 121);
+  await backdateRoom(young.room_id, 119);
+
+  const {
+    rows: [job],
+  } = await db.query(
+    "select schedule, command from cron.job where jobname='cleanup-abandoned-rooms'",
+  );
+  assert.equal(job.schedule, "*/5 * * * *");
+  await rpcAs("service_role", job.command);
+
+  const { rows } = await db.query(
+    "select id, status, ended_at is not null as has_end from public.rooms where id = any($1)",
+    [[old.room_id, young.room_id]],
+  );
+  const byId = Object.fromEntries(rows.map((row) => [row.id, row]));
+  assert.equal(byId[old.room_id].status, "ended");
+  assert.equal(byId[old.room_id].has_end, true);
+  assert.notEqual(byId[young.room_id].status, "ended");
+
+  // Students see the same signals as after an end by the teacher: the state
+  // is "ended" and the participant token no longer opens the room.
+  assert.deepEqual(
+    await rpc("select * from public.get_room_state_secure($1,$2,null)", [
+      old.room_id,
+      joined.participant_token,
+    ]),
+    [],
+  );
+  assert.equal(
+    (
+      await rpc("select * from public.get_room_state_secure($1,null,$2)", [
+        old.room_id,
+        old.access_token,
+      ])
+    )[0].status,
+    "ended",
+  );
+});

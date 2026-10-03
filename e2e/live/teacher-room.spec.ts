@@ -175,3 +175,107 @@ test("the live view shows progress per animal and the most frequent errors", asy
     fullPage: true,
   });
 });
+
+/** Legt einen Text in der lokalen Ablage an (die App erzeugt die Datenbank beim Öffnen). */
+async function seedStoredText(page: Page) {
+  await page.goto("/lehrer");
+  await page.waitForFunction(async () =>
+    (await indexedDB.databases()).some(
+      (entry) => entry.name === "lernraum:teacher:v1",
+    ),
+  );
+  await page.evaluate(async () => {
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+      const probe = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open("lernraum:teacher:v1");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const ready = probe.objectStoreNames.contains("contentPackages");
+      probe.close();
+      if (ready) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("lernraum:teacher:v1");
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction("contentPackages", "readwrite");
+      tx.objectStore("contentPackages").put({
+        id: "p-text",
+        revision: 1,
+        title: "Der Hund im Hof",
+        source: "Der Hund bellt laut im Hof. Die Katze schläft.",
+        promptLocale: "en",
+        answerLocale: "de",
+        createdAt: "2026-09-01T10:00:00.000Z",
+        updatedAt: "2026-09-02T10:00:00.000Z",
+        kind: "text",
+      });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  });
+}
+
+test("Öffnen und „Jetzt starten“ erzeugt eine Lobby, Neuladen zeigt denselben Raumcode", async ({
+  page,
+}) => {
+  let opened = 0;
+  await page.route("**/rest/v1/rpc/*", async (route) => {
+    const name = new URL(route.request().url()).pathname.split("/").pop();
+    if (name === "open_room_secure") opened += 1;
+    const body =
+      name === "open_room_secure"
+        ? [
+            {
+              room_id: ROOM.roomId,
+              code: ROOM.code,
+              access_token: ROOM.accessToken,
+            },
+          ]
+        : name === "get_room_state_secure"
+          ? [
+              {
+                status: "lobby",
+                session_id: null,
+                config: {
+                  words: [
+                    {
+                      id: "a",
+                      kind: "text",
+                      targetWord: "Der Hund bellt laut im Hof.",
+                    },
+                  ],
+                },
+              },
+            ]
+          : [];
+    await route.fulfill({ json: body });
+  });
+  await seedStoredText(page);
+  await page.reload();
+
+  await expect(async () => {
+    await page
+      .getByRole("button", { name: "Der Hund im Hof öffnen" })
+      .first()
+      .click();
+    await expect(page.getByRole("dialog", { name: "Raum öffnen" })).toBeVisible(
+      { timeout: 1500 },
+    );
+  }).toPass();
+  await page.getByRole("button", { name: /^Jetzt starten/ }).click();
+
+  await expect(page.getByRole("heading", { name: "Lobby" })).toBeVisible();
+  await expect(page.getByLabel("Raumcode 4829")).toBeVisible();
+  await expect(page.getByText(/^Code gilt bis \d{2}:\d{2}$/)).toBeVisible();
+  expect(opened).toBe(1);
+
+  await page.reload();
+  await expect(page.getByLabel("Raumcode 4829")).toBeVisible();
+  expect(opened).toBe(1);
+});

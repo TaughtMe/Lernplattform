@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TeacherContentTransfer } from "./teacher-content-transfer";
@@ -64,6 +64,36 @@ describe("TeacherContentTransfer", () => {
       }),
     );
     expect(await screen.findByText(/wurde lokal gespeichert/)).toBeVisible();
+  });
+
+  it("bietet nur Vokabelpakete zur Freigabe an, keine Texte oder Mathe", async () => {
+    const entry = (id: string, title: string, kind?: "text" | "math") => ({
+      id,
+      revision: 1,
+      title,
+      source: "go;gehen",
+      promptLocale: "en",
+      answerLocale: "de",
+      createdAt: "2026-09-01T10:00:00.000Z",
+      updatedAt: "2026-09-02T10:00:00.000Z",
+      ...(kind ? { kind } : {}),
+    });
+    libraryRepository.list.mockResolvedValue([
+      entry("v-alt", "Altes Vokabelpaket"),
+      entry("t", "Ein Text", "text"),
+      entry("m", "Eine Aufgabenreihe", "math"),
+    ]);
+    render(<TeacherContentTransfer transferConfig={null} />);
+
+    const select = await screen.findByRole("combobox", {
+      name: "Gespeichertes Paket",
+    });
+    await screen.findByRole("option", { name: /Altes Vokabelpaket/ });
+    expect(
+      within(select)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Paket auswählen", "Altes Vokabelpaket · Stand 1"]);
   });
 
   it("imports vocabulary pairs from a text file into the editable field", async () => {

@@ -1,0 +1,357 @@
+/*
+ * Inhalte des Lehrerbereichs: Design 3c (mobil) und 3d (Desktop). Maße und
+ * Farben stammen aus docs/design/lernraum-ui.dc.html. Die Breite kommt vom
+ * Rahmen (`@container lehrer-rahmen`, siehe teacher-frame.module.css).
+ */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px 16px 22px;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.wideOnly,
+.openBottom,
+.tileText {
+  display: none;
+}
+
+/* ---------- Raum öffnen ---------- */
+.openTop,
+.openBottom {
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: var(--green);
+  color: var(--green-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.openTop {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 54px;
+  border-radius: 14px;
+  font-size: 15.5px;
+}
+.openTop svg {
+  width: 19px;
+  height: 19px;
+}
+.openTop:hover,
+.openBottom:hover {
+  filter: brightness(1.12);
+}
+.openBottom svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---------- Neu anlegen ---------- */
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.tileOn {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-bg);
+}
+.tileIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.tileName {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.panelText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.panelTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.panelHint {
+  font-size: 12px;
+  line-height: 16.5px;
+  color: var(--ink2);
+}
+.next {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: auto;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.next:hover {
+  filter: brightness(1.12);
+}
+
+/* ---------- Abgelegt ---------- */
+.listHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.count {
+  font-size: 12.5px;
+  color: var(--ink3);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+  list-style: none;
+  overflow: hidden;
+}
+.list.wideList {
+  display: none;
+}
+.rowButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.rowButton:hover {
+  background: var(--bg);
+}
+.rowText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.rowTitle {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pill {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.used {
+  font-size: 12px;
+  color: var(--ink2);
+}
+.chevron {
+  flex: none;
+  color: var(--ink3);
+}
+.empty {
+  margin: 0;
+  padding: 18px 16px;
+  border: 1px dashed var(--line2);
+  border-radius: 15px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+.notice {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--accent-bg);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+.footnote {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+
+/* ---------- Desktop ---------- */
+@container lehrer-rahmen (min-width: 900px) {
+  .content {
+    gap: 22px;
+    padding: 0;
+  }
+  .section {
+    gap: 11px;
+  }
+  .label {
+    font-size: 13px;
+  }
+  .listHead {
+    gap: 16px;
+  }
+  .wideOnly {
+    display: inline;
+  }
+  .openTop,
+  .list.narrowList,
+  .panel {
+    display: none;
+  }
+  .tileText {
+    display: block;
+  }
+  .footnote {
+    display: none;
+  }
+  .list.wideList {
+    display: flex;
+  }
+  .openBottom {
+    display: inline-flex;
+    min-height: 46px;
+    padding: 0 20px;
+    border-radius: 12px;
+    font-size: 14.5px;
+  }
+  .tiles {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 11px;
+  }
+  .tileIcon {
+    width: 22px;
+    height: 22px;
+  }
+  .tileName {
+    font-size: 15px;
+  }
+  .tileText {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--ink2);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px 110px 132px;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .rowAssign {
+    grid-template-columns: minmax(0, 1fr) 120px 110px 260px;
+  }
+  .row .rowText {
+    gap: 2px;
+  }
+  .rowTitleWide {
+    font-size: 14.5px;
+    font-weight: 700;
+  }
+  .metaLine {
+    font-size: 12.5px;
+    color: var(--ink2);
+  }
+  .usedWide {
+    font-size: 12.5px;
+    color: var(--ink2);
+  }
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 7px;
+  }
+  .edit,
+  .openButton {
+    overflow-wrap: normal;
+    white-space: nowrap;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .edit {
+    border: 1px solid var(--line2);
+    background: var(--bg);
+    color: var(--ink2);
+    font-weight: 600;
+  }
+  .edit:hover {
+    border-color: var(--accent);
+  }
+  .openButton {
+    border: 1px solid var(--green);
+    background: transparent;
+    color: var(--green);
+    font-weight: 700;
+  }
+  .openButton:hover {
+    background: var(--accent-bg);
+  }
+  /* Dunkel: Das Grün der Vorlage hätte auf dunklem Grund zu wenig Kontrast. */
+  :global([data-theme="dark"]) .openButton {
+    border-color: var(--good);
+    color: var(--good);
+  }
+}

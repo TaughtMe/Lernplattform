@@ -4,6 +4,14 @@ export const TEACHER_CONTENT_LIBRARY_FORMAT =
   "lernraum.teacher-content-library" as const;
 export const TEACHER_CONTENT_LIBRARY_VERSION = 1 as const;
 
+/** Art eines abgelegten Inhalts; fehlt sie, ist es ein Vokabelpaket (Altbestand). */
+export const teacherContentKindSchema = z.enum(["vocabulary", "text", "math"]);
+export type TeacherContentKind = z.infer<typeof teacherContentKindSchema>;
+
+/** Zerlegung eines Textes in Abschnitte (nur Art „Text“). */
+export const teacherTextSplitSchema = z.enum(["satz", "zeile", "wort"]);
+export type TeacherTextSplit = z.infer<typeof teacherTextSplitSchema>;
+
 export const teacherContentPackageSchema = z
   .object({
     id: z.string().trim().min(1).max(200),
@@ -14,6 +22,14 @@ export const teacherContentPackageSchema = z
     answerLocale: z.string().trim().min(2).max(35),
     createdAt: z.iso.datetime({ offset: true }),
     updatedAt: z.iso.datetime({ offset: true }),
+    /** Fehlt = Vokabeln. */
+    kind: teacherContentKindSchema.optional(),
+    /** Zugeordnete Klassen; leer oder fehlend = „Nicht zugeordnet“. */
+    classIds: z.array(z.uuid()).max(50).optional(),
+    /** Letzter Raumstart mit diesem Inhalt. */
+    lastUsedAt: z.iso.datetime({ offset: true }).optional(),
+    /** Nur Text: Zerlegung in Stationen. */
+    textSplit: teacherTextSplitSchema.optional(),
   })
   .strict();
 
