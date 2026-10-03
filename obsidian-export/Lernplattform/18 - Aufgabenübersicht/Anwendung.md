@@ -295,3 +295,5 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Regeln für automatische Rückstufung bei Lernwörtern festlegen
 - [ ] Umfang der ersten festen Lernwortlisten auswählen
 - [ ] Erstes produktives Minimum endgültig abgrenzen
+- [x] „Ergebnisse als CSV“ im Lehrer-Laufdiktat auch auf schmalen Bildschirmen erreichbar machen
+- [x] Schülerbereich mobil: Kopfzeile „Lernraum“ führt zur Startseite

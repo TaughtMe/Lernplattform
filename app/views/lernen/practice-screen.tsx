@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Icon, type IconName } from "../../ui/icons";
-import { ThemeSwitch, type Theme } from "../parts/parts";
+import { HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./practice-screen.module.css";
 
 export type PracticeArea = {
@@ -26,13 +26,16 @@ export function PracticeScreen({
   return (
     <section className={styles.screen} aria-labelledby="practice-title">
       <header className={styles.head}>
-        <div>
-          <h1 id="practice-title" className={styles.title}>
-            Üben
-          </h1>
-          <p className={styles.subtitle}>
-            Such dir aus, was du heute trainieren möchtest
-          </p>
+        <div className={styles.headStart}>
+          <HomeLink />
+          <div>
+            <h1 id="practice-title" className={styles.title}>
+              Üben
+            </h1>
+            <p className={styles.subtitle}>
+              Such dir aus, was du heute trainieren möchtest
+            </p>
+          </div>
         </div>
         <ThemeSwitch theme={theme} onToggle={onToggleTheme} />
       </header>

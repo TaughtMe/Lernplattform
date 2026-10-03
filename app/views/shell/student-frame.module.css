@@ -10,9 +10,14 @@
   color: var(--ink);
 }
 .layout {
+  /* Mobil zeigen die Seitenköpfe das L zur Startseite (`HomeLink`). */
+  --student-home-link: grid;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+}
+.layout.noNav {
+  --student-home-link: none;
 }
 .main {
   display: flex;
@@ -122,6 +127,7 @@
 /* ---------- Seitenleiste (ab 900 px, 3a) ---------- */
 @container (min-width: 900px) {
   .layout {
+    --student-home-link: none;
     flex-direction: row;
   }
   .main {

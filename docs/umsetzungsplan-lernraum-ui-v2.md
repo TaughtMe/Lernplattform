@@ -42,6 +42,8 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
 - `--ink3` ist für WCAG-AA-Kontrast leicht nachgedunkelt bzw. aufgehellt.
 - Fehlerbalken im Live-Screen sind proportional zur Fehlerzahl; die Vorlage zeigt feste Beispielbreiten.
 - Der Raumcode bleibt vierstellig numerisch (Supabase-Vertrag). Die Beispieldaten nutzen „4K2P“ nur, um die Vorlage exakt abzubilden.
+- **5c (mobil):** „Ergebnisse als CSV“ steht als eigene Schaltfläche unter der Schüler- bzw. Stationsliste (volle Breite, mind. 44 px). Die Vorlage zeigt sie nicht; eine Kernfunktion darf auf dem Handy nicht fehlen. Ab 900 px bleibt sie im Kopf der Schülerliste, sichtbar ist immer genau eine. Im Designvergleich wird sie über `hide` in `screens.json` entfernt (eine `mask` genügt nicht, weil die Schaltfläche die Fehlerliste verschiebt).
+- **Schülerbereich mobil:** Eine schmale Kopfzeile „Lernraum“ führt zur Startseite, weil die Seitenleiste mit dem Logo unter 900 px fehlt.
 
 ## Reihenfolge
 

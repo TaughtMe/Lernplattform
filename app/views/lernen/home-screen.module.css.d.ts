@@ -16,6 +16,7 @@ declare const styles: {
   readonly disc: string;
   readonly duel: string;
   readonly head: string;
+  readonly headStart: string;
   readonly hint: string;
   readonly layout: string;
   readonly main: string;

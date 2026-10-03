@@ -151,9 +151,16 @@ test("the live view shows progress per animal and the most frequent errors", asy
   await expect(
     page.locator('img[src="/animals/fuchs.svg"]').first(),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Ergebnisse als CSV" }),
-  ).toBeEnabled();
+  const csv = page.getByRole("button", { name: "Ergebnisse als CSV" });
+  await expect(csv).toHaveCount(1);
+  await expect(csv).toBeEnabled();
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    csv.click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(
+    /^laufdiktat-ergebnisse-.*\.csv$/,
+  );
   // Raumcode in der Fußzeile öffnet den QR für späte Beitritte.
   await page
     .getByRole("button", { name: "Raumcode 4829 und QR-Code zeigen" })

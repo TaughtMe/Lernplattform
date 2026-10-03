@@ -39,7 +39,7 @@ export function StudentFrame({
 }) {
   return (
     <div className={styles.frame}>
-      <div className={styles.layout}>
+      <div className={cx(styles.layout, hideNav && styles.noNav)}>
         <nav
           className={styles.nav}
           aria-label="Hauptnavigation"

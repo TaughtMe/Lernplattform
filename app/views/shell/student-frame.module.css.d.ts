@@ -9,6 +9,7 @@ declare const styles: {
   readonly loading: string;
   readonly main: string;
   readonly nav: string;
+  readonly noNav: string;
   readonly profile: string;
   readonly profileLabel: string;
 };

@@ -89,6 +89,11 @@
   justify-content: space-between;
   gap: 12px;
 }
+.panelStart {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .panelTitle {
   margin: 0;
   font-size: 22px;
