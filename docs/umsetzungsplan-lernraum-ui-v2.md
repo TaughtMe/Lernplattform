@@ -43,6 +43,13 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
 - Fehlerbalken im Live-Screen sind proportional zur Fehlerzahl; die Vorlage zeigt feste Beispielbreiten.
 - Der Raumcode bleibt vierstellig numerisch (Supabase-Vertrag). Die Beispieldaten nutzen „4K2P“ nur, um die Vorlage exakt abzubilden.
 - **5c (mobil):** „Ergebnisse als CSV“ steht als eigene Schaltfläche unter der Schüler- bzw. Stationsliste (volle Breite, mind. 44 px). Die Vorlage zeigt sie nicht; eine Kernfunktion darf auf dem Handy nicht fehlen. Ab 900 px bleibt sie im Kopf der Schülerliste, sichtbar ist immer genau eine. Im Designvergleich wird sie über `hide` in `screens.json` entfernt (eine `mask` genügt nicht, weil die Schaltfläche die Fehlerliste verschiebt).
+- **Lehrerbereich (3c/3d):**
+  - Start-Overlay: Es zeigt die vier echten Modi des Laufdiktats statt der drei vereinfachten der Vorlage (Laufdiktat/Test/Üben) und keine Schalter für „Selbstkorrektur“ und „Punkte“, die es fachlich nicht gibt. Der Raumcode erscheint erst in der Lobby, weil er beim Erstellen des Raums entsteht. Das Overlay hat keine Referenzbilder; die Ansicht steht nur im Katalog (`3c-start`, `3d-start`).
+  - Ergänzungen ohne Vorlage: Eintrag „Nicht zugeordnet“ in der Leiste, Knopf „Zuordnen“ in der Ablage, Dialog „Klassen zuordnen“, Gruppe „Verwalten“ unter „Bereich“. Alle sind optionale Props; ohne sie zeigt die Ansicht genau die Vorlage.
+  - Statt „T. Bryson · Abmelden“ steht das lokale Lehrerprofil mit „Zur Startseite“, weil es keinen Lehrer-Login gibt (Entscheidung 43).
+  - Zeilenhöhe des Hinweistexts im Panel (mobil): 16,5 px statt 1,4 (16,8 px). Das Referenzbild liegt auf Teilpixeln; ganzzahlige Höhen halten Linien und Zeilen auf dem Pixelraster. Optisch gleich, die Abweichung zum Referenzbild sinkt von 1,25 % auf 0,2 %.
+  - Die Schublade ist 324 px breit (296 px Inhalt plus 14 px Innenabstand je Seite), wie die Vorlage sie misst.
+  - Der Hinweis unter der Liste („Tippen öffnet die Einstellungen als Overlay …“) ist Entwurfstext und steht nur in den Beispieldaten.
 - **Schülerbereich mobil:** Eine schmale Kopfzeile „Lernraum“ führt zur Startseite, weil die Seitenleiste mit dem Logo unter 900 px fehlt.
 
 ## Reihenfolge

@@ -1,0 +1,208 @@
+/*
+ * Start-Overlay: Design 3c (Blatt von unten). Ab 900 px Rahmenbreite steht
+ * es als Dialog in der Mitte. Maße aus docs/design/lernraum-ui.dc.html.
+ */
+.sheet {
+  position: fixed;
+  inset: auto 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 22px 22px 0 0;
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+}
+.sheet:focus-visible {
+  outline: none;
+}
+.sheet::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 16px 20px;
+  font-family: var(--font);
+  line-height: normal;
+}
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--ink2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.classLine {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -10px 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink2);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+}
+.close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink2);
+  cursor: pointer;
+}
+.close:hover {
+  border-color: var(--accent);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mode {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.modeOn {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-bg);
+}
+.modeTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.modeSub {
+  font-size: 11.5px;
+  color: var(--ink2);
+}
+.note {
+  margin: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink2);
+}
+.start,
+.options {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  border-radius: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.start {
+  min-height: 54px;
+  border: 0;
+  background: var(--green);
+  color: var(--green-ink);
+  font-size: 15.5px;
+}
+.start:hover {
+  filter: brightness(1.12);
+}
+.start:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.options {
+  min-height: 46px;
+  border: 1px solid var(--line2);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+}
+.options:hover {
+  border-color: var(--accent);
+}
+.openRoom {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.openRoomTitle {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@container lehrer-rahmen (min-width: 900px) {
+  .sheet {
+    inset: 0;
+    width: 480px;
+    max-width: calc(100% - 32px);
+    height: fit-content;
+    margin: auto;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+  .inner {
+    padding: 22px;
+  }
+}

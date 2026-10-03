@@ -1,0 +1,372 @@
+/*
+ * Rahmen des Lehrerbereichs: Design 3c (mobil: Kopfzeile, Schublade) und
+ * 3d (Desktop: Seitenleiste). Maße und Farben stammen aus
+ * docs/design/lernraum-ui.dc.html. Der Rahmen ist ein benannter Container;
+ * der Inhalt reagiert mit `@container lehrer-rahmen`.
+ */
+.frame {
+  composes: view from "../parts/parts.module.css";
+  container: lehrer-rahmen / inline-size;
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+}
+/* Ein Container kann sich nicht selbst abfragen: Der Aufbau liegt eine Ebene tiefer. */
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.sidebar {
+  display: none;
+}
+.column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ---------- Kopfzeile (mobil) ---------- */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.menuButton {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+}
+.menuButton:hover {
+  border-color: var(--accent);
+}
+.barTitles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.barClass {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.barTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink2);
+}
+
+/* ---------- Inhaltsfläche ---------- */
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.head {
+  display: none;
+}
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.title {
+  margin: 5px 0 0;
+  font-size: 29px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* ---------- Leiste: Seitenleiste und Schublade ---------- */
+.brand {
+  padding: 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.groupLabel,
+.areaLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nav-ink2);
+}
+.areaLabel {
+  padding-bottom: 6px;
+}
+.plus {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 24px;
+  margin: -10px -6px -10px 0;
+  color: var(--nav-ink2);
+}
+.plus:hover {
+  color: var(--nav-accent);
+}
+.classRow {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--nav-ink);
+  font-family: var(--font-control);
+  text-decoration: none;
+  cursor: pointer;
+}
+.classRow.active {
+  background: var(--nav-active);
+}
+.classText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  color: var(--nav-ink);
+}
+.className {
+  font-size: 14px;
+  font-weight: 700;
+}
+.classSub {
+  font-size: 12px;
+  color: var(--nav-ink2);
+}
+.count {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--nav-line);
+  color: var(--nav-ink2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.active .count {
+  background: var(--nav-accent);
+  color: #211f1b;
+}
+.addClass {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px dashed var(--nav-line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--nav-ink2);
+  font-family: var(--font-control);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.addClass:hover {
+  border-color: var(--nav-accent);
+  color: var(--nav-accent);
+}
+.areas {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.area {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--nav-ink2);
+  font-family: var(--font-control);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.area:hover {
+  background: var(--nav-active);
+}
+.areaActive {
+  background: var(--nav-active);
+  color: var(--nav-ink);
+  font-weight: 700;
+}
+.areaActive svg {
+  color: var(--nav-accent);
+}
+.areaSmall {
+  min-height: 36px;
+  font-size: 13px;
+}
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 10px 6px 0;
+  border-top: 1px solid var(--nav-line);
+  color: var(--nav-ink);
+  text-decoration: none;
+}
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--nav-active);
+  color: var(--nav-accent);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.profileText {
+  display: flex;
+  flex-direction: column;
+}
+.profileName {
+  font-size: 13px;
+  font-weight: 600;
+}
+.profileSub {
+  font-size: 11.5px;
+  color: var(--nav-ink2);
+}
+
+/* ---------- Schublade (mobil) ---------- */
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  /* Die Vorlage misst 296 px Inhalt plus 14 px Innenabstand je Seite. */
+  width: 324px;
+  max-width: 100%;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--nav);
+  color: var(--nav-ink);
+  box-shadow: 18px 0 40px rgba(0, 0, 0, 0.35);
+  overflow-y: auto;
+}
+.drawer:focus-visible {
+  outline: none;
+}
+.drawer::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.drawerInner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 18px 14px;
+}
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px;
+}
+.drawerClose {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--nav-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--nav-ink2);
+  cursor: pointer;
+}
+.drawerClose:hover {
+  color: var(--nav-accent);
+}
+.drawerInner .area {
+  min-height: 46px;
+}
+.drawerInner .profile {
+  padding-top: 12px;
+}
+
+/* ---------- Desktop ---------- */
+@container lehrer-rahmen (min-width: 900px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 252px minmax(0, 1fr);
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 14px;
+    background: var(--nav);
+    color: var(--nav-ink);
+    overflow-y: auto;
+  }
+  .bar,
+  .drawer {
+    display: none;
+  }
+  .main {
+    gap: 22px;
+    padding: 22px 28px 26px;
+  }
+  .head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+  }
+}

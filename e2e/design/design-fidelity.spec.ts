@@ -13,6 +13,11 @@ import { expect, test } from "@playwright/test";
  * Abweichungen von der Vorlage, z. B. die mobile CSV-Schaltfläche in 5c-live.
  * Eine Playwright-`mask` genügt dort nicht: Die Schaltfläche verschiebt die
  * Fehlerliste darunter. Referenzbilder und Toleranz bleiben unverändert.
+ *
+ * Optional `ready`: Selektor (innerhalb der Ansicht), auf den vor dem Vergleich
+ * gewartet wird. Für Zustände, die erst nach dem Laden des Skripts entstehen,
+ * z. B. ein modaler Dialog (`dialog[open]`): Die vorab gerenderte Seite ist
+ * stabil und würde sonst zu früh aufgenommen.
  */
 const MAX_DIFF_RATIO = Number(process.env["DESIGN_MAX_DIFF"] ?? 0.012);
 
@@ -28,16 +33,21 @@ const manifest = JSON.parse(
     height: number;
     status: string;
     hide?: string[];
+    ready?: string;
   }>;
 };
 
 for (const screen of manifest.screens) {
   test(`Design ${screen.id}`, async ({ page }) => {
-    test.skip(screen.status !== "umgesetzt", "Ansicht noch nicht umgesetzt");
+    test.skip(
+      screen.status !== "umgesetzt",
+      "Ansicht noch nicht umgesetzt (offen) oder nur Referenz",
+    );
     await page.setViewportSize({ width: screen.width, height: screen.height });
     await page.goto(`/entwicklung/screens/${screen.id}`);
     const frame = page.locator(`[data-screen="${screen.id}"]`);
     await expect(frame).toBeVisible();
+    if (screen.ready) await frame.locator(screen.ready).waitFor();
     for (const selector of screen.hide ?? []) {
       await frame
         .locator(selector)
