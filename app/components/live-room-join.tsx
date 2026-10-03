@@ -48,6 +48,9 @@ import { LIVE_APP_VERSION } from "../../src/app-version";
 import { LiveVersionNotice } from "./live-version-notice";
 import { Icon } from "../ui/icons";
 
+/** So oft prüft ein Schülergerät, ob der Raum vom Server geschlossen wurde. */
+const ROOM_END_WATCH_MS = 30_000;
+
 type View = "join" | "connecting" | "lobby" | "starting" | "game" | "ended";
 type AttackType = "ink" | "flicker";
 
@@ -134,16 +137,20 @@ export function LiveRoomJoin({
     });
     channelRef.current = channel;
 
+    function markRoomEnded() {
+      setEndedSession(lastSessionRef.current);
+      lastSessionRef.current = null;
+      setSession(null);
+      setView("ended");
+    }
+
     async function syncAuthorizedRoomState() {
       try {
         const state = await getLiveRoomState(activeConfig, activeRoom.roomId, {
           participantToken: activeRoom.participantToken,
         });
         if (!state || state.status === "ended") {
-          setEndedSession(lastSessionRef.current);
-          lastSessionRef.current = null;
-          setSession(null);
-          setView("ended");
+          markRoomEnded();
           return;
         }
         if (state.status === "live" && state.sessionId) {
@@ -319,7 +326,27 @@ export function LiveRoomJoin({
     // The authorized HTTP state must also load when school networks block WebSockets.
     void syncAuthorizedRoomState();
 
+    // Schließt der Server den Raum nach 120 Minuten, gibt es kein Signal der
+    // Lehrkraft. Dann erfährt das Gerät es hier und zeigt dieselbe
+    // Ergebnisseite samt LernBox-Übernahme wie beim Beenden durch die Lehrkraft.
+    let endWatchDone = false;
+    const endWatch = window.setInterval(async () => {
+      if (endWatchDone) return;
+      try {
+        const state = await getLiveRoomState(activeConfig, activeRoom.roomId, {
+          participantToken: activeRoom.participantToken,
+        });
+        if (endWatchDone || (state && state.status !== "ended")) return;
+        endWatchDone = true;
+        markRoomEnded();
+      } catch {
+        // Offline: der nächste Durchlauf versucht es erneut.
+      }
+    }, ROOM_END_WATCH_MS);
+
     return () => {
+      endWatchDone = true;
+      window.clearInterval(endWatch);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       channelRef.current = null;
       void client.removeChannel(channel);
@@ -470,7 +497,7 @@ export function LiveRoomJoin({
       });
       if (!joined || joined.status === "ended") {
         setView("join");
-        setError("Dieser Raum ist nicht verfügbar oder wurde bereits beendet.");
+        setError("Raumcode ungültig oder abgelaufen.");
         return;
       }
       saveLiveRoomIdentity({

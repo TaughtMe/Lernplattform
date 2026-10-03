@@ -19,6 +19,7 @@ import {
   type LiveOverview,
   mathGapRow,
   mathLineParts,
+  roomTimesView,
   splitConfigFor,
   splitModeOf,
   STAGE_OF_STEP,
@@ -39,10 +40,13 @@ import styles from "./teacher-live-room.module.css";
  */
 export function TeacherLiveRoom({
   liveRoomConfig,
+  clock,
 }: {
   liveRoomConfig: LiveRoomConfig | null;
+  /** Uhr für die Raumfristen in Millisekunden; die Tests setzen eine eigene. */
+  clock?: () => number;
 }) {
-  const [t, refs] = useTeacherLiveRoom(liveRoomConfig);
+  const [t, refs] = useTeacherLiveRoom(liveRoomConfig, clock);
   const { theme, toggleTheme } = useThemeToggle();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const stationMode = t.gameMode === "STATION";
@@ -72,6 +76,8 @@ export function TeacherLiveRoom({
     t.room && t.hydrated
       ? `${window.location.origin}/raum?code=${t.room.code}`
       : "";
+
+  const roomTimes = roomTimesView(t.roomTimeline, t.roomTimeState);
 
   return (
     <div className={styles.page} data-hydrated={t.hydrated ? "true" : "false"}>
@@ -140,6 +146,7 @@ export function TeacherLiveRoom({
             statusFor: t.statusFor,
           }),
         )}
+        {...(roomTimes ? { roomTimes } : {})}
         nextLabel={nextLabel(t)}
         nextDisabled={t.footerDisabled}
         lockedSteps={lockedSteps(t)}
@@ -305,6 +312,8 @@ function lockedSteps(t: TeacherLiveModel): TeacherStep[] {
   if (!t.words.length) locked.push("settings", "lobby", "live");
   if (!t.room && t.stage !== "settings") locked.push("lobby");
   if (t.stage !== "live") locked.push("live");
+  // Ein geschlossener Raum hat keine Lobby und keine Einstellungen mehr.
+  if (t.roomClosed) locked.push("import", "settings", "lobby");
   return locked;
 }
 
@@ -314,6 +323,7 @@ function nextLabel(t: TeacherLiveModel) {
     if (t.stage === "lobby") return "Startet …";
     if (t.stage === "live") return "Beendet …";
   }
+  if (t.roomClosed) return "Neuen Raum öffnen";
   if (t.stage === "content") return "Weiter zu Modus";
   if (t.stage === "settings") return "Raum öffnen";
   if (t.stage === "lobby") return "Sitzung starten";

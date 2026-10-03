@@ -21,6 +21,7 @@ import type { MathPreviewPart } from "../../views/laufdiktat/math-editor";
 import type {
   LiveStudent,
   ParticipantStatus,
+  RoomTimes,
   SplitMode,
   StationState,
   TeacherStep,
@@ -213,5 +214,22 @@ export function mathGapRow(
     parts,
     // Wie im Original: ohne Wahl wird die letzte Rechenzahl zur Lücke.
     active: chosen ?? Math.max(0, numberCount - 1),
+  };
+}
+
+/** Fristen des Raums in der Form, die die Ansicht erwartet (Entscheidung 52). */
+export function roomTimesView(
+  timeline: { joinUntil: Date; closesAt: Date } | null,
+  state: "open" | "join-closed" | "closing-soon" | "closed" | null,
+): RoomTimes | undefined {
+  if (!timeline || !state) return undefined;
+  const clockTime = (date: Date) =>
+    date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return {
+    joinOpen: state === "open",
+    joinUntil: clockTime(timeline.joinUntil),
+    closesAt: clockTime(timeline.closesAt),
+    closingSoon: state === "closing-soon",
+    closed: state === "closed",
   };
 }

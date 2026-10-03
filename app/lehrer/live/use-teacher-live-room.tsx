@@ -68,6 +68,10 @@ import {
   type VocabularyTransferChoice,
 } from "../../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../../src/integrations/laufdiktat/debounce";
+import {
+  roomTimeline,
+  roomTimeState,
+} from "../../../src/integrations/laufdiktat/room-limits";
 import { useHydrated } from "../../components/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
 import {
@@ -141,6 +145,9 @@ const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
   vocabulary: "",
   math: "",
 };
+function nowIso(clock: () => number) {
+  return new Date(clock()).toISOString();
+}
 function isOnline(participant: LiveRoomParticipant) {
   return Boolean(
     participant.lastSeenAt &&
@@ -155,7 +162,14 @@ export const emptyVocabularyPair = (): VocabularyPair => ({
   right: emptyVocabularySide(),
 });
 
-export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
+/** Wie oft die Uhr für die Raumfristen nachgesehen wird. */
+const ROOM_CLOCK_INTERVAL_MS = 15_000;
+
+export function useTeacherLiveRoom(
+  liveRoomConfig: LiveRoomConfig | null,
+  /** Uhr in Millisekunden; die Tests setzen eine eigene, ohne zu warten. */
+  clock: () => number = Date.now,
+) {
   const hydrated = useHydrated();
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
@@ -298,6 +312,11 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
   const [mathGap, setMathGap] = useState(false);
   const [mathTables, setMathTables] = useState<number[]>([]);
   const [room, setRoom] = useState<OpenedLiveRoom | null>(null);
+  // Raum ist zu Ende (Frist oder Server), die letzten Ergebnisse bleiben sichtbar.
+  const [roomClosed, setRoomClosed] = useState(false);
+  const [nowMs, setNowMs] = useState(0);
+  const roomRef = useRef<OpenedLiveRoom | null>(null);
+  const closingRef = useRef(false);
   const [participants, setParticipants] = useState<LiveRoomParticipant[]>([]);
   const [presenceNames, setPresenceNames] = useState<string[]>([]);
   // Wer die Raumseite verlassen hat und allein weiterübt (Anwesenheit „practice“).
@@ -790,17 +809,131 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     ],
   );
 
+  // Wird bei jedem Rendern aktualisiert, damit `refresh` stabil bleibt.
+  const serverEndedRef = useRef<() => void>(() => undefined);
+
   const refresh = useCallback(async () => {
     if (!liveRoomConfig || !room) return;
-    const [nextParticipants, nextStudents] = await Promise.all([
+    const [nextParticipants, nextStudents, state] = await Promise.all([
       getLiveRoomParticipants(liveRoomConfig, room),
       stage === "live"
         ? getLiveRoomStudents(liveRoomConfig, room)
         : Promise.resolve([]),
+      // Der Server schließt Räume nach 120 Minuten; ein Fehler hier stört nicht.
+      getLiveRoomState(liveRoomConfig, room.roomId, {
+        accessToken: room.accessToken,
+      }).catch(() => null),
     ]);
+    if (roomRef.current?.roomId !== room.roomId) return;
     setParticipants(nextParticipants);
     if (stage === "live") setStudents(nextStudents);
+    if (state?.status === "ended") serverEndedRef.current();
   }, [liveRoomConfig, room, stage]);
+
+  useEffect(() => {
+    roomRef.current = room;
+  }, [room]);
+
+  const openedAt = room?.openedAt;
+  const timeline = useMemo(
+    () => (openedAt ? roomTimeline(new Date(openedAt)) : null),
+    [openedAt],
+  );
+  const timeState = useMemo(
+    () =>
+      openedAt
+        ? roomClosed
+          ? "closed"
+          : roomTimeState(new Date(openedAt), new Date(nowMs))
+        : null,
+    [nowMs, openedAt, roomClosed],
+  );
+
+  // Uhr für „Code gilt bis“ und die Schließfrist. Ein Wechsel zurück in den
+  // Vordergrund (Gerät im Standby) prüft sofort.
+  useEffect(() => {
+    if (!room || roomClosed) return;
+    const tick = () => setNowMs(clock());
+    tick();
+    const interval = window.setInterval(tick, ROOM_CLOCK_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [clock, room, roomClosed]);
+
+  // Zurücksetzen ohne Aufruf an den Server (Raum ist schon zu Ende).
+  function resetRoomState() {
+    clearTeacherLiveRoom();
+    closingRef.current = false;
+    setRoom(null);
+    setRoomClosed(false);
+    setParticipants([]);
+    setStudents([]);
+    setPresenceNames([]);
+    setPracticingNames([]);
+    setStage("content");
+  }
+
+  // Der Raum ist zu Ende. Im Live-Schritt bleiben die letzten Ergebnisse
+  // samt CSV-Export sichtbar; aus der Lobby geht es zurück zum Inhalt.
+  async function finishClosedRoom() {
+    if (!room) return;
+    if (stage !== "live") {
+      resetRoomState();
+      setError("Der Raum wurde geschlossen. Du kannst einen neuen öffnen.");
+      return;
+    }
+    if (liveRoomConfig) {
+      try {
+        const [nextParticipants, nextStudents] = await Promise.all([
+          getLiveRoomParticipants(liveRoomConfig, room),
+          getLiveRoomStudents(liveRoomConfig, room),
+        ]);
+        setParticipants(nextParticipants);
+        setStudents(nextStudents);
+      } catch {
+        // Die zuletzt gezeigten Ergebnisse bleiben stehen.
+      }
+    }
+    clearTeacherLiveRoom();
+    setRoomClosed(true);
+  }
+  useEffect(() => {
+    serverEndedRef.current = () => {
+      if (closingRef.current) return;
+      closingRef.current = true;
+      void finishClosedRoom();
+    };
+  });
+
+  // Nach 120 Minuten beendet dieses Gerät den Raum selbst, genau einmal.
+  // Der Server-Job ist nur die Absicherung, falls das Gerät nicht offen ist.
+  const closesAtMs = timeline?.closesAt.getTime() ?? null;
+  useEffect(() => {
+    if (!liveRoomConfig || !room || roomClosed || closesAtMs === null) return;
+    if (nowMs < closesAtMs || closingRef.current) return;
+    closingRef.current = true;
+    void (async () => {
+      try {
+        await endLiveRoom(liveRoomConfig, room);
+        await channelRef.current?.send({
+          type: "broadcast",
+          event: "session-ended",
+          payload: {},
+        });
+      } catch {
+        // Der Server schließt den Raum spätestens beim nächsten Aufräumen.
+      }
+      await finishClosedRoom();
+    })();
+    // finishClosedRoom liest nur den Stand dieses Renderns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [closesAtMs, liveRoomConfig, nowMs, room, roomClosed]);
 
   useEffect(() => {
     if (!hydrated || !liveRoomConfig || room) return;
@@ -861,14 +994,15 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         setStationCount(restored.stationCount);
         setBattleInk(restored.battleOptions.ink);
         setBattleFlicker(restored.battleOptions.flicker);
-        setRoom(stored);
+        // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
+        setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(clock) });
         setStage(state.status === "live" ? "live" : "lobby");
       })
       .catch(() => clearTeacherLiveRoom());
-  }, [hydrated, liveRoomConfig, room]);
+  }, [clock, hydrated, liveRoomConfig, room]);
 
   useEffect(() => {
-    if (!liveRoomConfig || !room) return;
+    if (!liveRoomConfig || !room || roomClosed) return;
     const client = getLiveRoomClient(liveRoomConfig);
     const channel = client.channel(`room-${room.code}`);
     const refreshSoon = createLiveRoomDebounce(() => void refresh(), {
@@ -934,7 +1068,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       if (channelRef.current === channel) channelRef.current = null;
       void client.removeChannel(channel);
     };
-  }, [liveRoomConfig, refresh, room, stage]);
+  }, [liveRoomConfig, refresh, room, roomClosed, stage]);
 
   function importFile(file: File | undefined) {
     if (!file) return;
@@ -964,9 +1098,14 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       return setError("Bitte gib mindestens eine gültige Aufgabe ein.");
     setBusy(true);
     try {
-      const opened = await openLiveRoom(liveRoomConfig, roomConfig);
+      const opened = {
+        ...(await openLiveRoom(liveRoomConfig, roomConfig)),
+        openedAt: nowIso(clock),
+      };
       saveTeacherLiveRoom(opened);
+      closingRef.current = false;
       setRoom(opened);
+      setNowMs(clock());
       setStage("lobby");
     } catch {
       setError(
@@ -1014,13 +1153,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         event: "session-ended",
         payload: {},
       });
-      clearTeacherLiveRoom();
-      setRoom(null);
-      setParticipants([]);
-      setStudents([]);
-      setPresenceNames([]);
-      setPracticingNames([]);
-      setStage("content");
+      resetRoomState();
     } catch {
       setError("Der Raum konnte nicht beendet werden.");
     } finally {
@@ -1079,6 +1212,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
 
   function goBack() {
     setError("");
+    if (roomClosed) return;
     if (stage === "settings") setStage("content");
     if (stage === "lobby") setStage("settings");
     if (stage === "live") setStage("lobby");
@@ -1089,7 +1223,11 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     if (stage === "content") setStage("settings");
     if (stage === "settings") void openLobby();
     if (stage === "lobby") void startSession();
-    if (stage === "live") void endRoom();
+    if (stage === "live") {
+      // Ein geschlossener Raum braucht keinen Aufruf mehr: weiter zum neuen Raum.
+      if (roomClosed) resetRoomState();
+      else void endRoom();
+    }
   }
 
   function chooseContentMode(mode: TeacherContentMode) {
@@ -1426,6 +1564,9 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     setMathGap,
     mathTables,
     room,
+    roomClosed,
+    roomTimeline: timeline,
+    roomTimeState: timeState,
     participants,
     students,
     busy,

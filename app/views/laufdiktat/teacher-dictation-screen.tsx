@@ -50,6 +50,23 @@ export type StationState = {
   label: string;
 };
 
+/**
+ * Fristen des Raums (Entscheidung 52). Ohne Angabe zeigt die Ansicht genau die
+ * Vorlage. Die Uhrzeiten kommen fertig formatiert, die Ansicht rechnet nicht.
+ */
+export type RoomTimes = {
+  /** Beitritt mit Code und QR ist noch möglich. */
+  joinOpen: boolean;
+  /** Uhrzeit, bis der Code gilt, z. B. „14:35“. */
+  joinUntil: string;
+  /** Uhrzeit, zu der der Raum schließt. */
+  closesAt: string;
+  /** Der Raum schließt bald (ab 110 Minuten). */
+  closingSoon: boolean;
+  /** Der Raum ist geschlossen; die letzten Ergebnisse bleiben sichtbar. */
+  closed: boolean;
+};
+
 export type TeacherDictationScreenProps = {
   /** Klasse, falls der Raum zu einer Klasse gehört. */
   className?: string;
@@ -103,6 +120,7 @@ export type TeacherDictationScreenProps = {
       display?: ReactNode;
     }>;
   };
+  roomTimes?: RoomTimes;
   /** Beschriftung und Sperre des Weiter-Knopfs (z. B. „Öffnet …“). */
   nextLabel?: string;
   nextDisabled?: boolean;
@@ -252,7 +270,9 @@ function optionList(mode: DictationMode) {
 /** Laufdiktat für Lehrkräfte (Design 5c mobil, 5d Desktop). */
 export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
   const [qrOpen, setQrOpen] = useState(false);
-  const showQr = props.qrLarge && props.roomCode ? () => setQrOpen(true) : null;
+  const joinOpen = props.roomTimes?.joinOpen ?? true;
+  const showQr =
+    props.qrLarge && props.roomCode && joinOpen ? () => setQrOpen(true) : null;
   const index = STEPS.findIndex((step) => step.id === props.step);
   const current = STEPS[index] ?? STEPS[0]!;
   const stepLabel = `Schritt ${index + 1} von ${STEPS.length}`;
@@ -307,7 +327,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
       </div>
 
       <footer className={styles.footer}>
-        {index > 0 ? (
+        {index > 0 && !props.roomTimes?.closed ? (
           <button
             type="button"
             className={styles.previous}
@@ -329,13 +349,24 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
           <button
             type="button"
             className={styles.footerCode}
-            aria-label={`Raumcode ${props.roomCode} und QR-Code zeigen`}
+            aria-label={
+              props.roomTimes
+                ? `Raumcode ${props.roomCode} und QR-Code zeigen, Code gilt bis ${props.roomTimes.joinUntil}`
+                : `Raumcode ${props.roomCode} und QR-Code zeigen`
+            }
             onClick={showQr}
           >
             <Icon name="qr" size={18} />
             <span className={styles.footerCodeLabel}>Raum</span>
             <span className={styles.footerCodeValue}>{props.roomCode}</span>
+            {props.roomTimes ? (
+              <span className={styles.footerCodeUntil}>
+                gilt bis {props.roomTimes.joinUntil}
+              </span>
+            ) : null}
           </button>
+        ) : props.step === "live" && props.roomTimes && !joinOpen ? (
+          <span className={styles.footerClosed}>Beitritt geschlossen</span>
         ) : (
           <span className={styles.footerNote}>
             Alles wird automatisch unter „Abgelegt&quot; gespeichert.
@@ -353,7 +384,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
         </GreenButton>
       </footer>
 
-      {qrOpen && props.qrLarge ? (
+      {qrOpen && props.qrLarge && showQr ? (
         <QrOverlay
           roomCode={props.roomCode}
           joinHost={props.joinHost}
@@ -717,8 +748,19 @@ function RoomCard({
   roomCode,
   qr,
   joinHost,
+  roomTimes,
   onShowQr,
 }: TeacherDictationScreenProps & { onShowQr?: (() => void) | null }) {
+  if (roomTimes && !roomTimes.joinOpen)
+    return (
+      <div className={cx(styles.roomCard, styles.roomCardClosed)}>
+        <span className={styles.roomClosedTitle}>Beitritt geschlossen</span>
+        <span className={styles.roomHint}>
+          Der Code galt bis {roomTimes.joinUntil}. Wer schon im Raum ist, kann
+          weiterüben.
+        </span>
+      </div>
+    );
   return (
     <div className={styles.roomCard}>
       {onShowQr ? (
@@ -753,6 +795,11 @@ function RoomCard({
         <span className={styles.roomHint}>
           {joinHost} · Code eingeben oder scannen
         </span>
+        {roomTimes ? (
+          <span className={styles.roomHint}>
+            Code gilt bis {roomTimes.joinUntil}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -818,6 +865,7 @@ function LiveStep({
   roomCode,
   mode,
   live,
+  roomTimes,
   onExportCsv,
 }: TeacherDictationScreenProps) {
   const maxMistakes = Math.max(1, ...live.mistakes.map((entry) => entry.count));
@@ -827,6 +875,17 @@ function LiveStep({
         <span className={styles.dot} />
         Live · Raum {roomCode}
       </span>
+      {roomTimes?.closed ? (
+        <p className={styles.roomNote} role="status">
+          <strong>Raum geschlossen.</strong> Die letzten Ergebnisse bleiben
+          hier, bis du einen neuen Raum öffnest.
+        </p>
+      ) : roomTimes?.closingSoon ? (
+        <p className={styles.roomNote} role="status">
+          <strong>Raum schließt um {roomTimes.closesAt}.</strong> Ergebnisse
+          jetzt als CSV sichern.
+        </p>
+      ) : null}
       <div className={styles.stats}>
         <LiveStat label="Aktiv" value={live.active} dot="var(--gold)" />
         <LiveStat label="Fertig" value={live.finished} dot="var(--green)" />

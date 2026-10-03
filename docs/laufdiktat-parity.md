@@ -37,6 +37,28 @@ Raumverwaltungs- und Teilnehmertokens. Die Reparaturmigration ersetzt die neue
 Ein-Parameter-Funktion und führt die entfernte Freigabe nicht wieder ein.
 Abgelehnte Raumkonfigurationen verbrauchen ebenfalls ihr Anfragelimit.
 
+## Bewusste Abweichung: Beitrittsfrist und automatisches Schließen
+
+Im Original gilt ein Raumcode, solange der Raum offen ist, und ein Raum endet
+erst drei Stunden nach der letzten Aktivität. Die Lernplattform begrenzt das
+(Entscheidung 52, Migration `20261003120000_room_time_limits.sql`):
+
+- Neue Beitritte mit Raumcode oder QR sind 90 Minuten nach dem Öffnen des Raums
+  möglich. Danach antwortet `join_room_secure` leer, wie bei einem unbekannten
+  Code. Geräte, die schon im Raum sind, kehren mit ihrem Teilnehmertoken zurück.
+- 120 Minuten nach dem Öffnen schließt der Raum automatisch, genau wie beim
+  Beenden durch die Lehrkraft. Das Gerät der Lehrkraft beendet ihn selbst; der
+  Aufräum-Job (alle 5 Minuten) ist die Absicherung. Schülergeräte prüfen alle
+  30 Sekunden, ob der Server den Raum geschlossen hat, und übernehmen die Runde
+  dann wie beim Beenden in die LernBox.
+- Die Lehrkraft sieht „Code gilt bis HH:MM“, ab Minute 110 den Hinweis zum
+  Sichern der Ergebnisse als CSV und nach dem Schließen „Raum geschlossen“ mit
+  weiter nutzbarem CSV-Export. Die Uhrzeiten sind lokal berechnet und dienen nur
+  der Anzeige; maßgeblich ist der Server.
+
+Die Werte stehen in `src/integrations/laufdiktat/room-limits.ts`; der
+Datenbank-Vertragstest prüft, dass die Migration dieselben nutzt.
+
 ## Erhaltene Verbesserungen und Prüfgrenzen
 
 Maus- und Tastaturbedienung bleiben zusätzlich zur Zwei-Finger-Bedienung möglich.

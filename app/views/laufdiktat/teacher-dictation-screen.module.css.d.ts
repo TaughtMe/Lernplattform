@@ -32,8 +32,10 @@ declare const styles: {
   readonly flowNumber: string;
   readonly flowStep: string;
   readonly footer: string;
+  readonly footerClosed: string;
   readonly footerCode: string;
   readonly footerCodeLabel: string;
+  readonly footerCodeUntil: string;
   readonly footerCodeValue: string;
   readonly footerNote: string;
   readonly grabber: string;
@@ -81,9 +83,12 @@ declare const styles: {
   readonly qrOverlay: string;
   readonly radio: string;
   readonly roomCard: string;
+  readonly roomCardClosed: string;
+  readonly roomClosedTitle: string;
   readonly roomCode: string;
   readonly roomCodeLabel: string;
   readonly roomHint: string;
+  readonly roomNote: string;
   readonly screen: string;
   readonly section: string;
   readonly sectionNumber: string;
