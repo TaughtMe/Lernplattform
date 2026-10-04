@@ -150,3 +150,19 @@ seltener. Jeder Dependabot-PR durchläuft dieselben Quality Gates.
 2. Stufe 0 → Stufe 1 → Stufe 2 → Stufe 3, jeweils erst nach grünem Merge der vorigen.
 3. Dependabot einrichten (nach Stufe 3, damit nicht sofort viele PRs entstehen).
 4. Stufe 4 nach Bedarf, Node 24 spätestens vor April 2027.
+
+## 6. Umsetzungsstand (04.10.2026)
+
+Stufen 0 bis 3 und Dependabot sind umgesetzt, Stufe 4 steht aus. Jede Stufe ist ein eigener Commit auf `claude/lernraum-ui-v2` (kein eigener PR pro Stufe, weil der Branch von mehreren Sitzungen genutzt wird). Geprüft wurde je Stufe mit Format, Lint, Typen, Unit-Tests mit Coverage, Datenbankvertrag, Build, Renderprüfung, Chromium-E2E (Desktop, Mobil, Minimalbreite), Designvergleich und Live-Räumen. Die volle Cross-Browser-Suite läuft in GitHub.
+
+- **Stufe 0:** `npm audit fix` bricht mit npm 10.9.4 mit einem internen Fehler ab. Mit `npm@11.9.0` (laut `packageManager`) läuft es. Es wurden nur transitive Pakete angehoben, `package.json` blieb unverändert. Meldungen: 18 → 15.
+- **Stufe 1:** vinext 1.0.1 und die übrige Build-Kette laut Plan. Dazu `vitest` und `@vitest/coverage-v8` auf 4.1.11 (Sicherheits-Patch für `@vitest/mocker`). Meldungen: 15 → 10; `undici` und `sharp` sind behoben. Übrig sind nur Entwicklungswerkzeuge: `braces`/`micromatch`/`fast-glob` über `@next/eslint-plugin-next`, `vite-plugin-commonjs`/`vite-plugin-dynamic-import`/`@vercel/og` über vinext. Das vorgeschlagene „Fix“ von npm wäre ein Downgrade von vinext und wurde bewusst nicht ausgeführt.
+  - `worker/index.ts`: unverändert; die Importe (`vinext/server/image-optimization`, `vinext/server/app-router-entry`) gibt es in 1.0.1 weiter.
+  - Compatibility-Date des Workers: `2026-08-11` → `2026-10-01`.
+  - **Dev-Port:** vinext 1.0 startet `npm run dev` sonst auf 5173. `vite.config.ts` setzt jetzt `server.port: 3000`. `--port` auf der Kommandozeile gilt weiter (Live-Tests nutzen 3001).
+  - **Renderprüfung:** Das Worker-Bundle importiert `cloudflare:workers` (nur `tracing`). `tests/rendered-html.test.mjs` registriert dafür einen Node-Loader-Stub.
+  - **Manifest-Link:** vinext 1.0.1 schiebt weiterhin nur `icon` und `apple-touch-icon` in den `<head>`. Der Kernfix aus dem PWA-Plan bleibt nötig; die Renderprüfung hält ihn fest.
+- **Stufe 2:** `zod` 4.6.5, `dexie` 4.4.6, `@supabase/supabase-js` 2.117.2 in einem Commit, `katex` 0.19.0 in einem eigenen. KaTeX-Ausdrücke rendern wie unter 0.17, ungültige Eingaben werden gleich behandelt. `supabase-js` meldet neu: Realtime `send()` weicht ohne ausdrückliches `httpSend()` künftig nicht mehr automatisch auf REST aus. Das ist vor einem späteren Update zu klären.
+- **Stufe 3:** `@playwright/test` 1.63.0, `tailwindcss`/`@tailwindcss/postcss` 4.3.3, `typescript-eslint` 8.71.0, Testing Library, `fast-check`, `prettier` 3.9.9 (keine Umformatierung nötig). `@next/eslint-plugin-next` bleibt auf 16.2.6, weil 16.3.8 neue Warnungen (`no-location-assign-relative-destination`) an 5 Stellen meldet. Das lässt sich später mit den Stellen in `app/raum` und `app/ui/room-code-entry.tsx` zusammen angehen.
+- **Dependabot:** `.github/dependabot.yml` hatte schon eine Gruppe für Entwicklungswerkzeuge. Ergänzt wurden die Gruppen „build-chain“ und „runtime“. Hauptversionen stehen in keiner Gruppe und kommen einzeln.
+- **Lokale Prüfhinweise:** In der Cloud-Umgebung fehlt der Browser, den Playwright 1.63 selbst erwartet, deshalb liefen die Browsertests mit dem vorhandenen Chromium (`executablePath`). Bei vollen Live-Läufen scheiterte je Lauf genau ein Test beim ersten Seitenaufbau (Antwortfeld erscheint zu spät, jedes Mal ein anderer Test). Einzeln und in Wiederholungen bestanden alle. Falls das in GitHub auch auftritt, hilft ein Aufwärmen des Dev-Servers vor den Tests.
