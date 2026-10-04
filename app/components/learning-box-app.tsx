@@ -107,9 +107,12 @@ type Session = {
     given: string;
     boxFrom: number;
     boxTo: number;
+    practice: boolean;
     nextLabel: string;
   } | null;
   stats: { correct: number; wrong: number };
+  /** Übungsrunde einer Box: nichts wird verschoben oder gespeichert. */
+  practice: boolean;
   roundId: string;
   finished: boolean;
 };
@@ -276,7 +279,11 @@ export function LearningBoxApp({
     let title = "Heute dran";
     let pool: LearningBoxCard[] = [];
     let onlyDue = false;
-    if (scope === "due") {
+    const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
+    if (box) {
+      title = `Box ${box} (nur üben)`;
+      pool = cards.filter((card) => card.box === box);
+    } else if (scope === "due") {
       pool = cards.filter((card) =>
         isLearningBoxCardDueFor(card, choice.direction),
       );
@@ -310,6 +317,7 @@ export function LearningBoxApp({
       revealed: false,
       feedback: null,
       stats: { correct: 0, wrong: 0 },
+      practice: box > 0,
       roundId: crypto.randomUUID(),
       finished: false,
     });
@@ -319,18 +327,22 @@ export function LearningBoxApp({
     if (!session) return;
     const item = session.queue[session.index];
     if (!item) return;
-    const updated = processLearningBoxResult(item.card, {
-      correct,
-      direction: item.direction,
-      mode: session.mode,
-    });
-    await repository.putCardAndEvent({
-      card: updated,
-      correct,
-      direction: item.direction,
-      mode: session.mode,
-      roundId: session.roundId,
-    });
+    const updated = session.practice
+      ? item.card
+      : processLearningBoxResult(item.card, {
+          correct,
+          direction: item.direction,
+          mode: session.mode,
+        });
+    if (!session.practice) {
+      await repository.putCardAndEvent({
+        card: updated,
+        correct,
+        direction: item.direction,
+        mode: session.mode,
+        roundId: session.roundId,
+      });
+    }
     const queue = session.queue.map((entry, index) =>
       index === session.index ? { ...entry, card: updated } : entry,
     );
@@ -349,7 +361,10 @@ export function LearningBoxApp({
           given: session.answer.trim(),
           boxFrom: getLearningBoxLevel(item.card, item.direction),
           boxTo: getLearningBoxLevel(updated, item.direction),
-          nextLabel: nextLabel(updated, item.direction),
+          practice: session.practice,
+          nextLabel: session.practice
+            ? "nur geübt"
+            : nextLabel(updated, item.direction),
         },
       });
     } else {

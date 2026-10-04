@@ -7,6 +7,7 @@ declare const styles: {
   readonly backText: string;
   readonly badButton: string;
   readonly bar: string;
+  readonly barButton: string;
   readonly barCount: string;
   readonly barItem: string;
   readonly barLabel: string;
@@ -122,9 +123,6 @@ declare const styles: {
   readonly search: string;
   readonly segOff: string;
   readonly segOn: string;
-  readonly segment: string;
-  readonly segmentOff: string;
-  readonly segmentOn: string;
   readonly segmentSheet: string;
   readonly select: string;
   readonly sheet: string;

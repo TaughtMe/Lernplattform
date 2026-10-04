@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useEffect,
   useId,
@@ -56,6 +55,8 @@ export type LbFeedback = {
   given: string;
   boxFrom: number;
   boxTo: number;
+  /** Übungsrunde ohne Verschieben: die Box bleibt, wie sie ist. */
+  practice?: boolean;
   /** z. B. „kommt morgen wieder“. */
   nextLabel: string;
 };
@@ -209,7 +210,6 @@ function Home(props: LernBoxScreenProps) {
     <div className={styles.home}>
       <header className={styles.homeHead}>
         <h1 className={styles.homeTitle}>LernBox</h1>
-        <Segment />
         <span className={styles.spacer} />
         <EditButton onClick={props.onEdit} />
         <PlusMenu {...props} />
@@ -252,15 +252,16 @@ function Home(props: LernBoxScreenProps) {
             </button>
           </div>
         </section>
-        <section
-          className={cx(styles.chart, styles.wideOnly)}
-          aria-label="Verteilung auf die Boxen"
-        >
+        <section className={styles.chart} aria-label="Verteilung auf die Boxen">
           <span className={styles.chartHead}>
             <strong>Wo liegen meine Vokabeln?</strong>
             <span className={styles.muted}>{total} insgesamt</span>
           </span>
-          <BoxChart decks={decks} />
+          <BoxChart decks={decks} onPick={(box) => start(`box:${box}`)} />
+          <p className={styles.muted}>
+            Tippe auf eine Box, um nur ihre Vokabeln zu üben. Sie wandern dabei
+            nicht weiter.
+          </p>
         </section>
       </div>
 
@@ -307,19 +308,6 @@ function Home(props: LernBoxScreenProps) {
         <span>Meine Fehler üben</span>
         <span className={styles.errorPill}>{props.errorCount}</span>
       </button>
-    </div>
-  );
-}
-
-function Segment() {
-  return (
-    <div className={styles.segment} role="group" aria-label="Bereich">
-      <span className={styles.segmentOn} aria-current="page">
-        Vokabeln
-      </span>
-      <Link href="/frei/german/lernwoerter" className={styles.segmentOff}>
-        Wortspeicher
-      </Link>
     </div>
   );
 }
@@ -439,7 +427,13 @@ function CodeIcon() {
   );
 }
 
-function BoxChart({ decks }: { decks: readonly LbDeck[] }) {
+function BoxChart({
+  decks,
+  onPick,
+}: {
+  decks: readonly LbDeck[];
+  onPick: (box: number) => void;
+}) {
   const totals = [0, 1, 2, 3, 4].map((index) =>
     decks.reduce((sum, deck) => sum + (deck.boxes[index] ?? 0), 0),
   );
@@ -448,18 +442,26 @@ function BoxChart({ decks }: { decks: readonly LbDeck[] }) {
     <ul className={styles.bars}>
       {totals.map((count, index) => (
         <li key={index} className={styles.barItem}>
-          <span className={styles.barCount}>{count}</span>
-          <span
-            className={styles.bar}
-            aria-hidden="true"
-            style={
-              {
-                height: `${Math.round(18 + (92 * count) / max)}px`,
-                background: BOX_COLORS[index],
-              } as CSSProperties
-            }
-          />
-          <span className={styles.barLabel}>Box {index + 1}</span>
+          <button
+            type="button"
+            className={styles.barButton}
+            disabled={count === 0}
+            aria-label={`Box ${index + 1}: ${plural(count, "Vokabel", "Vokabeln")} üben`}
+            onClick={() => onPick(index + 1)}
+          >
+            <span className={styles.barCount}>{count}</span>
+            <span
+              className={styles.bar}
+              aria-hidden="true"
+              style={
+                {
+                  height: `${Math.round(18 + (92 * count) / max)}px`,
+                  background: BOX_COLORS[index],
+                } as CSSProperties
+              }
+            />
+            <span className={styles.barLabel}>Box {index + 1}</span>
+          </button>
         </li>
       ))}
     </ul>
@@ -610,14 +612,22 @@ function StartSheet(props: LernBoxScreenProps & { scope: string }) {
   const labels = props.directionLabelsFor(scope);
   const deck = props.decks.find((entry) => entry.id === scope);
   const dueDecks = props.decks.filter((entry) => entry.due > 0).length;
+  const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
+  const boxCount = props.decks.reduce(
+    (sum, entry) => sum + (entry.boxes[box - 1] ?? 0),
+    0,
+  );
   const title =
     scope === "due"
       ? "Heute dran"
       : scope === "errors"
         ? "Meine Fehler"
-        : (deck?.title ?? "Stapel");
-  const subtitle =
-    scope === "due"
+        : box
+          ? `Box ${box} üben`
+          : (deck?.title ?? "Stapel");
+  const subtitle = box
+    ? `${plural(boxCount, "Vokabel", "Vokabeln")} · nur üben, nichts wird verschoben`
+    : scope === "due"
       ? `${plural(props.dueTotal, "Vokabel", "Vokabeln")} aus ${dueDecks === props.decks.length ? "allen Stapeln" : plural(dueDecks, "Stapel", "Stapeln")}`
       : scope === "errors"
         ? `${plural(props.errorCount, "Vokabel", "Vokabeln")} zum Wiederholen`
@@ -1776,7 +1786,9 @@ function Feedback({
           )}
         </span>
         <span className={styles.resultNext}>
-          Box {feedback.boxFrom} → Box {feedback.boxTo} · {feedback.nextLabel}
+          {feedback.practice
+            ? `Box ${feedback.boxFrom} bleibt · ${feedback.nextLabel}`
+            : `Box ${feedback.boxFrom} → Box ${feedback.boxTo} · ${feedback.nextLabel}`}
         </span>
       </div>
       <button

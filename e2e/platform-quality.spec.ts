@@ -183,6 +183,25 @@ test("a downloaded LernBox backup restores a deleted deck", async ({
   ).toBeVisible();
 });
 
+test("a box can be practised without moving its words", async ({ page }) => {
+  await page.goto("/lernbox");
+  await createLernBoxDeck(page, "Boxprobe");
+  await page.getByRole("textbox", { name: "Deutsch" }).fill("Haus");
+  await page.getByRole("textbox", { name: "Englisch" }).fill("house");
+  await page.getByRole("button", { name: "Speichern und nächste" }).click();
+  await page.getByRole("button", { name: "Fertig" }).click();
+  await expect(async () => {
+    await page.getByRole("button", { name: /^Box 1: .* üben$/ }).click();
+    await expect(page.getByRole("button", { name: "Los geht's" })).toBeVisible({
+      timeout: 1_000,
+    });
+  }).toPass();
+  await page.getByRole("button", { name: "Los geht's" }).click();
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("house");
+  await page.getByRole("button", { name: /Prüfen/ }).click();
+  await expect(page.getByText("Box 1 bleibt · nur geübt")).toBeVisible();
+});
+
 test("the LernBox imports, filters and practises words", async ({ page }) => {
   await page.goto("/lernbox");
   await createLernBoxDeck(page, "Importprobe");

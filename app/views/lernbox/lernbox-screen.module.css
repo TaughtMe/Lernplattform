@@ -100,41 +100,6 @@
   font-weight: 700;
   letter-spacing: -0.025em;
 }
-.segment {
-  display: flex;
-  order: 5;
-  flex: 1 0 100%;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 13px;
-  background: var(--surface2);
-}
-.segmentOn,
-.segmentOff {
-  display: grid;
-  flex: 1;
-  place-items: center;
-  min-height: 38px;
-  padding: 4px 8px;
-  border: 0;
-  border-radius: 10px;
-  font-family: var(--font);
-  font-size: 13.5px;
-  font-weight: 700;
-  text-decoration: none;
-}
-.segmentOn {
-  background: var(--surface);
-  box-shadow: 0 1px 3px var(--shadow);
-  color: var(--ink);
-}
-.segmentOff {
-  background: transparent;
-  color: var(--ink2);
-}
-.segmentOff:hover {
-  color: var(--ink);
-}
 .editButton {
   display: inline-flex;
   flex: none;
@@ -345,11 +310,30 @@
 }
 .barItem {
   display: flex;
+  min-width: 0;
+  height: 100%;
+}
+.barButton {
+  display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  height: 100%;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font);
+  cursor: pointer;
+}
+.barButton:hover:not(:disabled) {
+  background: var(--surface2);
+}
+.barButton:disabled {
+  cursor: default;
 }
 .barCount {
   font-family: var(--font-fun);
@@ -498,11 +482,6 @@
   .homeTitle {
     flex: none;
     font-size: 28px;
-  }
-  .segment {
-    order: 0;
-    flex: none;
-    width: 280px;
   }
   .editButton {
     width: auto;
