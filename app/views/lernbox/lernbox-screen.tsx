@@ -96,6 +96,7 @@ export type LbSheet =
   | { kind: "manual" }
   | { kind: "import" }
   | { kind: "code" }
+  | { kind: "deck" }
   /** `scope`: „due“, „errors“ oder die Kennung eines Stapels. */
   | { kind: "start"; scope: string };
 
@@ -276,14 +277,18 @@ function Home(props: LernBoxScreenProps) {
         </span>
         {props.loading ? (
           <p className={styles.muted}>LernBox wird geladen …</p>
-        ) : decks.length === 0 ? (
-          <p className={styles.empty}>
-            Noch keine Stapel. Tippe auf das Plus und trage deine erste Vokabel
-            ein.
-          </p>
         ) : (
           <>
-            {loose.length ? <DeckGrid decks={loose} onStart={start} /> : null}
+            {decks.length === 0 ? (
+              <p className={styles.empty}>
+                Noch keine Stapel. Lege mit „Neuer Stapel“ deinen ersten an.
+              </p>
+            ) : null}
+            <DeckGrid
+              decks={loose}
+              onStart={start}
+              onNew={() => props.onOpenSheet?.({ kind: "deck" })}
+            />
             {props.folders.map((folder) => {
               const inside = decks.filter(
                 (deck) => deck.folderId === folder.id,
@@ -495,7 +500,9 @@ function BoxBar({ boxes }: { boxes: readonly number[] }) {
 function DeckGrid({
   decks,
   onStart,
+  onNew,
 }: {
+  onNew?: () => void;
   decks: readonly LbDeck[];
   onStart: (scope: string) => void;
 }) {
@@ -526,6 +533,14 @@ function DeckGrid({
           </button>
         </li>
       ))}
+      {onNew ? (
+        <li>
+          <button type="button" className={styles.newCard} onClick={onNew}>
+            <Icon name="plus" size={30} strokeWidth={2.6} />
+            <span>Neuer Stapel</span>
+          </button>
+        </li>
+      ) : null}
     </ul>
   );
 }
@@ -537,6 +552,7 @@ function Sheets(props: LernBoxScreenProps & { sheet: LbSheet }) {
   if (sheet.kind === "start")
     return <StartSheet {...props} scope={sheet.scope} />;
   if (sheet.kind === "code") return <CodeSheet {...props} />;
+  if (sheet.kind === "deck") return <DeckSheet {...props} />;
   if (sheet.kind === "import") return <ImportSheet {...props} />;
   return <ManualSheet {...props} />;
 }
@@ -848,6 +864,18 @@ function NewDeck({
         </button>
       </div>
     </form>
+  );
+}
+
+function DeckSheet(props: LernBoxScreenProps) {
+  return (
+    <Modal title="Neuer Stapel" onClose={props.onCloseSheet}>
+      <NewDeck
+        screen={props}
+        onCreated={() => props.onCloseSheet?.()}
+        onCancel={props.onCloseSheet}
+      />
+    </Modal>
   );
 }
 
@@ -1283,7 +1311,6 @@ function CardRow({ card, ...props }: LernBoxScreenProps & { card: LbCard }) {
     tag: card.tag ?? "",
   });
   const [deckId, setDeckId] = useState(card.deckId);
-  const tagInput = useRef<HTMLInputElement>(null);
 
   function open() {
     setDraft({
@@ -1311,7 +1338,11 @@ function CardRow({ card, ...props }: LernBoxScreenProps & { card: LbCard }) {
         <td className={styles.cellAnswer}>{card.answer}</td>
         <td className={styles.cellDeck}>{card.deckTitle}</td>
         <td className={styles.cellTag}>
-          {card.tag ? <span className={styles.tag}>{card.tag}</span> : null}
+          {card.tag ? (
+            <span className={styles.tag} title={card.tag}>
+              {card.tag}
+            </span>
+          ) : null}
         </td>
         <td className={styles.cellBox}>
           <span className={styles.boxLabel} style={dot}>
@@ -1369,36 +1400,14 @@ function CardRow({ card, ...props }: LernBoxScreenProps & { card: LbCard }) {
         </select>
       </td>
       <td className={styles.cellTag}>
-        {draft.tag ? (
-          <span className={styles.tag}>
-            {draft.tag}
-            <button
-              type="button"
-              className={styles.tagRemove}
-              aria-label="Tag entfernen"
-              onClick={() => setDraft({ ...draft, tag: "" })}
-            >
-              ×
-            </button>
-          </span>
-        ) : (
-          <input
-            ref={tagInput}
-            className={styles.tagInput}
-            placeholder="+ Tag"
-            aria-label="Tag hinzufügen"
-            onKeyDown={(event) => {
-              if (event.key !== "Enter") return;
-              event.preventDefault();
-              const value = event.currentTarget.value.trim();
-              if (value) setDraft({ ...draft, tag: value });
-            }}
-            onBlur={(event) => {
-              const value = event.currentTarget.value.trim();
-              if (value) setDraft({ ...draft, tag: value });
-            }}
-          />
-        )}
+        <input
+          className={styles.tagInput}
+          placeholder="+ Tag"
+          aria-label="Tag"
+          maxLength={40}
+          value={draft.tag}
+          onChange={(event) => setDraft({ ...draft, tag: event.target.value })}
+        />
       </td>
       <td className={styles.cellBox}>
         <span className={styles.boxLabel} style={dot}>

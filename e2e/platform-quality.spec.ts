@@ -183,6 +183,24 @@ test("a downloaded LernBox backup restores a deleted deck", async ({
   ).toBeVisible();
 });
 
+test("the LernBox start page offers a tile for a new deck", async ({
+  page,
+}) => {
+  await page.goto("/lernbox");
+  const tile = page.getByRole("button", { name: "Neuer Stapel", exact: true });
+  await expect(async () => {
+    await tile.click();
+    await expect(
+      page.getByRole("textbox", { name: "Name des neuen Stapels" }),
+    ).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+  await page
+    .getByRole("textbox", { name: "Name des neuen Stapels" })
+    .fill("Kachelprobe");
+  await page.getByRole("button", { name: "Stapel anlegen" }).click();
+  await expect(page.getByRole("button", { name: /Kachelprobe/ })).toBeVisible();
+});
+
 test("a box can be practised without moving its words", async ({ page }) => {
   await page.goto("/lernbox");
   await createLernBoxDeck(page, "Boxprobe");

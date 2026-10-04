@@ -91,6 +91,7 @@ declare const styles: {
   readonly menuText: string;
   readonly muted: string;
   readonly narrowOnly: string;
+  readonly newCard: string;
   readonly newDeck: string;
   readonly next: string;
   readonly notice: string;

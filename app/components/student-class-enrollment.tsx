@@ -274,8 +274,9 @@ export function StudentClassEnrollment() {
                 Individuellen Klassencode eingeben
               </h2>
               <p className="ui-small ui-muted">
-                Scanne den QR-Code deiner Lehrkraft mit der Kamera, dann trägt er den Code automatisch ein. Hier kannst du auch
-                einen Entfernungscode deiner Lehrkraft einfügen.
+                Scanne den QR-Code deiner Lehrkraft mit der Kamera, dann trägt
+                er den Code automatisch ein. Hier kannst du auch einen
+                Entfernungscode deiner Lehrkraft einfügen.
               </p>
             </div>
             <label className="ui-labeled" htmlFor="class-enrollment-code">
