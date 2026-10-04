@@ -507,6 +507,19 @@ export function LearningBoxApp() {
               frontLocale: input.frontLocale,
               backLocale: input.backLocale,
             });
+            if (input.importText) {
+              const { rows, skipped } = parseLearningBoxImport(
+                input.importText,
+              );
+              const result = await repository.importCards(deck.id, rows);
+              setNotice(
+                `${result.added} Vokabeln importiert${
+                  skipped.length
+                    ? ` · Zeile ${skipped.join(", ")} übersprungen`
+                    : ""
+                }.`,
+              );
+            }
             if (input.folderId) {
               const next = collapsed.filter(
                 (entry) => entry !== input.folderId,

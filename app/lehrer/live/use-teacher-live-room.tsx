@@ -1356,6 +1356,7 @@ export function useTeacherLiveRoom(
     if (!liveRoomConfig || !room) return;
     setBusy(true);
     try {
+      if (students.length > 0) exportCsv();
       await endLiveRoom(liveRoomConfig, room);
       await channelRef.current?.send({
         type: "broadcast",
