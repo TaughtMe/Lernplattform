@@ -35,7 +35,7 @@
     "@fontsource-variable/work-sans": "^5.3.0",
     "@supabase/supabase-js": "2.117.2",
     "dexie": "4.4.6",
-    "katex": "^0.17.0",
+    "katex": "^0.19.0",
     "qr-scanner": "1.4.2",
     "qrcode.react": "4.2.0",
     "react": "19.3.0",
