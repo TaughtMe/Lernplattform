@@ -1,6 +1,24 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { register } from "node:module";
 import test from "node:test";
+
+// Das Worker-Bundle importiert seit vinext 1.0 `cloudflare:workers` (nur
+// `tracing`). Das Modul gibt es nur in der Workers-Laufzeit; in Node steht
+// ein Stub ohne Tracing dafür.
+register(
+  `data:text/javascript,${encodeURIComponent(`
+    export async function resolve(specifier, context, nextResolve) {
+      if (specifier === "cloudflare:workers") {
+        return {
+          shortCircuit: true,
+          url: "data:text/javascript,export const tracing = undefined;",
+        };
+      }
+      return nextResolve(specifier, context);
+    }
+  `)}`,
+);
 
 // Die Renderprüfungen laufen standardmäßig mit eingeschalteter Vorschau
 // (Cookie). Der Freigabetest prüft den Schulbetrieb ohne Vorschau.
