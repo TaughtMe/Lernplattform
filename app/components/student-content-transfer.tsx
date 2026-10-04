@@ -88,6 +88,39 @@ export function StudentContentTransfer({
     }
   }
 
+  async function retrieveByScan(value: string) {
+    // Neue QR-Codes enthalten nur den Transfercode; ältere das Token-Paket.
+    if (value.startsWith("lernraum:transfer:")) return retrieveByQr(value);
+    setError("");
+    setSuccess(undefined);
+    const scanned = normalizeTransferCode(value);
+    if (!transferConfig) {
+      setError("Die Inhaltsübertragung ist noch nicht konfiguriert.");
+      return;
+    }
+    if (scanned.length !== 24) {
+      setError("Der QR-Code enthält keinen gültigen Transfercode.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await ingest(
+        await retrieveLearningBundleByCode(
+          getLiveRoomClient(transferConfig),
+          scanned,
+        ),
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Der QR-Code konnte nicht gelesen werden.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function retrieveByQr(value: string) {
     setError("");
     setSuccess(undefined);
@@ -146,7 +179,7 @@ export function StudentContentTransfer({
             setCode(normalizeTransferCode(event.target.value))
           }
         />
-        <QrCodeScanner onResult={(value) => void retrieveByQr(value)} />
+        <QrCodeScanner onResult={(value) => void retrieveByScan(value)} />
       </div>
       <Button type="submit" variant="green" disabled={busy}>
         {busy ? "Übernimmt …" : "Übernehmen"}

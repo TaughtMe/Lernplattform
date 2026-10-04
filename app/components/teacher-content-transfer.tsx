@@ -17,7 +17,6 @@ import {
 } from "../../src/domain/teacher-content-library";
 import {
   publishLearningBundle,
-  serializeTransferQrPayload,
   type PublishedContentTransfer,
 } from "../../src/integrations/content-transfer/content-transfer-client";
 import {
@@ -482,9 +481,9 @@ export function TeacherContentTransfer({
             </h2>
             <div className="ui-qr-box">
               <QRCodeSVG
-                value={serializeTransferQrPayload(published.qrPayload)}
+                value={published.manualTransferCode}
                 size={220}
-                level="H"
+                level="M"
                 marginSize={2}
                 aria-label="QR-Code für das verschlüsselte Vokabelpaket"
               />
