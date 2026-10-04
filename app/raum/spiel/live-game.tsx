@@ -715,9 +715,8 @@ export function LiveRunningDictationGame({
           ) : null
         }
         write={{
-          ...(kind === "vocabulary" || kind === "math"
-            ? { question: promptNode }
-            : {}),
+          // Mathe-Aufgaben sollen gemerkt werden: im Schreibfeld nicht zeigen.
+          ...(kind === "vocabulary" ? { question: promptNode } : {}),
           help: copyMode ? (
             <CopyGuide target={activeWord.targetWord} answer={answer} />
           ) : hint ? (

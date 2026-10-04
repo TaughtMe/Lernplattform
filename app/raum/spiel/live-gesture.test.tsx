@@ -162,3 +162,35 @@ describe("hold to reveal in the running dictation", () => {
     expect(field()).toBeInTheDocument();
   });
 });
+
+describe("math tasks must be memorised", () => {
+  it("does not show the task in the answer screen", () => {
+    const mathSession = parseLiveSession(
+      {
+        words: [{ id: "m", kind: "math", prompt: "7 · 8", targetWord: "56" }],
+        gameMode: "UEBUNG",
+        stationCount: 1,
+        uebungMaxAttempts: 3,
+      },
+      "session",
+      "seed",
+    );
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="1234"
+        studentName="Mia"
+        session={mathSession}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+    const stage = container.querySelector("[data-game-surface]")!;
+    twoFingersDown(stage);
+    expect(container.textContent).toContain("7");
+    twoFingersUp(stage);
+    expect(field()).toBeInTheDocument();
+    expect(container.textContent).not.toContain("7 · 8");
+    expect(container.textContent).not.toContain("56");
+  });
+});
