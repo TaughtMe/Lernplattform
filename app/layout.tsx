@@ -71,6 +71,7 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: "/favicon.svg",
       apple: { url: "/icon-180.png", sizes: "180x180", type: "image/png" },
     },
+    manifest: "/manifest.webmanifest",
     appleWebApp: { capable: true, title: "Lernraum" },
   };
 }
