@@ -26,6 +26,7 @@
   min-width: 0;
   /* Platz für die Tab-Leiste unten. */
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  container: student-main / inline-size;
 }
 .main.bare {
   padding-bottom: 0;
@@ -202,5 +203,28 @@
     background: none;
     border-color: var(--nav-accent);
     color: var(--nav-accent);
+  }
+}
+
+/*
+ * Die Fortschrittsspalte der Lernen-Startseite (rechts, ab 900 px Inhaltsbreite)
+ * soll bis zum unteren Rand reichen: Der Seitenfuß bleibt in der Hauptspalte
+ * und setzt die Fläche der Spalte darunter fort.
+ */
+@container student-main (min-width: 900px) {
+  .main:has([data-side-rail]) > footer {
+    position: relative;
+    margin-right: 356px;
+  }
+  .main:has([data-side-rail]) > footer::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    bottom: 0;
+    left: 100%;
+    width: 356px;
+    border-left: 1px solid var(--line);
+    background: var(--surface);
+    pointer-events: none;
   }
 }

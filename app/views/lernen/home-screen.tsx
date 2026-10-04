@@ -143,7 +143,11 @@ export function HomeScreen(props: HomeScreenProps) {
           </div>
         </section>
 
-        <aside className={styles.side} aria-label="Fortschritt">
+        <aside
+          className={styles.side}
+          aria-label="Fortschritt"
+          data-side-rail=""
+        >
           <section className={styles.panel} aria-labelledby="home-week">
             <div className={styles.panelHead}>
               <h2 id="home-week" className={styles.panelTitle}>
