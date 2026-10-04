@@ -259,7 +259,6 @@ export function useContentLibrary(): {
             },
           }
         : {}),
-      onOpenRoom: () => router.push("/lehrer/live"),
     },
     start: {
       open: startTarget !== undefined,

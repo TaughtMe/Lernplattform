@@ -20,41 +20,8 @@
   color: var(--ink2);
 }
 .wideOnly,
-.openBottom,
 .tileText {
   display: none;
-}
-
-/* ---------- Raum öffnen ---------- */
-.openTop,
-.openBottom {
-  align-items: center;
-  gap: 9px;
-  border: 0;
-  background: var(--green);
-  color: var(--green-ink);
-  font-weight: 700;
-  cursor: pointer;
-}
-.openTop {
-  display: inline-flex;
-  justify-content: center;
-  width: 100%;
-  min-height: 54px;
-  border-radius: 14px;
-  font-size: 15.5px;
-}
-.openTop svg {
-  width: 19px;
-  height: 19px;
-}
-.openTop:hover,
-.openBottom:hover {
-  filter: brightness(1.12);
-}
-.openBottom svg {
-  width: 18px;
-  height: 18px;
 }
 
 /* ---------- Neu anlegen ---------- */
@@ -253,7 +220,6 @@
   .wideOnly {
     display: inline;
   }
-  .openTop,
   .list.narrowList,
   .panel {
     display: none;
@@ -266,13 +232,6 @@
   }
   .list.wideList {
     display: flex;
-  }
-  .openBottom {
-    display: inline-flex;
-    min-height: 46px;
-    padding: 0 20px;
-    border-radius: 12px;
-    font-size: 14.5px;
   }
   .tiles {
     grid-template-columns: repeat(3, 1fr);

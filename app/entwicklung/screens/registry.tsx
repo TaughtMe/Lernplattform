@@ -187,7 +187,6 @@ function TeacherDemo({ variant, theme }: { variant: string; theme: Theme }) {
           footnote={DEMO_FOOTNOTE}
           onKind={setKind}
           onOpen={() => setSheetOpen(true)}
-          onOpenRoom={() => setSheetOpen(true)}
         />
         <StartSheet
           open={sheetOpen}

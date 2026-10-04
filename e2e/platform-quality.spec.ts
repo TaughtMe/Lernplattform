@@ -677,11 +677,15 @@ test("teachers can prepare every native live-room content type", async ({
     page.getByText("Dieses Gerät ist die Schutzgrenze."),
   ).toHaveCount(1);
   await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
-  // Der große Knopf „Raum öffnen“ führt zum Laufdiktat (mobil oben, am Desktop unten).
-  await expect(async () => {
-    await page.getByRole("button", { name: "Raum öffnen" }).first().click();
-    await expect(page).toHaveURL(/\/lehrer\/live$/, { timeout: 1500 });
-  }).toPass();
+  // Kein eigener Knopf „Raum öffnen“: Eine Inhaltsart führt zum Laufdiktat
+  // (mobil wählt die Kachel nur, „Weiter“ öffnet).
+  await expect(page.getByRole("button", { name: "Raum öffnen" })).toHaveCount(
+    0,
+  );
+  await page.getByRole("button", { name: /^Mathe/ }).click();
+  const next = page.getByRole("button", { name: "Weiter", exact: true });
+  if (await next.isVisible()) await next.click();
+  await expect(page).toHaveURL(/\/lehrer\/live\?neu=math/);
   await page.goBack();
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),

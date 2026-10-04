@@ -14,9 +14,7 @@ declare const styles: {
   readonly narrowList: string;
   readonly next: string;
   readonly notice: string;
-  readonly openBottom: string;
   readonly openButton: string;
-  readonly openTop: string;
   readonly panel: string;
   readonly panelHint: string;
   readonly panelText: string;

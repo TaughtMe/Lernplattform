@@ -160,13 +160,12 @@ describe("TeacherFrame", () => {
 });
 
 describe("ContentLibraryScreen", () => {
-  it("meldet Art, Anlegen, Öffnen, Bearbeiten und Raum öffnen", async () => {
+  it("meldet Art, Anlegen, Öffnen und Bearbeiten", async () => {
     const handlers = {
       onKind: vi.fn(),
       onCreate: vi.fn(),
       onOpen: vi.fn(),
       onEdit: vi.fn(),
-      onOpenRoom: vi.fn(),
     };
     render(
       <ContentLibraryScreen
@@ -207,12 +206,9 @@ describe("ContentLibraryScreen", () => {
     );
     expect(handlers.onOpen).toHaveBeenCalledWith("division");
 
-    for (const button of screen.getAllByRole("button", {
-      name: "Raum öffnen",
-    })) {
-      await userEvent.click(button);
-    }
-    expect(handlers.onOpenRoom).toHaveBeenCalledTimes(2);
+    expect(
+      screen.queryByRole("button", { name: "Raum öffnen" }),
+    ).not.toBeInTheDocument();
   });
 
   it("zeigt „Zuordnen“ nur mit onAssign", async () => {

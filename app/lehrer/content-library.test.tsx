@@ -244,7 +244,7 @@ describe("Inhalte-Seite: Zuordnen", () => {
 });
 
 describe("Inhalte-Seite: Wege", () => {
-  it("führt Bearbeiten, Öffnen, Neu anlegen und Raum öffnen zum Laufdiktat", async () => {
+  it("führt Bearbeiten, Öffnen und Neu anlegen zum Laufdiktat", async () => {
     await createTeacherContentLibraryRepository().put(
       entry("x", { classIds: [CLASS_A] }),
     );
@@ -266,12 +266,10 @@ describe("Inhalte-Seite: Wege", () => {
     expect(window.location.pathname + window.location.search).toBe(
       `/lehrer/live?neu=math&klasse=${CLASS_A}`,
     );
-
-    window.history.replaceState(null, "", `/lehrer?klasse=${CLASS_A}`);
-    await user.click(
-      screen.getAllByRole("button", { name: "Raum öffnen" })[0]!,
-    );
-    expect(window.location.pathname).toBe("/lehrer/live");
+    // Kein eigener Knopf „Raum öffnen“: Der Weg führt über Art oder Eintrag.
+    expect(
+      screen.queryByRole("button", { name: "Raum öffnen" }),
+    ).not.toBeInTheDocument();
   });
 });
 

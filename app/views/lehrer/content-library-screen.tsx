@@ -73,12 +73,11 @@ export type ContentLibraryScreenProps = {
   onEdit?: (id: string) => void;
   /** Zeigt „Zuordnen“ je Zeile (Ansicht „Nicht zugeordnet“). */
   onAssign?: (id: string) => void;
-  onOpenRoom?: () => void;
 };
 
 /**
  * Inhalte des Lehrerbereichs (Design 3c mobil, 3d Desktop): Neu anlegen,
- * Ablage und der große Knopf „Raum öffnen“. Läuft im `TeacherFrame` und
+ * Ablage. Der Raum wird über eine Inhaltsart oder einen Eintrag geöffnet. Läuft im `TeacherFrame` und
  * reagiert auf dessen Breite.
  */
 export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
@@ -95,13 +94,10 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
     onOpen,
     onEdit,
     onAssign,
-    onOpenRoom,
   } = props;
   const selected = KINDS[kind];
   return (
     <div className={styles.content}>
-      <OpenRoomButton className={styles.openTop} onClick={onOpenRoom} />
-
       <section className={styles.section} aria-labelledby="neu-anlegen">
         <span id="neu-anlegen" className={styles.label}>
           Neu anlegen
@@ -237,37 +233,11 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
         {footnote ? <p className={styles.footnote}>{footnote}</p> : null}
       </section>
 
-      <OpenRoomButton className={styles.openBottom} onClick={onOpenRoom} />
       {notice ? (
         <aside className={styles.notice} aria-label="Hinweis">
           {notice}
         </aside>
       ) : null}
     </div>
-  );
-}
-
-function OpenRoomButton({
-  className,
-  onClick,
-}: {
-  className: string;
-  onClick: (() => void) | undefined;
-}) {
-  return (
-    <button type="button" className={className} onClick={onClick}>
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path d="M8 5.5 18.5 12 8 18.5z" />
-      </svg>
-      Raum öffnen
-    </button>
   );
 }
