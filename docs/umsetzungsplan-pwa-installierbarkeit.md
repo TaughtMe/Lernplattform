@@ -2,9 +2,10 @@
 
 Stand: 04.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `b4bc3e0` · vinext `1.0.0-beta.8`
 
-Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Abschnitt 3 enthält die empfohlenen
-Entscheidungen; offene Punkte stehen in Abschnitt 7 und werden vor der Umsetzung mit der
-projektverantwortlichen Lehrkraft abgestimmt.
+Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Die Entscheidungen in Abschnitt 7
+sind mit der projektverantwortlichen Lehrkraft abgestimmt und verbindlich. Das Update von vinext
+und den übrigen Abhängigkeiten ist nicht Teil dieses Plans, sondern steht in
+`docs/umsetzungsplan-abhaengigkeiten.md`.
 
 ## 0. Arbeitsweise
 
@@ -86,7 +87,7 @@ Empfehlung:
 - **Fehler an vinext melden** (Issue mit minimaler Reproduktion). Ein Patch über `patch-package`
   ist nicht nötig, weil 3.1 den Fehler vollständig umgeht.
 - **Update von beta.8 auf 1.0.1 separat** in eigenem PR, mit voller Testsuite. Das ist sinnvoll
-  (raus aus der Beta), aber unabhängig von diesem Problem.
+  (raus aus der Beta), aber unabhängig von diesem Problem. Plan: `docs/umsetzungsplan-abhaengigkeiten.md`.
 
 Warum `laufdiktat.pages.dev` funktioniert: Die alte App ist sehr wahrscheinlich eine klassische
 Vite-SPA mit statischem `index.html`, in dem der Manifest-Link fest im `<head>` steht. Von hier aus
@@ -129,10 +130,18 @@ Verworfene Alternativen:
 
 ### 3.3 Icons reproduzierbar erzeugen
 
-- Neues Skript `scripts/generate-app-icons.mjs`. Es rendert `public/favicon.svg` mit dem bereits
-  vorhandenen Playwright (wie `scripts/render-design-references.mjs`) als PNG in 180, 192 und
-  512 px und erzeugt die maskable-Variante. Keine neue Abhängigkeit.
+Entscheidung: Vorerst bleibt das vorhandene „L“ (`public/favicon.svg`) das App-Icon. Ein eigenes
+App-Icon folgt später. Der Austausch soll dann nur aus „neue SVG ablegen, Skript ausführen“
+bestehen.
+
+- Neues Skript `scripts/generate-app-icons.mjs`. Es rendert eine Quell-SVG (Standard:
+  `public/favicon.svg`, später die neue Icon-Datei) mit dem bereits vorhandenen Playwright (wie
+  `scripts/render-design-references.mjs`) als PNG in 180, 192 und 512 px und erzeugt die
+  maskable-Variante. Keine neue Abhängigkeit.
 - Die PNGs bleiben eingecheckt. Das Skript läuft nur bei Icon-Änderungen, nicht in jedem Build.
+- Hinweis für das spätere Icon: Bei installierten Apps bleibt das alte Icon auf manchen Geräten
+  stehen, bis die App neu installiert wird. Deshalb erhalten neue Icon-Dateien neue Dateinamen
+  (z. B. `icon-v2-192.png`) statt die alten zu überschreiben.
 
 ### 3.4 iOS und iPadOS
 
@@ -157,11 +166,41 @@ Ergänzen: `appleWebApp.statusBarStyle: "default"`.
 - Das Folgeticket „vinext auf 1.0.1“ und den Upstream-Bericht in
   `docs/upstream-integration.md` vermerken.
 
-### 3.7 Optional: eigener Installationshinweis
+### 3.7 Knopf „Als App installieren“ auf der Startseite
 
-Nur auf Wunsch (siehe 7.2): ein unaufdringlicher Eintrag in den Einstellungen. Er heißt
-„Als App installieren“ und nutzt `beforeinstallprompt` in Chromium; auf iOS zeigt er eine kurze
-Anleitung. Für die Grundfunktion ist das nicht nötig, weil der Browser-Knopf nach 3.1 erscheint.
+Entscheidung: Ein eigener Knopf direkt auf der Startseite, **unter dem Raumcode**.
+
+Platzierung und Aussehen:
+
+- In `app/views/start/landing-screen.tsx` innerhalb der Raumcode-Gruppe, nach den Codefeldern
+  und dem `notice`, vor der Zeile „Ohne Konto · …“.
+- Zurückhaltend als Textknopf mit Symbol, damit die Startseite nach Design 2a („ein Tier, ein
+  Code, sonst nichts“) ruhig bleibt. Mindestens 44 px Touch-Ziel, sichtbarer Fokus.
+- Die Ansicht bleibt rein (Regel aus `docs/umsetzungsplan-lernraum-ui-v2.md`): Sie bekommt nur
+  eine neue Eigenschaft `renderInstall?: (className: string) => ReactNode`, analog zu
+  `renderScan`. Die Logik liegt in `app/landing/start-page.tsx`. Die bewusste Ergänzung zur
+  Vorlage 2a wird im v2-Plan als Abweichung vermerkt.
+
+Verhalten:
+
+- **Chrome, Edge, Android:** Ein früh eingebundener Listener speichert das Ereignis
+  `beforeinstallprompt` (mit `preventDefault()`). Der Browser feuert es oft vor der Hydration;
+  deshalb sitzt der Listener in der Komponente aus 3.5 oder in einem kleinen Inline-Skript im
+  `<head>`. Ein Klick ruft `prompt()` auf. Nach `appinstalled` oder einer Annahme verschwindet
+  der Knopf.
+- **iPhone/iPad (Safari):** Hier gibt es kein `beforeinstallprompt`. Der Knopf öffnet ein kurzes
+  Blatt (vorhandenes `app/ui/sheet.tsx`) mit der Anleitung „Teilen → Zum Home-Bildschirm“.
+- **Bereits installiert** (`display-mode: standalone` oder `navigator.standalone`): Der Knopf
+  erscheint nicht.
+- **Browser ohne Installation** (z. B. Firefox Desktop): Der Knopf erscheint nicht.
+- Vor der Hydration wird nichts gerendert, damit nichts springt oder flackert.
+
+Neue Bausteine:
+
+- `app/ui/use-install-prompt.ts`: ein Hook mit dem Zustand
+  `"unavailable" | "available" | "ios" | "installed"` und der Aktion `install()`.
+- Texte: Knopf „Als App installieren“; iOS-Blatt „So installierst du Lernraum“ mit zwei kurzen
+  Schritten.
 
 ## 4. Tests (Regressionsschutz)
 
@@ -175,6 +214,12 @@ Anleitung. Für die Grundfunktion ist das nicht nötig, weil der Browser-Knopf n
   - Über CDP `Page.getInstallabilityErrors` gibt es auf `/` keine Fehler. `in-incognito` wird
     ignoriert, weil Playwright-Kontexte als inkognito gelten.
   - Auf `/` ist nach dem Laden ein Service Worker registriert.
+- Installieren-Knopf (3.7):
+  - Unit-Test für `use-install-prompt` mit einem nachgebauten `beforeinstallprompt`-Ereignis,
+    iOS-Erkennung und dem Standalone-Fall.
+  - E2E auf `/`: Nach einem künstlich ausgelösten `beforeinstallprompt` erscheint der Knopf
+    unter dem Raumcode. Im Standalone-Modus erscheint er nicht. axe-Prüfung ohne Befund.
+  - `npm run test:design`: Die Startseiten-Referenz wird bewusst aktualisiert.
 - Bestehende Tests zu `VersionButton`/Update-Hinweis müssen grün bleiben.
 
 ## 5. Abnahme nach dem Deployment
@@ -188,6 +233,8 @@ Anleitung. Für die Grundfunktion ist das nicht nötig, weil der Browser-Knopf n
 4. Installierte App offline starten: Die App-Hülle oder der Offline-Hinweis erscheint, keine
    Browser-Fehlerseite.
 5. Update-Hinweis über den Versionsknopf funktioniert weiterhin in der installierten App.
+6. Knopf „Als App installieren“: In Chrome und Android installiert er die App, auf dem iPad zeigt
+   er die Anleitung, in der installierten App ist er verschwunden.
 
 Firefox (Desktop) bietet keine PWA-Installation an. Das ist kein Fehler des Lernraums.
 
@@ -195,15 +242,18 @@ Firefox (Desktop) bietet keine PWA-Installation an. Das ist kein Fehler des Lern
 
 1. 3.1 + Render-Test aus 4: behebt das gemeldete Problem allein (wenige Zeilen). Kann als eigener
    kleiner PR zuerst gehen.
-2. 3.5 (Service Worker zentral) mit E2E-Tests.
-3. 3.2–3.4 (Farben, Maskable-Icon, Icon-Skript, iOS-Feinschliff).
-4. 3.6, Upstream-Bericht, separater PR für das vinext-Update.
-5. Optional 3.7.
+2. 3.5 (Service Worker zentral) mit E2E-Tests. Der frühe `beforeinstallprompt`-Listener für 3.7
+   kommt gleich mit.
+3. 3.7 (Knopf auf der Startseite).
+4. 3.2–3.4 (Farben, Maskable-Icon, Icon-Skript, iOS-Feinschliff).
+5. 3.6 und Upstream-Bericht.
 
-## 7. Offene Entscheidungen
+Das vinext-Update folgt danach separat (`docs/umsetzungsplan-abhaengigkeiten.md`). Nach dem
+Update prüft der Render-Test aus 4, ob der Kernfix weiter greift.
 
-1. **Start-Adresse der installierten App:** `/` (Startseite mit Wahl Schüler/Lehrkraft,
-   empfohlen) oder direkt `/lernen`?
-2. **Eigener Installationshinweis (3.7)** gewünscht oder reicht der Browser-Knopf?
-3. **Icon-Motiv:** das vorhandene „L“-Favicon als App-Icon verwenden (empfohlen) oder ein eigenes
-   App-Icon gestalten?
+## 7. Entscheidungen (abgestimmt am 04.10.2026)
+
+1. **Start-Adresse:** Die installierte App startet auf der Startseite (`start_url: "/"`).
+2. **Eigener Installieren-Knopf:** ja, auf der Startseite unter dem Raumcode (3.7).
+3. **Icon:** vorerst das vorhandene „L“. Ein eigenes App-Icon gestaltet die Lehrkraft später; es
+   wird über das Skript aus 3.3 eingespielt.
