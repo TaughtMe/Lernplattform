@@ -100,6 +100,48 @@
       "status": "offen"
     },
     {
+      "id": "4g",
+      "screen": "4g",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "4h",
+      "screen": "4h",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "4i",
+      "screen": "4i",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "4j",
+      "screen": "4j",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "8a",
+      "screen": "8a",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "8b",
+      "screen": "8b",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
       "id": "4d",
       "screen": "4d",
       "width": 390,

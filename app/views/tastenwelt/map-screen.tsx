@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Icon } from "../../ui/icons";
 import { Animal, cx, type Theme } from "../parts/parts";
 import { Keyboard } from "./keyboard";
@@ -38,86 +39,92 @@ const MEDAL_LABEL: Record<MapMedal, string> = {
   silver: "Silber",
   bronze: "Bronze",
 };
-const MEDAL_STARS: Record<MapMedal, number> = { gold: 3, silver: 2, bronze: 1 };
 
+const WHITE = "#ffffff";
 const SPARKLE =
-  "M15 3 L17.5 12.5 L27 15 L17.5 17.5 L15 27 L12.5 17.5 L3 15 L12.5 12.5 Z";
+  "polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)";
 
-/** Glanz-Muster je Ecke; vier Varianten wechseln von Karte zu Karte. */
-function Gloss({ variant }: { variant: number }) {
-  const left =
-    variant === 0 ? (
-      <path
-        d="M5 22 L22 8"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-    ) : variant === 1 ? (
-      <path
-        d="M5 27 A18 18 0 0 1 24 5"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-    ) : variant === 2 ? (
-      <path
-        d={SPARKLE}
-        fill="currentColor"
-        transform="translate(3 3) scale(0.8)"
-      />
-    ) : null;
-  const right =
-    variant === 1 ? (
-      <circle cx="22" cy="8" r="3.5" fill="currentColor" />
-    ) : variant === 2 ? (
-      <>
-        <circle cx="18" cy="7" r="3" fill="currentColor" />
-        <circle cx="25" cy="15" r="2.2" fill="currentColor" />
-      </>
-    ) : variant === 3 ? (
-      <>
-        <path
-          d={SPARKLE}
-          fill="currentColor"
-          transform="translate(6 0) scale(0.8)"
-        />
-        <path
-          d={SPARKLE}
-          fill="currentColor"
-          transform="translate(0 15) scale(0.45)"
-        />
-      </>
-    ) : (
-      <path
-        d={SPARKLE}
-        fill="currentColor"
-        transform="translate(9 1) scale(0.6)"
-      />
-    );
+function bar(
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  turn: number,
+): CSSProperties {
+  return {
+    left,
+    top,
+    width,
+    height,
+    borderRadius: 6,
+    background: WHITE,
+    transform: `rotate(${turn}deg)`,
+  };
+}
+function spark(
+  position: { left: number } | { right: number },
+  top: number,
+  size: number,
+): CSSProperties {
+  return {
+    ...position,
+    top,
+    width: size,
+    height: size,
+    background: WHITE,
+    clipPath: SPARKLE,
+  };
+}
+function dot(right: number, top: number, size: number): CSSProperties {
+  return {
+    right,
+    top,
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    background: WHITE,
+  };
+}
+
+/** Glanzpunkte der Vorlage (6c): fünf Muster, je Karte eines. */
+const GLINTS: ReadonlyArray<readonly [CSSProperties, CSSProperties]> = [
+  [bar(14, 12, 30, 8, -35), bar(12, 26, 12, 6, -35)],
+  [spark({ right: 12 }, 10, 22), spark({ right: 34 }, 26, 11)],
+  [
+    {
+      left: 10,
+      top: 10,
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      border: `5px solid ${WHITE}`,
+      borderColor: `${WHITE} transparent transparent ${WHITE}`,
+      transform: "rotate(-8deg)",
+    },
+    dot(14, 12, 9),
+  ],
+  [spark({ right: 10 }, 8, 16), bar(14, 14, 24, 6, -30)],
+  [
+    {
+      ...dot(12, 12, 8),
+      boxShadow: `12px 10px 0 -1px ${WHITE}, -2px 16px 0 -2px ${WHITE}`,
+    },
+    spark({ left: 12 }, 12, 16),
+  ],
+];
+
+function Glint({ variant }: { variant: number }) {
+  const [first, second] = GLINTS[variant % GLINTS.length] ?? GLINTS[0] ?? [];
   return (
     <>
-      {left ? (
-        <svg
-          className={cx(styles.gloss, styles.glossLeft)}
-          viewBox="0 0 30 30"
-          fill="none"
-          aria-hidden="true"
-        >
-          {left}
-        </svg>
-      ) : null}
-      <svg
-        className={cx(styles.gloss, styles.glossRight)}
-        viewBox="0 0 30 30"
-        fill="none"
-        aria-hidden="true"
-      >
-        {right}
-      </svg>
+      <span className={styles.glint} style={first} aria-hidden="true" />
+      <span className={styles.glint} style={second} aria-hidden="true" />
     </>
   );
 }
+
+/** Leichte Schräglage je Karte, damit die Reihen nicht starr wirken. */
+const TILT = [-2, 1.5, -1, 2, 0.5];
 
 function listKeys(keys: readonly string[]) {
   const shown = keys.map((key) =>
@@ -131,17 +138,17 @@ function listKeys(keys: readonly string[]) {
   return `${shown.slice(0, -1).join(", ")} und ${shown.at(-1)}`;
 }
 
-/** Übersicht der Tastenwelt: alle Lektionen als Karten, nach Bereichen. */
+/** Übersicht der Tastenwelt: alle Stationen als Karten (Design 6c). */
 export function MapScreen(props: MapScreenProps) {
   const { areas, today, unsure } = props;
-  const lessons = areas.flatMap((area) => area.lessons);
-  const done = lessons.filter((lesson) => lesson.state === "done").length;
-  // Laufende Nummer der ersten Lektion je Bereich.
-  const offsets = areas.map((_, areaIndex) =>
-    areas
-      .slice(0, areaIndex)
-      .reduce((sum, area) => sum + area.lessons.length, 0),
+  const lessons = areas.flatMap((area) =>
+    area.lessons.map((lesson, lessonIndex) => ({
+      lesson,
+      area: areas.indexOf(area),
+      lessonIndex,
+    })),
   );
+  const done = lessons.filter(({ lesson }) => lesson.state === "done").length;
   return (
     <div className={styles.screen} lang="de">
       <div className={styles.layout}>
@@ -167,109 +174,77 @@ export function MapScreen(props: MapScreenProps) {
           </header>
 
           <div className={styles.board}>
-            <div className={styles.boardHead}>
-              <p className={styles.count}>
-                {done} von {lessons.length} Lektionen geschafft
-              </p>
-              <p className={styles.legend}>
-                {(
-                  [
-                    ["bronze", "Bronze ab 90 %"],
-                    ["silver", "Silber ab 94 %"],
-                    ["gold", "Gold ab 97 %"],
-                  ] as const
-                ).map(([medal, label]) => (
-                  <span key={medal} className={styles.legendItem}>
-                    <span className={cx(styles.legendDot, styles[medal])} />
-                    {label}
-                  </span>
-                ))}
-              </p>
-            </div>
-            {areas.map((area, areaIndex) => (
-              <section
-                key={area.title}
-                className={styles.area}
-                aria-label={area.title}
-              >
-                <h2 className={styles.areaTitle}>{area.title}</h2>
-                <ol className={styles.cards}>
-                  {area.lessons.map((lesson, lessonIndex) => {
-                    const index = (offsets[areaIndex] ?? 0) + lessonIndex;
-                    const main = lesson.keys ?? lesson.title;
-                    return (
-                      <li key={index} className={styles.cardItem}>
-                        <button
-                          type="button"
-                          className={cx(
-                            styles.card,
-                            styles[
-                              lesson.medal ??
-                                (lesson.state === "done"
-                                  ? "gold"
-                                  : lesson.state)
-                            ],
-                          )}
-                          disabled={lesson.state === "locked"}
-                          aria-label={`Lektion ${index + 1}: ${lesson.title}${
-                            lesson.keys ? ` (${lesson.keys})` : ""
-                          }${
-                            lesson.medal
-                              ? `, geschafft mit ${MEDAL_LABEL[lesson.medal]}`
-                              : lesson.state === "current"
-                                ? ", hier geht es weiter"
-                                : lesson.state === "locked"
-                                  ? ", noch gesperrt"
-                                  : ""
-                          }`}
-                          aria-current={
-                            lesson.state === "current" ? "step" : undefined
-                          }
-                          onClick={() => props.onLesson?.(index)}
-                        >
-                          {lesson.state === "locked" ? null : (
-                            <Gloss variant={index % 4} />
-                          )}
-                          <span className={styles.cardText}>
-                            <span
-                              className={cx(
-                                styles.cardMain,
-                                lesson.keys && styles.cardKeys,
-                              )}
-                            >
-                              {main}
-                            </span>
-                            {lesson.keys ? (
-                              <span className={styles.cardSub}>
-                                {lesson.title}
-                              </span>
-                            ) : null}
-                          </span>
-                          <span className={styles.cardFoot}>
-                            <span className={styles.cardNumber}>
-                              {index + 1}
-                            </span>
-                            {lesson.medal ? (
-                              <span className={styles.medal} aria-hidden="true">
-                                {"★".repeat(MEDAL_STARS[lesson.medal])}
-                              </span>
-                            ) : null}
-                          </span>
-                        </button>
-                        {lesson.state === "current" && props.animal ? (
-                          <Animal
-                            animal={props.animal}
-                            size={52}
-                            fluid
-                            className={styles.buddy}
-                          />
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ol>
-              </section>
-            ))}
+            <p className={styles.count}>
+              {done} von {lessons.length} Stationen geschafft
+            </p>
+            <ol className={styles.cards}>
+              {lessons.map(({ lesson, area }, index) => {
+                const label = lesson.keys ?? lesson.title;
+                return (
+                  <li key={index} className={styles.cardItem}>
+                    <button
+                      type="button"
+                      title={label}
+                      className={cx(
+                        styles.card,
+                        styles[
+                          lesson.medal ??
+                            (lesson.state === "done" ? "gold" : lesson.state)
+                        ],
+                      )}
+                      style={
+                        {
+                          "--tilt": `${TILT[(index * 3) % TILT.length]}deg`,
+                        } as CSSProperties
+                      }
+                      disabled={lesson.state === "locked"}
+                      aria-label={`Lektion ${index + 1}: ${lesson.title}${
+                        lesson.keys ? ` (${lesson.keys})` : ""
+                      }${
+                        lesson.medal
+                          ? `, geschafft mit ${MEDAL_LABEL[lesson.medal]}`
+                          : lesson.state === "current"
+                            ? ", hier geht es weiter"
+                            : lesson.state === "locked"
+                              ? ", noch gesperrt"
+                              : ""
+                      }`}
+                      aria-current={
+                        lesson.state === "current" ? "step" : undefined
+                      }
+                      onClick={() => props.onLesson?.(index)}
+                    >
+                      {lesson.medal ? (
+                        <Glint variant={index * 7 + area * 3} />
+                      ) : null}
+                      <span
+                        className={cx(
+                          styles.cardMain,
+                          label.length > 13
+                            ? styles.cardLong
+                            : label.length > 10
+                              ? styles.cardMid
+                              : null,
+                        )}
+                      >
+                        {label}
+                      </span>
+                      <span className={styles.cardNumber} aria-hidden="true">
+                        {index + 1}
+                      </span>
+                    </button>
+                    {lesson.state === "current" && props.animal ? (
+                      <Animal
+                        animal={props.animal}
+                        size={46}
+                        fluid
+                        className={styles.buddy}
+                      />
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
           </div>
         </section>
 
