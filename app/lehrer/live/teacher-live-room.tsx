@@ -19,8 +19,12 @@ import {
   type LiveOverview,
   mathGapRow,
   mathLineParts,
+  roomTimesView,
+  nextErrorBase,
   splitConfigFor,
   splitModeOf,
+  strugglingNames,
+  type ErrorBase,
   STAGE_OF_STEP,
   STEP_OF_STAGE,
 } from "./dictation-adapter";
@@ -39,18 +43,26 @@ import styles from "./teacher-live-room.module.css";
  */
 export function TeacherLiveRoom({
   liveRoomConfig,
+  clock,
 }: {
   liveRoomConfig: LiveRoomConfig | null;
+  /** Uhr für die Raumfristen in Millisekunden; die Tests setzen eine eigene. */
+  clock?: () => number;
 }) {
-  const [t, refs] = useTeacherLiveRoom(liveRoomConfig);
+  const [t, refs] = useTeacherLiveRoom(liveRoomConfig, clock);
   const { theme, toggleTheme } = useThemeToggle();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const stationMode = t.gameMode === "STATION";
+  // Fehlerstand je Schüler beim Wechsel der Aufgabe: daraus folgt, wer gerade hängt.
+  const [errorBase, setErrorBase] = useState<ErrorBase>({});
+  const currentBase = nextErrorBase(errorBase, t.students);
+  if (currentBase !== errorBase) setErrorBase(currentBase);
 
   const options: Record<DictationOption, boolean> = {
     tts: t.tts,
     shuffle: stationMode ? t.stationShuffle : t.shuffleWords,
     strict: t.strictTyping,
+    taskHelp: t.taskHelp,
     stars: t.showStars,
     ink: t.battleInk,
     flicker: t.battleFlicker,
@@ -63,6 +75,7 @@ export function TeacherLiveRoom({
       else t.setShuffleWords(!t.shuffleWords);
     }
     if (option === "strict") t.setStrictTyping(!t.strictTyping);
+    if (option === "taskHelp") t.setTaskHelp(!t.taskHelp);
     if (option === "stars") t.setShowStars(!t.showStars);
     if (option === "ink") t.setBattleInk(!t.battleInk);
     if (option === "flicker") t.setBattleFlicker(!t.battleFlicker);
@@ -72,6 +85,8 @@ export function TeacherLiveRoom({
     t.room && t.hydrated
       ? `${window.location.origin}/raum?code=${t.room.code}`
       : "";
+
+  const roomTimes = roomTimesView(t.roomTimeline, t.roomTimeState);
 
   return (
     <div className={styles.page} data-hydrated={t.hydrated ? "true" : "false"}>
@@ -138,8 +153,15 @@ export function TeacherLiveRoom({
             labelFor: t.labelFor,
             animalFor: t.animalFor,
             statusFor: t.statusFor,
+            struggling: strugglingNames(currentBase, t.students),
           }),
         )}
+        {...(roomTimes ? { roomTimes } : {})}
+        title={t.title}
+        onTitle={t.setTitle}
+        onSave={() => void t.saveContent()}
+        {...(t.contentId ? { onDelete: () => void t.deleteContent() } : {})}
+        {...(t.libraryNotice ? { libraryNotice: t.libraryNotice } : {})}
         nextLabel={nextLabel(t)}
         nextDisabled={t.footerDisabled}
         lockedSteps={lockedSteps(t)}
@@ -305,6 +327,8 @@ function lockedSteps(t: TeacherLiveModel): TeacherStep[] {
   if (!t.words.length) locked.push("settings", "lobby", "live");
   if (!t.room && t.stage !== "settings") locked.push("lobby");
   if (t.stage !== "live") locked.push("live");
+  // Ein geschlossener Raum hat keine Lobby und keine Einstellungen mehr.
+  if (t.roomClosed) locked.push("import", "settings", "lobby");
   return locked;
 }
 
@@ -314,6 +338,7 @@ function nextLabel(t: TeacherLiveModel) {
     if (t.stage === "lobby") return "Startet …";
     if (t.stage === "live") return "Beendet …";
   }
+  if (t.roomClosed) return "Neuen Raum öffnen";
   if (t.stage === "content") return "Weiter zu Modus";
   if (t.stage === "settings") return "Raum öffnen";
   if (t.stage === "lobby") return "Sitzung starten";

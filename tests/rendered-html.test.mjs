@@ -83,7 +83,7 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/frei/german/lernwoerter", "Lernwörter"],
     ["/klasse/7b", "Klasse 7b"],
     ["/lernbox", "LernBox"],
-    ["/lehrer", "Übersicht"],
+    ["/lehrer", "Inhalte"],
     ["/lehrer/klassen", "Klassen und Schüler"],
     ["/lehrer/material", "Material"],
     ["/lehrer/aufgaben", "Aufgaben"],

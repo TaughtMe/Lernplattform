@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { revealAndRelease } from "./hold";
 
 test("completion survives failed delivery, retry and reload", async ({
   page,
@@ -60,10 +61,7 @@ test("completion survives failed delivery, retry and reload", async ({
   });
   await page.goto("/raum?code=4829");
 
-  await page
-    .getByRole("button", { name: "Aufgabe zeigen", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Jetzt schreiben" }).click();
+  await revealAndRelease(page);
   await expect(
     page.getByRole("textbox", { name: "Deine Antwort" }),
   ).toBeFocused();

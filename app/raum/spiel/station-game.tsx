@@ -8,6 +8,7 @@ import type { LiveProgress } from "../../../src/integrations/laufdiktat/room-api
 import { MathDisplay } from "../../components/math-display";
 import { useThemeToggle } from "../../ui/theme";
 import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
+import { useHoldToReveal } from "./use-hold-to-reveal";
 import { DeliveryNotice, GameWarning } from "./game-parts";
 
 type Props = {
@@ -42,8 +43,7 @@ export function LiveStationGame({
   const [activity, setActivity] = useState(0);
   const request = useRef(0);
   const revealing = useRef(false);
-  // Per Knopf aufgedeckt: bleibt sichtbar, bis „wieder verdecken“ kommt.
-  const shownByButton = useRef(false);
+  const surfaceRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!revealed) revealing.current = false;
   }, [revealed]);
@@ -166,6 +166,18 @@ export function LiveStationGame({
     notices,
   };
 
+  const blocked = loading || Boolean(loadError);
+  function hide() {
+    setRevealed(false);
+    setActivity((value) => value + 1);
+  }
+  useHoldToReveal(surfaceRef, {
+    enabled: stationNumber !== null && !blocked,
+    phase: revealed ? "read" : "wait",
+    onReveal: () => reveal(),
+    onRelease: hide,
+  });
+
   if (stationNumber === null) {
     return (
       <div className="ui-dictation">
@@ -185,23 +197,12 @@ export function LiveStationGame({
 
   const current = words[index];
   if (!current) return null;
-  const blocked = loading || Boolean(loadError);
-  const hide = () => {
-    shownByButton.current = false;
-    setRevealed(false);
-    setActivity((value) => value + 1);
-  };
   return (
     <div
       className="ui-dictation is-active-round"
       data-game-surface=""
-      onTouchStart={(event) => {
-        if (event.touches.length >= 2) reveal();
-      }}
-      onTouchEnd={(event) => {
-        if (event.touches.length < 2) hide();
-      }}
-      onTouchCancel={hide}
+      ref={surfaceRef}
+      onContextMenu={(event) => event.preventDefault()}
     >
       <StudentDictationScreen
         {...common}
@@ -218,15 +219,8 @@ export function LiveStationGame({
         readAloud={session.isTtsEnabled && !blocked}
         onReadAloud={readAloud}
         hold={{
-          onShow: () => {
-            shownByButton.current = true;
-            reveal();
-          },
-          disabled: blocked,
           title: `Aufgabe ${index + 1}`,
-          text: loading
-            ? "Dein Stand wird geladen …"
-            : `Solange du hältst, siehst du Aufgabe ${index + 1}. Merke sie dir und schreibe sie auf Papier.`,
+          ...(loading ? { text: "Dein Stand wird geladen …" } : {}),
           ...(loadError
             ? {
                 error: {
@@ -236,18 +230,7 @@ export function LiveStationGame({
               }
             : {}),
         }}
-        read={{
-          onWriteNow: hide,
-          writeNowLabel: "Aufgabe wieder verdecken",
-          releaseHint: "Merken und auf Papier schreiben",
-        }}
-        onHoldStart={() => {
-          shownByButton.current = false;
-          reveal();
-        }}
-        onHoldEnd={() => {
-          if (!shownByButton.current) hide();
-        }}
+        read={{ maxFontSize: 72 }}
         stationNav={{
           canPrev: index > 0 && !blocked,
           canNext: seen.has(seenKey) && !blocked,

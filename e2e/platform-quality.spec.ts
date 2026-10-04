@@ -655,14 +655,21 @@ test("teachers can prepare every native live-room content type", async ({
   });
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Übersicht" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Inhalte" })).toBeVisible();
   await expect(
     page.getByText("Dieses Gerät ist die Schutzgrenze."),
   ).toHaveCount(1);
   await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Unterrichtsrunde starten" }),
-  ).toHaveAttribute("href", "/lehrer/live");
+  // Kein eigener Knopf „Raum öffnen“: Eine Inhaltsart führt zum Laufdiktat
+  // (mobil wählt die Kachel nur, „Weiter“ öffnet).
+  await expect(page.getByRole("button", { name: "Raum öffnen" })).toHaveCount(
+    0,
+  );
+  await page.getByRole("button", { name: /^Mathe/ }).click();
+  const next = page.getByRole("button", { name: "Weiter", exact: true });
+  if (await next.isVisible()) await next.click();
+  await expect(page).toHaveURL(/\/lehrer\/live\?neu=math/);
+  await page.goBack();
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),
   ).toHaveCount(0);

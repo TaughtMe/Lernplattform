@@ -31,7 +31,7 @@ export type ContentKind = "text" | "vocabulary" | "math";
 export type SplitMode = "satz" | "zeile" | "wort";
 export type DictationMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
 export type DictationOption =
-  "tts" | "shuffle" | "strict" | "stars" | "ink" | "flicker";
+  "tts" | "shuffle" | "strict" | "taskHelp" | "stars" | "ink" | "flicker";
 
 /** Verbindung eines Schülers: im Raum, übt allein weiter oder getrennt. */
 export type ParticipantStatus = "online" | "practice" | "offline";
@@ -43,11 +43,30 @@ export type LiveStudent = {
   progress: number;
   total: number;
   mistakes: number;
+  /** Liegt bei der aktuellen Aufgabe mehrfach falsch: in der Liste hervorheben. */
+  struggling?: boolean;
 };
 export type StationState = {
   number: number;
   state: "done" | "active" | "idle";
   label: string;
+};
+
+/**
+ * Fristen des Raums (Entscheidung 52). Ohne Angabe zeigt die Ansicht genau die
+ * Vorlage. Die Uhrzeiten kommen fertig formatiert, die Ansicht rechnet nicht.
+ */
+export type RoomTimes = {
+  /** Beitritt mit Code und QR ist noch möglich. */
+  joinOpen: boolean;
+  /** Uhrzeit, bis der Code gilt, z. B. „14:35“. */
+  joinUntil: string;
+  /** Uhrzeit, zu der der Raum schließt. */
+  closesAt: string;
+  /** Der Raum schließt bald (ab 110 Minuten). */
+  closingSoon: boolean;
+  /** Der Raum ist geschlossen; die letzten Ergebnisse bleiben sichtbar. */
+  closed: boolean;
 };
 
 export type TeacherDictationScreenProps = {
@@ -103,6 +122,18 @@ export type TeacherDictationScreenProps = {
       display?: ReactNode;
     }>;
   };
+  roomTimes?: RoomTimes;
+  /**
+   * Ablage im Schritt „Inhalt“ (optional, ohne Angabe zeigt die Ansicht genau
+   * die Vorlage): Titelfeld, „Ablegen“ und beim Bearbeiten „Aus der Ablage
+   * löschen“ mit Bestätigung.
+   */
+  title?: string;
+  titlePlaceholder?: string;
+  libraryNotice?: string;
+  onTitle?: (title: string) => void;
+  onSave?: () => void;
+  onDelete?: () => void;
   /** Beschriftung und Sperre des Weiter-Knopfs (z. B. „Öffnet …“). */
   nextLabel?: string;
   nextDisabled?: boolean;
@@ -211,7 +242,7 @@ export const MODES: ReadonlyArray<{
   },
 ];
 
-function optionList(mode: DictationMode) {
+function optionList(mode: DictationMode, kind: ContentKind) {
   const station = mode === "STATION";
   return [
     {
@@ -234,6 +265,12 @@ function optionList(mode: DictationMode) {
       hint: "Verhindert Einfügen und Autokorrektur",
       show: !station,
     },
+    {
+      id: "taskHelp",
+      label: "Aufgabe nach Fehlern zeigen",
+      hint: "Mathe: nach 2 Fehlern steht die Aufgabe wieder im Antwortfeld",
+      show: !station && kind === "math",
+    },
     { id: "stars", label: "Sterne anzeigen", hint: "", show: !station },
     { id: "ink", label: "Tinten-Angriff", hint: "", show: mode === "BATTLE" },
     {
@@ -252,7 +289,9 @@ function optionList(mode: DictationMode) {
 /** Laufdiktat für Lehrkräfte (Design 5c mobil, 5d Desktop). */
 export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
   const [qrOpen, setQrOpen] = useState(false);
-  const showQr = props.qrLarge && props.roomCode ? () => setQrOpen(true) : null;
+  const joinOpen = props.roomTimes?.joinOpen ?? true;
+  const showQr =
+    props.qrLarge && props.roomCode && joinOpen ? () => setQrOpen(true) : null;
   const index = STEPS.findIndex((step) => step.id === props.step);
   const current = STEPS[index] ?? STEPS[0]!;
   const stepLabel = `Schritt ${index + 1} von ${STEPS.length}`;
@@ -307,7 +346,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
       </div>
 
       <footer className={styles.footer}>
-        {index > 0 ? (
+        {index > 0 && !props.roomTimes?.closed ? (
           <button
             type="button"
             className={styles.previous}
@@ -329,13 +368,24 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
           <button
             type="button"
             className={styles.footerCode}
-            aria-label={`Raumcode ${props.roomCode} und QR-Code zeigen`}
+            aria-label={
+              props.roomTimes
+                ? `Raumcode ${props.roomCode} und QR-Code zeigen, Code gilt bis ${props.roomTimes.joinUntil}`
+                : `Raumcode ${props.roomCode} und QR-Code zeigen`
+            }
             onClick={showQr}
           >
             <Icon name="qr" size={18} />
             <span className={styles.footerCodeLabel}>Raum</span>
             <span className={styles.footerCodeValue}>{props.roomCode}</span>
+            {props.roomTimes ? (
+              <span className={styles.footerCodeUntil}>
+                gilt bis {props.roomTimes.joinUntil}
+              </span>
+            ) : null}
           </button>
+        ) : props.step === "live" && props.roomTimes && !joinOpen ? (
+          <span className={styles.footerClosed}>Beitritt geschlossen</span>
         ) : (
           <span className={styles.footerNote}>
             Alles wird automatisch unter „Abgelegt&quot; gespeichert.
@@ -353,7 +403,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
         </GreenButton>
       </footer>
 
-      {qrOpen && props.qrLarge ? (
+      {qrOpen && props.qrLarge && showQr ? (
         <QrOverlay
           roomCode={props.roomCode}
           joinHost={props.joinHost}
@@ -430,6 +480,78 @@ function KindChips({ content, onKind }: TeacherDictationScreenProps) {
   );
 }
 
+/** Titel, „Ablegen“ und „Aus der Ablage löschen“ (nur mit den Ablage-Props). */
+function LibraryBar(props: TeacherDictationScreenProps) {
+  const [confirming, setConfirming] = useState(false);
+  if (!props.onTitle && !props.onSave) return null;
+  return (
+    <div className={styles.libraryBar}>
+      <label className={styles.libraryTitle}>
+        <span className={styles.label}>Titel</span>
+        <input
+          type="text"
+          className={styles.libraryInput}
+          value={props.title ?? ""}
+          maxLength={300}
+          placeholder={
+            props.titlePlaceholder ?? "Wird aus dem Text vorgeschlagen"
+          }
+          onChange={(event) => props.onTitle?.(event.target.value)}
+        />
+      </label>
+      {props.onSave ? (
+        <button
+          type="button"
+          className={styles.libraryButton}
+          onClick={props.onSave}
+        >
+          Ablegen
+        </button>
+      ) : null}
+      {props.onDelete && !confirming ? (
+        <button
+          type="button"
+          className={styles.libraryButton}
+          onClick={() => setConfirming(true)}
+        >
+          Aus der Ablage löschen
+        </button>
+      ) : null}
+      {props.onDelete && confirming ? (
+        <span
+          className={styles.libraryConfirm}
+          role="group"
+          aria-label="Löschen bestätigen"
+        >
+          <span>Wirklich aus der Ablage löschen?</span>
+          <button
+            type="button"
+            className={cx(styles.libraryButton, styles.libraryDanger)}
+            onClick={() => {
+              setConfirming(false);
+              props.onDelete?.();
+            }}
+          >
+            Ja, löschen
+          </button>
+          <button
+            type="button"
+            className={styles.libraryButton}
+            onClick={() => setConfirming(false)}
+          >
+            Abbrechen
+          </button>
+        </span>
+      ) : null}
+      {props.libraryNotice ? (
+        <p className={styles.libraryNotice} role="status">
+          {props.libraryNotice}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function ImportStep(props: TeacherDictationScreenProps) {
   const {
     content,
@@ -446,6 +568,7 @@ function ImportStep(props: TeacherDictationScreenProps) {
     return (
       <div className={styles.editorStage}>
         <KindChips {...props} />
+        <LibraryBar {...props} />
         <VocabularyEditor {...props.vocabulary} />
       </div>
     );
@@ -454,6 +577,7 @@ function ImportStep(props: TeacherDictationScreenProps) {
     return (
       <div className={styles.editorStage}>
         <KindChips {...props} />
+        <LibraryBar {...props} />
         <MathEditor {...props.math} />
       </div>
     );
@@ -462,6 +586,7 @@ function ImportStep(props: TeacherDictationScreenProps) {
     <div className={styles.stage}>
       <div className={styles.column}>
         <KindChips {...props} />
+        <LibraryBar {...props} />
         <textarea
           className={styles.source}
           aria-label={KINDS.find(([kind]) => kind === content.kind)?.[1]}
@@ -603,6 +728,7 @@ function ModeButtons({
 
 function ModeDetails({
   mode,
+  content,
   options,
   classChoice,
   stationCount,
@@ -652,7 +778,7 @@ function ModeDetails({
             </span>
           </div>
         ) : null}
-        {optionList(mode).map((option) => (
+        {optionList(mode, content.kind).map((option) => (
           <button
             key={option.id}
             type="button"
@@ -717,8 +843,19 @@ function RoomCard({
   roomCode,
   qr,
   joinHost,
+  roomTimes,
   onShowQr,
 }: TeacherDictationScreenProps & { onShowQr?: (() => void) | null }) {
+  if (roomTimes && !roomTimes.joinOpen)
+    return (
+      <div className={cx(styles.roomCard, styles.roomCardClosed)}>
+        <span className={styles.roomClosedTitle}>Beitritt geschlossen</span>
+        <span className={styles.roomHint}>
+          Der Code galt bis {roomTimes.joinUntil}. Wer schon im Raum ist, kann
+          weiterüben.
+        </span>
+      </div>
+    );
   return (
     <div className={styles.roomCard}>
       {onShowQr ? (
@@ -753,6 +890,11 @@ function RoomCard({
         <span className={styles.roomHint}>
           {joinHost} · Code eingeben oder scannen
         </span>
+        {roomTimes ? (
+          <span className={styles.roomHint}>
+            Code gilt bis {roomTimes.joinUntil}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -818,6 +960,7 @@ function LiveStep({
   roomCode,
   mode,
   live,
+  roomTimes,
   onExportCsv,
 }: TeacherDictationScreenProps) {
   const maxMistakes = Math.max(1, ...live.mistakes.map((entry) => entry.count));
@@ -827,6 +970,17 @@ function LiveStep({
         <span className={styles.dot} />
         Live · Raum {roomCode}
       </span>
+      {roomTimes?.closed ? (
+        <p className={styles.roomNote} role="status">
+          <strong>Raum geschlossen.</strong> Die letzten Ergebnisse bleiben
+          hier, bis du einen neuen Raum öffnest.
+        </p>
+      ) : roomTimes?.closingSoon ? (
+        <p className={styles.roomNote} role="status">
+          <strong>Raum schließt um {roomTimes.closesAt}.</strong> Ergebnisse
+          jetzt als CSV sichern.
+        </p>
+      ) : null}
       <div className={styles.stats}>
         <LiveStat label="Aktiv" value={live.active} dot="var(--gold)" />
         <LiveStat label="Fertig" value={live.finished} dot="var(--green)" />
@@ -868,6 +1022,7 @@ function LiveStep({
                   className={cx(
                     styles.student,
                     student.status === "offline" && styles.away,
+                    student.struggling && styles.struggling,
                   )}
                 >
                   <span className={styles.studentHead}>
@@ -876,6 +1031,9 @@ function LiveStep({
                     ) : null}
                     <span className={styles.studentName}>{student.name}</span>
                     <StatusChip status={student.status} />
+                    {student.struggling ? (
+                      <span className={styles.needsHelp}>Braucht Hilfe</span>
+                    ) : null}
                   </span>
                   <span className={styles.studentMeta}>
                     {student.progress >= student.total ? (

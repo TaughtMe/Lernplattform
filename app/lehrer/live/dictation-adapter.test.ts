@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { buildRunningDictationSections } from "../../../src/domain/running-dictation-sections";
 import type { LiveRoomStudent } from "../../../src/integrations/laufdiktat/room-api";
-import { liveOverview, splitConfigFor, splitModeOf } from "./dictation-adapter";
+import {
+  liveOverview,
+  nextErrorBase,
+  splitConfigFor,
+  splitModeOf,
+  strugglingNames,
+} from "./dictation-adapter";
 
 const text = "Der Hund bellt.\nDie Katze schläft.";
 
@@ -68,5 +74,61 @@ describe("dictation-adapter", () => {
       "idle",
       "idle",
     ]);
+  });
+});
+
+describe("Schüler, die bei einer Aufgabe hängen", () => {
+  const student = (over: Partial<LiveRoomStudent> = {}): LiveRoomStudent => ({
+    studentName: "Mia",
+    stationNumber: null,
+    appVersion: null,
+    currentIndex: 1,
+    peeks: 0,
+    attempts: 0,
+    errors: 0,
+    finished: false,
+    ...over,
+  });
+
+  it("markiert nach 2 neuen Fehlern bei derselben Aufgabe", () => {
+    let base = nextErrorBase({}, [student({ errors: 3 })]);
+    expect(strugglingNames(base, [student({ errors: 3 })]).size).toBe(0);
+    expect(strugglingNames(base, [student({ errors: 4 })]).size).toBe(0);
+    expect(strugglingNames(base, [student({ errors: 5 })]).has("Mia")).toBe(
+      true,
+    );
+    // Neue Aufgabe: Zählung beginnt neu.
+    base = nextErrorBase(base, [student({ currentIndex: 2, errors: 5 })]);
+    expect(
+      strugglingNames(base, [student({ currentIndex: 2, errors: 5 })]).size,
+    ).toBe(0);
+  });
+
+  it("zählt bei der ersten Aufgabe auch Fehler vor dem ersten Abruf", () => {
+    const first = student({ currentIndex: 0, errors: 2 });
+    const base = nextErrorBase({}, [first]);
+    expect(strugglingNames(base, [first]).has("Mia")).toBe(true);
+  });
+
+  it("ignoriert Fertige und liefert ohne Änderung denselben Stand", () => {
+    const base = nextErrorBase({}, [student()]);
+    expect(nextErrorBase(base, [student()])).toBe(base);
+    expect(
+      strugglingNames(base, [student({ errors: 9, finished: true })]).size,
+    ).toBe(0);
+  });
+
+  it("gibt die Markierung an die Schülerliste weiter", () => {
+    const overview = liveOverview({
+      students: [student()],
+      connectedNames: ["Mia"],
+      total: 5,
+      stationMode: false,
+      stationCount: 1,
+      labelFor: (name) => name,
+      animalFor: () => null,
+      struggling: new Set(["Mia"]),
+    });
+    expect(overview.students[0]?.struggling).toBe(true);
   });
 });

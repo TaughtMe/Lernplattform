@@ -6,6 +6,7 @@
  * die Darstellung liegt in den Schritt-Komponenten dieses Ordners.
  */
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { animalTokenFromDisplayName } from "../../../src/domain/learner-profile";
 import type { ParticipantStatus } from "../../views/laufdiktat/teacher-dictation-screen";
@@ -68,12 +69,21 @@ import {
   type VocabularyTransferChoice,
 } from "../../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../../src/integrations/laufdiktat/debounce";
+import {
+  roomTimeline,
+  roomTimeState,
+} from "../../../src/integrations/laufdiktat/room-limits";
 import { useHydrated } from "../../components/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
 import {
   createTeacherClassRepository,
+  createTeacherContentLibraryRepository,
   createTeacherProfileRepository,
 } from "../../../src/storage/teacher-class-settings";
+import { liveContentToPackage, packageToLiveContent } from "../content-adapter";
+import { takeLiveIntent } from "../live-intent";
+import { splitModeOf } from "./dictation-adapter";
+import type { TeacherContentPackage } from "../../../src/domain/teacher-content-library";
 
 export type Stage = "content" | "settings" | "lobby" | "live";
 
@@ -141,6 +151,9 @@ const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
   vocabulary: "",
   math: "",
 };
+function nowIso(clock: () => number) {
+  return new Date(clock()).toISOString();
+}
 function isOnline(participant: LiveRoomParticipant) {
   return Boolean(
     participant.lastSeenAt &&
@@ -155,8 +168,17 @@ export const emptyVocabularyPair = (): VocabularyPair => ({
   right: emptyVocabularySide(),
 });
 
-export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
+/** Wie oft die Uhr für die Raumfristen nachgesehen wird. */
+const ROOM_CLOCK_INTERVAL_MS = 15_000;
+
+export function useTeacherLiveRoom(
+  liveRoomConfig: LiveRoomConfig | null,
+  /** Uhr in Millisekunden; die Tests setzen eine eigene, ohne zu warten. */
+  clock: () => number = Date.now,
+) {
   const hydrated = useHydrated();
+  const router = useRouter();
+  const params = useSearchParams();
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [markerMode, setMarkerMode] = useState(false);
@@ -256,7 +278,11 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       if (active && last && withPrint.some(({ id }) => id === last)) {
         setClassChoiceState((current) => current || last);
       }
-    })().catch(() => undefined);
+    })()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setClassesLoaded(true);
+      });
     return () => {
       active = false;
     };
@@ -285,6 +311,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
   const [tts, setTts] = useState(false);
   const [showStars, setShowStars] = useState(true);
   const [strictTyping, setStrictTyping] = useState(false);
+  const [taskHelp, setTaskHelp] = useState(true);
   const [stationCount, setStationCount] = useState(20);
   const [battleInk, setBattleInk] = useState(true);
   const [battleFlicker, setBattleFlicker] = useState(true);
@@ -297,7 +324,20 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
   const [mathExcludeZeroResult, setMathExcludeZeroResult] = useState(false);
   const [mathGap, setMathGap] = useState(false);
   const [mathTables, setMathTables] = useState<number[]>([]);
+  // Abgelegter Inhalt, der gerade bearbeitet wird (null = noch nicht abgelegt).
+  const [contentId, setContentId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [libraryNotice, setLibraryNotice] = useState("");
+  // Die Wiederaufnahme eines offenen Raums hat Vorrang vor Adressen und Absicht.
+  const [restoreChecked, setRestoreChecked] = useState(false);
+  const [classesLoaded, setClassesLoaded] = useState(false);
+  const [startRequested, setStartRequested] = useState(false);
   const [room, setRoom] = useState<OpenedLiveRoom | null>(null);
+  // Raum ist zu Ende (Frist oder Server), die letzten Ergebnisse bleiben sichtbar.
+  const [roomClosed, setRoomClosed] = useState(false);
+  const [nowMs, setNowMs] = useState(0);
+  const roomRef = useRef<OpenedLiveRoom | null>(null);
+  const closingRef = useRef(false);
   const [participants, setParticipants] = useState<LiveRoomParticipant[]>([]);
   const [presenceNames, setPresenceNames] = useState<string[]>([]);
   // Wer die Raumseite verlassen hat und allein weiterübt (Anwesenheit „practice“).
@@ -731,6 +771,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         uebungAssistanceEnabled: assistance,
         showStars,
         strictTypingMode: strictTyping,
+        showTaskAfterErrors: taskHelp,
         stationCount,
         stationShuffle,
         battleOptions: { ink: battleInk, flicker: battleFlicker },
@@ -785,33 +826,153 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       stationCount,
       stationShuffle,
       strictTyping,
+      taskHelp,
       tts,
       words,
     ],
   );
 
+  // Wird bei jedem Rendern aktualisiert, damit `refresh` stabil bleibt.
+  const serverEndedRef = useRef<() => void>(() => undefined);
+
   const refresh = useCallback(async () => {
     if (!liveRoomConfig || !room) return;
-    const [nextParticipants, nextStudents] = await Promise.all([
+    const [nextParticipants, nextStudents, state] = await Promise.all([
       getLiveRoomParticipants(liveRoomConfig, room),
       stage === "live"
         ? getLiveRoomStudents(liveRoomConfig, room)
         : Promise.resolve([]),
+      // Der Server schließt Räume nach 120 Minuten; ein Fehler hier stört nicht.
+      getLiveRoomState(liveRoomConfig, room.roomId, {
+        accessToken: room.accessToken,
+      }).catch(() => null),
     ]);
+    if (roomRef.current?.roomId !== room.roomId) return;
     setParticipants(nextParticipants);
     if (stage === "live") setStudents(nextStudents);
+    if (state?.status === "ended") serverEndedRef.current();
   }, [liveRoomConfig, room, stage]);
+
+  useEffect(() => {
+    roomRef.current = room;
+  }, [room]);
+
+  const openedAt = room?.openedAt;
+  const timeline = useMemo(
+    () => (openedAt ? roomTimeline(new Date(openedAt)) : null),
+    [openedAt],
+  );
+  const timeState = useMemo(
+    () =>
+      openedAt
+        ? roomClosed
+          ? "closed"
+          : roomTimeState(new Date(openedAt), new Date(nowMs))
+        : null,
+    [nowMs, openedAt, roomClosed],
+  );
+
+  // Uhr für „Code gilt bis“ und die Schließfrist. Ein Wechsel zurück in den
+  // Vordergrund (Gerät im Standby) prüft sofort.
+  useEffect(() => {
+    if (!room || roomClosed) return;
+    const tick = () => setNowMs(clock());
+    tick();
+    const interval = window.setInterval(tick, ROOM_CLOCK_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [clock, room, roomClosed]);
+
+  // Zurücksetzen ohne Aufruf an den Server (Raum ist schon zu Ende).
+  function resetRoomState() {
+    clearTeacherLiveRoom();
+    closingRef.current = false;
+    setRoom(null);
+    setRoomClosed(false);
+    setParticipants([]);
+    setStudents([]);
+    setPresenceNames([]);
+    setPracticingNames([]);
+    setStage("content");
+  }
+
+  // Der Raum ist zu Ende. Im Live-Schritt bleiben die letzten Ergebnisse
+  // samt CSV-Export sichtbar; aus der Lobby geht es zurück zum Inhalt.
+  async function finishClosedRoom() {
+    if (!room) return;
+    if (stage !== "live") {
+      resetRoomState();
+      setError("Der Raum wurde geschlossen. Du kannst einen neuen öffnen.");
+      return;
+    }
+    if (liveRoomConfig) {
+      try {
+        const [nextParticipants, nextStudents] = await Promise.all([
+          getLiveRoomParticipants(liveRoomConfig, room),
+          getLiveRoomStudents(liveRoomConfig, room),
+        ]);
+        setParticipants(nextParticipants);
+        setStudents(nextStudents);
+      } catch {
+        // Die zuletzt gezeigten Ergebnisse bleiben stehen.
+      }
+    }
+    clearTeacherLiveRoom();
+    setRoomClosed(true);
+  }
+  useEffect(() => {
+    serverEndedRef.current = () => {
+      if (closingRef.current) return;
+      closingRef.current = true;
+      void finishClosedRoom();
+    };
+  });
+
+  // Nach 120 Minuten beendet dieses Gerät den Raum selbst, genau einmal.
+  // Der Server-Job ist nur die Absicherung, falls das Gerät nicht offen ist.
+  const closesAtMs = timeline?.closesAt.getTime() ?? null;
+  useEffect(() => {
+    if (!liveRoomConfig || !room || roomClosed || closesAtMs === null) return;
+    if (nowMs < closesAtMs || closingRef.current) return;
+    closingRef.current = true;
+    void (async () => {
+      try {
+        await endLiveRoom(liveRoomConfig, room);
+        await channelRef.current?.send({
+          type: "broadcast",
+          event: "session-ended",
+          payload: {},
+        });
+      } catch {
+        // Der Server schließt den Raum spätestens beim nächsten Aufräumen.
+      }
+      await finishClosedRoom();
+    })();
+    // finishClosedRoom liest nur den Stand dieses Renderns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [closesAtMs, liveRoomConfig, nowMs, room, roomClosed]);
 
   useEffect(() => {
     if (!hydrated || !liveRoomConfig || room) return;
     const stored = readTeacherLiveRoom();
-    if (!stored) return;
+    if (!stored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+      setRestoreChecked(true);
+      return;
+    }
     getLiveRoomState(liveRoomConfig, stored.roomId, {
       accessToken: stored.accessToken,
     })
       .then((state) => {
         if (!state || state.status === "ended") {
           clearTeacherLiveRoom();
+          setRestoreChecked(true);
           return;
         }
         const restored = parseLiveSession(
@@ -858,17 +1019,23 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
         setTts(restored.isTtsEnabled);
         setShowStars(restored.showStars);
         setStrictTyping(restored.strictTypingMode);
+        setTaskHelp(restored.showTaskAfterErrors);
         setStationCount(restored.stationCount);
         setBattleInk(restored.battleOptions.ink);
         setBattleFlicker(restored.battleOptions.flicker);
-        setRoom(stored);
+        // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
+        setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(clock) });
         setStage(state.status === "live" ? "live" : "lobby");
+        setRestoreChecked(true);
       })
-      .catch(() => clearTeacherLiveRoom());
-  }, [hydrated, liveRoomConfig, room]);
+      .catch(() => {
+        clearTeacherLiveRoom();
+        setRestoreChecked(true);
+      });
+  }, [clock, hydrated, liveRoomConfig, room]);
 
   useEffect(() => {
-    if (!liveRoomConfig || !room) return;
+    if (!liveRoomConfig || !room || roomClosed) return;
     const client = getLiveRoomClient(liveRoomConfig);
     const channel = client.channel(`room-${room.code}`);
     const refreshSoon = createLiveRoomDebounce(() => void refresh(), {
@@ -934,7 +1101,176 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       if (channelRef.current === channel) channelRef.current = null;
       void client.removeChannel(channel);
     };
-  }, [liveRoomConfig, refresh, room, stage]);
+  }, [liveRoomConfig, refresh, room, roomClosed, stage]);
+
+  // Ohne Raumdienst gibt es nichts wiederherzustellen.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+    if (hydrated && !liveRoomConfig) setRestoreChecked(true);
+  }, [hydrated, liveRoomConfig]);
+
+  function applyLoadedContent(entry: TeacherContentPackage) {
+    const loaded = packageToLiveContent(entry);
+    setContentMode(loaded.contentMode);
+    setSources((current) => ({
+      ...current,
+      [loaded.contentMode]: loaded.source,
+    }));
+    setTitle(loaded.title);
+    setContentId(entry.id);
+    if (loaded.contentMode === "text") {
+      setSplitConfig(loaded.textSplitConfig);
+      setManualRanges([]);
+      setExcludedSectionIds([]);
+      setSectionOrder([]);
+    }
+    if (loaded.contentMode === "vocabulary") {
+      const parsed = parseVocabularyTable(loaded.source);
+      setVocabularyPairs(parsed.length > 0 ? parsed : [emptyVocabularyPair()]);
+      setVocabularyLocales(loaded.vocabularyLocales);
+      setShuffleWords(true);
+    }
+  }
+
+  // Adresse (`inhalt`, `neu`, `schritt`, `modus`) und Start-Absicht werten wir
+  // genau einmal aus. Beides löst nur Laden und Anzeigen aus; einen Raum
+  // erstellt allein „Jetzt starten“, und die Absicht ist dann schon gelöscht.
+  const paramsHandled = useRef(false);
+  useEffect(() => {
+    if (paramsHandled.current) return;
+    if (!hydrated || !restoreChecked || !classesLoaded) return;
+    paramsHandled.current = true;
+    const contentParam = params.get("inhalt");
+    const newParam = params.get("neu");
+    const stepParam = params.get("schritt");
+    const modeParam = params.get("modus");
+    const classParam = params.get("klasse");
+    const intent = takeLiveIntent();
+    const hasParams = Boolean(contentParam || newParam || stepParam);
+    if (!hasParams && !intent) return;
+    if (hasParams) router.replace("/lehrer/live");
+    if (room) {
+      // Ein offener Raum hat Vorrang; nichts wird überschrieben.
+      if (contentParam || newParam || intent)
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+        setError(
+          "Es ist schon ein Raum offen. Beende ihn zuerst, um einen anderen Inhalt zu laden.",
+        );
+      return;
+    }
+    void (async () => {
+      const id = intent?.contentId ?? contentParam;
+      if (id) {
+        const entry = await createTeacherContentLibraryRepository().get(id);
+        if (!entry) {
+          setError("Dieser Inhalt ist nicht mehr in der Ablage.");
+          return;
+        }
+        applyLoadedContent(entry);
+      } else if (
+        newParam === "text" ||
+        newParam === "math" ||
+        newParam === "vocabulary"
+      ) {
+        chooseContentMode(newParam);
+        setContentId(null);
+        setTitle("");
+      }
+      const mode =
+        intent?.mode ?? ALL_MODES.find(({ id }) => id === modeParam)?.id;
+      if (mode) setGameMode(mode);
+      // Die Klasse der Ablage gilt auch für neue Inhalte und den nächsten Raum.
+      if (
+        !intent &&
+        classParam &&
+        (classParam === "ohne" ||
+          liveClasses.some(({ id }) => id === classParam))
+      ) {
+        await setClassChoice(classParam === "ohne" ? "" : classParam);
+      }
+      if (stepParam === "inhalt") setStage("content");
+      if (stepParam === "einstellungen") setStage("settings");
+      if (intent) {
+        const known = liveClasses.some(({ id }) => id === intent.classId);
+        await setClassChoice(known ? intent.classId : "");
+        setStage("settings");
+        setStartRequested(true);
+      }
+    })().catch(() =>
+      setError("Der Inhalt konnte nicht aus der Ablage geladen werden."),
+    );
+    // Läuft einmal; die Funktionen lesen nur den Stand dieses Renderns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classesLoaded, hydrated, params, restoreChecked, room, router]);
+
+  // „Jetzt starten“: Sobald Inhalt, Modus und Klasse übernommen sind, öffnet
+  // sich die Lobby mit den Standardoptionen des Modus.
+  useEffect(() => {
+    if (!startRequested || busy || room) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+    setStartRequested(false);
+    void openLobby();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startRequested]);
+
+  /** Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. */
+  async function storeContent(markUsed: boolean) {
+    const repository = createTeacherContentLibraryRepository();
+    const existing = contentId ? await repository.get(contentId) : undefined;
+    const entry = liveContentToPackage({
+      draft: {
+        contentMode,
+        source,
+        title,
+        textSplit: splitModeOf(splitConfig),
+        vocabularyLocales,
+      },
+      existing,
+      newId: `teacher-package-${crypto.randomUUID()}`,
+      now: new Date(clock()).toISOString(),
+      classId: activeClass || undefined,
+      markUsed,
+    });
+    await repository.put(entry);
+    setContentId(entry.id);
+    setTitle(entry.title);
+    window.dispatchEvent(new Event("teacher-data-changed"));
+    return entry;
+  }
+
+  async function saveContent() {
+    setError("");
+    if (!source.trim()) {
+      setLibraryNotice("Gib zuerst etwas ein, das abgelegt werden kann.");
+      return;
+    }
+    try {
+      const entry = await storeContent(false);
+      setLibraryNotice(`„${entry.title}“ ist abgelegt.`);
+    } catch {
+      setLibraryNotice(
+        "Der Inhalt konnte nicht abgelegt werden. Bitte versuche es noch einmal.",
+      );
+    }
+  }
+
+  async function deleteContent() {
+    if (!contentId) return;
+    try {
+      const repository = createTeacherContentLibraryRepository();
+      const entry = await repository.get(contentId);
+      await repository.remove(contentId);
+      setContentId(null);
+      setLibraryNotice(
+        entry
+          ? `„${entry.title}“ wurde aus der Ablage gelöscht.`
+          : "Der Inhalt wurde aus der Ablage gelöscht.",
+      );
+      window.dispatchEvent(new Event("teacher-data-changed"));
+    } catch {
+      setLibraryNotice("Der Inhalt konnte nicht gelöscht werden.");
+    }
+  }
 
   function importFile(file: File | undefined) {
     if (!file) return;
@@ -964,10 +1300,22 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
       return setError("Bitte gib mindestens eine gültige Aufgabe ein.");
     setBusy(true);
     try {
-      const opened = await openLiveRoom(liveRoomConfig, roomConfig);
+      const opened = {
+        ...(await openLiveRoom(liveRoomConfig, roomConfig)),
+        openedAt: nowIso(clock),
+      };
       saveTeacherLiveRoom(opened);
+      closingRef.current = false;
       setRoom(opened);
+      setNowMs(clock());
       setStage("lobby");
+      // Beim Öffnen der Lobby wird der Inhalt abgelegt, ohne die Lobby
+      // aufzuhalten; ein Fehler hier stoppt den Raum nicht.
+      void storeContent(true).catch(() =>
+        setError(
+          "Der Raum ist offen, aber der Inhalt konnte nicht abgelegt werden.",
+        ),
+      );
     } catch {
       setError(
         "Der Raum konnte nicht geöffnet werden. Bitte prüfe die Verbindung.",
@@ -1008,19 +1356,14 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     if (!liveRoomConfig || !room) return;
     setBusy(true);
     try {
+      if (students.length > 0) exportCsv();
       await endLiveRoom(liveRoomConfig, room);
       await channelRef.current?.send({
         type: "broadcast",
         event: "session-ended",
         payload: {},
       });
-      clearTeacherLiveRoom();
-      setRoom(null);
-      setParticipants([]);
-      setStudents([]);
-      setPresenceNames([]);
-      setPracticingNames([]);
-      setStage("content");
+      resetRoomState();
     } catch {
       setError("Der Raum konnte nicht beendet werden.");
     } finally {
@@ -1079,6 +1422,7 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
 
   function goBack() {
     setError("");
+    if (roomClosed) return;
     if (stage === "settings") setStage("content");
     if (stage === "lobby") setStage("settings");
     if (stage === "live") setStage("lobby");
@@ -1089,10 +1433,16 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     if (stage === "content") setStage("settings");
     if (stage === "settings") void openLobby();
     if (stage === "lobby") void startSession();
-    if (stage === "live") void endRoom();
+    if (stage === "live") {
+      // Ein geschlossener Raum braucht keinen Aufruf mehr: weiter zum neuen Raum.
+      if (roomClosed) resetRoomState();
+      else void endRoom();
+    }
   }
 
   function chooseContentMode(mode: TeacherContentMode) {
+    // Ein anderer Typ ist ein anderer Inhalt: nicht über das Paket schreiben.
+    if (mode !== contentMode) setContentId(null);
     setContentMode(mode);
     if (mode === "vocabulary") {
       setShuffleWords(true);
@@ -1403,6 +1753,8 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     setShowStars,
     strictTyping,
     setStrictTyping,
+    taskHelp,
+    setTaskHelp,
     stationCount,
     setStationCount,
     battleInk,
@@ -1425,7 +1777,16 @@ export function useTeacherLiveRoom(liveRoomConfig: LiveRoomConfig | null) {
     mathGap,
     setMathGap,
     mathTables,
+    title,
+    setTitle,
+    contentId,
+    libraryNotice,
+    saveContent,
+    deleteContent,
     room,
+    roomClosed,
+    roomTimeline: timeline,
+    roomTimeState: timeState,
     participants,
     students,
     busy,
