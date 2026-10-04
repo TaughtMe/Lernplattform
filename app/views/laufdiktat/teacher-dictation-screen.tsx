@@ -31,7 +31,7 @@ export type ContentKind = "text" | "vocabulary" | "math";
 export type SplitMode = "satz" | "zeile" | "wort";
 export type DictationMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
 export type DictationOption =
-  "tts" | "shuffle" | "strict" | "stars" | "ink" | "flicker";
+  "tts" | "shuffle" | "strict" | "taskHelp" | "stars" | "ink" | "flicker";
 
 /** Verbindung eines Schülers: im Raum, übt allein weiter oder getrennt. */
 export type ParticipantStatus = "online" | "practice" | "offline";
@@ -43,6 +43,8 @@ export type LiveStudent = {
   progress: number;
   total: number;
   mistakes: number;
+  /** Liegt bei der aktuellen Aufgabe mehrfach falsch: in der Liste hervorheben. */
+  struggling?: boolean;
 };
 export type StationState = {
   number: number;
@@ -240,7 +242,7 @@ export const MODES: ReadonlyArray<{
   },
 ];
 
-function optionList(mode: DictationMode) {
+function optionList(mode: DictationMode, kind: ContentKind) {
   const station = mode === "STATION";
   return [
     {
@@ -262,6 +264,12 @@ function optionList(mode: DictationMode) {
       label: "Nur getippte Eingaben",
       hint: "Verhindert Einfügen und Autokorrektur",
       show: !station,
+    },
+    {
+      id: "taskHelp",
+      label: "Aufgabe nach Fehlern zeigen",
+      hint: "Mathe: nach 2 Fehlern steht die Aufgabe wieder im Antwortfeld",
+      show: !station && kind === "math",
     },
     { id: "stars", label: "Sterne anzeigen", hint: "", show: !station },
     { id: "ink", label: "Tinten-Angriff", hint: "", show: mode === "BATTLE" },
@@ -720,6 +728,7 @@ function ModeButtons({
 
 function ModeDetails({
   mode,
+  content,
   options,
   classChoice,
   stationCount,
@@ -769,7 +778,7 @@ function ModeDetails({
             </span>
           </div>
         ) : null}
-        {optionList(mode).map((option) => (
+        {optionList(mode, content.kind).map((option) => (
           <button
             key={option.id}
             type="button"
@@ -1013,6 +1022,7 @@ function LiveStep({
                   className={cx(
                     styles.student,
                     student.status === "offline" && styles.away,
+                    student.struggling && styles.struggling,
                   )}
                 >
                   <span className={styles.studentHead}>
@@ -1021,6 +1031,9 @@ function LiveStep({
                     ) : null}
                     <span className={styles.studentName}>{student.name}</span>
                     <StatusChip status={student.status} />
+                    {student.struggling ? (
+                      <span className={styles.needsHelp}>Braucht Hilfe</span>
+                    ) : null}
                   </span>
                   <span className={styles.studentMeta}>
                     {student.progress >= student.total ? (

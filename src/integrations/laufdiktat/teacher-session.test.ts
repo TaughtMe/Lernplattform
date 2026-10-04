@@ -69,6 +69,32 @@ describe("teacher live session builder", () => {
     expect(config.words).toHaveLength(1);
   });
 
+  it("offers the task after errors only for math and lets the teacher switch it off", () => {
+    const base = {
+      source: "9 + 6",
+      vocabularyDirection: "left-to-right" as const,
+      gameMode: "UEBUNG" as const,
+      shuffleWords: false,
+      repeatWrongAnswers: false,
+      vocabularyTransfer: "none" as const,
+    };
+    expect(
+      buildTeacherRoomConfig({ ...base, contentMode: "math" })
+        .showTaskAfterErrors,
+    ).toBe(true);
+    expect(
+      buildTeacherRoomConfig({
+        ...base,
+        contentMode: "math",
+        showTaskAfterErrors: false,
+      }).showTaskAfterErrors,
+    ).toBe(false);
+    expect(
+      buildTeacherRoomConfig({ ...base, contentMode: "text" })
+        .showTaskAfterErrors,
+    ).toBe(false);
+  });
+
   it("builds the upstream classic Laufdiktat without assistance", () => {
     const config = buildTeacherRoomConfig({
       contentMode: "text",

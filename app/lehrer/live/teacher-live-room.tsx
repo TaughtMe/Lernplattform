@@ -20,8 +20,11 @@ import {
   mathGapRow,
   mathLineParts,
   roomTimesView,
+  nextErrorBase,
   splitConfigFor,
   splitModeOf,
+  strugglingNames,
+  type ErrorBase,
   STAGE_OF_STEP,
   STEP_OF_STAGE,
 } from "./dictation-adapter";
@@ -50,11 +53,16 @@ export function TeacherLiveRoom({
   const { theme, toggleTheme } = useThemeToggle();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const stationMode = t.gameMode === "STATION";
+  // Fehlerstand je Schüler beim Wechsel der Aufgabe: daraus folgt, wer gerade hängt.
+  const [errorBase, setErrorBase] = useState<ErrorBase>({});
+  const currentBase = nextErrorBase(errorBase, t.students);
+  if (currentBase !== errorBase) setErrorBase(currentBase);
 
   const options: Record<DictationOption, boolean> = {
     tts: t.tts,
     shuffle: stationMode ? t.stationShuffle : t.shuffleWords,
     strict: t.strictTyping,
+    taskHelp: t.taskHelp,
     stars: t.showStars,
     ink: t.battleInk,
     flicker: t.battleFlicker,
@@ -67,6 +75,7 @@ export function TeacherLiveRoom({
       else t.setShuffleWords(!t.shuffleWords);
     }
     if (option === "strict") t.setStrictTyping(!t.strictTyping);
+    if (option === "taskHelp") t.setTaskHelp(!t.taskHelp);
     if (option === "stars") t.setShowStars(!t.showStars);
     if (option === "ink") t.setBattleInk(!t.battleInk);
     if (option === "flicker") t.setBattleFlicker(!t.battleFlicker);
@@ -144,6 +153,7 @@ export function TeacherLiveRoom({
             labelFor: t.labelFor,
             animalFor: t.animalFor,
             statusFor: t.statusFor,
+            struggling: strugglingNames(currentBase, t.students),
           }),
         )}
         {...(roomTimes ? { roomTimes } : {})}

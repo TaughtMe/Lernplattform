@@ -22,6 +22,7 @@ const session: LiveSession = {
   showStars: false,
   shuffleWords: false,
   strictTypingMode: false,
+  showTaskAfterErrors: false,
   stationShuffle: false,
   battleOptions: { ink: true, flicker: true },
 };

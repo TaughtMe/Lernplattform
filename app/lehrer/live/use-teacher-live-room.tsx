@@ -311,6 +311,7 @@ export function useTeacherLiveRoom(
   const [tts, setTts] = useState(false);
   const [showStars, setShowStars] = useState(true);
   const [strictTyping, setStrictTyping] = useState(false);
+  const [taskHelp, setTaskHelp] = useState(true);
   const [stationCount, setStationCount] = useState(20);
   const [battleInk, setBattleInk] = useState(true);
   const [battleFlicker, setBattleFlicker] = useState(true);
@@ -770,6 +771,7 @@ export function useTeacherLiveRoom(
         uebungAssistanceEnabled: assistance,
         showStars,
         strictTypingMode: strictTyping,
+        showTaskAfterErrors: taskHelp,
         stationCount,
         stationShuffle,
         battleOptions: { ink: battleInk, flicker: battleFlicker },
@@ -824,6 +826,7 @@ export function useTeacherLiveRoom(
       stationCount,
       stationShuffle,
       strictTyping,
+      taskHelp,
       tts,
       words,
     ],
@@ -1016,6 +1019,7 @@ export function useTeacherLiveRoom(
         setTts(restored.isTtsEnabled);
         setShowStars(restored.showStars);
         setStrictTyping(restored.strictTypingMode);
+        setTaskHelp(restored.showTaskAfterErrors);
         setStationCount(restored.stationCount);
         setBattleInk(restored.battleOptions.ink);
         setBattleFlicker(restored.battleOptions.flicker);
@@ -1748,6 +1752,8 @@ export function useTeacherLiveRoom(
     setShowStars,
     strictTyping,
     setStrictTyping,
+    taskHelp,
+    setTaskHelp,
     stationCount,
     setStationCount,
     battleInk,

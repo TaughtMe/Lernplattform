@@ -56,6 +56,54 @@ function progressOf(student: LiveRoomStudent | undefined, total: number) {
   return Math.min(total, student?.currentIndex ?? 0);
 }
 
+/** Fehler ab dieser Zahl bei einer Aufgabe: Die Lehrkraft sieht, dass jemand hängt. */
+export const STRUGGLE_ERRORS = 2;
+
+/** Pro Schüler: Aufgabe und Fehlerstand, als sie zuletzt gewechselt wurde. */
+export type ErrorBase = Record<string, { index: number; errors: number }>;
+
+/**
+ * Zieht den Stand nach: Bei einer neuen Aufgabe zählt ab jetzt neu. Gibt `prev`
+ * unverändert zurück, wenn sich nichts ändert (für einen Zustand ohne Endlosschleife).
+ */
+export function nextErrorBase(
+  prev: ErrorBase,
+  students: readonly LiveRoomStudent[],
+): ErrorBase {
+  let next: ErrorBase | null = null;
+  for (const student of students) {
+    const known = prev[student.studentName];
+    if (known && known.index === student.currentIndex) continue;
+    next ??= { ...prev };
+    next[student.studentName] = {
+      index: student.currentIndex,
+      // Neu gesehen mitten in der Runde: frühere Fehler zählen nicht als „gerade“.
+      errors: known || student.currentIndex > 0 ? student.errors : 0,
+    };
+  }
+  return next ?? prev;
+}
+
+/** Wer an der aktuellen Aufgabe mehrfach falsch lag und noch nicht fertig ist. */
+export function strugglingNames(
+  base: ErrorBase,
+  students: readonly LiveRoomStudent[],
+): ReadonlySet<string> {
+  return new Set(
+    students
+      .filter((student) => {
+        const known = base[student.studentName];
+        return (
+          !student.finished &&
+          known !== undefined &&
+          known.index === student.currentIndex &&
+          student.errors - known.errors >= STRUGGLE_ERRORS
+        );
+      })
+      .map((student) => student.studentName),
+  );
+}
+
 export type LiveOverview = {
   active: number;
   finished: number;
@@ -75,6 +123,7 @@ export function liveOverview({
   labelFor,
   animalFor,
   statusFor,
+  struggling,
 }: {
   students: LiveRoomStudent[];
   connectedNames: string[];
@@ -84,6 +133,7 @@ export function liveOverview({
   labelFor: (name: string) => string;
   animalFor: (name: string) => string | null;
   statusFor?: (name: string) => ParticipantStatus;
+  struggling?: ReadonlySet<string>;
 }): LiveOverview {
   const words = Math.max(1, total);
   const tracked = stationMode
@@ -118,6 +168,7 @@ export function liveOverview({
         progress: progressOf(student, words),
         total: words,
         mistakes: student?.errors ?? 0,
+        ...(struggling?.has(name) ? { struggling: true } : {}),
       };
     }),
     stations: Array.from({ length: stationCount }, (_, index) => {

@@ -734,6 +734,30 @@
   border-radius: 13px;
   background: var(--surface);
 }
+/* Liegt bei der Aufgabe mehrfach falsch: dezentes Leuchten, ohne Bewegung bei reduzierter Animation. */
+.struggling {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(224, 168, 58, 0.3);
+  animation: needs-help 1.6s ease-in-out infinite;
+}
+.needsHelp {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #2b2100;
+  font-size: 11px;
+  font-weight: 800;
+}
+@keyframes needs-help {
+  50% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .struggling {
+    animation: none;
+  }
+}
 .studentHead {
   display: flex;
   align-items: center;

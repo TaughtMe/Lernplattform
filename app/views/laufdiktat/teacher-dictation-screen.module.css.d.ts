@@ -72,6 +72,7 @@ declare const styles: {
   readonly muted: string;
   readonly name: string;
   readonly narrowOnly: string;
+  readonly needsHelp: string;
   readonly next: string;
   readonly notice: string;
   readonly offline: string;
@@ -130,6 +131,7 @@ declare const styles: {
   readonly stepTitle: string;
   readonly stepper: string;
   readonly steps: string;
+  readonly struggling: string;
   readonly student: string;
   readonly studentHead: string;
   readonly studentMeta: string;

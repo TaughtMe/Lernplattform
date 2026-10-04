@@ -1,3 +1,4 @@
+import "fake-indexeddb/auto";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -10,6 +11,13 @@ import {
   twoFingersUp,
 } from "./hold-test-utils";
 import { LiveRunningDictationGame } from "./live-game";
+
+vi.mock("../../../src/storage/personal-learning-events", () => ({
+  createLearningBoxRepository: () => ({ ingestBundle: vi.fn() }),
+  createPersonalLearningEventRepository: () => ({
+    put: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 const session = parseLiveSession(
   {
@@ -164,18 +172,19 @@ describe("hold to reveal in the running dictation", () => {
 });
 
 describe("math tasks must be memorised", () => {
-  it("does not show the task in the answer screen", () => {
+  function renderMath(showTaskAfterErrors: boolean) {
     const mathSession = parseLiveSession(
       {
         words: [{ id: "m", kind: "math", prompt: "7 · 8", targetWord: "56" }],
         gameMode: "UEBUNG",
         stationCount: 1,
-        uebungMaxAttempts: 3,
+        uebungMaxAttempts: 5,
+        showTaskAfterErrors,
       },
       "session",
       "seed",
     );
-    const { container } = render(
+    const view = render(
       <LiveRunningDictationGame
         code="1234"
         studentName="Mia"
@@ -185,12 +194,35 @@ describe("math tasks must be memorised", () => {
         onProgress={vi.fn()}
       />,
     );
-    const stage = container.querySelector("[data-game-surface]")!;
+    const stage = view.container.querySelector("[data-game-surface]")!;
     twoFingersDown(stage);
-    expect(container.textContent).toContain("7");
+    expect(view.container.textContent).toContain("7");
     twoFingersUp(stage);
+    return view;
+  }
+
+  it("does not show the task in the answer screen at first", () => {
+    const { container } = renderMath(true);
     expect(field()).toBeInTheDocument();
     expect(container.textContent).not.toContain("7 · 8");
     expect(container.textContent).not.toContain("56");
+  });
+
+  it("shows the task again after two wrong answers when the teacher allows it", async () => {
+    const user = userEvent.setup();
+    const { container } = renderMath(true);
+    await user.type(field(), "1{Enter}");
+    expect(container.textContent).not.toContain("7 · 8");
+    await user.type(field(), "2{Enter}");
+    expect(container.textContent).toContain("7 · 8");
+  });
+
+  it("keeps the task hidden when the teacher turned the option off", async () => {
+    const user = userEvent.setup();
+    const { container } = renderMath(false);
+    await user.type(field(), "1{Enter}");
+    await user.type(field(), "2{Enter}");
+    await user.type(field(), "3{Enter}");
+    expect(container.textContent).not.toContain("7 · 8");
   });
 });

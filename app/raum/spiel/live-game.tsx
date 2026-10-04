@@ -715,8 +715,13 @@ export function LiveRunningDictationGame({
           ) : null
         }
         write={{
-          // Mathe-Aufgaben sollen gemerkt werden: im Schreibfeld nicht zeigen.
-          ...(kind === "vocabulary" ? { question: promptNode } : {}),
+          // Mathe-Aufgaben sollen gemerkt werden: erst nach 2 Fehlern (Lehrkraft-Option) wieder zeigen.
+          ...(kind === "vocabulary" ||
+          (kind === "math" &&
+            session.showTaskAfterErrors &&
+            (wordErrors[errorKey] ?? 0) >= 2)
+            ? { question: promptNode }
+            : {}),
           help: copyMode ? (
             <CopyGuide target={activeWord.targetWord} answer={answer} />
           ) : hint ? (
