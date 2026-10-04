@@ -106,6 +106,7 @@ export type LernBoxScreenProps = {
     folderId: string | null;
     frontLocale: string;
     backLocale: string;
+    importText?: string;
   }) => void;
   onCreateFolder?: (title: string) => void;
   onMode?: (mode: LbMode) => void;
@@ -573,9 +574,11 @@ function CreateDeck({
     folderId: string | null;
     frontLocale: string;
     backLocale: string;
+    importText?: string;
   }) => void;
 }) {
   const [title, setTitle] = useState("");
+  const [importText, setImportText] = useState("");
   const [folderId, setFolderId] = useState("");
   const [front, setFront] = useState(languages[0]?.locale ?? "de-DE");
   const [back, setBack] = useState(languages[1]?.locale ?? "en-GB");
@@ -587,8 +590,10 @@ function CreateDeck({
       folderId: folderId || null,
       frontLocale: front,
       backLocale: back,
+      ...(importText.trim() ? { importText } : {}),
     });
     setTitle("");
+    setImportText("");
   }
   return (
     <form className={styles.create} onSubmit={submit}>
@@ -647,6 +652,29 @@ function CreateDeck({
           </select>
         </label>
       ) : null}
+      <details>
+        <summary className={styles.muted}>Vokabeln gleich importieren</summary>
+        <textarea
+          className={styles.importArea}
+          aria-label="Vokabeln für die neue Lernbox"
+          placeholder={"Haus\thome | house\tUnit 1\nBaum;tree"}
+          value={importText}
+          onChange={(event) => setImportText(event.target.value)}
+        />
+        <label className={styles.ghost}>
+          <Icon name="upload" size={15} /> Datei wählen
+          <input
+            type="file"
+            accept=".txt,.csv,.tsv,text/plain,text/csv"
+            className={styles.fileInput}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void file.text().then(setImportText);
+            }}
+          />
+        </label>
+      </details>
       <button type="submit" className={styles.primarySmall}>
         Erstellen
       </button>
