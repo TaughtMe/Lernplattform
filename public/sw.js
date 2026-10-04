@@ -1,7 +1,14 @@
 const APP_VERSION = "0.5.1";
-const BUILD_FINGERPRINT = "7350d97e04b1";
+const BUILD_FINGERPRINT = "8042d164081f";
 const CACHE_NAME = `lernraum-${APP_VERSION}-${BUILD_FINGERPRINT}`;
-const APP_SHELL = ["/", "/favicon.svg", "/manifest.webmanifest"];
+const APP_SHELL = [
+  "/",
+  "/favicon.svg",
+  "/manifest.webmanifest",
+  "/icon-180.png",
+  "/icon-192.png",
+  "/icon-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
 import { useHydrated } from "../components/use-hydrated";
+import { InstallButton } from "./install-button";
 import { QrCodeScanner } from "../ui/qr-scanner";
 import { useLearnerProfile } from "../ui/use-learner-profile";
 import { LandingScreen } from "../views/start/landing-screen";
@@ -38,6 +39,7 @@ export function StartPage() {
         setCode(next);
         if (/^\d{4}$/.test(next)) openRoom(next);
       }}
+      renderInstall={(className) => <InstallButton className={className} />}
       renderScan={(className) => (
         <QrCodeScanner
           buttonClassName={className}

@@ -80,8 +80,8 @@ export function VersionButton() {
       handleControllerChange,
     );
 
-    void navigator.serviceWorker
-      .register("/sw.js", { updateViaCache: "none" })
+    // Registriert wird zentral in `ServiceWorkerRegistration`.
+    void navigator.serviceWorker.ready
       .then((nextRegistration) => {
         if (cancelled) return;
         stopWatchingRegistration = watchRegistration(nextRegistration);

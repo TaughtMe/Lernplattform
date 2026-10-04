@@ -155,6 +155,30 @@
 .scan:hover {
   background: #3a8260;
 }
+.install {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #d8cfbc;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: center;
+}
+.install:hover {
+  color: #fff8e8;
+}
+.install:focus-visible {
+  outline: 2px solid #f0cf84;
+  outline-offset: 2px;
+}
 .note {
   margin: 6px 0 0;
   color: #8d8677;

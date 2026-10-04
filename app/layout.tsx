@@ -4,6 +4,7 @@ import { PREVIEW_COOKIE } from "../src/domain/release";
 import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
 import { AreaFrame } from "./ui/shell/area-frame";
+import { ServiceWorkerRegistration } from "./ui/service-worker-registration";
 import { SiteFooter } from "./ui/site-footer";
 import "@fontsource-variable/work-sans/wght.css";
 import "@fontsource-variable/fredoka/wght.css";
@@ -24,6 +25,10 @@ export const viewport: Viewport = {
   ],
   colorScheme: "light dark",
 };
+
+// Chrome bietet das Installieren oft schon vor der Hydration an. Das Ereignis
+// wird deshalb sofort gemerkt; `use-install-prompt` liest es später aus.
+const installPromptScript = `window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__installPrompt=e;window.dispatchEvent(new Event("lernraum-install-ready"))})`;
 
 const themeBootScript = `(()=>{try{const p=localStorage.getItem("theme-preference")||"system";const t=p==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):p;document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{}})()`;
 
@@ -71,8 +76,11 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: "/favicon.svg",
       apple: { url: "/icon-180.png", sizes: "180x180", type: "image/png" },
     },
-    manifest: "/manifest.webmanifest",
-    appleWebApp: { capable: true, title: "Lernraum" },
+    appleWebApp: {
+      capable: true,
+      title: "Lernraum",
+      statusBarStyle: "default",
+    },
   };
 }
 
@@ -90,12 +98,18 @@ export default async function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
+        {/* Absichtlich nicht in den Metadaten: vinext schiebt gestreamte
+            Manifest-Links nicht in den <head> zurück, Chrome wertet sie dann
+            nicht aus und bietet keine Installation an. */}
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <script dangerouslySetInnerHTML={{ __html: installPromptScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body>
         <ReleaseProvider value={visibility}>
           <AreaFrame liveRoomConfig={liveRoomConfig}>{children}</AreaFrame>
           <SiteFooter />
+          <ServiceWorkerRegistration />
         </ReleaseProvider>
       </body>
     </html>

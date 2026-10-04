@@ -236,3 +236,44 @@ test("keeps mobile and tablet support in the platform shell", async () => {
   assert.match(styles, /pointer:\s*coarse/);
   assert.match(strategy, /iOS Safari/);
 });
+
+test("links the web app manifest inside <head> so browsers offer installation", async () => {
+  for (const path of ["/", "/lernen/faecher/deutsch"]) {
+    const html = await (await render(path)).text();
+    const links = html.match(/<link[^>]+rel="manifest"[^>]*>/g) ?? [];
+    assert.equal(links.length, 1, `${path}: genau ein Manifest-Link`);
+    assert.ok(
+      html.indexOf(links[0]) < html.indexOf("</head>"),
+      `${path}: Manifest-Link steht im <head>`,
+    );
+    assert.match(links[0], /href="\/manifest\.webmanifest"/);
+  }
+});
+
+test("ships a complete web app manifest with existing icons", async () => {
+  const manifest = JSON.parse(
+    await readFile(
+      new URL("../public/manifest.webmanifest", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.equal(manifest.start_url, "/");
+  assert.equal(manifest.display, "standalone");
+  assert.ok(manifest.id && manifest.scope);
+  const sizes = manifest.icons.map((icon) => icon.sizes);
+  assert.ok(sizes.includes("192x192") && sizes.includes("512x512"));
+  for (const icon of manifest.icons) {
+    await readFile(new URL(`../public${icon.src}`, import.meta.url));
+  }
+  const maskable = manifest.icons.find((icon) => icon.purpose === "maskable");
+  assert.notEqual(maskable?.src, "/icon-512.png");
+});
+
+test("keeps the manifest out of the Next.js metadata pipeline", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const files = await readdir(new URL("../app", import.meta.url));
+  assert.deepEqual(
+    files.filter((name) => name.startsWith("manifest.")),
+    [],
+  );
+});

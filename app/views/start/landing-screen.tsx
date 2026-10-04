@@ -17,6 +17,8 @@ export type LandingScreenProps = {
   onCodeChange?: (code: string) => void;
   /** Kamera-Knopf; erhält die Klasse aus dem Entwurf. Ohne Angabe ein schlichter Knopf. */
   renderScan?: (className: string) => ReactNode;
+  /** Knopf „Als App installieren“ unter dem Code; erhält die Klasse aus dem Entwurf. */
+  renderInstall?: (className: string) => ReactNode;
   /** Zusätzliche Hinweise unter dem Code, z. B. Verbindungsstatus. */
   notice?: ReactNode;
   /** Rechtliche Links unter dem Hinweis (nur auf der echten Startseite). */
@@ -33,6 +35,7 @@ export function LandingScreen({
   enterHref,
   onCodeChange,
   renderScan,
+  renderInstall,
   notice,
   showLegal = false,
 }: LandingScreenProps) {
@@ -131,6 +134,7 @@ export function LandingScreen({
           )}
         </div>
         {notice}
+        {renderInstall?.(styles.install)}
         <p className={styles.note}>
           Ohne Konto · Tier änderst du später im Profil
         </p>

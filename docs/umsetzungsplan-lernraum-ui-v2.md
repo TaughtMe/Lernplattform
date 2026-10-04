@@ -39,6 +39,7 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
 
 ### Bewusste Abweichungen von der Vorlage
 
+- Startseite 2a: Unter dem Raumcode steht zusätzlich der Textknopf „Als App installieren“ (nur wo Installation möglich ist, nicht in der installierten App). Siehe `docs/umsetzungsplan-pwa-installierbarkeit.md`, 3.7.
 - `--ink3` ist für WCAG-AA-Kontrast leicht nachgedunkelt bzw. aufgehellt.
 - Fehlerbalken im Live-Screen sind proportional zur Fehlerzahl; die Vorlage zeigt feste Beispielbreiten.
 - Der Raumcode bleibt vierstellig numerisch (Supabase-Vertrag). Die Beispieldaten nutzen „4K2P“ nur, um die Vorlage exakt abzubilden.
