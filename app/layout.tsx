@@ -66,7 +66,12 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "Laufdiktat gemeinsam im Unterricht durchführen.",
       images: [socialImage],
     },
-    icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+    icons: {
+      icon: "/favicon.svg",
+      shortcut: "/favicon.svg",
+      apple: { url: "/icon-180.png", sizes: "180x180", type: "image/png" },
+    },
+    appleWebApp: { capable: true, title: "Lernraum" },
   };
 }
 
