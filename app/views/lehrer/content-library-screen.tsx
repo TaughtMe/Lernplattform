@@ -50,7 +50,7 @@ const KINDS: Record<
   },
 };
 
-const KIND_ORDER: readonly LibraryKind[] = ["text", "math", "vocabulary"];
+const KIND_ORDER: readonly LibraryKind[] = ["text", "vocabulary", "math"];
 
 export type ContentLibraryScreenProps = {
   /** Vorgewählte Art unter „Neu anlegen“ (mobil Grundlage des Panels). */
