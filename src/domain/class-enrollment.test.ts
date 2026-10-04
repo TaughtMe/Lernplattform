@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createEnrollmentCodeV2,
   CLASS_ENROLLMENT_PATH,
   createClassRemovalCode,
   createClassRemovalLink,
@@ -92,7 +93,7 @@ describe("class enrollment links", () => {
   });
 
   it("still accepts the former compact c2 payload without module metadata", () => {
-    const current = createEnrollmentCode(course, member);
+    const current = createEnrollmentCodeV2(course, member);
     const encoded = current.slice("lernraum:c2:".length);
     const padding = "=".repeat((4 - (encoded.length % 4)) % 4);
     const payload = JSON.parse(
@@ -155,7 +156,7 @@ describe("class enrollment links", () => {
     });
 
     it("lässt das Tupel ohne Klassenstempel bei neun Elementen (alte QR-Codes)", () => {
-      const code = createEnrollmentCode(course, relieved);
+      const code = createEnrollmentCodeV2(course, relieved);
       const encoded = code.slice("lernraum:c2:".length);
       const padding = "=".repeat((4 - (encoded.length % 4)) % 4);
       const payload = JSON.parse(
@@ -216,5 +217,40 @@ describe("class enrollment links", () => {
     expect(() =>
       parseClassRemovalLink("https://lernraum.example/lernen/klasse"),
     ).toThrow("enthält keinen Code");
+  });
+});
+
+describe("kompaktes Einschreibeformat c3", () => {
+  it("ist deutlich kürzer als c2 und verlustfrei", async () => {
+    const { createEnrollmentCode, parseEnrollmentCode } =
+      await import("./class-enrollment");
+    const course = {
+      id: "123e4567-e89b-42d3-a456-426614174000",
+      name: "Klasse 7b Ä",
+      teacherName: "Frau Müller",
+      schoolYear: "2026/27",
+      enabledModules: ["vocabulary", "typing"] as ("vocabulary" | "typing")[],
+      createdAt: "2026-09-01T08:00:00.000Z",
+      updatedAt: "2026-09-01T08:00:00.000Z",
+    };
+    const member = {
+      id: "123e4567-e89b-42d3-a456-426614174001",
+      classId: course.id,
+      displayName: "Lena",
+      enrollmentToken: "0123456789abcdef0123456789abcdef",
+      createdAt: "2026-09-01T08:05:00.123Z",
+    };
+    const code = createEnrollmentCode(course, member);
+    expect(code.startsWith("lernraum:c3:")).toBe(true);
+    expect(code.length).toBeLessThan(170);
+    expect(parseEnrollmentCode(code)).toMatchObject({
+      classId: course.id,
+      membershipId: member.id,
+      className: "Klasse 7b Ä",
+      displayName: "Lena",
+      enrollmentToken: member.enrollmentToken,
+      issuedAt: member.createdAt,
+      enabledModules: ["vocabulary", "typing"],
+    });
   });
 });

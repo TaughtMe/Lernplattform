@@ -228,8 +228,16 @@ export function TeacherClassConfigurator() {
           : `Schreiberleichterung für „${member.displayName}“ ist entzogen. Das Kind muss den neuen QR-Code scannen.`,
       );
       window.dispatchEvent(new Event("teacher-data-changed"));
-    } catch {
-      setMessage("Die Schreiberleichterung konnte nicht gespeichert werden.");
+    } catch (cause) {
+      const detail =
+        window.isSecureContext === false
+          ? " Die Seite muss über HTTPS oder localhost geöffnet sein."
+          : cause instanceof Error && cause.message
+            ? ` (${cause.message})`
+            : "";
+      setMessage(
+        `Die Schreiberleichterung konnte nicht gespeichert werden.${detail}`,
+      );
     }
   }
 
@@ -472,6 +480,9 @@ export function TeacherClassConfigurator() {
                 aria-label={`${course.name}, ${course.schoolYear}`}
                 aria-pressed={course.id === selectedId}
                 onClick={() => {
+                  // Dieselbe Klasse erneut zu wählen lädt nichts neu: die
+                  // Schülerliste darf dann nicht geleert werden.
+                  if (course.id === selectedId) return;
                   setMembers([]);
                   setSelectedId(course.id);
                   setShown(undefined);

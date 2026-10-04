@@ -82,6 +82,208 @@ function decodeCompactPayload(value: string) {
   );
 }
 
+const COMPACT_V3_PREFIX = "lernraum:c3:";
+const MODULE_ORDER = classModuleSchema.options;
+
+function bytesToBase64Url(bytes: Uint8Array) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary)
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/, "");
+}
+
+function base64UrlToBytes(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  return Uint8Array.from(
+    atob(value.replaceAll("-", "+").replaceAll("_", "/") + padding),
+    (character) => character.charCodeAt(0),
+  );
+}
+
+function hexToBytes(hex: string) {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(bytes: Uint8Array) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
+}
+
+function uuidToBytes(value: string) {
+  return hexToBytes(value.replaceAll("-", ""));
+}
+
+function bytesToUuid(bytes: Uint8Array) {
+  const hex = bytesToHex(bytes);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+/** Zeitpunkt als 48-Bit-Millisekunden; nur, wenn er exakt zurückführbar ist. */
+function timestampToBytes(iso: string) {
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms) || new Date(ms).toISOString() !== iso) {
+    throw new Error("Zeitpunkt nicht kompakt darstellbar.");
+  }
+  const bytes = new Uint8Array(6);
+  let rest = ms;
+  for (let index = 5; index >= 0; index -= 1) {
+    bytes[index] = rest % 256;
+    rest = Math.floor(rest / 256);
+  }
+  return bytes;
+}
+
+function bytesToTimestamp(bytes: Uint8Array) {
+  let ms = 0;
+  for (const byte of bytes) ms = ms * 256 + byte;
+  return new Date(ms).toISOString();
+}
+
+/** Kompaktes Binärformat: Kennungen als Rohbytes statt als Text. */
+function encodeEnrollmentV3(enrollment: ClassEnrollment) {
+  const encoder = new TextEncoder();
+  const parts: number[] = [];
+  const push = (bytes: ArrayLike<number>) => {
+    for (let index = 0; index < bytes.length; index += 1) {
+      parts.push(bytes[index] as number);
+    }
+  };
+  const pushText = (text: string) => {
+    const bytes = encoder.encode(text);
+    if (bytes.length > 0x3fff) throw new Error("Text zu lang.");
+    // Länge als 1–2 Bytes (hohes Bit zeigt ein zweites Byte an).
+    if (bytes.length < 0x80) parts.push(bytes.length);
+    else parts.push(0x80 | (bytes.length >> 8), bytes.length & 0xff);
+    push(bytes);
+  };
+  const hasGrant = Boolean(
+    enrollment.sealPublicKey &&
+    enrollment.writingReliefGrant &&
+    enrollment.writingReliefSignature,
+  );
+  parts.push(
+    (enrollment.enabledModules ? 1 : 0) |
+      (enrollment.sealPublicKey ? 2 : 0) |
+      (hasGrant ? 4 : 0),
+  );
+  push(uuidToBytes(enrollment.classId));
+  push(uuidToBytes(enrollment.membershipId));
+  push(hexToBytes(enrollment.enrollmentToken));
+  push(timestampToBytes(enrollment.issuedAt));
+  if (enrollment.enabledModules) {
+    let mask = 0;
+    for (const moduleName of enrollment.enabledModules) {
+      mask |= 1 << MODULE_ORDER.indexOf(moduleName);
+    }
+    parts.push(mask);
+  }
+  pushText(enrollment.className);
+  pushText(enrollment.teacherName);
+  pushText(enrollment.schoolYear);
+  pushText(enrollment.displayName);
+  if (enrollment.sealPublicKey) {
+    const key = base64UrlToBytes(enrollment.sealPublicKey);
+    if (
+      bytesToBase64Url(key) !== enrollment.sealPublicKey ||
+      key.length > 255
+    ) {
+      throw new Error("Schlüssel nicht kompakt darstellbar.");
+    }
+    parts.push(key.length);
+    push(key);
+  }
+  if (hasGrant) {
+    const signature = base64UrlToBytes(
+      enrollment.writingReliefSignature as string,
+    );
+    if (
+      bytesToBase64Url(signature) !== enrollment.writingReliefSignature ||
+      signature.length > 255
+    ) {
+      throw new Error("Signatur nicht kompakt darstellbar.");
+    }
+    push(
+      timestampToBytes(
+        (enrollment.writingReliefGrant as WritingReliefGrant).issuedAt,
+      ),
+    );
+    parts.push(signature.length);
+    push(signature);
+  }
+  return bytesToBase64Url(Uint8Array.from(parts));
+}
+
+function decodeEnrollmentV3(value: string) {
+  const bytes = base64UrlToBytes(value);
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  let at = 0;
+  const take = (length: number) => {
+    if (at + length > bytes.length) throw new Error("Code unvollständig.");
+    const slice = bytes.slice(at, at + length);
+    at += length;
+    return slice;
+  };
+  const takeText = () => {
+    const first = take(1)[0] as number;
+    const length =
+      first & 0x80 ? ((first & 0x7f) << 8) | (take(1)[0] as number) : first;
+    return decoder.decode(take(length));
+  };
+  const flags = take(1)[0] as number;
+  const classId = bytesToUuid(take(16));
+  const membershipId = bytesToUuid(take(16));
+  const enrollmentToken = bytesToHex(take(16));
+  const issuedAt = bytesToTimestamp(take(6));
+  let enabledModules: Array<(typeof MODULE_ORDER)[number]> | undefined;
+  if (flags & 1) {
+    const mask = take(1)[0] as number;
+    enabledModules = MODULE_ORDER.filter((_, index) => mask & (1 << index));
+  }
+  const className = takeText();
+  const teacherName = takeText();
+  const schoolYear = takeText();
+  const displayName = takeText();
+  let sealPublicKey: string | undefined;
+  if (flags & 2) sealPublicKey = bytesToBase64Url(take(take(1)[0] as number));
+  let writingReliefGrant: WritingReliefGrant | undefined;
+  let writingReliefSignature: string | undefined;
+  if (flags & 4) {
+    const grantIssuedAt = bytesToTimestamp(take(6));
+    writingReliefSignature = bytesToBase64Url(take(take(1)[0] as number));
+    writingReliefGrant = {
+      v: 1,
+      classId,
+      membershipId,
+      writingRelief: true,
+      issuedAt: grantIssuedAt,
+    };
+  }
+  if (at !== bytes.length) throw new Error("Code enthält Restdaten.");
+  return classEnrollmentSchema.parse({
+    version: 1,
+    classId,
+    membershipId,
+    className,
+    teacherName,
+    schoolYear,
+    displayName,
+    enrollmentToken,
+    issuedAt,
+    ...(enabledModules ? { enabledModules } : {}),
+    ...(sealPublicKey ? { sealPublicKey } : {}),
+    ...(writingReliefGrant && writingReliefSignature
+      ? { writingReliefGrant, writingReliefSignature }
+      : {}),
+  });
+}
+
 /**
  * Die Freigabe der Schreiberleichterung eines Kindes; ohne Haken oder ohne
  * gespeicherte Signatur gibt es keine.
@@ -106,10 +308,7 @@ function memberGrant(member: ClassMember) {
   };
 }
 
-export function createEnrollmentCode(
-  course: TeacherClass,
-  member: ClassMember,
-) {
+function buildEnrollment(course: TeacherClass, member: ClassMember) {
   const { grant, signature } = memberGrant(member) ?? {};
   const enrollment = classEnrollmentSchema.parse({
     version: 1,
@@ -127,6 +326,15 @@ export function createEnrollmentCode(
       ? { writingReliefGrant: grant, writingReliefSignature: signature }
       : {}),
   });
+  return enrollment;
+}
+
+/** Älteres, größeres Textformat (c2); bleibt les- und erzeugbar. */
+export function createEnrollmentCodeV2(
+  course: TeacherClass,
+  member: ClassMember,
+) {
+  const enrollment = buildEnrollment(course, member);
   const base = [
     enrollment.classId,
     enrollment.membershipId,
@@ -153,8 +361,24 @@ export function createEnrollmentCode(
       : base,
   )}`;
 }
+export function createEnrollmentCode(
+  course: TeacherClass,
+  member: ClassMember,
+) {
+  const enrollment = buildEnrollment(course, member);
+  try {
+    return `${COMPACT_V3_PREFIX}${encodeEnrollmentV3(enrollment)}`;
+  } catch {
+    // Nicht kanonische Werte (z. B. ältere Zeitstempel): Textformat nutzen.
+    return createEnrollmentCodeV2(course, member);
+  }
+}
+
 export function parseEnrollmentCode(value: string) {
   const normalized = value.trim();
+  if (normalized.startsWith(COMPACT_V3_PREFIX)) {
+    return decodeEnrollmentV3(normalized.slice(COMPACT_V3_PREFIX.length));
+  }
   const compactPrefix = "lernraum:c2:";
   if (normalized.startsWith(compactPrefix)) {
     const payload = z
@@ -257,9 +481,10 @@ export function createEnrollmentLink(origin: string, code: string) {
     throw new Error("Der Klassencode benötigt eine Lernraum-Webadresse.");
   }
   url.search = "";
-  url.hash = new URLSearchParams([
-    [CLASS_ENROLLMENT_FRAGMENT_KEY, code.trim()],
-  ]).toString();
+  // Base64url und „:“ bleiben unkodiert: Das hält den QR-Code klein.
+  url.hash = `${CLASS_ENROLLMENT_FRAGMENT_KEY}=${code
+    .trim()
+    .replace(/[^A-Za-z0-9_:.-]/g, encodeURIComponent)}`;
   return url.toString();
 }
 
