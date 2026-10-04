@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { Icon, type IconName } from "../../ui/icons";
+import { Icon } from "../../ui/icons";
 import { HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./practice-screen.module.css";
 
@@ -8,7 +8,8 @@ export type PracticeArea = {
   href: string;
   title: string;
   text: string;
-  icon: IconName;
+  icon:
+    "lernbox" | "wortspeicher" | "tastenwelt" | "kopfrechnen" | "laufdiktat";
   /** Kachelfarbe (Farbwelt der Tastenwelt-Stationen). */
   tone: string;
 };
@@ -48,7 +49,13 @@ export function PracticeScreen({
               style={{ "--tone": area.tone } as CSSProperties}
             >
               <span className={styles.symbol} aria-hidden="true">
-                <Icon name={area.icon} size={32} strokeWidth={2} />
+                {/* eslint-disable-next-line @next/next/no-img-element -- lokales SVG, ohne Rasteroptimierung */}
+                <img
+                  src={`/illustrations/practice/${area.icon}.svg`}
+                  width={64}
+                  height={64}
+                  alt=""
+                />
               </span>
               <h2 className={styles.tileTitle}>{area.title}</h2>
               <p className={styles.tileText}>{area.text}</p>
