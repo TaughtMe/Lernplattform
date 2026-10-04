@@ -1,6 +1,6 @@
 # Umsetzungsplan: Lernraum als installierbare Web-App (PWA)
 
-Stand: 04.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `bbb4702` · vinext `1.0.0-beta.8`
+Stand: 04.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `b4bc3e0` · vinext `1.0.0-beta.8`
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Abschnitt 3 enthält die empfohlenen
 Entscheidungen; offene Punkte stehen in Abschnitt 7 und werden vor der Umsetzung mit der
@@ -23,15 +23,15 @@ kein „App installieren“. Unter `laufdiktat.pages.dev` erscheint es.
 Nachgewiesen lokal mit Produktions-Build (`npm run build`, `vinext start`) und Chromium über
 CDP `Page.getInstallabilityErrors`:
 
-| Zustand                                                                             | Ergebnis von Chromium       |
-| ----------------------------------------------------------------------------------- | --------------------------- |
-| Ist-Zustand                                                                         | `no-manifest`               |
-| Gleiche Seite, Manifest-Link per Skript in `<head>` verschoben                      | keine Fehler, installierbar |
-| Prototyp aus Abschnitt 3.1 auf `/`, `/lernen`, `/lehrer`, `/lernen/faecher/deutsch` | keine Fehler, installierbar |
+| Zustand                                                                                | Manifest-Link | Ergebnis von Chromium       |
+| -------------------------------------------------------------------------------------- | ------------- | --------------------------- |
+| `bbb4702` (Manifest über `app/manifest.ts`)                                            | im `<body>`   | `no-manifest`               |
+| `b4bc3e0` (statische `public/manifest.webmanifest`, verlinkt über `metadata.manifest`) | im `<body>`   | `no-manifest`               |
+| Gleiche Seite, Manifest-Link per Skript in `<head>` verschoben                         | im `<head>`   | keine Fehler, installierbar |
+| Prototyp aus 3.1 auf `/`, `/lernen`, `/lehrer`, `/lernen/faecher/deutsch`              | im `<head>`   | keine Fehler, installierbar |
 
 **Ursache:** Der `<link rel="manifest">` landet im `<body>`, nicht im `<head>`. Chrome wertet
-Manifest-Links aber nur im `<head>` aus. Das Manifest selbst ist korrekt und wird ausgeliefert
-(`/manifest.webmanifest`, `200`, `application/manifest+json`).
+Manifest-Links aber nur im `<head>` aus. Das Manifest selbst ist korrekt und wird ausgeliefert.
 
 Wie es dazu kommt:
 
@@ -40,7 +40,8 @@ Wie es dazu kommt:
 2. vinext streamt dynamische Metadaten in den `<body>` und schiebt sie danach per Inline-Skript
    (`REINSERT_STREAMED_ICONS_SCRIPT` in `vinext/dist/server/app-page-route-wiring.js`) zurück in
    den `<head>`, **aber nur** `icon`- und `apple-touch-icon`-Links. Der Manifest-Link bleibt im
-   `<body>`.
+   `<body>`. Das gilt für `app/manifest.ts` genauso wie für den Eintrag `manifest:` in den
+   Metadaten. Die Commits `ad54507`/`b4bc3e0` haben das Problem deshalb nicht behoben.
 3. Dasselbe passiert auf jeder Seite mit eigenem `generateMetadata`, derzeit
    `app/lernen/faecher/[subject]/page.tsx`.
 
@@ -48,23 +49,27 @@ Gegenprobe: Mit statischem `export const metadata` im Layout steht der Manifest-
 Für Seiten mit eigenem `generateMetadata` gilt das aber nicht, deshalb reicht diese Variante
 allein nicht (siehe 3.1).
 
-Weitere Befunde, die die Installation nicht verhindern, die App aber als „funktionale Web-App“
-schwächen:
+Bereits erledigt (`ad54507`, `b4bc3e0`): statische `public/manifest.webmanifest` mit `id` und
+`scope`, PNG-Icons in 180, 192 und 512 px, `apple-touch-icon` und `appleWebApp` in den Metadaten.
+
+Weitere offene Befunde. Sie verhindern die Installation nicht, schwächen die App aber als
+„funktionale Web-App“:
 
 - **Service Worker nur über den Seitenfuß.** `navigator.serviceWorker.register("/sw.js")` steckt in
   `app/ui/version-button.tsx`. `SiteFooter` rendert auf `/` nichts. Auf der Startseite, der
-  `start_url` des Manifests, wird also kein Service Worker registriert. Wer dort installiert und
-  offline startet, bekommt keine App-Hülle.
-- **Nur ein SVG-Icon.** Desktop-Chrome akzeptiert `favicon.svg` mit `sizes: "any"`. Android erzeugt
-  ohne PNG-Icons (192/512, maskable) aber nur ein schlechtes Icon. iOS braucht ein PNG als
-  `apple-touch-icon`, sonst erscheint dort ein Screenshot als Icon.
+  `start_url` des Manifests, wird also kein Service Worker registriert (gemessen: 0
+  Registrierungen auf `/`, 1 auf `/lernen`). Wer dort installiert und offline startet, bekommt
+  keine App-Hülle.
+- **Maskable-Icon ist das normale Icon.** `icon-512.png` hat abgerundete, transparente Ecken und
+  wird zusätzlich als `purpose: "maskable"` eingetragen. Android-Masken zeigen die transparenten
+  Ecken als schwarze oder weiße Flächen.
 - **Farben passen nicht zusammen.** `theme_color`/`background_color` im Manifest sind `#211f1b`,
-  das Layout nutzt `#f6f2e8` (hell) und `#17150f` (dunkel). Ergebnis: ein unpassender Splash-Screen
-  und eine unpassende Titelleiste.
+  das Layout nutzt `#f6f2e8` (hell) und `#17150f` (dunkel). Ergebnis: ein unpassender
+  Splash-Screen und eine unpassende Titelleiste.
 - **Ungewollte Metadaten-Route.** `app/entwicklung/screens/manifest.ts` ist eine Hilfsdatei. Wegen
   ihres Namens behandelt vinext sie als Manifest-Route für `/entwicklung/screens`.
-- **Kein `id`/`scope`** im Manifest. Wenn sich `start_url` später ändert, gilt die App sonst als
-  neue App.
+- **Kein Regressionstest.** Kein Test prüft, ob die App installierbar ist. Deshalb ist der
+  Fehler unbemerkt geblieben.
 
 ## 2. Ist die Beta-Version schuld?
 
@@ -91,54 +96,50 @@ nicht live geprüft, weil der Zugriff aus der Testumgebung gesperrt war.
 
 ### 3.1 Manifest-Link fest im `<head>` (Kernfix)
 
-- `app/manifest.ts` entfernen. Inhalt als statische Datei `public/manifest.webmanifest`
-  ablegen (Cloudflare liefert sie direkt aus den Assets aus).
-- In `app/layout.tsx` im `<head>` direkt `<link rel="manifest" href="/manifest.webmanifest" />`
-  rendern, vor dem Theme-Skript.
-- Damit gibt es genau einen Manifest-Link, immer im `<head>`, auf jeder Seite, egal ob die
-  Seite Metadaten streamt.
+- In `app/layout.tsx` den Eintrag `manifest: "/manifest.webmanifest"` aus `generateMetadata()`
+  entfernen.
+- Stattdessen im JSX von `RootLayout` direkt im `<head>` rendern:
+  `<link rel="manifest" href="/manifest.webmanifest" />`, vor dem Theme-Skript.
+- `public/manifest.webmanifest` bleibt die einzige Quelle. Es darf keine `app/manifest.*`-Datei
+  geben (sonst erzeugt vinext wieder einen zweiten Link im `<body>`).
+- Kurzer Kommentar am Link: Er steht absichtlich nicht in den Metadaten, weil vinext gestreamte
+  Manifest-Links nicht in den `<head>` zurückschiebt.
 
 Verworfene Alternativen:
 
 - _Nur statische Metadaten im Layout:_ behebt `/`, aber nicht Seiten mit eigenem
   `generateMetadata`. Jede künftige Seite könnte den Fehler wieder einführen.
-- _`app/manifest.ts` behalten und zusätzlich einen Link setzen:_ doppelte Links, einer davon
+- _Link in den Metadaten behalten und zusätzlich im `<head>` setzen:_ doppelte Links, einer davon
   weiterhin im `<body>`. Unsauber und verwirrend.
 - _vinext patchen:_ Wartungslast bei jedem Update; der Fehler gehört upstream.
 - _Wechsel auf Next.js mit OpenNext oder auf eine reine SPA:_ großer Umbau ohne Mehrwert für
   dieses Problem.
 
-### 3.2 Manifest vervollständigen
+### 3.2 Manifest nachschärfen
 
 `public/manifest.webmanifest`:
 
-- `id: "/"`, `scope: "/"`, `start_url: "/"` (siehe offene Frage 7.1), `display: "standalone"`,
-  `lang: "de"`, `dir: "ltr"`.
 - `theme_color`/`background_color` passend zum hellen Standardthema (`#f6f2e8`). Der dunkle Modus
   bleibt über die vorhandenen `theme-color`-Meta-Tags mit `media` abgedeckt.
-- Icons: `favicon.svg` (`any`), `icon-192.png`, `icon-512.png` (`purpose: "any"`),
-  `icon-maskable-512.png` (`purpose: "maskable"`, Motiv innerhalb der 80-%-Schutzzone).
+- Eigenes `icon-maskable-512.png` statt `icon-512.png` für `purpose: "maskable"`. Es hat einen
+  vollflächigen Hintergrund ohne abgerundete Ecken, und das Motiv liegt in der 80-%-Schutzzone.
+- `dir: "ltr"`, `categories: ["education"]`.
 - Optional für die ausführliche Installationsansicht unter Android und Desktop: `screenshots`
-  (je ein Bild `form_factor: "wide"` und `"narrow"`), dazu `description` und `categories:
-["education"]`.
+  (je ein Bild `form_factor: "wide"` und `"narrow"`).
 
-### 3.3 App-Icons erzeugen
+### 3.3 Icons reproduzierbar erzeugen
 
 - Neues Skript `scripts/generate-app-icons.mjs`. Es rendert `public/favicon.svg` mit dem bereits
   vorhandenen Playwright (wie `scripts/render-design-references.mjs`) als PNG in 180, 192 und
-  512 px, dazu eine maskable-Variante mit Innenabstand. Keine neue Abhängigkeit.
-- Die PNGs werden eingecheckt (`public/icons/`). Das Skript läuft nur bei Icon-Änderungen,
-  nicht in jedem Build.
+  512 px und erzeugt die maskable-Variante. Keine neue Abhängigkeit.
+- Die PNGs bleiben eingecheckt. Das Skript läuft nur bei Icon-Änderungen, nicht in jedem Build.
 
 ### 3.4 iOS und iPadOS
 
 Safari zeigt nie einen Installieren-Knopf. Der Weg führt dort immer über „Teilen → Zum
-Home-Bildschirm“. Damit das Ergebnis eine richtige App ist:
-
-- In den Layout-Metadaten `icons.apple: "/icons/apple-touch-icon.png"` (180 px, ohne
-  Transparenz) und `appleWebApp: { capable: true, title: "Lernraum", statusBarStyle: "default" }`.
-- Da vinext `apple-touch-icon` korrekt in den `<head>` verschiebt, kann das über die Metadaten
-  laufen. Der Regressionstest (3.6) prüft es trotzdem.
+Home-Bildschirm“. `apple-touch-icon` (180 px) und `appleWebApp` sind bereits gesetzt. vinext
+schiebt `apple-touch-icon` korrekt in den `<head>`; der Regressionstest (4) prüft das trotzdem.
+Ergänzen: `appleWebApp.statusBarStyle: "default"`.
 
 ### 3.5 Service Worker zentral registrieren
 
@@ -147,8 +148,8 @@ Home-Bildschirm“. Damit das Ergebnis eine richtige App ist:
 - `VersionButton` registriert nicht mehr selbst, sondern nutzt
   `navigator.serviceWorker.ready`/`getRegistration()` für die Update-Anzeige. Die Update-Logik
   (Intervall, `SKIP_WAITING`, Neuladen bei `controllerchange`) bleibt unverändert.
-- `scripts/service-worker.template.js`: `APP_SHELL` um `/manifest.webmanifest` (schon drin) und
-  die PNG-Icons ergänzen. Die Offline-Antwort bleibt wie heute.
+- `scripts/service-worker.template.js`: `APP_SHELL` um die PNG-Icons ergänzen. Die
+  Offline-Antwort bleibt wie heute.
 
 ### 3.6 Aufräumen
 
@@ -169,6 +170,7 @@ Anleitung. Für die Grundfunktion ist das nicht nötig, weil der Browser-Knopf n
     zwar **vor** `</head>`. Dieser Test hätte den aktuellen Fehler gefunden.
   - `/manifest.webmanifest` liefert `200`, gültiges JSON mit `id`, `start_url`, `display` und
     Icons in 192 und 512 px. Alle Icon-URLs liefern `200`.
+  - Es gibt keine Datei `app/manifest.*`.
 - `e2e/platform-quality.spec.ts`, nur Chromium-Projekte:
   - Über CDP `Page.getInstallabilityErrors` gibt es auf `/` keine Fehler. `in-incognito` wird
     ignoriert, weil Playwright-Kontexte als inkognito gelten.
@@ -191,10 +193,10 @@ Firefox (Desktop) bietet keine PWA-Installation an. Das ist kein Fehler des Lern
 
 ## 6. Reihenfolge
 
-1. 3.1 + Render-Test aus 4: behebt das gemeldete Problem allein. Kann als eigener kleiner PR
-   zuerst gehen.
-2. 3.2–3.4 (Manifest, Icons, iOS).
-3. 3.5 (Service Worker zentral) mit E2E-Tests.
+1. 3.1 + Render-Test aus 4: behebt das gemeldete Problem allein (wenige Zeilen). Kann als eigener
+   kleiner PR zuerst gehen.
+2. 3.5 (Service Worker zentral) mit E2E-Tests.
+3. 3.2–3.4 (Farben, Maskable-Icon, Icon-Skript, iOS-Feinschliff).
 4. 3.6, Upstream-Bericht, separater PR für das vinext-Update.
 5. Optional 3.7.
 
