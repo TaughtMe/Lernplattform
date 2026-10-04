@@ -109,6 +109,8 @@ export type LernBoxScreenProps = {
     importText?: string;
   }) => void;
   onCreateFolder?: (title: string) => void;
+  /** Übernahme von Lehrkraft-Paketen per QR-Code/Transfercode. */
+  transferSlot?: ReactNode;
   onMode?: (mode: LbMode) => void;
   onDirection?: (direction: LbDirection) => void;
   onLearnDue?: () => void;
@@ -181,7 +183,7 @@ export function LernBoxScreen(props: LernBoxScreenProps) {
 /* ================= Panel (4a / 4c links) ================= */
 
 function Panel(props: LernBoxScreenProps) {
-  const [creating, setCreating] = useState<"deck" | "folder" | null>(null);
+  const [creating, setCreating] = useState<"deck" | "folder" | "transfer" | null>(null);
   const loose = props.decks.filter((deck) => !deck.folderId);
   return (
     <aside className={styles.panel} aria-labelledby="lernbox-title">
@@ -251,6 +253,18 @@ function Panel(props: LernBoxScreenProps) {
           >
             + Neuer Stapel
           </button>
+          {props.transferSlot ? (
+            <button
+              type="button"
+              className={styles.link}
+              aria-expanded={creating === "transfer"}
+              onClick={() =>
+                setCreating(creating === "transfer" ? null : "transfer")
+              }
+            >
+              QR-Import
+            </button>
+          ) : null}
         </span>
       </div>
 
@@ -262,6 +276,7 @@ function Panel(props: LernBoxScreenProps) {
           }}
         />
       ) : null}
+      {creating === "transfer" ? props.transferSlot : null}
       {creating === "deck" || (!props.loading && props.decks.length === 0) ? (
         <CreateDeck
           folders={props.folders}

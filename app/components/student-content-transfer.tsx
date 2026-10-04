@@ -28,8 +28,10 @@ function displayTransferCode(value: string) {
 
 export function StudentContentTransfer({
   transferConfig,
+  onImported,
 }: {
   transferConfig: LiveRoomConfig | null;
+  onImported?: () => void;
 }) {
   const repository = useMemo(() => createLearningBoxRepository(), []);
   const [code, setCode] = useState("");
@@ -52,6 +54,7 @@ export function StudentContentTransfer({
     });
     setSuccess({ title, added: result.added, reused: result.reused });
     setCode("");
+    onImported?.();
   }
 
   async function retrieveByCode(event: FormEvent<HTMLFormElement>) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { StudentContentTransfer } from "./student-content-transfer";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   evaluateLearningBoxAnswer,
@@ -136,6 +137,15 @@ function buildQueue(
     return { card, direction };
   });
 }
+
+const transferConfig =
+  process.env["NEXT_PUBLIC_SUPABASE_URL"] &&
+  process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]
+    ? {
+        url: process.env["NEXT_PUBLIC_SUPABASE_URL"],
+        publishableKey: process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
+      }
+    : null;
 
 export function LearningBoxApp() {
   const repository = useMemo(() => createLearningBoxRepository(), []);
@@ -436,6 +446,12 @@ export function LearningBoxApp() {
   return (
     <StudentPage activePath="/lernbox" bare>
       <LernBoxScreen
+        transferSlot={
+          <StudentContentTransfer
+            transferConfig={transferConfig}
+            onImported={() => void refresh()}
+          />
+        }
         theme={theme}
         panelOpen={panelOpen}
         loading={loading}
