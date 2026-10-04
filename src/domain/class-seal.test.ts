@@ -177,3 +177,19 @@ describe("Klassenstempel", () => {
     });
   });
 });
+
+describe("Browser-JWK mit alg", () => {
+  it("akzeptiert einen privaten Schlüssel mit alg", async () => {
+    const { classSealPrivateJwkSchema } = await import("./class-seal");
+    expect(
+      classSealPrivateJwkSchema.parse({
+        kty: "EC",
+        crv: "P-256",
+        x: "x",
+        y: "y",
+        d: "d",
+        alg: "ES256",
+      }),
+    ).toMatchObject({ alg: "ES256" });
+  });
+});
