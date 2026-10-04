@@ -132,6 +132,56 @@ describe("learning box repository", () => {
     expect(cards[0]?.source.kind).toBe("running-dictation");
   });
 
+  it("replaces long package tags by an own tag or none", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const bundle = parseLearningBundleV1({
+      schemaVersion: LEARNING_BUNDLE_VERSION,
+      id: "pkg-1",
+      revision: 1,
+      createdAt: "2026-08-13T08:00:00.000Z",
+      source: { kind: "teacher", id: "class-7b" },
+      vocabulary: [
+        {
+          kind: "vocabulary",
+          id: "library",
+          prompt: { text: "library", locale: "en" },
+          answer: { text: "Bibliothek", locale: "de" },
+          tagIds: ["ein-sehr-langer-tag-aus-dem-paket"],
+          createdAt: "2026-08-13T08:00:00.000Z",
+          updatedAt: "2026-08-13T08:00:00.000Z",
+        },
+      ],
+      stacks: [{ id: "s", title: "Paket", itemIds: ["library"], tagIds: [] }],
+    });
+    const source = { kind: "teacher" as const, sourceId: "pkg-1" };
+
+    const none = await repository.ingestBundle({
+      bundle,
+      title: "Paket",
+      source,
+      tagOverride: "",
+    });
+    let cards = await repository.listCards(none.deckId);
+    expect(cards[0]?.tag).toBeUndefined();
+
+    await repository.ingestBundle({
+      bundle,
+      title: "Paket",
+      source,
+      tagOverride: " Unit 3 ",
+    });
+    cards = await repository.listCards(none.deckId);
+    expect(cards[0]?.tag).toBe("Unit 3");
+
+    await repository.ingestBundle({ bundle, title: "Paket", source });
+    cards = await repository.listCards(none.deckId);
+    expect(cards[0]?.tag).toBe("ein-sehr-langer-tag-aus-dem-paket");
+  });
+
   it("keeps personal progress unchanged across repeated teacher-package revisions", async () => {
     const database = new PersonalLearningDatabase(
       `learning-box-${crypto.randomUUID()}`,

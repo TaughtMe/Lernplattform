@@ -437,6 +437,7 @@ export function LearningBoxApp({
   async function receivePackage(
     fetchBundle: () => ReturnType<typeof retrieveLearningBundleByCode>,
     fallback: string,
+    tag: string,
   ) {
     setTransfer({ busy: true, error: "", success: null });
     try {
@@ -446,6 +447,8 @@ export function LearningBoxApp({
         bundle,
         title,
         source: { kind: "teacher", sourceId: bundle.id },
+        // Tags der Pakete sind sehr lang: nur der eigene Tag oder keiner.
+        tagOverride: tag,
       });
       setTransfer({
         busy: false,
@@ -466,7 +469,7 @@ export function LearningBoxApp({
     setTransfer({ busy: false, error, success: null });
   }
 
-  function receiveByCode(code: string) {
+  function receiveByCode(code: string, tag: string) {
     if (!transferConfig)
       return transferFailure(
         "Die Inhaltsübertragung ist noch nicht konfiguriert.",
@@ -479,10 +482,11 @@ export function LearningBoxApp({
       () =>
         retrieveLearningBundleByCode(getLiveRoomClient(transferConfig), code),
       "Das Paket konnte nicht übernommen werden.",
+      tag,
     );
   }
 
-  function receiveByQr(value: string) {
+  function receiveByQr(value: string, tag: string) {
     if (!transferConfig)
       return transferFailure(
         "Die Inhaltsübertragung ist noch nicht konfiguriert.",
@@ -494,6 +498,7 @@ export function LearningBoxApp({
           parseTransferQrPayload(value),
         ),
       "Der QR-Code konnte nicht gelesen werden.",
+      tag,
     );
   }
 

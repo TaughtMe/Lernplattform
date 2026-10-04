@@ -505,6 +505,11 @@ export function createLearningBoxRepository(
       source: LearningBoxSource;
       /** Ergebnis je Bundle-Eintrag aus einer Unterrichtsrunde (Platzierung). */
       placements?: Readonly<Record<string, LiveVocabularyOutcome>>;
+      /**
+       * Eigener Tag für alle Einträge statt der Tags aus dem Paket; leer heißt
+       * ohne Tag (vorhandene Tags bleiben). Ohne Angabe gelten die Paket-Tags.
+       */
+      tagOverride?: string;
     }): Promise<RunningDictationImportResult> =>
       database.transaction(
         "rw",
@@ -548,6 +553,9 @@ export function createLearningBoxRepository(
           let added = 0;
           let reused = 0;
           let practiceAgain = 0;
+          const override = input.tagOverride?.trim();
+          const tagOf = (item: { tagIds: readonly string[] }) =>
+            input.tagOverride === undefined ? item.tagIds[0] : override;
           for (const item of input.bundle.vocabulary) {
             const itemId = bundleItemId(item);
             const incomingRevision = bundleItemRevision(item, input.bundle);
@@ -625,8 +633,9 @@ export function createLearningBoxRepository(
                   fingerprint: bundleItemFingerprint(item),
                   sourceLinks: nextLinks,
                 };
-                if (item.tagIds[0]) nextCard.tag = item.tagIds[0];
-                else delete nextCard.tag;
+                const tag = tagOf(item);
+                if (tag) nextCard.tag = tag;
+                else if (input.tagOverride === undefined) delete nextCard.tag;
                 await database.learningBoxCards.put(nextCard);
                 Object.assign(existing, nextCard);
               } else if (!matchingLink) {
@@ -651,7 +660,7 @@ export function createLearningBoxRepository(
                   .map((text) => text.trim())
                   .filter(Boolean)
                   .join(" | "),
-                ...(item.tagIds[0] ? { tag: item.tagIds[0] } : {}),
+                ...(tagOf(item) ? { tag: tagOf(item) as string } : {}),
                 source: input.source,
               }),
               fingerprint: bundleItemFingerprint(item),

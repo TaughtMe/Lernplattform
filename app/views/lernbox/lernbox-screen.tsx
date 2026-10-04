@@ -150,8 +150,9 @@ export type LernBoxScreenProps = {
     input: { question: string; answer: string },
   ) => Promise<"added" | "duplicate" | "error">;
   onImportCards?: (deckId: string, text: string) => Promise<string>;
-  onTransferCode?: (code: string) => void;
-  onTransferQr?: (value: string) => void;
+  /** `tag`: eigener Tag für alle Vokabeln des Pakets, leer = ohne Tag. */
+  onTransferCode?: (code: string, tag: string) => void;
+  onTransferQr?: (value: string, tag: string) => void;
   // Vokabelliste
   onQuery?: (query: string) => void;
   onFilter?: (filter: string) => void;
@@ -1090,6 +1091,7 @@ function groupCode(value: string) {
 
 function CodeSheet(props: LernBoxScreenProps) {
   const [code, setCode] = useState("");
+  const [tag, setTag] = useState("");
   const { transfer } = props;
   return (
     <Modal title="Code eingeben" onClose={props.onCloseSheet}>
@@ -1097,13 +1099,24 @@ function CodeSheet(props: LernBoxScreenProps) {
         className={styles.sheetForm}
         onSubmit={(event) => {
           event.preventDefault();
-          props.onTransferCode?.(code);
+          props.onTransferCode?.(code, tag.trim());
         }}
       >
         <p className={styles.sheetText}>
           Tippe den Code von der Tafel oder vom Arbeitsblatt ein, oder scanne
           den QR-Code mit der Kamera.
         </p>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>Tag für diese Vokabeln</span>
+          <input
+            className={styles.input}
+            placeholder="z. B. Unit 3 (leer = ohne Tag)"
+            maxLength={40}
+            autoComplete="off"
+            value={tag}
+            onChange={(event) => setTag(event.target.value)}
+          />
+        </label>
         <div className={styles.codeBox}>
           <input
             className={styles.codeInput}
@@ -1124,7 +1137,7 @@ function CodeSheet(props: LernBoxScreenProps) {
             }
           />
           <QrCodeScanner
-            onResult={(value) => props.onTransferQr?.(value)}
+            onResult={(value) => props.onTransferQr?.(value, tag.trim())}
             buttonClassName={styles.scanButton ?? ""}
             iconSize={24}
             iconStrokeWidth={2.2}
