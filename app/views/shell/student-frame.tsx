@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BrandSymbol } from "../../ui/brand";
 import { Icon, type IconName } from "../../ui/icons";
 import { cx } from "../parts/parts";
 import styles from "./student-frame.module.css";
@@ -45,9 +46,9 @@ export function StudentFrame({
           aria-label="Hauptnavigation"
           hidden={hideNav}
         >
-          {/* Das L führt zur Startseite (Raumcode, Lehrer-Login). */}
+          {/* Das Logo führt zur Startseite (Raumcode, Lehrer-Login). */}
           <Link href="/" className={styles.brand} aria-label="Zur Startseite">
-            L
+            <BrandSymbol height={40} onDark />
           </Link>
           {items.map((item) => (
             <Link

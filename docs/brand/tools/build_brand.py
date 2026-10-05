@@ -111,12 +111,15 @@ w("symbol-reversed.svg", sym_svg(REV, title="Lernraum Symbol, für dunklen Grund
 w("symbol-black.svg", sym_svg(mono("#000000"), title="Lernraum Symbol, schwarz"))
 w("symbol-white.svg", sym_svg(mono("#ffffff"), title="Lernraum Symbol, weiß"))
 # Kleinvariante: ohne Punkte, eng beschnitten
-def small(cols, title="Lernraum Symbol, klein"):
-    pad = 4
-    shs = shapes(False, -BX0 + pad, -BY0 + pad)
+def small(cols, title="Lernraum Symbol, klein", dots=False):
+    pad = 4 if not dots else 0
+    shs = shapes(dots, -BX0 + pad, -BY0 + pad)
     return svg(f"0 0 {f(BX1-BX0+2*pad)} {f(BY1-BY0+2*pad)}", colored(shs, cols), title)
 w("symbol-small.svg", small(FULL))
 w("symbol-small-reversed.svg", small(REV))
+# Zuschnitt für die Oberfläche: eng beschnitten, mit Punkten (ab 32 px Höhe)
+w("mark.svg", small(FULL, "Lernraum", dots=True))
+w("mark-reversed.svg", small(REV, "Lernraum", dots=True))
 
 # Wortmarke
 CAP = 104
@@ -127,9 +130,9 @@ w("wordmark.svg", word_svg(DARK)); w("wordmark-reversed.svg", word_svg(CREAM))
 w("wordmark-black.svg", word_svg("#000000")); w("wordmark-white.svg", word_svg("#ffffff"))
 
 # Lockups
-def horizontal(cols, wcol, title):
+def horizontal(cols, wcol, title, dots=True):
     sw = BX1-BX0; sh = BY1-BY0; gap = 44
-    shs = shapes(True, -BX0, -BY0)
+    shs = shapes(dots, -BX0, -BY0)
     wy = sh  # Grundlinie = Unterkante der Steine
     body = colored(shs, cols) + f'<path fill="{wcol}" transform="translate({f(sw+gap)} {f(wy)})" d="{path}"/>'
     return svg(f"0 0 {f(sw+gap+wd)} {f(sh)}", body, title)
@@ -142,6 +145,9 @@ def stacked(cols, wcol, title):
     return svg(f"0 0 {f(W)} {f(sh+gap+cap)}", body, title)
 w("logo-horizontal.svg", horizontal(FULL, DARK, "Lernraum"))
 w("logo-horizontal-reversed.svg", horizontal(REV, CREAM, "Lernraum"))
+# Kleinvarianten ohne Punkte (unter 32 px Höhe)
+w("logo-horizontal-small.svg", horizontal(FULL, DARK, "Lernraum", dots=False))
+w("logo-horizontal-small-reversed.svg", horizontal(REV, CREAM, "Lernraum", dots=False))
 w("logo-horizontal-black.svg", horizontal(mono("#000"), "#000", "Lernraum"))
 w("logo-horizontal-white.svg", horizontal(mono("#fff"), "#fff", "Lernraum"))
 w("logo-stacked.svg", stacked(FULL, DARK, "Lernraum"))

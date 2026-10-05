@@ -94,3 +94,20 @@ Die Einbindung steht in `app/layout.tsx` (Metadaten) und `public/manifest.webman
 - Die Sprechblase ist um 8° gekippt. Die zwei leicht schiefen Kanten an der Spitze (etwa 122° und 73°) sind die Folge davon und gewollt.
 - Es wurde keine Markenrecherche durchgeführt. Vor einer Anmeldung als Marke ist eine Recherche in den Markenregistern und per Rückwärts-Bildersuche nötig.
 - Die Dateien werden mit `docs/brand/tools/build_brand.py` erzeugt (Icons mit `raster_icons.py`). Änderungen bitte am Symbol dort machen und alle Varianten neu erzeugen, nicht von Hand an einzelnen Dateien.
+
+## 9. Logo in der App
+
+Die Komponenten in `app/ui/brand.tsx` wählen die Variante nach der Höhe:
+
+- ab 32 px Höhe: mit Punkten (`mark.svg`, `logo-horizontal.svg`)
+- unter 32 px: ohne Punkte (`symbol-small.svg`, `logo-horizontal-small.svg`)
+- auf dunklem Grund (`onDark`): jeweils die Datei mit `-reversed`
+
+`mark.svg` und `mark-reversed.svg` sind das Symbol eng zugeschnitten, im Unterschied zu `symbol.svg`, das für Icons und Profilbilder auf ein Quadrat zentriert ist.
+
+| Stelle                       | Komponente    | Höhe               |
+| ---------------------------- | ------------- | ------------------ |
+| Schüler-Seitenleiste         | `BrandSymbol` | 40 px, mit Punkten |
+| Schüler-Kopfzeile am Handy   | `BrandSymbol` | 26 px, ohne Punkte |
+| Startbildschirm              | `BrandLogo`   | 28 px, ohne Punkte |
+| Lehrer-Leiste und -Schublade | `BrandSymbol` | 26 px, ohne Punkte |

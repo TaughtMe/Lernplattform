@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
+import { BrandLogo } from "../../ui/brand";
 import { Icon } from "../../ui/icons";
 import { Animal } from "../parts/parts";
 import styles from "./landing-screen.module.css";
@@ -59,7 +60,9 @@ export function LandingScreen({
   return (
     <main className={styles.screen}>
       <header className={styles.header}>
-        <span className={styles.brand}>Lernraum</span>
+        <span className={styles.brand}>
+          <BrandLogo height={28} onDark label="Lernraum" />
+        </span>
         <Link href={teacherHref} className={styles.teacher}>
           Lehrer-Login
         </Link>
