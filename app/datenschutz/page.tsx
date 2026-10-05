@@ -96,11 +96,10 @@ export default function DatenschutzPage() {
           eigenen Geräten abgleichen. Die Daten liegen dabei in einem
           Cloud-Speicher, den die Lehrkraft selbst wählt (WebDAV, Microsoft
           OneDrive oder Google Drive) und der keinen Zugriff durch den
-          Lernraum-Betreiber ermöglicht. Die Lehrkraft entscheidet über
-          Anbieter und Umfang und ist für die Übertragung verantwortlich; wir
-          empfehlen, die Datei mit einem Passwort zu verschlüsseln, sobald
-          Daten von Kindern enthalten sind. Ohne Einrichtung findet kein
-          Abgleich statt.
+          Lernraum-Betreiber ermöglicht. Die Lehrkraft entscheidet über Anbieter
+          und Umfang und ist für die Übertragung verantwortlich; wir empfehlen,
+          die Datei mit einem Passwort zu verschlüsseln, sobald Daten von
+          Kindern enthalten sind. Ohne Einrichtung findet kein Abgleich statt.
         </p>
       </section>
 
