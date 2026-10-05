@@ -16,13 +16,16 @@ import {
 } from "../../src/integrations/cloud-sync/session";
 import {
   pullStudentData,
+  pullTeacherData,
   pushStudentData,
+  pushTeacherData,
 } from "../../src/integrations/cloud-sync/sync";
 import {
   CloudSyncError,
   type CloudSyncTarget,
 } from "../../src/integrations/cloud-sync/types";
 import { createWebDavTarget } from "../../src/integrations/cloud-sync/webdav";
+import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-class-settings";
 import { Button } from "../ui/primitives";
 import { useCloudClientIds } from "./cloud-client-ids";
 import { GoogleDriveLogo, MicrosoftLogo, WebDavIcon } from "./cloud-logos";
@@ -43,12 +46,11 @@ function readSettings(): StoredSettings {
 }
 
 /**
- * Handabgleich des Lernstands über einen Cloudspeicher (Schüler). Für
- * Lehrkräfte gibt es den automatischen Abgleich (`cloud-sync-setup.tsx`). WebDAV lässt sich sofort nutzen;
+ * Synchronisation über einen Cloudspeicher. WebDAV lässt sich sofort nutzen;
  * OneDrive und Google Drive erscheinen, sobald die Schulkonten eingerichtet
  * sind. Das Passwort wird nicht gespeichert.
  */
-export function CloudSyncPanel({ area }: { area: "student" }) {
+export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
   const clientIds = useCloudClientIds();
   const providers = useMemo(() => cloudProviders(clientIds), [clientIds]);
   const [settings, setSettings] = useState<StoredSettings>({
@@ -74,7 +76,8 @@ export function CloudSyncPanel({ area }: { area: "student" }) {
     return () => window.clearTimeout(id);
   }, []);
 
-  const returnTo = "/lernen/einstellungen";
+  const returnTo =
+    area === "teacher" ? "/lehrer/einstellungen" : "/lernen/einstellungen";
 
   async function connectProvider(provider: OAuthProviderId) {
     setMessage("");
@@ -130,16 +133,33 @@ export function CloudSyncPanel({ area }: { area: "student" }) {
           : via === "google-drive"
             ? createGoogleDriveTarget(await getAccessToken("google-drive"))
             : createWebDavTarget({ ...settings, password });
-      if (action === "push") {
-        await pushStudentData(resolved);
-        setMessage("Lernstand wurde in der Cloud gesichert.");
+      const target = () => resolved;
+      if (area === "student") {
+        if (action === "push") {
+          await pushStudentData(target());
+          setMessage("Lernstand wurde in der Cloud gesichert.");
+        } else {
+          const result = await pullStudentData(target());
+          setMessage(
+            result === null
+              ? "In der Cloud liegt noch keine Sicherung."
+              : `Zusammengeführt: ${result.added} neu, ${result.updated} aktualisiert.`,
+          );
+        }
       } else {
-        const result = await pullStudentData(resolved);
-        setMessage(
-          result === null
-            ? "In der Cloud liegt noch keine Sicherung."
-            : `Zusammengeführt: ${result.added} neu, ${result.updated} aktualisiert.`,
-        );
+        const workspace = createTeacherWorkspaceRepository();
+        if (action === "push") {
+          await pushTeacherData(target(), workspace);
+          setMessage("Lehrerdaten wurden in der Cloud gesichert.");
+        } else {
+          const found = await pullTeacherData(target(), workspace);
+          if (found) window.dispatchEvent(new Event("teacher-data-changed"));
+          setMessage(
+            found
+              ? "Lehrerdaten wurden geholt und zusammengeführt."
+              : "In der Cloud liegt noch keine Sicherung.",
+          );
+        }
       }
     } catch (error) {
       if (via !== "webdav") {
@@ -168,8 +188,9 @@ export function CloudSyncPanel({ area }: { area: "student" }) {
         Cloud-Synchronisation
       </h2>
       <p className="ui-small ui-muted">
-        Lernstand zwischen Geräten abgleichen. Beim Holen wird zusammengeführt,
-        nichts geht verloren.
+        {area === "student"
+          ? "Lernstand zwischen Geräten abgleichen. Beim Holen wird zusammengeführt, nichts geht verloren."
+          : "Klassen, Inhalte und Einstellungen zwischen Lehrergeräten abgleichen. Beim Holen wird zusammengeführt."}
       </p>
       <ul className={styles.list}>
         {providers

@@ -129,9 +129,13 @@ async function fillWebDav(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("release gate", () => {
-  it("stays invisible and idle without the preview", () => {
-    const { container } = render(<CloudSyncSetup preview={false} />);
-    expect(container).toBeEmptyDOMElement();
+  it("keeps the manual backup and restore without the preview", () => {
+    render(<CloudSyncSetup preview={false} />);
+    expect(
+      screen.getByRole("heading", { name: "Cloud-Synchronisation" }),
+    ).toBeVisible();
+    expect(screen.queryByText("Geräte abgleichen")).toBeNull();
+    expect(controller.enable).not.toHaveBeenCalled();
   });
 });
 

@@ -2,10 +2,10 @@
 
 Zwei Wege, Daten über einen Cloudspeicher zwischen Geräten zu bringen:
 
-| Rolle     | Weg                                  | Datei                        | Code                                                 |
-| --------- | ------------------------------------ | ---------------------------- | ---------------------------------------------------- |
-| Schüler   | Handabgleich („sichern“ / „holen“)   | `lernraum-schueler-v1.json`  | `sync.ts`, `app/components/cloud-sync-panel.tsx`     |
-| Lehrkraft | **Automatischer Geräte-Abgleich** v2 | `lernraum-lehrkraft-v2.json` | `engine.ts`, `controller.ts`, `cloud-sync-setup.tsx` |
+| Rolle     | Weg                                                                              | Datei                        | Code                                                 |
+| --------- | -------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
+| Schüler   | Handabgleich („sichern“ / „holen“)                                               | `lernraum-schueler-v1.json`  | `sync.ts`, `app/components/cloud-sync-panel.tsx`     |
+| Lehrkraft | **Automatischer Geräte-Abgleich** v2 (ohne Vorschau: bisheriger Handabgleich v1) | `lernraum-lehrkraft-v2.json` | `engine.ts`, `controller.ts`, `cloud-sync-setup.tsx` |
 
 Beim Holen wird immer zusammengeführt, nichts wird blind überschrieben. Code
 liegt in `src/integrations/cloud-sync/`.

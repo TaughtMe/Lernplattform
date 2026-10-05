@@ -34,6 +34,7 @@ import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-clas
 import { CloudStatusPanel, useTick } from "../ui/cloud-badge";
 import { Button, Notice, Toggle } from "../ui/primitives";
 import { toBadgeModel } from "./cloud-badge-connected";
+import { CloudSyncPanel } from "./cloud-sync-panel";
 import { useCloudClientIds } from "./cloud-client-ids";
 import { useAreaVisible } from "../release/release-context";
 import { useSyncSnapshot } from "./cloud-sync-client";
@@ -113,7 +114,8 @@ async function downloadBackup() {
 export function CloudSyncSetup() {
   const visible = useAreaVisible("geraete-sync");
   const { snapshot, controller } = useSyncSnapshot(visible);
-  if (!visible) return null;
+  // Ohne Freigabe bleibt der bisherige Handabgleich (Sichern/Holen) erreichbar.
+  if (!visible) return <CloudSyncPanel area="teacher" />;
   return (
     <section
       id="cloud-abgleich"
