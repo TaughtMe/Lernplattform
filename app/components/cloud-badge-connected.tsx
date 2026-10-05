@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { SyncSnapshot } from "../../src/integrations/cloud-sync/controller";
+import { useAreaVisible } from "../release/release-context";
 import { CloudBadge } from "../ui/cloud-badge";
 import {
   effectiveStatus,
@@ -45,7 +46,9 @@ export function toBadgeModel(snapshot: SyncSnapshot): CloudBadgeModel {
  * nichts. Wird als Platzhalter in den Kopf des Lehrerrahmens gesetzt.
  */
 export function CloudBadgeConnected() {
-  const { snapshot, controller } = useSyncSnapshot();
+  const { snapshot, controller } = useSyncSnapshot(
+    useAreaVisible("geraete-sync"),
+  );
   const model = useMemo(
     () => (snapshot?.enabled ? toBadgeModel(snapshot) : null),
     [snapshot],

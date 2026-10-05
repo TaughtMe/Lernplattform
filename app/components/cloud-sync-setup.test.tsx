@@ -3,7 +3,20 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SyncSnapshot } from "../../src/integrations/cloud-sync/controller";
 import { DEFAULT_SYNC_SCOPE } from "../../src/integrations/cloud-sync/model";
-import { CloudSyncSetup } from "./cloud-sync-setup";
+import { ReleaseProvider } from "../release/release-context";
+import { resolveStages, resolveVisibility } from "../../src/domain/release";
+import { CloudSyncSetup as Setup } from "./cloud-sync-setup";
+
+const visibility = (preview: boolean) =>
+  resolveVisibility(resolveStages(undefined), preview);
+
+function CloudSyncSetup({ preview = true }: { preview?: boolean }) {
+  return (
+    <ReleaseProvider value={visibility(preview)}>
+      <Setup />
+    </ReleaseProvider>
+  );
+}
 
 const GOOD = "pferd-batterie-klammer";
 
@@ -114,6 +127,13 @@ async function fillWebDav(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText("Benutzername"), "lea");
   await user.type(screen.getByLabelText("App-Passwort"), "app-pw");
 }
+
+describe("release gate", () => {
+  it("stays invisible and idle without the preview", () => {
+    const { container } = render(<CloudSyncSetup preview={false} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+});
 
 describe("setup wizard", () => {
   it("leads from provider to start and passes everything to the controller", async () => {

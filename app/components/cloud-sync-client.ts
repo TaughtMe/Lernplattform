@@ -36,8 +36,12 @@ export function getSyncController(): SyncController {
   return instance;
 }
 
-/** Zustand des Abgleichs; `null`, bis er gelesen ist. Startet ihn bei Bedarf. */
-export function useSyncSnapshot(): {
+/**
+ * Zustand des Abgleichs; `null`, bis er gelesen ist. Startet ihn bei Bedarf.
+ * Mit `active = false` (Bereich `geraete-sync` nicht freigegeben) bleibt alles
+ * aus: nichts wird gelesen, nichts gestartet.
+ */
+export function useSyncSnapshot(active = true): {
   snapshot: SyncSnapshot | null;
   controller: SyncController | null;
 } {
@@ -46,12 +50,13 @@ export function useSyncSnapshot(): {
     controller: SyncController | null;
   }>({ snapshot: null, controller: null });
   useEffect(() => {
+    if (!active) return undefined;
     const controller = getSyncController();
     void controller.resume();
     const unsubscribe = controller.subscribe((snapshot) =>
       setState({ snapshot, controller }),
     );
     return unsubscribe;
-  }, []);
-  return state;
+  }, [active]);
+  return active ? state : { snapshot: null, controller: null };
 }

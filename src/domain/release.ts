@@ -93,6 +93,13 @@ export const RELEASE_AREAS = {
     // Kommt später; bis dahin nur mit Vorschau auf dem Gerät.
     stage: "vorschau",
   },
+  "geraete-sync": {
+    label: "Geräte abgleichen (Lehrkraft)",
+    // Kein eigener Pfad: schaltet Einrichtung und Cloud-Symbol im Lehrerbereich.
+    routes: [],
+    // Entscheidung 53: erst nach dem Pilot mit einer Lehrkraft frei.
+    stage: "vorschau",
+  },
   motivation: {
     label: "Häuser, Serie und Abzeichen",
     routes: ["/haus", "/lehrer/haeuser"],

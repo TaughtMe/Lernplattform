@@ -89,7 +89,23 @@ export default function DatenschutzPage() {
       </section>
 
       <section>
-        <h2>8. Rechte betroffener Personen</h2>
+        <h2>8. Optionaler Geräte-Abgleich für Lehrkräfte</h2>
+        <p>
+          Lehrkräfte können ihre Daten (Material, Aufgaben, Klassen und
+          wahlweise Schülerliste, Ergebnisse und Schlüssel) zwischen ihren
+          eigenen Geräten abgleichen. Die Daten liegen dabei in einem
+          Cloud-Speicher, den die Lehrkraft selbst wählt (WebDAV, Microsoft
+          OneDrive oder Google Drive) und der keinen Zugriff durch den
+          Lernraum-Betreiber ermöglicht. Die Lehrkraft entscheidet über
+          Anbieter und Umfang und ist für die Übertragung verantwortlich; wir
+          empfehlen, die Datei mit einem Passwort zu verschlüsseln, sobald
+          Daten von Kindern enthalten sind. Ohne Einrichtung findet kein
+          Abgleich statt.
+        </p>
+      </section>
+
+      <section>
+        <h2>9. Rechte betroffener Personen</h2>
         <p>
           Betroffene Personen können im Rahmen der gesetzlichen Voraussetzungen
           Auskunft, Berichtigung, Löschung, Einschränkung oder Widerspruch

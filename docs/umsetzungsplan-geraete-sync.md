@@ -7,6 +7,47 @@ Vorgaben der projektverantwortlichen Lehrkraft fest. Abschnitt 9 nennt die
 Punkte, die vor Phase 2 noch entschieden werden müssen; dort steht jeweils eine
 Empfehlung.
 
+## Umsetzungsstand (5. Oktober 2026)
+
+Umgesetzt auf `claude/lernraum-ui-v2` (Version 0.7.0, Bereich `geraete-sync` auf
+`vorschau`). Abweichungen vom Plan sind begründet:
+
+| Phase                               | Stand           | Anmerkung                                                                                                                                                                      |
+| ----------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0 Entscheidung, Sicherheit          | umgesetzt       | Entscheidung 53 steht in `docs/cloud-sync.md` (der Vault liegt nicht im Repository und ist von Hand nachzuziehen); SR-003 im Risikoregister; Datenschutzerklärung Abschnitt 8. |
+| 1 Datenmodell, Zusammenführen       | umgesetzt       | Dexie v6, `hlc.ts`, `merge.ts`, `dedupe.ts`, Eigenschaftstests mit drei Geräten; `importData` führt zusammen; `classSettings` im Backup.                                       |
+| 2 Format, Verschlüsselung, Anbieter | umgesetzt       | `envelope.ts`, `crypto/passphrase.ts`, `stat`/`read`/`remove` und `If-Match` bzw. Versionsvergleich, v1-Übernahme.                                                             |
+| 3 Engine                            | umgesetzt       | `engine.ts`, `scheduler.ts`, `credentials.ts`, `controller.ts`, `watch.ts`.                                                                                                    |
+| 4 Oberfläche                        | umgesetzt       | Cloud-Symbol, Statusmenü, Konfliktdialog, Einrichtung, Passwortformulare; Katalog `/entwicklung/ui`.                                                                           |
+| 5 OAuth-Anbieter                    | schon vorhanden | Rückleitungsseite und Verbinden-Knopf bestanden bereits; die Einrichtung nutzt sie und meldet „Anmeldung nötig“.                                                               |
+| 6 Dokumentation, Freigabe           | teilweise       | Dokumentation und Version erledigt; Pilot und manuelle Passwortmanager-Prüfung stehen aus.                                                                                     |
+
+**Abweichungen**
+
+- **Änderungen werden am Hash erkannt, nicht über Dexie-Hooks.** Hooks laufen
+  synchron und dürfen in anderen Tabellen nur schreiben, wenn diese Teil der
+  Transaktion sind; die bestehenden Repositorys öffnen ihre Transaktionen mit
+  fester Tabellenliste, und jede Komponente legt eine eigene Dexie-Instanz an.
+  Stattdessen vergleicht jede Runde Datensätze und Stempel (`stamping.ts`);
+  `watch.ts` weckt die Entprellung über `storagemutated`. Folge: Die Marke einer
+  Änderung ist der Zeitpunkt der Erkennung (höchstens 2 s später), beim ersten
+  Abgleich der Zeitpunkt aus `updatedAt`/`createdAt`.
+- **Hash synchron** (eigene SHA-256-Funktion, gegen `node:crypto` getestet),
+  damit `merge.ts` eine reine Funktion bleibt.
+- **Klassenstempel werden nicht blockiert.** Die Konfliktregel (der zuerst in
+  der Cloud stehende Stempel gilt, betroffene Kinder werden genannt) fängt
+  gleichzeitig erzeugte Stempel ab. Ein Sperren der Stempel-Erzeugung bis zur
+  ersten Runde hätte Lehrkräfte ohne Netz am Anlegen von Klassen gehindert.
+- **Schlüssel stehen außerhalb des Hashs** (`secrets` am Datensatz); ein Gerät
+  ohne Bereich „Schlüssel“ lässt sie in der Cloud unberührt. Einschreibe-Schlüssel
+  fehlender Kinder ersetzt der Platzhalter `NO_ENROLLMENT_KEY`; die Prüfung von
+  Leistungsbriefen schlägt dann fehl, wie vorgesehen.
+- **Passwortwechsel** liest mit dem alten und schreibt mit dem neuen Schlüssel
+  (`readKey`), damit kein Gerät die Datei verliert.
+
+Offen: Playwright-Test mit zwei Browser-Kontexten gegen einen WebDAV-Nachbau
+läuft in `e2e/cloud-sync.spec.ts`; die Cross-Browser-Suite bleibt in GitHub.
+
 ## 0. Arbeitsweise
 
 - Eigener Branch je Phase, abgezweigt von `claude/lernraum-ui-v2`. Die Lehrkraft

@@ -5,6 +5,7 @@ import type { SyncConflict } from "../../src/integrations/cloud-sync/model";
 import { useTick } from "../ui/cloud-badge";
 import { Sheet } from "../ui/sheet";
 import { SyncConflictList, type ConflictChoice } from "../ui/sync-conflicts";
+import { useAreaVisible } from "../release/release-context";
 import { getSyncController, useSyncSnapshot } from "./cloud-sync-client";
 
 /** Ereignis, mit dem Symbol und Einstellungen den Dialog öffnen. */
@@ -15,7 +16,7 @@ export const OPEN_CONFLICTS_EVENT = "cloud-sync-open-conflicts";
  * Cloud-Symbol ihn von jeder Seite öffnen kann.
  */
 export function SyncConflictsHost() {
-  const { snapshot } = useSyncSnapshot();
+  const { snapshot } = useSyncSnapshot(useAreaVisible("geraete-sync"));
   const [open, setOpen] = useState(false);
   const [conflicts, setConflicts] = useState<SyncConflict[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});

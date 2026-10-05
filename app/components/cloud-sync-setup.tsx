@@ -34,6 +34,7 @@ import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-clas
 import { CloudStatusPanel, useTick } from "../ui/cloud-badge";
 import { Button, Notice, Toggle } from "../ui/primitives";
 import { toBadgeModel } from "./cloud-badge-connected";
+import { useAreaVisible } from "../release/release-context";
 import { useSyncSnapshot } from "./cloud-sync-client";
 import { offerToStorePassword, SyncPasswordForm } from "./cloud-sync-password";
 import { OPEN_CONFLICTS_EVENT } from "./sync-conflicts-host";
@@ -109,7 +110,9 @@ async function downloadBackup() {
  * die Daten, sie liegen im Speicher der Lehrkraft.
  */
 export function CloudSyncSetup() {
-  const { snapshot, controller } = useSyncSnapshot();
+  const visible = useAreaVisible("geraete-sync");
+  const { snapshot, controller } = useSyncSnapshot(visible);
+  if (!visible) return null;
   return (
     <section
       id="cloud-abgleich"
