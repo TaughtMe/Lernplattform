@@ -1,14 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { createOneDriveTarget } from "../../src/integrations/cloud-sync/drives";
 import { cloudProviders } from "../../src/integrations/cloud-sync/providers";
+import {
+  disconnect,
+  getAccessToken,
+  isConnected,
+  startConnect,
+} from "../../src/integrations/cloud-sync/session";
 import {
   pullStudentData,
   pullTeacherData,
   pushStudentData,
   pushTeacherData,
 } from "../../src/integrations/cloud-sync/sync";
-import { CloudSyncError } from "../../src/integrations/cloud-sync/types";
+import {
+  CloudSyncError,
+  type CloudSyncTarget,
+} from "../../src/integrations/cloud-sync/types";
 import { createWebDavTarget } from "../../src/integrations/cloud-sync/webdav";
 import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-class-settings";
 import { Button } from "../ui/primitives";
@@ -41,30 +51,66 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [oneDriveConnected, setOneDriveConnected] = useState(false);
 
   useEffect(() => {
-    const id = window.setTimeout(() => setSettings(readSettings()), 0);
+    const id = window.setTimeout(() => {
+      setSettings(readSettings());
+      setOneDriveConnected(isConnected("onedrive"));
+    }, 0);
     return () => window.clearTimeout(id);
   }, []);
 
-  function target() {
-    return createWebDavTarget({ ...settings, password });
+  const returnTo =
+    area === "teacher" ? "/lehrer/einstellungen" : "/lernen/einstellungen";
+
+  async function connectOneDrive() {
+    setMessage("");
+    try {
+      await startConnect("onedrive", returnTo);
+    } catch (error) {
+      setMessage(
+        error instanceof CloudSyncError
+          ? error.message
+          : "Die Anmeldung konnte nicht gestartet werden.",
+      );
+    }
   }
 
-  async function run(action: "push" | "pull", event?: FormEvent) {
+  function disconnectOneDrive() {
+    disconnect("onedrive");
+    setOneDriveConnected(false);
+    setMessage("OneDrive wurde getrennt.");
+  }
+
+  async function run(
+    action: "push" | "pull",
+    via: "webdav" | "onedrive",
+    event?: FormEvent,
+  ) {
     event?.preventDefault();
-    if (!settings.url.trim() || !settings.username.trim() || !password) {
+    if (
+      via === "webdav" &&
+      (!settings.url.trim() || !settings.username.trim() || !password)
+    ) {
       setMessage("Bitte Adresse, Benutzername und Passwort angeben.");
       return;
     }
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    } catch {
-      // Ohne Speicher gelten die Angaben nur für diesen Besuch.
+    if (via === "webdav") {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      } catch {
+        // Ohne Speicher gelten die Angaben nur für diesen Besuch.
+      }
     }
     setBusy(true);
     setMessage("");
     try {
+      const resolved: CloudSyncTarget =
+        via === "onedrive"
+          ? createOneDriveTarget(await getAccessToken("onedrive"))
+          : createWebDavTarget({ ...settings, password });
+      const target = () => resolved;
       if (area === "student") {
         if (action === "push") {
           await pushStudentData(target());
@@ -93,6 +139,7 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
         }
       }
     } catch (error) {
+      if (via === "onedrive") setOneDriveConnected(isConnected("onedrive"));
       setMessage(
         error instanceof CloudSyncError
           ? error.message
@@ -131,15 +178,45 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
                   · {provider.description}
                 </span>
               </span>
-              <span className="ui-small ui-muted">
-                {provider.available
-                  ? "Bereit zum Verbinden"
-                  : "Konto noch nicht eingerichtet"}
-              </span>
+              {provider.id === "onedrive" && provider.available ? (
+                oneDriveConnected ? (
+                  <span className="ui-row ui-wrap">
+                    <Button
+                      disabled={busy}
+                      onClick={() => void run("push", "onedrive")}
+                    >
+                      In die Cloud sichern
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => void run("pull", "onedrive")}
+                    >
+                      Aus der Cloud holen
+                    </Button>
+                    <Button variant="ghost" onClick={disconnectOneDrive}>
+                      Trennen
+                    </Button>
+                  </span>
+                ) : (
+                  <Button onClick={() => void connectOneDrive()}>
+                    Mit OneDrive verbinden
+                  </Button>
+                )
+              ) : (
+                <span className="ui-small ui-muted">
+                  {provider.id === "google-drive"
+                    ? "In Vorbereitung"
+                    : "Konto noch nicht eingerichtet"}
+                </span>
+              )}
             </li>
           ))}
       </ul>
-      <form className="ui-stack" onSubmit={(event) => void run("push", event)}>
+      <form
+        className="ui-stack"
+        onSubmit={(event) => void run("push", "webdav", event)}
+      >
         <strong>WebDAV (z. B. Nextcloud)</strong>
         <label className="ui-labeled">
           Server-Adresse
@@ -187,7 +264,7 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
           <Button
             variant="ghost"
             disabled={busy}
-            onClick={() => void run("pull")}
+            onClick={() => void run("pull", "webdav")}
           >
             Aus der Cloud holen
           </Button>
