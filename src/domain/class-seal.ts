@@ -15,6 +15,8 @@ export const classSealPrivateJwkSchema = z
     x: z.string().min(1),
     y: z.string().min(1),
     d: z.string().min(1),
+    // Manche Browser (z. B. Safari) ergänzen beim JWK-Export `alg`.
+    alg: z.string().optional(),
     ext: z.boolean().optional(),
     key_ops: z.array(z.string()).optional(),
   })

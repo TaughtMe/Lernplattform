@@ -107,3 +107,7 @@ Der Raumbeitritt lädt nur dann den Browserclient, wenn `NEXT_PUBLIC_SUPABASE_UR
 ## Mathe-Weiterüben (18. September 2026)
 
 Der vorhandene Port aus `src/utils/dashboard/mathTasks.ts` des Laufdiktat-Quellprojekts bleibt die Generatorgrundlage. Persönliche Fehlerablage, Wiederholung und der Anschluss nach Unterrichtsrunden ergänzen diesen Kern im Lernraum. Der Generator-Fallback wurde korrigiert: Zahlenraum, Nullregeln und Reihen gelten auch nach erfolgloser Zufallsauswahl; unmögliche Kombinationen werden gemeldet. Numerische Live-Antworten werden vollständig geprüft; ein Zahlpräfix mit angehängtem Text zählt nicht mehr als richtige Antwort. Beide Abweichungen sind durch Regressionstests geschützt.
+
+## PWA: Manifest-Link in vinext (4. Oktober 2026)
+
+vinext (`1.0.0-beta.8` und `1.0.1`) schiebt gestreamte Metadaten zwar in den `<head>` zurück, aber nur `icon`- und `apple-touch-icon`-Links, nicht `rel="manifest"`. Mit asynchronem `generateMetadata()` landet der Manifest-Link im `<body>`, und Chrome bietet keine Installation an. Der Lernraum setzt den Link deshalb fest im `<head>` von `app/layout.tsx` (nicht in den Metadaten); `tests/rendered-html.test.mjs` und `e2e/installability.spec.ts` sichern das ab. Offen: Fehlerbericht mit minimaler Reproduktion an vinext. Das vinext-Update steht in `docs/umsetzungsplan-abhaengigkeiten.md`.

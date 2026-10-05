@@ -36,6 +36,7 @@ export type TeacherSessionOptions = {
   uebungAssistanceEnabled?: boolean;
   showStars?: boolean;
   strictTypingMode?: boolean;
+  showTaskAfterErrors?: boolean;
   stationCount?: number;
   stationShuffle?: boolean;
   battleOptions?: TeacherBattleOptions;
@@ -60,6 +61,7 @@ export type TeacherRoomConfig = {
   showStars: boolean;
   shuffleWords: boolean;
   strictTypingMode: boolean;
+  showTaskAfterErrors: boolean;
   stationShuffle: boolean;
   appVersion: typeof LIVE_APP_VERSION;
 };
@@ -166,6 +168,10 @@ export function buildTeacherRoomConfig(
     shuffleWords: options.gameMode !== "STATION" && options.shuffleWords,
     strictTypingMode:
       options.gameMode !== "STATION" && (options.strictTypingMode ?? false),
+    showTaskAfterErrors:
+      options.contentMode === "math" &&
+      options.gameMode !== "STATION" &&
+      (options.showTaskAfterErrors ?? true),
     stationShuffle:
       options.gameMode === "STATION" && (options.stationShuffle ?? true),
     appVersion: LIVE_APP_VERSION,

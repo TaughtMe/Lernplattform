@@ -33,6 +33,211 @@ input{font:inherit}
 @keyframes tt-pop{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:1}}
 </style></helmet>
 
+<section class="dv-turn" id="t8">
+<div class="dv-thd"><a class="dv-tid" href="#t8">8</a><span class="dv-tname">LernBox aufgeräumt · Übersicht zuerst, Plus zum Hinzufügen, Stift zum Bearbeiten</span></div>
+<p class="dv-note">Die Seitenleiste fällt weg. Die Startseite beantwortet nur: Was ist heute dran, wo liegen meine Vokabeln? Hinzufügen sitzt hinter dem Plus oben rechts (selbst eintragen oder Code), Bearbeiten hinter dem Stift. Modus und Richtung wählt man erst beim Start einer Runde. Plus, Stift, „Jetzt üben" und die Stapel sind anklickbar.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="8a">
+<div class="dv-olabel"><a class="dv-oid" href="#8a">8a</a>Desktop · dein Vorschlag: Übersicht, Plus und Stift oben rechts</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="position:relative;display:grid;grid-template-columns:100px minmax(0,1fr);min-height:740px;color:var(--ink,#211f1b)">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 10px;background:var(--nav,#211f1b);color:var(--nav-ink,#f7f4ee)">
+<span style="display:grid;place-items:center;width:38px;height:38px;margin-bottom:10px;border-radius:12px;background:var(--nav-active,#332f28);color:var(--nav-accent,#f0cf84);font-size:15px;font-weight:800">L</span>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:var(--nav-active,#332f28);color:var(--nav-accent,#f0cf84);font-size:11px;font-weight:700;cursor:pointer">
+<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M8 9h8M8 13h5"></path></svg>Lernen</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer">
+<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><path d="M14 17h6M17 14v6"></path></svg>Raum</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer">
+<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h3l10.5 10.5"></path><path d="M20 4.5h-3L6.5 15"></path><path d="M14.5 17.5 18 21l3-3-3.5-3.5"></path><path d="M9.5 17.5 6 21l-3-3 3.5-3.5"></path></svg>Duell</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer">
+<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5V20H4z"></path><path d="M9.5 20v-5h5v5"></path></svg>Haus</button>
+</div>
+
+<div style="display:{{ l8HomeDisp }};flex-direction:column;gap:26px;padding:28px 34px 34px">
+<div style="display:flex;align-items:center;gap:18px">
+<span style="font-size:28px;font-weight:700;letter-spacing:-.025em">LernBox</span>
+<div style="display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--surface2,#efe9da);width:280px"><button style="{{ segOn }}">Vokabeln</button><a href="#4f" style="{{ segOff }}"><span style="display:grid;place-items:center;height:38px">Wortspeicher</span></a></div>
+<span style="flex:1"></span>
+<button onClick="{{ l8GoEdit }}" style="display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:14px;font-weight:700;cursor:pointer" style-hover="border-color:var(--accent,#7a5a12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>Bearbeiten</button>
+<div style="position:relative">
+<button onClick="{{ l8ToggleMenu }}" aria-label="Vokabeln hinzufügen" title="Hinzufügen" style="display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);cursor:pointer;box-shadow:0 4px 0 color-mix(in oklch,var(--accent,#7a5a12) 60%,#000)" style-hover="filter:brightness(1.12)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+<div style="display:{{ l8MenuDisp }};flex-direction:column;gap:2px;position:absolute;right:0;top:62px;z-index:5;width:300px;padding:8px;border:1px solid var(--line,#e3dac7);border-radius:18px;background:var(--surface,#fffdf7);box-shadow:0 18px 40px var(--shadow,rgba(80,62,26,.18))">
+<button onClick="{{ l8Open }}" data-s="manual" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--ink,#211f1b);text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Selbst eintragen</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">Wort und Übersetzung tippen</span></span></button>
+<button onClick="{{ l8Open }}" data-s="code" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--ink,#211f1b);text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2.5"></rect><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"></path></svg></span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Code eingeben</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">Stapel von deiner Lehrkraft holen</span></span></button>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px">
+<div style="display:flex;flex-direction:column;gap:18px;padding:26px 28px;border-radius:24px;background:var(--nav,#211f1b);color:var(--nav-ink,#f7f4ee)">
+<span style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--nav-ink2,#a89e8c)">Heute dran</span>
+<span style="display:flex;align-items:baseline;gap:12px"><span style="font:600 72px/1 Fredoka,sans-serif;color:var(--nav-accent,#f0cf84)">{{ l8Due }}</span><span style="font-size:16px;color:var(--nav-ink2,#a89e8c)">Vokabeln aus 2 Stapeln</span></span>
+<div style="display:flex;gap:10px;margin-top:auto">
+<button onClick="{{ l8Start }}" data-d="all" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;background:var(--nav-accent,#f0cf84);color:#211f1b;flex:1">Jetzt üben</button>
+<button onClick="{{ l8Start }}" data-d="err" style="display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 16px;border:1px solid var(--nav-line,#423d33);border-radius:14px;background:transparent;color:var(--nav-ink,#f7f4ee);font-size:14px;font-weight:700;cursor:pointer">Meine Fehler<span style="padding:2px 8px;border-radius:999px;background:var(--bad-bg,#f8e6df);color:var(--bad,#a8432c);font-size:12px">5</span></button>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px;padding:22px 24px;border:1px solid var(--line,#e3dac7);border-radius:24px;background:var(--surface,#fffdf7)">
+<span style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:700">Wo liegen meine Vokabeln?</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ l8Total }} insgesamt</span></span>
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:end;flex:1;min-height:150px">
+<sc-for list="{{ l8Boxes }}" as="b" hint-placeholder-count="5">
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;height:100%">
+<span style="font:600 20px/1 Fredoka,sans-serif">{{ b.n }}</span>
+<span style="{{ b.bar }}"></span>
+<span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">{{ b.label }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<span style="font-size:15px;font-weight:700">Meine Stapel</span>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+<sc-for list="{{ l8Decks }}" as="d" hint-placeholder-count="3">
+<button onClick="{{ l8Start }}" data-d="{{ d.id }}" style="display:flex;flex-direction:column;gap:14px;padding:18px 20px;border:1px solid var(--line,#e3dac7);border-radius:20px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);text-align:left;cursor:pointer" style-hover="border-color:var(--accent,#7a5a12)">
+<span style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;width:100%"><span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:16px;font-weight:700">{{ d.name }}</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">{{ d.total }} Vokabeln · {{ d.sub }}</span></span><span style="{{ d.duePill }}">{{ d.dueTxt }}</span></span>
+<span style="display:flex;gap:2px;width:100%;height:8px;border-radius:999px;overflow:hidden"><sc-for list="{{ d.segs }}" as="g" hint-placeholder-count="5"><span style="{{ g.style }}"></span></sc-for></span>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="display:{{ l8EditDisp }};flex-direction:column;gap:20px;padding:28px 34px 34px">
+<div style="display:flex;align-items:center;gap:14px">
+<button onClick="{{ l8GoHome }}" style="display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:14px;font-weight:700;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>LernBox</button>
+<span style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:24px;font-weight:700;letter-spacing:-.02em">Alle Vokabeln</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ l8ListSub }}</span></span>
+<div style="position:relative">
+<button onClick="{{ l8ToggleMenu }}" aria-label="Vokabeln hinzufügen" style="display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);cursor:pointer;box-shadow:0 4px 0 color-mix(in oklch,var(--accent,#7a5a12) 60%,#000)" style-hover="filter:brightness(1.12)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+<div style="display:{{ l8MenuDisp }};flex-direction:column;gap:2px;position:absolute;right:0;top:62px;z-index:5;width:300px;padding:8px;border:1px solid var(--line,#e3dac7);border-radius:18px;background:var(--surface,#fffdf7);box-shadow:0 18px 40px var(--shadow,rgba(80,62,26,.18))">
+<button onClick="{{ l8Open }}" data-s="manual" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--ink,#211f1b);text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Selbst eintragen</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">Wort und Übersetzung tippen</span></span></button>
+<button onClick="{{ l8Open }}" data-s="code" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--ink,#211f1b);text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2.5"></rect><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"></path></svg></span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Code eingeben</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">Stapel von deiner Lehrkraft holen</span></span></button>
+</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<input value="{{ l8Q }}" onInput="{{ l8QIn }}" placeholder="Suchen …" autoComplete="off" aria-label="Suchen" style="box-sizing:border-box;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:17px;font-weight:600;outline:none;width:280px;height:46px;font-size:15px" style-focus="border-color:var(--accent,#7a5a12)">
+<div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ l8Filters }}" as="f" hint-placeholder-count="4"><button onClick="{{ l8SetFilter }}" data-f="{{ f.id }}" style="{{ f.style }}">{{ f.name }}</button></sc-for></div>
+</div>
+<div style="display:flex;flex-direction:column;border:1px solid var(--line,#e3dac7);border-radius:20px;background:var(--surface,#fffdf7);overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 160px 210px 78px 44px;gap:14px;padding:6px 20px;background:var(--surface2,#efe9da)"><sc-for list="{{ l8Heads }}" as="c" hint-placeholder-count="5"><button onClick="{{ l8Sort }}" data-k="{{ c.k }}" title="Sortieren" style="{{ c.style }}">{{ c.label }}<span style="{{ c.arrowS }}">{{ c.arrow }}</span></button></sc-for><span></span></div>
+<sc-for list="{{ l8Rows }}" as="r" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 160px 210px 78px 44px;gap:14px;align-items:center;min-height:56px;padding:6px 20px;border-top:1px solid var(--line,#e3dac7)">
+<span style="display:{{ r.viewDisp }};font-size:15.5px;font-weight:700">{{ r.de }}</span>
+<input value="{{ r.de }}" onInput="{{ r.onDe }}" aria-label="Deutsch" style="display:{{ r.editDisp }};box-sizing:border-box;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:17px;font-weight:600;outline:none;height:42px;font-size:15px">
+<span style="display:{{ r.viewDisp }};font-size:15.5px">{{ r.en }}</span>
+<input value="{{ r.en }}" onInput="{{ r.onEn }}" aria-label="Fremdsprache" style="display:{{ r.editDisp }};box-sizing:border-box;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:17px;font-weight:600;outline:none;height:42px;font-size:15px">
+<span style="font-size:13px;color:var(--ink2,#6b6252)">{{ r.deck }}</span>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;min-width:0"><sc-for list="{{ r.tags }}" as="t" hint-placeholder-count="2"><span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252);font-size:12px;font-weight:700;white-space:nowrap">{{ t.name }}<button onClick="{{ t.remove }}" aria-label="Tag entfernen" style="{{ t.xS }}">×</button></span></sc-for><input onKeyDown="{{ r.addTag }}" placeholder="+ Tag" aria-label="Tag hinzufügen" style="display:{{ r.editDisp }};width:70px;height:28px;padding:0 9px;border:1.5px dashed var(--line2,#d5cbb6);border-radius:999px;background:transparent;color:var(--ink,#211f1b);font-size:12px;font-weight:700;outline:none" style-focus="border-color:var(--accent,#7a5a12)"></div>
+<span style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700"><span style="{{ r.dot }}"></span>{{ r.box }}</span>
+<button onClick="{{ r.toggle }}" aria-label="{{ r.aria }}" style="{{ r.btn }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg></button>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:{{ l8SheetDisp }};position:absolute;inset:0;align-items:center;justify-content:center;z-index:6;background:rgba(33,31,27,.38)">
+<div style="width:460px;padding:24px;border-radius:24px;background:var(--bg,#f6f2e8);box-shadow:0 24px 60px rgba(0,0,0,.25)">
+<div style="display:{{ l8ManDisp }};flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:20px;font-weight:700">Vokabel eintragen</span><button onClick="{{ l8Close }}" aria-label="Schließen" style="display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:12px;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Deutsch</span><input value="{{ l8De }}" onInput="{{ l8DeIn }}" placeholder="z. B. Frühstück" autoComplete="off" style="box-sizing:border-box;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:17px;font-weight:600;outline:none" style-focus="border-color:var(--accent,#7a5a12)"></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Englisch</span><input value="{{ l8En }}" onInput="{{ l8EnIn }}" placeholder="z. B. breakfast" autoComplete="off" style="box-sizing:border-box;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:17px;font-weight:600;outline:none" style-focus="border-color:var(--accent,#7a5a12)"></label>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">In Stapel</span><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ l8DeckChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ l8PickDeck }}" data-d="{{ c.id }}" style="{{ c.style }}">{{ c.name }}</button></sc-for></div></div>
+<span style="display:{{ l8SavedDisp }};font-size:13px;font-weight:700;color:var(--good,#26543f)">{{ l8Saved }}</span>
+<div style="display:flex;gap:10px"><button onClick="{{ l8Close }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 18px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:transparent;color:var(--ink,#211f1b);font-size:15px;font-weight:700;cursor:pointer">Fertig</button><button onClick="{{ l8Save }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;flex:1">Speichern und nächste</button></div>
+</div>
+<div style="display:{{ l8CodeDisp }};flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:20px;font-weight:700">Code eingeben</span><button onClick="{{ l8Close }}" aria-label="Schließen" style="display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:12px;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<span style="font-size:14px;color:var(--ink2,#6b6252)">Tippe den Code von der Tafel oder vom Arbeitsblatt ein, oder scanne den QR-Code mit der Kamera.</span>
+<div style="position:relative">
+<input value="{{ l8Code }}" onInput="{{ l8CodeIn }}" maxLength="4" placeholder="····" autoComplete="off" spellCheck="false" aria-label="Code" style="box-sizing:border-box;width:100%;height:84px;border:2px solid var(--line2,#d5cbb6);border-radius:18px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:700 44px/1 Fredoka,sans-serif;letter-spacing:.5em;text-align:center;text-transform:uppercase;outline:none" style-focus="border-color:var(--accent,#7a5a12)">
+<button onClick="{{ l8Scan }}" aria-label="QR-Code scannen" title="QR-Code scannen" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:14px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12);cursor:pointer" style-hover="filter:brightness(.96)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"></path><circle cx="12" cy="12.5" r="3.5"></circle></svg></button>
+</div>
+<div style="display:{{ l8FoundDisp }};align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:var(--good-bg,#e4f1e9);color:var(--good,#26543f)"><span style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:16px;font-weight:700">Unit 4 · Food and drinks</span><span style="font-size:13px">24 Vokabeln · von T. Bryson</span></span></div>
+<button onClick="{{ l8Close }}" style="{{ l8CodeBtn }}">Stapel hinzufügen</button>
+</div>
+<div style="display:{{ l8StartDisp }};flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:700">{{ l8StartTitle }}</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ l8StartSub }}</span></span><button onClick="{{ l8Close }}" aria-label="Schließen" style="display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:12px;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Wie willst du üben?</span><div style="display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--surface2,#efe9da)"><button onClick="{{ l8SetMode }}" data-v="w" style="{{ l8SegW }}">Schreiben</button><button onClick="{{ l8SetMode }}" data-v="o" style="{{ l8SegO }}">Mündlich</button></div></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Richtung</span><div style="display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--surface2,#efe9da)"><button onClick="{{ l8SetDir }}" data-v="fw" style="{{ l8SegFw }}">Deutsch → Englisch</button><button onClick="{{ l8SetDir }}" data-v="rv" style="{{ l8SegRv }}">Englisch → Deutsch</button></div></div>
+<a href="#4c" onClick="{{ l8Close }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none">Los geht's</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="8b">
+<div class="dv-olabel"><a class="dv-oid" href="#8b">8b</a>Mobil · gleiche Idee, Plus und Stift in der Kopfzeile, Fenster von unten</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:390px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="position:relative;display:flex;flex-direction:column;gap:18px;min-height:788px;padding:20px 18px 24px;color:var(--ink,#211f1b);overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1;font-size:24px;font-weight:700;letter-spacing:-.025em">LernBox</span>
+<button onClick="{{ l8GoEdit }}" aria-label="Bearbeiten" style="display:grid;place-items:center;width:48px;height:48px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg></button>
+<div style="position:relative"><button onClick="{{ l8ToggleMenu }}" aria-label="Vokabeln hinzufügen" style="display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);cursor:pointer;box-shadow:0 4px 0 color-mix(in oklch,var(--accent,#7a5a12) 60%,#000);width:48px;height:48px;border-radius:14px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+<div style="display:{{ l8MenuDisp }};flex-direction:column;gap:2px;position:absolute;right:0;top:58px;z-index:5;width:300px;padding:8px;border:1px solid var(--line,#e3dac7);border-radius:18px;background:var(--surface,#fffdf7);box-shadow:0 18px 40px var(--shadow,rgba(80,62,26,.18))">
+<button onClick="{{ l8Open }}" data-s="manual" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--ink,#211f1b);text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Selbst eintragen</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">Wort und Übersetzung tippen</span></span></button>
+<button onClick="{{ l8Open }}" data-s="code" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--ink,#211f1b);text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2.5"></rect><path d="M7 12h.01M10.5 12h.01M14 12h.01M17.5 12h.01"></path></svg></span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">Code eingeben</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">Stapel von deiner Lehrkraft holen</span></span></button>
+</div></div>
+</div>
+<div style="display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--surface2,#efe9da)"><button style="{{ segOn }}">Vokabeln</button><a href="#4d" style="{{ segOff }}"><span style="display:grid;place-items:center;height:38px">Wortspeicher</span></a></div>
+<div style="display:flex;flex-direction:column;gap:14px;padding:22px;border-radius:22px;background:var(--nav,#211f1b);color:var(--nav-ink,#f7f4ee)">
+<span style="font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--nav-ink2,#a89e8c)">Heute dran</span>
+<span style="display:flex;align-items:baseline;gap:10px"><span style="font:600 56px/1 Fredoka,sans-serif;color:var(--nav-accent,#f0cf84)">{{ l8Due }}</span><span style="font-size:14px;color:var(--nav-ink2,#a89e8c)">Vokabeln aus 2 Stapeln</span></span>
+<button onClick="{{ l8Start }}" data-d="all" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;background:var(--nav-accent,#f0cf84);color:#211f1b">Jetzt üben</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="display:flex;justify-content:space-between;font-size:14px;font-weight:700"><span>Meine Stapel</span><span style="font-weight:600;color:var(--ink2,#6b6252)">{{ l8Total }} Vokabeln</span></span>
+<sc-for list="{{ l8Decks }}" as="d" hint-placeholder-count="3">
+<button onClick="{{ l8Start }}" data-d="{{ d.id }}" style="display:flex;flex-direction:column;gap:11px;padding:15px 16px;border:1px solid var(--line,#e3dac7);border-radius:18px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);text-align:left;cursor:pointer">
+<span style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;width:100%"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:15px;font-weight:700">{{ d.name }}</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">{{ d.total }} Vokabeln</span></span><span style="{{ d.duePill }}">{{ d.dueTxt }}</span></span>
+<span style="display:flex;gap:2px;width:100%;height:7px;border-radius:999px;overflow:hidden"><sc-for list="{{ d.segs }}" as="g" hint-placeholder-count="5"><span style="{{ g.style }}"></span></sc-for></span>
+</button>
+</sc-for>
+</div>
+<button onClick="{{ l8Start }}" data-d="err" style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border:1px solid var(--line,#e3dac7);border-radius:16px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:14.5px;font-weight:700;cursor:pointer"><span>Meine Fehler üben</span><span style="padding:3px 9px;border-radius:999px;background:var(--bad-bg,#f8e6df);color:var(--bad,#a8432c);font-size:12px">5</span></button>
+<div style="display:{{ l8SheetDisp }};position:absolute;inset:0;align-items:flex-end;z-index:6;background:rgba(33,31,27,.38)">
+<div style="box-sizing:border-box;width:100%;padding:22px 18px 28px;border-radius:26px 26px 0 0;background:var(--bg,#f6f2e8)">
+<div style="display:{{ l8ManDisp }};flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:20px;font-weight:700">Vokabel eintragen</span><button onClick="{{ l8Close }}" aria-label="Schließen" style="display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:12px;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Deutsch</span><input value="{{ l8De }}" onInput="{{ l8DeIn }}" placeholder="z. B. Frühstück" autoComplete="off" style="box-sizing:border-box;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:17px;font-weight:600;outline:none" style-focus="border-color:var(--accent,#7a5a12)"></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Englisch</span><input value="{{ l8En }}" onInput="{{ l8EnIn }}" placeholder="z. B. breakfast" autoComplete="off" style="box-sizing:border-box;width:100%;height:52px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:17px;font-weight:600;outline:none" style-focus="border-color:var(--accent,#7a5a12)"></label>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">In Stapel</span><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ l8DeckChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ l8PickDeck }}" data-d="{{ c.id }}" style="{{ c.style }}">{{ c.name }}</button></sc-for></div></div>
+<span style="display:{{ l8SavedDisp }};font-size:13px;font-weight:700;color:var(--good,#26543f)">{{ l8Saved }}</span>
+<div style="display:flex;gap:10px"><button onClick="{{ l8Close }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 18px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:transparent;color:var(--ink,#211f1b);font-size:15px;font-weight:700;cursor:pointer">Fertig</button><button onClick="{{ l8Save }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;flex:1">Speichern und nächste</button></div>
+</div>
+<div style="display:{{ l8CodeDisp }};flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:20px;font-weight:700">Code eingeben</span><button onClick="{{ l8Close }}" aria-label="Schließen" style="display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:12px;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<span style="font-size:14px;color:var(--ink2,#6b6252)">Tippe den Code von der Tafel oder vom Arbeitsblatt ein, oder scanne den QR-Code mit der Kamera.</span>
+<div style="position:relative">
+<input value="{{ l8Code }}" onInput="{{ l8CodeIn }}" maxLength="4" placeholder="····" autoComplete="off" spellCheck="false" aria-label="Code" style="box-sizing:border-box;width:100%;height:84px;border:2px solid var(--line2,#d5cbb6);border-radius:18px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:700 44px/1 Fredoka,sans-serif;letter-spacing:.5em;text-align:center;text-transform:uppercase;outline:none" style-focus="border-color:var(--accent,#7a5a12)">
+<button onClick="{{ l8Scan }}" aria-label="QR-Code scannen" title="QR-Code scannen" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:14px;background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12);cursor:pointer" style-hover="filter:brightness(.96)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"></path><circle cx="12" cy="12.5" r="3.5"></circle></svg></button>
+</div>
+<div style="display:{{ l8FoundDisp }};align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:var(--good-bg,#e4f1e9);color:var(--good,#26543f)"><span style="display:flex;flex-direction:column;gap:2px;flex:1"><span style="font-size:16px;font-weight:700">Unit 4 · Food and drinks</span><span style="font-size:13px">24 Vokabeln · von T. Bryson</span></span></div>
+<button onClick="{{ l8Close }}" style="{{ l8CodeBtn }}">Stapel hinzufügen</button>
+</div>
+<div style="display:{{ l8StartDisp }};flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:700">{{ l8StartTitle }}</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ l8StartSub }}</span></span><button onClick="{{ l8Close }}" aria-label="Schließen" style="display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:12px;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252);cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Wie willst du üben?</span><div style="display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--surface2,#efe9da)"><button onClick="{{ l8SetMode }}" data-v="w" style="{{ l8SegW }}">Schreiben</button><button onClick="{{ l8SetMode }}" data-v="o" style="{{ l8SegO }}">Mündlich</button></div></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">Richtung</span><div style="display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--surface2,#efe9da)"><button onClick="{{ l8SetDir }}" data-v="fw" style="{{ l8SegFw }}">Deutsch → Englisch</button><button onClick="{{ l8SetDir }}" data-v="rv" style="{{ l8SegRv }}">Englisch → Deutsch</button></div></div>
+<a href="#4c" onClick="{{ l8Close }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 22px;border:0;border-radius:14px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none">Los geht's</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
 <section class="dv-turn" id="t7">
 <div class="dv-thd"><a class="dv-tid" href="#t7">7</a><span class="dv-tname">Mein Haus · Häuser, Missionen, Leistungsbrief · Schüler mobil und Desktop, Lehrer</span></div>
 <p class="dv-note">Vier Häuser als Türme: jedes Stockwerk steht für 50 Punkte pro aktivem Mitglied, so zählen große und kleine Häuser gleich. Es gibt keine Minuspunkte und kein Einzelranking. Angezeigt werden Hausmissionen, positive Momente mit Zufallsnamen und ein Tageslimit gegen reines Punktesammeln. Der Leistungsbrief geht als QR-Code an die Lehrkraft. Die Bestätigung erscheint nur auf dem Lehrergerät. In <a class="dv-oid" href="#7a">7a</a> öffnet der Knopf unten den Brief, in <a class="dv-oid" href="#7c">7c</a> fügt „Scan simulieren" einen Brief hinzu und die Türme wachsen.</p>
@@ -415,7 +620,7 @@ input{font:inherit}
 </div>
 
 <div class="dv-opt" id="6c">
-<div class="dv-olabel"><a class="dv-oid" href="#6c">6c</a>Lernweg Desktop · zehn Stationen, unsichere Tasten, Tagesziel</div>
+<div class="dv-olabel"><a class="dv-oid" href="#6c">6c</a>Lernweg Desktop · nummerierte Stationen mit Medaillen-Sternen, unsichere Tasten, Tagesziel</div>
 <div style="{{ themeVars }}">
 <div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
 <div style="display:grid;grid-template-columns:100px minmax(0,1fr) 330px;min-height:740px;color:var(--ink,#211f1b)">
@@ -430,26 +635,23 @@ input{font:inherit}
 
 <div style="display:flex;flex-direction:column;gap:16px;padding:22px 26px 26px;min-width:0">
 <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
-<span style="display:flex;flex-direction:column;gap:4px"><span style="font:600 30px/1 Fredoka,sans-serif">Tastenwelt</span><span style="font-size:13.5px;color:var(--ink2,#6b6252)">Zehn Stationen von der Grundstellung bis zum freien Abschreiben</span></span>
+<span style="display:flex;flex-direction:column;gap:4px"><span style="font:600 30px/1 Fredoka,sans-serif">Tastenwelt</span><span style="font-size:13.5px;color:var(--ink2,#6b6252)">Zehn Bereiche von der Grundstellung bis zum freien Abschreiben</span></span>
 <button onClick="{{ toggleTheme }}" aria-label="Hell oder dunkel" style="display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:var(--surface,#fffdf7);box-shadow:0 3px 0 var(--line2,#d5cbb6);color:var(--ink2,#6b6252);cursor:pointer">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:{{ moonDisp }}"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" style="display:{{ sunDisp }}"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"></path></svg>
 </button>
 </div>
-<div style="position:relative;flex:1;min-height:560px;border-radius:28px;background:radial-gradient(circle at 1px 1px,var(--line,#e3dac7) 1.3px,transparent 0) 0 0/22px 22px,var(--surface,#fffdf7);box-shadow:0 5px 0 var(--line2,#d5cbb6);overflow:hidden">
-<svg width="670" height="540" viewBox="0 0 670 540" fill="none" style="position:absolute;left:12px;top:14px">
-<path d="{{ ttPathTodo }}" stroke="var(--line2,#d5cbb6)" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 14"></path>
-<path d="{{ ttPathDone }}" stroke="var(--gold,#e0a83a)" stroke-width="8" stroke-linecap="round"></path>
-</svg>
-<div style="position:absolute;left:12px;top:14px;width:670px;height:540px">
-<sc-for list="{{ ttMap }}" as="n" hint-placeholder-count="10">
-<div style="{{ n.wrap }}">
-<span style="{{ n.animal }}"></span>
-<span style="{{ n.cap }}">{{ n.num }}</span>
-<span style="{{ n.lab }}">{{ n.label }}</span>
-<span style="{{ n.starsD }}">{{ n.stars }}</span>
-<a href="#6a" style="{{ n.go }}">Weiter üben</a>
-</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;padding:22px 24px 26px;border-radius:28px;background:var(--surface,#fffdf7);box-shadow:0 5px 0 var(--line2,#d5cbb6)">
+<span style="font-size:13px;font-weight:600;color:var(--ink2,#6b6252)">{{ ttSum }}</span>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px 12px">
+<sc-for list="{{ ttTilesAll }}" as="t" hint-placeholder-count="24">
+<a href="#6a" title="{{ t.label }}" style="{{ t.box }}">
+<span style="{{ t.g1 }}"></span>
+<span style="{{ t.g2 }}"></span>
+<span lang="de" style="{{ t.labS }}">{{ t.label }}</span>
+<span style="position:absolute;left:10px;bottom:7px;font:700 26px/1 Fredoka,sans-serif;opacity:.75">{{ t.n }}</span>
+<span style="{{ t.animal }}"></span>
+</a>
 </sc-for>
 </div>
 </div>
@@ -1048,7 +1250,7 @@ input{font:inherit}
 </div>
 
 <div class="dv-opt" id="4c">
-<div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>LernBox Desktop · Stapel links, Karte in der Mitte, Boxen unten</div>
+<div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>LernBox Desktop · Übungsrunde ohne Seitenleiste, Start aus <a class="dv-oid" href="#8a">8a</a></div>
 <div style="{{ themeVars }}">
 <div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
 <div style="display:grid;grid-template-columns:{{ lbCols }};min-height:740px;color:var(--ink,#211f1b)">
@@ -1105,8 +1307,8 @@ input{font:inherit}
 
 <div style="display:flex;flex-direction:column;gap:18px;padding:22px 30px 26px">
 <div style="display:flex;align-items:center;gap:14px">
-<button onClick="{{ toggleLbPanel }}" aria-label="Stapel und Modus ausklappen" title="Stapel und Modus" style="display:{{ lbOpenDisp }};place-items:center;width:32px;height:32px;border:0;border-radius:9px;background:transparent;color:var(--ink3,#8d8677);cursor:pointer" style-hover="background:var(--surface2,#efe9da);color:var(--ink,#211f1b)">
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M9 4.5v15M13.5 10l2 2-2 2"></path></svg></button>
+<a href="#8a" aria-label="Zurück zur LernBox" title="Zurück zur LernBox" style="display:grid;place-items:center;width:40px;height:40px;text-decoration:none;border:0;border-radius:9px;background:transparent;color:var(--ink3,#8d8677);cursor:pointer" style-hover="background:var(--surface2,#efe9da);color:var(--ink,#211f1b)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
 <span style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:18px;font-weight:700;letter-spacing:-.02em">{{ deckName }}</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ lbLeft }} · Schreiben</span></span>
 <button onClick="{{ toggleTheme }}" aria-label="Hell oder dunkel" style="display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--line2,#d5cbb6);border-radius:50%;background:var(--surface,#fffdf7);color:var(--ink2,#6b6252);cursor:pointer" style-hover="border-color:var(--accent,#7a5a12);color:var(--accent,#7a5a12)">
 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:{{ moonDisp }}"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
@@ -1150,6 +1352,74 @@ input{font:inherit}
 </div>
 </div>
 
+<div class="dv-opt" id="4g">
+<div class="dv-olabel"><a class="dv-oid" href="#4g">4g</a>LernBox mobil · gewusst</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:390px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="display:flex;flex-direction:column;gap:16px;min-height:788px;padding:18px 18px 26px;color:var(--ink,#211f1b)">
+<div style="display:flex;align-items:center;gap:12px">
+<a href="#8a" aria-label="Zurück" style="display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--surface,#fffdf7);border:1px solid var(--line2,#d5cbb6);color:var(--ink,#211f1b);text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:15.5px;font-weight:700">Present Perfect · Unit 3</span><span style="font-size:13px;color:var(--ink2,#6b6252)">5 übrig · Deutsch → Englisch</span></span>
+</div>
+<div style="height:7px;border-radius:999px;background:var(--surface2,#efe9da)"><div style="width:44%;height:100%;border-radius:999px;background:var(--gold,#e0a83a)"></div></div>
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;text-align:center"><span style="display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:var(--good-bg,#e4f1e9);color:var(--good,#26543f)"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+<span style="font:600 34px/1.05 Fredoka,sans-serif;color:var(--good,#26543f)">Gewusst</span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:14.5px;color:var(--ink2,#6b6252)">schon, bereits</span><span style="font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--ink,#211f1b)">already</span></span>
+<span style="font-size:13.5px;font-weight:700;color:var(--ink2,#6b6252)">Box 2 → Box 3 · kommt in 3 Tagen wieder</span></div>
+<button style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer">Weiter<span style="padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.2);font-size:12px">↵</span></button>
+</div></div></div></div>
+<div class="dv-opt" id="4h">
+<div class="dv-olabel"><a class="dv-oid" href="#4h">4h</a>LernBox mobil · nicht gewusst</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:390px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="display:flex;flex-direction:column;gap:16px;min-height:788px;padding:18px 18px 26px;color:var(--ink,#211f1b)">
+<div style="display:flex;align-items:center;gap:12px">
+<a href="#8a" aria-label="Zurück" style="display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--surface,#fffdf7);border:1px solid var(--line2,#d5cbb6);color:var(--ink,#211f1b);text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:15.5px;font-weight:700">Present Perfect · Unit 3</span><span style="font-size:13px;color:var(--ink2,#6b6252)">5 übrig · Deutsch → Englisch</span></span>
+</div>
+<div style="height:7px;border-radius:999px;background:var(--surface2,#efe9da)"><div style="width:44%;height:100%;border-radius:999px;background:var(--gold,#e0a83a)"></div></div>
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;text-align:center"><span style="display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:var(--bad-bg,#f8e6df);color:var(--bad,#a8432c)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"></path></svg></span>
+<span style="font:600 34px/1.05 Fredoka,sans-serif;color:var(--bad,#a8432c)">Nicht gewusst</span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:14.5px;color:var(--ink2,#6b6252)">schon, bereits</span><span style="font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--ink,#211f1b)">already</span><span style="font-size:14px;color:var(--ink2,#6b6252)">Du: <span style="color:var(--bad,#a8432c);font-weight:700;text-decoration:line-through">alredy</span></span></span>
+<span style="font-size:13.5px;font-weight:700;color:var(--ink2,#6b6252)">Box 2 → Box 1 · kommt morgen wieder</span></div>
+<button style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:15px;font-weight:700;cursor:pointer">Weiter<span style="padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.2);font-size:12px">↵</span></button>
+</div></div></div></div>
+<div class="dv-opt" id="4i">
+<div class="dv-olabel"><a class="dv-oid" href="#4i">4i</a>LernBox Desktop · gewusst</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="display:flex;flex-direction:column;gap:18px;min-height:740px;padding:24px 34px 30px;color:var(--ink,#211f1b)">
+<div style="display:flex;align-items:center;gap:12px">
+<a href="#8a" aria-label="Zurück" style="display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--surface,#fffdf7);border:1px solid var(--line2,#d5cbb6);color:var(--ink,#211f1b);text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:18px;font-weight:700">Present Perfect · Unit 3</span><span style="font-size:13px;color:var(--ink2,#6b6252)">5 übrig · Deutsch → Englisch</span></span>
+</div>
+<div style="height:7px;border-radius:999px;background:var(--surface2,#efe9da)"><div style="width:44%;height:100%;border-radius:999px;background:var(--gold,#e0a83a)"></div></div>
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;width:100%;max-width:600px;margin:0 auto">
+<div style="box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:18px;width:100%;padding:36px 32px;border:1px solid var(--line,#e3dac7);border-top:6px solid var(--green,#2f6b4f);border-radius:24px;background:var(--surface,#fffdf7);box-shadow:0 14px 36px var(--shadow,rgba(80,62,26,.14));text-align:center"><span style="display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--good-bg,#e4f1e9);color:var(--good,#26543f)"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+<span style="font:600 40px/1.05 Fredoka,sans-serif;color:var(--good,#26543f)">Gewusst</span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:16px;color:var(--ink2,#6b6252)">schon, bereits</span><span style="font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--ink,#211f1b)">already</span></span>
+<span style="font-size:13.5px;font-weight:700;color:var(--ink2,#6b6252)">Box 2 → Box 3 · kommt in 3 Tagen wieder</span></div>
+<button style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:16px;font-weight:700;cursor:pointer">Weiter<span style="padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.2);font-size:12px">↵</span></button>
+</div>
+</div></div></div></div>
+<div class="dv-opt" id="4j">
+<div class="dv-olabel"><a class="dv-oid" href="#4j">4j</a>LernBox Desktop · nicht gewusst</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="display:flex;flex-direction:column;gap:18px;min-height:740px;padding:24px 34px 30px;color:var(--ink,#211f1b)">
+<div style="display:flex;align-items:center;gap:12px">
+<a href="#8a" aria-label="Zurück" style="display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--surface,#fffdf7);border:1px solid var(--line2,#d5cbb6);color:var(--ink,#211f1b);text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:18px;font-weight:700">Present Perfect · Unit 3</span><span style="font-size:13px;color:var(--ink2,#6b6252)">5 übrig · Deutsch → Englisch</span></span>
+</div>
+<div style="height:7px;border-radius:999px;background:var(--surface2,#efe9da)"><div style="width:44%;height:100%;border-radius:999px;background:var(--gold,#e0a83a)"></div></div>
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;width:100%;max-width:600px;margin:0 auto">
+<div style="box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:18px;width:100%;padding:36px 32px;border:1px solid var(--line,#e3dac7);border-top:6px solid var(--bad,#a8432c);border-radius:24px;background:var(--surface,#fffdf7);box-shadow:0 14px 36px var(--shadow,rgba(80,62,26,.14));text-align:center"><span style="display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--bad-bg,#f8e6df);color:var(--bad,#a8432c)"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"></path></svg></span>
+<span style="font:600 40px/1.05 Fredoka,sans-serif;color:var(--bad,#a8432c)">Nicht gewusst</span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:16px;color:var(--ink2,#6b6252)">schon, bereits</span><span style="font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--ink,#211f1b)">already</span><span style="font-size:14px;color:var(--ink2,#6b6252)">Du: <span style="color:var(--bad,#a8432c);font-weight:700;text-decoration:line-through">alredy</span></span></span>
+<span style="font-size:13.5px;font-weight:700;color:var(--ink2,#6b6252)">Box 2 → Box 1 · kommt morgen wieder</span></div>
+<button style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:16px;font-weight:700;cursor:pointer">Weiter<span style="padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.2);font-size:12px">↵</span></button>
+</div>
+</div></div></div></div>
 <div class="dv-opt" id="4d">
 <div class="dv-olabel"><a class="dv-oid" href="#4d">4d</a>Wortspeicher mobil · Trainingswörter nach Rechtschreib-Sammlung</div>
 <div style="{{ themeVars }}">
@@ -1414,8 +1684,7 @@ input{font:inherit}
 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h3l10.5 10.5"></path><path d="M20 4.5h-3L6.5 15"></path><path d="M14.5 17.5 18 21l3-3-3.5-3.5"></path><path d="M9.5 17.5 6 21l-3-3 3.5-3.5"></path></svg>Duell</button>
 <button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer" style-hover="background:var(--nav-line,#2a2723);color:var(--nav-ink,#f7f4ee)">
 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5V20H4z"></path><path d="M9.5 20v-5h5v5"></path></svg>Haus</button>
-<button aria-label="Profileinstellungen" style="display:grid;place-items:center;width:44px;height:44px;margin-top:auto;border:1px solid var(--nav-line,#332f28);border-radius:50%;background:transparent;color:var(--nav-ink2,#a89e8c);cursor:pointer" style-hover="color:var(--nav-accent,#f0cf84);border-color:var(--nav-accent,#f0cf84)">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 3v2.4M12 18.6V21M3 12h2.4M18.6 12H21M5.6 5.6l1.7 1.7M16.7 16.7l1.7 1.7M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7"></path></svg></button>
+
 </div>
 
 <div style="display:flex;flex-direction:column;padding:22px 34px 30px">
@@ -2017,18 +2286,18 @@ input{font:inherit}
 </button>
 
 <div style="display:{{ pickerDisplay }};flex-wrap:wrap;justify-content:center;gap:8px;max-width:330px;padding:12px;border:1px solid #332f28;border-radius:18px;background:#1b1916">
-<button onClick="{{ pick }}" data-animal="fuchs" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/fuchs.svg" alt="Fuchs" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="capybara" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/capybara.svg" alt="Capybara" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="katze" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/katze.svg" alt="Katze" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="koala" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/koala.svg" alt="Koala" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="orca" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/orca.svg" alt="Orca" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="pfau" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/pfau.svg" alt="Pfau" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="roter_panda" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/roter_panda.svg" alt="Roter Panda" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="igel" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/igel.svg" alt="Igel" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="lama" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/lama.svg" alt="Lama" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="flamingo" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/flamingo.svg" alt="Flamingo" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="elefant" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/elefant.svg" alt="Elefant" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="schildkroete" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="../../public/animals/schildkroete.svg" alt="Schildkröte" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="fuchs" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="fuchs.svg" alt="Fuchs" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="capybara" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="capybara.svg" alt="Capybara" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="katze" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="katze.svg" alt="Katze" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="koala" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="koala.svg" alt="Koala" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="orca" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="orca.svg" alt="Orca" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="pfau" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="pfau.svg" alt="Pfau" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="roter_panda" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="roter_panda.svg" alt="Roter Panda" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="igel" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="igel.svg" alt="Igel" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="lama" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="lama.svg" alt="Lama" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="flamingo" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="flamingo.svg" alt="Flamingo" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="elefant" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="elefant.svg" alt="Elefant" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="schildkroete" style="display:grid;place-items:center;width:58px;height:58px;padding:5px;border:1px solid #332f28;border-radius:14px;background:#262320;cursor:pointer"><img src="schildkroete.svg" alt="Schildkröte" style="width:100%;height:100%;object-fit:contain"></button>
 </div>
 </div>
 
@@ -2098,14 +2367,14 @@ input{font:inherit}
 </div>
 </div>
 <div style="display:{{ pickerDisplay }};flex-wrap:wrap;justify-content:center;gap:8px;width:100%;padding:12px;border:1px solid #e3dac7;border-radius:18px;background:#fffdf7">
-<button onClick="{{ pick }}" data-animal="fuchs" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/fuchs.svg" alt="Fuchs" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="capybara" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/capybara.svg" alt="Capybara" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="katze" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/katze.svg" alt="Katze" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="koala" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/koala.svg" alt="Koala" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="orca" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/orca.svg" alt="Orca" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="pfau" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/pfau.svg" alt="Pfau" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="igel" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/igel.svg" alt="Igel" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="lama" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="../../public/animals/lama.svg" alt="Lama" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="fuchs" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="fuchs.svg" alt="Fuchs" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="capybara" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="capybara.svg" alt="Capybara" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="katze" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="katze.svg" alt="Katze" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="koala" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="koala.svg" alt="Koala" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="orca" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="orca.svg" alt="Orca" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="pfau" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="pfau.svg" alt="Pfau" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="igel" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="igel.svg" alt="Igel" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="lama" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #e3dac7;border-radius:14px;background:#f6f2e8;cursor:pointer"><img src="lama.svg" alt="Lama" style="width:100%;height:100%;object-fit:contain"></button>
 </div>
 </div>
 
@@ -2148,12 +2417,12 @@ input{font:inherit}
 <button onClick="{{ togglePicker }}" style="margin-top:6px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;height:36px;padding:0 14px;border:1px solid #403a31;border-radius:999px;background:transparent;color:#f0cf84;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:#f0cf84">Tier tauschen</button>
 </div>
 <div style="display:{{ pickerDisplay }};flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px;padding:12px;border:1px solid #302c25;border-radius:18px;background:#221f1b">
-<button onClick="{{ pick }}" data-animal="fuchs" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="../../public/animals/fuchs.svg" alt="Fuchs" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="phoenix" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="../../public/animals/phoenix.svg" alt="Phönix" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="orca" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="../../public/animals/orca.svg" alt="Orca" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="gepard" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="../../public/animals/gepard.svg" alt="Gepard" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="einhorn" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="../../public/animals/einhorn.svg" alt="Einhorn" style="width:100%;height:100%;object-fit:contain"></button>
-<button onClick="{{ pick }}" data-animal="krabbe" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="../../public/animals/krabbe.svg" alt="Krabbe" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="fuchs" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="fuchs.svg" alt="Fuchs" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="phoenix" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="phoenix.svg" alt="Phönix" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="orca" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="orca.svg" alt="Orca" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="gepard" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="gepard.svg" alt="Gepard" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="einhorn" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="einhorn.svg" alt="Einhorn" style="width:100%;height:100%;object-fit:contain"></button>
+<button onClick="{{ pick }}" data-animal="krabbe" style="display:grid;place-items:center;width:56px;height:56px;padding:5px;border:1px solid #302c25;border-radius:14px;background:#2a2723;cursor:pointer"><img src="krabbe.svg" alt="Krabbe" style="width:100%;height:100%;object-fit:contain"></button>
 </div>
 
 <div style="display:grid;grid-template-columns:repeat(4,1fr) 62px;gap:8px;margin-top:22px">
@@ -2349,7 +2618,7 @@ const WORDS_BY_SET = {
   verl: [{w:"Hund",box:1,src:"Laufdiktat"},{w:"Berg",box:2,src:"Laufdiktat"},{w:"Wald",box:1,src:"Test"},{w:"klug",box:3,src:"eigenes Wort"},{w:"Zwerg",box:2,src:"Laufdiktat"},{w:"Korb",box:1,src:"Laufdiktat"},{w:"Rad",box:5,src:"T. Bryson"}],
   merk: [{w:"Vater",box:5,src:"T. Bryson"},{w:"Vogel",box:4,src:"Laufdiktat"},{w:"Zug",box:2,src:"Test"}]
 };
-const bgStyle = (a,w,extra) => "width:"+w+"px;height:"+w+"px;background-image:url('../../public/animals/"+a+".svg');background-repeat:no-repeat;background-position:center;background-size:contain;"+extra;
+const bgStyle = (a,w,extra) => "width:"+w+"px;height:"+w+"px;background-image:url('"+a+".svg');background-repeat:no-repeat;background-position:center;background-size:contain;"+extra;
 
 const TT_TEXT = "Fuchs Bär Wiese springt über Käfer";
 const TT_FINGER = {};
@@ -2374,6 +2643,19 @@ const TT_LAYOUTS = {
 const TT_STAGES = ["Grundstellung","Obere Reihe","Untere Reihe","Großbuchstaben","Umlaute und ß","Satzzeichen","Buchstabenfolgen","Wörter","Sätze","Abschreibtexte"];
 const TT_PTS = [[70,92],[230,66],[395,100],[570,78],[600,262],[425,290],[245,252],[88,420],[310,462],[560,440]];
 const TT_STARS = [3,3,2,3,2,3,1];
+const TT_SUB = [
+  ["f und j","d und k","s und l","a und ö","Leertaste","Ganze Grundreihe"],
+  ["e und i","r und u","t und z","w und o","q und p","ü","Ganze Reihe"],
+  ["v und m","c und Komma","x und Punkt","y und Bindestrich","b und n","Ganze Reihe"],
+  ["Linke Umschalttaste","Rechte Umschalttaste","Namen","Satzanfänge","Gemischt"],
+  ["ä","ö","ü","ß","Gemischt"],
+  ["Punkt und Komma","Frage und Ausruf","Doppelpunkt","Anführungszeichen","Klammern","Gemischt"],
+  ["ei und ie","ch und sch","st und sp","pf und qu","Doppelte Buchstaben","Gemischt"],
+  ["Kurze Wörter","Nomen","Verben","Adjektive","Lange Wörter","Zusammengesetzte","Tempo-Runde","Inselprüfung"],
+  ["Kurze Sätze","Fragesätze","Mit Komma","Wörtliche Rede","Lange Sätze","Tempo-Runde","Inselprüfung"],
+  ["Kurzer Text","Brief","Sachtext","Geschichte","Gedicht","Abschlussprüfung"]
+];
+const TT_CUR_SUB = 4;
 const TT_HEAT = {b:3,"ü":2,z:2,"ß":2,y:1,"ö":1,v:1};
 const HS = [
   {id:"phoenix", name:"Phönix", hue:40, animal:"phoenix", pts:3420, active:7, members:8, trend:"+12 %"},
@@ -2585,8 +2867,8 @@ class Component extends DCLogic {
       pickSet: e => this.setState({wsSet: e.currentTarget.getAttribute("data-set"), wsI:0, wsIn:"", wsPh:"ask", wsTip:false}),
       words: (s.wsWords[s.wsSet] || []).map((x,i) => Object.assign({}, x, {idx: String(i), boxTxt: "Box " + x.box,
         dot: "width:9px;height:9px;border-radius:50%;background:" + BOXC[x.box-1]})),
-      lbCols: s.lbPanel ? "100px 318px minmax(0,1fr)" : "100px minmax(0,1fr)",
-      lbPanelDisp: s.lbPanel ? "flex" : "none",
+      lbCols: "100px minmax(0,1fr)",
+      lbPanelDisp: "none",
       lbOpenDisp: s.lbPanel ? "none" : "grid",
       toggleLbPanel: () => this.setState(p => ({lbPanel: !p.lbPanel})),
       vSets: s.wsView === "sets" ? "flex" : "none",
@@ -2834,17 +3116,39 @@ class Component extends DCLogic {
     const cur = 7;
     const segs = TT_PTS.slice(0, -1).map((p1, i) => { const p0 = TT_PTS[i - 1] || p1, p2 = TT_PTS[i + 1], p3 = TT_PTS[i + 2] || p2;
       return ` C${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]} ${p2[1]}`; });
-    const map = TT_STAGES.map((label, k) => {
-      const [x, y] = TT_PTS[k], st = k < cur ? "done" : k === cur ? "cur" : "lock", sz = st === "cur" ? 84 : 62, hue = [25,60,95,140,185,245,295,345,25,60][k], n = TT_STARS[k] || 0;
-      return {num: String(k + 1), label,
-        wrap: `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-${sz / 2}px);display:flex;flex-direction:column;align-items:center;gap:7px;width:150px`,
-        cap: `display:grid;place-items:center;width:${sz}px;height:${sz}px;border-radius:${st === "cur" ? 28 : 20}px;font:700 ${st === "cur" ? 34 : 24}px/1 Fredoka,sans-serif;` + (st === "done" ? (dark ? `background:oklch(0.5 0.1 ${hue});color:#fff;box-shadow:0 6px 0 oklch(0.34 0.08 ${hue})` : `background:oklch(0.86 0.1 ${hue});color:#211f1b;box-shadow:0 6px 0 oklch(0.62 0.12 ${hue})`)
-          : st === "cur" ? "background:var(--gold,#e0a83a);color:#211f1b;box-shadow:0 7px 0 color-mix(in oklch,var(--gold) 55%,#000),0 0 0 9px color-mix(in oklch,var(--gold) 26%,transparent);animation:tt-press 1.6s ease-in-out infinite"
-          : "box-sizing:border-box;background:var(--surface2,#efe9da);color:var(--ink3,#8d8677);border:2px dashed var(--line2,#d5cbb6)"),
-        animal: st === "cur" ? bgStyle(s.animal, 70, "position:absolute;top:-66px;left:40px;animation:tt-bob 2.4s ease-in-out infinite") : "display:none",
-        lab: `font:600 ${st === "cur" ? 15 : 13.5}px/1.2 Fredoka,sans-serif;text-align:center;color:${st === "lock" ? "var(--ink3,#8d8677)" : "var(--ink,#211f1b)"}`,
-        stars: "★".repeat(n) + "☆".repeat(3 - n), starsD: st === "done" ? "font-size:14px;letter-spacing:2px;line-height:1;color:var(--gold,#e0a83a)" : "display:none",
-        go: st === "cur" ? "padding:8px 14px;border-radius:999px;background:var(--nav,#211f1b);color:var(--nav-accent,#f0cf84);font-size:12.5px;font-weight:700" : "display:none"};
+    const MED = ["#c4844e", "#a9afb9", "var(--gold,#e0a83a)"];
+    const starSt = (m, i, off) => { const on = m === 3 || (m === 2 && i !== 1) || (m === 1 && i === 0);
+      return `display:block;color:${on ? MED[m - 1] : off};` + (i === 1 ? "margin:0 0 6px" : `transform:rotate(${i ? 16 : -16}deg)`); };
+    const WK = {Komma:",", Punkt:".", Bindestrich:"-", Leertaste:"sp", Frage:"ß", Ausruf:"1", Doppelpunkt:".", Anführungszeichen:"2", Klammern:"8", "Linke Umschalttaste":"shl", "Rechte Umschalttaste":"shr"};
+    const keysOf = l => { if (WK[l]) return [WK[l]]; const p = l.split(" und "); return p.map(x => x.length === 1 ? x.toLowerCase() : WK[x]).filter(Boolean); };
+    const col = k => { const f = TT_FINGER[k]; if (!f || f === "th") return null; const hue = TT_HUE[f] ?? 70;
+      return {bg: dark ? `oklch(0.45 0.1 ${hue})` : `oklch(0.87 0.1 ${hue})`, sh: dark ? `oklch(0.3 0.08 ${hue})` : `oklch(0.64 0.14 ${hue})`, ink: dark ? `oklch(0.96 0.04 ${hue})` : `oklch(0.3 0.1 ${hue})`}; };
+    let no = 0, total = 0, doneN = 0;
+    const all = [];
+    TT_STAGES.forEach((name, a) => {
+      const subs = TT_SUB[a], nS = subs.length, aSt = a < cur ? "done" : a === cur ? "cur" : "lock", got = aSt === "done" ? nS : aSt === "cur" ? TT_CUR_SUB : 0;
+      total += nS; doneN += got;
+      subs.forEach((label, k) => {
+        const st = aSt === "done" || (aSt === "cur" && k < got) ? "done" : aSt === "cur" && k === got ? "cur" : "lock", m = st === "done" ? [3,3,2,3,1,3,2][(k * 5 + a) % 7] : 0;
+        const cs = keysOf(label).map(col).filter(Boolean), c0 = cs[0], c1 = cs[1] || c0;
+        const MC = [{bg:"#e3a272", sh:"#b56b3e", ink:"#3d2414"}, {bg:"#d9dee6", sh:"#9aa3b1", ink:"#272c35"}, {bg:"#f6cf5b", sh:"#d29a24", ink:"#3d2a05"}];
+        const v = (no * 7 + a * 3) % 5, rot = [-2, 1.5, -1, 2, 0.5][(no * 3) % 5], OUT = dark ? "#0f0e0c" : "#211f1b";
+        const W = "#ffffff", SPARK = "polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)";
+        const glint = [
+          [`left:14px;top:12px;width:30px;height:8px;border-radius:6px;background:${W};transform:rotate(-35deg)`, `left:12px;top:26px;width:12px;height:6px;border-radius:6px;background:${W};transform:rotate(-35deg)`],
+          [`right:12px;top:10px;width:22px;height:22px;background:${W};clip-path:${SPARK}`, `right:34px;top:26px;width:11px;height:11px;background:${W};clip-path:${SPARK}`],
+          [`left:10px;top:10px;width:40px;height:40px;border-radius:50%;border:5px solid ${W};border-color:${W} transparent transparent ${W};transform:rotate(-8deg)`, `right:14px;top:12px;width:9px;height:9px;border-radius:50%;background:${W}`],
+          [`right:10px;top:8px;width:16px;height:16px;background:${W};clip-path:${SPARK}`, `left:14px;top:14px;width:24px;height:6px;border-radius:6px;background:${W};transform:rotate(-30deg)`],
+          [`right:12px;top:12px;width:8px;height:8px;border-radius:50%;background:${W};box-shadow:12px 10px 0 -1px ${W},-2px 16px 0 -2px ${W}`, `left:12px;top:12px;width:16px;height:16px;background:${W};clip-path:${SPARK}`]
+        ][v].map(g => m ? `position:absolute;pointer-events:none;opacity:.9;${g}` : "display:none");
+        const fc = m ? MC[m - 1] : c0, bg = fc ? fc.bg : "var(--surface2,#efe9da)";
+        const sh = fc ? fc.sh : "var(--line2,#d5cbb6)", ink = fc ? fc.ink : "var(--ink,#211f1b)", off = dark ? "rgba(255,255,255,.28)" : "rgba(0,0,0,.16)";
+        no++;
+        all.push({n: String(no), label, 
+          box: `position:relative;box-sizing:border-box;display:block;min-width:0;aspect-ratio:1;border-radius:18px;background:${bg};color:${ink};text-decoration:none;border:2.5px solid ${OUT};transform:rotate(${rot}deg);box-shadow:4px 5px 0 ${OUT}` + (st === "cur" ? ",0 0 0 6px color-mix(in oklch,var(--gold,#e0a83a) 55%,transparent)" : "") + (st === "lock" ? ";opacity:.42" : ""), g1: glint[0], g2: glint[1],
+          labS: `position:absolute;inset:0;display:grid;place-items:center;padding:6px 8px 30px;font:600 ${label.length > 13 ? 16 : label.length > 10 ? 18 : 22}px/1.1 Fredoka,sans-serif;text-align:center;text-wrap:balance;hyphens:auto;overflow-wrap:anywhere`,
+          animal: st === "cur" ? bgStyle(s.animal, 46, "position:absolute;right:-14px;bottom:-12px;animation:tt-bob 2.4s ease-in-out infinite") : "display:none"});
+      });
     });
     return {
       ttDTiles: this.ttTiles(D, {w:40, h:58, sp:20, r:13, fs:30}),
@@ -2879,7 +3183,73 @@ class Component extends DCLogic {
       ttKey: e => { if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return; e.preventDefault(); this.ttHit("ttD", e.key); },
       ttMIn: e => { const ch = (e.target.value || "").slice(-1); e.target.value = ""; if (ch) this.ttHit("ttM", ch); },
       ttResetD: () => this.setState({ttD: ttNew()}), ttResetM: () => this.setState({ttM: ttNew()}),
-      ttMap: map, ttPathDone: "M" + TT_PTS[0].join(" ") + segs.slice(0, cur).join(""), ttPathTodo: "M" + TT_PTS[cur].join(" ") + segs.slice(cur).join("")
+      ...this.l8Vals(),
+      ttTilesAll: all, ttSum: `${doneN} von ${total} Stationen geschafft`
+    };
+  }
+
+  l8Vals() {
+    const s = this.state, sh = s.l8Sheet || null, view = s.l8View || "home", ed = s.l8Ed ?? -1;
+    const voc = s.l8Voc || [
+      {de:"gehen", en:"to go · went · gone", d:"iv", box:3, tags:["unregelmäßig","Unit 3"]}, {de:"sehen", en:"to see · saw · seen", d:"iv", box:2, tags:["unregelmäßig"]},
+      {de:"bringen", en:"to bring · brought · brought", d:"iv", box:1, tags:["unregelmäßig","schwierig"]}, {de:"Ich habe gegessen.", en:"I have eaten.", d:"pp", box:1, tags:["Laufdiktat"]},
+      {de:"schon", en:"already", d:"pp", box:4, tags:["Signalwort"]}, {de:"noch nicht", en:"not yet", d:"pp", box:2, tags:["Signalwort","schwierig"]},
+      {de:"die Kantine", en:"la cantine", d:"fr", box:5, tags:["Schule"]}, {de:"der Stundenplan", en:"l'emploi du temps", d:"fr", box:3, tags:["Schule"]}];
+    const seg = on => "flex:1;min-height:42px;padding:0 10px;border:0;border-radius:10px;font-size:13.5px;font-weight:700;white-space:nowrap;cursor:pointer;" + (on ? "background:var(--surface,#fffdf7);color:var(--ink,#211f1b);box-shadow:0 1px 3px var(--shadow,rgba(80,62,26,.14))" : "background:transparent;color:var(--ink2,#6b6252)");
+    const chip = on => "min-height:40px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;" + (on ? "border:1.5px solid var(--accent,#7a5a12);background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)" : "border:1px solid var(--line2,#d5cbb6);background:var(--surface,#fffdf7);color:var(--ink2,#6b6252)");
+    const boxes = [0,1,2,3,4].map(i => DECKS.reduce((a, d) => a + d.lv[i], 0)), mx = Math.max(...boxes), total = boxes.reduce((a, b) => a + b, 0);
+    const deckOf = id => DECKS.find(d => d.id === id);
+    const f = s.l8F || "all", q = (s.l8Q || "").toLowerCase();
+    const sk = s.l8SK || null, sdir = s.l8SD || 1;
+    const keyOf = v => sk === "de" ? v.de : sk === "en" ? v.en : sk === "deck" ? (deckOf(v.d) || {}).name : sk === "tags" ? (v.tags || []).join(" ") || "~" : v.box;
+    const rows = voc.map((v, i) => ({v, i})).filter(({v}) => (f === "all" || v.d === f) && (!q || (v.de + v.en + (v.tags || []).join(" ")).toLowerCase().includes(q)));
+    if (sk) rows.sort((a, b) => { const x = keyOf(a.v), y = keyOf(b.v); return (typeof x === "number" ? x - y : String(x).localeCompare(String(y), "de")) * sdir; });
+    const setTags = (i, t) => { const nv = voc.slice(); nv[i] = Object.assign({}, nv[i], {tags: t}); this.setState({l8Voc: nv}); };
+    const upd = (i, k) => e => { const nv = voc.slice(); nv[i] = Object.assign({}, nv[i], {[k]: e.target.value}); this.setState({l8Voc: nv}); };
+    const startDeck = s.l8StartD || "all", sd = deckOf(startDeck);
+    const code = s.l8Code || "", found = code.length === 4;
+    return {
+      l8HomeDisp: view === "home" ? "flex" : "none", l8EditDisp: view === "edit" ? "flex" : "none",
+      l8GoEdit: () => this.setState({l8View: "edit", l8Menu: false}), l8GoHome: () => this.setState({l8View: "home", l8Ed: -1}),
+      l8MenuDisp: s.l8Menu ? "flex" : "none", l8ToggleMenu: () => this.setState({l8Menu: !s.l8Menu}),
+      l8Open: e => this.setState({l8Sheet: e.currentTarget.getAttribute("data-s"), l8Menu: false, l8Saved: ""}),
+      l8Close: () => this.setState({l8Sheet: null, l8Code: "", l8De: "", l8En: "", l8Saved: ""}),
+      l8SheetDisp: sh ? "flex" : "none", l8ManDisp: sh === "manual" ? "flex" : "none", l8CodeDisp: sh === "code" ? "flex" : "none", l8StartDisp: sh === "start" ? "flex" : "none",
+      l8Due: String(DECKS.reduce((a, d) => a + d.due, 0)), l8Total: String(total),
+      l8Boxes: boxes.map((n, i) => ({n: String(n), label: "Box " + (i + 1), bar: `display:block;width:100%;height:${Math.round(18 + 92 * n / mx)}px;border-radius:10px 10px 4px 4px;background:${BOXC[i]}`})),
+      l8Decks: DECKS.map(d => ({id: d.id, name: d.name, sub: d.sub.split(" · ")[1] || d.sub, total: String(d.total),
+        dueTxt: d.due ? d.due + " heute" : "erledigt",
+        duePill: "flex:none;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;" + (d.due ? "background:var(--accent-bg,#fdf4dd);color:var(--accent,#7a5a12)" : "background:var(--good-bg,#e4f1e9);color:var(--good,#26543f)"),
+        segs: d.lv.map((n, i) => ({style: "flex:" + n + ";background:" + BOXC[i]}))})),
+      l8Start: e => this.setState({l8Sheet: "start", l8StartD: e.currentTarget.getAttribute("data-d"), l8Menu: false}),
+      l8StartTitle: startDeck === "all" ? "Heute dran" : startDeck === "err" ? "Meine Fehler" : sd ? sd.name : "",
+      l8StartSub: startDeck === "all" ? DECKS.reduce((a, d) => a + d.due, 0) + " Vokabeln aus allen Stapeln" : startDeck === "err" ? "5 Vokabeln aus dem letzten Test" : sd ? (sd.due || sd.total) + " Vokabeln" : "",
+      l8SegW: seg((s.l8Mode || "w") === "w"), l8SegO: seg(s.l8Mode === "o"), l8SegFw: seg((s.l8Dir || "fw") === "fw"), l8SegRv: seg(s.l8Dir === "rv"),
+      l8SetMode: e => this.setState({l8Mode: e.currentTarget.getAttribute("data-v")}), l8SetDir: e => this.setState({l8Dir: e.currentTarget.getAttribute("data-v")}),
+      l8De: s.l8De || "", l8En: s.l8En || "", l8DeIn: e => this.setState({l8De: e.target.value}), l8EnIn: e => this.setState({l8En: e.target.value}),
+      l8DeckChips: DECKS.map(d => ({id: d.id, name: d.name.split(" · ")[0], style: chip((s.l8AddD || "pp") === d.id)})),
+      l8PickDeck: e => this.setState({l8AddD: e.currentTarget.getAttribute("data-d")}),
+      l8Save: () => { if (!(s.l8De || "").trim() || !(s.l8En || "").trim()) return;
+        this.setState({l8Voc: [{de: s.l8De.trim(), en: s.l8En.trim(), d: s.l8AddD || "pp", box: 1, tags: []}].concat(voc), l8De: "", l8En: "", l8Saved: "„" + s.l8De.trim() + "“ gespeichert · Box 1"}); },
+      l8Saved: s.l8Saved || "", l8SavedDisp: s.l8Saved ? "block" : "none",
+      l8Code: code, l8Scan: () => this.setState({l8Code: "K7QF"}), l8CodeIn: e => this.setState({l8Code: e.target.value.toUpperCase().slice(0, 4)}), l8FoundDisp: found ? "flex" : "none",
+      l8CodeBtn: "display:inline-flex;align-items:center;justify-content:center;min-height:52px;border:0;border-radius:14px;font-size:15px;font-weight:700;" + (found ? "background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);cursor:pointer" : "background:var(--surface2,#efe9da);color:var(--ink3,#8d8677);pointer-events:none"),
+      l8Heads: [["de","Deutsch"],["en","Fremdsprache"],["deck","Stapel"],["tags","Tags"],["box","Box"]].map(([k, label]) => ({k, label, arrow: sk === k ? (sdir > 0 ? "↑" : "↓") : "↕",
+        arrowS: "font-size:13px;letter-spacing:0;" + (sk === k ? "color:var(--accent,#7a5a12)" : "opacity:.45"),
+        style: "display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0;border:0;background:transparent;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left;cursor:pointer;color:" + (sk === k ? "var(--ink,#211f1b)" : "var(--ink2,#6b6252)")})),
+      l8Sort: e => { const k = e.currentTarget.getAttribute("data-k"); this.setState(sk === k ? {l8SD: -sdir} : {l8SK: k, l8SD: 1}); },
+      l8ListSub: rows.length + " von " + voc.length + " Vokabeln · Spaltenkopf antippen zum Sortieren · Stift zum Ändern",
+      l8Q: s.l8Q || "", l8QIn: e => this.setState({l8Q: e.target.value}),
+      l8Filters: [{id: "all", name: "Alle"}].concat(DECKS.map(d => ({id: d.id, name: d.name.split(" · ")[0]}))).map(x => Object.assign(x, {style: chip(f === x.id)})),
+      l8SetFilter: e => this.setState({l8F: e.currentTarget.getAttribute("data-f")}),
+      l8Rows: rows.map(({v, i}) => { const on = ed === i; return {de: v.de, en: v.en, deck: (deckOf(v.d) || {}).name, box: "Box " + v.box,
+        dot: "width:10px;height:10px;border-radius:50%;background:" + BOXC[v.box - 1],
+        viewDisp: on ? "none" : "block", editDisp: on ? "block" : "none", onDe: upd(i, "de"), onEn: upd(i, "en"),
+        tags: (v.tags || []).map((t, ti) => ({name: t, remove: () => setTags(i, v.tags.filter((_, z) => z !== ti)),
+          xS: (on ? "display:grid" : "display:none") + ";place-items:center;width:16px;height:16px;padding:0;border:0;border-radius:50%;background:var(--line2,#d5cbb6);color:var(--ink,#211f1b);font-size:12px;line-height:1;cursor:pointer"})),
+        addTag: e => { if (e.key !== "Enter") return; const t = e.target.value.trim(); if (t && !(v.tags || []).includes(t)) setTags(i, (v.tags || []).concat(t)); e.target.value = ""; },
+        aria: on ? "Fertig" : "Bearbeiten", toggle: () => this.setState({l8Ed: on ? -1 : i}),
+        btn: "display:grid;place-items:center;width:40px;height:40px;border-radius:12px;cursor:pointer;" + (on ? "border:0;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7)" : "border:1px solid var(--line2,#d5cbb6);background:transparent;color:var(--ink2,#6b6252)")}; })
     };
   }
 
@@ -2911,7 +3281,7 @@ class Component extends DCLogic {
     }));
     return {
       classes, items, classesV, itemsV, ...this.lernVals(), ...this.ldVals(), ...this.ttVals(), ...this.hsVals(),
-      themeVars: dark ? DARK : LIGHT,
+      themeVars: (dark ? DARK : LIGHT) + (dark ? ";--ok-bg:oklch(0.27 0.045 155);--ok-card:oklch(0.32 0.05 155);--ok-line:oklch(0.42 0.06 155);--ok-mark:oklch(0.45 0.09 155);--no-bg:oklch(0.27 0.045 30);--no-card:oklch(0.32 0.05 30);--no-line:oklch(0.42 0.06 30)" : ""),
       themeLabel: dark ? "Hell" : "Dunkel",
       moonDisp: dark ? "none" : "block", sunDisp: dark ? "block" : "none",
       toggleTheme: () => this.setState(p => ({theme: p.theme === "dark" ? "light" : "dark"})),

@@ -15,7 +15,7 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     href: "/lernbox",
     title: "LernBox",
     text: "Vokabeln in fünf Boxen – was sitzt, wandert weiter.",
-    icon: "cards",
+    icon: "lernbox",
     tone: "#ffb3ad",
   },
   {
@@ -23,7 +23,7 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     href: "/frei/german/lernwoerter",
     title: "Wortspeicher",
     text: "Trainingswörter richtig schreiben, Sammlung für Sammlung.",
-    icon: "pencil",
+    icon: "wortspeicher",
     tone: "#ffc58f",
   },
   {
@@ -31,7 +31,7 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     href: "/frei/typing",
     title: "Tastenwelt",
     text: "Zehn Stationen von der Grundstellung bis zum Abschreiben.",
-    icon: "keyboard",
+    icon: "tastenwelt",
     tone: "#a8e2a0",
   },
   {
@@ -39,7 +39,7 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     href: "/frei/mathematics",
     title: "Kopfrechnen",
     text: "Rechenaufgaben im eigenen Tempo, mit Lücken und Reihen.",
-    icon: "math",
+    icon: "kopfrechnen",
     tone: "#8fcdf5",
   },
   {
@@ -47,7 +47,7 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     href: "/frei/german/laufdiktat",
     title: "Laufdiktat allein",
     text: "Sätze einprägen und aus dem Gedächtnis schreiben.",
-    icon: "run",
+    icon: "laufdiktat",
     tone: "#cdb6f2",
   },
 ];

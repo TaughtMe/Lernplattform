@@ -7,7 +7,6 @@ declare const styles: {
   readonly battleBar: string;
   readonly battleControls: string;
   readonly battleText: string;
-  readonly card: string;
   readonly char: string;
   readonly charge: string;
   readonly chargeLabel: string;
@@ -23,8 +22,6 @@ declare const styles: {
   readonly doneDisc: string;
   readonly doneNote: string;
   readonly doneTitle: string;
-  readonly edge: string;
-  readonly eyeDisc: string;
   readonly feedback: string;
   readonly full: string;
   readonly ghost: string;
@@ -34,9 +31,11 @@ declare const styles: {
   readonly headerExtras: string;
   readonly hintsPill: string;
   readonly hold: string;
-  readonly holdText: string;
-  readonly holdTitle: string;
+  readonly holdBody: string;
+  readonly holdLine: string;
   readonly intro: string;
+  readonly keyHint: string;
+  readonly keycap: string;
   readonly large: string;
   readonly layout: string;
   readonly link: string;
@@ -50,11 +49,12 @@ declare const styles: {
   readonly progress: string;
   readonly question: string;
   readonly question2: string;
+  readonly rail: string;
   readonly reached: string;
   readonly read: string;
   readonly readAloud: string;
+  readonly readBox: string;
   readonly ready: string;
-  readonly releaseHint: string;
   readonly right: string;
   readonly ring: string;
   readonly ringEmpty: string;
@@ -80,6 +80,7 @@ declare const styles: {
   readonly tilesScroll: string;
   readonly title: string;
   readonly titles: string;
+  readonly touchHint: string;
   readonly wideOnly: string;
   readonly write: string;
   readonly writeHead: string;

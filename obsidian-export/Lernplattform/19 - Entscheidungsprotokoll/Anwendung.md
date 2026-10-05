@@ -582,3 +582,24 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 
 **Bekannte Grenze:** Der QR-Code mit Freigabe ist länger (ca. Version 19 statt 13). Er wird im Einzelfall größer angezeigt; im Klassen-QR-Bogen bleibt die Größe unverändert und ist im Probedurchlauf zu prüfen.
 
+## 51. Lehrerbereich: Ablage aller Inhaltsarten nach Klassen und ein Startweg – 3. Oktober 2026
+
+**Beschlossen:** `/lehrer` zeigt „Inhalte“ der gewählten Klasse (Entwurf 3c/3d). Die Ablage nimmt Text, Mathe und Vokabeln auf, jeder Inhalt kann zu mehreren Klassen gehören oder unter „Nicht zugeordnet“ stehen. Räume entstehen weiter nur im Laufdiktat (5c/5d); „Öffnen“ in der Ablage startet ein Overlay mit den vier echten Modi.
+
+- **Ablage:** `kind` (fehlt = Vokabeln), `classIds`, `lastUsedAt` und `textSplit` sind optionale Felder des bestehenden Pakets. Keine neue Dexie-Version. Archivierte Klassen zählen nicht; ihre Inhalte stehen unter „Nicht zugeordnet“. Die Freigabe an Schüler bietet nur Vokabeln an.
+- **Aktive Klasse:** Adresse (`?klasse=` oder `ohne`) vor zuletzt genutzter Klasse (`lastLiveClassId`) vor erster Klasse. Sie ist zugleich die Klasse des nächsten Raums.
+- **Schreiberleichterung:** Wer „Nicht zugeordnet“ wählt, löscht die gemerkte Klasse; der nächste Raum startet ohne Klasse und damit ohne Schreiberleichterung. Das Startfenster nennt deshalb immer „Raum für Klasse …“ bzw. „Raum ohne Klasse (keine Schreiberleichterung)“.
+- **Startweg:** „Jetzt starten“ schreibt eine einmalige Absicht (nur IDs und Modus) in den Sitzungsspeicher; der Live-Raum löscht sie, bevor er den Raum erstellt. Ein offener Raum hat Vorrang.
+- **Ablegen:** Titelfeld und „Ablegen“ im Schritt „Inhalt“; beim Öffnen der Lobby wird automatisch abgelegt, die Revision steigt nur bei geänderter Quelle oder geändertem Titel.
+- **Rahmen:** Leiste mit Klassen, „Nicht zugeordnet“, Bereichen und der Gruppe „Verwalten“; kein „Auswertung“, bis es einen Entwurf gibt. Profil statt Login (Entscheidung 43).
+
+**Bekannte Grenze:** Eine Bibliotheksdatei mit den neuen Feldern liest eine ältere App-Version nicht mehr ein (`strict`).
+
+## 52. Raumcode gilt 90 Minuten, Raum schließt nach 120 Minuten – 3. Oktober 2026
+
+**Beschlossen:** Neue Beitritte mit Raumcode oder QR sind 90 Minuten nach dem Öffnen des Raums möglich. Geräte, die schon im Raum sind, kommen mit ihrem Teilnehmertoken weiter zurück. 120 Minuten nach dem Öffnen schließt der Raum automatisch wie beim Beenden durch die Lehrkraft (Migration `20261003120000_room_time_limits.sql`, Aufräum-Job alle 5 Minuten).
+
+- Die Lehrkraft sieht „Code gilt bis HH:MM“, ab Minute 110 den Hinweis zum CSV-Sichern und nach dem Schließen „Raum geschlossen“ mit weiter nutzbarem Export. Die Uhrzeiten sind lokal berechnet; maßgeblich ist der Server.
+- Schülergeräte prüfen alle 30 Sekunden, ob der Server den Raum geschlossen hat, und übernehmen die Runde dann wie beim Beenden in die LernBox (Entscheidung 49).
+- Abweichung vom Original-Laufdiktat; in `docs/laufdiktat-parity.md` vermerkt.
+

@@ -1,19 +1,14 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
-  readonly area: string;
-  readonly areaTitle: string;
   readonly board: string;
-  readonly boardHead: string;
   readonly bronze: string;
   readonly buddy: string;
   readonly card: string;
-  readonly cardFoot: string;
   readonly cardItem: string;
-  readonly cardKeys: string;
+  readonly cardLong: string;
   readonly cardMain: string;
+  readonly cardMid: string;
   readonly cardNumber: string;
-  readonly cardSub: string;
-  readonly cardText: string;
   readonly cards: string;
   readonly continue: string;
   readonly count: string;
@@ -21,18 +16,12 @@ declare const styles: {
   readonly extra: string;
   readonly eyebrow: string;
   readonly filled: string;
-  readonly gloss: string;
-  readonly glossLeft: string;
-  readonly glossRight: string;
+  readonly glint: string;
   readonly gold: string;
   readonly head: string;
   readonly layout: string;
-  readonly legend: string;
-  readonly legendDot: string;
-  readonly legendItem: string;
   readonly locked: string;
   readonly main: string;
-  readonly medal: string;
   readonly open: string;
   readonly raised: string;
   readonly screen: string;

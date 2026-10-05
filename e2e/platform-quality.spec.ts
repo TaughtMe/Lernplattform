@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   createEnrollmentCode,
   createEnrollmentLink,
@@ -98,7 +98,27 @@ test("mobile learners retain direct access to their personal learning room", asy
   await expect(room).toHaveAttribute("href", "/lernen");
 });
 
-test("the native LernBox creates and opens a personal deck", async ({
+/** Öffnet das Plus-Menü; Klicks vor der Hydration gehen verloren, daher wiederholen. */
+async function chooseFromPlusMenu(page: Page, item: RegExp) {
+  const entry = page.getByRole("menuitem", { name: item });
+  await expect(async () => {
+    if (!(await entry.isVisible())) {
+      await page.getByRole("button", { name: "Vokabeln hinzufügen" }).click();
+    }
+    await expect(entry).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+  await entry.click();
+}
+
+async function createLernBoxDeck(page: Page, name: string) {
+  await chooseFromPlusMenu(page, /Selbst eintragen/);
+  await page
+    .getByRole("textbox", { name: "Name des neuen Stapels" })
+    .fill(name);
+  await page.getByRole("button", { name: "Stapel anlegen" }).click();
+}
+
+test("the native LernBox creates a deck, adds a word and opens the start sheet", async ({
   page,
 }) => {
   const runtimeErrors: string[] = [];
@@ -114,66 +134,33 @@ test("the native LernBox creates and opens a personal deck", async ({
   await page.goto("/lernbox");
   await expect(page.locator("iframe")).toHaveCount(0);
 
-  await expect(
-    page.getByRole("textbox", { name: "Name der neuen Lernbox" }),
-  ).toBeVisible();
-  const deckName = page.getByRole("textbox", {
-    name: "Name der neuen Lernbox",
-  });
-  await deckName.fill("Englisch 7b");
-  await expect(deckName).toHaveValue("Englisch 7b");
-  await page.getByRole("button", { name: "Erstellen" }).click();
+  await createLernBoxDeck(page, "Englisch 7b");
+  await page.getByRole("textbox", { name: "Deutsch" }).fill("Haus");
+  await page.getByRole("textbox", { name: "Englisch" }).fill("house");
+  await page.getByRole("button", { name: "Speichern und nächste" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "„Haus“ gespeichert · Box 1",
+  );
+  await page.getByRole("button", { name: "Fertig" }).click();
 
   await expect.poll(() => runtimeErrors).toEqual([]);
-  await expect
-    .poll(
-      () =>
-        page.evaluate(async () => {
-          const request = indexedDB.open("lernraum:personal:v1");
-          const database = await new Promise<IDBDatabase>((resolve, reject) => {
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-          });
-          const transaction = database.transaction(
-            "learningBoxDecks",
-            "readonly",
-          );
-          const read = transaction.objectStore("learningBoxDecks").getAll();
-          const values = await new Promise<Array<{ title: string }>>(
-            (resolve, reject) => {
-              read.onsuccess = () => resolve(read.result);
-              read.onerror = () => reject(read.error);
-            },
-          );
-          database.close();
-          return values.map((value) => value.title);
-        }),
-      { timeout: 10_000 },
-    )
-    .toContain("Englisch 7b");
   await expect(page.getByText("Englisch 7b", { exact: true })).toBeVisible();
-  await page.getByText("Englisch 7b", { exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Englisch 7b" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Karte hinzufügen" }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: /Englisch 7b/ }).click();
+  await expect(page.getByRole("button", { name: "Los geht's" })).toBeVisible();
 });
 
 test("a downloaded LernBox backup restores a deleted deck", async ({
   page,
 }) => {
   await page.goto("/lernbox");
-  await page
-    .getByRole("textbox", { name: "Name der neuen Lernbox" })
-    .fill("Sicherungsprobe");
-  await page.getByRole("button", { name: "Erstellen" }).click();
+  await createLernBoxDeck(page, "Sicherungsprobe");
+  await page.getByRole("button", { name: "Schließen" }).click();
   await expect(
-    page.getByText("Sicherungsprobe", { exact: true }),
+    page.getByRole("button", { name: /Sicherungsprobe/ }),
   ).toBeVisible();
 
-  await page.getByText("Datensicherung").click();
+  await page.getByRole("button", { name: "Bearbeiten", exact: true }).click();
+  await page.getByText("Stapel, Ordner und Sicherung").click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Sicherung speichern" }).click();
   const download = await downloadPromise;
@@ -181,9 +168,9 @@ test("a downloaded LernBox backup restores a deleted deck", async ({
   expect(backupPath).not.toBeNull();
 
   await page.getByRole("button", { name: "Sicherungsprobe löschen" }).click();
-  await expect(page.getByText("Sicherungsprobe", { exact: true })).toHaveCount(
-    0,
-  );
+  await expect(
+    page.getByRole("button", { name: "Sicherungsprobe löschen" }),
+  ).toHaveCount(0);
 
   await page
     .locator('input[type="file"][accept="application/json"]')
@@ -192,59 +179,92 @@ test("a downloaded LernBox backup restores a deleted deck", async ({
     "Sicherung wurde importiert.",
   );
   await expect(
-    page.getByText("Sicherungsprobe", { exact: true }),
+    page.getByRole("button", { name: "Sicherungsprobe löschen" }),
   ).toBeVisible();
 });
 
-test("the LernBox imports, filters and locks the mode during a round", async ({
+test("the LernBox start page offers a tile for a new deck", async ({
   page,
 }) => {
   await page.goto("/lernbox");
+  const tile = page.getByRole("button", { name: "Neuer Stapel", exact: true });
+  await expect(async () => {
+    await tile.click();
+    await expect(
+      page.getByRole("textbox", { name: "Name des neuen Stapels" }),
+    ).toBeVisible({ timeout: 1_000 });
+  }).toPass();
   await page
-    .getByRole("textbox", { name: "Name der neuen Lernbox" })
-    .fill("Importprobe");
-  await page.getByRole("button", { name: "Erstellen" }).click();
-  await page.getByText("Importprobe", { exact: true }).click();
-  await page.getByText("Viele Vokabeln importieren").click();
+    .getByRole("textbox", { name: "Name des neuen Stapels" })
+    .fill("Kachelprobe");
+  await page.getByRole("button", { name: "Stapel anlegen" }).click();
+  await expect(page.getByRole("button", { name: /Kachelprobe/ })).toBeVisible();
+});
+
+test("a box can be practised without moving its words", async ({ page }) => {
+  await page.goto("/lernbox");
+  await createLernBoxDeck(page, "Boxprobe");
+  await page.getByRole("textbox", { name: "Deutsch" }).fill("Haus");
+  await page.getByRole("textbox", { name: "Englisch" }).fill("house");
+  await page.getByRole("button", { name: "Speichern und nächste" }).click();
+  await page.getByRole("button", { name: "Fertig" }).click();
+  await expect(async () => {
+    await page.getByRole("button", { name: /^Box 1: .* üben$/ }).click();
+    await expect(page.getByRole("button", { name: "Los geht's" })).toBeVisible({
+      timeout: 1_000,
+    });
+  }).toPass();
+  await page.getByRole("button", { name: "Los geht's" }).click();
+  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("house");
+  await page.getByRole("button", { name: /Prüfen/ }).click();
+  await expect(page.getByText("Box 1 bleibt · nur geübt")).toBeVisible();
+});
+
+test("the LernBox imports, filters and practises words", async ({ page }) => {
+  await page.goto("/lernbox");
+  await createLernBoxDeck(page, "Importprobe");
+  await page.getByRole("button", { name: "Schließen" }).click();
+  await chooseFromPlusMenu(page, /Viele einfügen/);
   await page
     .getByRole("textbox", { name: "Vokabeln zum Importieren" })
     .fill("Haus\thome | house\tNomen\nlaufen;to run;Verben");
   await page.getByRole("button", { name: "Importieren", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("2 Vokabeln importiert.");
+  await page.getByRole("button", { name: "Schließen" }).click();
 
+  await page.getByRole("button", { name: "Bearbeiten", exact: true }).click();
   await page
     .getByRole("searchbox", { name: "Vokabeln durchsuchen" })
     .fill("verben");
   await expect(
-    page.getByRole("checkbox", { name: "laufen auswählen" }),
+    page.getByRole("button", { name: "laufen bearbeiten" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("checkbox", { name: "Haus auswählen" }),
+    page.getByRole("button", { name: "Haus bearbeiten" }),
   ).toHaveCount(0);
-  await page.getByRole("checkbox", { name: "laufen auswählen" }).check();
-  await page.getByRole("button", { name: "Auswahl üben" }).click();
+  await page.getByRole("button", { name: "LernBox", exact: true }).click();
 
-  await expect(page.getByRole("heading", { name: "laufen" })).toBeVisible();
-  // Die Leiste mit Modus und Richtung steht nur auf breiten Bildschirmen neben der Runde.
-  const wide = (page.viewportSize()?.width ?? 0) >= 1100;
-  const oral = page.getByRole("button", { name: "Mündlich" }).last();
-  if (wide) await expect(oral).toBeDisabled();
-  await page.getByRole("textbox", { name: "Deine Antwort" }).fill("to run");
+  await page.getByRole("button", { name: /Importprobe/ }).click();
+  await page.getByRole("button", { name: "Los geht's" }).click();
+  await expect(page.getByRole("heading", { level: 2 })).toBeVisible();
+  const question = (
+    await page.getByRole("heading", { level: 2 }).innerText()
+  ).trim();
+  await page
+    .getByRole("textbox", { name: "Deine Antwort" })
+    .fill(question === "laufen" ? "to run" : "home");
   await page.getByRole("button", { name: /Prüfen/ }).click();
-  await expect(page.getByText("Richtig", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Gewusst" })).toBeVisible();
   await page.getByRole("button", { name: "Weiter" }).click();
-  await page.getByRole("button", { name: "Zur LernBox" }).click();
-  if (!wide) {
-    await page.getByRole("button", { name: "Zurück zu den Stapeln" }).click();
-  }
-  await expect(oral).toBeEnabled();
+  await page.getByRole("button", { name: "Runde beenden" }).click();
+  await expect(page.getByRole("heading", { name: "LernBox" })).toBeVisible();
 });
 
 test("the typing world lists every lesson and starts the current one", async ({
   page,
 }) => {
   await page.goto("/frei/typing");
-  await expect(page.getByText(/^0 von \d+ Lektionen geschafft$/)).toBeVisible();
+  await expect(page.getByText(/^0 von \d+ Stationen geschafft$/)).toBeVisible();
   await expect(
     page.getByRole("button", { name: /^Lektion 2: .*noch gesperrt$/ }),
   ).toBeDisabled();
@@ -672,14 +692,21 @@ test("teachers can prepare every native live-room content type", async ({
   });
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Übersicht" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Inhalte" })).toBeVisible();
   await expect(
     page.getByText("Dieses Gerät ist die Schutzgrenze."),
   ).toHaveCount(1);
   await expect(page.getByText("Lehrer-Login")).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Unterrichtsrunde starten" }),
-  ).toHaveAttribute("href", "/lehrer/live");
+  // Kein eigener Knopf „Raum öffnen“: Eine Inhaltsart führt zum Laufdiktat
+  // (mobil wählt die Kachel nur, „Weiter“ öffnet).
+  await expect(page.getByRole("button", { name: "Raum öffnen" })).toHaveCount(
+    0,
+  );
+  await page.getByRole("button", { name: /^Mathe/ }).click();
+  const next = page.getByRole("button", { name: "Weiter", exact: true });
+  if (await next.isVisible()) await next.click();
+  await expect(page).toHaveURL(/\/lehrer\/live\?neu=math/);
+  await page.goBack();
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),
   ).toHaveCount(0);

@@ -32,8 +32,10 @@ declare const styles: {
   readonly flowNumber: string;
   readonly flowStep: string;
   readonly footer: string;
+  readonly footerClosed: string;
   readonly footerCode: string;
   readonly footerCodeLabel: string;
+  readonly footerCodeUntil: string;
   readonly footerCodeValue: string;
   readonly footerNote: string;
   readonly grabber: string;
@@ -42,6 +44,16 @@ declare const styles: {
   readonly joined: string;
   readonly joinedCard: string;
   readonly label: string;
+  readonly libraryBar: string;
+  readonly libraryButton: string;
+  readonly libraryClass: string;
+  readonly libraryConfirm: string;
+  readonly libraryDanger: string;
+  readonly libraryIcon: string;
+  readonly libraryInput: string;
+  readonly libraryNewClass: string;
+  readonly libraryNotice: string;
+  readonly libraryTitle: string;
   readonly linkButton: string;
   readonly live: string;
   readonly liveBadge: string;
@@ -63,6 +75,7 @@ declare const styles: {
   readonly muted: string;
   readonly name: string;
   readonly narrowOnly: string;
+  readonly needsHelp: string;
   readonly next: string;
   readonly notice: string;
   readonly offline: string;
@@ -81,9 +94,12 @@ declare const styles: {
   readonly qrOverlay: string;
   readonly radio: string;
   readonly roomCard: string;
+  readonly roomCardClosed: string;
+  readonly roomClosedTitle: string;
   readonly roomCode: string;
   readonly roomCodeLabel: string;
   readonly roomHint: string;
+  readonly roomNote: string;
   readonly screen: string;
   readonly section: string;
   readonly sectionNumber: string;
@@ -118,6 +134,7 @@ declare const styles: {
   readonly stepTitle: string;
   readonly stepper: string;
   readonly steps: string;
+  readonly struggling: string;
   readonly student: string;
   readonly studentHead: string;
   readonly studentMeta: string;

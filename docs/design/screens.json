@@ -27,7 +27,7 @@
       "screen": "1d",
       "width": 1180,
       "height": 839,
-      "status": "offen"
+      "status": "referenz"
     },
     {
       "id": "2a",
@@ -48,7 +48,7 @@
       "screen": "2c",
       "width": 1180,
       "height": 760,
-      "status": "offen"
+      "status": "referenz"
     },
     {
       "id": "3a",
@@ -69,14 +69,34 @@
       "screen": "3c",
       "width": 390,
       "height": 788,
-      "status": "offen"
+      "status": "umgesetzt"
+    },
+    {
+      "id": "3c-nav",
+      "screen": "3c",
+      "width": 390,
+      "height": 788,
+      "canvas": ["[id=\"3c\"] button[aria-label=\"Klassen und Bereiche\"]"],
+      "reset": ["[id=\"3c\"] button[aria-label=\"Leiste schließen\"]"],
+      "ready": "dialog[open]",
+      "status": "umgesetzt"
     },
     {
       "id": "3d",
       "screen": "3d",
       "width": 1180,
       "height": 700,
-      "status": "offen"
+      "status": "umgesetzt"
+    },
+    {
+      "id": "3d-dark",
+      "screen": "3d",
+      "width": 1180,
+      "height": 700,
+      "canvas": ["[id=\"3d\"] button[aria-label=\"Hell oder dunkel\"]"],
+      "reset": ["[id=\"3d\"] button[aria-label=\"Hell oder dunkel\"]"],
+      "theme": "dark",
+      "status": "umgesetzt"
     },
     {
       "id": "4a",
@@ -97,6 +117,48 @@
       "screen": "4c",
       "width": 1180,
       "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "4g",
+      "screen": "4g",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "4h",
+      "screen": "4h",
+      "width": 390,
+      "height": 788,
+      "status": "offen"
+    },
+    {
+      "id": "4i",
+      "screen": "4i",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "4j",
+      "screen": "4j",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "8a",
+      "screen": "8a",
+      "width": 1180,
+      "height": 740,
+      "status": "offen"
+    },
+    {
+      "id": "8b",
+      "screen": "8b",
+      "width": 390,
+      "height": 788,
       "status": "offen"
     },
     {

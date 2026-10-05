@@ -12,6 +12,7 @@ import {
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
 import { Icon } from "../ui/icons";
 import { Button, EmptyState } from "../ui/primitives";
+import { QrCodeScanner } from "../ui/qr-scanner";
 
 export function StudentClassEnrollment() {
   const repository = useMemo(() => createStudentClassesRepository(), []);
@@ -90,6 +91,40 @@ export function StudentClassEnrollment() {
       setMessage("");
     } catch {
       setMessage("Der Einschreibecode ist ungültig oder unvollständig.");
+    }
+  }
+
+  function handleScan(value: string) {
+    const scanned = value.trim();
+    try {
+      if (/^https?:\/\//i.test(scanned)) {
+        if (
+          new URLSearchParams(new URL(scanned).hash.slice(1)).has("entfernen")
+        ) {
+          const linked = parseClassRemovalLink(scanned);
+          setCode(linked.code);
+          setRemovalClassId(linked.classId);
+          setCandidate(undefined);
+        } else {
+          const linked = parseEnrollmentLink(scanned);
+          setCode(linked.code);
+          setCandidate(linked.enrollment);
+          setRemovalClassId("");
+        }
+      } else if (scanned.startsWith("lernraum:remove:")) {
+        setCode(scanned);
+        setRemovalClassId(parseClassRemovalCode(scanned));
+        setCandidate(undefined);
+      } else {
+        setCode(scanned);
+        setCandidate(parseEnrollmentCode(scanned));
+        setRemovalClassId("");
+      }
+      setMessage("");
+    } catch {
+      setMessage(
+        "Der QR-Code ist ungültig oder unvollständig. Bitte nutze einen neuen Code deiner Lehrkraft.",
+      );
     }
   }
 
@@ -239,8 +274,9 @@ export function StudentClassEnrollment() {
                 Individuellen Klassencode eingeben
               </h2>
               <p className="ui-small ui-muted">
-                Ein QR-Code trägt den Code automatisch ein. Hier kannst du auch
-                einen Entfernungscode deiner Lehrkraft einfügen.
+                Scanne den QR-Code deiner Lehrkraft mit der Kamera, dann trägt
+                er den Code automatisch ein. Hier kannst du auch einen
+                Entfernungscode deiner Lehrkraft einfügen.
               </p>
             </div>
             <label className="ui-labeled" htmlFor="class-enrollment-code">
@@ -257,7 +293,16 @@ export function StudentClassEnrollment() {
               autoComplete="off"
               spellCheck={false}
             />
-            <Button type="submit">Code prüfen</Button>
+            <div className="ui-grid2">
+              <Button type="submit">Code prüfen</Button>
+              <span className="ui-row">
+                <QrCodeScanner
+                  buttonClassName="ui-btn ui-btn--ghost"
+                  onResult={handleScan}
+                />
+                <span className="ui-small">QR-Code scannen</span>
+              </span>
+            </div>
           </form>
         )}
         {message ? (

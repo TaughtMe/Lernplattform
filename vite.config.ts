@@ -55,9 +55,14 @@ process.env["MINIFLARE_REGISTRY_PATH"] ??= ".wrangler/registry";
 const { cloudflare } = await import("@cloudflare/vite-plugin");
 
 export default defineConfig({
-  ...(isCodexSeatbeltSandbox
-    ? { server: { watch: { useFsEvents: false, usePolling: true } } }
-    : {}),
+  // vinext 1.0 nutzt sonst den Vite-Standardport 5173; Tests, Dokumentation
+  // und Playwright erwarten 3000. `--port` auf der Kommandozeile gilt weiter.
+  server: {
+    port: 3000,
+    ...(isCodexSeatbeltSandbox
+      ? { watch: { useFsEvents: false, usePolling: true } }
+      : {}),
+  },
   plugins: [
     vinext(),
     sites(),

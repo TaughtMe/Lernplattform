@@ -10,6 +10,7 @@ import {
   createClassSealKeyPair,
   signWritingReliefGrant,
 } from "../../src/domain/class-seal";
+import { revealAndRelease } from "./hold";
 
 const sessionId = "66666666-6666-4666-8666-666666666666";
 const classId = "123e4567-e89b-42d3-a456-426614174001";
@@ -100,10 +101,7 @@ async function enroll(
 }
 
 async function typeWrong(page: Page, answer: string) {
-  await page
-    .getByRole("button", { name: "Aufgabe zeigen", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Jetzt schreiben" }).click();
+  await revealAndRelease(page);
   const field = page.getByRole("textbox", { name: "Deine Antwort" });
   await field.fill(answer);
   await field.press("Enter");

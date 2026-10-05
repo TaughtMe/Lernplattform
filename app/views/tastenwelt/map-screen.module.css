@@ -56,67 +56,26 @@
   cursor: pointer;
 }
 
-/* ---------- Kartenübersicht ---------- */
+/* ---------- Kartenübersicht (6c) ---------- */
 .board {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 16px;
   padding: 18px 14px 22px;
   border-radius: 28px;
   background: var(--surface);
   box-shadow: 0 5px 0 var(--line2);
 }
-.boardHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px 16px;
-}
 .count {
   margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink2);
-}
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--ink2);
-}
-.legendItem {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-right: 8px;
-  white-space: nowrap;
-}
-.legendDot {
-  width: 12px;
-  height: 12px;
-  border: 1.5px solid #211f1b;
-  border-radius: 4px;
-}
-.area {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.areaTitle {
-  margin: 0;
-  font-family: var(--font-fun);
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--ink2);
 }
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 112px), 1fr));
-  gap: 16px 14px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 118px), 1fr));
+  gap: 14px 12px;
   margin: 0;
   padding: 0 4px 6px 0;
   list-style: none;
@@ -126,23 +85,18 @@
   display: flex;
   min-width: 0;
 }
-/* Jede Karte misst sich selbst, damit die Schrift mit ihrer Breite wächst
-   und lange Namen in der Karte bleiben. */
+/* Quadratische Karte mit harter Kante, leicht schräg gestellt. */
 .card {
-  --face: #f5cf5c;
+  --face: var(--surface2);
   --edge: #211f1b;
-  --face-ink: #2a2014;
+  --face-ink: var(--ink);
   position: relative;
-  container-type: inline-size;
-  display: flex;
+  display: block;
   flex: 1;
-  flex-direction: column;
-  gap: 4px;
+  aspect-ratio: 1;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 124px;
-  padding: 10px 10px 8px 12px;
-  overflow: hidden;
+  padding: 0;
   border: 2.5px solid var(--edge);
   border-radius: 18px;
   background: var(--face);
@@ -151,128 +105,84 @@
   font-family: var(--font-fun);
   text-align: center;
   cursor: pointer;
-  transition: transform 0.12s ease;
+  transform: rotate(var(--tilt, 0deg));
+  transition: translate 0.12s ease;
 }
 .card:hover:not(:disabled) {
-  transform: translateY(-2px);
+  translate: 0 -2px;
 }
 .card:focus-visible {
   outline: 3px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: 4px;
 }
 .gold {
-  --face: #f5cf5c;
+  --face: #f6cf5b;
+  --face-ink: #3d2a05;
 }
 .silver {
-  --face: #dde1ea;
-  --face-ink: #262a33;
+  --face: #d9dee6;
+  --face-ink: #272c35;
 }
 .bronze {
-  --face: #e4a477;
-  --face-ink: #2e1a0c;
+  --face: #e3a272;
+  --face-ink: #3d2414;
 }
-.legendDot.gold,
-.legendDot.silver,
-.legendDot.bronze {
-  background: var(--face);
-}
-.open {
-  --face: #f6efdc;
+.open,
+.current {
+  --face: var(--surface2);
 }
 .current {
-  --face: #f2ead6;
   box-shadow:
     4px 5px 0 var(--edge),
-    0 0 0 7px color-mix(in oklch, var(--gold) 45%, transparent);
+    0 0 0 6px color-mix(in oklch, var(--gold) 55%, transparent);
 }
 .locked {
-  --face: var(--surface2);
-  --edge: var(--line2);
-  --face-ink: var(--ink3);
-  border-width: 2px;
-  box-shadow: 3px 4px 0 var(--edge);
+  opacity: 0.42;
   cursor: default;
 }
-/* Dunkel: Kante in der Kartenfarbe abgedunkelt, damit sie sichtbar bleibt. */
-[data-theme="dark"] .card:not(.locked) {
-  --edge: color-mix(in oklch, var(--face) 38%, #000);
+[data-theme="dark"] .card {
+  --edge: #0f0e0c;
 }
-.gloss {
+.glint {
   position: absolute;
-  top: 6px;
-  width: 26px;
-  height: 26px;
-  color: rgba(255, 255, 255, 0.88);
+  opacity: 0.9;
   pointer-events: none;
 }
-.glossLeft {
-  left: 8px;
-}
-.glossRight {
-  right: 8px;
-}
-.cardText {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
-  min-width: 0;
-  /* Platz für den Glanz oben in den Ecken. */
-  padding-top: 24px;
-}
-.cardMain,
-.cardSub {
-  display: -webkit-box;
-  min-width: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
+.cardMain {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 6px 8px 30px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
   hyphens: auto;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   text-wrap: balance;
 }
-.cardMain {
-  -webkit-line-clamp: 3;
-  font-size: clamp(13px, 12.5cqi, 19px);
-  font-weight: 600;
-  line-height: 1.12;
+.cardMid {
+  font-size: 18px;
 }
-.cardKeys {
-  -webkit-line-clamp: 2;
-  font-size: clamp(15px, 15cqi, 23px);
-}
-.cardSub {
-  -webkit-line-clamp: 2;
-  font-family: var(--font);
-  font-size: clamp(10.5px, 9cqi, 12.5px);
-  font-weight: 600;
-  line-height: 1.2;
-  opacity: 0.85;
-}
-.cardFoot {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 6px;
-  min-height: 26px;
+.cardLong {
+  font-size: 16px;
 }
 .cardNumber {
-  font-size: clamp(18px, 18cqi, 26px);
+  position: absolute;
+  bottom: 7px;
+  left: 10px;
+  font-size: 26px;
   font-weight: 700;
   line-height: 1;
-}
-.medal {
-  font-size: 13px;
-  letter-spacing: 1px;
-  line-height: 1;
+  opacity: 0.75;
 }
 /* Das eigene Tier sitzt auf der aktuellen Karte und wippt leicht. */
 .buddy {
   position: absolute;
-  right: -8px;
-  bottom: -6px;
-  width: 52px;
-  height: 52px;
+  right: -14px;
+  bottom: -12px;
+  width: 46px;
+  height: 46px;
   pointer-events: none;
   animation: bob 2.4s ease-in-out infinite;
 }
@@ -376,13 +286,7 @@
 /* ============ Seitenspalte ab 1000 px ============ */
 @container (min-width: 700px) {
   .board {
-    padding: 22px 22px 26px;
-  }
-  .cards {
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  }
-  .card {
-    min-height: 138px;
+    padding: 22px 24px 26px;
   }
 }
 @container (min-width: 1000px) {

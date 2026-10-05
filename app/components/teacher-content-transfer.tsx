@@ -17,13 +17,13 @@ import {
 } from "../../src/domain/teacher-content-library";
 import {
   publishLearningBundle,
-  serializeTransferQrPayload,
   type PublishedContentTransfer,
 } from "../../src/integrations/content-transfer/content-transfer-client";
 import {
   getLiveRoomClient,
   type LiveRoomConfig,
 } from "../../src/integrations/laufdiktat/live-room-client";
+import { contentKindOf } from "../../src/domain/teacher-content-summary";
 import { createTeacherContentLibraryRepository } from "../../src/storage/teacher-class-settings";
 import { Icon } from "../ui/icons";
 import { Button, Card, Pill } from "../ui/primitives";
@@ -53,6 +53,12 @@ export function TeacherContentTransfer({
   const bundleId = useRef<string | null>(null);
   const revision = useRef(0);
   const library = useMemo(() => createTeacherContentLibraryRepository(), []);
+  // Die Freigabe an Schüler überträgt nur Vokabelpakete; Texte und Mathe
+  // bleiben in der Ablage, werden hier aber nicht angeboten.
+  const vocabularyPackages = useMemo(
+    () => packages.filter((entry) => contentKindOf(entry) === "vocabulary"),
+    [packages],
+  );
   const importInput = useRef<HTMLInputElement>(null);
   const sourceInput = useRef<HTMLTextAreaElement>(null);
   const sourceFileInput = useRef<HTMLInputElement>(null);
@@ -93,6 +99,9 @@ export function TeacherContentTransfer({
       answerLocale: existing?.answerLocale ?? "de",
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
+      // Klassenzuordnung und letzte Nutzung gehen beim Speichern nicht verloren.
+      ...(existing?.classIds ? { classIds: existing.classIds } : {}),
+      ...(existing?.lastUsedAt ? { lastUsedAt: existing.lastUsedAt } : {}),
     } satisfies TeacherContentPackage;
   }
 
@@ -367,7 +376,7 @@ export function TeacherContentTransfer({
           <div>
             <p className="ui-eyebrow">Nur auf diesem Gerät</p>
             <h2 id="teacher-library-title" className="ui-h-section">
-              Lehrkraftbibliothek
+              Gespeicherte Pakete
             </h2>
             <p className="ui-small ui-muted">
               Pakete lokal vorbereiten, später erneut öffnen oder als geprüfte
@@ -382,9 +391,11 @@ export function TeacherContentTransfer({
               onChange={(event) => setSelectedPackageId(event.target.value)}
             >
               <option value="">
-                {packages.length ? "Paket auswählen" : "Noch keine Pakete"}
+                {vocabularyPackages.length
+                  ? "Paket auswählen"
+                  : "Noch keine Pakete"}
               </option>
-              {packages.map((entry) => (
+              {vocabularyPackages.map((entry) => (
                 <option key={entry.id} value={entry.id}>
                   {entry.title} · Stand {entry.revision}
                 </option>
@@ -397,7 +408,7 @@ export function TeacherContentTransfer({
               size="sm"
               disabled={!selectedPackageId}
               onClick={() => {
-                const entry = packages.find(
+                const entry = vocabularyPackages.find(
                   ({ id }) => id === selectedPackageId,
                 );
                 if (entry) loadPackage(entry);
@@ -424,14 +435,14 @@ export function TeacherContentTransfer({
               disabled={!packages.length}
               onClick={exportLibrary}
             >
-              Bibliothek exportieren
+              Exportieren
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => importInput.current?.click()}
             >
-              Bibliothek importieren
+              Importieren
             </Button>
             <input
               ref={importInput}
@@ -470,9 +481,9 @@ export function TeacherContentTransfer({
             </h2>
             <div className="ui-qr-box">
               <QRCodeSVG
-                value={serializeTransferQrPayload(published.qrPayload)}
+                value={published.manualTransferCode}
                 size={220}
-                level="H"
+                level="M"
                 marginSize={2}
                 aria-label="QR-Code für das verschlüsselte Vokabelpaket"
               />

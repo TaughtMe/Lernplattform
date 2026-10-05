@@ -13,17 +13,17 @@ Die gemeinsame Oberfläche, Speicherung und Aktualisierungsverwaltung bleiben
 die der Lernplattform. Die übrigen persönlichen Lernmodule bleiben vom
 Laufdiktat-Pilot getrennt.
 
-| Bereich                | Angleichung                                                                                                                                                                  |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Freie Übung            | Schrittweise Buchstaben-/Worthilfe, anschließend sichtbare Abschreibvorlage; korrekte Zeichen werden hervorgehoben. Eingaben bleiben bei Korrekturen in dieser Phase stehen. |
-| Klassisches Laufdiktat | Falsche Antworten führen nicht mehr zur nächsten Aufgabe. Erst eine richtige Antwort schließt die Aufgabe ab.                                                                |
-| Erneutes Nachschauen   | Zwei Finger decken die Aufgabe auch während des Schreibens auf; die angefangene Antwort bleibt erhalten.                                                                     |
-| Stationen              | Zwei-Finger-Aufdecken, Verdecken beim Loslassen, Rückkehr nach drei Sekunden Untätigkeit, Vorlesen und Erinnerung an angesehene Aufgaben je Nummer.                          |
-| Stationsfehler         | Fehlgeschlagene Wiederherstellung verhindert neue Fortschrittsmeldungen, bis der Stand erfolgreich geladen wurde.                                                            |
-| Abschluss              | Sterne und längenbezogene Tempo-Punkte. Tempo verändert keinen persönlichen Lernstand.                                                                                       |
-| Battle                 | Aufholbonus wie im Original erst bei mindestens der Hälfte der Teilnehmer voraus; laufende Angriffe werden nicht durch weitere verlängert.                                   |
-| Versionen              | Abweichende Unterrichtsversion verhindert den Start. Ältere Schülergeräte suchen eine Aktualisierung; neuere Geräte verweisen an die Lehrkraft.                              |
-| Speicherung            | Die bereits geprüften Abschluss-, Wiederaufnahme-, Wiederholungs- und Berechtigungsreparaturen bleiben erhalten.                                                             |
+| Bereich                | Angleichung                                                                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freie Übung            | Schrittweise Buchstaben-/Worthilfe, anschließend sichtbare Abschreibvorlage; korrekte Zeichen werden hervorgehoben. Eingaben bleiben bei Korrekturen in dieser Phase stehen.             |
+| Klassisches Laufdiktat | Falsche Antworten führen nicht mehr zur nächsten Aufgabe. Erst eine richtige Antwort schließt die Aufgabe ab.                                                                            |
+| Erneutes Nachschauen   | Zwei Finger decken die Aufgabe auch während des Schreibens auf; X                                                                                                                        |
+| Stationen              | Zwei-Finger-Aufdecken, Verdecken beim Loslassen, Rückkehr nach drei Sekunden Untätigkeit, Vorlesen und Erinnerung an angesehene Aufgaben je Nummer; robust gegen Verrutschen, kein Zoom. |
+| Stationsfehler         | Fehlgeschlagene Wiederherstellung verhindert neue Fortschrittsmeldungen, bis der Stand erfolgreich geladen wurde.                                                                        |
+| Abschluss              | Sterne und längenbezogene Tempo-Punkte. Tempo verändert keinen persönlichen Lernstand.                                                                                                   |
+| Battle                 | Aufholbonus wie im Original erst bei mindestens der Hälfte der Teilnehmer voraus; laufende Angriffe werden nicht durch weitere verlängert.                                               |
+| Versionen              | Abweichende Unterrichtsversion verhindert den Start. Ältere Schülergeräte suchen eine Aktualisierung; neuere Geräte verweisen an die Lehrkraft.                                          |
+| Speicherung            | Die bereits geprüften Abschluss-, Wiederaufnahme-, Wiederholungs- und Berechtigungsreparaturen bleiben erhalten.                                                                         |
 
 Text-, Vokabel- und Matheimport, Bearbeitung von Abschnitten und Lücken,
 Lobby, Ergebnisübersicht und Tabellenausgabe stammen aus dem zusammengeführten
@@ -37,9 +37,31 @@ Raumverwaltungs- und Teilnehmertokens. Die Reparaturmigration ersetzt die neue
 Ein-Parameter-Funktion und führt die entfernte Freigabe nicht wieder ein.
 Abgelehnte Raumkonfigurationen verbrauchen ebenfalls ihr Anfragelimit.
 
+## Bewusste Abweichung: Beitrittsfrist und automatisches Schließen
+
+Im Original gilt ein Raumcode, solange der Raum offen ist, und ein Raum endet
+erst drei Stunden nach der letzten Aktivität. Die Lernplattform begrenzt das
+(Entscheidung 52, Migration `20261003120000_room_time_limits.sql`):
+
+- Neue Beitritte mit Raumcode oder QR sind 90 Minuten nach dem Öffnen des Raums
+  möglich. Danach antwortet `join_room_secure` leer, wie bei einem unbekannten
+  Code. Geräte, die schon im Raum sind, kehren mit ihrem Teilnehmertoken zurück.
+- 120 Minuten nach dem Öffnen schließt der Raum automatisch, genau wie beim
+  Beenden durch die Lehrkraft. Das Gerät der Lehrkraft beendet ihn selbst; der
+  Aufräum-Job (alle 5 Minuten) ist die Absicherung. Schülergeräte prüfen alle
+  30 Sekunden, ob der Server den Raum geschlossen hat, und übernehmen die Runde
+  dann wie beim Beenden in die LernBox.
+- Die Lehrkraft sieht „Code gilt bis HH:MM“, ab Minute 110 den Hinweis zum
+  Sichern der Ergebnisse als CSV und nach dem Schließen „Raum geschlossen“ mit
+  weiter nutzbarem CSV-Export. Die Uhrzeiten sind lokal berechnet und dienen nur
+  der Anzeige; maßgeblich ist der Server.
+
+Die Werte stehen in `src/integrations/laufdiktat/room-limits.ts`; der
+Datenbank-Vertragstest prüft, dass die Migration dieselben nutzt.
+
 ## Erhaltene Verbesserungen und Prüfgrenzen
 
-Maus- und Tastaturbedienung bleiben zusätzlich zur Zwei-Finger-Bedienung möglich.
+Am Computer decken die gleichzeitig gehaltenen Tasten A und L auf. Eine Schaltfläche zum Aufdecken gibt es bewusst nicht (wie im Original).
 Fehlermeldungen, Wiederholungsversand und Laufzeitvalidierung werden nicht
 zugunsten einer Nachbildung von Fehlern des Originals entfernt.
 

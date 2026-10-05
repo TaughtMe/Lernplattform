@@ -5,6 +5,7 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { animalFileName } from "../../../src/domain/learner-profile";
+import { BrandSymbol } from "../../ui/brand";
 import { Icon, type IconName } from "../../ui/icons";
 import styles from "./parts.module.css";
 
@@ -78,7 +79,7 @@ export function ThemeSwitch({
 export function HomeLink() {
   return (
     <Link href="/" className={styles.homeLink} aria-label="Zur Startseite">
-      L
+      <BrandSymbol height={26} onDark />
     </Link>
   );
 }

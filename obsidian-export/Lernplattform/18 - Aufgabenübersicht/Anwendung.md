@@ -18,6 +18,17 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Sichtprüfung auf realen Schulgeräten (iPad, Chromebook, kleines Android-Smartphone)
 - [x] Alle Seiteninhalte auf `ui-`-Bausteine umstellen und `app/globals.css` auflösen (Phase 12)
 
+## Jetzt: Lehrerbereich (Schritt 8, Entscheidungen 51 und 52)
+
+- [x] Raumfristen: Beitritt 90 Minuten, Schließen nach 120 Minuten, Anzeige und CSV-Hinweis
+- [x] Ansichten 3c/3d mit Designvergleich (hell, dunkel, Schublade)
+- [x] Ablage für Text, Mathe und Vokabeln mit Klassenzuordnung und „Nicht zugeordnet“
+- [x] Rahmen mit Klassen, Bereichen, Verwalten und Profil
+- [x] Seite „Inhalte“ unter `/lehrer`, alte Übersicht entfernt
+- [x] Inhalt im Laufdiktat laden, ablegen, löschen; Startfenster mit „Jetzt starten“
+- [ ] Sichtprüfung am echten Handy und Laptop durch die Lehrkraft (Abnahme nach Abschnitt 10 des Plans)
+- [ ] Axe-Prüfungen in `e2e/platform-quality.spec.ts` laufen in GitHub nicht (Schalter `ENABLE_PRE_PILOT_E2E`); Entscheidung über die Freischaltung steht aus
+
 ## Jetzt: Stabilisierung vor Live-Tests
 
 - [x] Vault-Status, Produktprioritäten und aktuellen Code-Stand abgleichen

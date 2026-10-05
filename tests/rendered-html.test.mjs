@@ -1,6 +1,24 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { register } from "node:module";
 import test from "node:test";
+
+// Das Worker-Bundle importiert seit vinext 1.0 `cloudflare:workers` (nur
+// `tracing`). Das Modul gibt es nur in der Workers-Laufzeit; in Node steht
+// ein Stub ohne Tracing dafür.
+register(
+  `data:text/javascript,${encodeURIComponent(`
+    export async function resolve(specifier, context, nextResolve) {
+      if (specifier === "cloudflare:workers") {
+        return {
+          shortCircuit: true,
+          url: "data:text/javascript,export const tracing = undefined;",
+        };
+      }
+      return nextResolve(specifier, context);
+    }
+  `)}`,
+);
 
 // Die Renderprüfungen laufen standardmäßig mit eingeschalteter Vorschau
 // (Cookie). Der Freigabetest prüft den Schulbetrieb ohne Vorschau.
@@ -83,7 +101,7 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/frei/german/lernwoerter", "Lernwörter"],
     ["/klasse/7b", "Klasse 7b"],
     ["/lernbox", "LernBox"],
-    ["/lehrer", "Übersicht"],
+    ["/lehrer", "Inhalte"],
     ["/lehrer/klassen", "Klassen und Schüler"],
     ["/lehrer/material", "Material"],
     ["/lehrer/aufgaben", "Aufgaben"],
@@ -235,4 +253,45 @@ test("keeps mobile and tablet support in the platform shell", async () => {
   assert.match(styles, /@media\s*\(max-width:\s*370px\)/);
   assert.match(styles, /pointer:\s*coarse/);
   assert.match(strategy, /iOS Safari/);
+});
+
+test("links the web app manifest inside <head> so browsers offer installation", async () => {
+  for (const path of ["/", "/lernen/faecher/deutsch"]) {
+    const html = await (await render(path)).text();
+    const links = html.match(/<link[^>]+rel="manifest"[^>]*>/g) ?? [];
+    assert.equal(links.length, 1, `${path}: genau ein Manifest-Link`);
+    assert.ok(
+      html.indexOf(links[0]) < html.indexOf("</head>"),
+      `${path}: Manifest-Link steht im <head>`,
+    );
+    assert.match(links[0], /href="\/manifest\.webmanifest"/);
+  }
+});
+
+test("ships a complete web app manifest with existing icons", async () => {
+  const manifest = JSON.parse(
+    await readFile(
+      new URL("../public/manifest.webmanifest", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.equal(manifest.start_url, "/");
+  assert.equal(manifest.display, "standalone");
+  assert.ok(manifest.id && manifest.scope);
+  const sizes = manifest.icons.map((icon) => icon.sizes);
+  assert.ok(sizes.includes("192x192") && sizes.includes("512x512"));
+  for (const icon of manifest.icons) {
+    await readFile(new URL(`../public${icon.src}`, import.meta.url));
+  }
+  const maskable = manifest.icons.find((icon) => icon.purpose === "maskable");
+  assert.notEqual(maskable?.src, "/icon-512.png");
+});
+
+test("keeps the manifest out of the Next.js metadata pipeline", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const files = await readdir(new URL("../app", import.meta.url));
+  assert.deepEqual(
+    files.filter((name) => name.startsWith("manifest.")),
+    [],
+  );
 });

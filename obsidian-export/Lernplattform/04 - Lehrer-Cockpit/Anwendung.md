@@ -73,3 +73,16 @@ Für zugeteilte Arbeitsaufträge ist der erste lokale Briefkasten umgesetzt: Das
 ## Datenschutz
 
 Standardmäßig werden Pseudonyme, Teams und aggregierte Lernereignisse angezeigt. Klarnamen und dauerhafte Leistungsübersichten sind eine zusätzliche, schulrechtlich zu prüfende Funktion.
+
+## Seite „Inhalte“ und Startweg (Entscheidungen 51 und 52)
+
+`/lehrer` ist die Seite **Inhalte** der gewählten Klasse (Entwurf 3c mobil, 3d Desktop). Die Leiste zeigt die Klassen mit Schülerzahl, bei Bedarf **Nicht zugeordnet**, die Bereiche **Inhalte** und **Räume** und darunter **Verwalten** (Klassen, Freigabe an Schüler, Aufgaben, Häuser, Einstellungen, je nach Freigabe). Am Handy öffnet das Menü die Leiste als Schublade.
+
+Die Ablage nimmt **Text, Mathe und Vokabeln** auf. Jede Zeile zeigt Titel, Art, Metazeile (z. B. „42 Vokabeln · Englisch“) und das Datum der letzten Nutzung; neueste zuerst. Ein Inhalt kann zu mehreren Klassen gehören („Zuordnen“ in „Nicht zugeordnet“, oder „ändern“ im Startfenster). Die alten Vokabelpakete stehen nach dem Update unter „Nicht zugeordnet“.
+
+**Neu anlegen** führt in den Editor des Laufdiktats (am Desktop direkt, mobil über „Weiter“). Dort legen Titelfeld und „Ablegen“ den Inhalt ab; „Aus der Ablage löschen“ fragt nach. Beim Öffnen der Lobby wird automatisch abgelegt.
+
+**Öffnen** zeigt das Startfenster: Titel, **Raum für Klasse …** bzw. **Raum ohne Klasse (keine Schreiberleichterung)**, die vier Modi, „Jetzt starten“ und „Alle Optionen“. „Jetzt starten“ öffnet die Lobby mit den Standardoptionen; läuft schon ein Raum, verweist das Fenster darauf.
+
+Räume schließen automatisch 120 Minuten nach dem Öffnen; neue Beitritte sind 90 Minuten möglich (Entscheidung 52).
+

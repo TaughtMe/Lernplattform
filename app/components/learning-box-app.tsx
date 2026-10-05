@@ -12,16 +12,23 @@ import {
   learningBoxDirectionAt,
   parseLearningBoxImport,
   processLearningBoxResult,
-  sortLearningBoxCards,
   type LearningBoxCard,
   type LearningBoxDeck,
   type LearningBoxDirection,
   type LearningBoxFolder,
   type LearningBoxMode,
   type LearningBoxSessionDirection,
-  type LearningBoxSort,
 } from "../../src/domain/learning-box";
 import { VOCABULARY_LANGUAGES } from "../../src/domain/running-dictation";
+import {
+  parseTransferQrPayload,
+  retrieveLearningBundleByCode,
+  retrieveLearningBundleByQr,
+} from "../../src/integrations/content-transfer/content-transfer-client";
+import {
+  getLiveRoomClient,
+  type LiveRoomConfig,
+} from "../../src/integrations/laufdiktat/live-room-client";
 import {
   createLearningBoxRepository,
   migrateLegacyLearningBox,
@@ -30,9 +37,13 @@ import { StudentPage } from "../ui/shell/student-page";
 import { useThemeToggle } from "../ui/theme";
 import {
   LernBoxScreen,
+  type LbCard,
   type LbDeck,
-  type LbManager,
+  type LbEdit,
+  type LbSheet,
+  type LbSortKey,
   type LbStudy,
+  type LbTransfer,
 } from "../views/lernbox/lernbox-screen";
 
 const LANGUAGES: Record<string, { name: string; into: string }> =
@@ -49,14 +60,10 @@ const MODE_LABEL: Record<LearningBoxMode, string> = {
   writing: "Schreiben",
   oral: "Mündlich",
 };
-const PANEL_KEY = "lernbox:leiste";
-const FOLDERS_KEY = "lernbox:ordner-zu";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function languageName(locale: string) {
   return LANGUAGES[locale]?.name ?? locale;
-}
-function languageShort(locale: string) {
-  return languageName(locale).slice(0, 2).toUpperCase();
 }
 function sourceLabel(deck: LearningBoxDeck) {
   switch (deck.source.kind) {
@@ -68,22 +75,6 @@ function sourceLabel(deck: LearningBoxDeck) {
       return "importiert";
     default:
       return "eigene";
-  }
-}
-
-function readStored<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw === null ? fallback : (JSON.parse(raw) as T);
-  } catch {
-    return fallback;
-  }
-}
-function store(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Ohne Speicher gilt die Einstellung nur für diesen Besuch.
   }
 }
 
@@ -110,14 +101,23 @@ type Session = {
   index: number;
   answer: string;
   revealed: boolean;
-  feedback: { correct: boolean; expected: string } | null;
+  feedback: {
+    correct: boolean;
+    expected: string;
+    given: string;
+    boxFrom: number;
+    boxTo: number;
+    practice: boolean;
+    nextLabel: string;
+  } | null;
   stats: { correct: number; wrong: number };
+  /** Übungsrunde einer Box: nichts wird verschoben oder gespeichert. */
+  practice: boolean;
   roundId: string;
   finished: boolean;
 };
 
-type View =
-  { kind: "welcome" } | { kind: "deck"; id: string } | { kind: "all" };
+type View = "home" | "edit";
 
 /** Reihenfolge und Richtung der Karten einer Runde. */
 function buildQueue(
@@ -137,7 +137,26 @@ function buildQueue(
   });
 }
 
-export function LearningBoxApp() {
+function nextLabel(card: LearningBoxCard, direction: LearningBoxDirection) {
+  const next =
+    direction === "forward" ? card.nextReview : card.reverseNextReview;
+  const days = Math.max(1, Math.round((next - Date.now()) / DAY_MS));
+  return days === 1 ? "kommt morgen wieder" : `kommt in ${days} Tagen wieder`;
+}
+
+const SORT_VALUE: Record<LbSortKey, (card: LbCard) => string | number> = {
+  question: (card) => card.question,
+  answer: (card) => card.answer,
+  deck: (card) => card.deckTitle,
+  tag: (card) => card.tag ?? "",
+  box: (card) => card.box,
+};
+
+export function LearningBoxApp({
+  transferConfig = null,
+}: {
+  transferConfig?: LiveRoomConfig | null;
+}) {
   const repository = useMemo(() => createLearningBoxRepository(), []);
   const { theme, toggleTheme } = useThemeToggle();
   const [decks, setDecks] = useState<LearningBoxDeck[]>([]);
@@ -145,15 +164,23 @@ export function LearningBoxApp() {
   const [cards, setCards] = useState<LearningBoxCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
-  const [view, setView] = useState<View>({ kind: "welcome" });
-  const [panelOpen, setPanelOpen] = useState(true);
-  const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [view, setView] = useState<View>("home");
+  const [sheet, setSheet] = useState<LbSheet | null>(null);
   const [mode, setMode] = useState<LearningBoxMode>("writing");
   const [direction, setDirection] =
     useState<LearningBoxSessionDirection>("forward");
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<LearningBoxSort>("alphabet");
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState<{ key: LbSortKey | null; dir: 1 | -1 }>({
+    key: null,
+    dir: 1,
+  });
   const [session, setSession] = useState<Session | null>(null);
+  const [transfer, setTransfer] = useState<LbTransfer>({
+    busy: false,
+    error: "",
+    success: null,
+  });
   const refreshRevision = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -163,30 +190,30 @@ export function LearningBoxApp() {
       repository.listFolders(),
       repository.listAllCards(),
     ]);
-    if (revision !== refreshRevision.current) return;
+    if (revision !== refreshRevision.current) return undefined;
     setDecks(nextDecks);
     setFolders(nextFolders);
     setCards(nextCards);
     setLoading(false);
+    return nextDecks;
   }, [repository]);
 
   useEffect(() => {
     let active = true;
     void migrateLegacyLearningBox().then(async (result) => {
       if (!active) return;
-      setPanelOpen(readStored(PANEL_KEY, true));
-      setCollapsed(readStored<string[]>(FOLDERS_KEY, []));
       if (result.cards > 0) {
         setNotice(
           `${result.cards} vorhandene Karten wurden in den Lernraum übernommen.`,
         );
       }
-      await refresh();
-      // ?stapel=<id> öffnet einen Stapel direkt, z. B. nach dem Laufdiktat.
+      const loaded = await refresh();
+      // ?stapel=<id> öffnet das Start-Fenster eines Stapels, z. B. nach dem Laufdiktat.
       const requested = new URLSearchParams(window.location.search).get(
         "stapel",
       );
-      if (active && requested) setView({ kind: "deck", id: requested });
+      if (active && requested && loaded?.some((deck) => deck.id === requested))
+        setSheet({ kind: "start", scope: requested });
     });
     return () => {
       active = false;
@@ -199,18 +226,9 @@ export function LearningBoxApp() {
   );
   const now = Date.now();
   const dueCards = cards.filter((card) =>
-    isLearningBoxCardDueFor(card, direction, now),
+    isLearningBoxCardDueFor(card, "mixed", now),
   );
   const mistakes = cards.filter(isMistake);
-  const selectedDeck = view.kind === "deck" ? deckById.get(view.id) : undefined;
-  const labelDeck = selectedDeck ?? decks[0];
-  const directionLabels = labelDeck
-    ? {
-        forward: `${languageShort(labelDeck.frontLocale)} → ${languageShort(labelDeck.backLocale)}`,
-        reverse: `${languageShort(labelDeck.backLocale)} → ${languageShort(labelDeck.frontLocale)}`,
-      }
-    : { forward: "DE → EN", reverse: "EN → DE" };
-  const locked = session !== null && !session.finished;
 
   const lbDecks: LbDeck[] = decks.map((deck) => {
     const inside = cards.filter((card) => card.deckId === deck.id);
@@ -222,13 +240,24 @@ export function LearningBoxApp() {
       title: deck.title,
       folderId: deck.folderId ?? null,
       total: inside.length,
-      due: inside.filter((card) =>
-        isLearningBoxCardDueFor(card, direction, now),
-      ).length,
+      due: inside.filter((card) => isLearningBoxCardDueFor(card, "mixed", now))
+        .length,
       boxes,
-      sourceLabel: `${languageName(deck.backLocale)} · ${sourceLabel(deck)}`,
+      sourceLabel: sourceLabel(deck),
+      frontLabel: languageName(deck.frontLocale),
+      backLabel: languageName(deck.backLocale),
     };
   });
+
+  function directionLabelsFor(scope: string) {
+    const deck = deckById.get(scope) ?? decks[0];
+    return deck
+      ? {
+          forward: `${languageName(deck.frontLocale)} → ${languageName(deck.backLocale)}`,
+          reverse: `${languageName(deck.backLocale)} → ${languageName(deck.frontLocale)}`,
+        }
+      : { forward: "Deutsch → Englisch", reverse: "Englisch → Deutsch" };
+  }
 
   function say(text: string, locale: string) {
     if (!("speechSynthesis" in window) || !text) return;
@@ -240,21 +269,55 @@ export function LearningBoxApp() {
   }
 
   function startSession(
-    title: string,
-    pool: readonly LearningBoxCard[],
-    onlyDue: boolean,
+    scope: string,
+    choice: {
+      mode: LearningBoxMode;
+      direction: LearningBoxSessionDirection;
+    },
   ) {
-    if (!pool.length) return;
+    const deck = deckById.get(scope);
+    let title = "Heute dran";
+    let pool: LearningBoxCard[] = [];
+    let onlyDue = false;
+    const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
+    if (box) {
+      title = `Box ${box} (nur üben)`;
+      pool = cards.filter((card) => card.box === box);
+    } else if (scope === "due") {
+      pool = cards.filter((card) =>
+        isLearningBoxCardDueFor(card, choice.direction),
+      );
+      onlyDue = true;
+    } else if (scope === "errors") {
+      title = "Meine Fehler";
+      pool = mistakes;
+    } else if (deck) {
+      title = deck.title;
+      const all = cards.filter((card) => card.deckId === deck.id);
+      const due = all.filter((card) =>
+        isLearningBoxCardDueFor(card, choice.direction),
+      );
+      pool = due.length ? due : all;
+      onlyDue = due.length > 0;
+    }
+    setMode(choice.mode);
+    setDirection(choice.direction);
+    setSheet(null);
+    if (!pool.length) {
+      setNotice("Dafür ist gerade nichts fällig.");
+      return;
+    }
     setNotice("");
     setSession({
       title,
-      mode,
-      queue: buildQueue(pool, direction, onlyDue),
+      mode: choice.mode,
+      queue: buildQueue(pool, choice.direction, onlyDue),
       index: 0,
       answer: "",
       revealed: false,
       feedback: null,
       stats: { correct: 0, wrong: 0 },
+      practice: box > 0,
       roundId: crypto.randomUUID(),
       finished: false,
     });
@@ -264,18 +327,22 @@ export function LearningBoxApp() {
     if (!session) return;
     const item = session.queue[session.index];
     if (!item) return;
-    const updated = processLearningBoxResult(item.card, {
-      correct,
-      direction: item.direction,
-      mode: session.mode,
-    });
-    await repository.putCardAndEvent({
-      card: updated,
-      correct,
-      direction: item.direction,
-      mode: session.mode,
-      roundId: session.roundId,
-    });
+    const updated = session.practice
+      ? item.card
+      : processLearningBoxResult(item.card, {
+          correct,
+          direction: item.direction,
+          mode: session.mode,
+        });
+    if (!session.practice) {
+      await repository.putCardAndEvent({
+        card: updated,
+        correct,
+        direction: item.direction,
+        mode: session.mode,
+        roundId: session.roundId,
+      });
+    }
     const queue = session.queue.map((entry, index) =>
       index === session.index ? { ...entry, card: updated } : entry,
     );
@@ -288,7 +355,17 @@ export function LearningBoxApp() {
         ...session,
         queue,
         stats,
-        feedback: { correct, expected: showAlternatives(expected) },
+        feedback: {
+          correct,
+          expected: showAlternatives(expected),
+          given: session.answer.trim(),
+          boxFrom: getLearningBoxLevel(item.card, item.direction),
+          boxTo: getLearningBoxLevel(updated, item.direction),
+          practice: session.practice,
+          nextLabel: session.practice
+            ? "nur geübt"
+            : nextLabel(updated, item.direction),
+        },
       });
     } else {
       advance({ ...session, queue, stats });
@@ -356,8 +433,77 @@ export function LearningBoxApp() {
     }
   }
 
+  // ---------- Vokabelpaket der Lehrkraft (Code oder QR) ----------
+  async function receivePackage(
+    fetchBundle: () => ReturnType<typeof retrieveLearningBundleByCode>,
+    fallback: string,
+    tag: string,
+  ) {
+    setTransfer({ busy: true, error: "", success: null });
+    try {
+      const bundle = await fetchBundle();
+      const title = bundle.stacks[0]?.title ?? "Von der Lehrkraft";
+      const result = await repository.ingestBundle({
+        bundle,
+        title,
+        source: { kind: "teacher", sourceId: bundle.id },
+        // Tags der Pakete sind sehr lang: nur der eigene Tag oder keiner.
+        tagOverride: tag,
+      });
+      setTransfer({
+        busy: false,
+        error: "",
+        success: { title, added: result.added, reused: result.reused },
+      });
+      await refresh();
+    } catch (cause) {
+      setTransfer({
+        busy: false,
+        error: cause instanceof Error ? cause.message : fallback,
+        success: null,
+      });
+    }
+  }
+
+  function transferFailure(error: string) {
+    setTransfer({ busy: false, error, success: null });
+  }
+
+  function receiveByCode(code: string, tag: string) {
+    if (!transferConfig)
+      return transferFailure(
+        "Die Inhaltsübertragung ist noch nicht konfiguriert.",
+      );
+    if (code.length !== 24)
+      return transferFailure(
+        "Bitte gib den vollständigen 24-stelligen Code ein.",
+      );
+    void receivePackage(
+      () =>
+        retrieveLearningBundleByCode(getLiveRoomClient(transferConfig), code),
+      "Das Paket konnte nicht übernommen werden.",
+      tag,
+    );
+  }
+
+  function receiveByQr(value: string, tag: string) {
+    if (!transferConfig)
+      return transferFailure(
+        "Die Inhaltsübertragung ist noch nicht konfiguriert.",
+      );
+    void receivePackage(
+      () =>
+        retrieveLearningBundleByQr(
+          getLiveRoomClient(transferConfig),
+          parseTransferQrPayload(value),
+        ),
+      "Der QR-Code konnte nicht gelesen werden.",
+      tag,
+    );
+  }
+
   // ---------- Hauptbereich ----------
-  let main: Parameters<typeof LernBoxScreen>[0]["main"] = { kind: "welcome" };
+  let main: Parameters<typeof LernBoxScreen>[0]["main"] = { kind: "home" };
   if (session) {
     const item = session.queue[session.index];
     const deck = item ? deckById.get(item.card.deckId) : undefined;
@@ -369,11 +515,16 @@ export function LearningBoxApp() {
         ? deck.backLocale
         : deck.frontLocale
       : "";
-    const remaining = session.queue.length - session.index;
+    const labels = directionLabelsFor(deck?.id ?? "");
+    const total = session.queue.length;
+    const answered = session.index + (session.feedback ? 1 : 0);
     const study: LbStudy = {
       title: session.title,
-      subtitle: `${remaining} übrig · ${MODE_LABEL[session.mode]}`,
-      progress: session.queue.length ? session.index / session.queue.length : 1,
+      remaining: Math.max(0, total - answered),
+      modeLabel: MODE_LABEL[session.mode],
+      directionLabel:
+        item?.direction === "reverse" ? labels.reverse : labels.forward,
+      progress: total ? answered / total : 1,
       eyebrow: LANGUAGES[answerLocale]?.into ?? "Antwort",
       box: item ? getLearningBoxLevel(item.card, item.direction) : 1,
       question: showAlternatives(prompt?.question ?? ""),
@@ -381,103 +532,186 @@ export function LearningBoxApp() {
       answer: session.answer,
       revealed: session.revealed,
       revealedAnswer: showAlternatives(prompt?.answer ?? ""),
-      feedback: session.feedback,
+      feedback: session.feedback
+        ? {
+            ...session.feedback,
+            prompt: showAlternatives(prompt?.question ?? ""),
+          }
+        : null,
       done: session.finished ? session.stats : null,
       canSpeak: typeof window !== "undefined" && "speechSynthesis" in window,
     };
     main = { kind: "study", study };
-  } else if (view.kind === "all" || selectedDeck) {
-    const pool = selectedDeck
-      ? cards.filter((card) => card.deckId === selectedDeck.id)
-      : cards;
-    const activeSort = selectedDeck && sort === "deck" ? "alphabet" : sort;
-    const shown = sortLearningBoxCards(
-      filterLearningBoxCards(pool, query),
-      activeSort,
-      (id) => deckById.get(id)?.title ?? "",
-    );
-    const summary = selectedDeck
-      ? lbDecks.find((deck) => deck.id === selectedDeck.id)
-      : undefined;
-    const manager: LbManager = {
-      title: selectedDeck?.title ?? "Alle Vokabeln",
-      subtitle: selectedDeck
-        ? `${languageName(selectedDeck.frontLocale)} → ${languageName(selectedDeck.backLocale)} · ${sourceLabel(selectedDeck)}`
-        : `${cards.length} Karten in ${decks.length} Stapeln`,
-      deck:
-        selectedDeck && summary
-          ? {
-              id: selectedDeck.id,
-              folderId: selectedDeck.folderId ?? null,
-              frontLabel: languageName(selectedDeck.frontLocale),
-              backLabel: languageName(selectedDeck.backLocale),
-              due: summary.due,
-              total: summary.total,
-              boxes: summary.boxes,
-            }
-          : null,
-      cards: shown.map((card) => ({
-        id: card.id,
-        question: card.question,
-        answer: card.answer,
-        tag: card.tag ?? null,
-        box: card.box,
-        deckTitle: deckById.get(card.deckId)?.title ?? "",
-      })),
+  } else if (view === "edit") {
+    const pool =
+      filter === "all" ? cards : cards.filter((card) => card.deckId === filter);
+    const rows: LbCard[] = filterLearningBoxCards(pool, query).map((card) => ({
+      id: card.id,
+      question: card.question,
+      answer: card.answer,
+      tag: card.tag ?? null,
+      box: card.box,
+      deckId: card.deckId,
+      deckTitle: deckById.get(card.deckId)?.title ?? "",
+    }));
+    const createdAt = new Map(cards.map((card) => [card.id, card.createdAt]));
+    const byKey = sort.key ? SORT_VALUE[sort.key] : null;
+    rows.sort((a, b) => {
+      if (!byKey)
+        return (createdAt.get(b.id) ?? 0) - (createdAt.get(a.id) ?? 0);
+      const x = byKey(a);
+      const y = byKey(b);
+      // Vokabeln ohne Tag stehen immer am Ende.
+      if (sort.key === "tag" && (x === "") !== (y === ""))
+        return x === "" ? 1 : -1;
+      const order =
+        typeof x === "number" && typeof y === "number"
+          ? x - y
+          : String(x).localeCompare(String(y), "de");
+      return order * sort.dir;
+    });
+    const edit: LbEdit = {
+      cards: rows,
+      total: pool.length,
       query,
-      sort: activeSort,
+      filter,
+      sortKey: sort.key,
+      sortDir: sort.dir,
     };
-    main = { kind: "manager", manager };
+    main = { kind: "edit", edit };
   }
-
-  const cardsOf = (ids: readonly string[]) =>
-    cards.filter((card) => ids.includes(card.id));
 
   return (
     <StudentPage activePath="/lernbox" bare>
       <LernBoxScreen
         theme={theme}
-        panelOpen={panelOpen}
         loading={loading}
         notice={notice}
         folders={folders.map(({ id, title }) => ({ id, title }))}
         decks={lbDecks}
-        collapsedFolders={collapsed}
-        selectedDeckId={selectedDeck?.id ?? null}
-        mode={session?.mode ?? mode}
-        direction={direction}
-        directionLabels={directionLabels}
-        locked={locked}
         dueTotal={dueCards.length}
         errorCount={mistakes.length}
         languages={LANGUAGE_CHOICES}
+        mode={mode}
+        direction={direction}
+        directionLabelsFor={directionLabelsFor}
         main={main}
+        sheet={sheet}
+        transfer={transfer}
         onToggleTheme={toggleTheme}
-        onTogglePanel={() => {
-          setPanelOpen(!panelOpen);
-          store(PANEL_KEY, !panelOpen);
+        onOpenSheet={(next) => {
+          setTransfer({ busy: false, error: "", success: null });
+          setNotice("");
+          setSheet(next);
         }}
-        onToggleFolder={(id) => {
-          const next = collapsed.includes(id)
-            ? collapsed.filter((entry) => entry !== id)
-            : [...collapsed, id];
-          setCollapsed(next);
-          store(FOLDERS_KEY, next);
-        }}
-        onSelectDeck={(id) => {
-          if (locked) return;
-          setSession(null);
-          setView({ kind: "deck", id });
+        onCloseSheet={() => setSheet(null)}
+        onStart={({ scope, mode: chosenMode, direction: chosenDirection }) =>
+          startSession(scope, { mode: chosenMode, direction: chosenDirection })
+        }
+        onEdit={() => {
+          setView("edit");
           setQuery("");
+          setFilter("all");
           setNotice("");
         }}
-        onShowAll={() => {
-          if (locked) return;
-          setSession(null);
-          setView({ kind: "all" });
-          setQuery("");
-          setNotice("");
+        onBack={() => {
+          if (session) endSession();
+          else {
+            setView("home");
+            setNotice("");
+          }
         }}
+        onCreateDeck={async (input) => {
+          try {
+            const deck = await repository.createDeck({
+              title: input.title,
+              folderId: input.folderId ?? undefined,
+              frontLocale: input.frontLocale,
+              backLocale: input.backLocale,
+            });
+            await refresh();
+            return deck.id;
+          } catch {
+            setNotice("Das hat nicht geklappt. Bitte versuche es noch einmal.");
+            return null;
+          }
+        }}
+        onAddCard={async (deckId, input) => {
+          try {
+            const result = await repository.addCard({
+              deckId,
+              question: input.question,
+              answer: input.answer,
+            });
+            await refresh();
+            return result.added ? "added" : "duplicate";
+          } catch {
+            return "error";
+          }
+        }}
+        onImportCards={async (deckId, text) => {
+          const { rows, skipped } = parseLearningBoxImport(text);
+          try {
+            const result = await repository.importCards(deckId, rows);
+            await refresh();
+            const parts = [`${result.added} Vokabeln importiert`];
+            if (result.duplicates)
+              parts.push(`${result.duplicates} schon vorhanden`);
+            if (skipped.length)
+              parts.push(
+                `Zeile ${skipped.join(", ")} ohne zwei Spalten übersprungen`,
+              );
+            return `${parts.join(" · ")}.`;
+          } catch {
+            return "Das hat nicht geklappt. Bitte versuche es noch einmal.";
+          }
+        }}
+        onTransferCode={receiveByCode}
+        onTransferQr={receiveByQr}
+        onQuery={setQuery}
+        onFilter={setFilter}
+        onSort={(key) =>
+          setSort((current) =>
+            current.key === key
+              ? { key, dir: current.dir === 1 ? -1 : 1 }
+              : { key, dir: 1 },
+          )
+        }
+        onSaveCard={(id, input, deckId) =>
+          void run(async () => {
+            await repository.editCard(id, {
+              question: input.question,
+              answer: input.answer,
+              tag: input.tag.trim() || null,
+            });
+            const card = cards.find((entry) => entry.id === id);
+            if (card && card.deckId !== deckId)
+              await repository.moveCards([id], deckId);
+          }, "Vokabel gespeichert.")
+        }
+        onDeleteCards={(ids) =>
+          void run(
+            () => repository.deleteCards(ids),
+            ids.length === 1
+              ? "Vokabel gelöscht."
+              : `${ids.length} Vokabeln gelöscht.`,
+          )
+        }
+        onCreateFolder={(title) =>
+          void run(
+            () => repository.createFolder(title),
+            `Ordner „${title}“ angelegt.`,
+          )
+        }
+        onDeleteFolder={(id) =>
+          void run(
+            () => repository.deleteFolder(id),
+            "Ordner gelöscht. Seine Stapel liegen jetzt ohne Ordner.",
+          )
+        }
+        onMoveDeck={(id, folderId) =>
+          void run(() => repository.moveDeck(id, folderId))
+        }
         onDeleteDeck={(id) => {
           const deck = lbDecks.find((entry) => entry.id === id);
           if (
@@ -489,139 +723,11 @@ export function LearningBoxApp() {
           ) {
             return;
           }
-          if (view.kind === "deck" && view.id === id)
-            setView({ kind: "welcome" });
+          if (filter === id) setFilter("all");
           void run(() => repository.deleteDeck(id));
-        }}
-        onDeleteFolder={(id) =>
-          void run(
-            () => repository.deleteFolder(id),
-            "Ordner gelöscht. Seine Stapel liegen jetzt ohne Ordner.",
-          )
-        }
-        onCreateDeck={(input) =>
-          void run(async () => {
-            const deck = await repository.createDeck({
-              title: input.title,
-              folderId: input.folderId ?? undefined,
-              frontLocale: input.frontLocale,
-              backLocale: input.backLocale,
-            });
-            if (input.folderId) {
-              const next = collapsed.filter(
-                (entry) => entry !== input.folderId,
-              );
-              setCollapsed(next);
-              store(FOLDERS_KEY, next);
-            }
-            return deck;
-          })
-        }
-        onCreateFolder={(title) =>
-          void run(
-            () => repository.createFolder(title),
-            `Ordner „${title}“ angelegt.`,
-          )
-        }
-        onMode={(value) => {
-          if (!locked) setMode(value);
-        }}
-        onDirection={(value) => {
-          if (!locked) setDirection(value);
-        }}
-        onLearnDue={() => startSession("Alle fälligen Karten", dueCards, true)}
-        onLearnErrors={() => startSession("Meine Fehler", mistakes, false)}
-        onBack={() => {
-          if (session) endSession();
-          else setView({ kind: "welcome" });
         }}
         onExport={() => void repository.exportBackup().then(downloadBackup)}
         onImportBackup={(file) => void importBackup(file)}
-        onStartDeck={() => {
-          if (!selectedDeck) return;
-          const pool = cards.filter((card) => card.deckId === selectedDeck.id);
-          const due = pool.filter((card) =>
-            isLearningBoxCardDueFor(card, direction),
-          );
-          startSession(
-            selectedDeck.title,
-            due.length ? due : pool,
-            due.length > 0,
-          );
-        }}
-        onMoveDeck={(folderId) => {
-          if (selectedDeck)
-            void run(() => repository.moveDeck(selectedDeck.id, folderId));
-        }}
-        onAddCard={(input) => {
-          if (!selectedDeck) return;
-          void run(async () => {
-            const result = await repository.addCard({
-              deckId: selectedDeck.id,
-              question: input.question,
-              answer: input.answer,
-              ...(input.tag.trim() ? { tag: input.tag } : {}),
-            });
-            setNotice(
-              result.added
-                ? "Karte wurde hinzugefügt."
-                : "Diese Karte ist bereits in der LernBox.",
-            );
-          });
-        }}
-        onImportCards={(text) => {
-          if (!selectedDeck) return;
-          const { rows, skipped } = parseLearningBoxImport(text);
-          void run(async () => {
-            const result = await repository.importCards(selectedDeck.id, rows);
-            const parts = [`${result.added} Vokabeln importiert`];
-            if (result.duplicates)
-              parts.push(`${result.duplicates} schon vorhanden`);
-            if (skipped.length)
-              parts.push(
-                `Zeile ${skipped.join(", ")} ohne zwei Spalten übersprungen`,
-              );
-            setNotice(`${parts.join(" · ")}.`);
-          });
-        }}
-        onQuery={setQuery}
-        onSort={setSort}
-        onEditCard={(id, input) =>
-          void run(
-            () =>
-              repository.editCard(id, {
-                question: input.question,
-                answer: input.answer,
-                tag: input.tag.trim() || null,
-              }),
-            "Karte gespeichert.",
-          )
-        }
-        onPracticeCards={(ids) =>
-          startSession("Ausgewählte Vokabeln", cardsOf(ids), false)
-        }
-        onMoveCards={(ids, deckId) =>
-          void run(
-            () => repository.moveCards(ids, deckId),
-            `${ids.length} Karten nach „${deckById.get(deckId)?.title ?? ""}“ verschoben.`,
-          )
-        }
-        onTagCards={(ids, tag) =>
-          void run(
-            () => repository.setCardsTag(ids, tag),
-            tag.trim()
-              ? `Tag „${tag.trim()}“ für ${ids.length} Karten gesetzt.`
-              : `Tag bei ${ids.length} Karten entfernt.`,
-          )
-        }
-        onDeleteCards={(ids) =>
-          void run(
-            () => repository.deleteCards(ids),
-            ids.length === 1
-              ? "Karte gelöscht."
-              : `${ids.length} Karten gelöscht.`,
-          )
-        }
         onAnswer={(value) =>
           session && setSession({ ...session, answer: value })
         }

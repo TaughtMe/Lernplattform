@@ -5,10 +5,7 @@
  */
 import type { LiveRoomStudent } from "../../../src/integrations/laufdiktat/room-api";
 import { aggregateWordErrors } from "../../../src/integrations/laufdiktat/teacher-results";
-import {
-  DEFAULT_TEXT_SPLIT_CONFIG,
-  type TextSplitConfig,
-} from "../../../src/domain/running-dictation-sections";
+import type { TextSplitConfig } from "../../../src/domain/running-dictation-sections";
 import {
   countMathChainNumbers,
   displayMathNumber,
@@ -17,17 +14,17 @@ import {
   isLatexMathSyntax,
   tokenizeMathChain,
 } from "../../../src/domain/mental-math";
+import { textSplitConfigFor } from "../../../src/domain/teacher-content-summary";
 import type { MathPreviewPart } from "../../views/laufdiktat/math-editor";
 import type {
   LiveStudent,
   ParticipantStatus,
+  RoomTimes,
   SplitMode,
   StationState,
   TeacherStep,
 } from "../../views/laufdiktat/teacher-dictation-screen";
 import type { Stage } from "./use-teacher-live-room";
-
-const WORD_DELIMITER = { id: "wort", value: " " };
 
 export const STEP_OF_STAGE: Record<Stage, TeacherStep> = {
   content: "import",
@@ -51,22 +48,60 @@ export function splitModeOf(config: TextSplitConfig): SplitMode {
 
 /** Trenn-Konfiguration für Satz (Satzzeichen), Zeile oder Wort. */
 export function splitConfigFor(mode: SplitMode): TextSplitConfig {
-  if (mode === "satz") return { ...DEFAULT_TEXT_SPLIT_CONFIG };
-  if (mode === "zeile") {
-    return { ...DEFAULT_TEXT_SPLIT_CONFIG, punctuationEnabled: false };
-  }
-  // Eigene Trenner wirken nur bei aktiven Trennzeichen; Satzzeichen bleiben
-  // dabei am Wort.
-  return {
-    ...DEFAULT_TEXT_SPLIT_CONFIG,
-    punctuation: [],
-    customDelimiters: [WORD_DELIMITER],
-  };
+  return textSplitConfigFor(mode);
 }
 
 function progressOf(student: LiveRoomStudent | undefined, total: number) {
   if (student?.finished) return total;
   return Math.min(total, student?.currentIndex ?? 0);
+}
+
+/** Fehler ab dieser Zahl bei einer Aufgabe: Die Lehrkraft sieht, dass jemand hängt. */
+export const STRUGGLE_ERRORS = 2;
+
+/** Pro Schüler: Aufgabe und Fehlerstand, als sie zuletzt gewechselt wurde. */
+export type ErrorBase = Record<string, { index: number; errors: number }>;
+
+/**
+ * Zieht den Stand nach: Bei einer neuen Aufgabe zählt ab jetzt neu. Gibt `prev`
+ * unverändert zurück, wenn sich nichts ändert (für einen Zustand ohne Endlosschleife).
+ */
+export function nextErrorBase(
+  prev: ErrorBase,
+  students: readonly LiveRoomStudent[],
+): ErrorBase {
+  let next: ErrorBase | null = null;
+  for (const student of students) {
+    const known = prev[student.studentName];
+    if (known && known.index === student.currentIndex) continue;
+    next ??= { ...prev };
+    next[student.studentName] = {
+      index: student.currentIndex,
+      // Neu gesehen mitten in der Runde: frühere Fehler zählen nicht als „gerade“.
+      errors: known || student.currentIndex > 0 ? student.errors : 0,
+    };
+  }
+  return next ?? prev;
+}
+
+/** Wer an der aktuellen Aufgabe mehrfach falsch lag und noch nicht fertig ist. */
+export function strugglingNames(
+  base: ErrorBase,
+  students: readonly LiveRoomStudent[],
+): ReadonlySet<string> {
+  return new Set(
+    students
+      .filter((student) => {
+        const known = base[student.studentName];
+        return (
+          !student.finished &&
+          known !== undefined &&
+          known.index === student.currentIndex &&
+          student.errors - known.errors >= STRUGGLE_ERRORS
+        );
+      })
+      .map((student) => student.studentName),
+  );
 }
 
 export type LiveOverview = {
@@ -88,6 +123,7 @@ export function liveOverview({
   labelFor,
   animalFor,
   statusFor,
+  struggling,
 }: {
   students: LiveRoomStudent[];
   connectedNames: string[];
@@ -97,6 +133,7 @@ export function liveOverview({
   labelFor: (name: string) => string;
   animalFor: (name: string) => string | null;
   statusFor?: (name: string) => ParticipantStatus;
+  struggling?: ReadonlySet<string>;
 }): LiveOverview {
   const words = Math.max(1, total);
   const tracked = stationMode
@@ -131,6 +168,7 @@ export function liveOverview({
         progress: progressOf(student, words),
         total: words,
         mistakes: student?.errors ?? 0,
+        ...(struggling?.has(name) ? { struggling: true } : {}),
       };
     }),
     stations: Array.from({ length: stationCount }, (_, index) => {
@@ -213,5 +251,22 @@ export function mathGapRow(
     parts,
     // Wie im Original: ohne Wahl wird die letzte Rechenzahl zur Lücke.
     active: chosen ?? Math.max(0, numberCount - 1),
+  };
+}
+
+/** Fristen des Raums in der Form, die die Ansicht erwartet (Entscheidung 52). */
+export function roomTimesView(
+  timeline: { joinUntil: Date; closesAt: Date } | null,
+  state: "open" | "join-closed" | "closing-soon" | "closed" | null,
+): RoomTimes | undefined {
+  if (!timeline || !state) return undefined;
+  const clockTime = (date: Date) =>
+    date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return {
+    joinOpen: state === "open",
+    joinUntil: clockTime(timeline.joinUntil),
+    closesAt: clockTime(timeline.closesAt),
+    closingSoon: state === "closing-soon",
+    closed: state === "closed",
   };
 }

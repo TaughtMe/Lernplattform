@@ -4,13 +4,11 @@ import Link from "next/link";
 import type {
   CSSProperties,
   KeyboardEvent,
-  PointerEvent,
   ReactNode,
   Ref,
   TextareaHTMLAttributes,
-  TouchEvent,
 } from "react";
-import { BoltIcon, Icon, InkIcon, ShieldIcon } from "../../ui/icons";
+import { BoltIcon, InkIcon, ShieldIcon } from "../../ui/icons";
 import {
   Animal,
   cx,
@@ -21,6 +19,7 @@ import {
   type Theme,
 } from "../parts/parts";
 import styles from "./student-dictation-screen.module.css";
+import { useAutoFitText } from "./use-auto-fit-text";
 
 export type StudentDictationPhase =
   "station" | "hold" | "read" | "write" | "battle" | "done";
@@ -72,18 +71,15 @@ export type StudentDictationScreenProps = {
   /** Hinweise zu Verbindung und Speicherung unter dem Fortschritt. */
   notices?: ReactNode;
   hold?: {
-    /** Aufdecken ohne Geste (Tastatur, Maus, Hilfsmittel). */
-    onShow?: () => void;
-    disabled?: boolean;
     /** Ersetzt „Satz 1“ im Hinweis, z. B. an Stationen. */
     title?: string;
+    /** Ersetzt die ganze Hinweiszeile, z. B. beim Laden. */
     text?: string;
     error?: { text: string; onRetry: () => void };
   };
   read?: {
-    onWriteNow?: () => void;
-    writeNowLabel?: string;
-    releaseHint?: string;
+    /** Größte Schrift des Worts in px (Standard 88, Stationen 72). */
+    maxFontSize?: number;
   };
   write?: {
     /** Vorgabe bei Vokabeln und Mathe (Frage statt Gedächtnis). */
@@ -137,8 +133,6 @@ export type StudentDictationScreenProps = {
   onToggleTheme?: () => void;
   onLeave?: () => void;
   onPickStation?: (station: number) => void;
-  onHoldStart?: () => void;
-  onHoldEnd?: () => void;
   onType?: (value: string) => void;
   onCheck?: () => void;
   onPower?: (power: BattlePower) => void;
@@ -247,7 +241,7 @@ export function StudentDictationScreen(props: StudentDictationScreenProps) {
         {phase === "battle" ? <BattlePhase {...props} /> : null}
         {phase === "done" ? <DonePhase {...props} /> : null}
 
-        {props.stationNav && (phase === "hold" || phase === "read") ? (
+        {props.stationNav && phase === "hold" ? (
           <StationNav nav={props.stationNav} />
         ) : null}
       </div>
@@ -311,56 +305,37 @@ function StationPhase({
   );
 }
 
-/** Beginnt das Lesen: zwei Finger (Touch) oder gedrückte Maustaste. */
-function holdHandlers(onHoldStart: (() => void) | undefined) {
-  return {
-    onTouchStart: (event: TouchEvent) => {
-      if (event.touches.length >= 2) onHoldStart?.();
-    },
-    onPointerDown: (event: PointerEvent) => {
-      if (event.pointerType === "mouse") onHoldStart?.();
-    },
-  };
-}
-
-function Edge({ label }: { label: string }) {
-  return (
-    <span className={styles.edge} aria-hidden="true">
-      <Icon name="hand" size={26} strokeWidth={1.8} />
-      <span>{label}</span>
-    </span>
-  );
-}
-
 function HoldPhase({
   sentenceIndex,
   unit = "Satz",
   hold,
-  onHoldStart,
 }: StudentDictationScreenProps) {
   const title = hold?.title ?? `${unit} ${sentenceIndex + 1}`;
   return (
     <section
       className={cx(styles.phase, styles.hold)}
       aria-labelledby="dictation-hold"
-      {...holdHandlers(hold?.disabled ? undefined : onHoldStart)}
     >
-      <Edge label="hier" />
-      <div className={styles.card}>
-        <span className={styles.eyeDisc} aria-hidden="true">
-          <Icon name="eye" size={30} strokeLinejoin="miter" />
-        </span>
-        <h1 id="dictation-hold" className={styles.holdTitle}>
-          Mit zwei Fingern an beiden Rändern halten
+      <span className={styles.rail} aria-hidden="true">
+        <kbd className={styles.keycap}>A</kbd>
+      </span>
+      <div className={styles.holdBody}>
+        <h1 id="dictation-hold" className={styles.holdLine}>
+          {hold?.text ? (
+            hold.text
+          ) : (
+            <>
+              <span className={styles.touchHint}>
+                Mit zwei Fingern an den Rändern halten, um {title} zu sehen.
+              </span>
+              <span className={styles.keyHint}>
+                Halte <kbd className={styles.keycap}>A</kbd> und{" "}
+                <kbd className={styles.keycap}>L</kbd> gleichzeitig gedrückt, um{" "}
+                {title} zu sehen.
+              </span>
+            </>
+          )}
         </h1>
-        <p className={styles.holdText}>
-          {hold?.text ??
-            `Solange du hältst, siehst du ${title}. Loslassen öffnet das Schreibfeld.`}
-          <span className={styles.wideOnly}>
-            {" "}
-            Am Laptop: Maustaste auf der Fläche gedrückt halten.
-          </span>
-        </p>
         {hold?.error ? (
           <div className={styles.alert} role="alert">
             <p>{hold.error.text}</p>
@@ -373,19 +348,10 @@ function HoldPhase({
             </button>
           </div>
         ) : null}
-        {hold?.onShow ? (
-          <button
-            type="button"
-            className={styles.ghost}
-            disabled={hold.disabled}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={hold.onShow}
-          >
-            Aufgabe zeigen
-          </button>
-        ) : null}
       </div>
-      <Edge label="hier" />
+      <span className={styles.rail} aria-hidden="true">
+        <kbd className={styles.keycap}>L</kbd>
+      </span>
     </section>
   );
 }
@@ -393,41 +359,22 @@ function HoldPhase({
 function ReadPhase({
   sentence,
   prompt,
-  sentenceIndex,
-  sentenceCount,
   unit = "Satz",
   read,
-  onHoldEnd,
 }: StudentDictationScreenProps) {
+  const fit = useAutoFitText<HTMLParagraphElement>(sentence, {
+    max: read?.maxFontSize ?? 88,
+  });
   return (
     <section
       className={cx(styles.phase, styles.read)}
       aria-label={`${unit} lesen`}
-      onTouchEnd={onHoldEnd}
-      onPointerUp={onHoldEnd}
-      onPointerLeave={onHoldEnd}
     >
-      <Edge label="halten" />
-      <div className={styles.card}>
-        <Pill>
-          {unit} {sentenceIndex + 1} von {sentenceCount}
-        </Pill>
-        <p className={styles.sentence}>{prompt ?? sentence}</p>
-        <span className={styles.releaseHint}>
-          {read?.releaseHint ?? "Loslassen, um zu schreiben"}
-        </span>
-        {read?.onWriteNow ? (
-          <button
-            type="button"
-            className={styles.ghost}
-            onPointerUp={(event) => event.stopPropagation()}
-            onClick={read.onWriteNow}
-          >
-            {read.writeNowLabel ?? "Jetzt schreiben"}
-          </button>
-        ) : null}
+      <div className={styles.readBox}>
+        <p ref={fit} className={styles.sentence}>
+          {prompt ?? sentence}
+        </p>
       </div>
-      <Edge label="halten" />
     </section>
   );
 }

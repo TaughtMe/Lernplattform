@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DESIGN_SCREENS } from "./manifest";
+import { DESIGN_SCREENS } from "./design-screens";
 import styles from "./frame.module.css";
 
 export const metadata: Metadata = {

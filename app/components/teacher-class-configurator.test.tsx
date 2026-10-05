@@ -88,6 +88,30 @@ describe("TeacherClassConfigurator", () => {
     ).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("keeps a new class even when the class seal cannot be created", async () => {
+    const user = userEvent.setup();
+    const generateKey = vi
+      .spyOn(crypto.subtle, "generateKey")
+      .mockRejectedValue(new Error("kein sicherer Kontext"));
+    render(<TeacherClassConfigurator />);
+    await user.type(
+      screen.getByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8b",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    expect(
+      await screen.findByText("Klasse wurde lokal angelegt."),
+    ).toBeVisible();
+    expect(
+      screen.queryByText("Die Klasse konnte nicht gespeichert werden."),
+    ).toBeNull();
+    generateKey.mockRestore();
+  });
+
   it("creates an individual enrollment code for a student", async () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);

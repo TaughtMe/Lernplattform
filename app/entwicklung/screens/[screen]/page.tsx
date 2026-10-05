@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { DESIGN_SCREENS } from "../manifest";
+import { DESIGN_SCREENS } from "../design-screens";
 import { ScreenFrame } from "../screen-frame";
 
 export const metadata: Metadata = {

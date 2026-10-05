@@ -67,9 +67,11 @@
   width: 64px;
   height: 64px;
   border-radius: 18px;
-  background: var(--tone);
-  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.12);
-  color: #211f1b;
+}
+.symbol > img {
+  display: block;
+  width: 64px;
+  height: 64px;
 }
 .tileTitle {
   margin: 0;

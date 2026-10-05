@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { revealAndRelease } from "./hold";
 
 for (const withError of [true, false])
   test(`a finished math learner practices locally (errors: ${withError}) while the room remains live`, async ({
@@ -57,10 +58,7 @@ for (const withError of [true, false])
     });
     await page.goto("/raum?code=4829");
 
-    await page
-      .getByRole("button", { name: "Aufgabe zeigen", exact: true })
-      .click();
-    await page.getByRole("button", { name: "Jetzt schreiben" }).click();
+    await revealAndRelease(page);
     const answer = page.getByRole("textbox", { name: "Deine Antwort" });
     if (withError) {
       await answer.fill("54");

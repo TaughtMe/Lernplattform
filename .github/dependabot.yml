@@ -5,7 +5,28 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Gruppen (siehe docs/umsetzungsplan-abhaengigkeiten.md, Abschnitt 4):
+    # Die erste passende Gruppe gewinnt. Hauptversionen stehen in keiner Gruppe
+    # und kommen als einzelne Pull Requests. Sicherheits-Updates erstellt
+    # GitHub unabhängig von diesem Zeitplan, sobald Dependabot security updates
+    # im Repository eingeschaltet sind.
     groups:
+      build-chain:
+        patterns:
+          - vinext
+          - vite
+          - "@vitejs/*"
+          - "@cloudflare/*"
+          - wrangler
+          - react
+          - react-dom
+          - react-server-dom-webpack
+          - "@types/react"
+          - "@types/react-dom"
+        update-types: [minor, patch]
+      runtime:
+        dependency-type: production
+        update-types: [minor, patch]
       development-tooling:
         dependency-type: development
         update-types: [minor, patch]
