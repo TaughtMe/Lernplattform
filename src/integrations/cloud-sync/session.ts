@@ -3,6 +3,7 @@
  * Verbinden leitet zum Anbieter und über die Rückleitungsseite zurück;
  * danach holt `getAccessToken` bei Bedarf still ein neues Zugriffstoken.
  */
+import { requestGoogleToken } from "./google-identity";
 import {
   buildAuthorizeUrl,
   createPkcePair,
@@ -206,13 +207,59 @@ export async function completeConnect(
   return { provider: pending.provider, returnTo: pending.returnTo };
 }
 
+type GoogleEnv = Pick<Env, "storage" | "now"> & {
+  request?: typeof requestGoogleToken;
+};
+
+/** Google: Popup öffnen (nur aus einem Klick heraus) und Token speichern. */
+export async function connectGoogle(
+  env: GoogleEnv = browserEnv(),
+  prompt: "" | "consent" = "consent",
+) {
+  const clientId = oauthClientId("google-drive");
+  if (!clientId) {
+    throw new CloudSyncError(
+      "not-configured",
+      "Dieses Konto ist noch nicht eingerichtet.",
+    );
+  }
+  const { accessToken, expiresIn } = await (env.request ?? requestGoogleToken)(
+    clientId,
+    prompt,
+  );
+  writeTokens(env.storage, {
+    ...readTokens(env.storage),
+    "google-drive": {
+      accessToken,
+      refreshToken: null,
+      expiresAt: env.now() + expiresIn * 1000,
+    },
+  });
+  return accessToken;
+}
+
 /** Gültiges Zugriffstoken; erneuert still, sonst Aufforderung zum Neuverbinden. */
 export async function getAccessToken(
   provider: OAuthProviderId,
-  env: Pick<Env, "storage" | "fetcher" | "now"> = browserEnv(),
+  env: Pick<Env, "storage" | "fetcher" | "now"> & {
+    request?: typeof requestGoogleToken;
+  } = browserEnv(),
 ) {
   const tokens = readTokens(env.storage);
   const stored = tokens[provider];
+  if (provider === "google-drive") {
+    if (!stored) {
+      throw new CloudSyncError(
+        "unauthorized",
+        "Bitte zuerst mit dem Konto verbinden.",
+      );
+    }
+    if (stored.expiresAt - EXPIRY_MARGIN_MS > env.now()) {
+      return stored.accessToken;
+    }
+    // Ohne Refresh-Token: neues Token über Popup, nur nachfragen wenn nötig.
+    return connectGoogle(env, "");
+  }
   if (!stored) {
     throw new CloudSyncError(
       "unauthorized",

@@ -39,11 +39,16 @@ den Anbietern **zusätzlich** eintragen.
    tauschen, `session.ts`) → zurück zu den Einstellungen. Das Zugriffstoken
    wird still erneuert. Microsoft begrenzt Refresh-Tokens von Single-Page-
    Apps auf 24 Stunden; danach ist ein erneutes Verbinden nötig.
-2. **Google Drive (offen):** OAuth-Client in der Google Cloud Console, Scope
-   `https://www.googleapis.com/auth/drive.appdata`, Client-ID als
-   `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID`. Google verlangt beim Token-Tausch für
-   Webclients ein Client-Secret; dafür fehlt noch eine Lösung. Bis dahin zeigt
-   die Oberfläche „In Vorbereitung“.
+2. **Google Drive (angebunden, Google Identity Services):** Google Cloud
+   Console, Drive API aktivieren, OAuth-Zustimmungsbildschirm (Branding,
+   Testnutzer), OAuth-Client „Webanwendung“ mit der Adresse der Seite unter
+   „Autorisierte JavaScript-Quellen“ (Scope `drive.appdata`). Client-ID als
+   Build-Variable `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID`. Es wird kein
+   Client-Secret verwendet. Zugriffstoken gelten eine Stunde und ohne
+   Refresh-Token; ein neues kommt über ein Popup, das ein Klick auslösen muss
+   (`google-identity.ts`). Im Status „Test“ dürfen nur eingetragene
+   Testnutzer einloggen; für den Regelbetrieb ist Veröffentlichung samt
+   Markenprüfung (eigene, bestätigbare Domain) nötig.
 
 Solange keine Client-ID gesetzt ist, zeigen die Einstellungen „Konto noch
 nicht eingerichtet“.

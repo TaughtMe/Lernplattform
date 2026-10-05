@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   completeConnect,
+  connectGoogle,
   disconnect,
   getAccessToken,
   isConnected,
@@ -139,5 +140,38 @@ describe("cloud sign-in session", () => {
     });
     expect(isConnected("onedrive", e.storage)).toBe(false);
     disconnect("onedrive", e.storage);
+  });
+
+  it("connects Google without a secret and asks again after an hour", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID", "g-client");
+    let clock = 1_000_000;
+    const prompts: string[] = [];
+    let n = 0;
+    const e = {
+      ...env([], () => clock),
+      request: async (clientId: string, prompt: "" | "consent") => {
+        expect(clientId).toBe("g-client");
+        prompts.push(prompt);
+        return { accessToken: `g${++n}`, expiresIn: 3600 };
+      },
+    };
+    await connectGoogle(e);
+    expect(isConnected("google-drive", e.storage)).toBe(true);
+    expect(await getAccessToken("google-drive", e)).toBe("g1");
+    clock += 3_600_000;
+    expect(await getAccessToken("google-drive", e)).toBe("g2");
+    expect(prompts).toEqual(["consent", ""]);
+    expect(e.requests).toHaveLength(0);
+  });
+
+  it("requires a connection before using Google", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID", "");
+    const e = env([]);
+    await expect(getAccessToken("google-drive", e)).rejects.toMatchObject({
+      code: "unauthorized",
+    });
+    await expect(connectGoogle(e)).rejects.toMatchObject({
+      code: "not-configured",
+    });
   });
 });

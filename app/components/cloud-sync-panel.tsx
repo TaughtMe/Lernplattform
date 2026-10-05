@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { createOneDriveTarget } from "../../src/integrations/cloud-sync/drives";
+import {
+  createGoogleDriveTarget,
+  createOneDriveTarget,
+} from "../../src/integrations/cloud-sync/drives";
+import type { OAuthProviderId } from "../../src/integrations/cloud-sync/oauth";
 import { cloudProviders } from "../../src/integrations/cloud-sync/providers";
 import {
+  connectGoogle,
   disconnect,
   getAccessToken,
   isConnected,
@@ -51,12 +56,18 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [oneDriveConnected, setOneDriveConnected] = useState(false);
+  const [connected, setConnected] = useState<Record<OAuthProviderId, boolean>>({
+    onedrive: false,
+    "google-drive": false,
+  });
 
   useEffect(() => {
     const id = window.setTimeout(() => {
       setSettings(readSettings());
-      setOneDriveConnected(isConnected("onedrive"));
+      setConnected({
+        onedrive: isConnected("onedrive"),
+        "google-drive": isConnected("google-drive"),
+      });
     }, 0);
     return () => window.clearTimeout(id);
   }, []);
@@ -64,10 +75,16 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
   const returnTo =
     area === "teacher" ? "/lehrer/einstellungen" : "/lernen/einstellungen";
 
-  async function connectOneDrive() {
+  async function connectProvider(provider: OAuthProviderId) {
     setMessage("");
     try {
-      await startConnect("onedrive", returnTo);
+      if (provider === "google-drive") {
+        await connectGoogle();
+        setConnected((value) => ({ ...value, [provider]: true }));
+        setMessage("Google Drive ist verbunden.");
+      } else {
+        await startConnect(provider, returnTo);
+      }
     } catch (error) {
       setMessage(
         error instanceof CloudSyncError
@@ -77,15 +94,15 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
     }
   }
 
-  function disconnectOneDrive() {
-    disconnect("onedrive");
-    setOneDriveConnected(false);
-    setMessage("OneDrive wurde getrennt.");
+  function disconnectProvider(provider: OAuthProviderId) {
+    disconnect(provider);
+    setConnected((value) => ({ ...value, [provider]: false }));
+    setMessage("Die Verbindung wurde getrennt.");
   }
 
   async function run(
     action: "push" | "pull",
-    via: "webdav" | "onedrive",
+    via: "webdav" | OAuthProviderId,
     event?: FormEvent,
   ) {
     event?.preventDefault();
@@ -109,7 +126,9 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
       const resolved: CloudSyncTarget =
         via === "onedrive"
           ? createOneDriveTarget(await getAccessToken("onedrive"))
-          : createWebDavTarget({ ...settings, password });
+          : via === "google-drive"
+            ? createGoogleDriveTarget(await getAccessToken("google-drive"))
+            : createWebDavTarget({ ...settings, password });
       const target = () => resolved;
       if (area === "student") {
         if (action === "push") {
@@ -139,7 +158,13 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
         }
       }
     } catch (error) {
-      if (via === "onedrive") setOneDriveConnected(isConnected("onedrive"));
+      if (via !== "webdav") {
+        const provider = via;
+        setConnected((value) => ({
+          ...value,
+          [provider]: isConnected(provider),
+        }));
+      }
       setMessage(
         error instanceof CloudSyncError
           ? error.message
@@ -178,36 +203,49 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
                   · {provider.description}
                 </span>
               </span>
-              {provider.id === "onedrive" && provider.available ? (
-                oneDriveConnected ? (
+              {provider.id !== "webdav" && provider.available ? (
+                connected[provider.id] ? (
                   <span className="ui-row ui-wrap">
                     <Button
                       disabled={busy}
-                      onClick={() => void run("push", "onedrive")}
+                      onClick={() =>
+                        void run("push", provider.id as OAuthProviderId)
+                      }
                     >
                       In die Cloud sichern
                     </Button>
                     <Button
                       variant="ghost"
                       disabled={busy}
-                      onClick={() => void run("pull", "onedrive")}
+                      onClick={() =>
+                        void run("pull", provider.id as OAuthProviderId)
+                      }
                     >
                       Aus der Cloud holen
                     </Button>
-                    <Button variant="ghost" onClick={disconnectOneDrive}>
+                    <Button
+                      variant="ghost"
+                      onClick={() =>
+                        disconnectProvider(provider.id as OAuthProviderId)
+                      }
+                    >
                       Trennen
                     </Button>
                   </span>
                 ) : (
-                  <Button onClick={() => void connectOneDrive()}>
-                    Mit OneDrive verbinden
+                  <Button
+                    onClick={() =>
+                      void connectProvider(provider.id as OAuthProviderId)
+                    }
+                  >
+                    Mit{" "}
+                    {provider.id === "onedrive" ? "OneDrive" : "Google Drive"}{" "}
+                    verbinden
                   </Button>
                 )
               ) : (
                 <span className="ui-small ui-muted">
-                  {provider.id === "google-drive"
-                    ? "In Vorbereitung"
-                    : "Konto noch nicht eingerichtet"}
+                  Konto noch nicht eingerichtet
                 </span>
               )}
             </li>
