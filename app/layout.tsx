@@ -72,8 +72,11 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [socialImage],
     },
     icons: {
-      icon: "/favicon.svg",
-      shortcut: "/favicon.svg",
+      icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/favicon.ico", sizes: "48x48" },
+      ],
+      shortcut: "/favicon.ico",
       apple: { url: "/icon-180.png", sizes: "180x180", type: "image/png" },
     },
     appleWebApp: {
