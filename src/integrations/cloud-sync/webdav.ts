@@ -1,4 +1,10 @@
-import { errorForStatus, networkError, type CloudSyncTarget } from "./types";
+import {
+  errorForStatus,
+  networkError,
+  type CloudSyncTarget,
+  type RemoteFile,
+  type UploadOptions,
+} from "./types";
 
 export type WebDavSettings = {
   /** Basisadresse, z. B. https://cloud.schule.de/remote.php/dav/files/name */
@@ -56,24 +62,77 @@ export function createWebDavTarget(
     }
   }
 
+  const fileUrl = (name: string) => joinUrl(settings.url, folder, name);
+
+  /** Version über PROPFIND: Das ETag-Feld ist ohne CORS-Freigabe lesbar. */
+  async function stat(name: string) {
+    const response = await request(fileUrl(name), {
+      method: "PROPFIND",
+      headers: { Depth: "0", "Content-Type": "application/xml" },
+      body: PROPFIND_BODY,
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) throw errorForStatus(response.status, SERVICE);
+    return { etag: parseEtag(await response.text()) };
+  }
+
   return {
     provider: "webdav",
-    async upload(name, text) {
+    async upload(name, text, options: UploadOptions = {}) {
       await ensureFolder();
-      const response = await request(joinUrl(settings.url, folder, name), {
+      const conditions: Record<string, string> = {};
+      if (typeof options.ifMatch === "string") {
+        conditions["If-Match"] = options.ifMatch;
+      } else if (options.ifMatch === null) {
+        conditions["If-None-Match"] = "*";
+      }
+      const response = await request(fileUrl(name), {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...conditions },
         body: text,
       });
       if (!response.ok) throw errorForStatus(response.status, SERVICE);
+      const header =
+        response.headers.get("OC-ETag") ?? response.headers.get("ETag");
+      return { etag: header ?? (await stat(name))?.etag ?? null };
     },
     async download(name) {
-      const response = await request(joinUrl(settings.url, folder, name), {
-        method: "GET",
-      });
+      const response = await request(fileUrl(name), { method: "GET" });
       if (response.status === 404) return null;
       if (!response.ok) throw errorForStatus(response.status, SERVICE);
       return response.text();
     },
+    stat,
+    async read(name): Promise<RemoteFile | null> {
+      // Erst die Version, dann der Inhalt: Ändert sich die Datei dazwischen,
+      // ist die Version älter als der Inhalt und ein späteres Schreiben mit
+      // If-Match scheitert sicher, statt Fremdes zu überschreiben.
+      const before = await stat(name);
+      if (!before) return null;
+      const text = await this.download(name);
+      return text === null ? null : { text, etag: before.etag };
+    },
   };
+}
+
+const PROPFIND_BODY =
+  '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:getetag/></d:prop></d:propfind>';
+
+const XML_ENTITIES: Record<string, string> = {
+  "&quot;": '"',
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&apos;": "'",
+};
+
+/** ETag aus einer PROPFIND-Antwort lesen (mit Anführungszeichen, wie gesendet). */
+export function parseEtag(xml: string): string | null {
+  const match = /<(?:[\w-]+:)?getetag[^>]*>([^<]*)</i.exec(xml);
+  const raw = match?.[1]?.trim();
+  if (!raw) return null;
+  return raw.replace(
+    /&(?:quot|amp|lt|gt|apos);/g,
+    (entity) => XML_ENTITIES[entity] ?? entity,
+  );
 }

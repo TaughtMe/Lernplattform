@@ -1,4 +1,10 @@
-import { errorForStatus, networkError, type CloudSyncTarget } from "./types";
+import {
+  errorForStatus,
+  networkError,
+  type CloudSyncTarget,
+  type RemoteFile,
+  type UploadOptions,
+} from "./types";
 
 async function call(
   fetcher: typeof fetch,
@@ -19,26 +25,65 @@ export function createOneDriveTarget(
   fetcher: typeof fetch = (...args) => fetch(...args),
 ): CloudSyncTarget {
   const service = "OneDrive";
-  const fileUrl = (name: string) =>
-    `https://graph.microsoft.com/v1.0/me/drive/special/approot:/${encodeURIComponent(name)}:/content`;
+  const base = "https://graph.microsoft.com/v1.0/me/drive/special/approot:";
+  const itemUrl = (name: string) => `${base}/${encodeURIComponent(name)}`;
+  const fileUrl = (name: string) => `${itemUrl(name)}:/content`;
   const auth = { Authorization: `Bearer ${accessToken}` };
+
+  async function stat(name: string) {
+    const response = await call(
+      fetcher,
+      service,
+      `${itemUrl(name)}?$select=eTag`,
+      { headers: auth },
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) throw errorForStatus(response.status, service);
+    const data = (await response.json()) as { eTag?: string };
+    return { etag: data.eTag ?? null };
+  }
+
+  async function download(name: string) {
+    const response = await call(fetcher, service, fileUrl(name), {
+      headers: auth,
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) throw errorForStatus(response.status, service);
+    return response.text();
+  }
+
   return {
     provider: "onedrive",
-    async upload(name, text) {
-      const response = await call(fetcher, service, fileUrl(name), {
+    async upload(name, text, options: UploadOptions = {}) {
+      const headers: Record<string, string> = {
+        ...auth,
+        "Content-Type": "application/json",
+      };
+      let url = fileUrl(name);
+      if (typeof options.ifMatch === "string") {
+        headers["If-Match"] = options.ifMatch;
+      } else if (options.ifMatch === null) {
+        url += "?@microsoft.graph.conflictBehavior=fail";
+      }
+      const response = await call(fetcher, service, url, {
         method: "PUT",
-        headers: { ...auth, "Content-Type": "application/json" },
+        headers,
         body: text,
       });
       if (!response.ok) throw errorForStatus(response.status, service);
+      const data = (await response.json().catch(() => ({}))) as {
+        eTag?: string;
+      };
+      return { etag: data.eTag ?? null };
     },
-    async download(name) {
-      const response = await call(fetcher, service, fileUrl(name), {
-        headers: auth,
-      });
-      if (response.status === 404) return null;
-      if (!response.ok) throw errorForStatus(response.status, service);
-      return response.text();
+    download,
+    stat,
+    async read(name): Promise<RemoteFile | null> {
+      // Erst die Version, dann der Inhalt (siehe WebDAV).
+      const before = await stat(name);
+      if (!before) return null;
+      const text = await download(name);
+      return text === null ? null : { text, etag: before.etag };
     },
   };
 }
@@ -51,11 +96,11 @@ export function createGoogleDriveTarget(
   const service = "Google Drive";
   const auth = { Authorization: `Bearer ${accessToken}` };
 
-  async function findId(name: string) {
+  async function find(name: string) {
     const query = new URLSearchParams({
       spaces: "appDataFolder",
       q: `name = '${name.replace(/'/g, "\\'")}' and trashed = false`,
-      fields: "files(id)",
+      fields: "files(id,version)",
     });
     const response = await call(
       fetcher,
@@ -64,16 +109,41 @@ export function createGoogleDriveTarget(
       { headers: auth },
     );
     if (!response.ok) throw errorForStatus(response.status, service);
-    const data = (await response.json()) as { files?: Array<{ id: string }> };
-    return data.files?.[0]?.id ?? null;
+    const data = (await response.json()) as {
+      files?: Array<{ id: string; version?: string }>;
+    };
+    const file = data.files?.[0];
+    return file ? { id: file.id, version: file.version ?? null } : null;
+  }
+
+  async function content(id: string) {
+    const response = await call(
+      fetcher,
+      service,
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      { headers: auth },
+    );
+    if (!response.ok) throw errorForStatus(response.status, service);
+    return response.text();
   }
 
   return {
     provider: "google-drive",
-    async upload(name, text) {
-      const id = await findId(name);
+    async upload(name, text, options: UploadOptions = {}) {
+      const existing = await find(name);
+      // Google Drive kennt für Inhalte kein If-Match: Die Version wird vor dem
+      // Schreiben verglichen. Ein enges Fenster bleibt; die nächste Runde
+      // gleicht Unterschiede aus, weil lokale Änderungen erhalten bleiben.
+      if (options.ifMatch !== undefined) {
+        const expected = options.ifMatch;
+        if ((existing?.version ?? null) !== expected) {
+          throw errorForStatus(412, service);
+        }
+      }
       const boundary = `lernraum-${crypto.randomUUID()}`;
-      const metadata = id ? { name } : { name, parents: ["appDataFolder"] };
+      const metadata = existing
+        ? { name }
+        : { name, parents: ["appDataFolder"] };
       const body = [
         `--${boundary}`,
         "Content-Type: application/json; charset=UTF-8",
@@ -85,11 +155,11 @@ export function createGoogleDriveTarget(
         text,
         `--${boundary}--`,
       ].join("\r\n");
-      const url = id
-        ? `https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=multipart`
-        : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
+      const url = existing
+        ? `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=multipart&fields=id,version`
+        : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,version";
       const response = await call(fetcher, service, url, {
-        method: id ? "PATCH" : "POST",
+        method: existing ? "PATCH" : "POST",
         headers: {
           ...auth,
           "Content-Type": `multipart/related; boundary=${boundary}`,
@@ -97,18 +167,23 @@ export function createGoogleDriveTarget(
         body,
       });
       if (!response.ok) throw errorForStatus(response.status, service);
+      const data = (await response.json().catch(() => ({}))) as {
+        version?: string;
+      };
+      return { etag: data.version ?? null };
     },
     async download(name) {
-      const id = await findId(name);
-      if (!id) return null;
-      const response = await call(
-        fetcher,
-        service,
-        `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
-        { headers: auth },
-      );
-      if (!response.ok) throw errorForStatus(response.status, service);
-      return response.text();
+      const existing = await find(name);
+      return existing ? content(existing.id) : null;
+    },
+    async stat(name) {
+      const existing = await find(name);
+      return existing ? { etag: existing.version } : null;
+    },
+    async read(name) {
+      const existing = await find(name);
+      if (!existing) return null;
+      return { text: await content(existing.id), etag: existing.version };
     },
   };
 }

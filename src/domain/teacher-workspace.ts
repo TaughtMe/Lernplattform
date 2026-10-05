@@ -1,6 +1,28 @@
 import * as z from "zod";
 import { classMemberSchema, teacherClassSchema } from "./class-enrollment";
+import { classModuleSchema } from "./class-workspace";
 import { teacherContentPackageSchema } from "./teacher-content-library";
+
+export const teacherClassSettingsSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    enabledModules: z.array(classModuleSchema).min(1),
+    updatedAt: z.iso.datetime({ offset: true }),
+  })
+  .strict()
+  .superRefine((settings, context) => {
+    if (
+      new Set(settings.enabledModules).size !== settings.enabledModules.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Ein Modul darf nur einmal aktiviert sein.",
+        path: ["enabledModules"],
+      });
+    }
+  });
+
+export type TeacherClassSettings = z.infer<typeof teacherClassSettingsSchema>;
 
 export const teacherProfileSchema = z
   .object({
@@ -112,6 +134,8 @@ export const teacherWorkspaceBackupSchema = z
     materials: z.array(teacherContentPackageSchema),
     assignments: z.array(teacherAssignmentSchema),
     submissions: z.array(teacherSubmissionSchema).default([]),
+    /** Freigeschaltete Module je Klasse; ältere Sicherungen haben sie nicht. */
+    classSettings: z.array(teacherClassSettingsSchema).default([]),
   })
   .strict();
 

@@ -1,6 +1,14 @@
 import Dexie, { type Table } from "dexie";
-import * as z from "zod";
-import { classModuleSchema, type ClassModule } from "../domain/class-workspace";
+import type {
+  SyncConflict,
+  SyncStamp,
+  SyncTombstone,
+} from "../integrations/cloud-sync/model";
+import {
+  createTeacherSyncStore,
+  type SyncStateRow,
+} from "./teacher-sync-store";
+import { type ClassModule } from "../domain/class-workspace";
 import { LOCAL_DATA_AREAS } from "./local-data-boundaries";
 import {
   filterByClass,
@@ -22,6 +30,8 @@ import {
   type TeacherContentPackage,
 } from "../domain/teacher-content-library";
 import {
+  teacherClassSettingsSchema,
+  type TeacherClassSettings,
   teacherAssignmentSchema,
   teacherProfileSchema,
   teacherSubmissionSchema,
@@ -33,28 +43,17 @@ import {
   type TeacherSubmission,
 } from "../domain/teacher-workspace";
 
-export const teacherClassSettingsSchema = z
-  .object({
-    id: z.string().trim().min(1),
-    enabledModules: z.array(classModuleSchema).min(1),
-    updatedAt: z.iso.datetime({ offset: true }),
-  })
-  .strict()
-  .superRefine((settings, context) => {
-    if (
-      new Set(settings.enabledModules).size !== settings.enabledModules.length
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: "Ein Modul darf nur einmal aktiviert sein.",
-        path: ["enabledModules"],
-      });
-    }
-  });
+export { teacherClassSettingsSchema, type TeacherClassSettings };
 
-export type TeacherClassSettings = z.infer<typeof teacherClassSettingsSchema>;
+/** Tabellen des Geräte-Abgleichs (siehe `teacher-sync-store.ts`). */
+export type SyncStampRow = SyncStamp & { key: string };
+export type SyncTombstoneRow = SyncTombstone & { key: string };
 
 export class TeacherClassDatabase extends Dexie {
+  syncStamps!: Table<SyncStampRow, string>;
+  tombstones!: Table<SyncTombstoneRow, string>;
+  syncConflicts!: Table<SyncConflict, string>;
+  syncState!: Table<SyncStateRow, string>;
   classSettings!: Table<TeacherClassSettings, string>;
   classes!: Table<TeacherClass, string>;
   members!: Table<ClassMember, string>;
@@ -103,6 +102,22 @@ export class TeacherClassDatabase extends Dexie {
             assignment.memberIds ??= [];
           }),
       );
+    // Version 6: Geräte-Abgleich. Die fachlichen Tabellen bleiben unverändert;
+    // Stempel, Grabsteine und Konflikte liegen daneben. Es gibt nichts zu
+    // befüllen: Stempel entstehen beim ersten Abgleich aus `updatedAt`.
+    this.version(6).stores({
+      classSettings: "id, updatedAt",
+      classes: "id, updatedAt",
+      members: "id, classId, createdAt",
+      contentPackages: "id, updatedAt",
+      profiles: "id, updatedAt",
+      assignments: "id, status, dueDate, updatedAt, *classIds, *memberIds",
+      submissions: "id, assignmentId, classId, membershipId, receivedAt",
+      syncStamps: "key, table",
+      tombstones: "key, table",
+      syncConflicts: "id, status",
+      syncState: "id",
+    });
   }
 }
 
@@ -203,29 +218,20 @@ export function createTeacherWorkspaceRepository(
         materials: await database.contentPackages.toArray(),
         assignments: await database.assignments.toArray(),
         submissions: await database.submissions.toArray(),
+        classSettings: await database.classSettings.toArray(),
       }),
+    /**
+     * Führt die Sicherung mit den Daten des Geräts zusammen (jüngere Fassung
+     * gewinnt, Konflikte werden gemerkt). Ersetzt nichts blind.
+     */
     importData: async (value: unknown) => {
       const backup = teacherWorkspaceBackupSchema.parse(value);
-      await database.transaction(
-        "rw",
-        [
-          database.profiles,
-          database.classes,
-          database.members,
-          database.contentPackages,
-          database.assignments,
-          database.submissions,
-        ],
-        async () => {
-          if (backup.profile) await database.profiles.put(backup.profile);
-          await database.classes.bulkPut(backup.classes);
-          await database.members.bulkPut(backup.members);
-          await database.contentPackages.bulkPut(backup.materials);
-          await database.assignments.bulkPut(backup.assignments);
-          await database.submissions.bulkPut(backup.submissions);
-        },
-      );
-      return backup;
+      await createTeacherSyncStore(database).importBackup(backup);
+      return {
+        ...backup,
+        profile:
+          (await database.profiles.get("local-teacher")) ?? backup.profile,
+      };
     },
   };
 }

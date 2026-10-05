@@ -21,8 +21,14 @@ function memoryTarget(): CloudSyncTarget & { files: Map<string, string> } {
   return {
     provider: "webdav",
     files,
-    upload: async (name, text) => void files.set(name, text),
+    upload: async (name, text) => {
+      files.set(name, text);
+      return { etag: null };
+    },
     download: async (name) => files.get(name) ?? null,
+    stat: async (name) => (files.has(name) ? { etag: null } : null),
+    read: async (name) =>
+      files.has(name) ? { text: files.get(name) as string, etag: null } : null,
   };
 }
 
@@ -61,6 +67,7 @@ describe("cloud sync", () => {
       "GET https://cloud.example/dav/Lernraum/x.json",
       "MKCOL https://cloud.example/dav/Lernraum",
       "PUT https://cloud.example/dav/Lernraum/x.json",
+      "PROPFIND https://cloud.example/dav/Lernraum/x.json",
       "GET https://cloud.example/dav/Lernraum/x.json",
     ]);
     expect(calls[0]?.auth).toBe(
