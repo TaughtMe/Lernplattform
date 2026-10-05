@@ -346,6 +346,7 @@ describe("setup wizard", () => {
     );
     expect(session.startConnect).toHaveBeenCalledWith(
       "onedrive",
+      null,
       "/lehrer/einstellungen#cloud-abgleich",
     );
     expect(window.sessionStorage.getItem("lernraum:cloud-setup:provider")).toBe(
@@ -463,6 +464,7 @@ describe("active sync", () => {
     );
     expect(session.startConnect).toHaveBeenCalledWith(
       "onedrive",
+      null,
       "/lehrer/einstellungen#cloud-abgleich",
     );
     snapshot = active({ status: "reauth", provider: "google-drive" });

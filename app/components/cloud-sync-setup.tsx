@@ -34,6 +34,7 @@ import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-clas
 import { CloudStatusPanel, useTick } from "../ui/cloud-badge";
 import { Button, Notice, Toggle } from "../ui/primitives";
 import { toBadgeModel } from "./cloud-badge-connected";
+import { useCloudClientIds } from "./cloud-client-ids";
 import { useAreaVisible } from "../release/release-context";
 import { useSyncSnapshot } from "./cloud-sync-client";
 import { offerToStorePassword, SyncPasswordForm } from "./cloud-sync-password";
@@ -143,7 +144,8 @@ const STEPS: readonly { id: Step; label: string }[] = [
 ];
 
 function SetupWizard({ controller }: { controller: SyncController }) {
-  const providers = useMemo(() => cloudProviders(), []);
+  const clientIds = useCloudClientIds();
+  const providers = useMemo(() => cloudProviders(clientIds), [clientIds]);
   const [step, setStep] = useState<Step>("provider");
   const [provider, setProvider] = useState<CloudProviderId>("webdav");
   const [webdav, setWebdav] = useState<WebDavConnection>({
@@ -197,10 +199,10 @@ function SetupWizard({ controller }: { controller: SyncController }) {
     }
     try {
       if (id === "google-drive") {
-        await connectGoogle();
+        await connectGoogle(clientIds["google-drive"]);
         await check();
       } else {
-        await startConnect(id, RETURN_TO);
+        await startConnect(id, clientIds[id], RETURN_TO);
       }
     } catch (failure) {
       setError(
@@ -649,6 +651,7 @@ function ActiveSync({
   snapshot: SyncSnapshot;
   controller: SyncController;
 }) {
+  const clientIds = useCloudClientIds();
   const model = useMemo(() => toBadgeModel(snapshot), [snapshot]);
   const now = useTick(10_000, true);
   const [name, setName] = useState(snapshot.deviceName);
@@ -713,8 +716,11 @@ function ActiveSync({
             onClick={() =>
               void run(async () => {
                 const provider = snapshot.provider as OAuthProviderId;
-                if (provider === "google-drive") await connectGoogle();
-                else await startConnect(provider, RETURN_TO);
+                if (provider === "google-drive") {
+                  await connectGoogle(clientIds["google-drive"]);
+                } else {
+                  await startConnect(provider, clientIds[provider], RETURN_TO);
+                }
                 await controller.syncNow();
               }, "Wieder angemeldet.")
             }

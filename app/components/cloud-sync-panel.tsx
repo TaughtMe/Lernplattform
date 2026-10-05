@@ -24,6 +24,9 @@ import {
 } from "../../src/integrations/cloud-sync/types";
 import { createWebDavTarget } from "../../src/integrations/cloud-sync/webdav";
 import { Button } from "../ui/primitives";
+import { useCloudClientIds } from "./cloud-client-ids";
+import { GoogleDriveLogo, MicrosoftLogo, WebDavIcon } from "./cloud-logos";
+import styles from "./cloud-sync-panel.module.css";
 
 const STORAGE_KEY = "lernraum:cloud-sync";
 
@@ -46,7 +49,8 @@ function readSettings(): StoredSettings {
  * sind. Das Passwort wird nicht gespeichert.
  */
 export function CloudSyncPanel({ area }: { area: "student" }) {
-  const providers = useMemo(() => cloudProviders(), []);
+  const clientIds = useCloudClientIds();
+  const providers = useMemo(() => cloudProviders(clientIds), [clientIds]);
   const [settings, setSettings] = useState<StoredSettings>({
     url: "",
     username: "",
@@ -76,11 +80,11 @@ export function CloudSyncPanel({ area }: { area: "student" }) {
     setMessage("");
     try {
       if (provider === "google-drive") {
-        await connectGoogle();
+        await connectGoogle(clientIds["google-drive"]);
         setConnected((value) => ({ ...value, [provider]: true }));
         setMessage("Google Drive ist verbunden.");
       } else {
-        await startConnect(provider, returnTo);
+        await startConnect(provider, clientIds[provider], returnTo);
       }
     } catch (error) {
       setMessage(
@@ -167,131 +171,148 @@ export function CloudSyncPanel({ area }: { area: "student" }) {
         Lernstand zwischen Geräten abgleichen. Beim Holen wird zusammengeführt,
         nichts geht verloren.
       </p>
-      <ul
-        className="ui-stack"
-        style={{ listStyle: "none", padding: 0, margin: 0 }}
-      >
+      <ul className={styles.list}>
         {providers
           .filter((provider) => provider.id !== "webdav")
-          .map((provider) => (
-            <li key={provider.id} className="ui-between ui-wrap">
-              <span>
-                <strong>{provider.label}</strong>
-                <span className="ui-small ui-muted">
-                  {" "}
-                  · {provider.description}
+          .map((provider) => {
+            const id = provider.id as OAuthProviderId;
+            const name = id === "onedrive" ? "OneDrive" : "Google Drive";
+            return (
+              <li key={id} className={`${styles.provider} ${styles.head}`}>
+                <span className={styles.logo}>
+                  {id === "onedrive" ? <MicrosoftLogo /> : <GoogleDriveLogo />}
                 </span>
-              </span>
-              {provider.id !== "webdav" && provider.available ? (
-                connected[provider.id] ? (
-                  <span className="ui-row ui-wrap">
+                <span className={styles.text}>
+                  <strong>{provider.label}</strong>
+                  <span className="ui-small ui-muted">
+                    {provider.description}
+                  </span>
+                </span>
+                {!provider.available ? (
+                  <span className="ui-small ui-muted">
+                    Konto noch nicht eingerichtet
+                  </span>
+                ) : connected[id] ? (
+                  <span className={styles.actions}>
+                    <span className={styles.connected}>Verbunden</span>
                     <Button
                       disabled={busy}
-                      onClick={() =>
-                        void run("push", provider.id as OAuthProviderId)
-                      }
+                      onClick={() => void run("push", id)}
                     >
-                      In die Cloud sichern
+                      Sichern
                     </Button>
                     <Button
                       variant="ghost"
                       disabled={busy}
-                      onClick={() =>
-                        void run("pull", provider.id as OAuthProviderId)
-                      }
+                      onClick={() => void run("pull", id)}
                     >
-                      Aus der Cloud holen
+                      Holen
                     </Button>
                     <Button
                       variant="ghost"
-                      onClick={() =>
-                        disconnectProvider(provider.id as OAuthProviderId)
-                      }
+                      onClick={() => disconnectProvider(id)}
                     >
                       Trennen
                     </Button>
                   </span>
                 ) : (
-                  <Button
-                    onClick={() =>
-                      void connectProvider(provider.id as OAuthProviderId)
-                    }
-                  >
-                    Mit{" "}
-                    {provider.id === "onedrive" ? "OneDrive" : "Google Drive"}{" "}
-                    verbinden
+                  <Button onClick={() => void connectProvider(id)}>
+                    Mit {name} verbinden
                   </Button>
-                )
-              ) : (
+                )}
+              </li>
+            );
+          })}
+        <li className={styles.provider}>
+          <details className={styles.webdav}>
+            <summary className={styles.head}>
+              <span className={styles.logo}>
+                <WebDavIcon />
+              </span>
+              <span className={styles.text}>
+                <strong>WebDAV (z. B. Nextcloud)</strong>
                 <span className="ui-small ui-muted">
-                  Konto noch nicht eingerichtet
+                  Eigener Server mit Adresse, Benutzername und App-Passwort.
                 </span>
-              )}
-            </li>
-          ))}
+              </span>
+              <svg
+                className={styles.chevron}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </summary>
+            <form
+              className={styles.form}
+              onSubmit={(event) => void run("push", "webdav", event)}
+            >
+              <label className="ui-labeled">
+                Server-Adresse
+                <input
+                  className="ui-input"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="url"
+                  placeholder="https://cloud.schule.de/remote.php/dav/files/name"
+                  value={settings.url}
+                  onChange={(event) =>
+                    setSettings({ ...settings, url: event.target.value })
+                  }
+                />
+              </label>
+              <label className="ui-labeled">
+                Benutzername
+                <input
+                  className="ui-input"
+                  autoComplete="username"
+                  value={settings.username}
+                  onChange={(event) =>
+                    setSettings({ ...settings, username: event.target.value })
+                  }
+                />
+              </label>
+              <label className="ui-labeled">
+                App-Passwort
+                <input
+                  className="ui-input"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              </label>
+              <p className="ui-small ui-muted">
+                Das Passwort wird nicht gespeichert und muss nach dem Neuladen
+                erneut eingegeben werden.
+              </p>
+              <div className="ui-row ui-wrap">
+                <Button type="submit" disabled={busy}>
+                  In die Cloud sichern
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void run("pull", "webdav")}
+                >
+                  Aus der Cloud holen
+                </Button>
+              </div>
+            </form>
+          </details>
+        </li>
       </ul>
-      <form
-        className="ui-stack"
-        onSubmit={(event) => void run("push", "webdav", event)}
-      >
-        <strong>WebDAV (z. B. Nextcloud)</strong>
-        <label className="ui-labeled">
-          Server-Adresse
-          <input
-            className="ui-input"
-            type="url"
-            inputMode="url"
-            autoComplete="url"
-            placeholder="https://cloud.schule.de/remote.php/dav/files/name"
-            value={settings.url}
-            onChange={(event) =>
-              setSettings({ ...settings, url: event.target.value })
-            }
-          />
-        </label>
-        <label className="ui-labeled">
-          Benutzername
-          <input
-            className="ui-input"
-            autoComplete="username"
-            value={settings.username}
-            onChange={(event) =>
-              setSettings({ ...settings, username: event.target.value })
-            }
-          />
-        </label>
-        <label className="ui-labeled">
-          App-Passwort
-          <input
-            className="ui-input"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </label>
-        <p className="ui-small ui-muted">
-          Das Passwort wird nicht gespeichert und muss nach dem Neuladen erneut
-          eingegeben werden.
+      {message ? (
+        <p className="ui-notice" role="status">
+          {message}
         </p>
-        <div className="ui-row ui-wrap">
-          <Button type="submit" disabled={busy}>
-            In die Cloud sichern
-          </Button>
-          <Button
-            variant="ghost"
-            disabled={busy}
-            onClick={() => void run("pull", "webdav")}
-          >
-            Aus der Cloud holen
-          </Button>
-        </div>
-        {message ? (
-          <p className="ui-notice" role="status">
-            {message}
-          </p>
-        ) : null}
-      </form>
+      ) : null}
     </section>
   );
 }

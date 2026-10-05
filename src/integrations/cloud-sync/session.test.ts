@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   completeConnect,
   connectGoogle,
@@ -42,18 +42,14 @@ function env(responses: Array<Response | Error>, now = () => 1_000_000) {
   };
 }
 
-afterEach(() => vi.unstubAllEnvs());
-
 describe("cloud sign-in session", () => {
   it("refuses to connect without a client id", async () => {
-    vi.stubEnv("NEXT_PUBLIC_ONEDRIVE_CLIENT_ID", "");
     await expect(
-      startConnect("onedrive", "/x", vi.fn(), env([]), ORIGIN),
+      startConnect("onedrive", null, "/x", vi.fn(), env([]), ORIGIN),
     ).rejects.toMatchObject({ code: "not-configured" });
   });
 
   it("redirects to Microsoft and finishes with the returned code", async () => {
-    vi.stubEnv("NEXT_PUBLIC_ONEDRIVE_CLIENT_ID", "client-1");
     const e = env([
       Response.json({
         access_token: "a1",
@@ -64,6 +60,7 @@ describe("cloud sign-in session", () => {
     let target = "";
     await startConnect(
       "onedrive",
+      "client-1",
       "/lehrer/einstellungen",
       (url) => (target = url),
       e,
@@ -86,13 +83,12 @@ describe("cloud sign-in session", () => {
   });
 
   it("rejects a wrong state or a declined sign-in", async () => {
-    vi.stubEnv("NEXT_PUBLIC_ONEDRIVE_CLIENT_ID", "client-1");
     const e = env([]);
-    await startConnect("onedrive", "/", vi.fn(), e, ORIGIN);
+    await startConnect("onedrive", "client-1", "/", vi.fn(), e, ORIGIN);
     await expect(
       completeConnect("?code=abc&state=falsch", e, ORIGIN),
     ).rejects.toBeInstanceOf(CloudSyncError);
-    await startConnect("onedrive", "/", vi.fn(), e, ORIGIN);
+    await startConnect("onedrive", "client-1", "/", vi.fn(), e, ORIGIN);
     await expect(
       completeConnect("?error=access_denied", e, ORIGIN),
     ).rejects.toMatchObject({ code: "unauthorized" });
@@ -100,7 +96,6 @@ describe("cloud sign-in session", () => {
   });
 
   it("refreshes an expired access token and keeps the refresh token", async () => {
-    vi.stubEnv("NEXT_PUBLIC_ONEDRIVE_CLIENT_ID", "client-1");
     let clock = 1_000_000;
     const e = env(
       [
@@ -114,7 +109,14 @@ describe("cloud sign-in session", () => {
       () => clock,
     );
     let target = "";
-    await startConnect("onedrive", "/", (url) => (target = url), e, ORIGIN);
+    await startConnect(
+      "onedrive",
+      "client-1",
+      "/",
+      (url) => (target = url),
+      e,
+      ORIGIN,
+    );
     await completeConnect(
       `?code=c&state=${new URL(target).searchParams.get("state")}`,
       e,
@@ -127,12 +129,16 @@ describe("cloud sign-in session", () => {
   });
 
   it("disconnects when the refresh token is rejected", async () => {
-    vi.stubEnv("NEXT_PUBLIC_ONEDRIVE_CLIENT_ID", "client-1");
     const e = env([new Response("{}", { status: 400 })]);
     e.storage.setItem(
       "lernraum:cloud-sync:tokens",
       JSON.stringify({
-        onedrive: { accessToken: "old", refreshToken: "r", expiresAt: 0 },
+        onedrive: {
+          clientId: "client-1",
+          accessToken: "old",
+          refreshToken: "r",
+          expiresAt: 0,
+        },
       }),
     );
     await expect(getAccessToken("onedrive", e)).rejects.toMatchObject({
@@ -143,7 +149,6 @@ describe("cloud sign-in session", () => {
   });
 
   it("connects Google without a secret and asks again after an hour", async () => {
-    vi.stubEnv("NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID", "g-client");
     let clock = 1_000_000;
     const prompts: string[] = [];
     let n = 0;
@@ -155,7 +160,7 @@ describe("cloud sign-in session", () => {
         return { accessToken: `g${++n}`, expiresIn: 3600 };
       },
     };
-    await connectGoogle(e);
+    await connectGoogle("g-client", e);
     expect(isConnected("google-drive", e.storage)).toBe(true);
     expect(await getAccessToken("google-drive", e)).toBe("g1");
     clock += 3_600_000;
@@ -165,12 +170,11 @@ describe("cloud sign-in session", () => {
   });
 
   it("requires a connection before using Google", async () => {
-    vi.stubEnv("NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID", "");
     const e = env([]);
     await expect(getAccessToken("google-drive", e)).rejects.toMatchObject({
       code: "unauthorized",
     });
-    await expect(connectGoogle(e)).rejects.toMatchObject({
+    await expect(connectGoogle(null, e)).rejects.toMatchObject({
       code: "not-configured",
     });
   });

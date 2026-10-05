@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 import { PREVIEW_COOKIE } from "../src/domain/release";
+import { readOAuthClientIds } from "../src/integrations/cloud-sync/oauth";
+import { CloudClientIdsProvider } from "./components/cloud-client-ids";
 import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
 import { AreaFrame } from "./ui/shell/area-frame";
@@ -98,6 +100,7 @@ export default async function RootLayout({
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"];
   const publishableKey = process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"];
   const liveRoomConfig = url && publishableKey ? { url, publishableKey } : null;
+  const cloudClientIds = readOAuthClientIds();
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
@@ -110,7 +113,9 @@ export default async function RootLayout({
       </head>
       <body>
         <ReleaseProvider value={visibility}>
-          <AreaFrame liveRoomConfig={liveRoomConfig}>{children}</AreaFrame>
+          <CloudClientIdsProvider value={cloudClientIds}>
+            <AreaFrame liveRoomConfig={liveRoomConfig}>{children}</AreaFrame>
+          </CloudClientIdsProvider>
           <SiteFooter />
           <ServiceWorkerRegistration />
         </ReleaseProvider>

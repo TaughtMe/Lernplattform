@@ -7,7 +7,6 @@ import { requestGoogleToken } from "./google-identity";
 import {
   buildAuthorizeUrl,
   createPkcePair,
-  oauthClientId,
   tokenRequest,
   type OAuthProviderId,
 } from "./oauth";
@@ -23,12 +22,15 @@ const EXPIRY_MARGIN_MS = 60_000;
 
 type Pending = {
   provider: OAuthProviderId;
+  clientId: string;
   verifier: string;
   state: string;
   returnTo: string;
 };
 
 type StoredToken = {
+  /** Client-ID, mit der verbunden wurde; für das Erneuern ohne Umgebung. */
+  clientId: string;
   accessToken: string;
   refreshToken: string | null;
   expiresAt: number;
@@ -88,12 +90,12 @@ export function disconnect(
 /** Zur Anmeldeseite des Anbieters wechseln. */
 export async function startConnect(
   provider: OAuthProviderId,
+  clientId: string | null,
   returnTo: string,
   navigate: (url: string) => void = (url) => window.location.assign(url),
   env: Pick<Env, "pendingStorage"> = browserEnv(),
   origin?: string,
 ) {
-  const clientId = oauthClientId(provider);
   if (!clientId) {
     throw new CloudSyncError(
       "not-configured",
@@ -102,7 +104,7 @@ export async function startConnect(
   }
   const { verifier, challenge } = await createPkcePair();
   const state = crypto.randomUUID();
-  const pending: Pending = { provider, verifier, state, returnTo };
+  const pending: Pending = { provider, clientId, verifier, state, returnTo };
   env.pendingStorage.setItem(PENDING_KEY, JSON.stringify(pending));
   navigate(
     buildAuthorizeUrl({
@@ -147,10 +149,12 @@ async function requestToken(
 
 function toStored(
   data: TokenResponse,
+  clientId: string,
   previous: StoredToken | undefined,
   now: number,
 ): StoredToken {
   return {
+    clientId,
     accessToken: data.access_token ?? "",
     refreshToken: data.refresh_token ?? previous?.refreshToken ?? null,
     expiresAt: now + (data.expires_in ?? 3600) * 1000,
@@ -180,16 +184,9 @@ export async function completeConnect(
       "Die Anmeldung konnte nicht zugeordnet werden. Bitte erneut verbinden.",
     );
   }
-  const clientId = oauthClientId(pending.provider);
-  if (!clientId) {
-    throw new CloudSyncError(
-      "not-configured",
-      "Dieses Konto ist noch nicht eingerichtet.",
-    );
-  }
   const request = tokenRequest({
     provider: pending.provider,
-    clientId,
+    clientId: pending.clientId,
     redirectUri: redirectUri(origin),
     code,
     verifier: pending.verifier,
@@ -202,7 +199,7 @@ export async function completeConnect(
   );
   writeTokens(env.storage, {
     ...readTokens(env.storage),
-    [pending.provider]: toStored(data, undefined, env.now()),
+    [pending.provider]: toStored(data, pending.clientId, undefined, env.now()),
   });
   return { provider: pending.provider, returnTo: pending.returnTo };
 }
@@ -213,10 +210,10 @@ type GoogleEnv = Pick<Env, "storage" | "now"> & {
 
 /** Google: Popup öffnen (nur aus einem Klick heraus) und Token speichern. */
 export async function connectGoogle(
+  clientId: string | null,
   env: GoogleEnv = browserEnv(),
   prompt: "" | "consent" = "consent",
 ) {
-  const clientId = oauthClientId("google-drive");
   if (!clientId) {
     throw new CloudSyncError(
       "not-configured",
@@ -230,6 +227,7 @@ export async function connectGoogle(
   writeTokens(env.storage, {
     ...readTokens(env.storage),
     "google-drive": {
+      clientId,
       accessToken,
       refreshToken: null,
       expiresAt: env.now() + expiresIn * 1000,
@@ -258,7 +256,7 @@ export async function getAccessToken(
       return stored.accessToken;
     }
     // Ohne Refresh-Token: neues Token über Popup, nur nachfragen wenn nötig.
-    return connectGoogle(env, "");
+    return connectGoogle(stored.clientId, env, "");
   }
   if (!stored) {
     throw new CloudSyncError(
@@ -269,7 +267,7 @@ export async function getAccessToken(
   if (stored.expiresAt - EXPIRY_MARGIN_MS > env.now()) {
     return stored.accessToken;
   }
-  const clientId = oauthClientId(provider);
+  const clientId = stored.clientId;
   if (!stored.refreshToken || !clientId) {
     disconnect(provider, env.storage);
     throw new CloudSyncError(
@@ -294,7 +292,7 @@ export async function getAccessToken(
     }
     throw error;
   }
-  const next = toStored(data, stored, env.now());
+  const next = toStored(data, clientId, stored, env.now());
   writeTokens(env.storage, { ...readTokens(env.storage), [provider]: next });
   return next.accessToken;
 }
