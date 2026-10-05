@@ -88,7 +88,7 @@ function groupBy(
 }
 
 /** Verweise eines Datensatzes auf eine gelöschte ID umschreiben. */
-function rewriteReferences(
+export function rewriteReferences(
   record: SyncRecord,
   table: SyncTable,
   dropped: string,

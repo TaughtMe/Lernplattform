@@ -78,6 +78,14 @@ export function createOneDriveTarget(
     },
     download,
     stat,
+    async remove(name) {
+      const response = await call(fetcher, service, itemUrl(name), {
+        method: "DELETE",
+        headers: auth,
+      });
+      if (response.status === 404) return;
+      if (!response.ok) throw errorForStatus(response.status, service);
+    },
     async read(name): Promise<RemoteFile | null> {
       // Erst die Version, dann der Inhalt (siehe WebDAV).
       const before = await stat(name);
@@ -179,6 +187,18 @@ export function createGoogleDriveTarget(
     async stat(name) {
       const existing = await find(name);
       return existing ? { etag: existing.version } : null;
+    },
+    async remove(name) {
+      const existing = await find(name);
+      if (!existing) return;
+      const response = await call(
+        fetcher,
+        service,
+        `https://www.googleapis.com/drive/v3/files/${existing.id}`,
+        { method: "DELETE", headers: auth },
+      );
+      if (response.status === 404) return;
+      if (!response.ok) throw errorForStatus(response.status, service);
     },
     async read(name) {
       const existing = await find(name);

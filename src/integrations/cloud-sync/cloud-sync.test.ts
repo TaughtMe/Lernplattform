@@ -27,6 +27,7 @@ function memoryTarget(): CloudSyncTarget & { files: Map<string, string> } {
     },
     download: async (name) => files.get(name) ?? null,
     stat: async (name) => (files.has(name) ? { etag: null } : null),
+    remove: async (name) => void files.delete(name),
     read: async (name) =>
       files.has(name) ? { text: files.get(name) as string, etag: null } : null,
   };

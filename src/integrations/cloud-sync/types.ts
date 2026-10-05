@@ -34,6 +34,8 @@ export interface CloudSyncTarget {
   stat(name: string): Promise<{ etag: string | null } | null>;
   /** Inhalt samt Version; `null`, wenn die Datei fehlt. */
   read(name: string): Promise<RemoteFile | null>;
+  /** Datei löschen; eine fehlende Datei ist kein Fehler. */
+  remove(name: string): Promise<void>;
 }
 
 export type CloudSyncErrorCode =

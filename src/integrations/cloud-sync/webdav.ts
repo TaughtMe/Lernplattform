@@ -103,6 +103,11 @@ export function createWebDavTarget(
       return response.text();
     },
     stat,
+    async remove(name) {
+      const response = await request(fileUrl(name), { method: "DELETE" });
+      if (response.status === 404) return;
+      if (!response.ok) throw errorForStatus(response.status, SERVICE);
+    },
     async read(name): Promise<RemoteFile | null> {
       // Erst die Version, dann der Inhalt: Ändert sich die Datei dazwischen,
       // ist die Version älter als der Inhalt und ein späteres Schreiben mit

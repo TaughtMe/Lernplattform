@@ -60,6 +60,10 @@ function memoryCloud(): Cloud {
       const file = files.get(name);
       return file ? { etag: file.etag } : null;
     },
+    async remove(name: string) {
+      cloud.calls.push("remove");
+      files.delete(name);
+    },
     async read(name: string) {
       cloud.calls.push("read");
       if (cloud.offline) throw new CloudSyncError("network", "offline");

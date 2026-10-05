@@ -199,3 +199,72 @@ describe("Google Drive version check", () => {
     expect(await none.read("f.json")).toBeNull();
   });
 });
+
+describe("removing the file", () => {
+  it("deletes on WebDAV and tolerates a missing file", async () => {
+    const { fetcher, calls } = recorder((call) =>
+      call.url.endsWith("weg.json")
+        ? new Response(null, { status: 404 })
+        : new Response(null, { status: 204 }),
+    );
+    const target = createWebDavTarget(
+      { url: "https://cloud.example/dav", username: "u", password: "p" },
+      fetcher,
+    );
+    await target.remove("f.json");
+    await target.remove("weg.json");
+    expect(calls.map((c) => c.method)).toEqual(["DELETE", "DELETE"]);
+    const failing = createWebDavTarget(
+      { url: "https://cloud.example/dav", username: "u", password: "p" },
+      recorder(() => new Response(null, { status: 403 })).fetcher,
+    );
+    await expect(failing.remove("f.json")).rejects.toMatchObject({
+      code: "unauthorized",
+    });
+  });
+
+  it("deletes on OneDrive", async () => {
+    const ok = recorder((call) =>
+      call.url.includes("weg")
+        ? new Response(null, { status: 404 })
+        : new Response(null, { status: 204 }),
+    );
+    const target = createOneDriveTarget("t", ok.fetcher);
+    await target.remove("f.json");
+    await target.remove("weg.json");
+    expect(ok.calls[0]?.method).toBe("DELETE");
+    await expect(
+      createOneDriveTarget(
+        "t",
+        recorder(() => new Response(null, { status: 500 })).fetcher,
+      ).remove("f"),
+    ).rejects.toMatchObject({ code: "server" });
+  });
+
+  it("deletes on Google Drive by id and skips missing files", async () => {
+    const found = recorder((call) => {
+      if (call.method === "DELETE") return new Response(null, { status: 204 });
+      return Response.json({ files: [{ id: "id1", version: "3" }] });
+    });
+    await createGoogleDriveTarget("t", found.fetcher).remove("f.json");
+    expect(found.calls.at(-1)).toMatchObject({ method: "DELETE" });
+    expect(found.calls.at(-1)?.url).toContain("/files/id1");
+    const none = recorder(() => Response.json({ files: [] }));
+    await createGoogleDriveTarget("t", none.fetcher).remove("f.json");
+    expect(none.calls).toHaveLength(1);
+    const gone = recorder((call) =>
+      call.method === "DELETE"
+        ? new Response(null, { status: 404 })
+        : Response.json({ files: [{ id: "id1" }] }),
+    );
+    await createGoogleDriveTarget("t", gone.fetcher).remove("f.json");
+    const broken = recorder((call) =>
+      call.method === "DELETE"
+        ? new Response(null, { status: 500 })
+        : Response.json({ files: [{ id: "id1" }] }),
+    );
+    await expect(
+      createGoogleDriveTarget("t", broken.fetcher).remove("f.json"),
+    ).rejects.toMatchObject({ code: "server" });
+  });
+});

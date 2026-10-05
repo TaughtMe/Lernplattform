@@ -5,6 +5,7 @@
  * unverändert; Änderungen werden beim Abgleich am Hash erkannt.
  */
 import type { SyncDeviceEntry } from "../integrations/cloud-sync/envelope";
+import { rewriteReferences } from "../integrations/cloud-sync/dedupe";
 import { createClock, type Hlc } from "../integrations/cloud-sync/hlc";
 import {
   mergeStates,
@@ -17,6 +18,7 @@ import {
   tablesInScope,
   type LocalSyncRecord,
   type SyncConflict,
+  type SyncData,
   type SyncScope,
   type SyncStamp,
   type SyncTable,
@@ -359,6 +361,130 @@ export function createTeacherSyncStore(database: TeacherClassDatabase) {
     return merged;
   }
 
+  async function markResolved(conflict: SyncConflict) {
+    const state = await getState();
+    await database.syncConflicts.put({
+      ...conflict,
+      status: "resolved",
+      resolvedAt: new Date().toISOString(),
+    });
+    await database.syncState.put({
+      ...state,
+      resolved: [...new Set([...state.resolved, conflict.id])],
+      dirty: true,
+    });
+  }
+
+  /**
+   * Konflikt entscheiden. Die Entscheidung wird als gewöhnliche Änderung
+   * geschrieben und beim nächsten Abgleich verteilt; die ID des Konflikts
+   * wandert mit, damit das andere Gerät ihn nicht erneut zeigt.
+   */
+  async function resolveConflict(
+    id: string,
+    action: ConflictAction,
+  ): Promise<void> {
+    const conflict = await database.syncConflicts.get(id);
+    if (!conflict || conflict.status === "resolved") return;
+    await database.transaction(
+      "rw",
+      [...allTables(), database.syncConflicts, database.syncState],
+      async () => {
+        const target = table(conflict.table);
+        switch (action.type) {
+          case "keep":
+            break;
+          case "use-other": {
+            if (!conflict.other) break;
+            const existing = await target.get(conflict.recordId);
+            const row = rowFromRecord(
+              { table: conflict.table, data: conflict.other.data },
+              existing,
+              { keys: false },
+            );
+            const parsed = SYNC_SCHEMAS[conflict.table].safeParse(row);
+            if (!parsed.success) {
+              throw new Error("Die andere Fassung ist nicht mehr gültig.");
+            }
+            await target.put(parsed.data as never);
+            break;
+          }
+          case "keep-both": {
+            if (!conflict.other || !COPYABLE.has(conflict.table)) break;
+            const copyId = crypto.randomUUID();
+            const label = action.label ?? "andere Fassung";
+            const data: SyncData = {
+              ...conflict.other.data,
+              id: copyId,
+              title:
+                `${String(conflict.other.data["title"] ?? "")} (${label})`.slice(
+                  0,
+                  160,
+                ),
+            };
+            const parsed = SYNC_SCHEMAS[conflict.table].safeParse(data);
+            if (!parsed.success) {
+              throw new Error("Die Kopie ist nicht gültig.");
+            }
+            await target.put(parsed.data as never);
+            break;
+          }
+          case "delete":
+            await target.delete(conflict.recordId);
+            break;
+          case "remove":
+            await target.delete(action.id);
+            break;
+          case "merge": {
+            if (!conflict.otherRecordId) break;
+            await mergeInto(
+              conflict.table,
+              conflict.recordId,
+              conflict.otherRecordId,
+            );
+            break;
+          }
+        }
+        await markResolved(conflict);
+      },
+    );
+  }
+
+  /** `other` in `kept` zusammenlegen: Verweise umschreiben, `other` löschen. */
+  async function mergeInto(name: SyncTable, kept: string, dropped: string) {
+    const holders: SyncTable[] =
+      name === "classes"
+        ? [
+            "contentPackages",
+            "assignments",
+            "members",
+            "submissions",
+            "profiles",
+          ]
+        : name === "contentPackages"
+          ? ["assignments"]
+          : [];
+    for (const holder of holders) {
+      for (const row of await table(holder).toArray()) {
+        const data = rewriteReferences(
+          {
+            table: holder,
+            id: row.id,
+            hlc: "",
+            device: "",
+            hash: "",
+            data: row,
+          },
+          name,
+          dropped,
+          kept,
+        );
+        if (data) await table(holder).put(data as never);
+      }
+    }
+    await table(name).delete(dropped);
+  }
+
   const listConflicts = (status: SyncConflict["status"] = "open") =>
     database.syncConflicts.where("status").equals(status).toArray();
 
@@ -369,10 +495,30 @@ export function createTeacherSyncStore(database: TeacherClassDatabase) {
     apply,
     confirm,
     importBackup,
+    resolveConflict,
     listConflicts,
     table,
   };
 }
+
+export type ConflictAction =
+  /** Die vorläufig gültige Fassung bleibt. */
+  | { type: "keep" }
+  /** Die unterlegene Fassung wird übernommen. */
+  | { type: "use-other" }
+  /** Die unterlegene Fassung wird als Kopie angelegt (Material, Aufgaben). */
+  | { type: "keep-both"; label?: string }
+  /** Gelöscht gegen geändert: doch löschen. */
+  | { type: "delete" }
+  /** Doppelung: einen der beiden Datensätze entfernen. */
+  | { type: "remove"; id: string }
+  /** Doppelung: zusammenlegen. */
+  | { type: "merge" };
+
+const COPYABLE: ReadonlySet<SyncTable> = new Set([
+  "contentPackages",
+  "assignments",
+]);
 
 export type TeacherSyncStore = ReturnType<typeof createTeacherSyncStore>;
 
