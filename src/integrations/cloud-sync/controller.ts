@@ -169,6 +169,7 @@ export function createSyncController(deps: ControllerDeps) {
       target,
       syncKey: key,
       readKey,
+      onStart: () => void emit(),
     });
     if (result.status !== "off" && !result.error) readKey = null;
     return result;
@@ -251,6 +252,12 @@ export function createSyncController(deps: ControllerDeps) {
       return () => void listeners.delete(listener);
     },
     inspectRemote,
+
+    /** Passwort gegen die vorhandene Cloud-Datei prüfen (zweites Gerät). */
+    async checkPassword(password: string, remote: RemoteInfo) {
+      const encryption = remote.header?.encryption;
+      if (encryption) await unlockSyncKey(password, encryption);
+    },
 
     /** Beim Start der App: war der Abgleich an, geht er weiter. */
     async resume() {
@@ -377,6 +384,13 @@ export function createSyncController(deps: ControllerDeps) {
       await emit();
     },
     listConflicts: store.listConflicts,
+    /** Anzeigenamen von Kindern (für Hinweise im Konfliktdialog). */
+    async memberNames(ids: readonly string[]) {
+      const rows = await deps.database.members.bulkGet([...ids]);
+      return Object.fromEntries(
+        rows.flatMap((row) => (row ? [[row.id, row.displayName]] : [])),
+      );
+    },
 
     /** Ausschalten; optional auch die Cloud-Datei löschen. */
     async disable(options: { deleteRemote?: boolean } = {}) {

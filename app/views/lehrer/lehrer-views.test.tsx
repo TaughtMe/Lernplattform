@@ -507,3 +507,16 @@ describe("ClassAssignDialog", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("TeacherFrame cloud slot", () => {
+  it("shows the cloud symbol next to the theme switch and omits it otherwise", () => {
+    const { rerender } = render(
+      frame({ cloud: <button type="button">Cloud-Symbol</button> }),
+    );
+    expect(
+      screen.getAllByRole("button", { name: "Cloud-Symbol" }).length,
+    ).toBeGreaterThan(0);
+    rerender(frame());
+    expect(screen.queryByRole("button", { name: "Cloud-Symbol" })).toBeNull();
+  });
+});

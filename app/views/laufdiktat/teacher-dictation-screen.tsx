@@ -1,5 +1,6 @@
 "use client";
 
+import { CloudSlot } from "../../ui/cloud-slot";
 import {
   useEffect,
   useRef,
@@ -330,6 +331,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
             </button>
           ))}
         </nav>
+        <CloudSlot />
         <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
       </header>
 

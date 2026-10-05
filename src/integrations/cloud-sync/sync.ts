@@ -6,7 +6,10 @@ import {
 import { PersonalLearningDatabase } from "../../storage/personal-learning-events";
 import type { CloudSyncTarget } from "./types";
 
-/** Eine Datei je Rolle im Cloudordner. */
+/**
+ * Eine Datei je Rolle im Cloudordner. Die Lehrer-Datei v1 wird nur noch
+ * einmalig als Ausgangsstand gelesen; geschrieben wird `lernraum-lehrkraft-v2.json`.
+ */
 export const SYNC_FILES = {
   student: "lernraum-schueler-v1.json",
   teacher: "lernraum-lehrkraft-v1.json",
@@ -30,30 +33,4 @@ export async function pullStudentData(
   const text = await target.download(SYNC_FILES.student);
   if (text === null) return null;
   return restorePersonalLearningBackupText(text, database);
-}
-
-type TeacherWorkspace = {
-  exportData(): Promise<unknown>;
-  importData(value: unknown): Promise<unknown>;
-};
-
-/** Lehrerdaten (Klassen, Inhalte, Einstellungen) in die Cloud schreiben. */
-export async function pushTeacherData(
-  target: CloudSyncTarget,
-  workspace: TeacherWorkspace,
-) {
-  const text = JSON.stringify(await workspace.exportData());
-  await target.upload(SYNC_FILES.teacher, text);
-  return { bytes: text.length };
-}
-
-/** Lehrerdaten holen und zusammenführen; `false`, wenn noch keine Datei da ist. */
-export async function pullTeacherData(
-  target: CloudSyncTarget,
-  workspace: TeacherWorkspace,
-) {
-  const text = await target.download(SYNC_FILES.teacher);
-  if (text === null) return false;
-  await workspace.importData(JSON.parse(text));
-  return true;
 }

@@ -9,6 +9,7 @@ declare const styles: {
   readonly areas: string;
   readonly avatar: string;
   readonly bar: string;
+  readonly barActions: string;
   readonly barClass: string;
   readonly barTitle: string;
   readonly barTitles: string;
@@ -41,5 +42,6 @@ declare const styles: {
   readonly profileText: string;
   readonly sidebar: string;
   readonly title: string;
+  readonly "ui-cloud-badge": string;
 };
 export default styles;

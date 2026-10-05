@@ -74,6 +74,8 @@ export type TeacherFrameProps = {
   onNavOpen?: () => void;
   onNavClose?: () => void;
   onToggleTheme?: () => void;
+  /** Cloud-Symbol (nur bei aktivem Abgleich); steht neben Hell/Dunkel. */
+  cloud?: ReactNode;
   children: ReactNode;
 };
 
@@ -131,7 +133,13 @@ export function TeacherFrame(props: TeacherFrameProps) {
               )}
             </span>
             {layout === "fill" ? null : (
-              <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+              <span className={styles.barActions}>
+                {props.cloud}
+                <ThemeSwitch
+                  theme={props.theme}
+                  onToggle={props.onToggleTheme}
+                />
+              </span>
             )}
           </header>
 
@@ -145,6 +153,7 @@ export function TeacherFrame(props: TeacherFrameProps) {
                   </div>
                 ) : null}
                 <span className={styles.headTheme}>
+                  {props.cloud}
                   <ThemeSwitch
                     theme={props.theme}
                     onToggle={props.onToggleTheme}

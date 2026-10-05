@@ -6,13 +6,7 @@ import {
 } from "../../storage/personal-learning-events";
 import { createGoogleDriveTarget, createOneDriveTarget } from "./drives";
 import { buildAuthorizeUrl, createPkcePair, tokenRequest } from "./oauth";
-import {
-  pullStudentData,
-  pullTeacherData,
-  pushStudentData,
-  pushTeacherData,
-  SYNC_FILES,
-} from "./sync";
+import { pullStudentData, pushStudentData, SYNC_FILES } from "./sync";
 import { CloudSyncError, type CloudSyncTarget } from "./types";
 import { createWebDavTarget } from "./webdav";
 
@@ -165,21 +159,5 @@ describe("cloud sync", () => {
       ),
     ).toEqual(["Haus"]);
     expect(await pullStudentData(memoryTarget(), second)).toBeNull();
-  });
-
-  it("round-trips teacher data through the workspace import", async () => {
-    const cloud = memoryTarget();
-    const imported: unknown[] = [];
-    await pushTeacherData(cloud, {
-      exportData: async () => ({ classes: [1] }),
-      importData: async () => undefined,
-    });
-    expect(
-      await pullTeacherData(cloud, {
-        exportData: async () => ({}),
-        importData: async (value) => void imported.push(value),
-      }),
-    ).toBe(true);
-    expect(imported).toEqual([{ classes: [1] }]);
   });
 });

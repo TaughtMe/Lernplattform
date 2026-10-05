@@ -16,16 +16,13 @@ import {
 } from "../../src/integrations/cloud-sync/session";
 import {
   pullStudentData,
-  pullTeacherData,
   pushStudentData,
-  pushTeacherData,
 } from "../../src/integrations/cloud-sync/sync";
 import {
   CloudSyncError,
   type CloudSyncTarget,
 } from "../../src/integrations/cloud-sync/types";
 import { createWebDavTarget } from "../../src/integrations/cloud-sync/webdav";
-import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-class-settings";
 import { Button } from "../ui/primitives";
 
 const STORAGE_KEY = "lernraum:cloud-sync";
@@ -43,11 +40,12 @@ function readSettings(): StoredSettings {
 }
 
 /**
- * Synchronisation über einen Cloudspeicher. WebDAV lässt sich sofort nutzen;
+ * Handabgleich des Lernstands über einen Cloudspeicher (Schüler). Für
+ * Lehrkräfte gibt es den automatischen Abgleich (`cloud-sync-setup.tsx`). WebDAV lässt sich sofort nutzen;
  * OneDrive und Google Drive erscheinen, sobald die Schulkonten eingerichtet
  * sind. Das Passwort wird nicht gespeichert.
  */
-export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
+export function CloudSyncPanel({ area }: { area: "student" }) {
   const providers = useMemo(() => cloudProviders(), []);
   const [settings, setSettings] = useState<StoredSettings>({
     url: "",
@@ -72,8 +70,7 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
     return () => window.clearTimeout(id);
   }, []);
 
-  const returnTo =
-    area === "teacher" ? "/lehrer/einstellungen" : "/lernen/einstellungen";
+  const returnTo = "/lernen/einstellungen";
 
   async function connectProvider(provider: OAuthProviderId) {
     setMessage("");
@@ -129,33 +126,16 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
           : via === "google-drive"
             ? createGoogleDriveTarget(await getAccessToken("google-drive"))
             : createWebDavTarget({ ...settings, password });
-      const target = () => resolved;
-      if (area === "student") {
-        if (action === "push") {
-          await pushStudentData(target());
-          setMessage("Lernstand wurde in der Cloud gesichert.");
-        } else {
-          const result = await pullStudentData(target());
-          setMessage(
-            result === null
-              ? "In der Cloud liegt noch keine Sicherung."
-              : `Zusammengeführt: ${result.added} neu, ${result.updated} aktualisiert.`,
-          );
-        }
+      if (action === "push") {
+        await pushStudentData(resolved);
+        setMessage("Lernstand wurde in der Cloud gesichert.");
       } else {
-        const workspace = createTeacherWorkspaceRepository();
-        if (action === "push") {
-          await pushTeacherData(target(), workspace);
-          setMessage("Lehrerdaten wurden in der Cloud gesichert.");
-        } else {
-          const found = await pullTeacherData(target(), workspace);
-          if (found) window.dispatchEvent(new Event("teacher-data-changed"));
-          setMessage(
-            found
-              ? "Lehrerdaten wurden geholt und zusammengeführt."
-              : "In der Cloud liegt noch keine Sicherung.",
-          );
-        }
+        const result = await pullStudentData(resolved);
+        setMessage(
+          result === null
+            ? "In der Cloud liegt noch keine Sicherung."
+            : `Zusammengeführt: ${result.added} neu, ${result.updated} aktualisiert.`,
+        );
       }
     } catch (error) {
       if (via !== "webdav") {
@@ -184,9 +164,8 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
         Cloud-Synchronisation
       </h2>
       <p className="ui-small ui-muted">
-        {area === "student"
-          ? "Lernstand zwischen Geräten abgleichen. Beim Holen wird zusammengeführt, nichts geht verloren."
-          : "Klassen, Inhalte und Einstellungen zwischen Lehrergeräten abgleichen. Beim Holen wird zusammengeführt."}
+        Lernstand zwischen Geräten abgleichen. Beim Holen wird zusammengeführt,
+        nichts geht verloren.
       </p>
       <ul
         className="ui-stack"

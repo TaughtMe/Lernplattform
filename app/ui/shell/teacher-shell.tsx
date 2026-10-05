@@ -6,6 +6,9 @@ import {
   resolveClassSelection,
   UNASSIGNED,
 } from "../../../src/domain/teacher-content-summary";
+import { CloudBadgeConnected } from "../../components/cloud-badge-connected";
+import { SyncConflictsHost } from "../../components/sync-conflicts-host";
+import { CloudSlotProvider } from "../cloud-slot";
 import { TeacherFrame } from "../../views/lehrer/teacher-frame";
 import type {
   TeacherAreaItem,
@@ -93,10 +96,13 @@ export function TeacherShell({
   });
   const visible = TEACHER_NAV.filter((entry) => visibility[entry.release]);
   const fill = area === "live";
+  // Ohne aktiven Abgleich zeichnet das Symbol nichts.
+  const cloud = <CloudBadgeConnected />;
 
   return (
     <div style={{ height: "100dvh" }}>
       <TeacherFrame
+        cloud={cloud}
         layout={fill ? "fill" : area === "content" ? "titled" : "plain"}
         eyebrow={
           selection === UNASSIGNED
@@ -125,8 +131,13 @@ export function TeacherShell({
         onToggleTheme={toggleTheme}
         footer={fill ? null : <SiteFooter compact />}
       >
+        <SyncConflictsHost />
         {/* Ältere Seiten brauchen die Grundlage `.ui` (Schrift, Abstände). */}
-        {fill ? children : <div className="ui">{children}</div>}
+        {fill ? (
+          <CloudSlotProvider value={cloud}>{children}</CloudSlotProvider>
+        ) : (
+          <div className="ui">{children}</div>
+        )}
       </TeacherFrame>
     </div>
   );

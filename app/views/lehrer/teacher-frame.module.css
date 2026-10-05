@@ -95,10 +95,17 @@
   height: 44px;
   margin: -3px;
 }
-.headTheme {
+.headTheme,
+.barActions {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+.bar :global(.ui-cloud-badge),
+.headTheme :global(.ui-cloud-badge) {
+  width: 44px;
+  height: 44px;
+  margin: -3px;
 }
 /* Ältere Seiten messen mit border-box, nicht wie die Vorlage mit content-box. */
 .plain .main :where(*, ::before, ::after) {

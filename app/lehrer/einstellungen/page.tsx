@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CloudSyncPanel } from "../../components/cloud-sync-panel";
+import { CloudSyncSetup } from "../../components/cloud-sync-setup";
 import { TeacherProfilePanel } from "../../components/teacher-workspace-manager";
 
 export const metadata: Metadata = { title: "Einstellungen" };
@@ -13,7 +13,7 @@ export default function Page() {
         verwendetes Geräteprofil.
       </aside>
       <TeacherProfilePanel />
-      <CloudSyncPanel area="teacher" />
+      <CloudSyncSetup />
     </div>
   );
 }

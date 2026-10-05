@@ -54,6 +54,8 @@ export type EngineDeps = {
   now?: () => number;
   /** Datei im Cloud-Ordner. */
   fileName?: string;
+  /** Die Runde beginnt (Zustand „läuft“ ist gespeichert). */
+  onStart?: () => void;
 };
 
 export type RoundResult = {
@@ -181,6 +183,7 @@ export async function syncOnce(
   }
   try {
     state = await store.patchState({ status: "syncing", error: null });
+    deps.onStart?.();
     const result = await runRound(deps, store, fileName, now, options.force);
     return result;
   } catch (error) {
@@ -217,6 +220,8 @@ async function runRound(
     const pending =
       countPending(local.records) +
       Math.max(0, local.tombstones.length - state.settledTombstones);
+
+    if (pending !== state.pending) await store.patchState({ pending });
 
     // Schneller Weg: Version unverändert und nichts Eigenes offen.
     const sameEncryption =

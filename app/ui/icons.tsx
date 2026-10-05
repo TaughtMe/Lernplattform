@@ -219,6 +219,57 @@ const PATHS = {
   cloud: (
     <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
   ),
+  /* Zustände des Geräte-Abgleichs: gleiche Wolke, jeweils ein anderes Zeichen. */
+  "cloud-check": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <path d="M9.2 13l2 2 3.6-3.8" />
+    </>
+  ),
+  "cloud-sync": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <path d="M9.3 13.4a2.7 2.7 0 0 1 4.6-1.6M14.2 10.4v1.6h-1.6M14.7 14a2.7 2.7 0 0 1-4.6 1.6M9.8 17v-1.6h1.6" />
+    </>
+  ),
+  "cloud-dot": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <circle cx="12" cy="13.3" r="1.7" fill="currentColor" />
+    </>
+  ),
+  "cloud-off": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <path d="M4 3.5l16 17" />
+    </>
+  ),
+  "cloud-alert": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <path d="M12 10.6v3.2M12 16v.1" />
+    </>
+  ),
+  "cloud-lock": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <rect x="9.6" y="13" width="4.8" height="3.6" rx="0.9" />
+      <path d="M10.6 13v-1a1.4 1.4 0 0 1 2.8 0v1" />
+    </>
+  ),
+  "cloud-key": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <circle cx="10.3" cy="13.4" r="1.5" />
+      <path d="M11.8 13.4h3.4M14 13.4v1.5" />
+    </>
+  ),
+  "cloud-x": (
+    <>
+      <path d="M6.5 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.7 8a5 5 0 0 1-.7 10Z" />
+      <path d="M10.2 11.4l3.6 3.6M13.8 11.4l-3.6 3.6" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;
