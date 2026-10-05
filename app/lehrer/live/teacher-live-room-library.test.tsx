@@ -193,7 +193,7 @@ describe("Inhalt aus der Ablage laden", () => {
   });
 });
 
-describe("Ablegen und Löschen", () => {
+describe("Speichern und Löschen", () => {
   it("legt genau ein Paket an, hält die Revision bei Gleichem und erhöht sie bei Änderung", async () => {
     renderRoom();
     await waitHydrated();
@@ -203,9 +203,9 @@ describe("Ablegen und Löschen", () => {
       "Eins. Zwei.",
     );
     await user.type(screen.getByRole("textbox", { name: "Titel" }), "Zahlen");
-    await user.click(screen.getByRole("button", { name: "Ablegen" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
     expect(
-      await screen.findByText("„Zahlen“ ist abgelegt."),
+      await screen.findByText("„Zahlen“ ist gespeichert."),
     ).toBeInTheDocument();
 
     let stored = await library().list();
@@ -217,13 +217,13 @@ describe("Ablegen und Löschen", () => {
       source: "Eins. Zwei.",
     });
 
-    await user.click(screen.getByRole("button", { name: "Ablegen" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
     stored = await library().list();
     expect(stored).toHaveLength(1);
     expect(stored[0]?.revision).toBe(0);
 
     await user.type(screen.getByRole("textbox", { name: "Text" }), " Drei.");
-    await user.click(screen.getByRole("button", { name: "Ablegen" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(async () =>
       expect((await library().list())[0]?.revision).toBe(1),
     );
@@ -241,7 +241,7 @@ describe("Ablegen und Löschen", () => {
     const source = await screen.findByRole("textbox", { name: "Text" });
     await waitFor(() => expect(window.location.search).toBe(""));
     await user.type(source, "Eins. Zwei.");
-    await user.click(screen.getByRole("button", { name: "Ablegen" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(async () => expect(await library().list()).toHaveLength(1));
     expect((await library().list())[0]?.classIds).toEqual([CLASS_A]);
   });
@@ -257,7 +257,7 @@ describe("Ablegen und Löschen", () => {
     const source = await screen.findByRole("textbox", { name: "Text" });
     await waitFor(() => expect(window.location.search).toBe(""));
     await user.type(source, "Eins.");
-    await user.click(screen.getByRole("button", { name: "Ablegen" }));
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(async () => expect(await library().list()).toHaveLength(1));
     expect((await library().list())[0]?.classIds).toBeUndefined();
   });
@@ -266,7 +266,7 @@ describe("Ablegen und Löschen", () => {
     renderRoom();
     await waitHydrated();
     await userEvent.click(
-      await screen.findByRole("button", { name: "Ablegen" }),
+      await screen.findByRole("button", { name: "Speichern" }),
     );
     expect(await screen.findByText(/Gib zuerst etwas ein/)).toBeInTheDocument();
     expect(await library().list()).toEqual([]);

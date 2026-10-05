@@ -1278,6 +1278,13 @@
 .libraryButton:hover {
   border-color: var(--accent);
 }
+.libraryIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+}
 .libraryDanger {
   border-color: var(--bad);
   color: var(--bad);

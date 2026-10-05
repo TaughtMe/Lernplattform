@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Icon, type IconName } from "../../ui/icons";
 import { cx } from "../parts/parts";
 import styles from "./content-library-screen.module.css";
@@ -69,8 +70,12 @@ export type ContentLibraryScreenProps = {
   onKind?: (kind: LibraryKind) => void;
   /** „Weiter“ im Panel: den gewählten Typ anlegen. */
   onCreate?: (kind: LibraryKind) => void;
+  /** Play: den Inhalt starten (Start-Overlay). */
   onOpen?: (id: string) => void;
+  /** Zeile: den Inhalt in der Bearbeitungsansicht öffnen. */
   onEdit?: (id: string) => void;
+  /** Mülleimer: den Inhalt nach Rückfrage aus der Ablage löschen. */
+  onDelete?: (id: string) => void;
   /** Zeigt „Zuordnen“ je Zeile (Ansicht „Nicht zugeordnet“). */
   onAssign?: (id: string) => void;
 };
@@ -93,9 +98,68 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
     onCreate,
     onOpen,
     onEdit,
+    onDelete,
     onAssign,
   } = props;
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const selected = KINDS[kind];
+
+  /** Play und Mülleimer einer Zeile; der Mülleimer fragt vorher nach. */
+  function rowActions(item: LibraryItem) {
+    if (confirmId === item.id) {
+      return (
+        <span
+          className={styles.confirm}
+          role="group"
+          aria-label={`${item.title} löschen bestätigen`}
+        >
+          <span>Löschen?</span>
+          <button
+            type="button"
+            className={cx(styles.edit, styles.danger)}
+            onClick={() => {
+              setConfirmId(null);
+              onDelete?.(item.id);
+            }}
+          >
+            Ja
+          </button>
+          <button
+            type="button"
+            className={styles.edit}
+            onClick={() => setConfirmId(null)}
+          >
+            Nein
+          </button>
+        </span>
+      );
+    }
+    return (
+      <span className={styles.iconActions}>
+        <button
+          type="button"
+          className={cx(styles.iconButton, styles.play)}
+          aria-label={`${item.title} starten`}
+          title="Starten"
+          onClick={() => onOpen?.(item.id)}
+        >
+          <Icon name="play" size={18} />
+        </button>
+        {onDelete ? (
+          <button
+            type="button"
+            className={styles.iconButton}
+            aria-label={`${item.title} löschen`}
+            title="Löschen"
+            onClick={() => setConfirmId(item.id)}
+          >
+            <Icon name="trash" size={18} />
+          </button>
+        ) : null}
+      </span>
+    );
+  }
+
   return (
     <div className={styles.content}>
       <section className={styles.section} aria-labelledby="neu-anlegen">
@@ -159,12 +223,12 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
           <>
             <ul className={cx(styles.list, styles.narrowList)}>
               {items.map((item) => (
-                <li key={item.id}>
+                <li key={item.id} className={styles.rowWrap}>
                   <button
                     type="button"
                     className={styles.rowButton}
-                    aria-label={`${item.title} öffnen`}
-                    onClick={() => onOpen?.(item.id)}
+                    aria-label={`${item.title} bearbeiten`}
+                    onClick={() => onEdit?.(item.id)}
                   >
                     <span className={styles.rowText}>
                       <span className={styles.rowTitle}>{item.title}</span>
@@ -175,13 +239,8 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
                         <span className={styles.used}>{item.used}</span>
                       </span>
                     </span>
-                    <Icon
-                      name="forward"
-                      size={18}
-                      strokeWidth={2}
-                      className={styles.chevron}
-                    />
                   </button>
+                  {rowActions(item)}
                 </li>
               ))}
             </ul>
@@ -191,10 +250,17 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
                   key={item.id}
                   className={cx(styles.row, onAssign && styles.rowAssign)}
                 >
-                  <span className={styles.rowText}>
-                    <span className={styles.rowTitleWide}>{item.title}</span>
-                    <span className={styles.metaLine}>{item.meta}</span>
-                  </span>
+                  <button
+                    type="button"
+                    className={styles.rowMain}
+                    aria-label={`${item.title} bearbeiten`}
+                    onClick={() => onEdit?.(item.id)}
+                  >
+                    <span className={styles.rowText}>
+                      <span className={styles.rowTitleWide}>{item.title}</span>
+                      <span className={styles.metaLine}>{item.meta}</span>
+                    </span>
+                  </button>
                   <span className={styles.pill}>{KINDS[item.kind].label}</span>
                   <span className={styles.usedWide}>{item.used}</span>
                   <span className={styles.actions}>
@@ -208,22 +274,7 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
                         Zuordnen
                       </button>
                     ) : null}
-                    <button
-                      type="button"
-                      className={styles.edit}
-                      aria-label={`${item.title} bearbeiten`}
-                      onClick={() => onEdit?.(item.id)}
-                    >
-                      Bearbeiten
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.openButton}
-                      aria-label={`${item.title} öffnen`}
-                      onClick={() => onOpen?.(item.id)}
-                    >
-                      Öffnen
-                    </button>
+                    {rowActions(item)}
                   </span>
                 </li>
               ))}

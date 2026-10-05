@@ -114,10 +114,10 @@ test("die Ablage zeigt nur die Inhalte der gewählten Klasse", async ({
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator("header").getByText("Klasse 9a")).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Mathe für 9a öffnen" }).first(),
+    page.getByRole("button", { name: "Mathe für 9a bearbeiten" }).first(),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Text für 7b öffnen" }),
+    page.getByRole("button", { name: "Text für 7b bearbeiten" }),
   ).toHaveCount(0);
   await expect(page.getByText("1 Inhalt").first()).toBeVisible();
 });
@@ -149,11 +149,11 @@ test("ein nicht zugeordneter Inhalt wandert in die gewählte Klasse", async ({
 
   await page.goto(`/lehrer?klasse=${CLASS_A}`);
   await expect(
-    page.getByRole("button", { name: "Altes Vokabelpaket öffnen" }).first(),
+    page.getByRole("button", { name: "Altes Vokabelpaket bearbeiten" }).first(),
   ).toBeVisible();
 });
 
-test("Text anlegen, ablegen, wiederfinden und per Bearbeiten umbenennen", async ({
+test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", async ({
   page,
 }) => {
   await seed(page);
@@ -175,20 +175,22 @@ test("Text anlegen, ablegen, wiederfinden und per Bearbeiten umbenennen", async 
     .getByRole("textbox", { name: "Text" })
     .fill("Am Morgen scheint die Sonne.");
   await page.getByRole("textbox", { name: "Titel" }).fill("Sonne am Morgen");
-  await page.getByRole("button", { name: "Ablegen" }).click();
-  await expect(page.getByText("„Sonne am Morgen“ ist abgelegt.")).toBeVisible();
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(
+    page.getByText("„Sonne am Morgen“ ist gespeichert."),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Zurück zu Inhalte" }).click();
   await expect(page).toHaveURL(/\/lehrer$/);
   await page.goto(`/lehrer?klasse=${CLASS_A}`);
   await expect(
-    page.getByRole("button", { name: "Sonne am Morgen öffnen" }).first(),
+    page.getByRole("button", { name: "Sonne am Morgen bearbeiten" }).first(),
   ).toBeVisible();
 
-  // Bearbeiten gibt es am Desktop in der Zeile; mobil führt „Alle Optionen“ zum Inhalt.
-  if (isMobile(page)) return;
+  // Ein Klick auf die Zeile öffnet die Bearbeitungsansicht.
   await page
     .getByRole("button", { name: "Sonne am Morgen bearbeiten" })
+    .first()
     .click();
   await expect(page).toHaveURL(/\/lehrer\/live$/);
   await expect(page.getByRole("textbox", { name: "Titel" })).toHaveValue(
@@ -198,15 +200,15 @@ test("Text anlegen, ablegen, wiederfinden und per Bearbeiten umbenennen", async 
     "Am Morgen scheint die Sonne.",
   );
   await page.getByRole("textbox", { name: "Titel" }).fill("Morgensonne");
-  await page.getByRole("button", { name: "Ablegen" }).click();
-  await expect(page.getByText("„Morgensonne“ ist abgelegt.")).toBeVisible();
+  await page.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText("„Morgensonne“ ist gespeichert.")).toBeVisible();
   await page.getByRole("button", { name: "Zurück zu Inhalte" }).click();
   await page.goto(`/lehrer?klasse=${CLASS_A}`);
   await expect(
-    page.getByRole("button", { name: "Morgensonne öffnen" }).first(),
+    page.getByRole("button", { name: "Morgensonne bearbeiten" }).first(),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Sonne am Morgen öffnen" }),
+    page.getByRole("button", { name: "Sonne am Morgen bearbeiten" }),
   ).toHaveCount(0);
 });
 
@@ -253,7 +255,7 @@ async function openSheet(page: Page) {
   const sheet = page.getByRole("dialog", { name: "Raum öffnen" });
   await expect(async () => {
     await page
-      .getByRole("button", { name: "Text für 7b öffnen" })
+      .getByRole("button", { name: "Text für 7b starten" })
       .last()
       .click();
     await expect(sheet).toBeVisible({ timeout: 1500 });
@@ -271,7 +273,7 @@ for (const theme of ["light", "dark"] as const) {
       await seed(page);
       await page.goto(`/lehrer?klasse=${CLASS_A}`);
       await expect(
-        page.getByRole("button", { name: "Text für 7b öffnen" }).first(),
+        page.getByRole("button", { name: "Text für 7b starten" }).first(),
       ).toBeVisible();
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
     });

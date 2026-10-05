@@ -183,6 +183,16 @@ export function useContentLibrary(): {
     loaded &&
     router.push(`/lehrer/live?neu=${EDITOR_PARAM[value]}&${classParam}`);
 
+  async function remove(id: string) {
+    try {
+      await library.remove(id);
+      await reload();
+      window.dispatchEvent(new Event(DATA_EVENT));
+    } catch {
+      setFailed(true);
+    }
+  }
+
   const assignTarget = loaded?.packages.find(({ id }) => id === assignId);
   const startTarget = loaded?.packages.find(({ id }) => id === startId);
 
@@ -248,6 +258,7 @@ export function useContentLibrary(): {
       onCreate: create,
       onOpen: setStartId,
       onEdit: edit,
+      onDelete: (id) => void remove(id),
       ...(unassignedView
         ? {
             onAssign: (id: string) => {

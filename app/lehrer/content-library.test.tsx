@@ -66,9 +66,9 @@ function renderAt(search = "") {
 /** Titel der mobilen Liste (die Desktop-Liste zeigt dieselben Inhalte). */
 const titles = () =>
   within(screen.getAllByRole("list")[0]!)
-    .queryAllByRole("button")
+    .queryAllByRole("button", { name: / bearbeiten$/ })
     .map((button) =>
-      button.getAttribute("aria-label")!.replace(/ öffnen$/, ""),
+      button.getAttribute("aria-label")!.replace(/ bearbeiten$/, ""),
     );
 
 beforeEach(async () => {
@@ -106,7 +106,7 @@ describe("Inhalte-Seite: Filter nach Klasse", () => {
     await screen.findAllByText("2 Inhalte");
     expect(titles().filter((_, i) => i < 2)).toEqual(["a-neu", "a-alt"]);
     expect(
-      screen.queryByRole("button", { name: "b öffnen" }),
+      screen.queryByRole("button", { name: "b starten" }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Text anlegen für Klasse 7b")).toBeInTheDocument();
   });
@@ -121,7 +121,7 @@ describe("Inhalte-Seite: Filter nach Klasse", () => {
       await screen.findByRole("button", { name: "alt zuordnen" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "a öffnen" }),
+      screen.queryByRole("button", { name: "a starten" }),
     ).not.toBeInTheDocument();
     expect(screen.getAllByText("1 Inhalt").length).toBeGreaterThan(0);
   });
@@ -144,7 +144,7 @@ describe("Inhalte-Seite: Filter nach Klasse", () => {
       entry("a", { classIds: [CLASS_A] }),
     ]);
     renderAt("?klasse=123e4567-e89b-42d3-a456-426614174099");
-    await screen.findAllByRole("button", { name: "b öffnen" });
+    await screen.findAllByRole("button", { name: "b starten" });
     expect(titles()).toEqual(["b"]);
   });
 
@@ -154,7 +154,7 @@ describe("Inhalte-Seite: Filter nach Klasse", () => {
       entry("b", { classIds: [CLASS_B] }),
     ]);
     renderAt();
-    await screen.findAllByRole("button", { name: "a öffnen" });
+    await screen.findAllByRole("button", { name: "a starten" });
     expect(titles()).toEqual(["a"]);
   });
 });
@@ -244,7 +244,7 @@ describe("Inhalte-Seite: Zuordnen", () => {
 });
 
 describe("Inhalte-Seite: Wege", () => {
-  it("führt Bearbeiten, Öffnen und Neu anlegen zum Laufdiktat", async () => {
+  it("führt Zeile (Bearbeiten), Play (Start) und Neu anlegen zum Laufdiktat", async () => {
     await createTeacherContentLibraryRepository().put(
       entry("x", { classIds: [CLASS_A] }),
     );
@@ -252,7 +252,7 @@ describe("Inhalte-Seite: Wege", () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole("button", { name: "x bearbeiten" }),
+      (await screen.findAllByRole("button", { name: "x bearbeiten" }))[0]!,
     );
     expect(window.location.search).toBe(
       `?inhalt=x&schritt=inhalt&klasse=${CLASS_A}`,
@@ -273,6 +273,29 @@ describe("Inhalte-Seite: Wege", () => {
   });
 });
 
+describe("Inhalte-Seite: Löschen", () => {
+  it("löscht erst nach Rückfrage über den Mülleimer", async () => {
+    await createTeacherContentLibraryRepository().putMany([
+      entry("weg", { classIds: [CLASS_A] }),
+      entry("bleibt", { classIds: [CLASS_A] }),
+    ]);
+    renderAt(`?klasse=${CLASS_A}`);
+    const user = userEvent.setup();
+    await user.click(
+      (await screen.findAllByRole("button", { name: "weg löschen" }))[0]!,
+    );
+    await user.click(screen.getAllByRole("button", { name: "Nein" })[0]!);
+    expect(titles()).toHaveLength(2);
+
+    await user.click(
+      (await screen.findAllByRole("button", { name: "weg löschen" }))[0]!,
+    );
+    await user.click(screen.getAllByRole("button", { name: "Ja" })[0]!);
+    await screen.findAllByText("1 Inhalt");
+    expect(titles()).toEqual(["bleibt"]);
+  });
+});
+
 describe("Inhalte-Seite: Start-Overlay", () => {
   async function openSheet() {
     await createTeacherContentLibraryRepository().put(
@@ -280,7 +303,9 @@ describe("Inhalte-Seite: Start-Overlay", () => {
     );
     renderAt(`?klasse=${CLASS_A}`);
     const user = userEvent.setup();
-    const open = await screen.findAllByRole("button", { name: "Tiere öffnen" });
+    const open = await screen.findAllByRole("button", {
+      name: "Tiere starten",
+    });
     await user.click(open[0]!);
     return {
       user,
@@ -328,7 +353,7 @@ describe("Inhalte-Seite: Start-Overlay", () => {
     renderAt("?klasse=ohne");
     const user = userEvent.setup();
     await user.click(
-      (await screen.findAllByRole("button", { name: "Frei öffnen" }))[0]!,
+      (await screen.findAllByRole("button", { name: "Frei starten" }))[0]!,
     );
     const dialog = await screen.findByRole("dialog", { name: "Raum öffnen" });
     expect(within(dialog).getByText(/Nicht zugeordnet/)).toBeInTheDocument();

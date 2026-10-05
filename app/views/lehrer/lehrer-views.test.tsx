@@ -160,12 +160,13 @@ describe("TeacherFrame", () => {
 });
 
 describe("ContentLibraryScreen", () => {
-  it("meldet Art, Anlegen, Öffnen und Bearbeiten", async () => {
+  it("meldet Art, Anlegen, Starten, Bearbeiten und Löschen", async () => {
     const handlers = {
       onKind: vi.fn(),
       onCreate: vi.fn(),
       onOpen: vi.fn(),
       onEdit: vi.fn(),
+      onDelete: vi.fn(),
     };
     render(
       <ContentLibraryScreen
@@ -185,26 +186,31 @@ describe("ContentLibraryScreen", () => {
     await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
     expect(handlers.onCreate).toHaveBeenCalledWith("text");
 
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: "Present Perfect · Unit 3 bearbeiten",
-      }),
-    );
-    expect(handlers.onEdit).toHaveBeenCalledWith("present-perfect");
-    const openPerfect = screen.getAllByRole("button", {
-      name: "Present Perfect · Unit 3 öffnen",
+    // Eine Zeile je Ansicht (mobil, Desktop): die Zeile bearbeitet.
+    const editPerfect = screen.getAllByRole("button", {
+      name: "Present Perfect · Unit 3 bearbeiten",
     });
-    // Eine Zeile je Ansicht: mobil die ganze Zeile, am Desktop der Knopf „Öffnen“.
-    expect(openPerfect).toHaveLength(2);
-    await userEvent.click(openPerfect[1]!);
-    expect(handlers.onOpen).toHaveBeenCalledWith("present-perfect");
-    // Mobile Zeile: die ganze Zeile öffnet.
+    expect(editPerfect).toHaveLength(2);
+    await userEvent.click(editPerfect[1]!);
+    expect(handlers.onEdit).toHaveBeenCalledWith("present-perfect");
+
+    // Play startet.
     await userEvent.click(
       screen.getAllByRole("button", {
-        name: "Halbschriftliche Division öffnen",
+        name: "Halbschriftliche Division starten",
       })[0]!,
     );
     expect(handlers.onOpen).toHaveBeenCalledWith("division");
+
+    // Mülleimer fragt nach, erst „Ja“ löscht.
+    await userEvent.click(
+      screen.getAllByRole("button", {
+        name: "Halbschriftliche Division löschen",
+      })[0]!,
+    );
+    expect(handlers.onDelete).not.toHaveBeenCalled();
+    await userEvent.click(screen.getAllByRole("button", { name: "Ja" })[0]!);
+    expect(handlers.onDelete).toHaveBeenCalledWith("division");
 
     expect(
       screen.queryByRole("button", { name: "Raum öffnen" }),

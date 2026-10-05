@@ -48,6 +48,7 @@ declare const styles: {
   readonly libraryButton: string;
   readonly libraryConfirm: string;
   readonly libraryDanger: string;
+  readonly libraryIcon: string;
   readonly libraryInput: string;
   readonly libraryNotice: string;
   readonly libraryTitle: string;

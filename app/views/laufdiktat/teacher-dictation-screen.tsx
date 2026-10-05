@@ -125,7 +125,7 @@ export type TeacherDictationScreenProps = {
   roomTimes?: RoomTimes;
   /**
    * Ablage im Schritt „Inhalt“ (optional, ohne Angabe zeigt die Ansicht genau
-   * die Vorlage): Titelfeld, „Ablegen“ und beim Bearbeiten „Aus der Ablage
+   * die Vorlage): Titelfeld, „Speichern“ und beim Bearbeiten „Aus der Ablage
    * löschen“ mit Bestätigung.
    */
   title?: string;
@@ -388,7 +388,7 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
           <span className={styles.footerClosed}>Beitritt geschlossen</span>
         ) : (
           <span className={styles.footerNote}>
-            Alles wird automatisch unter „Abgelegt&quot; gespeichert.
+            Alles wird automatisch unter „Abgelegt“ gespeichert.
           </span>
         )}
         <GreenButton
@@ -480,7 +480,7 @@ function KindChips({ content, onKind }: TeacherDictationScreenProps) {
   );
 }
 
-/** Titel, „Ablegen“ und „Aus der Ablage löschen“ (nur mit den Ablage-Props). */
+/** Titel, „Speichern“ und Mülleimer (nur mit den Ablage-Props). */
 function LibraryBar(props: TeacherDictationScreenProps) {
   const [confirming, setConfirming] = useState(false);
   if (!props.onTitle && !props.onSave) return null;
@@ -505,16 +505,18 @@ function LibraryBar(props: TeacherDictationScreenProps) {
           className={styles.libraryButton}
           onClick={props.onSave}
         >
-          Ablegen
+          Speichern
         </button>
       ) : null}
       {props.onDelete && !confirming ? (
         <button
           type="button"
-          className={styles.libraryButton}
+          className={cx(styles.libraryButton, styles.libraryIcon)}
+          aria-label="Aus der Ablage löschen"
+          title="Löschen"
           onClick={() => setConfirming(true)}
         >
-          Aus der Ablage löschen
+          <Icon name="trash" size={18} />
         </button>
       ) : null}
       {props.onDelete && confirming ? (

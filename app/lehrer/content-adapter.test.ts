@@ -45,7 +45,7 @@ describe("Roundtrip je Inhaltsart", () => {
     ],
   ];
 
-  it.each(drafts)("%s übersteht Ablegen und Laden", (_name, draft) => {
+  it.each(drafts)("%s übersteht Speichern und Laden", (_name, draft) => {
     const stored = liveContentToPackage({ draft, newId: "p1", now: NOW });
     const loaded = packageToLiveContent(stored);
     expect(loaded).toMatchObject({

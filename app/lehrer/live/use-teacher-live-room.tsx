@@ -1241,15 +1241,15 @@ export function useTeacherLiveRoom(
   async function saveContent() {
     setError("");
     if (!source.trim()) {
-      setLibraryNotice("Gib zuerst etwas ein, das abgelegt werden kann.");
+      setLibraryNotice("Gib zuerst etwas ein, das gespeichert werden kann.");
       return;
     }
     try {
       const entry = await storeContent(false);
-      setLibraryNotice(`„${entry.title}“ ist abgelegt.`);
+      setLibraryNotice(`„${entry.title}“ ist gespeichert.`);
     } catch {
       setLibraryNotice(
-        "Der Inhalt konnte nicht abgelegt werden. Bitte versuche es noch einmal.",
+        "Der Inhalt konnte nicht gespeichert werden. Bitte versuche es noch einmal.",
       );
     }
   }
@@ -1313,7 +1313,7 @@ export function useTeacherLiveRoom(
       // aufzuhalten; ein Fehler hier stoppt den Raum nicht.
       void storeContent(true).catch(() =>
         setError(
-          "Der Raum ist offen, aber der Inhalt konnte nicht abgelegt werden.",
+          "Der Raum ist offen, aber der Inhalt konnte nicht gespeichert werden.",
         ),
       );
     } catch {

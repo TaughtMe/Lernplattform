@@ -1,12 +1,15 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
   readonly actions: string;
-  readonly chevron: string;
+  readonly confirm: string;
   readonly content: string;
   readonly count: string;
+  readonly danger: string;
   readonly edit: string;
   readonly empty: string;
   readonly footnote: string;
+  readonly iconActions: string;
+  readonly iconButton: string;
   readonly label: string;
   readonly list: string;
   readonly listHead: string;
@@ -14,19 +17,21 @@ declare const styles: {
   readonly narrowList: string;
   readonly next: string;
   readonly notice: string;
-  readonly openButton: string;
   readonly panel: string;
   readonly panelHint: string;
   readonly panelText: string;
   readonly panelTitle: string;
   readonly pill: string;
+  readonly play: string;
   readonly row: string;
   readonly rowAssign: string;
   readonly rowButton: string;
+  readonly rowMain: string;
   readonly rowMeta: string;
   readonly rowText: string;
   readonly rowTitle: string;
   readonly rowTitleWide: string;
+  readonly rowWrap: string;
   readonly section: string;
   readonly tile: string;
   readonly tileIcon: string;
