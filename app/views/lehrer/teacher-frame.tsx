@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
-import { BrandSymbol } from "../../ui/brand";
+import { BrandLogo } from "../../ui/brand";
 import { Icon, type IconName } from "../../ui/icons";
 import { cx, ThemeSwitch, type Theme } from "../parts/parts";
 import { ModalDialog } from "./modal-dialog";
@@ -167,8 +167,8 @@ export function TeacherFrame(props: TeacherFrameProps) {
         <nav className={styles.drawerInner} aria-label="Lehrerbereich">
           <div className={styles.drawerHead}>
             <span className={styles.brand}>
-              <BrandSymbol height={26} onDark />
-              Lernraum · Lehrer
+              <BrandLogo height={30} onDark label="Lernraum" />
+              <span>· Lehrer</span>
             </span>
             <button
               type="button"
@@ -205,8 +205,8 @@ function NavContent({
     <>
       {drawer ? null : (
         <span className={styles.brand}>
-          <BrandSymbol height={26} onDark />
-          Lernraum · Lehrer
+          <BrandLogo height={30} onDark label="Lernraum" />
+          <span>· Lehrer</span>
         </span>
       )}
       <div className={styles.group}>

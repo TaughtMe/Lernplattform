@@ -6,13 +6,13 @@ Kurzfassung für alle, die das Logo verwenden. Die Dateien liegen in `public/bra
 
 **Idee:** Ein L aus Bausteinen. Oben sitzt eine Sprechblase mit drei Punkten, darunter folgen Quadrat, Viertel und Bogen. Lernen heißt miteinander sprechen: Austausch, Diktat, Gespräch zwischen Lehrkraft und Schülern. Die unterschiedlichen Formen machen das L eigenständig.
 
-| Version      | Datei                 | Einsatz                                                  |
-| ------------ | --------------------- | -------------------------------------------------------- |
-| Quer         | `logo-horizontal.svg` | Standard: Kopfzeilen, Dokumente, Präsentationen          |
-| Gestapelt    | `logo-stacked.svg`    | Hochformat, Titelseiten, Schilder                        |
-| Symbol       | `symbol.svg`          | Profilbilder, Sticker, wenn der Name schon im Text steht |
-| Symbol klein | `symbol-small.svg`    | Unter 32 px, ohne Punkte in der Blase                    |
-| Wortmarke    | `wordmark.svg`        | Wenn das Symbol schon in der Nähe steht                  |
+| Version      | Datei                 | Einsatz                                                                                                           |
+| ------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Quer         | `logo-horizontal.svg` | Standard: Kopfzeilen, Dokumente, Präsentationen. Das Symbol ist das L von „Lernraum“, daneben steht nur „ernraum“ |
+| Gestapelt    | `logo-stacked.svg`    | Hochformat, Titelseiten, Schilder                                                                                 |
+| Symbol       | `symbol.svg`          | Profilbilder, Sticker, wenn der Name schon im Text steht                                                          |
+| Symbol klein | `symbol-small.svg`    | Unter 32 px, ohne Punkte in der Blase                                                                             |
+| Wortmarke    | `wordmark.svg`        | Wenn das Symbol schon in der Nähe steht                                                                           |
 
 Jede Version gibt es in vier Ausführungen. Der Suffix steht im Dateinamen:
 
@@ -105,9 +105,9 @@ Die Komponenten in `app/ui/brand.tsx` wählen die Variante nach der Höhe:
 
 `mark.svg` und `mark-reversed.svg` sind das Symbol eng zugeschnitten, im Unterschied zu `symbol.svg`, das für Icons und Profilbilder auf ein Quadrat zentriert ist.
 
-| Stelle                       | Komponente    | Höhe               |
-| ---------------------------- | ------------- | ------------------ |
-| Schüler-Seitenleiste         | `BrandSymbol` | 40 px, mit Punkten |
-| Schüler-Kopfzeile am Handy   | `BrandSymbol` | 26 px, ohne Punkte |
-| Startbildschirm              | `BrandLogo`   | 28 px, ohne Punkte |
-| Lehrer-Leiste und -Schublade | `BrandSymbol` | 26 px, ohne Punkte |
+| Stelle                       | Komponente                  | Höhe               |
+| ---------------------------- | --------------------------- | ------------------ |
+| Schüler-Seitenleiste         | `BrandSymbol`               | 40 px, mit Punkten |
+| Schüler-Kopfzeile am Handy   | `BrandSymbol`               | 26 px, ohne Punkte |
+| Startbildschirm              | `BrandLogo`                 | 28 px, ohne Punkte |
+| Lehrer-Leiste und -Schublade | `BrandLogo` plus „· Lehrer“ | 30 px, ohne Punkte |

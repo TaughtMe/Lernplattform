@@ -131,11 +131,13 @@ w("wordmark-black.svg", word_svg("#000000")); w("wordmark-white.svg", word_svg("
 
 # Lockups
 def horizontal(cols, wcol, title, dots=True):
-    sw = BX1-BX0; sh = BY1-BY0; gap = 44
+    # Das L des Symbols ist das L von „Lernraum“: daneben steht nur „ernraum“.
+    sw = BX1-BX0; sh = BY1-BY0; gap = 30
+    p3, w3 = word_path("ernraum", CAP)
     shs = shapes(dots, -BX0, -BY0)
     wy = sh  # Grundlinie = Unterkante der Steine
-    body = colored(shs, cols) + f'<path fill="{wcol}" transform="translate({f(sw+gap)} {f(wy)})" d="{path}"/>'
-    return svg(f"0 0 {f(sw+gap+wd)} {f(sh)}", body, title)
+    body = colored(shs, cols) + f'<path fill="{wcol}" transform="translate({f(sw+gap)} {f(wy)})" d="{p3}"/>'
+    return svg(f"0 0 {f(sw+gap+w3)} {f(sh)}", body, title)
 def stacked(cols, wcol, title):
     sw = BX1-BX0; sh = BY1-BY0; gap = 56; cap = 74
     p2, w2 = word_path("Lernraum", cap)

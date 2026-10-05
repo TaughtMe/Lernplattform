@@ -136,7 +136,8 @@
 /* ---------- Leiste: Seitenleiste und Schublade ---------- */
 .brand {
   display: flex;
-  align-items: center;
+  /* Grundlinie des Logos (Unterkante der Bausteine) = Grundlinie des Textes */
+  align-items: baseline;
   gap: 10px;
   padding: 0 6px;
   font-size: 15px;

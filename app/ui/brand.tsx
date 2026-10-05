@@ -12,7 +12,7 @@ export const BRAND_DOTS_MIN_HEIGHT = 32;
 const RATIO = {
   mark: 116.98 / 196.76,
   small: 124.98 / 204.76,
-  lockup: 833.15 / 196.76,
+  lockup: 733.36 / 196.76,
 } as const;
 
 export type BrandAsset = { src: string; ratio: number };
@@ -73,7 +73,10 @@ export function BrandSymbol(props: BrandProps) {
   return <BrandImage kind="symbol" {...props} />;
 }
 
-/** Symbol mit Wortmarke „Lernraum“, quer. */
+/**
+ * Symbol mit Wortmarke, quer. Das Symbol ist das L von „Lernraum“, daneben
+ * steht nur „ernraum“.
+ */
 export function BrandLogo(props: BrandProps) {
   return <BrandImage kind="lockup" {...props} />;
 }
