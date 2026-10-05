@@ -1,6 +1,6 @@
 # Umsetzungsplan: Geräteübergreifende Synchronisation für Lehrkräfte
 
-Stand: 05.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `bbb4702`
+Stand: 05.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `a484c35`
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Abschnitt 2 hält die
 Vorgaben der projektverantwortlichen Lehrkraft fest. Abschnitt 9 nennt die
@@ -43,6 +43,9 @@ Für einen echten Mehrgeräte-Betrieb reicht das nicht:
 3. **Kein Änderungsstempel für alle Datensätze.** `members` und `submissions`
    haben kein `updatedAt`. Die Zod-Schemata sind `.strict()`, zusätzliche
    Felder würden die Prüfung brechen.
+   Material (`contentPackages`) hat bereits eine fachliche `revision`, die
+   nur bei inhaltlichen Änderungen steigt (nicht bei Klassenzuordnung oder
+   `lastUsedAt`). Sie bleibt fachlich und ersetzt den Abgleichstempel nicht.
 4. **Klasseneinstellungen fehlen im Export.** `classSettings` (freigeschaltete
    Module) ist nicht in `teacherWorkspaceBackupSchema`.
 5. **Kein Schutz bei gleichzeitigem Schreiben.** `upload` schreibt ohne
@@ -62,7 +65,7 @@ Für einen echten Mehrgeräte-Betrieb reicht das nicht:
    „permanente Echtzeit-Synchronisation aller Schüleraktivitäten mit einem
    Backend“. Der hier geplante Abgleich läuft nicht über ein Lernraum-Backend,
    sondern zwischen den Geräten **einer** Lehrkraft über **ihren** Speicher. Das
-   gehört als neue Entscheidung 51 ins Protokoll (Phase 0).
+   gehört als neue Entscheidung 53 ins Protokoll (Phase 0).
 
 ## 2. Vorgaben der Lehrkraft
 
@@ -311,9 +314,9 @@ Einrichtung empfiehlt das, ohne die anderen auszuschließen.
 
 ### 4.8 Cloud-Symbol und Statusmenü
 
-Sichtbar im Kopf des Lehrerbereichs (`ui-teacher__top` in
-`app/ui/shell/teacher-shell.tsx`) und in der Seitenleiste, auch im
-Vollflächen-Modus des Live-Raums. Ohne aktiven Abgleich gibt es kein Symbol.
+Sichtbar in der Kopfleiste des Lehrerrahmens neben dem Hell/Dunkel-Schalter
+(`app/views/lehrer/teacher-frame.tsx`, Daten über `TeacherShell` in
+`app/ui/shell/teacher-shell.tsx`), auch im Vollflächen-Modus des Live-Raums. Ohne aktiven Abgleich gibt es kein Symbol.
 
 | Zustand         | Symbol                   | Text (für Screenreader und Tooltip)           |
 | --------------- | ------------------------ | --------------------------------------------- |
@@ -379,7 +382,7 @@ Phase 4 die Oberfläche freigibt.
 
 **Phase 0 — Entscheidung und Sicherheit (Dokumentation)**
 
-- Entscheidung 51 im Vault: geräteübergreifender Abgleich der Lehrerdaten über
+- Entscheidung 53 im Vault: geräteübergreifender Abgleich der Lehrerdaten über
   die Cloud der Lehrkraft, ohne Lernraum-Server, optional, Verschlüsselung
   empfohlen. Abgrenzung zum Nicht-Ziel „Echtzeit-Synchronisation mit Backend“.
 - `docs/security-risk-register.md`: SR-003 „Schlüssel und Schülerdaten in
@@ -424,8 +427,8 @@ Phase 4 die Oberfläche freigibt.
 
 **Phase 4 — Oberfläche**
 
-- Cloud-Symbol und Statusmenü (4.8), erst rein in `/entwicklung/ui`, dann im
-  `TeacherShell`.
+- Cloud-Symbol und Statusmenü (4.8), erst rein in `/entwicklung/ui`, dann als
+  Prop von `TeacherFrame`, befüllt in `TeacherShell`.
 - Einrichtung als Schrittfolge in `/lehrer/einstellungen`: Anbieter →
   Verbindung testen → Umfang (4.1) → Verschlüsselung (Empfehlung,
   Passwort zweimal, „auf diesem Gerät merken“) → Gerätename → Hinweis zur
