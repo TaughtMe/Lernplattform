@@ -290,6 +290,61 @@ abgeglichen, damit das andere Gerät den Konflikt nicht erneut zeigt.
 - Ohne Verschlüsselung bleiben die Daten nur durch das Cloud-Konto geschützt.
   Die Einrichtung sagt das in einem Satz.
 
+#### Zusammenspiel mit Passwortmanagern
+
+Ziel: Ist ein Passwortmanager vorhanden (im Browser oder als Erweiterung wie
+1Password, Bitwarden, iCloud-Schlüsselbund), schlägt er beim Anlegen ein
+starkes Passwort vor, bietet danach das Speichern an und füllt es auf dem
+zweiten Gerät selbst aus. Ein Passwort, das im Manager liegt, ist auch auf
+der Tafel verfügbar und wird seltener vergessen.
+
+Der Lernraum kann das nur ermöglichen, nicht erzwingen: Ob und wann sich der
+Manager meldet, entscheidet der Browser bzw. die Erweiterung. Dafür gilt:
+
+- **Echtes Formular.** Jede Passworteingabe steht in einem `<form>` mit
+  Absende-Knopf und wird über `submit` abgeschickt. Felder werden nicht per
+  Skript umbenannt oder nachträglich vertauscht.
+- **Benutzername als Anker.** Manager speichern Paare aus Name und Passwort.
+  Das Formular enthält deshalb ein schreibgeschütztes, sichtbares Feld
+  `autocomplete="username"` mit einem festen Namen, z. B.
+  „Lernraum-Abgleich · <Cloud-Konto>“. So liegt das Abgleich-Passwort im
+  Manager getrennt vom WebDAV-App-Passwort (das mit dem WebDAV-Benutzernamen
+  gespeichert wird) und lässt sich eindeutig wiederfinden.
+- **Anlegen:** beide Felder `type="password"`, `autocomplete="new-password"`,
+  `minlength="12"`, keine Pflicht-Zeichenklassen, damit erzeugte Passwörter
+  nie abgelehnt werden. Zusätzlich `passwordrules="minlength: 12;"`, damit
+  der iCloud-Schlüsselbund passende Vorschläge macht. Die Wiederholung wird
+  vom Manager mit ausgefüllt.
+- **Entsperren auf einem weiteren Gerät:** ein Feld `type="password"`,
+  `autocomplete="current-password"`, gleicher Benutzername wie oben.
+- **Passwort ändern:** altes Passwort `current-password`, neues
+  `new-password`, gleicher Benutzername. Manager bieten dann „Passwort
+  aktualisieren“ statt eines zweiten Eintrags an.
+- **Speichern auslösen:** Viele Manager fragen erst, wenn das Formular nach dem
+  Absenden verschwindet. Nach erfolgreicher Prüfung (`keyCheck`) wechselt die
+  Einrichtung deshalb zum nächsten Schritt und entfernt das Formular aus dem
+  DOM. Bei falschem Passwort bleibt es stehen, damit kein falsches Passwort
+  gespeichert wird.
+- **Credential Management API, wo vorhanden** (Chromium-Browser): Nach
+  erfolgreicher Prüfung zusätzlich
+  `navigator.credentials.store(new PasswordCredential({ id, password, name }))`;
+  beim Entsperren `navigator.credentials.get({ password: true,
+mediation: "optional" })` als Vorschlag. Nur mit Feature-Prüfung
+  (`"PasswordCredential" in window`), sonst gelten die Formularregeln allein.
+- **Nichts verhindern:** Einfügen ist erlaubt, kein `autocomplete="off"`, ein
+  Knopf „Passwort anzeigen“ hilft beim Abtippen von einem anderen Gerät.
+- **Hinweistext** im Schritt Verschlüsselung: „Speichere das Passwort in
+  deinem Passwortmanager. Er überträgt es auch auf deine anderen Geräte. Ohne
+  das Passwort lassen sich die Daten in der Cloud nicht mehr öffnen.“
+- **Geteilte Tafel:** Ist die Tafel ein Gerät mit gemeinsamem Konto für
+  mehrere Lehrkräfte, soll das Passwort dort **nicht** im Browser gespeichert
+  werden. Die Einrichtung fragt deshalb „Nutzen auch andere dieses Gerät mit
+  demselben Konto?“. Bei Ja erscheint dieser Hinweis, und „Auf diesem Gerät
+  merken“ ist aus.
+
+Dieselben Regeln gelten für das WebDAV-App-Passwort (Benutzername =
+WebDAV-Benutzer, `current-password`).
+
 ### 4.7 Zugangsdaten und Anmeldung
 
 Für automatischen Abgleich müssen Zugangsdaten das Neuladen überleben:
@@ -431,7 +486,8 @@ Phase 4 die Oberfläche freigibt.
   Prop von `TeacherFrame`, befüllt in `TeacherShell`.
 - Einrichtung als Schrittfolge in `/lehrer/einstellungen`: Anbieter →
   Verbindung testen → Umfang (4.1) → Verschlüsselung (Empfehlung,
-  Passwort zweimal, „auf diesem Gerät merken“) → Gerätename → Hinweis zur
+  Passwort zweimal mit Passwortmanager-Unterstützung nach 4.6, „auf diesem
+  Gerät merken“, „Geteiltes Gerät“) → Gerätename → Hinweis zur
   Verantwortung mit Bestätigung → erster Abgleich.
 - Zweites Gerät: gleicher Ablauf; findet die Einrichtung eine vorhandene
   Datei, fragt sie nur noch nach Passwort und Gerätename. Liegen auf dem
@@ -448,6 +504,14 @@ Phase 4 die Oberfläche freigibt.
   zeigt es nach dem nächsten Takt; Konflikt erzeugen und lösen; falsches
   Passwort), axe-Prüfung von Symbol, Sheet und Dialog, Design-Referenz für
   Symbolzustände.
+- Tests Passwortmanager: Komponententests prüfen `autocomplete`,
+  Benutzername-Feld, `minlength`, `passwordrules` und dass das Formular nach
+  Erfolg verschwindet bzw. bei Fehler stehen bleibt. Das tatsächliche
+  Speichern lässt sich nicht automatisiert testen; im Pilot einmal von Hand in
+  Chrome, Edge, Firefox, Safari (iCloud-Schlüsselbund) und mit einer
+  Erweiterung (Bitwarden oder 1Password) prüfen: Vorschlag beim Anlegen,
+  Speichern-Angebot, Ausfüllen auf dem zweiten Gerät, Aktualisieren nach
+  Passwortwechsel.
 
 **Phase 5 — OAuth-Anbieter**
 
