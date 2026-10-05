@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { LibrarySortKey } from "../../../src/domain/teacher-content-summary";
 import { Icon, type IconName } from "../../ui/icons";
 import { cx } from "../parts/parts";
 import styles from "./content-library-screen.module.css";
@@ -11,9 +12,20 @@ export type LibraryItem = {
   kind: LibraryKind;
   /** Metazeile am Desktop, z. B. „42 Vokabeln · Englisch“. */
   meta: string;
-  /** Datum der letzten Nutzung, z. B. „14.09.“. */
-  used: string;
+  /** Datum der letzten Änderung, z. B. „14.09.“. */
+  date: string;
+  /** Datum der letzten Durchführung (Raumstart); `null` = noch nie. */
+  ran: string | null;
 };
+
+export type { LibrarySortKey };
+
+const SORTS: ReadonlyArray<[LibrarySortKey, string]> = [
+  ["title", "Titel"],
+  ["kind", "Aufgabentyp"],
+  ["date", "Datum"],
+  ["ran", "Zuletzt durchgeführt"],
+];
 
 const KINDS: Record<
   LibraryKind,
@@ -51,6 +63,11 @@ const KINDS: Record<
   },
 };
 
+/** Letzte Durchführung: nur das jüngste Datum, sonst „noch nie“. */
+function ranText(item: LibraryItem) {
+  return item.ran ? `Durchgeführt ${item.ran}` : "Noch nie durchgeführt";
+}
+
 const KIND_ORDER: readonly LibraryKind[] = ["text", "vocabulary", "math"];
 
 export type ContentLibraryScreenProps = {
@@ -78,6 +95,16 @@ export type ContentLibraryScreenProps = {
   onDelete?: (id: string) => void;
   /** Zeigt „Zuordnen“ je Zeile (Ansicht „Nicht zugeordnet“). */
   onAssign?: (id: string) => void;
+  /** Aktive Sortierung; `null` = zuletzt genutzt zuerst. */
+  sortKey?: LibrarySortKey | null;
+  sortDir?: 1 | -1;
+  /** Gleicher Schlüssel kehrt die Richtung um. */
+  onSort?: (key: LibrarySortKey) => void;
+  onResetSort?: () => void;
+  /** Ziele der Massenaktion „Verschieben“ (Klassen und „Nicht zugeordnet“). */
+  moveTargets?: ReadonlyArray<{ id: string; name: string }>;
+  onDeleteMany?: (ids: readonly string[]) => void;
+  onMoveMany?: (ids: readonly string[], target: string) => void;
 };
 
 /**
@@ -100,12 +127,46 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
     onEdit,
     onDelete,
     onAssign,
+    sortKey = null,
+    sortDir = -1,
+    onSort,
+    onResetSort,
+    moveTargets = [],
+    onDeleteMany,
+    onMoveMany,
   } = props;
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<readonly string[]>([]);
+  const [confirmMany, setConfirmMany] = useState(false);
+  const [moveTarget, setMoveTarget] = useState("");
+  // Gelöschte oder verschobene Inhalte verschwinden auch aus der Auswahl.
+  const present = picked.filter((id) => items.some((item) => item.id === id));
+  const bulk = Boolean(onDeleteMany || onMoveMany);
+
+  function leaveSelecting() {
+    setSelecting(false);
+    setPicked([]);
+    setConfirmMany(false);
+    setMoveTarget("");
+  }
+  function toggle(id: string) {
+    setConfirmMany(false);
+    setPicked((current) =>
+      current.includes(id)
+        ? current.filter((value) => value !== id)
+        : [...current, id],
+    );
+  }
+  function pickRow(id: string) {
+    if (selecting) toggle(id);
+    else onEdit?.(id);
+  }
   const selected = KINDS[kind];
 
   /** Play und Mülleimer einer Zeile; der Mülleimer fragt vorher nach. */
   function rowActions(item: LibraryItem) {
+    if (selecting) return null;
     if (confirmId === item.id) {
       return (
         <span
@@ -148,7 +209,7 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
         {onDelete ? (
           <button
             type="button"
-            className={styles.iconButton}
+            className={cx(styles.iconButton, styles.trash)}
             aria-label={`${item.title} löschen`}
             title="Löschen"
             onClick={() => setConfirmId(item.id)}
@@ -215,6 +276,145 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
           </span>
           <span className={styles.count}>{countLabel}</span>
         </div>
+        {items.length > 0 ? (
+          <div className={styles.toolbar}>
+            <label className={styles.sortPick}>
+              <span className={styles.sortLabel}>Sortieren nach</span>
+              <select
+                className={styles.sortSelect}
+                value={sortKey ?? ""}
+                onChange={(event) => {
+                  const value = event.target.value as LibrarySortKey | "";
+                  if (!value) onResetSort?.();
+                  else if (value !== sortKey) onSort?.(value);
+                }}
+              >
+                <option value="">Zuletzt genutzt</option>
+                {SORTS.map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {sortKey ? (
+              <button
+                type="button"
+                className={styles.dirButton}
+                aria-label={
+                  sortDir === 1
+                    ? "Aufsteigend sortiert, umkehren"
+                    : "Absteigend sortiert, umkehren"
+                }
+                title="Richtung umkehren"
+                onClick={() => onSort?.(sortKey)}
+              >
+                {sortDir === 1 ? "↑" : "↓"}
+              </button>
+            ) : null}
+            {bulk ? (
+              <button
+                type="button"
+                className={cx(styles.edit, styles.selectToggle)}
+                aria-pressed={selecting}
+                onClick={() =>
+                  selecting ? leaveSelecting() : setSelecting(true)
+                }
+              >
+                {selecting ? "Fertig" : "Auswählen"}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {selecting ? (
+          <div
+            className={styles.bulkBar}
+            role="group"
+            aria-label="Auswahl bearbeiten"
+          >
+            <label className={styles.bulkAll}>
+              <input
+                type="checkbox"
+                checked={items.length > 0 && present.length === items.length}
+                onChange={(event) => {
+                  setConfirmMany(false);
+                  setPicked(
+                    event.target.checked ? items.map(({ id }) => id) : [],
+                  );
+                }}
+              />
+              Alle
+            </label>
+            <span className={styles.bulkCount} aria-live="polite">
+              {present.length} ausgewählt
+            </span>
+            {onMoveMany ? (
+              <>
+                <select
+                  className={styles.sortSelect}
+                  aria-label="Verschieben nach"
+                  value={moveTarget}
+                  onChange={(event) => setMoveTarget(event.target.value)}
+                >
+                  <option value="">Verschieben nach …</option>
+                  {moveTargets.map(({ id, name }) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={styles.edit}
+                  disabled={present.length === 0 || !moveTarget}
+                  onClick={() => {
+                    onMoveMany(present, moveTarget);
+                    leaveSelecting();
+                  }}
+                >
+                  Verschieben
+                </button>
+              </>
+            ) : null}
+            {onDeleteMany ? (
+              confirmMany ? (
+                <span
+                  className={styles.confirm}
+                  role="group"
+                  aria-label="Löschen bestätigen"
+                >
+                  <span>{present.length} löschen?</span>
+                  <button
+                    type="button"
+                    className={cx(styles.edit, styles.danger)}
+                    onClick={() => {
+                      onDeleteMany(present);
+                      leaveSelecting();
+                    }}
+                  >
+                    Ja
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.edit}
+                    onClick={() => setConfirmMany(false)}
+                  >
+                    Nein
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className={cx(styles.edit, styles.danger)}
+                  disabled={present.length === 0}
+                  onClick={() => setConfirmMany(true)}
+                >
+                  Auswahl löschen
+                </button>
+              )
+            ) : null}
+          </div>
+        ) : null}
         {items.length === 0 ? (
           <p className={styles.empty}>
             {emptyText ?? "Hier ist noch nichts abgelegt."}
@@ -224,11 +424,24 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
             <ul className={cx(styles.list, styles.narrowList)}>
               {items.map((item) => (
                 <li key={item.id} className={styles.rowWrap}>
+                  {selecting ? (
+                    <input
+                      type="checkbox"
+                      className={styles.check}
+                      aria-label={`${item.title} auswählen`}
+                      checked={picked.includes(item.id)}
+                      onChange={() => toggle(item.id)}
+                    />
+                  ) : null}
                   <button
                     type="button"
                     className={styles.rowButton}
-                    aria-label={`${item.title} bearbeiten`}
-                    onClick={() => onEdit?.(item.id)}
+                    aria-label={
+                      selecting
+                        ? `${item.title} markieren`
+                        : `${item.title} bearbeiten`
+                    }
+                    onClick={() => pickRow(item.id)}
                   >
                     <span className={styles.rowText}>
                       <span className={styles.rowTitle}>{item.title}</span>
@@ -236,7 +449,8 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
                         <span className={styles.pill}>
                           {KINDS[item.kind].label}
                         </span>
-                        <span className={styles.used}>{item.used}</span>
+                        <span className={styles.used}>{item.date}</span>
+                        <span className={styles.used}>{ranText(item)}</span>
                       </span>
                     </span>
                   </button>
@@ -250,19 +464,37 @@ export function ContentLibraryScreen(props: ContentLibraryScreenProps) {
                   key={item.id}
                   className={cx(styles.row, onAssign && styles.rowAssign)}
                 >
-                  <button
-                    type="button"
-                    className={styles.rowMain}
-                    aria-label={`${item.title} bearbeiten`}
-                    onClick={() => onEdit?.(item.id)}
-                  >
-                    <span className={styles.rowText}>
-                      <span className={styles.rowTitleWide}>{item.title}</span>
-                      <span className={styles.metaLine}>{item.meta}</span>
-                    </span>
-                  </button>
+                  <span className={styles.rowLead}>
+                    {selecting ? (
+                      <input
+                        type="checkbox"
+                        className={styles.check}
+                        aria-label={`${item.title} auswählen`}
+                        checked={picked.includes(item.id)}
+                        onChange={() => toggle(item.id)}
+                      />
+                    ) : null}
+                    <button
+                      type="button"
+                      className={styles.rowMain}
+                      aria-label={
+                        selecting
+                          ? `${item.title} markieren`
+                          : `${item.title} bearbeiten`
+                      }
+                      onClick={() => pickRow(item.id)}
+                    >
+                      <span className={styles.rowText}>
+                        <span className={styles.rowTitleWide}>
+                          {item.title}
+                        </span>
+                        <span className={styles.metaLine}>{item.meta}</span>
+                      </span>
+                    </button>
+                  </span>
                   <span className={styles.pill}>{KINDS[item.kind].label}</span>
-                  <span className={styles.usedWide}>{item.used}</span>
+                  <span className={styles.usedWide}>Geändert {item.date}</span>
+                  <span className={styles.usedWide}>{ranText(item)}</span>
                   <span className={styles.actions}>
                     {onAssign ? (
                       <button

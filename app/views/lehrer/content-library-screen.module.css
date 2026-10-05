@@ -200,18 +200,109 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 0;
+  border: 1px solid var(--line2);
   border-radius: 10px;
-  background: transparent;
+  background: var(--surface);
   color: var(--ink2);
   cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    color 0.15s;
 }
-.iconButton:hover {
-  background: var(--bg);
-  color: var(--ink);
-}
+/* Play leuchtet grün, der Mülleimer rot – bei Maus und Tastatur. */
 .play {
   color: var(--green);
+}
+.play:hover,
+.play:focus-visible {
+  border-color: var(--green);
+  background: var(--accent-bg);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--green) 28%, transparent),
+    0 0 12px color-mix(in srgb, var(--green) 55%, transparent);
+}
+.trash:hover,
+.trash:focus-visible {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--bad) 28%, transparent),
+    0 0 12px color-mix(in srgb, var(--bad) 55%, transparent);
+}
+.check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0 0 0 14px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.sortPick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.sortLabel {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.sortSelect,
+.dirButton {
+  min-height: 44px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.sortSelect {
+  padding: 0 10px;
+}
+.dirButton {
+  width: 44px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.dirButton:hover {
+  border-color: var(--accent);
+}
+.selectToggle {
+  margin-left: auto;
+  min-height: 44px;
+}
+.bulkBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--surface2);
+  font-size: 13px;
+}
+.bulkAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+.bulkAll input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--green);
+}
+.bulkCount {
+  color: var(--ink2);
 }
 .confirm {
   display: flex;
@@ -222,7 +313,36 @@
   font-size: 12.5px;
   color: var(--ink2);
 }
-.danger {
+.edit {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--ink2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.edit:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.edit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.rowLead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.rowLead .check {
+  margin: 0;
+}
+.edit.danger {
   border-color: var(--bad);
   color: var(--bad);
 }
@@ -300,14 +420,14 @@
   }
   .row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 120px 110px 132px;
+    grid-template-columns: minmax(0, 1fr) 120px 130px 170px 176px;
     align-items: center;
     gap: 14px;
     padding: 14px 16px;
     border-top: 1px solid var(--line);
   }
   .rowAssign {
-    grid-template-columns: minmax(0, 1fr) 120px 110px 260px;
+    grid-template-columns: minmax(0, 1fr) 120px 130px 170px 260px;
   }
   .row .rowText {
     gap: 2px;
@@ -332,24 +452,6 @@
   }
   .iconActions {
     padding-right: 0;
-  }
-  .edit {
-    overflow-wrap: normal;
-    white-space: nowrap;
-    min-height: 36px;
-    padding: 0 12px;
-    border-radius: 9px;
-    font-size: 12.5px;
-    cursor: pointer;
-  }
-  .edit {
-    border: 1px solid var(--line2);
-    background: var(--bg);
-    color: var(--ink2);
-    font-weight: 600;
-  }
-  .edit:hover {
-    border-color: var(--accent);
   }
   /* Dunkel: Das Grün der Vorlage hätte auf dunklem Grund zu wenig Kontrast. */
   :global([data-theme="dark"]) .play {

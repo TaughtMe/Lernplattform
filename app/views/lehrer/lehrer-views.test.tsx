@@ -217,6 +217,118 @@ describe("ContentLibraryScreen", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("zeigt Änderung und letzte Durchführung getrennt", () => {
+    render(
+      <ContentLibraryScreen
+        kind="text"
+        items={[
+          { ...DEMO_ITEMS[0]!, date: "02.09.", ran: "14.09." },
+          { ...DEMO_ITEMS[1]!, date: "03.09.", ran: null },
+        ]}
+        countLabel={DEMO_COUNT}
+      />,
+    );
+    expect(screen.getAllByText("Durchgeführt 14.09.").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("Noch nie durchgeführt").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText("Geändert 02.09.").length).toBeGreaterThan(0);
+  });
+
+  it("sortiert über Auswahl und Richtungsknopf", async () => {
+    const onSort = vi.fn();
+    const onResetSort = vi.fn();
+    const { rerender } = render(
+      <ContentLibraryScreen
+        kind="text"
+        items={DEMO_ITEMS}
+        countLabel={DEMO_COUNT}
+        onSort={onSort}
+        onResetSort={onResetSort}
+      />,
+    );
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "Sortieren nach" }),
+      "Aufgabentyp",
+    );
+    expect(onSort).toHaveBeenCalledWith("kind");
+    expect(
+      screen.queryByRole("button", { name: /umkehren/ }),
+    ).not.toBeInTheDocument();
+    rerender(
+      <ContentLibraryScreen
+        kind="text"
+        items={DEMO_ITEMS}
+        countLabel={DEMO_COUNT}
+        sortKey="kind"
+        sortDir={1}
+        onSort={onSort}
+        onResetSort={onResetSort}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Aufsteigend sortiert, umkehren" }),
+    );
+    expect(onSort).toHaveBeenLastCalledWith("kind");
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "Sortieren nach" }),
+      "Zuletzt genutzt",
+    );
+    expect(onResetSort).toHaveBeenCalled();
+  });
+
+  it("wählt mehrere Inhalte aus, verschiebt und löscht sie nach Rückfrage", async () => {
+    const onDeleteMany = vi.fn();
+    const onMoveMany = vi.fn();
+    render(
+      <ContentLibraryScreen
+        kind="text"
+        items={DEMO_ITEMS}
+        countLabel={DEMO_COUNT}
+        moveTargets={[
+          { id: "k1", name: "Klasse 7b" },
+          { id: "ohne", name: "Nicht zugeordnet" },
+        ]}
+        onDeleteMany={onDeleteMany}
+        onMoveMany={onMoveMany}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Auswählen" }));
+    // Im Auswahlmodus gibt es weder Play noch Mülleimer je Zeile.
+    expect(
+      screen.queryByRole("button", { name: /starten$/ }),
+    ).not.toBeInTheDocument();
+    const first = DEMO_ITEMS[0]!;
+    await userEvent.click(
+      screen.getAllByRole("checkbox", { name: `${first.title} auswählen` })[0]!,
+    );
+    expect(screen.getByText("1 ausgewählt")).toBeInTheDocument();
+
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "Verschieben nach" }),
+      "Klasse 7b",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Verschieben" }));
+    expect(onMoveMany).toHaveBeenCalledWith([first.id], "k1");
+    expect(
+      screen.getByRole("button", { name: "Auswählen" }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Auswählen" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Alle" }));
+    expect(
+      screen.getByText(`${DEMO_ITEMS.length} ausgewählt`),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Auswahl löschen" }),
+    );
+    expect(onDeleteMany).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Ja" }));
+    expect(onDeleteMany).toHaveBeenCalledWith(DEMO_ITEMS.map(({ id }) => id));
+  });
+
   it("zeigt „Zuordnen“ nur mit onAssign", async () => {
     const onAssign = vi.fn();
     const { rerender } = render(

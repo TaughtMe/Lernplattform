@@ -10,7 +10,10 @@ import {
   filterByClass,
   isUnassigned,
   resolveClassSelection,
+  changedDate,
+  ranDate,
   shortDate,
+  sortLibrary,
   sortForLibrary,
   suggestTitle,
   UNASSIGNED,
@@ -169,6 +172,73 @@ describe("Sortierung und Datum", () => {
     expect(
       shortDate({ updatedAt: "2026-09-02T10:00:00.000Z" }, "Europe/Berlin"),
     ).toBe("02.09.");
+  });
+});
+
+describe("Sortieren der Ablage", () => {
+  const entry = (
+    id: string,
+    title: string,
+    kind: "text" | "math" | "vocabulary",
+    updatedAt: string,
+    lastUsedAt?: string,
+  ) => ({
+    id,
+    title,
+    kind,
+    updatedAt,
+    ...(lastUsedAt ? { lastUsedAt } : {}),
+  });
+  const list = [
+    entry("a", "Zebra", "math", "2026-09-01T10:00:00.000Z"),
+    entry(
+      "b",
+      "apfel",
+      "text",
+      "2026-09-03T10:00:00.000Z",
+      "2026-09-20T10:00:00.000Z",
+    ),
+    entry(
+      "c",
+      "Birne 10",
+      "vocabulary",
+      "2026-09-02T10:00:00.000Z",
+      "2026-09-10T10:00:00.000Z",
+    ),
+    entry("d", "Birne 2", "text", "2026-09-04T10:00:00.000Z"),
+  ];
+  const ids = (key: Parameters<typeof sortLibrary>[1], dir: 1 | -1) =>
+    sortLibrary(list, key, dir).map(({ id }) => id);
+
+  it("sortiert nach Titel ohne Groß-/Kleinschreibung und mit Zahlen", () => {
+    expect(ids("title", 1)).toEqual(["b", "d", "c", "a"]);
+    expect(ids("title", -1)).toEqual(["a", "c", "d", "b"]);
+  });
+
+  it("sortiert nach Typ: Text, Vokabeln, Mathe", () => {
+    expect(ids("kind", 1).slice(2)).toEqual(["c", "a"]);
+    expect(ids("kind", -1).slice(0, 2)).toEqual(["a", "c"]);
+  });
+
+  it("sortiert nach Änderungsdatum", () => {
+    expect(ids("date", 1)).toEqual(["a", "c", "b", "d"]);
+    expect(ids("date", -1)).toEqual(["d", "b", "c", "a"]);
+  });
+
+  it("sortiert nach letzter Durchführung; Nie-Gestartetes bleibt hinten", () => {
+    expect(ids("ran", 1).slice(0, 2)).toEqual(["c", "b"]);
+    expect(ids("ran", -1).slice(0, 2)).toEqual(["b", "c"]);
+    expect(ids("ran", -1).slice(2).sort()).toEqual(["a", "d"]);
+  });
+
+  it("zeigt Änderung und Durchführung getrennt", () => {
+    const stamp = {
+      updatedAt: "2026-09-02T10:00:00.000Z",
+      lastUsedAt: "2026-09-14T10:00:00.000Z",
+    };
+    expect(changedDate(stamp, "Europe/Berlin")).toBe("02.09.");
+    expect(ranDate(stamp, "Europe/Berlin")).toBe("14.09.");
+    expect(ranDate({}, "Europe/Berlin")).toBeNull();
   });
 });
 

@@ -1,10 +1,15 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
   readonly actions: string;
+  readonly bulkAll: string;
+  readonly bulkBar: string;
+  readonly bulkCount: string;
+  readonly check: string;
   readonly confirm: string;
   readonly content: string;
   readonly count: string;
   readonly danger: string;
+  readonly dirButton: string;
   readonly edit: string;
   readonly empty: string;
   readonly footnote: string;
@@ -26,6 +31,7 @@ declare const styles: {
   readonly row: string;
   readonly rowAssign: string;
   readonly rowButton: string;
+  readonly rowLead: string;
   readonly rowMain: string;
   readonly rowMeta: string;
   readonly rowText: string;
@@ -33,12 +39,18 @@ declare const styles: {
   readonly rowTitleWide: string;
   readonly rowWrap: string;
   readonly section: string;
+  readonly selectToggle: string;
+  readonly sortLabel: string;
+  readonly sortPick: string;
+  readonly sortSelect: string;
   readonly tile: string;
   readonly tileIcon: string;
   readonly tileName: string;
   readonly tileOn: string;
   readonly tileText: string;
   readonly tiles: string;
+  readonly toolbar: string;
+  readonly trash: string;
   readonly used: string;
   readonly usedWide: string;
   readonly wideList: string;

@@ -296,6 +296,67 @@ describe("Inhalte-Seite: Löschen", () => {
   });
 });
 
+describe("Inhalte-Seite: Sortieren und Massenbearbeitung", () => {
+  it("sortiert nach Titel und kehrt die Richtung um", async () => {
+    await createTeacherContentLibraryRepository().putMany([
+      entry("1", { title: "Birne", classIds: [CLASS_A] }),
+      entry("2", { title: "Apfel", classIds: [CLASS_A] }),
+      entry("3", { title: "Citrus", classIds: [CLASS_A] }),
+    ]);
+    renderAt(`?klasse=${CLASS_A}`);
+    const user = userEvent.setup();
+    await screen.findAllByText("3 Inhalte");
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Sortieren nach" }),
+      "Titel",
+    );
+    expect(titles()).toEqual(["Apfel", "Birne", "Citrus"]);
+    await user.click(
+      screen.getByRole("button", { name: "Aufsteigend sortiert, umkehren" }),
+    );
+    expect(titles()).toEqual(["Citrus", "Birne", "Apfel"]);
+  });
+
+  it("verschiebt ausgewählte Inhalte in eine andere Klasse und löscht andere", async () => {
+    const repository = createTeacherContentLibraryRepository();
+    await repository.putMany([
+      entry("1", { title: "Eins", classIds: [CLASS_A] }),
+      entry("2", { title: "Zwei", classIds: [CLASS_A] }),
+      entry("3", { title: "Drei", classIds: [CLASS_A] }),
+    ]);
+    renderAt(`?klasse=${CLASS_A}`);
+    const user = userEvent.setup();
+    await screen.findAllByText("3 Inhalte");
+
+    await user.click(screen.getByRole("button", { name: "Auswählen" }));
+    await user.click(
+      screen.getAllByRole("checkbox", { name: "Eins auswählen" })[0]!,
+    );
+    await user.click(
+      screen.getAllByRole("checkbox", { name: "Zwei auswählen" })[0]!,
+    );
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Verschieben nach" }),
+      "Klasse 9a",
+    );
+    await user.click(screen.getByRole("button", { name: "Verschieben" }));
+    await screen.findAllByText("1 Inhalt");
+    expect((await repository.get("1"))?.classIds).toEqual([CLASS_B]);
+    expect((await repository.get("3"))?.classIds).toEqual([CLASS_A]);
+
+    await user.click(screen.getByRole("button", { name: "Auswählen" }));
+    await user.click(
+      screen.getAllByRole("checkbox", { name: "Drei auswählen" })[0]!,
+    );
+    await user.click(screen.getByRole("button", { name: "Auswahl löschen" }));
+    await user.click(screen.getAllByRole("button", { name: "Ja" })[0]!);
+    await waitFor(async () =>
+      expect(await repository.get("3")).toBeUndefined(),
+    );
+    expect(await repository.get("2")).toBeDefined();
+  });
+});
+
 describe("Inhalte-Seite: Start-Overlay", () => {
   async function openSheet() {
     await createTeacherContentLibraryRepository().put(

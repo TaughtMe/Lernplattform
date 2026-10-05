@@ -130,6 +130,75 @@ export function sortForLibrary<
   );
 }
 
+export type LibrarySortKey = "title" | "kind" | "date" | "ran";
+
+const KIND_RANK = { text: 0, vocabulary: 1, math: 2 } as const;
+
+/**
+ * Sortiert die Ablage nach Titel, Aufgabentyp, Änderungsdatum oder letzter
+ * Durchführung. `dir` 1 = aufsteigend. Nie Durchgeführtes steht bei „ran“
+ * immer hinten; gleiche Werte behalten die Reihenfolge von `sortForLibrary`.
+ */
+export function sortLibrary<
+  T extends Pick<
+    TeacherContentPackage,
+    "title" | "kind" | "lastUsedAt" | "updatedAt" | "id"
+  >,
+>(entries: readonly T[], key: LibrarySortKey, dir: 1 | -1): T[] {
+  const base = sortForLibrary(entries);
+  const compare = (left: T, right: T): number => {
+    switch (key) {
+      case "title":
+        return left.title.localeCompare(right.title, "de", {
+          sensitivity: "base",
+          numeric: true,
+        });
+      case "kind":
+        return KIND_RANK[contentKindOf(left)] - KIND_RANK[contentKindOf(right)];
+      case "date":
+        return Date.parse(left.updatedAt) - Date.parse(right.updatedAt);
+      case "ran":
+        return (
+          Date.parse(left.lastUsedAt ?? "") - Date.parse(right.lastUsedAt ?? "")
+        );
+    }
+  };
+  return base.sort((left, right) => {
+    if (key === "ran") {
+      const never = (entry: T) => !entry.lastUsedAt;
+      if (never(left) !== never(right)) return never(left) ? 1 : -1;
+      if (never(left)) return 0;
+    }
+    return compare(left, right) * dir;
+  });
+}
+
+/** Datum der letzten Durchführung („14.09.“) oder `null`, wenn nie gestartet. */
+export function ranDate(
+  entry: Pick<TeacherContentPackage, "lastUsedAt">,
+  timeZone?: string,
+) {
+  return entry.lastUsedAt
+    ? new Date(entry.lastUsedAt).toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "2-digit",
+        ...(timeZone ? { timeZone } : {}),
+      })
+    : null;
+}
+
+/** Änderungsdatum der Ablage, z. B. „14.09.“. */
+export function changedDate(
+  entry: Pick<TeacherContentPackage, "updatedAt">,
+  timeZone?: string,
+) {
+  return new Date(entry.updatedAt).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    ...(timeZone ? { timeZone } : {}),
+  });
+}
+
 /** Datum für die Ablage, z. B. „14.09.“. */
 export function shortDate(
   entry: Pick<TeacherContentPackage, "lastUsedAt" | "updatedAt">,

@@ -8,8 +8,11 @@ import {
   describeContent,
   filterByClass,
   resolveClassSelection,
-  shortDate,
+  changedDate,
+  ranDate,
   sortForLibrary,
+  sortLibrary,
+  type LibrarySortKey,
   UNASSIGNED,
 } from "../../src/domain/teacher-content-summary";
 import type { TeacherClass } from "../../src/domain/class-enrollment";
@@ -90,6 +93,8 @@ export function useContentLibrary(): {
   const [assignChecked, setAssignChecked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [startId, setStartId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<LibrarySortKey | null>(null);
+  const [sortDir, setSortDir] = useState<1 | -1>(-1);
   const [startMode, setStartMode] = useState<DictationMode>("LAUFDIKTAT");
 
   async function reload() {
@@ -161,13 +166,16 @@ export function useContentLibrary(): {
   }, [loaded, profile, storedClass, wantedClass, classIds, profileRepository]);
 
   const activeIds = useMemo(() => new Set(classIds), [classIds]);
-  const visible = useMemo(
-    () =>
-      sortForLibrary(
-        filterByClass(loaded?.packages ?? [], selection, activeIds),
-      ),
-    [loaded, selection, activeIds],
-  );
+  const visible = useMemo(() => {
+    const filtered = filterByClass(
+      loaded?.packages ?? [],
+      selection,
+      activeIds,
+    );
+    return sortKey
+      ? sortLibrary(filtered, sortKey, sortDir)
+      : sortForLibrary(filtered);
+  }, [loaded, selection, activeIds, sortKey, sortDir]);
   const selectedClass = loaded?.classes.find(({ id }) => id === selection);
 
   // Die gewählte Klasse reist mit: Neue Inhalte gehören dazu, und sie ist die
@@ -190,6 +198,39 @@ export function useContentLibrary(): {
       window.dispatchEvent(new Event(DATA_EVENT));
     } catch {
       setFailed(true);
+    }
+  }
+
+  /** Massenaktion: Löschen mehrerer Inhalte. */
+  async function removeMany(ids: readonly string[]) {
+    try {
+      for (const id of ids) await library.remove(id);
+      await reload();
+      window.dispatchEvent(new Event(DATA_EVENT));
+    } catch {
+      setFailed(true);
+    }
+  }
+
+  /** Massenaktion: Inhalte in eine Klasse (oder „Nicht zugeordnet“) verschieben. */
+  async function moveMany(ids: readonly string[], target: string) {
+    try {
+      for (const id of ids) {
+        await library.assignClasses(id, target === UNASSIGNED ? [] : [target]);
+      }
+      await reload();
+      window.dispatchEvent(new Event(DATA_EVENT));
+    } catch {
+      setFailed(true);
+    }
+  }
+
+  function sortBy(key: LibrarySortKey) {
+    if (key === sortKey) setSortDir((current) => (current === 1 ? -1 : 1));
+    else {
+      setSortKey(key);
+      // Titel und Typ starten aufsteigend, Datumsspalten mit dem Neuesten.
+      setSortDir(key === "title" || key === "kind" ? 1 : -1);
     }
   }
 
@@ -246,8 +287,20 @@ export function useContentLibrary(): {
         title: entry.title,
         kind: contentKindOf(entry),
         meta: describeContent(entry),
-        used: shortDate(entry),
+        date: changedDate(entry),
+        ran: ranDate(entry),
       })),
+      sortKey,
+      sortDir,
+      onSort: sortBy,
+      onResetSort: () => setSortKey(null),
+      moveTargets: [
+        ...(loaded?.classes ?? []).map(({ id, name }) => ({ id, name })),
+        { id: UNASSIGNED, name: "Nicht zugeordnet" },
+      ],
+      onDeleteMany: (ids: readonly string[]) => void removeMany(ids),
+      onMoveMany: (ids: readonly string[], target: string) =>
+        void moveMany(ids, target),
       countLabel: countLabel(visible.length),
       ...(selectedClass ? { createFor: selectedClass.name } : {}),
       emptyText,
