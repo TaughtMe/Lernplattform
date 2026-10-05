@@ -33,8 +33,8 @@ den Anbietern **zusätzlich** eintragen.
 1. **OneDrive (fertig angebunden):** App-Registrierung in Microsoft Entra ID,
    Kontotypen „Organisationen und persönliche Konten“, Plattform
    „Single-Page-Anwendung“ mit der Redirect-URI, Berechtigung
-   `Files.ReadWrite.AppFolder`. Client-ID als Build-Variable
-   `NEXT_PUBLIC_ONEDRIVE_CLIENT_ID` setzen und neu bauen.
+   `Files.ReadWrite.AppFolder`. Client-ID als Laufzeit-Variable
+   `NEXT_PUBLIC_ONEDRIVE_CLIENT_ID` des Workers setzen.
    Ablauf: Verbinden → Microsoft-Login → `/sync/rueckkehr` (Code gegen Token
    tauschen, `session.ts`) → zurück zu den Einstellungen. Das Zugriffstoken
    wird still erneuert. Microsoft begrenzt Refresh-Tokens von Single-Page-
@@ -43,12 +43,18 @@ den Anbietern **zusätzlich** eintragen.
    Console, Drive API aktivieren, OAuth-Zustimmungsbildschirm (Branding,
    Testnutzer), OAuth-Client „Webanwendung“ mit der Adresse der Seite unter
    „Autorisierte JavaScript-Quellen“ (Scope `drive.appdata`). Client-ID als
-   Build-Variable `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID`. Es wird kein
+   Laufzeit-Variable `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID`. Es wird kein
    Client-Secret verwendet. Zugriffstoken gelten eine Stunde und ohne
    Refresh-Token; ein neues kommt über ein Popup, das ein Klick auslösen muss
    (`google-identity.ts`). Im Status „Test“ dürfen nur eingetragene
    Testnutzer einloggen; für den Regelbetrieb ist Veröffentlichung samt
    Markenprüfung (eigene, bestätigbare Domain) nötig.
+
+Die Client-IDs liest der Server-Layout zur Laufzeit (`readOAuthClientIds`)
+und reicht sie per Context an die Oberfläche; sie werden nicht beim Build
+eingebettet. Beim Verbinden wird die ID mit dem Token gespeichert, damit
+Rückleitungsseite und Erneuern ohne Umgebung auskommen. Lokal werden sie über
+`vite.config.ts` an den Worker weitergegeben.
 
 Solange keine Client-ID gesetzt ist, zeigen die Einstellungen „Konto noch
 nicht eingerichtet“.

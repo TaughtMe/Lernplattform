@@ -1,7 +1,7 @@
 /**
  * Anmeldung bei OneDrive und Google Drive im Browser (OAuth 2.0 mit PKCE,
- * ohne Client-Secret). Die Client-IDs kommen aus der Umgebung; solange sie
- * fehlen, gelten die Dienste als „noch nicht eingerichtet“.
+ * ohne Client-Secret). Die Client-IDs kommen aus der Umgebung des Servers;
+ * solange sie fehlen, gelten die Dienste als „noch nicht eingerichtet“.
  */
 import type { CloudProviderId } from "./types";
 
@@ -28,13 +28,19 @@ export const OAUTH_ENDPOINTS: Record<OAuthProviderId, OAuthEndpoints> = {
   },
 };
 
-/** Client-IDs aus der Umgebung (öffentlich, kein Geheimnis). */
-export function oauthClientId(provider: OAuthProviderId) {
-  const value =
-    provider === "onedrive"
-      ? process.env["NEXT_PUBLIC_ONEDRIVE_CLIENT_ID"]
-      : process.env["NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID"];
-  return value?.trim() || null;
+export type OAuthClientIds = Record<OAuthProviderId, string | null>;
+
+/**
+ * Client-IDs (öffentlich, kein Geheimnis) aus der Laufzeitumgebung des
+ * Servers. Nur serverseitig aufrufen; der Browser bekommt sie über den Layout.
+ */
+export function readOAuthClientIds(
+  env: Record<string, string | undefined> = process.env,
+): OAuthClientIds {
+  return {
+    onedrive: env["NEXT_PUBLIC_ONEDRIVE_CLIENT_ID"]?.trim() || null,
+    "google-drive": env["NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID"]?.trim() || null,
+  };
 }
 
 function base64Url(bytes: Uint8Array) {

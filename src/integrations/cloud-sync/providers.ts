@@ -1,4 +1,4 @@
-import { oauthClientId } from "./oauth";
+import type { OAuthClientIds } from "./oauth";
 import type { CloudProviderId } from "./types";
 
 export type CloudProviderInfo = {
@@ -10,19 +10,19 @@ export type CloudProviderInfo = {
 };
 
 /** Anbieter mit Status für die Einstellungen. */
-export function cloudProviders(): CloudProviderInfo[] {
+export function cloudProviders(clientIds: OAuthClientIds): CloudProviderInfo[] {
   return [
     {
       id: "onedrive",
       label: "Microsoft OneDrive",
       description: "Speichert im App-Ordner des Schul- oder Familienkontos.",
-      available: oauthClientId("onedrive") !== null,
+      available: clientIds.onedrive !== null,
     },
     {
       id: "google-drive",
       label: "Google Drive",
       description: "Speichert im versteckten App-Ordner des Google-Kontos.",
-      available: oauthClientId("google-drive") !== null,
+      available: clientIds["google-drive"] !== null,
     },
     {
       id: "webdav",

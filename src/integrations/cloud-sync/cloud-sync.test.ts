@@ -5,7 +5,12 @@ import {
   PersonalLearningDatabase,
 } from "../../storage/personal-learning-events";
 import { createGoogleDriveTarget, createOneDriveTarget } from "./drives";
-import { buildAuthorizeUrl, createPkcePair, tokenRequest } from "./oauth";
+import {
+  buildAuthorizeUrl,
+  createPkcePair,
+  readOAuthClientIds,
+  tokenRequest,
+} from "./oauth";
 import {
   pullStudentData,
   pullTeacherData,
@@ -173,5 +178,18 @@ describe("cloud sync", () => {
       }),
     ).toBe(true);
     expect(imported).toEqual([{ classes: [1] }]);
+  });
+
+  it("reads public client ids from the server environment", () => {
+    expect(readOAuthClientIds({})).toEqual({
+      onedrive: null,
+      "google-drive": null,
+    });
+    expect(
+      readOAuthClientIds({
+        NEXT_PUBLIC_ONEDRIVE_CLIENT_ID: " a ",
+        NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID: "",
+      }),
+    ).toEqual({ onedrive: "a", "google-drive": null });
   });
 });

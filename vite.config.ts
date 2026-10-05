@@ -16,16 +16,28 @@ const localBindingConfig = {
   compatibility_flags: ["nodejs_compat"],
   // The local Worker has its own environment; forward explicitly supplied
   // public connection settings (also used by the isolated browser tests).
-  ...(process.env["NEXT_PUBLIC_SUPABASE_URL"] &&
-  process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]
-    ? {
-        vars: {
+  vars: {
+    ...(process.env["NEXT_PUBLIC_SUPABASE_URL"] &&
+    process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]
+      ? {
           NEXT_PUBLIC_SUPABASE_URL: process.env["NEXT_PUBLIC_SUPABASE_URL"],
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
             process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
-        },
-      }
-    : {}),
+        }
+      : {}),
+    ...(process.env["NEXT_PUBLIC_ONEDRIVE_CLIENT_ID"]
+      ? {
+          NEXT_PUBLIC_ONEDRIVE_CLIENT_ID:
+            process.env["NEXT_PUBLIC_ONEDRIVE_CLIENT_ID"],
+        }
+      : {}),
+    ...(process.env["NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID"]
+      ? {
+          NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID:
+            process.env["NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID"],
+        }
+      : {}),
+  },
   d1_databases: d1
     ? [
         {
