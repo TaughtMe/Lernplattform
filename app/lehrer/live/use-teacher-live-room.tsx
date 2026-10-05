@@ -75,6 +75,8 @@ import {
 } from "../../../src/integrations/laufdiktat/room-limits";
 import { useHydrated } from "../../components/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
+import { classModuleSchema } from "../../../src/domain/class-workspace";
+import { notifyTeacherClassesChanged } from "../../ui/shell/teacher-classes";
 import {
   createTeacherClassRepository,
   createTeacherContentLibraryRepository,
@@ -84,6 +86,13 @@ import { liveContentToPackage, packageToLiveContent } from "../content-adapter";
 import { takeLiveIntent } from "../live-intent";
 import { splitModeOf } from "./dictation-adapter";
 import type { TeacherContentPackage } from "../../../src/domain/teacher-content-library";
+
+/** Schuljahr zum Datum, z. B. „2026/27“ (ab August das neue Jahr). */
+function defaultSchoolYear(date: Date) {
+  const start =
+    date.getMonth() >= 7 ? date.getFullYear() : date.getFullYear() - 1;
+  return `${start}/${String((start + 1) % 100).padStart(2, "0")}`;
+}
 
 export type Stage = "content" | "settings" | "lobby" | "live";
 
@@ -1214,7 +1223,7 @@ export function useTeacherLiveRoom(
   }, [startRequested]);
 
   /** Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. */
-  async function storeContent(markUsed: boolean) {
+  async function storeContent(markUsed: boolean, moveToClass = false) {
     const repository = createTeacherContentLibraryRepository();
     const existing = contentId ? await repository.get(contentId) : undefined;
     const entry = liveContentToPackage({
@@ -1230,6 +1239,7 @@ export function useTeacherLiveRoom(
       now: new Date(clock()).toISOString(),
       classId: activeClass || undefined,
       markUsed,
+      moveToClass,
     });
     await repository.put(entry);
     setContentId(entry.id);
@@ -1245,12 +1255,40 @@ export function useTeacherLiveRoom(
       return;
     }
     try {
-      const entry = await storeContent(false);
+      const entry = await storeContent(false, true);
       setLibraryNotice(`„${entry.title}“ ist gespeichert.`);
     } catch {
       setLibraryNotice(
         "Der Inhalt konnte nicht gespeichert werden. Bitte versuche es noch einmal.",
       );
+    }
+  }
+
+  /** Legt eine neue Klasse an und wählt sie aus; gespeichert wird erst mit „Speichern“. */
+  async function createClassNamed(rawName: string) {
+    const name = rawName.trim();
+    if (!name) return;
+    try {
+      const repository = createTeacherClassRepository();
+      const profile = await createTeacherProfileRepository().get();
+      const now = new Date().toISOString();
+      const course = {
+        id: crypto.randomUUID(),
+        name,
+        teacherName: profile?.displayName || "Lehrkraft",
+        schoolYear: defaultSchoolYear(new Date(clock())),
+        enabledModules: [...classModuleSchema.options],
+        createdAt: now,
+        updatedAt: now,
+      };
+      await repository.put(course);
+      setLiveClasses((current) => [...current, { id: course.id, name }]);
+      window.dispatchEvent(new Event("teacher-data-changed"));
+      notifyTeacherClassesChanged();
+      await setClassChoice(course.id);
+      setLibraryNotice(`Klasse „${name}“ ist angelegt.`);
+    } catch {
+      setLibraryNotice("Die Klasse konnte nicht angelegt werden.");
     }
   }
 
@@ -1782,6 +1820,7 @@ export function useTeacherLiveRoom(
     contentId,
     libraryNotice,
     saveContent,
+    createClassNamed,
     deleteContent,
     room,
     roomClosed,

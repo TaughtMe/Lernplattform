@@ -133,6 +133,8 @@ export type TeacherDictationScreenProps = {
   libraryNotice?: string;
   onTitle?: (title: string) => void;
   onSave?: () => void;
+  /** Legt unter „Speichern“ eine neue Klasse an (Name) und wählt sie aus. */
+  onCreateClass?: (name: string) => Promise<void> | void;
   onDelete?: () => void;
   /** Beschriftung und Sperre des Weiter-Knopfs (z. B. „Öffnet …“). */
   nextLabel?: string;
@@ -480,9 +482,15 @@ function KindChips({ content, onKind }: TeacherDictationScreenProps) {
   );
 }
 
-/** Titel, „Speichern“ und Mülleimer (nur mit den Ablage-Props). */
+const NEW_CLASS = "__neu__";
+
+/** Titel, Klasse, „Speichern“ und Mülleimer (nur mit den Ablage-Props). */
 function LibraryBar(props: TeacherDictationScreenProps) {
   const [confirming, setConfirming] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newClass, setNewClass] = useState("");
+  const classChoice = props.classChoice;
+  const showClass = Boolean(props.onSave && classChoice && props.onCreateClass);
   if (!props.onTitle && !props.onSave) return null;
   return (
     <div className={styles.libraryBar}>
@@ -499,6 +507,57 @@ function LibraryBar(props: TeacherDictationScreenProps) {
           onChange={(event) => props.onTitle?.(event.target.value)}
         />
       </label>
+      {showClass && classChoice ? (
+        <label className={styles.libraryClass}>
+          <span className={styles.label}>Klasse</span>
+          <select
+            className={styles.libraryInput}
+            value={creating ? NEW_CLASS : classChoice.value}
+            onChange={(event) => {
+              if (event.target.value === NEW_CLASS) {
+                setCreating(true);
+                return;
+              }
+              setCreating(false);
+              classChoice.onChange(event.target.value);
+            }}
+          >
+            <option value="">Keine Klasse</option>
+            {classChoice.options.map(({ id, name }) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+            <option value={NEW_CLASS}>Neue Klasse …</option>
+          </select>
+        </label>
+      ) : null}
+      {showClass && creating ? (
+        <span className={styles.libraryNewClass}>
+          <input
+            type="text"
+            className={styles.libraryInput}
+            aria-label="Name der neuen Klasse"
+            placeholder="z. B. 7b"
+            maxLength={120}
+            value={newClass}
+            onChange={(event) => setNewClass(event.target.value)}
+          />
+          <button
+            type="button"
+            className={styles.libraryButton}
+            disabled={!newClass.trim()}
+            onClick={() => {
+              void Promise.resolve(props.onCreateClass?.(newClass)).then(() => {
+                setCreating(false);
+                setNewClass("");
+              });
+            }}
+          >
+            Klasse anlegen
+          </button>
+        </span>
+      ) : null}
       {props.onSave ? (
         <button
           type="button"

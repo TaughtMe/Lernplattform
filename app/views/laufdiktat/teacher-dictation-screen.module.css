@@ -1253,6 +1253,21 @@
   flex-direction: column;
   gap: 4px;
 }
+.libraryClass {
+  display: flex;
+  flex: 0 1 170px;
+  flex-direction: column;
+  gap: 4px;
+}
+.libraryNewClass {
+  display: inline-flex;
+  flex: 1 1 220px;
+  gap: 8px;
+}
+.libraryNewClass .libraryInput {
+  flex: 1;
+  min-width: 0;
+}
 .libraryInput {
   box-sizing: border-box;
   min-height: 44px;

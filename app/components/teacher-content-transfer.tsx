@@ -376,7 +376,7 @@ export function TeacherContentTransfer({
           <div>
             <p className="ui-eyebrow">Nur auf diesem Gerät</p>
             <h2 id="teacher-library-title" className="ui-h-section">
-              Lehrkraftbibliothek
+              Gespeicherte Pakete
             </h2>
             <p className="ui-small ui-muted">
               Pakete lokal vorbereiten, später erneut öffnen oder als geprüfte
@@ -435,14 +435,14 @@ export function TeacherContentTransfer({
               disabled={!packages.length}
               onClick={exportLibrary}
             >
-              Bibliothek exportieren
+              Exportieren
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => importInput.current?.click()}
             >
-              Bibliothek importieren
+              Importieren
             </Button>
             <input
               ref={importInput}

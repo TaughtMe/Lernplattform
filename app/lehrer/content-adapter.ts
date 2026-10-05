@@ -67,7 +67,7 @@ export type LiveContentDraft = {
 
 /**
  * Zustand des Live-Raums → Paket der Ablage. Mit `existing` bleiben ID,
- * Erstellzeit, Klassen und letzte Nutzung erhalten; die Revision steigt nur,
+ * Erstellzeit, Klassen (außer bei `moveToClass`) und letzte Nutzung erhalten; die Revision steigt nur,
  * wenn sich Quelle oder Titel geändert haben. Ein leerer Titel wird aus
  * der Quelle vorgeschlagen.
  */
@@ -81,17 +81,26 @@ export function liveContentToPackage(input: {
   classId?: string | undefined;
   /** Raumstart: setzt die letzte Nutzung. */
   markUsed?: boolean;
+  /** Speichern: ein bestehendes Paket wechselt in `classId`, falls es dort noch fehlt. */
+  moveToClass?: boolean;
 }): TeacherContentPackage {
   const { draft, existing, now } = input;
   const title =
     draft.title.trim() || suggestTitle(draft.source) || "Ohne Titel";
   const changed =
     !existing || existing.source !== draft.source || existing.title !== title;
-  const classIds = existing
-    ? existing.classIds
-    : input.classId
-      ? [input.classId]
-      : undefined;
+  const moves =
+    existing &&
+    input.moveToClass &&
+    input.classId &&
+    !existing.classIds?.includes(input.classId);
+  const classIds = moves
+    ? [input.classId as string]
+    : existing
+      ? existing.classIds
+      : input.classId
+        ? [input.classId]
+        : undefined;
   const lastUsedAt = input.markUsed ? now : existing?.lastUsedAt;
   return {
     id: existing?.id ?? input.newId,
@@ -107,7 +116,7 @@ export function liveContentToPackage(input: {
         ? draft.vocabularyLocales.right
         : (existing?.answerLocale ?? "de"),
     createdAt: existing?.createdAt ?? now,
-    updatedAt: changed || !existing ? now : existing.updatedAt,
+    updatedAt: changed || moves || !existing ? now : existing.updatedAt,
     kind: draft.contentMode,
     ...(classIds ? { classIds } : {}),
     ...(lastUsedAt ? { lastUsedAt } : {}),

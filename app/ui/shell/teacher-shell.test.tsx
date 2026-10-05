@@ -164,15 +164,18 @@ describe("TeacherShell", () => {
     );
   });
 
-  it("markiert den Bereich nach Adresse und zeigt „Auswertung“ nicht", async () => {
-    renderShell("/lehrer/live");
+  it("markiert den Bereich nach Adresse und zeigt weder „Räume“ noch „Auswertung“", async () => {
+    renderShell("/lehrer/klassen");
     const sidebar = screen.getByRole("navigation", { name: "Lehrerbereich" });
     expect(
-      within(sidebar).getByRole("link", { name: "Räume" }),
+      within(sidebar).getByRole("link", { name: "Klassen" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
       within(sidebar).getByRole("link", { name: "Inhalte" }),
     ).not.toHaveAttribute("aria-current");
+    expect(
+      within(sidebar).queryByRole("link", { name: "Räume" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Auswertung")).not.toBeInTheDocument();
     // Bereiche ohne Vorlage stehen unter „Verwalten“.
     expect(within(sidebar).getByText("Verwalten")).toBeInTheDocument();
@@ -183,14 +186,10 @@ describe("TeacherShell", () => {
 
   it("blendet nicht freigegebene Bereiche aus", () => {
     renderShell("/lehrer", {
-      "lehrer-live": false,
       "lehrer-aufgaben": false,
       motivation: false,
     });
     const sidebar = screen.getByRole("navigation", { name: "Lehrerbereich" });
-    expect(
-      within(sidebar).queryByRole("link", { name: "Räume" }),
-    ).not.toBeInTheDocument();
     expect(
       within(sidebar).queryByRole("link", { name: "Aufgaben" }),
     ).not.toBeInTheDocument();
@@ -209,7 +208,9 @@ describe("TeacherShell", () => {
       screen.getByRole("button", { name: "Klassen und Bereiche" }),
     );
     const drawer = screen.getByRole("dialog", { name: "Klassen und Bereiche" });
-    await userEvent.click(within(drawer).getByRole("link", { name: "Räume" }));
+    await userEvent.click(
+      within(drawer).getByRole("link", { name: "Inhalte" }),
+    );
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );

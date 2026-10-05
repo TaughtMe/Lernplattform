@@ -34,14 +34,6 @@ export const TEACHER_NAV: readonly TeacherNavEntry[] = [
     group: "area",
   },
   {
-    area: "live",
-    href: "/lehrer/live",
-    label: "Räume",
-    icon: "room",
-    release: "lehrer-live",
-    group: "area",
-  },
-  {
     area: "classes",
     href: "/lehrer/klassen",
     label: "Klassen",
@@ -83,8 +75,14 @@ export const TEACHER_NAV: readonly TeacherNavEntry[] = [
   },
 ];
 
+/** Der Raum hat keinen eigenen Eintrag; er wird über „Inhalte“ gestartet. */
+const LIVE_HREF = "/lehrer/live";
+
 /** Bereich zur Adresse: der längste passende Navigationseintrag. */
 export function teacherAreaOf(pathname: string): TeacherArea {
+  if (pathname === LIVE_HREF || pathname.startsWith(`${LIVE_HREF}/`)) {
+    return "live";
+  }
   let best: TeacherNavEntry | undefined;
   for (const item of TEACHER_NAV) {
     const hit = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -95,6 +93,7 @@ export function teacherAreaOf(pathname: string): TeacherArea {
 
 /** Seitentitel des Bereichs. */
 export function teacherAreaTitle(area: TeacherArea): string {
+  if (area === "live") return "Räume";
   return TEACHER_NAV.find((item) => item.area === area)?.label ?? "Inhalte";
 }
 

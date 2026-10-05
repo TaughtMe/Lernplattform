@@ -159,6 +159,25 @@ describe("liveContentToPackage", () => {
     });
     expect(entry).toMatchObject({ revision: 4, lastUsedAt: NOW });
   });
+
+  it("verschiebt beim Speichern in eine andere Klasse, sonst bleiben die Klassen", () => {
+    const input = {
+      draft: { ...draft, title: "Eins" },
+      existing: { ...existing, classIds: [CLASS_A] },
+      newId: "x",
+      now: NOW,
+      classId: "123e4567-e89b-42d3-a456-426614174099",
+    };
+    expect(liveContentToPackage(input).classIds).toEqual([CLASS_A]);
+    expect(
+      liveContentToPackage({ ...input, moveToClass: true }).classIds,
+    ).toEqual(["123e4567-e89b-42d3-a456-426614174099"]);
+    // Gehört der Inhalt schon zur Klasse, bleibt er in all seinen Klassen.
+    expect(
+      liveContentToPackage({ ...input, moveToClass: true, classId: CLASS_A })
+        .classIds,
+    ).toEqual([CLASS_A]);
+  });
 });
 
 describe("packageToLiveContent", () => {

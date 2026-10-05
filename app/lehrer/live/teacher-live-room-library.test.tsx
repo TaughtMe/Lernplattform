@@ -193,6 +193,54 @@ describe("Inhalt aus der Ablage laden", () => {
   });
 });
 
+describe("Speichern in eine Klasse", () => {
+  it("legt den Inhalt in der gewählten Klasse ab", async () => {
+    renderRoom();
+    await waitHydrated();
+    const user = userEvent.setup();
+    await user.type(
+      await screen.findByRole("textbox", { name: "Text" }),
+      "Eins. Zwei.",
+    );
+    await user.selectOptions(
+      await screen.findByRole("combobox", { name: "Klasse" }),
+      CLASS_A,
+    );
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await waitFor(async () =>
+      expect((await library().list())[0]?.classIds).toEqual([CLASS_A]),
+    );
+  });
+
+  it("legt eine neue Klasse an und speichert den Inhalt darin", async () => {
+    renderRoom();
+    await waitHydrated();
+    const user = userEvent.setup();
+    await user.type(
+      await screen.findByRole("textbox", { name: "Text" }),
+      "Eins. Zwei.",
+    );
+    await user.selectOptions(
+      await screen.findByRole("combobox", { name: "Klasse" }),
+      "Neue Klasse …",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Name der neuen Klasse" }),
+      "9c",
+    );
+    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    expect(await screen.findByText("Klasse „9c“ ist angelegt.")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Speichern" }));
+
+    const classes = await createTeacherClassRepository().list();
+    const created = classes.find(({ name }) => name === "9c");
+    expect(created).toBeDefined();
+    await waitFor(async () =>
+      expect((await library().list())[0]?.classIds).toEqual([created!.id]),
+    );
+  });
+});
+
 describe("Speichern und Löschen", () => {
   it("legt genau ein Paket an, hält die Revision bei Gleichem und erhöht sie bei Änderung", async () => {
     renderRoom();

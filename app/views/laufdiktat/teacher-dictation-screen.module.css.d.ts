@@ -46,10 +46,12 @@ declare const styles: {
   readonly label: string;
   readonly libraryBar: string;
   readonly libraryButton: string;
+  readonly libraryClass: string;
   readonly libraryConfirm: string;
   readonly libraryDanger: string;
   readonly libraryIcon: string;
   readonly libraryInput: string;
+  readonly libraryNewClass: string;
   readonly libraryNotice: string;
   readonly libraryTitle: string;
   readonly linkButton: string;

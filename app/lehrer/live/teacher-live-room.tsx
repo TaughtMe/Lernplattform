@@ -160,6 +160,7 @@ export function TeacherLiveRoom({
         title={t.title}
         onTitle={t.setTitle}
         onSave={() => void t.saveContent()}
+        onCreateClass={(name) => t.createClassNamed(name)}
         {...(t.contentId ? { onDelete: () => void t.deleteContent() } : {})}
         {...(t.libraryNotice ? { libraryNotice: t.libraryNotice } : {})}
         nextLabel={nextLabel(t)}
