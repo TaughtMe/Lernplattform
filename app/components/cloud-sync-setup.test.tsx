@@ -7,12 +7,18 @@ import { ReleaseProvider } from "../release/release-context";
 import { resolveStages, resolveVisibility } from "../../src/domain/release";
 import { CloudSyncSetup as Setup } from "./cloud-sync-setup";
 
-const visibility = (preview: boolean) =>
-  resolveVisibility(resolveStages(undefined), preview);
+const visibility = (preview: boolean, stages?: string) =>
+  resolveVisibility(resolveStages(stages), preview);
 
-function CloudSyncSetup({ preview = true }: { preview?: boolean }) {
+function CloudSyncSetup({
+  preview = true,
+  stages,
+}: {
+  preview?: boolean;
+  stages?: string;
+}) {
   return (
-    <ReleaseProvider value={visibility(preview)}>
+    <ReleaseProvider value={visibility(preview, stages)}>
       <Setup />
     </ReleaseProvider>
   );
@@ -129,8 +135,16 @@ async function fillWebDav(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("release gate", () => {
-  it("keeps the manual backup and restore without the preview", () => {
+  it("offers the automatic sync in regular school operation", () => {
     render(<CloudSyncSetup preview={false} />);
+    expect(
+      screen.getByRole("heading", { name: "Geräte abgleichen" }),
+    ).toBeVisible();
+    expect(screen.queryByText("Cloud-Synchronisation")).toBeNull();
+  });
+
+  it("falls back to the manual backup and restore when held back", () => {
+    render(<CloudSyncSetup preview={false} stages="geraete-sync=vorschau" />);
     expect(
       screen.getByRole("heading", { name: "Cloud-Synchronisation" }),
     ).toBeVisible();
@@ -140,6 +154,23 @@ describe("release gate", () => {
 });
 
 describe("setup wizard", () => {
+  it("takes over address and user name from the manual sync", async () => {
+    window.localStorage.setItem(
+      "lernraum:cloud-sync",
+      JSON.stringify({ url: "https://cloud.example/dav", username: "lea" }),
+    );
+    const user = userEvent.setup();
+    await toConnect(user);
+    await waitFor(() =>
+      expect(screen.getByLabelText("Server-Adresse")).toHaveValue(
+        "https://cloud.example/dav",
+      ),
+    );
+    expect(screen.getByLabelText("Benutzername")).toHaveValue("lea");
+    expect(screen.getByLabelText("App-Passwort")).toHaveValue("");
+    window.localStorage.clear();
+  });
+
   it("leads from provider to start and passes everything to the controller", async () => {
     const user = userEvent.setup();
     await toConnect(user);

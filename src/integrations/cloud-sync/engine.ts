@@ -235,14 +235,16 @@ async function runRound(
     ) {
       const stat = await deps.target.stat(fileName);
       if (stat && stat.etag !== null && stat.etag === state.lastEtag) {
+        // Offene Konflikte bleiben sichtbar, auch wenn sich nichts geändert hat.
+        const status = await settledStatus(store);
         await store.patchState({
-          status: "idle",
+          status,
           error: null,
           pending: 0,
           lastSyncedAt: new Date(now()).toISOString(),
         });
         return {
-          status: await settledStatus(store),
+          status,
           uploaded: false,
           received: false,
           revision: state.lastRevision,

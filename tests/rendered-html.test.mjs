@@ -129,6 +129,13 @@ test("server-renders the houses once motivation is switched on", async () => {
   }
 });
 
+test("offers the automatic teacher sync without preview", async () => {
+  // Entscheidung 53: Der Geräte-Abgleich ist seit dem Pilot frei.
+  const html = await (await render("/lehrer/einstellungen", null)).text();
+  assert.match(html, /Geräte abgleichen/);
+  assert.doesNotMatch(html, />Cloud-Synchronisation</);
+});
+
 test("shows only released areas without preview and redirects the rest", async () => {
   // Entscheidung 48: Lernbereiche und Lehrerbereich sind frei.
   const releasedRoutes = [

@@ -2,10 +2,10 @@
 
 Zwei Wege, Daten über einen Cloudspeicher zwischen Geräten zu bringen:
 
-| Rolle     | Weg                                                                              | Datei                        | Code                                                 |
-| --------- | -------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
-| Schüler   | Handabgleich („sichern“ / „holen“)                                               | `lernraum-schueler-v1.json`  | `sync.ts`, `app/components/cloud-sync-panel.tsx`     |
-| Lehrkraft | **Automatischer Geräte-Abgleich** v2 (ohne Vorschau: bisheriger Handabgleich v1) | `lernraum-lehrkraft-v2.json` | `engine.ts`, `controller.ts`, `cloud-sync-setup.tsx` |
+| Rolle     | Weg                                                                               | Datei                        | Code                                                 |
+| --------- | --------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
+| Schüler   | Handabgleich („sichern“ / „holen“)                                                | `lernraum-schueler-v1.json`  | `sync.ts`, `app/components/cloud-sync-panel.tsx`     |
+| Lehrkraft | **Automatischer Geräte-Abgleich** v2 (zurückgehalten: bisheriger Handabgleich v1) | `lernraum-lehrkraft-v2.json` | `engine.ts`, `controller.ts`, `cloud-sync-setup.tsx` |
 
 Beim Holen wird immer zusammengeführt, nichts wird blind überschrieben. Code
 liegt in `src/integrations/cloud-sync/`.
@@ -17,8 +17,8 @@ Tafel auf Gerät B; Änderungen erscheinen ohne Knopfdruck auf dem anderen Gerä
 
 **Grundsätze**
 
-- **Optional.** Ohne Einrichtung ändert sich nichts. Der Bereich steht auf
-  Stufe `vorschau` (`geraete-sync` im Freigaberegister) bis zum Pilot.
+- **Optional.** Ohne Einrichtung ändert sich nichts. Der Bereich
+  `geraete-sync` steht im Freigaberegister seit dem 7. Oktober 2026 auf `frei`.
 - **Kein Lernraum-Server.** Der Abgleich läuft zwischen den Geräten **einer**
   Lehrkraft über **ihren** Speicher. Das ist keine „permanente
   Echtzeit-Synchronisation aller Schüleraktivitäten mit einem Backend“
@@ -192,9 +192,15 @@ nicht eingerichtet“.
 
 ## Pilot und Freigabe
 
-Der Bereich `geraete-sync` steht auf `vorschau`. Vor allgemeiner Freigabe
-(`frei` in `src/domain/release.ts`): Pilot mit einer Lehrkraft (Laptop zu
-Hause, Tafel in der Schule) und die manuelle Prüfung der Passwortmanager in
+Der Bereich `geraete-sync` steht seit dem 7. Oktober 2026 auf `frei`
+(`src/domain/release.ts`). Die projektverantwortliche Lehrkraft wollte den
+automatischen Abgleich für den Pilot (Laptop zu Hause, Tafel in der Schule) im
+normalen Betrieb, weil ohne Vorschau nur der Handabgleich erschien. Wer ihn
+zurückhalten will, setzt `LERNRAUM_FREIGABE=geraete-sync=vorschau`; dann
+erscheint ohne Vorschau wieder der Handabgleich. Die Einrichtung übernimmt
+WebDAV-Adresse und Benutzername aus dem Handabgleich.
+
+Weiter offen ist die manuelle Prüfung der Passwortmanager in
 Chrome, Edge, Firefox, Safari (iCloud-Schlüsselbund) und mit Bitwarden oder
 1Password: Vorschlag beim Anlegen, Speichern-Angebot, Ausfüllen auf dem zweiten
 Gerät, Aktualisieren nach Passwortwechsel. Das tatsächliche Speichern entscheidet
