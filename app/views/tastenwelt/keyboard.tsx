@@ -26,6 +26,34 @@ function keyLabel(key: (typeof KEYBOARD_ROWS)[number][number]) {
   return key.label === "ß" ? "ß" : key.label.toLocaleUpperCase("de-DE");
 }
 
+type KeyDef = (typeof KEYBOARD_ROWS)[number][number];
+
+/**
+ * Große Entertaste: deutsche ISO-Form über zwei Zeilen (oben breit, unten schmal).
+ * Kleine Entertaste: eine einzelne Taste in der mittleren Zeile, das „#“ rückt nach oben.
+ */
+function layoutRows(enterKey: "large" | "small"): KeyDef[][] {
+  if (enterKey === "large") return KEYBOARD_ROWS;
+  const hash = KEYBOARD_ROWS.flat().find((key) => key.code === "Backslash");
+  return KEYBOARD_ROWS.map((row) => {
+    if (row.some((key) => key.code === "Enter") && hash) {
+      return [
+        ...row.filter((key) => key.code !== "Enter"),
+        { ...hash, width: 1.55 },
+      ];
+    }
+    if (row.some((key) => key.code === "EnterLower")) {
+      return [
+        ...row.filter(
+          (key) => key.code !== "Backslash" && key.code !== "EnterLower",
+        ),
+        { id: "Enter", code: "Enter", label: "↵", width: 2.25, kind: "system" },
+      ];
+    }
+    return row;
+  });
+}
+
 type KeyboardProps = {
   size: "large" | "small";
   /** Codes der nächsten Taste(n), z. B. Buchstabe und Umschalt. */
@@ -51,24 +79,15 @@ export function Keyboard({
   const small = enterKey === "small";
   return (
     <div className={cx(styles.board, styles[size])} aria-hidden="true">
-      {KEYBOARD_ROWS.map((row, index) => (
+      {layoutRows(enterKey).map((row, index) => (
         <div key={index} className={styles.row}>
           {row.map((key) => {
-            if (small && key.code === "Enter") {
-              return (
-                <span
-                  key={key.code}
-                  className={styles.spacer}
-                  style={{ "--w": key.width ?? 1 } as CSSProperties}
-                />
-              );
-            }
-            const isTarget = (code: string) =>
-              targets.includes(code) ||
-              (small && code === "EnterLower" && targets.includes("Enter"));
             const level = heat?.[key.code] ?? 0;
             const colored =
               !heat && fingerColors && key.finger && key.finger !== "thumb";
+            // Beide Teile der großen Entertaste leuchten zusammen.
+            const code = key.code === "EnterLower" ? "Enter" : key.code;
+            const iso = !small && code === "Enter";
             return (
               <span
                 key={key.code}
@@ -76,10 +95,14 @@ export function Keyboard({
                   styles.key,
                   key.kind !== "character" && styles.control,
                   colored && styles.finger,
-                  !heat && isTarget(key.code) && styles.target,
-                  !heat && wrong === key.code && styles.wrong,
+                  !heat && targets.includes(code) && styles.target,
+                  !heat &&
+                    (wrong === key.code || (iso && wrong === "Enter")) &&
+                    styles.wrong,
                   level > 0 && styles.heat,
                   level >= 2 && styles.hot,
+                  iso && key.code === "Enter" && styles.isoTop,
+                  iso && key.code === "EnterLower" && styles.isoBottom,
                 )}
                 style={
                   {
@@ -89,7 +112,7 @@ export function Keyboard({
                   } as CSSProperties
                 }
               >
-                {keyLabel(key)}
+                {key.code === "Enter" && small ? "↵" : keyLabel(key)}
                 {key.home ? <span className={styles.bump} /> : null}
               </span>
             );

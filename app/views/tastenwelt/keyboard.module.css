@@ -168,9 +168,22 @@
   background: oklch(0.62 0.18 var(--hue));
 }
 
-/* Leerer Platz, wenn die kleine Entertaste die obere Hälfte freigibt. */
-.spacer {
-  flex: var(--w) var(--w) 0;
-  min-width: 0;
-  height: var(--h);
+/* Große deutsche Entertaste: zwei Teile, die als eine L-förmige Taste wirken.
+   Der untere Teil überbrückt die Lücke zwischen den Zeilen. */
+.isoTop {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: var(--r);
+}
+.isoBottom {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.isoBottom::before {
+  position: absolute;
+  top: calc(var(--gap) * -1);
+  right: 0;
+  left: 0;
+  height: var(--gap);
+  background: inherit;
+  content: "";
 }
