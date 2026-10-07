@@ -34,6 +34,11 @@ declare const styles: {
   readonly right: string;
   readonly round: string;
   readonly screen: string;
+  readonly setChoice: string;
+  readonly setChoices: string;
+  readonly setGroup: string;
+  readonly setLabel: string;
+  readonly settings: string;
   readonly shake: string;
   readonly space: string;
   readonly srOnly: string;

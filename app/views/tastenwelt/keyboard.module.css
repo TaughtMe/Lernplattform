@@ -167,3 +167,10 @@
   border-radius: 50%;
   background: oklch(0.62 0.18 var(--hue));
 }
+
+/* Leerer Platz, wenn die kleine Entertaste die obere Hälfte freigibt. */
+.spacer {
+  flex: var(--w) var(--w) 0;
+  min-width: 0;
+  height: var(--h);
+}

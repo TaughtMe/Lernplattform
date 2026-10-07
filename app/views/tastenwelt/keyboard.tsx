@@ -35,6 +35,8 @@ type KeyboardProps = {
   /** Fehlerstärke 1–3 je Tastencode (Wärmekarte „Unsichere Tasten“). */
   heat?: Readonly<Record<string, number>>;
   fingerColors?: boolean;
+  /** Große Entertaste über zwei Zeilen oder kleine Taste in der mittleren Zeile. */
+  enterKey?: "large" | "small";
 };
 
 /** Deutsche ISO-Tastatur mit Fingerfarben, Zielhinweis und Wärmekarte. */
@@ -44,12 +46,26 @@ export function Keyboard({
   wrong = null,
   heat,
   fingerColors = true,
+  enterKey = "large",
 }: KeyboardProps) {
+  const small = enterKey === "small";
   return (
     <div className={cx(styles.board, styles[size])} aria-hidden="true">
       {KEYBOARD_ROWS.map((row, index) => (
         <div key={index} className={styles.row}>
           {row.map((key) => {
+            if (small && key.code === "Enter") {
+              return (
+                <span
+                  key={key.code}
+                  className={styles.spacer}
+                  style={{ "--w": key.width ?? 1 } as CSSProperties}
+                />
+              );
+            }
+            const isTarget = (code: string) =>
+              targets.includes(code) ||
+              (small && code === "EnterLower" && targets.includes("Enter"));
             const level = heat?.[key.code] ?? 0;
             const colored =
               !heat && fingerColors && key.finger && key.finger !== "thumb";
@@ -60,7 +76,7 @@ export function Keyboard({
                   styles.key,
                   key.kind !== "character" && styles.control,
                   colored && styles.finger,
-                  !heat && targets.includes(key.code) && styles.target,
+                  !heat && isTarget(key.code) && styles.target,
                   !heat && wrong === key.code && styles.wrong,
                   level > 0 && styles.heat,
                   level >= 2 && styles.hot,

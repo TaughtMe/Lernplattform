@@ -15,6 +15,7 @@ declare const styles: {
   readonly on: string;
   readonly row: string;
   readonly small: string;
+  readonly spacer: string;
   readonly target: string;
   readonly wrong: string;
 };

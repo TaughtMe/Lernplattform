@@ -4,6 +4,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
@@ -12,6 +13,7 @@ import type { Finger } from "../../../src/tastschreiben/keyboard-layout";
 import { Icon } from "../../ui/icons";
 import { Animal, cx, type Theme } from "../parts/parts";
 import { FingerLegend, Keyboard } from "./keyboard";
+import { useKeyboardSettings } from "./keyboard-settings";
 import styles from "./practice-screen.module.css";
 
 export type TileState = "todo" | "current" | "right" | "corrected" | "bad";
@@ -74,6 +76,9 @@ export function PracticeScreen(props: PracticeScreenProps) {
   const textId = useId();
   const focusInput = () => input.current?.focus();
   const { tiles, result } = props;
+  const [settings, updateSettings] = useKeyboardSettings();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsTitle = useId();
   const onCharRef = useRef(props.onChar);
   useEffect(() => {
     onCharRef.current = props.onChar;
@@ -158,11 +163,70 @@ export function PracticeScreen(props: PracticeScreenProps) {
           <button
             type="button"
             className={cx(styles.raised, styles.round)}
+            aria-label="Tastatur einstellen"
+            aria-expanded={settingsOpen}
+            aria-controls={settingsTitle}
+            onClick={() => setSettingsOpen((open) => !open)}
+          >
+            <Icon name="gear" size={19} />
+          </button>
+          <button
+            type="button"
+            className={cx(styles.raised, styles.round)}
             aria-label="Hell oder dunkel"
             onClick={props.onToggleTheme}
           >
             <Icon name={props.theme === "dark" ? "sun" : "moon"} size={19} />
           </button>
+          {settingsOpen ? (
+            <section
+              id={settingsTitle}
+              className={styles.settings}
+              aria-label="Tastatur einstellen"
+            >
+              <fieldset className={styles.setGroup}>
+                <legend className={styles.setLabel}>Entertaste</legend>
+                <div className={styles.setChoices}>
+                  {(
+                    [
+                      ["large", "Groß"],
+                      ["small", "Klein"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <label key={value} className={styles.setChoice}>
+                      <input
+                        type="radio"
+                        name="enter-key"
+                        checked={settings.enterKey === value}
+                        onChange={() => updateSettings({ enterKey: value })}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <label className={styles.setChoice}>
+                <input
+                  type="checkbox"
+                  checked={settings.showNext}
+                  onChange={(event) =>
+                    updateSettings({ showNext: event.target.checked })
+                  }
+                />
+                Nächste Taste zeigen
+              </label>
+              <label className={styles.setChoice}>
+                <input
+                  type="checkbox"
+                  checked={settings.fingerColors}
+                  onChange={(event) =>
+                    updateSettings({ fingerColors: event.target.checked })
+                  }
+                />
+                Fingerfarben
+              </label>
+            </section>
+          ) : null}
         </header>
 
         <div className={styles.body}>
@@ -287,7 +351,7 @@ export function PracticeScreen(props: PracticeScreenProps) {
                   }}
                 />
               </span>
-              {props.hint ? (
+              {props.hint && settings.showNext ? (
                 <span
                   className={styles.hint}
                   style={{ "--hue": props.hint.hue } as CSSProperties}
@@ -326,10 +390,14 @@ export function PracticeScreen(props: PracticeScreenProps) {
           <div className={styles.keys}>
             <Keyboard
               size="large"
-              targets={props.keyboard.targets}
+              targets={settings.showNext ? props.keyboard.targets : []}
               wrong={props.keyboard.wrong}
+              fingerColors={settings.fingerColors}
+              enterKey={settings.enterKey}
             />
-            <FingerLegend active={props.keyboard.fingers} />
+            <FingerLegend
+              active={settings.showNext ? props.keyboard.fingers : []}
+            />
             {!props.started ? (
               <button
                 type="button"
