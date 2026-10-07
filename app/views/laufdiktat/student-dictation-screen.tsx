@@ -18,6 +18,7 @@ import {
   ThemeSwitch,
   type Theme,
 } from "../parts/parts";
+import { AnimalImage } from "../../ui/animal";
 import styles from "./student-dictation-screen.module.css";
 import { useAutoFitText } from "./use-auto-fit-text";
 
@@ -105,9 +106,9 @@ export type StudentDictationScreenProps = {
   battleBar?: {
     powers: readonly BattlePower[];
     picking: BattlePower | null;
-    targets: readonly string[];
+    targets: readonly { key: string; label: string; animal: string | null }[];
     message: string;
-    onPickTarget?: (name: string) => void;
+    onPickTarget?: (key: string) => void;
     onCancelPick?: () => void;
   };
   /** Stationen: blättern zwischen den Aufgaben einer Nummer. */
@@ -564,14 +565,17 @@ function BattleBar({
         <div className={styles.targets}>
           <strong>Wen möchtest du treffen?</strong>
           <div className={styles.targetList}>
-            {battleBar.targets.map((name) => (
+            {battleBar.targets.map((target) => (
               <button
-                key={name}
+                key={target.key}
                 type="button"
                 className={styles.ghost}
-                onClick={() => battleBar.onPickTarget?.(name)}
+                onClick={() => battleBar.onPickTarget?.(target.key)}
               >
-                {name}
+                {target.animal ? (
+                  <AnimalImage animal={target.animal} size={24} />
+                ) : null}{" "}
+                {target.label}
               </button>
             ))}
           </div>

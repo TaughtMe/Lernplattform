@@ -61,6 +61,8 @@ type LiveRunningDictationGameProps = {
   onRetryProgress?: () => void;
   onLoadProgress?: (studentKey: string) => Promise<LiveProgress | null>;
   roster?: Record<string, number>;
+  /** Anzeigename und Tier der Mitspieler, nach Raumschlüssel. */
+  peers?: Record<string, { label: string; animal: string | null }>;
   incomingAttack?: { id: number; type: AttackType; from: string } | null;
   onSendAttack?: (to: string, type: AttackType) => boolean;
   /** Angezeigter Tiername (z. B. „Fuchs 2“); studentName ist ein anonymer Schlüssel. */
@@ -79,6 +81,7 @@ export function LiveRunningDictationGame({
   deliveryStatus = "idle",
   onRetryProgress,
   roster = {},
+  peers = {},
   incomingAttack,
   onSendAttack,
   displayName: displayNameProp = null,
@@ -816,13 +819,22 @@ export function LiveRunningDictationGame({
               battleBar: {
                 powers: battlePowers,
                 picking: picker,
-                targets: battleCandidates.map(({ name }) => name),
+                targets: battleCandidates.map(({ name }) => ({
+                  key: name,
+                  label:
+                    peers[name]?.label ??
+                    (name.startsWith("participant-") ? "Mitspieler" : name),
+                  animal: peers[name]?.animal ?? null,
+                })),
                 message: battleMessage,
                 onPickTarget: (name: string) => {
+                  const label =
+                    peers[name]?.label ??
+                    (name.startsWith("participant-") ? "Mitspieler" : name);
                   if (picker && onSendAttack?.(name, picker)) {
                     setCharge(0);
                     setPicker(null);
-                    setBattleMessage(`Angriff auf ${name} gestartet.`);
+                    setBattleMessage(`Angriff auf ${label} gestartet.`);
                   }
                 },
                 onCancelPick: () => setPicker(null),

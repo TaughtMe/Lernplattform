@@ -59,6 +59,28 @@ type LiveRoomJoinProps = {
   liveRoomConfig: LiveRoomConfig | null;
 };
 
+function peerIdentity(room: Parameters<typeof roomPeerLabel>[0]) {
+  const { label, animal } = roomPeerLabel(room);
+  return label ? { label, animal } : {};
+}
+
+function roomPeerLabel(room: {
+  studentName: string;
+  animalToken?: string | null;
+  animalNumber: number;
+}): { label: string | null; animal: string | null } {
+  const animal =
+    room.animalToken ?? animalTokenFromDisplayName(room.studentName);
+  const label = room.animalToken
+    ? room.animalNumber > 1
+      ? `${room.animalToken} ${room.animalNumber}`
+      : room.animalToken
+    : animal
+      ? room.studentName
+      : null;
+  return { label, animal };
+}
+
 export function LiveRoomJoin({
   initialCode = "",
   liveRoomConfig,
@@ -113,6 +135,9 @@ export function LiveRoomJoin({
     null,
   );
   const [roster, setRoster] = useState<Record<string, number>>({});
+  const [peers, setPeers] = useState<
+    Record<string, { label: string; animal: string | null }>
+  >({});
   const [incomingAttack, setIncomingAttack] = useState<{
     id: number;
     type: AttackType;
@@ -136,6 +161,16 @@ export function LiveRoomJoin({
       config: { presence: { key: activeRoom.studentName } },
     });
     channelRef.current = channel;
+
+    function rememberPeer(name: string, label: unknown, animal: unknown) {
+      if (typeof label !== "string" || !label) return;
+      const nextAnimal = typeof animal === "string" ? animal : null;
+      setPeers((current) =>
+        current[name]?.label === label && current[name]?.animal === nextAnimal
+          ? current
+          : { ...current, [name]: { label, animal: nextAnimal } },
+      );
+    }
 
     function markRoomEnded() {
       setEndedSession(lastSessionRef.current);
@@ -249,15 +284,26 @@ export function LiveRoomJoin({
         void syncAuthorizedRoomState();
       })
       .on("broadcast", { event: "student-progress" }, ({ payload }) => {
-        const update = payload as { name?: unknown; index?: unknown };
+        const update = payload as {
+          name?: unknown;
+          index?: unknown;
+          label?: unknown;
+          animal?: unknown;
+        };
         if (typeof update.name !== "string" || typeof update.index !== "number")
           return;
         const name = update.name;
         const index = update.index;
+        rememberPeer(name, update.label, update.animal);
         setRoster((current) => ({ ...current, [name]: index }));
       })
       .on("broadcast", { event: "student-finished" }, ({ payload }) => {
-        const update = payload as { name?: unknown; currentIndex?: unknown };
+        const update = payload as {
+          name?: unknown;
+          currentIndex?: unknown;
+          label?: unknown;
+          animal?: unknown;
+        };
         if (
           typeof update.name !== "string" ||
           typeof update.currentIndex !== "number"
@@ -265,6 +311,7 @@ export function LiveRoomJoin({
           return;
         const name = update.name;
         const index = update.currentIndex;
+        rememberPeer(name, update.label, update.animal);
         setRoster((current) => ({
           ...current,
           [name]: index,
@@ -285,6 +332,7 @@ export function LiveRoomJoin({
         const attack = payload as {
           to?: unknown;
           from?: unknown;
+          fromLabel?: unknown;
           type?: unknown;
         };
         if (
@@ -295,7 +343,10 @@ export function LiveRoomJoin({
           return;
         setIncomingAttack({
           id: Date.now(),
-          from: attack.from,
+          from:
+            typeof attack.fromLabel === "string" && attack.fromLabel
+              ? attack.fromLabel
+              : "einem Mitspieler",
           type: attack.type,
         });
       })
@@ -424,6 +475,7 @@ export function LiveRoomJoin({
           ? `Station ${progress.stationNumber}`
           : room.studentName,
         index: progress.currentIndex,
+        ...(progress.stationNumber ? {} : peerIdentity(room)),
         ...progress,
       };
       lastProgressBroadcastRef.current = { event, payload };
@@ -451,7 +503,12 @@ export function LiveRoomJoin({
       void channelRef.current.send({
         type: "broadcast",
         event: "attack",
-        payload: { from: room.studentName, to, type },
+        payload: {
+          from: room.studentName,
+          fromLabel: roomPeerLabel(room).label,
+          to,
+          type,
+        },
       });
       return true;
     },
@@ -575,6 +632,7 @@ export function LiveRoomJoin({
         onProgress={reportProgress}
         onLoadProgress={loadProgress}
         roster={roster}
+        peers={peers}
         incomingAttack={incomingAttack}
         onSendAttack={sendAttack}
       />
