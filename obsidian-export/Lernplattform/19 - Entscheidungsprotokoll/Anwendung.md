@@ -603,3 +603,17 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 - Schülergeräte prüfen alle 30 Sekunden, ob der Server den Raum geschlossen hat, und übernehmen die Runde dann wie beim Beenden in die LernBox (Entscheidung 49).
 - Abweichung vom Original-Laufdiktat; in `docs/laufdiktat-parity.md` vermerkt.
 
+## 54. Textbox: Rechtschreibtraining mit Texten – 8. Oktober 2026
+
+**Beschlossen:** Die Textbox ist ein eigener Übungsbereich (`/frei/german/textbox`) für Rechtschreibtraining mit zusammenhängenden Texten. Die fachlichen Festlegungen sind mit der projektverantwortlichen Lehrkraft abgestimmt und stehen verbindlich in `docs/umsetzungsplan-textbox.md` (Abschnitt 1). Die Nummer 53 bleibt dem geräteübergreifenden Abgleich der Lehrerdaten vorbehalten (`docs/cloud-sync.md`).
+
+- **Ablauf:** Vier Durchgänge am selben Text, je Merken → Schreiben → Kontrolle. Ausblendung 20/40/70/100 %, geschachtelt; in Durchgang 1 sind die Zielwörter markiert. Durchgang 1–3 schreibt direkt in die Lücken, Durchgang 4 in ein leeres Feld. Merkzeit 60/90/120 s je Schwierigkeit.
+- **Bewertung:** Durchgang 4 ist der Hauptwert. Zeit ändert den Lernstand nicht. Satzzeichen sind Hinweise ohne Wertung. Zusätzliche Wörter werden abgezogen, nie unter 0 %. „Fast richtig“ (ein Buchstabe Abstand) zählt als Fehler.
+- **Bestwert:** Die Übersicht zeigt immer den Bestwert, nie das letzte Ergebnis; alle Kennzahlen werden aus den abgeschlossenen Einheiten abgeleitet. Laufende Einheiten werden nach jedem Durchgang gespeichert und können fortgesetzt oder verworfen werden.
+- **Texte:** 50 Texte (Welle 1 und 2), von einem KI-Agenten entworfen und von der Lehrkraft fachlich geprüft. Zielwörter machen 10–25 % aus und müssen echte Beispiele für den Schwerpunkt sein.
+- **Wortspeicher:** Keine zweite Trainingsanwendung. Zwei Zugänge: frei über „Üben“ und nach einer Wortspeicher-Übung (vorbereitete Texte, Variante A). Wörter reisen als Adressparameter, Zod-geprüft, höchstens 50. KI-Texte (Variante B) sind nicht Teil dieser Version.
+- **Daten:** Rein lokal, Dexie-Tabelle `textboxSessions` (Version 5), Teil der persönlichen Sicherung. Eigene Ereignisquelle `textbox` für Serie und Tagesaktivität. Keine Supabase-Migration, kein Server.
+- **Laufzettel:** Dokumentation, kein gesicherter Prüfungsnachweis; das Namensfeld wird nicht gespeichert.
+- **Freigabe:** Bereich `textbox` zunächst auf `vorschau`. Die Lehrkraft stellt ihn nach dem Probedurchlauf auf `frei`.
+
+**Bekannte Grenzen:** Auch das Gedächtnis wird trainiert; die Wirksamkeit der Methode für LRS ist nicht belegt. Ältere App-Versionen kennen `textbox` und `textboxSessions` nicht.

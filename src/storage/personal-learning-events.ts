@@ -1,8 +1,10 @@
 import {
   learningWordProgressSchema,
+  textboxSessionSchema,
   typingProgressSchema,
   typingStatsSchema,
 } from "./progress-schema";
+import type { TextboxSession } from "../domain/textbox-session";
 import {
   learningEventV1Schema,
   normalizeVocabularyText,
@@ -48,6 +50,7 @@ export class PersonalLearningDatabase extends Dexie {
   learningBoxFolders!: Table<LearningBoxFolder, string>;
   learningWordProgress!: Table<LearningWordProgress, string>;
   typingProgress!: Table<TypingLessonProgress, string>;
+  textboxSessions!: Table<TextboxSession, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.personal) {
     super(name);
@@ -78,6 +81,18 @@ export class PersonalLearningDatabase extends Dexie {
       learningBoxFolders: "id, title, createdAt",
       learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
       typingProgress: "id, completed, lastPracticedAt",
+    });
+    // Textbox: eine Trainingseinheit je Datensatz.
+    this.version(5).stores({
+      learningEvents: "id, learningObjectId, occurredAt, roundId",
+      learningBoxDecks:
+        "id, title, createdAt, folderId, source.kind, source.sourceId",
+      learningBoxCards:
+        "id, deckId, fingerprint, [deckId+fingerprint], nextReview, reverseNextReview, createdAt, source.kind, source.sourceId",
+      learningBoxFolders: "id, title, createdAt",
+      learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
+      typingProgress: "id, completed, lastPracticedAt",
+      textboxSessions: "id, textId, status, completedAt",
     });
   }
 }
@@ -856,6 +871,123 @@ export function createTypingProgressRepository(
             }),
           );
           return progress;
+        },
+      );
+    },
+  };
+}
+
+/** Ab diesem Ergebnis in Durchgang 4 gilt die Schreibleistung als richtig (kalibrierbar). */
+export const TEXTBOX_WRITING_THRESHOLD = 90;
+
+export function createTextboxRepository(
+  database = new PersonalLearningDatabase(),
+) {
+  const parse = (value: unknown) => textboxSessionSchema.parse(value);
+  return {
+    listCompleted: async () =>
+      (
+        await database.textboxSessions
+          .where("status")
+          .equals("abgeschlossen")
+          .toArray()
+      ).map(parse),
+    listByText: async (textId: string) =>
+      (
+        await database.textboxSessions.where("textId").equals(textId).toArray()
+      ).map(parse),
+    getOpen: async (textId: string) => {
+      const open = await database.textboxSessions
+        .where("textId")
+        .equals(textId)
+        .filter((session) => session.status === "laufend")
+        .toArray();
+      const latest = open
+        .map(parse)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+      return latest;
+    },
+    /** Speichert eine laufende Einheit; eine neue ersetzt die alte zum selben Text. */
+    saveRound: async (session: TextboxSession) => {
+      const checked = parse(session);
+      if (checked.status !== "laufend") {
+        throw new Error(
+          "Nur laufende Einheiten lassen sich zwischenspeichern.",
+        );
+      }
+      await database.transaction("rw", database.textboxSessions, async () => {
+        const stored = await database.textboxSessions.get(checked.id);
+        if (stored && parse(stored).status === "abgeschlossen") {
+          throw new Error("Abgeschlossene Einheiten sind unveränderlich.");
+        }
+        const others = await database.textboxSessions
+          .where("textId")
+          .equals(checked.textId)
+          .filter(
+            (entry) => entry.status === "laufend" && entry.id !== checked.id,
+          )
+          .primaryKeys();
+        await database.textboxSessions.bulkDelete(others);
+        await database.textboxSessions.put(checked);
+      });
+    },
+    discard: async (trainingId: string) => {
+      await database.transaction("rw", database.textboxSessions, async () => {
+        const stored = await database.textboxSessions.get(trainingId);
+        if (!stored) return;
+        if (parse(stored).status === "abgeschlossen") {
+          throw new Error(
+            "Abgeschlossene Einheiten lassen sich nicht verwerfen.",
+          );
+        }
+        await database.textboxSessions.delete(trainingId);
+      });
+    },
+    /** Schließt ab und schreibt in einer Transaktion genau ein Lernereignis. */
+    complete: async (session: TextboxSession, now = new Date()) => {
+      const checked = parse(session);
+      if (
+        checked.status !== "abgeschlossen" ||
+        checked.finalPercent === undefined
+      ) {
+        throw new Error("Die Einheit ist noch nicht abgeschlossen.");
+      }
+      const eventId = await learningEventIdentity("textbox", checked.id);
+      await database.transaction(
+        "rw",
+        database.textboxSessions,
+        database.learningEvents,
+        async () => {
+          const stored = await database.textboxSessions.get(checked.id);
+          if (stored && parse(stored).status === "abgeschlossen") {
+            if (JSON.stringify(parse(stored)) !== JSON.stringify(checked)) {
+              throw new Error("Abgeschlossene Einheiten sind unveränderlich.");
+            }
+          } else {
+            await database.textboxSessions.put(checked);
+          }
+          if (await database.learningEvents.get(eventId)) return;
+          await database.learningEvents.add(
+            learningEventV1Schema.parse({
+              id: eventId,
+              learningObjectId: `textbox:${checked.textId}`,
+              occurredAt: now.toISOString(),
+              source: "textbox",
+              learningArea: "german",
+              roundId: checked.id,
+              direction: "prompt-to-answer",
+              answerMode: "typed",
+              help: "none",
+              assessment: {
+                knowledge: "not-assessed",
+                writing:
+                  checked.finalPercent! >= TEXTBOX_WRITING_THRESHOLD
+                    ? "correct"
+                    : "incorrect",
+                selfCorrected: false,
+              },
+            }),
+          );
         },
       );
     },

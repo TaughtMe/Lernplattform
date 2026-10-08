@@ -19,6 +19,10 @@ describe("Freigaberegister", () => {
     expect(areaForPath("/lehrer/haeuser")).toBe("motivation");
     expect(areaForPath("/frei/german/laufdiktat")).toBe("laufdiktat-frei");
     expect(areaForPath("/frei/german/lernwoerter")).toBe("wortspeicher");
+    // Das längste Präfix gewinnt: die Textbox ist ein eigener Bereich.
+    expect(areaForPath("/frei/german/textbox")).toBe("textbox");
+    expect(areaForPath("/frei/german/textbox/laufzettel")).toBe("textbox");
+    expect(areaForPath("/frei/german/textboxen")).toBe("wortspeicher");
     expect(areaForPath("/frei/mathematics")).toBe("mathe");
     expect(areaForPath("/frei/typing")).toBe("tastenwelt");
     expect(areaForPath("/frei/sonstiges")).toBe("lernen");
@@ -33,6 +37,8 @@ describe("Freigaberegister", () => {
     expect(defaults.lernbox).toBe("frei");
     expect(defaults.lernen).toBe("frei");
     expect(defaults.lehrer).toBe("frei");
+    expect(defaults.textbox).toBe("frei");
+    expect(defaults.wortspeicher).toBe("frei");
     expect(defaults.motivation).toBe("aus");
     expect(defaults.duell).toBe("aus");
 
@@ -64,6 +70,19 @@ describe("Freigaberegister", () => {
     expect(isPathVisible("/lernbox", preview)).toBe(true);
     expect(isPathVisible("/duell", preview)).toBe(false);
     expect(isPathVisible("/entwicklung/ui", school)).toBe(true);
+  });
+
+  it("gibt die Textbox frei und lässt sie per Freigabe zurück in die Vorschau", () => {
+    const school = resolveVisibility(resolveStages(undefined), false);
+    expect(isPathVisible("/frei/german/textbox", school)).toBe(true);
+    expect(isPathVisible("/frei/german/lernwoerter", school)).toBe(true);
+    const held = resolveStages("textbox=vorschau");
+    expect(
+      isPathVisible("/frei/german/textbox", resolveVisibility(held, false)),
+    ).toBe(false);
+    expect(
+      isPathVisible("/frei/german/textbox", resolveVisibility(held, true)),
+    ).toBe(true);
   });
 
   it("leitet Lehrkräfte zum Live-Raum und alle anderen zum Start", () => {

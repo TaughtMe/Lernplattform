@@ -2963,6 +2963,11 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
   .ui-footer {
     display: none !important;
   }
+  /* Druckbare Seiten (z. B. Laufzettel) ohne Navigation und Kopfzeile. */
+  body:has([data-print-sheet]) nav[aria-label="Hauptnavigation"],
+  body:has([data-print-sheet]) .ui-student-page__head {
+    display: none !important;
+  }
 }
 .ui-transfer__result {
   display: grid;

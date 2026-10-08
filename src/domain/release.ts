@@ -72,6 +72,12 @@ export const RELEASE_AREAS = {
     routes: ["/frei/german"],
     stage: "frei",
   },
+  textbox: {
+    label: "Textbox",
+    routes: ["/frei/german/textbox"],
+    // Von der Lehrkraft am 08.10.2026 freigegeben (Entscheidung 54).
+    stage: "frei",
+  },
   "laufdiktat-frei": {
     label: "Laufdiktat allein üben",
     routes: ["/frei/german/laufdiktat"],

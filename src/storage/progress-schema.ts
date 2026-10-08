@@ -16,6 +16,7 @@ const problemChars = z.array(
   z.object({ char: z.string().min(1), errors: count }),
 );
 
+export { textboxSessionSchema } from "../domain/textbox-session";
 export const learningWordProgressSchema: z.ZodType<LearningWordProgress> =
   z.object({
     id: z.string().min(1),

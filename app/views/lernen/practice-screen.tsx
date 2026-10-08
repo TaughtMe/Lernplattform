@@ -9,7 +9,12 @@ export type PracticeArea = {
   title: string;
   text: string;
   icon:
-    "lernbox" | "wortspeicher" | "tastenwelt" | "kopfrechnen" | "laufdiktat";
+    | "lernbox"
+    | "wortspeicher"
+    | "tastenwelt"
+    | "kopfrechnen"
+    | "laufdiktat"
+    | "textbox";
   /** Kachelfarbe (Farbwelt der Tastenwelt-Stationen). */
   tone: string;
 };
