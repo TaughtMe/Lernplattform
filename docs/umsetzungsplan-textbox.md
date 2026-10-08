@@ -16,8 +16,8 @@ Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 > als Hinweiszahl. Gespeicherte Eingaben sind auf 100 Zeichen je Wort gekürzt; Lücken erlauben 40,
 > das Schreibfeld 4000 Zeichen.
 > Paket D: Der Wortspeicher liest zusätzlich `?sammlung=<id>` (wählt eine Sammlung vor), damit der Link
-> der Fortschrittsseite zur passenden Sammlung führt. Der Laufzettel nennt die Spalte „Übungen
-> (Wiederholungen)“ und zählt abgeschlossene Einheiten. Der Fortschrittsabschnitt erscheint nur bei
+> der Fortschrittsseite zur passenden Sammlung führt. Der Laufzettel nennt die Spalte „Übungen“
+> (Entscheidung der Lehrkraft) und zählt abgeschlossene Einheiten. Der Fortschrittsabschnitt erscheint nur bei
 > sichtbarem Bereich `textbox`. Die Entscheidung heißt im Vault Nr. 54 (Nr. 53 ist der Geräte-Abgleich).
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Leitfaden ist das Konzept
@@ -684,7 +684,7 @@ Neue Route `app/frei/german/textbox/laufzettel/page.tsx`:
 
 - Freiwilliges Feld für Name oder Kennung. Es wird **nicht** gespeichert.
 - Tabelle mit Text, Schwierigkeit, Schwerpunkt, Datum der letzten Übung, Anzahl der
-  Wiederholungen und Bestwert.
+  Übungen (Spalte „Übungen“) und Bestwert.
 - Druck-CSS (`@media print`) und Schaltfläche „Drucken oder als PDF sichern“
   (`window.print()`).
 - Hinweis: „Dieser Laufzettel wurde auf deinem Gerät erstellt. Er ist eine Übersicht und kein

@@ -75,7 +75,7 @@ export function WorksheetScreen({
               <th scope="col">Schwierigkeit</th>
               <th scope="col">Schwerpunkt</th>
               <th scope="col">Letzte Übung</th>
-              <th scope="col">Übungen (Wiederholungen)</th>
+              <th scope="col">Übungen</th>
               <th scope="col">Bestwert</th>
             </tr>
           </thead>

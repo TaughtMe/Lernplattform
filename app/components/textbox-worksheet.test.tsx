@@ -50,7 +50,7 @@ describe("TextboxWorksheet", () => {
       "Schwierigkeit",
       "Schwerpunkt",
       "Letzte Übung",
-      "Übungen (Wiederholungen)",
+      "Übungen",
       "Bestwert",
     ]) {
       expect(
