@@ -68,6 +68,7 @@ describe("FreeWritingScreen", () => {
     });
     expect(field).toHaveFocus();
     expect(field).toHaveAttribute("spellcheck", "false");
+    expect(field).toHaveAttribute("maxlength", "4000");
     await user.paste("kopiert");
     expect(field).toHaveValue("");
     await user.keyboard("Der Hund");

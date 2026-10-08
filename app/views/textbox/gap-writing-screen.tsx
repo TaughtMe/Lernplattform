@@ -18,6 +18,9 @@ import { StepList } from "./memorize-screen";
 import { TextFlow } from "./text-flow";
 import styles from "./textbox.module.css";
 
+/** Längste Eingabe in einer Lücke; schützt vor festgehaltenen Tasten. */
+export const MAX_GAP_LENGTH = 40;
+
 /** Breite der Lücken in Durchgang 3 (kalibrierbar, Plan 1.4). */
 const UNIFORM_GAP_WIDTH = 11;
 
@@ -141,6 +144,7 @@ export function GapWritingScreen({
                 className={styles.gap}
                 style={{ width: `${width}ch` }}
                 type="text"
+                maxLength={MAX_GAP_LENGTH}
                 aria-label={`Lücke ${gap + 1} von ${blanked.length}`}
                 value={values[gap] ?? ""}
                 onChange={(event) => onChange(gap, event.target.value)}

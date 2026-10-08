@@ -195,24 +195,14 @@ export function phenomenonErrorStats(
     );
 }
 
-/** Reflexionsfragen erst ab zwei Einheiten, neutral und ohne Bewertung. */
+/** Fragen aus dem Konzept (§8.3); sie erscheinen erst ab zwei Einheiten. */
+export const REFLECTION_QUESTIONS = [
+  "Bei welcher Übung war dein Ergebnis am besten?",
+  "Wie stark hast du dich verbessert?",
+  "Ist dein Ergebnis bei jeder Übung gestiegen?",
+  "Was fällt dir an deinem Diagramm auf?",
+] as const;
+
 export function reflectionQuestions(summary: TextboxTextSummary): string[] {
-  if (summary.sessions < 2) return [];
-  const questions = [
-    "Bei welcher Übung war dein Ergebnis am besten?",
-    "Was hat dir beim Einprägen geholfen?",
-  ];
-  const first = summary.history[0]?.percent;
-  if (first !== undefined && (summary.bestPercent ?? 0) > first) {
-    questions.push("Was hast du seit dem ersten Mal anders gemacht?");
-  }
-  if (
-    summary.lastPercent !== undefined &&
-    summary.bestPercent !== undefined &&
-    summary.lastPercent < summary.bestPercent
-  ) {
-    questions.push("Was war beim besten Mal anders als beim letzten Mal?");
-  }
-  questions.push("Welche Wörter möchtest du als Nächstes üben?");
-  return questions;
+  return summary.sessions < 2 ? [] : [...REFLECTION_QUESTIONS];
 }

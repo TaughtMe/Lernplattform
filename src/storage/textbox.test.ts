@@ -331,3 +331,34 @@ describe("Backup mit Textbox-Einheiten", () => {
     expect(await target.textboxSessions.get("c")).toEqual(done);
   });
 });
+
+describe("Sehr lange Eingaben", () => {
+  const hard = TEXTBOX_TEXTS.find((t) => t.difficulty === "schwer")!;
+
+  it("lassen sich vollständig abschließen und speichern", async () => {
+    const database = createDatabase();
+    const repository = createTextboxRepository(database);
+    let state = startRun(hard, "lang");
+    for (let round = 1; round <= 4; round += 1) {
+      state = finishMemorize(state, 1);
+      const gaps = buildBlankingPlan(hard, state.seed)[round - 1]!.size;
+      state = submitRound(
+        state,
+        hard,
+        round === 4
+          ? hard.text.replace(/\s+/g, "") + "x".repeat(4000)
+          : Array.from({ length: gaps }, () => "g".repeat(300)),
+        1,
+      );
+      for (const word of state.rounds.at(-1)!.words) {
+        expect(Array.from(word.actual ?? "").length).toBeLessThanOrEqual(100);
+      }
+      state = nextRound(state);
+    }
+    const session = sessionFromRun(state, hard, { startedAt: t0, now: t1 });
+    expect(session.status).toBe("abgeschlossen");
+    await repository.complete(session);
+    expect(await repository.listCompleted()).toEqual([session]);
+    expect(await database.learningEvents.count()).toBe(1);
+  });
+});

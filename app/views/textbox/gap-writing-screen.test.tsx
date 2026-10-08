@@ -114,4 +114,9 @@ describe("GapWritingScreen", () => {
     await user.keyboard("a b c ");
     expect(screen.getByRole("button", { name: "Prüfen" })).toHaveFocus();
   });
+
+  it("begrenzt die Länge einer Lücke", () => {
+    const { gaps } = setup();
+    for (const gap of gaps) expect(gap).toHaveAttribute("maxlength", "40");
+  });
 });

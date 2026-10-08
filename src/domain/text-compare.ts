@@ -81,6 +81,16 @@ export function wordsOf(tokens: readonly TextToken[]): string[] {
   return tokens.filter((t) => t.kind === "word").map((t) => t.text);
 }
 
+/** Höchstlänge einer gespeicherten Eingabe; verglichen wird das ganze Wort. */
+export const MAX_STORED_INPUT_LENGTH = 100;
+
+function clip(value: string) {
+  const letters = Array.from(value);
+  return letters.length > MAX_STORED_INPUT_LENGTH
+    ? letters.slice(0, MAX_STORED_INPUT_LENGTH).join("")
+    : value;
+}
+
 function lower(value: string) {
   return value.toLocaleLowerCase("de");
 }
@@ -94,7 +104,7 @@ function differentWord(
     return {
       kind: "gross-klein",
       expected,
-      actual,
+      actual: clip(actual),
       expectedIndex,
       nearMiss: false,
     };
@@ -102,7 +112,7 @@ function differentWord(
   return {
     kind: "falsch",
     expected,
-    actual,
+    actual: clip(actual),
     expectedIndex,
     nearMiss: isWithinOneEdit(actual, expected),
   };
@@ -158,7 +168,7 @@ export function alignWords(expected: string[], actual: string[]): WordResult[] {
           ? {
               kind: "richtig",
               expected: want,
-              actual: got,
+              actual: clip(got),
               expectedIndex: i - 1,
               nearMiss: false,
             }
@@ -177,7 +187,7 @@ export function alignWords(expected: string[], actual: string[]): WordResult[] {
     } else {
       results.push({
         kind: "zusaetzlich",
-        actual: actual[j - 1]!,
+        actual: clip(actual[j - 1]!),
         nearMiss: false,
       });
       j -= 1;
@@ -205,7 +215,7 @@ export function compareGaps(
       return {
         kind: "richtig",
         expected: want,
-        actual: got,
+        actual: clip(got),
         expectedIndex: index,
         nearMiss: false,
       };

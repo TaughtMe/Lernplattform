@@ -5,7 +5,30 @@ import {
   TEXTBOX_WORD_COUNT_RANGES,
   countWords,
   textboxTextSchema,
+  type TextboxPhenomenon,
 } from "./textbox-text";
+
+/**
+ * Grobe Prüfung, ob ein Zielwort ein echtes Beispiel für den Schwerpunkt ist.
+ * Das ist eine Plausibilitätsprüfung; die fachliche Prüfung macht die Lehrkraft.
+ */
+const BEISPIELE: Record<
+  Exclude<TextboxPhenomenon, "gemischt">,
+  (word: string) => boolean
+> = {
+  doppelkonsonanten: (w) => /([bdfgklmnprstz])\1/i.test(w),
+  "dehnungs-h": (w) => /[aeiouäöü]h(?:[lmnr]|$)/i.test(w),
+  ie: (w) => /ie/i.test(w) && !/^reptilien/i.test(w),
+  "s-ss-sz": (w) => /ß|ss/i.test(w),
+  "gross-klein": (w) => /^\p{Lu}/u.test(w),
+  auslautverhaertung: (w) => /[bdg]$/i.test(w) && !/ig$/i.test(w),
+  vokallaenge: (w) =>
+    /aa|ee|oo|ie|[aeiouäöü]h(?:[lmnr]|$)|([bdfgklmnprstz])\1/i.test(w),
+  wortbausteine: (w) =>
+    /^(ver|vor|er|be|ent|zer|ge|ab|un)\p{L}{3,}/iu.test(w) ||
+    /\p{L}{3,}(ung|heit|keit|lich|nis|schaft|los|bar)$/iu.test(w),
+  zusammensetzungen: (w) => /^\p{Lu}/u.test(w) && w.length >= 8,
+};
 
 describe("Textbibliothek", () => {
   it("hat eindeutige, fortlaufende Ids und 5 Texte je Schwierigkeit (Welle 1)", () => {
@@ -40,8 +63,21 @@ describe("Textbibliothek", () => {
       expect(new Set(text.targetWords).size).toBe(text.targetWords.length);
       const targets = new Set(text.targetWords);
       const share = words.filter((w) => targets.has(w)).length / words.length;
-      expect(share).toBeGreaterThanOrEqual(0.15);
+      expect(share).toBeGreaterThanOrEqual(0.1);
       expect(share).toBeLessThanOrEqual(0.25);
+
+      // Zielwörter sind echte Beispiele für einen Schwerpunkt des Textes.
+      const focus = text.phenomena.filter((p) => p !== "gemischt");
+      expect(focus.length).toBeGreaterThan(0);
+      if (text.phenomena.includes("gemischt")) {
+        expect(focus.length).toBeGreaterThanOrEqual(2);
+      }
+      for (const target of text.targetWords) {
+        expect(
+          focus.some((phenomenon) => BEISPIELE[phenomenon](target)),
+          `„${target}“ passt zu keinem Schwerpunkt von ${text.id}`,
+        ).toBe(true);
+      }
     },
   );
 

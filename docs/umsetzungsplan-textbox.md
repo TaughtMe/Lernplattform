@@ -2,7 +2,19 @@
 
 Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 
-> **Fortschritt:** Paket A umgesetzt (Fachlogik, 15 Texte, Speicherung, Tests). Paket B umgesetzt (spielbare Textbox im Vorschaumodus unter `/frei/german/textbox`; „Verlauf ansehen“ folgt mit Paket C). Nächster Schritt: Paket C nach Freigabe.
+> **Fortschritt:** Paket A und B umgesetzt (Stand 08.10.2026). Korrekturen nach der Prüfung:
+> lange Eingaben werden gekürzt gespeichert, Zielwörter passen zum Schwerpunkt (1.8/2.7 geändert),
+> Reflexionsfragen im Wortlaut des Konzepts. Nächster Schritt: Paket C nach Freigabe.
+
+> **Festgehaltene Abweichungen (von der Lehrkraft akzeptiert):** `textboxSessionSchema` liegt in
+> `src/domain/textbox-session.ts` und wird in `progress-schema.ts` nur exportiert. `TextboxRunState`
+> trägt zusätzlich `extraTargets` und `memorizeMs`; `scoreWords` hat den optionalen Parameter
+> `punctuationHints`; `sessionFromRun` und `runFromSession` sind ergänzt. Verteilungen in
+> `summarizeTextboxOverall` zählen Einheiten. `rankTextsForWords` berücksichtigt nur Texte mit
+> Verwendung „wortspeicher“. `useTextbox` nimmt optional ein Repository entgegen. „Verlauf ansehen“
+> im Abschlussbildschirm folgt mit Paket C. In Durchgang 4 zeigt die Kontrolle Satzzeichen nur
+> als Hinweiszahl. Gespeicherte Eingaben sind auf 100 Zeichen je Wort gekürzt; Lücken erlauben 40,
+> das Schreibfeld 4000 Zeichen.
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Leitfaden ist das Konzept
 „Lernraum – Konzept: Textbox und Rechtschreibtraining“ vom 08.10.2026. Die fachlichen
@@ -161,7 +173,11 @@ nicht selbst umentscheiden.
   Wortbausteine und Wortfamilien, zusammengesetzte Wörter, gemischt.
 - Textarten: Geschichte, Alltag, Erlebnis, Sachtext, Schule. Inhalte altersangemessen,
   freundlich und ohne Bloßstellung.
-- Zielwörter machen 15–25 % der Wörter eines Textes aus und gehören zum Schwerpunkt.
+- Zielwörter machen 10–25 % der Wörter eines Textes aus (jedes Vorkommen zählt) und müssen
+  **echte Beispiele für den Rechtschreibschwerpunkt** des Textes sein; bei „gemischt“ für einen
+  der im Text genannten Schwerpunkte (ein gemischter Text nennt mindestens zwei). Fehlen passende
+  Wörter, wird der Text umgeschrieben, nicht mit unpassenden Wörtern aufgefüllt.
+  _(Geändert am 08.10.2026: vorher 15–25 % ohne Bezug zum Schwerpunkt.)_
 - **Herkunft der Texte:** Ein KI-Agent entwirft die Texte, die Lehrkraft prüft sie fachlich vor
   der Freigabe. Welle 1 umfasst 15 Texte (je 5 pro Schwierigkeit), Welle 2 ergänzt auf rund 50.
 
@@ -408,7 +424,9 @@ Neue Datei `src/domain/textbox-library.ts`:
 - Ids sind eindeutig und fortlaufend.
 - Jedes Zielwort kommt im Text als ganzes Wort vor (Groß-/Kleinschreibung beachtet).
 - Die Wortanzahl liegt im Bereich der Schwierigkeit aus 1.8.
-- Zielwörter machen 15–25 % der Wörter aus.
+- Zielwörter machen 10–25 % der Wörter aus und passen zu einem Schwerpunkt des Textes
+  (Plausibilitätsprüfung im Test; die fachliche Prüfung macht die Lehrkraft). _(Geändert am
+  08.10.2026, siehe 1.8.)_
 - Ab Welle 2: mindestens 2 Texte je Schwerpunkt und je Schwierigkeit mindestens 10 Texte.
 
 #### 2.8 Texte, Welle 2

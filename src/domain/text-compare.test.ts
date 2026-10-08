@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_STORED_INPUT_LENGTH,
   alignWords,
   layoutText,
   compareGaps,
@@ -229,5 +230,25 @@ describe("layoutText", () => {
       "_er",
       ".",
     ]);
+  });
+});
+
+describe("lange Eingaben", () => {
+  const long = "a".repeat(300);
+
+  it("vergleicht das ganze Wort, speichert aber höchstens 100 Zeichen", () => {
+    const [wrong] = alignWords(["Hund"], [long]);
+    expect(wrong).toMatchObject({ kind: "falsch", nearMiss: false });
+    expect(wrong?.actual).toHaveLength(MAX_STORED_INPUT_LENGTH);
+    const [extra] = alignWords([], [long]);
+    expect(extra?.actual).toHaveLength(MAX_STORED_INPUT_LENGTH);
+    const [gap] = compareGaps(["Hund"], [long]);
+    expect(gap?.actual).toHaveLength(MAX_STORED_INPUT_LENGTH);
+    const [caseOnly] = compareGaps([long.toUpperCase()], [long]);
+    expect(caseOnly).toMatchObject({ kind: "gross-klein" });
+    expect(caseOnly?.actual).toHaveLength(MAX_STORED_INPUT_LENGTH);
+    const [right] = alignWords([long], [long]);
+    expect(right).toMatchObject({ kind: "richtig" });
+    expect(right?.actual).toHaveLength(MAX_STORED_INPUT_LENGTH);
   });
 });

@@ -16,6 +16,9 @@ import { Button } from "../../ui/primitives";
 import { StepList } from "./memorize-screen";
 import styles from "./textbox.module.css";
 
+/** Längster Text in Durchgang 4; schützt vor festgehaltenen Tasten. */
+export const MAX_FREE_TEXT_LENGTH = 4000;
+
 /** Durchgang 4: der ganze Text aus dem Gedächtnis in ein leeres Feld. */
 export function FreeWritingScreen({
   title,
@@ -66,6 +69,7 @@ export function FreeWritingScreen({
         className={styles.free}
         aria-label="Dein Text aus dem Gedächtnis"
         value={value}
+        maxLength={MAX_FREE_TEXT_LENGTH}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={() => {
           if (startedAt.current === null) startedAt.current = Date.now();

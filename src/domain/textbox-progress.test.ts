@@ -188,24 +188,16 @@ describe("reflectionQuestions", () => {
     expect(reflectionQuestions(one)).toEqual([]);
   });
 
-  it("stellt passende Fragen bei Verbesserung und Rückgang", () => {
-    const improved = summarizeTextboxProgress([
+  it("stellt ab zwei Einheiten die Fragen aus dem Konzept", () => {
+    const two = summarizeTextboxProgress([
       session("a", "TXT-001", 50, 1),
       session("b", "TXT-001", 80, 2),
     ]).get("TXT-001")!;
-    const improvedQuestions = reflectionQuestions(improved);
-    expect(improvedQuestions).toContain(
+    expect(reflectionQuestions(two)).toEqual([
       "Bei welcher Übung war dein Ergebnis am besten?",
-    );
-    expect(improvedQuestions.some((q) => q.includes("anders gemacht"))).toBe(
-      true,
-    );
-    const dropped = summarizeTextboxProgress([
-      session("a", "TXT-001", 80, 1),
-      session("b", "TXT-001", 60, 2),
-    ]).get("TXT-001")!;
-    expect(
-      reflectionQuestions(dropped).some((q) => q.includes("letzten Mal")),
-    ).toBe(true);
+      "Wie stark hast du dich verbessert?",
+      "Ist dein Ergebnis bei jeder Übung gestiegen?",
+      "Was fällt dir an deinem Diagramm auf?",
+    ]);
   });
 });
