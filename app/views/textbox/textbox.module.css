@@ -124,6 +124,9 @@
   background: var(--accent-bg);
   color: var(--ink);
   font: inherit;
+  /* Niedriger als die Textzeile, damit Lücken und Fokusrahmen zweier Zeilen
+     nicht aneinanderstoßen (die Zeile selbst ist 2,1 hoch). */
+  line-height: 1.3;
   letter-spacing: inherit;
   text-align: center;
   scroll-margin: 40vh 0;
