@@ -2,6 +2,7 @@ import * as z from "zod";
 import { learningEventV1Schema, type LearningEventV1 } from "./learning-bundle";
 import type { LearningBoxCard, LearningBoxDeck } from "./learning-box";
 import type { LearningWordProgress } from "./learning-word-progress";
+import { textboxSessionSchema, type TextboxSession } from "./textbox-session";
 import type { TypingLessonProgress } from "../tastschreiben/typing-progress";
 
 export const PERSONAL_BACKUP_SCHEMA_VERSION = 1 as const;
@@ -107,6 +108,8 @@ const personalDataSchema = z
       .array(learningWordProgressBackupSchema)
       .max(100_000),
     typingProgress: z.array(typingProgressBackupSchema).max(100_000),
+    // Ältere Sicherungen kennen die Textbox nicht.
+    textboxSessions: z.array(textboxSessionSchema).max(100_000).default([]),
   })
   .strict();
 
@@ -130,6 +133,7 @@ export type PersonalLearningBackupInput = {
   learningBoxCards: readonly LearningBoxCard[];
   learningWordProgress: readonly LearningWordProgress[];
   typingProgress: readonly TypingLessonProgress[];
+  textboxSessions?: readonly TextboxSession[];
 };
 
 const legacyBackupSchema = z
@@ -154,6 +158,7 @@ export function createPersonalLearningBackup(
       learningBoxCards: [...input.learningBoxCards],
       learningWordProgress: [...input.learningWordProgress],
       typingProgress: [...input.typingProgress],
+      textboxSessions: [...(input.textboxSessions ?? [])],
     },
   });
 }
@@ -170,6 +175,7 @@ export function parsePersonalLearningBackup(value: unknown) {
       learningBoxCards: legacy.data.cards,
       learningWordProgress: [],
       typingProgress: [],
+      textboxSessions: [],
     });
   }
 

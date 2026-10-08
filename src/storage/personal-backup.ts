@@ -21,7 +21,8 @@ export type PersonalBackupRestoreConflict = {
     | "learningBoxDecks"
     | "learningBoxCards"
     | "learningWordProgress"
-    | "typingProgress";
+    | "typingProgress"
+    | "textboxSessions";
   id: string;
 };
 
@@ -82,6 +83,7 @@ export async function exportPersonalLearningBackup(
     learningBoxCards: await database.learningBoxCards.toArray(),
     learningWordProgress: await database.learningWordProgress.toArray(),
     typingProgress: await database.typingProgress.toArray(),
+    textboxSessions: await database.textboxSessions.toArray(),
   };
   return createPersonalLearningBackup(input, exportedAt);
 }
@@ -115,6 +117,7 @@ export async function restorePersonalLearningBackup(
       database.learningBoxCards,
       database.learningWordProgress,
       database.typingProgress,
+      database.textboxSessions,
     ],
     async () => {
       for (const event of backup.data.learningEvents) {
@@ -233,6 +236,35 @@ export async function restorePersonalLearningBackup(
             collection: "typingProgress",
             id: progress.id,
           });
+        }
+      }
+
+      for (const session of backup.data.textboxSessions) {
+        const current = await database.textboxSessions.get(session.id);
+        if (!current) {
+          await database.textboxSessions.add(session);
+          result.added += 1;
+        } else if (sameJson(current, session)) {
+          result.unchanged += 1;
+        } else if (
+          current.status === "abgeschlossen" &&
+          session.status === "abgeschlossen"
+        ) {
+          // Zwei abgeschlossene Einheiten sind unveränderlich: Inhalt weicht ab.
+          result.conflicts.push({
+            collection: "textboxSessions",
+            id: session.id,
+          });
+        } else if (
+          session.status === "abgeschlossen" ||
+          (current.status === "laufend" &&
+            session.updatedAt > current.updatedAt)
+        ) {
+          await database.textboxSessions.put(session);
+          result.updated += 1;
+        } else {
+          // Lokal ist abgeschlossen oder neuer: nichts zu tun.
+          result.unchanged += 1;
         }
       }
     },

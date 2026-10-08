@@ -21,6 +21,7 @@ export const eventSourceSchema = z.enum([
   "test",
   "running-dictation",
   "duel",
+  "textbox",
 ]);
 export const learningAreaSchema = z.enum([
   "vocabulary",
