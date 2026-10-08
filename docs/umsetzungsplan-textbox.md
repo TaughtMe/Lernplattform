@@ -2,9 +2,9 @@
 
 Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 
-> **Fortschritt:** Paket A, B und C umgesetzt (Stand 08.10.2026). Paket C: Diagramme (`app/ui/charts.tsx`),
-> Detailansicht eines Textes, „Verlauf“ in Bibliothek und Abschlussbildschirm, Welle 2 mit 35 neuen Texten
-> (jetzt 50) und Überarbeitung von TXT-009. Nächster Schritt: Paket D nach Freigabe.
+> **Fortschritt:** Paket A bis D umgesetzt (Stand 08.10.2026). Paket D: Wortspeicher-Brücke (2.22, 2.23),
+> Fortschrittsabschnitt (2.25), druckbarer Laufzettel (2.26) und Dokumentation (2.28). Die Freigabestufe
+> bleibt `vorschau`; offen sind der Probedurchlauf (Teil 9), die fachliche Textprüfung und die Kalibrierung (Abschnitt 7).
 
 > **Festgehaltene Abweichungen (von der Lehrkraft akzeptiert):** `textboxSessionSchema` liegt in
 > `src/domain/textbox-session.ts` und wird in `progress-schema.ts` nur exportiert. `TextboxRunState`
@@ -15,6 +15,10 @@ Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 > im Abschlussbildschirm kam mit Paket C. `ChartPoint` hat das optionale Feld `detail` (Datum für die Wertetabelle). In Durchgang 4 zeigt die Kontrolle Satzzeichen nur
 > als Hinweiszahl. Gespeicherte Eingaben sind auf 100 Zeichen je Wort gekürzt; Lücken erlauben 40,
 > das Schreibfeld 4000 Zeichen.
+> Paket D: Der Wortspeicher liest zusätzlich `?sammlung=<id>` (wählt eine Sammlung vor), damit der Link
+> der Fortschrittsseite zur passenden Sammlung führt. Der Laufzettel nennt die Spalte „Übungen
+> (Wiederholungen)“ und zählt abgeschlossene Einheiten. Der Fortschrittsabschnitt erscheint nur bei
+> sichtbarem Bereich `textbox`. Die Entscheidung heißt im Vault Nr. 54 (Nr. 53 ist der Geräte-Abgleich).
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Leitfaden ist das Konzept
 „Lernraum – Konzept: Textbox und Rechtschreibtraining“ vom 08.10.2026. Die fachlichen

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { StudentPage } from "../ui/shell/student-page";
 import { Icon } from "../ui/icons";
 import {
@@ -28,7 +29,13 @@ import {
   type LearningWordBlockSize,
   type LearningWordStage,
 } from "../../src/domain/learning-word";
+import {
+  buildTextboxLink,
+  parseCollectionParam,
+  parseWordsParam,
+} from "../../src/domain/practice-bridge";
 import { createLearningWordProgressRepository } from "../../src/storage/personal-learning-events";
+import { useRelease } from "../release/release-context";
 
 type Phase =
   "setup" | "memorize" | "recall" | "feedback" | "success" | "complete";
@@ -63,9 +70,29 @@ const stageCopy: Record<LearningWordStage, { title: string; detail: string }> =
     },
   };
 
+/**
+ * Vorbelegung aus der Adresse: `?woerter=` (z. B. aus der Textbox) füllt die
+ * eigene Liste, `?sammlung=` wählt eine Sammlung. Es wird nichts gespeichert.
+ */
+function initialSelection(params: URLSearchParams) {
+  const words = parseWordsParam(params.get("woerter"));
+  if (words.length > 0)
+    return { collectionId: "own", source: words.join("\n") };
+  const collection = getLearningWordCollection(
+    parseCollectionParam(params.get("sammlung")) ?? "",
+  );
+  if (collection) {
+    return { collectionId: collection.id, source: collection.words.join("\n") };
+  }
+  return { collectionId: "own", source: sampleWords };
+}
+
 export function LearningWordApp() {
   const repository = useMemo(() => createLearningWordProgressRepository(), []);
-  const [source, setSource] = useState(sampleWords);
+  const textboxVisible = useRelease()["textbox"];
+  const searchParams = useSearchParams();
+  const [initial] = useState(() => initialSelection(searchParams));
+  const [source, setSource] = useState(initial.source);
   const [stage, setStage] = useState<LearningWordStage>(1);
   const [blockSize, setBlockSize] = useState<LearningWordBlockSize>(3);
   const [roundSize, setRoundSize] = useState<5 | 10 | 20 | "all">(10);
@@ -76,7 +103,7 @@ export function LearningWordApp() {
   const [usedHelp, setUsedHelp] = useState(false);
   const [incorrectAttempts, setIncorrectAttempts] = useState(0);
   const [results, setResults] = useState<Result[]>([]);
-  const [collectionId, setCollectionId] = useState("own");
+  const [collectionId, setCollectionId] = useState(initial.collectionId);
   const [dueWords, setDueWords] = useState<
     Array<{ word: string; stage: LearningWordStage }>
   >([]);
@@ -238,6 +265,8 @@ export function LearningWordApp() {
   }
 
   const collection = getLearningWordCollection(collectionId);
+  // Wörter dieser Runde, die richtig geschrieben wurden (für die Textbox).
+  const practicedWords = results.flatMap((result) => result.words);
   const inSession =
     phase === "memorize" ||
     phase === "recall" ||
@@ -694,6 +723,14 @@ export function LearningWordApp() {
               >
                 Andere Stufe testen
               </button>
+              {textboxVisible && practicedWords.length > 0 ? (
+                <Link
+                  className="ui-btn ui-btn--gold"
+                  href={buildTextboxLink(practicedWords, collectionId)}
+                >
+                  Mit einem Text weiterüben
+                </Link>
+              ) : null}
               <Link className="ui-btn ui-btn--ghost" href="/lernen">
                 Andere Übung wählen
               </Link>

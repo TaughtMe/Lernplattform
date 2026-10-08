@@ -46,6 +46,7 @@ declare const styles: {
   readonly stepActive: string;
   readonly steps: string;
   readonly subtitle: string;
+  readonly suggestions: string;
   readonly symbol: string;
   readonly text: string;
   readonly timer: string;

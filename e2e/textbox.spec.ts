@@ -229,3 +229,131 @@ test("Verlauf zeigt Werte und Diagramme, barrierefrei in beiden Farbschemata", a
   await page.getByRole("button", { name: "Linie" }).click();
   await expectAccessible(page);
 });
+
+test("Wortspeicher führt zu passenden Texten und die Wörter werden ausgeblendet", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/lernwoerter?woerter=Ball,Wiese");
+  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
+  for (const word of ["Ball", "Wiese"]) {
+    await page.getByLabel("Deine Lösung").fill(word);
+    await page.getByLabel("Deine Lösung").press("Enter");
+    await expect(page.getByText("Richtig")).toBeVisible();
+  }
+  await expect(page.getByText("Merkstrecke abgeschlossen")).toBeVisible();
+  await page.getByRole("link", { name: "Mit einem Text weiterüben" }).click();
+
+  const panel = page.getByRole("region", {
+    name: "Passende Texte zu deinen Wörtern",
+  });
+  await expect(panel).toContainText(text.title);
+  await expect(panel).toContainText("Enthält 2 deiner 2 Wörter.");
+  await expectAccessible(page);
+  await panel
+    .getByRole("button", { name: /mit deinen Wörtern üben/ })
+    .first()
+    .click();
+  await expect(page.locator("mark").filter({ hasText: "Wiese" })).toBeVisible();
+});
+
+test("Fehlerwörter aus der Textbox füllen die eigene Liste im Wortspeicher", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/textbox");
+  await page.getByRole("button", { name: `${text.title} üben` }).click();
+  await completeRun(page, "Im Garten");
+  await page
+    .getByRole("link", { name: "Fehlerwörter im Wortspeicher üben" })
+    .click();
+  const list = page.getByRole("textbox", { name: /Deine Lernwörter/ });
+  await expect(list).toHaveValue(/wohnt/);
+  await expect(list).toHaveValue(/Hund/);
+});
+
+test("Fortschrittsseite: leerer Zustand, dann Werte, barrierefrei", async ({
+  page,
+}) => {
+  await page.goto("/lernen/fortschritt");
+  await expect(
+    page.getByText("Noch keine Textbox-Übung abgeschlossen"),
+  ).toBeVisible();
+  await expectAccessible(page);
+
+  await page.goto("/frei/german/textbox");
+  await page.getByRole("button", { name: `${text.title} üben` }).click();
+  await completeRun(page, text.text);
+
+  await page.goto("/lernen/fortschritt");
+  const section = page.getByRole("region", { name: "Textbox" });
+  await expect(section).toContainText("Abgeschlossene Übungen");
+  await expect(
+    section.getByRole("img", { name: /alle Übungen: ein Wert, 100 Prozent/ }),
+  ).toBeVisible();
+  await expectAccessible(page);
+});
+
+test("Laufzettel: Tabelle, Namensfeld ohne Speicherung und Druckansicht", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/textbox");
+  await page.getByRole("button", { name: `${text.title} üben` }).click();
+  await completeRun(page, text.text);
+
+  await page.goto("/frei/german/textbox/laufzettel");
+  await expect(
+    page.getByRole("heading", { name: "Laufzettel Textbox" }),
+  ).toBeVisible();
+  const table = page.getByRole("table");
+  await expect(table).toContainText(text.title);
+  await expect(table).toContainText("100 %");
+  await expectAccessible(page);
+
+  await page.getByRole("textbox", { name: /Name oder Kennung/ }).fill("Mia M.");
+  await expect(page.getByTestId("worksheet-name")).toHaveText("Mia M.");
+  // Der Name taucht in keinem Browser-Speicher auf (andere Einträge der App sind erlaubt).
+  const stored = await page.evaluate(async () => {
+    const dump = [document.cookie];
+    for (const store of [localStorage, sessionStorage]) {
+      for (let i = 0; i < store.length; i += 1) {
+        const key = store.key(i)!;
+        dump.push(key, store.getItem(key) ?? "");
+      }
+    }
+    for (const info of await indexedDB.databases()) {
+      if (!info.name) continue;
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open(info.name!);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      for (const name of Array.from(db.objectStoreNames)) {
+        const rows = await new Promise<unknown[]>((resolve, reject) => {
+          const request = db.transaction(name).objectStore(name).getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        dump.push(JSON.stringify(rows));
+      }
+      db.close();
+    }
+    return dump.join("\n");
+  });
+  expect(stored).not.toContain("Mia");
+  await page.reload();
+  await expect(page.getByTestId("worksheet-name")).toHaveText("–");
+
+  // Im Ausdruck: Hinweis sichtbar, Bedienelemente und Navigation weg.
+  const notice =
+    "Dieser Laufzettel wurde auf deinem Gerät erstellt. Er ist eine Übersicht und kein Prüfungsnachweis.";
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("note")).toContainText(notice);
+  await expect(page.getByRole("note")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Drucken oder als PDF sichern" }),
+  ).toBeHidden();
+  await expect(
+    page.getByRole("navigation", { name: "Hauptnavigation" }),
+  ).toBeHidden();
+  await expect(table).toBeVisible();
+  await page.emulateMedia({ media: "screen" });
+});

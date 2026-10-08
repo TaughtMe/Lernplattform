@@ -299,6 +299,16 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Aggregierte Haus- und Klassenquests mit freiwilliger Teilnahme erproben
 - [ ] Wirkung, Druckempfinden und unerwünschtes Farmverhalten mit Schülern evaluieren
 
+## Jetzt: Textbox (Entscheidung 54, `docs/umsetzungsplan-textbox.md`)
+
+- [x] Paket A: Fachlogik (Textvergleich, Trainingseinheit, Auswertung), 15 Texte, Speicherung, Lernereignis und Datensicherung, vollständig getestet
+- [x] Paket B: spielbare Textbox im Vorschaumodus (Bibliothek, Merken, Lückentext, freies Schreiben, Kontrolle, Abschluss, Fortsetzen)
+- [x] Paket C: Detailansicht mit Linien- und Säulendiagramm, Welle 2 mit 50 Texten
+- [x] Paket D: Wortspeicher-Brücke in beide Richtungen, Fortschrittsabschnitt, druckbarer Laufzettel, Dokumentation
+- [ ] Probedurchlauf der Lehrkraft (Plan Teil 9) und fachliche Prüfung der 50 Texte
+- [ ] Freigabestufe `textbox` nach dem Probedurchlauf von `vorschau` auf `frei` stellen
+- [ ] Kalibrierung nach dem Probedurchlauf: Merkzeiten, Ausblendungsanteile, Lückenbreite, Wortanzahlen, Schwelle 90 %
+
 ## Noch zu entscheiden
 
 - [ ] Verbindliche Abzüge für Selbstkorrekturen, Fehlversuche und Hilfen festlegen

@@ -14,6 +14,8 @@ import {
   PersonalLearningDatabase,
   createTextboxRepository,
 } from "../../src/storage/personal-learning-events";
+import { resolveStages, resolveVisibility } from "../../src/domain/release";
+import { ReleaseProvider } from "../release/release-context";
 import { TextboxApp } from "./textbox-app";
 
 const text = TEXTBOX_TEXTS[0]!; // „Der kleine Hund“
@@ -23,17 +25,29 @@ async function setup(
   prepare?: (
     repository: ReturnType<typeof createTextboxRepository>,
   ) => Promise<void>,
+  options: { query?: string; stages?: string } = {},
 ) {
   const database = new PersonalLearningDatabase(`app-${crypto.randomUUID()}`);
   databases.push(database);
   const repository = createTextboxRepository(database);
   await prepare?.(repository);
-  render(<TextboxApp repository={repository} />);
+  window.history.pushState(
+    null,
+    "",
+    `/frei/german/textbox${options.query ?? ""}`,
+  );
+  const visibility = resolveVisibility(resolveStages(options.stages), false);
+  render(
+    <ReleaseProvider value={visibility}>
+      <TextboxApp repository={repository} />
+    </ReleaseProvider>,
+  );
   return { database, repository };
 }
 
 afterEach(async () => {
   vi.useRealTimers();
+  window.history.pushState(null, "", "/");
   await Promise.all(
     databases.splice(0).map(async (database) => {
       database.close();
@@ -252,5 +266,109 @@ describe("TextboxApp", () => {
     expect(
       await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" }),
     ).toBeInTheDocument();
+  });
+
+  describe("Wortspeicher-Brücke", () => {
+    it("schlägt Texte mit den mitgebrachten Wörtern vor und blendet sie aus", async () => {
+      const user = userEvent.setup();
+      await setup(undefined, { query: "?woerter=Ball,rennt,Wiese,xyz" });
+      const panel = await screen.findByRole("region", {
+        name: "Passende Texte zu deinen Wörtern",
+      });
+      expect(within(panel).getAllByRole("listitem")[0]).toHaveTextContent(
+        `${text.title}Enthält 3 deiner 4 Wörter.`,
+      );
+      await user.click(
+        within(panel).getByRole("button", {
+          name: `${text.title} mit deinen Wörtern üben`,
+        }),
+      );
+      await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" });
+      // „Wiese“ gehört nicht zu den Zielwörtern, wird aber als geübtes Wort markiert.
+      expect(
+        [...document.querySelectorAll("mark")].map((mark) =>
+          mark.textContent?.replace("(fehlt gleich)", "").trim(),
+        ),
+      ).toContain("Wiese");
+    });
+
+    it("zeigt ohne Treffer die Bibliothek mit vorgewähltem Schwerpunkt", async () => {
+      await setup(undefined, {
+        query: "?woerter=gibtesnicht&sammlung=double-consonants",
+      });
+      expect(
+        await screen.findByText(/noch keinen passenden Text/),
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Schwerpunkt")).toHaveValue(
+        "doppelkonsonanten",
+      );
+    });
+
+    it("ignoriert ungültige Parameter", async () => {
+      await setup(undefined, { query: "?woerter=%3Cb%3E&sammlung=nope" });
+      await screen.findByRole("heading", { name: "Textbox" });
+      expect(
+        screen.queryByRole("region", {
+          name: "Passende Texte zu deinen Wörtern",
+        }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Schwerpunkt")).toHaveValue("alle");
+    });
+
+    async function finishWith(
+      user: ReturnType<typeof userEvent.setup>,
+      typed: string,
+    ) {
+      for (const round of [1, 2, 3] as const) {
+        await playRound(user, round);
+        await user.click(
+          screen.getByRole("button", {
+            name: `Weiter zu Durchgang ${round + 1}`,
+          }),
+        );
+      }
+      await playRound(user, 4, typed);
+      await user.click(
+        screen.getByRole("button", { name: "Ergebnis ansehen" }),
+      );
+      await screen.findByRole("heading", { name: "Geschafft!" });
+    }
+
+    it("bietet nach Fehlern die Fehlerwörter im Wortspeicher an", async () => {
+      const user = userEvent.setup();
+      await setup();
+      await startText(user);
+      await finishWith(user, "Im Garten");
+      const link = screen.getByRole("link", {
+        name: "Fehlerwörter im Wortspeicher üben",
+      });
+      const url = new URL(link.getAttribute("href")!, "http://x");
+      expect(url.pathname).toBe("/frei/german/lernwoerter");
+      expect(url.searchParams.get("woerter")).toContain("wohnt");
+    });
+
+    it("zeigt den Link nicht, wenn alles richtig war oder der Wortspeicher aus ist", async () => {
+      const user = userEvent.setup();
+      await setup();
+      await startText(user);
+      await finishWith(user, text.text);
+      expect(
+        screen.queryByRole("link", {
+          name: "Fehlerwörter im Wortspeicher üben",
+        }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("blendet die Aktion aus, wenn der Wortspeicher nicht sichtbar ist", async () => {
+      const user = userEvent.setup();
+      await setup(undefined, { stages: "wortspeicher=aus" });
+      await startText(user);
+      await finishWith(user, "Im Garten");
+      expect(
+        screen.queryByRole("link", {
+          name: "Fehlerwörter im Wortspeicher üben",
+        }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

@@ -1,5 +1,5 @@
 import type { TextboxRoundResult } from "../../../src/domain/textbox-session";
-import { Button, ProgressBar } from "../../ui/primitives";
+import { Button, ButtonLink, ProgressBar } from "../../ui/primitives";
 import styles from "./textbox.module.css";
 
 /** Abschluss einer Einheit: Ergebnis aus Durchgang 4 und die vier Durchgänge. */
@@ -11,6 +11,7 @@ export function CompletionScreen({
   onAgain,
   onLibrary,
   onHistory,
+  errorWordsHref,
 }: {
   title: string;
   rounds: readonly TextboxRoundResult[];
@@ -20,6 +21,8 @@ export function CompletionScreen({
   onAgain: () => void;
   onLibrary: () => void;
   onHistory: () => void;
+  /** Link zum Wortspeicher mit den Fehlerwörtern; leer, wenn es keine gibt. */
+  errorWordsHref?: string | undefined;
 }) {
   const record =
     previousBest === undefined
@@ -65,6 +68,11 @@ export function CompletionScreen({
         <Button size="lg" variant="soft" onClick={onHistory}>
           Verlauf ansehen
         </Button>
+        {errorWordsHref ? (
+          <ButtonLink size="lg" variant="soft" href={errorWordsHref}>
+            Fehlerwörter im Wortspeicher üben
+          </ButtonLink>
+        ) : null}
       </div>
     </section>
   );

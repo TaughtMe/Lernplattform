@@ -452,3 +452,13 @@
   font-size: 18px;
   font-weight: 700;
 }
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-l);
+  background: var(--accent-bg);
+}

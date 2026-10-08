@@ -100,6 +100,8 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/lernen/material", "Lernwerkstatt"],
     ["/frei/german/lernwoerter", "Lernwörter"],
     ["/frei/german/textbox", "Textbox"],
+    ["/frei/german/textbox/laufzettel", "Laufzettel Textbox"],
+    ["/lernen/fortschritt", "Mein Fortschritt"],
     ["/klasse/7b", "Klasse 7b"],
     ["/lernbox", "LernBox"],
     ["/lehrer", "Inhalte"],
@@ -187,6 +189,10 @@ test("shows only released areas without preview and redirects the rest", async (
   // Die Textbox ist neu und zunächst nur in der Vorschau sichtbar.
   assert.equal((await render("/frei/german/textbox", null)).status, 307);
   assert.equal((await render("/frei/german/textbox")).status, 200);
+  assert.equal(
+    (await render("/frei/german/textbox/laufzettel", null)).status,
+    307,
+  );
   process.env["LERNRAUM_FREIGABE"] = "textbox=frei";
   try {
     assert.equal((await render("/frei/german/textbox", null)).status, 200);

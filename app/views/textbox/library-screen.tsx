@@ -13,12 +13,21 @@ import {
 } from "../../../src/domain/textbox-text";
 import {
   Button,
+  ButtonLink,
   EmptyState,
   Notice,
   Pill,
   Segmented,
 } from "../../ui/primitives";
+import { TEXTBOX_WORKSHEET_PATH } from "../../../src/domain/practice-bridge";
 import styles from "./textbox.module.css";
+
+/** Vorschläge nach einer Wortspeicher-Übung (Plan 2.22). */
+export type LibraryBridge = {
+  /** Anzahl der mitgebrachten Wörter. */
+  total: number;
+  suggestions: readonly { text: TextboxText; matches: readonly string[] }[];
+};
 
 export type LibraryEntry = {
   text: TextboxText;
@@ -28,6 +37,11 @@ export type LibraryEntry = {
 
 type DifficultyFilter = TextboxDifficulty | "alle";
 type StatusFilter = "alle" | "neu" | "geuebt";
+
+function matchSentence(matches: number, total: number) {
+  if (total === 1) return "Enthält dein Wort.";
+  return `Enthält ${matches} deiner ${total} Wörter.`;
+}
 
 /** Bibliothek und Laufzettel in einem: Filter, Bestwert und angefangene Übungen. */
 export function LibraryScreen({
@@ -39,6 +53,9 @@ export function LibraryScreen({
   onRestart,
   onCancelPending,
   onDetails,
+  bridge,
+  initialPhenomenon,
+  onStartSuggested,
 }: {
   entries: readonly LibraryEntry[];
   /** Text mit angefangener Einheit, für den „Fortsetzen“ angeboten wird. */
@@ -49,10 +66,14 @@ export function LibraryScreen({
   onRestart: (textId: string) => void;
   onCancelPending: () => void;
   onDetails: (textId: string) => void;
+  bridge?: LibraryBridge | undefined;
+  initialPhenomenon?: TextboxPhenomenon | undefined;
+  onStartSuggested?:
+    ((textId: string, matches: readonly string[]) => void) | undefined;
 }) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>("alle");
   const [phenomenon, setPhenomenon] = useState<TextboxPhenomenon | "alle">(
-    "alle",
+    initialPhenomenon ?? "alle",
   );
   const [status, setStatus] = useState<StatusFilter>("alle");
 
@@ -104,6 +125,42 @@ export function LibraryScreen({
             </Button>
           </div>
         </div>
+      ) : null}
+      {bridge ? (
+        <section
+          className={styles.suggestions}
+          aria-labelledby="textbox-suggestions"
+        >
+          <h2 id="textbox-suggestions" className={styles.sectionTitle}>
+            Passende Texte zu deinen Wörtern
+          </h2>
+          {bridge.suggestions.length === 0 ? (
+            <p className={styles.hint}>
+              Zu deinen Wörtern gibt es noch keinen passenden Text. Such dir
+              unten einen Text aus.
+            </p>
+          ) : (
+            <ul className={styles.list} aria-label="Vorschläge">
+              {bridge.suggestions.map(({ text, matches }) => (
+                <li key={text.id} className={styles.row}>
+                  <div>
+                    <h3 className={styles.rowTitle}>{text.title}</h3>
+                    <p className={styles.hint}>
+                      {matchSentence(matches.length, bridge.total)}
+                    </p>
+                  </div>
+                  <Button
+                    className={styles.rowAction}
+                    aria-label={`${text.title} mit deinen Wörtern üben`}
+                    onClick={() => onStartSuggested?.(text.id, matches)}
+                  >
+                    Üben
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       ) : null}
       <div className={styles.filters}>
         <Segmented<DifficultyFilter>
@@ -198,6 +255,11 @@ export function LibraryScreen({
           ))}
         </ul>
       )}
+      <div className={styles.actions}>
+        <ButtonLink variant="link" href={TEXTBOX_WORKSHEET_PATH}>
+          Laufzettel ansehen und drucken
+        </ButtonLink>
+      </div>
     </section>
   );
 }
