@@ -217,4 +217,40 @@ describe("TextboxApp", () => {
     );
     expect((await screen.findAllByRole("textbox")).length).toBeGreaterThan(0);
   });
+
+  it("führt vom Abschluss und aus der Bibliothek zum Verlauf eines Textes", async () => {
+    const user = userEvent.setup();
+    await setup();
+    await startText(user);
+    for (const round of [1, 2, 3] as const) {
+      await playRound(user, round);
+      await user.click(
+        screen.getByRole("button", {
+          name: `Weiter zu Durchgang ${round + 1}`,
+        }),
+      );
+    }
+    await playRound(user, 4);
+    await user.click(screen.getByRole("button", { name: "Ergebnis ansehen" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Verlauf ansehen" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: text.title }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Bestwert").nextSibling).toHaveTextContent("100 %");
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      /ein Wert, 100 Prozent/,
+    );
+    await user.click(screen.getByRole("button", { name: "Zur Textauswahl" }));
+    await user.click(
+      await screen.findByRole("button", {
+        name: `${text.title}: Verlauf ansehen`,
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Erneut üben" }));
+    expect(
+      await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" }),
+    ).toBeInTheDocument();
+  });
 });

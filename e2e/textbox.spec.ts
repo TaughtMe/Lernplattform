@@ -171,3 +171,61 @@ test("dunkles Farbschema bleibt barrierefrei", async ({ page }) => {
   await page.getByRole("button", { name: "Prüfen" }).click();
   await expectAccessible(page);
 });
+
+async function completeRun(page: Page, typed: string) {
+  for (const round of [1, 2, 3] as const) {
+    await playGapRound(page, round);
+    await page
+      .getByRole("button", { name: `Weiter zu Durchgang ${round + 1}` })
+      .click();
+  }
+  await page.getByRole("button", { name: "Ich bin bereit" }).click();
+  await page
+    .getByRole("textbox", { name: "Dein Text aus dem Gedächtnis" })
+    .fill(typed);
+  await page.getByRole("button", { name: "Prüfen" }).click();
+  await page.getByRole("button", { name: "Ergebnis ansehen" }).click();
+  await expect(page.getByRole("heading", { name: "Geschafft!" })).toBeVisible();
+}
+
+test("Verlauf zeigt Werte und Diagramme, barrierefrei in beiden Farbschemata", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/textbox");
+  await page.getByRole("button", { name: `${text.title} üben` }).click();
+  await completeRun(page, text.text);
+  // „Nochmal üben“ startet sofort den zweiten Versuch (schlechteres Ergebnis).
+  await page.getByRole("button", { name: "Nochmal üben" }).click();
+  await completeRun(page, "Im Garten");
+  await page.getByRole("button", { name: "Verlauf ansehen" }).click();
+  await expect(page.getByRole("heading", { name: text.title })).toBeVisible();
+  const stats = page.locator("dl");
+  await expect(stats).toContainText("100 %");
+  await expect(stats).toContainText("Übungsversuche2");
+
+  const chart = page.getByRole("img", {
+    name: /^Dein Ergebnis in Durchgang 4/,
+  });
+  await expect(chart).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByRole("button", { name: "Säulen" }).click();
+  await expect(chart).toBeVisible();
+  await page.getByText("Wertetabelle anzeigen").click();
+  await expect(page.getByRole("table")).toContainText("100 %");
+  await expectAccessible(page);
+
+  await page.getByText("Schau dir dein Diagramm an").click();
+  await expect(
+    page.getByText("Wie stark hast du dich verbessert?"),
+  ).toBeVisible();
+  await expect(async () => {
+    await page.getByRole("button", { name: "Hell oder dunkel" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark", {
+      timeout: 1000,
+    });
+  }).toPass();
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Linie" }).click();
+  await expectAccessible(page);
+});

@@ -20,6 +20,7 @@ declare const styles: {
   readonly meta: string;
   readonly paper: string;
   readonly percent: string;
+  readonly reflection: string;
   readonly res: string;
   readonly resume: string;
   readonly resumeTitle: string;
@@ -34,7 +35,13 @@ declare const styles: {
   readonly score: string;
   readonly scoreDetail: string;
   readonly screen: string;
+  readonly sectionTitle: string;
   readonly select: string;
+  readonly session: string;
+  readonly sessionRounds: string;
+  readonly sessions: string;
+  readonly stat: string;
+  readonly stats: string;
   readonly step: string;
   readonly stepActive: string;
   readonly steps: string;

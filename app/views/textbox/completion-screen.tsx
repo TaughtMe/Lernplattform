@@ -10,6 +10,7 @@ export function CompletionScreen({
   previousBest,
   onAgain,
   onLibrary,
+  onHistory,
 }: {
   title: string;
   rounds: readonly TextboxRoundResult[];
@@ -18,6 +19,7 @@ export function CompletionScreen({
   previousBest: number | undefined;
   onAgain: () => void;
   onLibrary: () => void;
+  onHistory: () => void;
 }) {
   const record =
     previousBest === undefined
@@ -59,6 +61,9 @@ export function CompletionScreen({
         </Button>
         <Button size="lg" variant="ghost" onClick={onLibrary}>
           Anderen Text wählen
+        </Button>
+        <Button size="lg" variant="soft" onClick={onHistory}>
+          Verlauf ansehen
         </Button>
       </div>
     </section>

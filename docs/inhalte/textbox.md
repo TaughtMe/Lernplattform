@@ -49,6 +49,11 @@ Die Texte stehen in `src/domain/textbox-library.ts` und werden beim Laden mit
 
 ## Stand
 
-Welle 1: 15 Texte (`TXT-001` bis `TXT-015`) als **Entwurf**. Sie wurden von
-einem KI-Agenten verfasst und sind noch **nicht** fachlich geprüft. Welle 2
-(rund 50 Texte) folgt nach der Prüfung (Paket C).
+Welle 1 (`TXT-001` bis `TXT-015`) und Welle 2 (`TXT-016` bis `TXT-050`) sind
+**Entwürfe**. Sie wurden von einem KI-Agenten verfasst und sind noch **nicht**
+fachlich geprüft. Aufteilung: je Schwierigkeit mindestens 10 Texte (aktuell 16
+leicht, 17 mittel, 17 schwer), jeder Schwerpunkt in mindestens 2 Texten.
+
+Beim Prüfen besonders ansehen: Zielwörter, die nur nach dem Muster als
+Schwerpunktwort erkannt werden (z. B. „Fahrrad“, „sah“, „Mutter“,
+„zusammen“), und Sätze, die nur wegen der Zielwörter da sein könnten.

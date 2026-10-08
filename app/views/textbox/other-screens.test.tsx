@@ -201,6 +201,7 @@ describe("CompletionScreen", () => {
         previousBest={previousBest}
         onAgain={() => undefined}
         onLibrary={() => undefined}
+        onHistory={() => undefined}
       />,
     );
     expect(screen.getByRole("status")).toHaveTextContent(text);
@@ -210,6 +211,7 @@ describe("CompletionScreen", () => {
   it("meldet keinen Bestwert bei schlechterem Ergebnis und bietet die Aktionen an", async () => {
     const onAgain = vi.fn();
     const onLibrary = vi.fn();
+    const onHistory = vi.fn();
     render(
       <CompletionScreen
         title="Test"
@@ -218,6 +220,7 @@ describe("CompletionScreen", () => {
         previousBest={90}
         onAgain={onAgain}
         onLibrary={onLibrary}
+        onHistory={onHistory}
       />,
     );
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
@@ -227,6 +230,10 @@ describe("CompletionScreen", () => {
     );
     expect(onAgain).toHaveBeenCalledOnce();
     expect(onLibrary).toHaveBeenCalledOnce();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Verlauf ansehen" }),
+    );
+    expect(onHistory).toHaveBeenCalledOnce();
   });
 });
 
@@ -257,6 +264,7 @@ describe("LibraryScreen", () => {
       onResume: vi.fn(),
       onRestart: vi.fn(),
       onCancelPending: vi.fn(),
+      onDetails: vi.fn(),
     };
     render(
       <LibraryScreen
@@ -289,9 +297,11 @@ describe("LibraryScreen", () => {
     setup();
     const count = () =>
       screen.getByRole("list", { name: "Texte" }).children.length;
-    expect(count()).toBe(15);
+    const total = TEXTBOX_TEXTS.length;
+    const hard = TEXTBOX_TEXTS.filter((t) => t.difficulty === "schwer").length;
+    expect(count()).toBe(total);
     await user.click(screen.getByRole("button", { name: "Schwer" }));
-    expect(count()).toBe(5);
+    expect(count()).toBe(hard);
     await user.click(screen.getByRole("button", { name: "Alle" }));
     await user.selectOptions(screen.getByLabelText("Schwerpunkt"), "ie");
     expect(count()).toBe(
@@ -301,9 +311,13 @@ describe("LibraryScreen", () => {
     await user.selectOptions(screen.getByLabelText("Status"), "geuebt");
     expect(count()).toBe(1);
     await user.selectOptions(screen.getByLabelText("Status"), "neu");
-    expect(count()).toBe(14);
-    await user.click(screen.getByRole("button", { name: "Schwer" }));
-    await user.selectOptions(screen.getByLabelText("Schwerpunkt"), "ie");
+    expect(count()).toBe(total - 1);
+    // Der geübte Text hat einen anderen Schwerpunkt: keine Treffer.
+    await user.selectOptions(screen.getByLabelText("Status"), "geuebt");
+    await user.selectOptions(
+      screen.getByLabelText("Schwerpunkt"),
+      "wortbausteine",
+    );
     expect(screen.getByText("Keine passenden Texte")).toBeInTheDocument();
   });
 
@@ -314,6 +328,18 @@ describe("LibraryScreen", () => {
       screen.getByRole("button", { name: `${third.title} üben` }),
     );
     expect(handlers.onStart).toHaveBeenCalledWith(third.id);
+  });
+
+  it("bietet den Verlauf nur für geübte Texte an", async () => {
+    const user = userEvent.setup();
+    const handlers = setup();
+    expect(
+      screen.getAllByRole("button", { name: /Verlauf ansehen/ }),
+    ).toHaveLength(1);
+    await user.click(
+      screen.getByRole("button", { name: `${first.title}: Verlauf ansehen` }),
+    );
+    expect(handlers.onDetails).toHaveBeenCalledWith(first.id);
   });
 
   it("markiert angefangene Texte und zeigt die Fortsetzen-Auswahl", async () => {

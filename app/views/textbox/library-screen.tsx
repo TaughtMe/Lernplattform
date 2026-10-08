@@ -38,6 +38,7 @@ export function LibraryScreen({
   onResume,
   onRestart,
   onCancelPending,
+  onDetails,
 }: {
   entries: readonly LibraryEntry[];
   /** Text mit angefangener Einheit, für den „Fortsetzen“ angeboten wird. */
@@ -47,6 +48,7 @@ export function LibraryScreen({
   onResume: (textId: string) => void;
   onRestart: (textId: string) => void;
   onCancelPending: () => void;
+  onDetails: (textId: string) => void;
 }) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>("alle");
   const [phenomenon, setPhenomenon] = useState<TextboxPhenomenon | "alle">(
@@ -182,6 +184,16 @@ export function LibraryScreen({
               >
                 {open ? "Weiter" : summary ? "Nochmal" : "Üben"}
               </Button>
+              {summary ? (
+                <Button
+                  className={styles.rowAction}
+                  variant="soft"
+                  aria-label={`${text.title}: Verlauf ansehen`}
+                  onClick={() => onDetails(text.id)}
+                >
+                  Verlauf
+                </Button>
+              ) : null}
             </li>
           ))}
         </ul>

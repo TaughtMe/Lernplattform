@@ -22,6 +22,7 @@ import {
   type LibraryEntry,
 } from "../views/textbox/library-screen";
 import { MemorizeScreen } from "../views/textbox/memorize-screen";
+import { TextDetailScreen } from "../views/textbox/text-detail-screen";
 import { ReviewScreen } from "../views/textbox/review-screen";
 import { EmptyState, Notice } from "../ui/primitives";
 import { useTextbox, type TextboxRepository } from "./use-textbox";
@@ -50,6 +51,7 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
   const runRef = useRef<Run | null>(null);
   const completing = useRef(false);
   const [pendingId, setPendingId] = useState<string>();
+  const [detailId, setDetailId] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const [tick, setTick] = useState(0);
 
@@ -196,8 +198,20 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
     }
   }
 
+  function showDetails(id: string) {
+    setRun(null);
+    setPendingId(undefined);
+    setDetailId(id);
+  }
+
+  function practiceFromDetails(id: string) {
+    setDetailId(undefined);
+    onStart(id);
+  }
+
   function backToLibrary() {
     setRun(null);
+    setDetailId(undefined);
     setNotice(undefined);
     void refresh();
   }
@@ -214,6 +228,17 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
         </EmptyState>
       );
     }
+    const detailText = store.texts.find((entry) => entry.id === detailId);
+    if (detailText) {
+      return (
+        <TextDetailScreen
+          text={detailText}
+          summary={store.summaries.get(detailText.id)}
+          onPractice={() => practiceFromDetails(detailText.id)}
+          onBack={backToLibrary}
+        />
+      );
+    }
     const entries: LibraryEntry[] = store.texts.map((text) => ({
       text,
       summary: store.summaries.get(text.id),
@@ -228,6 +253,7 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
         onResume={onResume}
         onRestart={(id) => void onRestart(id)}
         onCancelPending={() => setPendingId(undefined)}
+        onDetails={showDetails}
       />
     );
   }
@@ -301,6 +327,7 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
         previousBest={run.previousBest}
         onAgain={() => begin(text)}
         onLibrary={backToLibrary}
+        onHistory={() => showDetails(text.id)}
       />
     </>
   );

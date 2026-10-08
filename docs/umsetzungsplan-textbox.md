@@ -2,9 +2,9 @@
 
 Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 
-> **Fortschritt:** Paket A und B umgesetzt (Stand 08.10.2026). Korrekturen nach der Prüfung:
-> lange Eingaben werden gekürzt gespeichert, Zielwörter passen zum Schwerpunkt (1.8/2.7 geändert),
-> Reflexionsfragen im Wortlaut des Konzepts. Nächster Schritt: Paket C nach Freigabe.
+> **Fortschritt:** Paket A, B und C umgesetzt (Stand 08.10.2026). Paket C: Diagramme (`app/ui/charts.tsx`),
+> Detailansicht eines Textes, „Verlauf“ in Bibliothek und Abschlussbildschirm, Welle 2 mit 35 neuen Texten
+> (jetzt 50) und Überarbeitung von TXT-009. Nächster Schritt: Paket D nach Freigabe.
 
 > **Festgehaltene Abweichungen (von der Lehrkraft akzeptiert):** `textboxSessionSchema` liegt in
 > `src/domain/textbox-session.ts` und wird in `progress-schema.ts` nur exportiert. `TextboxRunState`
@@ -12,7 +12,7 @@ Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 > `punctuationHints`; `sessionFromRun` und `runFromSession` sind ergänzt. Verteilungen in
 > `summarizeTextboxOverall` zählen Einheiten. `rankTextsForWords` berücksichtigt nur Texte mit
 > Verwendung „wortspeicher“. `useTextbox` nimmt optional ein Repository entgegen. „Verlauf ansehen“
-> im Abschlussbildschirm folgt mit Paket C. In Durchgang 4 zeigt die Kontrolle Satzzeichen nur
+> im Abschlussbildschirm kam mit Paket C. `ChartPoint` hat das optionale Feld `detail` (Datum für die Wertetabelle). In Durchgang 4 zeigt die Kontrolle Satzzeichen nur
 > als Hinweiszahl. Gespeicherte Eingaben sind auf 100 Zeichen je Wort gekürzt; Lücken erlauben 40,
 > das Schreibfeld 4000 Zeichen.
 
