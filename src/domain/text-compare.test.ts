@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   alignWords,
+  layoutText,
   compareGaps,
   comparePunctuation,
   scoreWords,
@@ -206,5 +207,27 @@ describe("scoreWords", () => {
       scoreWords(results, 2, 5).percent,
     );
     expect(scoreWords(results, 2, 5).punctuationHints).toBe(5);
+  });
+});
+
+describe("layoutText", () => {
+  it("merkt sich Leerraum vor jedem Token", () => {
+    expect(
+      layoutText("Er sagte: „Hallo!“ Dann ging er.").map(
+        (t) => `${t.spaceBefore ? "_" : ""}${t.text}`,
+      ),
+    ).toEqual([
+      "Er",
+      "_sagte",
+      ":",
+      "_„",
+      "Hallo",
+      "!",
+      "“",
+      "_Dann",
+      "_ging",
+      "_er",
+      ".",
+    ]);
   });
 });

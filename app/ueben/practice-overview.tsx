@@ -50,6 +50,14 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     icon: "laufdiktat",
     tone: "#cdb6f2",
   },
+  {
+    area: "textbox",
+    href: "/frei/german/textbox",
+    title: "Textbox",
+    text: "Texte einprägen und Schritt für Schritt aus dem Gedächtnis schreiben.",
+    icon: "textbox",
+    tone: "#f2d58a",
+  },
 ];
 
 export function PracticeOverview() {

@@ -41,6 +41,7 @@ const NAV: readonly NavItem[] = [
       "tastenwelt",
       "mathe",
       "laufdiktat-frei",
+      "textbox",
     ],
     also: ["/lernbox", "/frei"],
   },

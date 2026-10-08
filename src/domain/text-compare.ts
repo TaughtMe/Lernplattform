@@ -41,21 +41,40 @@ const TOKEN_PATTERN =
   /[\p{L}\p{N}\p{M}]+(?:[-'’][\p{L}\p{N}\p{M}]+)*|[^\s\p{L}\p{N}\p{M}]/gu;
 const WORD_START = /^[\p{L}\p{N}\p{M}]/u;
 
-export function tokenizeText(text: string): TextToken[] {
-  const tokens: TextToken[] = [];
+/** Token mit der Angabe, ob im Original ein Leerraum davor stand (für die Anzeige). */
+export type LayoutToken = TextToken & { spaceBefore: boolean };
+
+export function layoutText(text: string): LayoutToken[] {
+  const normalized = text.normalize("NFC");
+  const tokens: LayoutToken[] = [];
   let words = 0;
   let punctuation = 0;
-  for (const match of text.normalize("NFC").matchAll(TOKEN_PATTERN)) {
+  for (const match of normalized.matchAll(TOKEN_PATTERN)) {
     const value = match[0];
+    const start = match.index ?? 0;
+    const spaceBefore = start > 0 && /\s/u.test(normalized[start - 1] ?? "");
     if (WORD_START.test(value)) {
-      tokens.push({ kind: "word", text: value, index: words });
+      tokens.push({ kind: "word", text: value, index: words, spaceBefore });
       words += 1;
     } else {
-      tokens.push({ kind: "punct", text: value, index: punctuation });
+      tokens.push({
+        kind: "punct",
+        text: value,
+        index: punctuation,
+        spaceBefore,
+      });
       punctuation += 1;
     }
   }
   return tokens;
+}
+
+export function tokenizeText(text: string): TextToken[] {
+  return layoutText(text).map(({ kind, text: value, index }) => ({
+    kind,
+    text: value,
+    index,
+  }));
 }
 
 export function wordsOf(tokens: readonly TextToken[]): string[] {

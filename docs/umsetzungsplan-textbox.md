@@ -2,7 +2,7 @@
 
 Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 
-> **Fortschritt:** Paket A umgesetzt (Fachlogik, 15 Texte, Speicherung, Tests; ohne Oberfläche). Nächster Schritt: Paket B nach Freigabe.
+> **Fortschritt:** Paket A umgesetzt (Fachlogik, 15 Texte, Speicherung, Tests). Paket B umgesetzt (spielbare Textbox im Vorschaumodus unter `/frei/german/textbox`; „Verlauf ansehen“ folgt mit Paket C). Nächster Schritt: Paket C nach Freigabe.
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Leitfaden ist das Konzept
 „Lernraum – Konzept: Textbox und Rechtschreibtraining“ vom 08.10.2026. Die fachlichen

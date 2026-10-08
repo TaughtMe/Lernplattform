@@ -72,6 +72,12 @@ export const RELEASE_AREAS = {
     routes: ["/frei/german"],
     stage: "frei",
   },
+  textbox: {
+    label: "Textbox",
+    routes: ["/frei/german/textbox"],
+    // Neuer Bereich: zunächst nur mit Vorschau, bis die Lehrkraft ihn freigibt.
+    stage: "vorschau",
+  },
   "laufdiktat-frei": {
     label: "Laufdiktat allein üben",
     routes: ["/frei/german/laufdiktat"],
