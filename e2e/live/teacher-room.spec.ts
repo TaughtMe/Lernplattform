@@ -261,7 +261,7 @@ test("Öffnen und „Jetzt starten“ erzeugt eine Lobby, Neuladen zeigt denselb
 
   await expect(async () => {
     await page
-      .getByRole("button", { name: "Der Hund im Hof öffnen" })
+      .getByRole("button", { name: "Der Hund im Hof starten" })
       .first()
       .click();
     await expect(page.getByRole("dialog", { name: "Raum öffnen" })).toBeVisible(
