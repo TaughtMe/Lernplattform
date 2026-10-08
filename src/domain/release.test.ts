@@ -37,7 +37,7 @@ describe("Freigaberegister", () => {
     expect(defaults.lernbox).toBe("frei");
     expect(defaults.lernen).toBe("frei");
     expect(defaults.lehrer).toBe("frei");
-    expect(defaults.textbox).toBe("vorschau");
+    expect(defaults.textbox).toBe("frei");
     expect(defaults.wortspeicher).toBe("frei");
     expect(defaults.motivation).toBe("aus");
     expect(defaults.duell).toBe("aus");
@@ -72,14 +72,17 @@ describe("Freigaberegister", () => {
     expect(isPathVisible("/entwicklung/ui", school)).toBe(true);
   });
 
-  it("hält die Textbox in der Vorschau, das Wortspeicher-Üben bleibt frei", () => {
+  it("gibt die Textbox frei und lässt sie per Freigabe zurück in die Vorschau", () => {
     const school = resolveVisibility(resolveStages(undefined), false);
-    const preview = resolveVisibility(resolveStages(undefined), true);
-    expect(isPathVisible("/frei/german/textbox", school)).toBe(false);
-    expect(isPathVisible("/frei/german/textbox", preview)).toBe(true);
+    expect(isPathVisible("/frei/german/textbox", school)).toBe(true);
     expect(isPathVisible("/frei/german/lernwoerter", school)).toBe(true);
-    const frei = resolveVisibility(resolveStages("textbox=frei"), false);
-    expect(isPathVisible("/frei/german/textbox", frei)).toBe(true);
+    const held = resolveStages("textbox=vorschau");
+    expect(
+      isPathVisible("/frei/german/textbox", resolveVisibility(held, false)),
+    ).toBe(false);
+    expect(
+      isPathVisible("/frei/german/textbox", resolveVisibility(held, true)),
+    ).toBe(true);
   });
 
   it("leitet Lehrkräfte zum Live-Raum und alle anderen zum Start", () => {

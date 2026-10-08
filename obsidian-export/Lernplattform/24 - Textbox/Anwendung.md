@@ -55,7 +55,7 @@ Es gibt keine zweite Trainingsanwendung. Die Textbox hat zwei Zugänge: frei üb
 - Der Abschluss schreibt in einer Transaktion die Einheit und ein Lernereignis (`source: "textbox"`, `learningObjectId: "textbox:<textId>"`). Doppeltes Abschließen erzeugt kein zweites Ereignis. Dadurch zählt eine Einheit für Serie und Tagesaktivität im Dashboard.
 - Gespeicherte Eingaben sind je Wort auf 100 Zeichen gekürzt; Lücken erlauben 40, das Schreibfeld 4000 Zeichen.
 - Datensicherung: `textboxSessions` ist Teil der persönlichen Sicherung. Ältere Sicherungen ohne dieses Feld lassen sich weiter einlesen. Beim Zusammenführen gewinnt `abgeschlossen` vor `laufend`, sonst das neuere `updatedAt`; zwei abgeschlossene Einheiten mit gleicher Id und anderem Inhalt ergeben einen Konflikt. Der Schüler-Cloud-Abgleich nutzt dieselbe Sicherungsdatei.
-- Freigabe: Bereich `textbox`, Stufe `vorschau`. Die Lehrkraft stellt ihn nach dem Probedurchlauf auf `frei` (`LERNRAUM_FREIGABE=textbox=frei`).
+- Freigabe: Bereich `textbox`, seit 08.10.2026 auf Stufe `frei` (von der Lehrkraft freigegeben). Zurückhalten mit `LERNRAUM_FREIGABE=textbox=vorschau`.
 
 ## Bekannte Grenzen
 

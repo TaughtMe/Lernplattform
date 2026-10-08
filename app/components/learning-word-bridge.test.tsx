@@ -61,7 +61,7 @@ describe("Wortspeicher ↔ Textbox", () => {
   });
 
   it("zeigt die Aktion nicht, solange die Textbox in der Vorschau ist", async () => {
-    open("?woerter=Ball", undefined);
+    open("?woerter=Ball", "textbox=vorschau");
     await practiceOneWord();
     expect(
       screen.queryByRole("link", { name: "Mit einem Text weiterüben" }),

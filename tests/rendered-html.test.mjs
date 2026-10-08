@@ -186,16 +186,16 @@ test("shows only released areas without preview and redirects the rest", async (
     }
   }
 
-  // Die Textbox ist neu und zunächst nur in der Vorschau sichtbar.
-  assert.equal((await render("/frei/german/textbox", null)).status, 307);
-  assert.equal((await render("/frei/german/textbox")).status, 200);
+  // Die Textbox ist freigegeben und lässt sich per Freigabe zurückhalten.
+  assert.equal((await render("/frei/german/textbox", null)).status, 200);
   assert.equal(
     (await render("/frei/german/textbox/laufzettel", null)).status,
-    307,
+    200,
   );
-  process.env["LERNRAUM_FREIGABE"] = "textbox=frei";
+  process.env["LERNRAUM_FREIGABE"] = "textbox=vorschau";
   try {
-    assert.equal((await render("/frei/german/textbox", null)).status, 200);
+    assert.equal((await render("/frei/german/textbox", null)).status, 307);
+    assert.equal((await render("/frei/german/textbox")).status, 200);
   } finally {
     delete process.env["LERNRAUM_FREIGABE"];
   }

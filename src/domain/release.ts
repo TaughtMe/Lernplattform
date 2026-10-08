@@ -75,8 +75,8 @@ export const RELEASE_AREAS = {
   textbox: {
     label: "Textbox",
     routes: ["/frei/german/textbox"],
-    // Neuer Bereich: zunächst nur mit Vorschau, bis die Lehrkraft ihn freigibt.
-    stage: "vorschau",
+    // Von der Lehrkraft am 08.10.2026 freigegeben (Entscheidung 54).
+    stage: "frei",
   },
   "laufdiktat-frei": {
     label: "Laufdiktat allein üben",

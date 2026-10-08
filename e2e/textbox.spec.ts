@@ -6,7 +6,7 @@ const text = TEXTBOX_TEXTS[0]!;
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
 
 test.beforeEach(async ({ context, baseURL }) => {
-  // Die Textbox ist zunächst eine Vorschau und erscheint nur mit diesem Cookie.
+  // Die Textbox ist frei; das Cookie hält die Tests unabhängig von der Freigabe.
   await context.addCookies([
     { name: "lernraum-vorschau", value: "1", url: baseURL! },
   ]);

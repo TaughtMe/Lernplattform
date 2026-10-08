@@ -3,8 +3,9 @@
 Stand: 08.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `9b913af`
 
 > **Fortschritt:** Paket A bis D umgesetzt (Stand 08.10.2026). Paket D: Wortspeicher-Brücke (2.22, 2.23),
-> Fortschrittsabschnitt (2.25), druckbarer Laufzettel (2.26) und Dokumentation (2.28). Die Freigabestufe
-> bleibt `vorschau`; offen sind der Probedurchlauf (Teil 9), die fachliche Textprüfung und die Kalibrierung (Abschnitt 7).
+> Fortschrittsabschnitt (2.25), druckbarer Laufzettel (2.26) und Dokumentation (2.28). Am 08.10.2026
+> hat die Lehrkraft die Textbox auf `frei` gestellt. Offen sind die fachliche Textprüfung und die
+> Kalibrierung (Abschnitt 7).
 
 > **Festgehaltene Abweichungen (von der Lehrkraft akzeptiert):** `textboxSessionSchema` liegt in
 > `src/domain/textbox-session.ts` und wird in `progress-schema.ts` nur exportiert. `TextboxRunState`

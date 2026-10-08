@@ -97,7 +97,10 @@ describe("TextboxProgressSection", () => {
   });
 
   it("bleibt unsichtbar, solange der Bereich nicht freigegeben ist", async () => {
-    const { container } = await setup([completedSession("a", 0, 80, 1)], "");
+    const { container } = await setup(
+      [completedSession("a", 0, 80, 1)],
+      "textbox=vorschau",
+    );
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 });
