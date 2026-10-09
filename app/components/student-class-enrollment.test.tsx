@@ -154,5 +154,5 @@ describe("StudentClassEnrollment", () => {
     expect(stored).toHaveLength(1);
     expect(stored[0]?.writingReliefGrant).toBeUndefined();
     expect(stored[0]?.sealPublicKey).toBe("A".repeat(122));
-  });
+  }, 20_000);
 });

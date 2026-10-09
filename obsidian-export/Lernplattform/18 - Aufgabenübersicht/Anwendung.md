@@ -111,11 +111,12 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Eigene Wortbank „Merkwörter & Fremdwörter“ für Wörter ohne verlässliche Regel anlegen
 - [x] Überschaubare Rundengrößen 5, 10, 20 oder gesamte Wortbank anbieten
 - [x] Erste Sammlungen mit den Rechtschreibstrategien Silbieren, Verlängern, Ableiten und Merken taggen
+- [x] Lernwörter aus dem Text-Laufdiktat übernehmen (Entscheidung 55)
 - [ ] Lernwörter aus Tests, Lehrerzuweisungen und eigenen Texten übernehmen
 
 ## Später: automatische Fehleranalyse
 
-- [ ] Zieltext und Eingabe wortweise vergleichen
+- [x] Zieltext und Eingabe wortweise vergleichen (Fehlerwörter aus dem Laufdiktat, Entscheidung 55)
 - [ ] Einmalige Fehler zunächst nur als Lernwort vorschlagen
 - [ ] Testfehler und wiederholte Übungsfehler automatisch aufnehmen
 - [ ] Fehlerbilder wie Doppelkonsonant, ck/tz oder Dehnungs-h erkennen
@@ -308,6 +309,17 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [ ] Probedurchlauf der Lehrkraft (Plan Teil 9) und fachliche Prüfung der 50 Texte
 - [ ] Freigabestufe `textbox` nach dem Probedurchlauf von `vorschau` auf `frei` stellen
 - [ ] Kalibrierung nach dem Probedurchlauf: Merkzeiten, Ausblendungsanteile, Lückenbreite, Wortanzahlen, Schwelle 90 %
+
+## Wortspeicher-Überarbeitung (Entscheidung 55, `docs/umsetzungsplan-wortspeicher.md`)
+
+- [x] Paket A: Fachlogik (Stufe 6, Wortboxen, Rundenautomat, Buchstabenvergleich, gleich klingende Wörter, Auswertung, Übernahme), Dexie Version 6, Backup
+- [x] Paket B: neuer Wortspeicher mit Wortboxen, Stufen 1–5, Prozentwert und Bestwert
+- [x] Paket C: Stufe 6 mit vorbereiteter Stimme (`src/speech/`)
+- [x] Paket D: Verlauf, Fortschrittsseite, Laufzettel
+- [x] Paket E: Laufdiktat-Übernahme, Textbox-Brücke, Dokumentation
+- [ ] Probedurchlauf der Lehrkraft (Plan Teil 8) und fachliche Prüfung der Wortbox „s, ss und ß“ und der gleich klingenden Wörter
+- [ ] Übernahme von `claude/wortspeicher-umbau` nach dem Probedurchlauf
+- [ ] Kalibrierung: Wartezeit auf die Stimme, Sprechtempo, Mindestlänge „Alle Wörter“, Wortbox-Grenzen, Lückenmuster der Stufen 2 und 3
 
 ## Noch zu entscheiden
 
