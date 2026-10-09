@@ -127,7 +127,7 @@ sich im Vokal unterscheiden, bewusst nebeneinander stehen sollen.
 ### Gleich klingende Wörter (Stufe 6)
 
 In Stufe 6 steht bei diesen Wörtern immer eine Bedeutungshilfe unter dem
-Lautsprecher („Bedeutung: zum Fahren“). Schreibt das Kind das andere Wort der
+Lautsprecher („__________ zum Fahren“, das Wort selbst bleibt verborgen). Schreibt das Kind das andere Wort der
 Gruppe, zählt das als Fehler, die Rückmeldung lautet aber: „Das klingt genauso.
 Gemeint war ‚Rad‘ (zum Fahren).“ Die Hilfe zählt nicht als Hilfe im Sinn der
 Bewertung.

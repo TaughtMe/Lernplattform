@@ -29,7 +29,7 @@ Stand: 09.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `c013990` (Version 
 >   Gruppen (u. a. das/dass, viel/fiel, wahr/war); die Lehrkraft prüft sie.
 > - **Bedeutungshilfe in Stufe 6 (bitte prüfen):** Plan 2.4 widerspricht sich leicht: Sichtbar sein sollen
 >   nur Lautsprecher, Eingabefeld und Knöpfe („kein Schriftbild“), das Beispiel der Hilfe lautet aber
->   „Rad – zum Fahren“. Umgesetzt ist nur die Bedeutung („Bedeutung: zum Fahren“), ohne das Wort, damit
+>   „Rad – zum Fahren“. Entscheidung der Projektleitung: Die Hilfe zeigt eine Lücke statt des Wortes („__________ zum Fahren“), damit
 >   die Schreibweise nicht verraten wird. Die Rückmeldung nach einem Fehler nennt das Wort wie im Plan
 >   („Gemeint war ‚Rad‘ (zum Fahren).“).
 > - „Nochmal üben“ und jede neue Runde ziehen die Wörter zufällig (`sampleRoundWords` mit

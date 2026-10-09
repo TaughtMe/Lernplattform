@@ -30,7 +30,12 @@ export function ListenAnswer({
       <p className="ui-sr-only" role="status">
         {speaking ? "Das Wort wird gesprochen." : ""}
       </p>
-      {meaning ? <p className={styles.meaning}>Bedeutung: {meaning}</p> : null}
+      {meaning ? (
+        <p className={styles.meaning}>
+          <span aria-hidden="true">__________ {meaning}</span>
+          <span className="ui-sr-only">Gesuchtes Wort: {meaning}</span>
+        </p>
+      ) : null}
     </div>
   );
 }
