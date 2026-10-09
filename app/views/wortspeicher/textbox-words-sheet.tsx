@@ -56,7 +56,7 @@ export function TextboxWordsSheet({
             : "aus deiner Textbox-Übung"}
           :
         </p>
-        <ul className={styles.missed} aria-label="Wörter aus der Textbox">
+        <ul className={styles.missed} aria-label={sheetTitle}>
           {words.map((word) => (
             <li key={word}>{word}</li>
           ))}

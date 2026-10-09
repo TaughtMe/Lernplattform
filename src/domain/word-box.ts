@@ -45,7 +45,11 @@ export const wordBoxSchema = z
     createdAt: instant,
     updatedAt: instant,
   })
-  .strict();
+  .strict()
+  .refine((box) => (box.id === "unterricht") === (box.kind === "unterricht"), {
+    message: "Id und Art der Wortbox passen nicht zusammen.",
+    path: ["kind"],
+  });
 
 export type WordBoxWord = z.infer<typeof wordBoxWordSchema>;
 export type WordBoxWordSource = WordBoxWord["source"];

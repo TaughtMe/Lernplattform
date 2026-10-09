@@ -30,6 +30,18 @@ export function useSpeech(lang = "de-DE") {
     };
   }, [lang]);
 
+  // Eine Stimme, die erst nach dem ersten Warten geladen wird, schaltet Stufe 6 frei.
+  useEffect(() => {
+    const speech =
+      typeof window === "undefined" ? undefined : window.speechSynthesis;
+    if (!speech?.addEventListener) return;
+    const onChange = () => {
+      if (hasVoiceFor(lang)) setHasVoice(true);
+    };
+    speech.addEventListener("voiceschanged", onChange);
+    return () => speech.removeEventListener("voiceschanged", onChange);
+  }, [lang]);
+
   // Beim Verlassen der Seite verstummt eine laufende Ausgabe.
   useEffect(() => stopSpeaking, []);
 

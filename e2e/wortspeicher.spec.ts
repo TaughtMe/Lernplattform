@@ -237,7 +237,7 @@ test("Stufe 6: Stimme wird vorbereitet, das erste Wort ist hörbar, gleich kling
   );
   expect(spoken[0]).toMatchObject({ volume: 0, voice: true });
   expect(spoken[1]).toMatchObject({ voice: true });
-  await expect(page.getByText("Gesuchtes Wort: zum Fahren")).toBeVisible();
+  await expect(page.getByText("Bedeutungshilfe: zum Fahren")).toBeVisible();
   await expectAccessible(page);
 
   await answer(page, "Rat");

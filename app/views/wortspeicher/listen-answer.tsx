@@ -33,7 +33,7 @@ export function ListenAnswer({
       {meaning ? (
         <p className={styles.meaning}>
           <span aria-hidden="true">__________ {meaning}</span>
-          <span className="ui-sr-only">Gesuchtes Wort: {meaning}</span>
+          <span className="ui-sr-only">Bedeutungshilfe: {meaning}</span>
         </p>
       ) : null}
     </div>

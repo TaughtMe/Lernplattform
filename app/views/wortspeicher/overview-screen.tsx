@@ -46,16 +46,23 @@ export function OverviewScreen({
   newBoxError?: string | undefined;
   onStart: (id: string) => void;
   onMenu: (id: string) => void;
-  onCreate: (title: string) => void;
+  onCreate: (title: string) => void | Promise<void>;
   onMixed: () => void;
   worksheetHref?: string | undefined;
 }) {
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
+  const [pending, setPending] = useState(false);
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (title.trim()) onCreate(title.trim());
+    if (!title.trim() || pending) return;
+    setPending(true);
+    try {
+      await onCreate(title.trim());
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -185,7 +192,7 @@ export function OverviewScreen({
             </Notice>
           ) : null}
           <div className={styles.actions}>
-            <Button type="submit" disabled={!title.trim()}>
+            <Button type="submit" disabled={!title.trim() || pending}>
               Wortbox anlegen
             </Button>
             <Button variant="ghost" onClick={() => setCreating(false)}>

@@ -773,7 +773,7 @@ describe("Stufe 6: Hören und schreiben", () => {
     expect(
       screen.queryByRole("heading", { name: /Rad/ }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Gesuchtes Wort: zum Fahren")).toBeInTheDocument();
+    expect(screen.getByText("Bedeutungshilfe: zum Fahren")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Anhören" }));
     await user.click(screen.getByRole("button", { name: "Anhören" }));

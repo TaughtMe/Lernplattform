@@ -64,6 +64,8 @@ export type WordRoundState = {
   settledWords: string[];
   /** Wörter des Blocks, bei denen „Wort zeigen“ vor ihrem Abschluss genutzt wurde. */
   helpedWords: string[];
+  /** Nummer des Versuchs, in dem ein Wort des Blocks richtig wurde. */
+  settledAt: Partial<Record<string, number>>;
 };
 
 /** Alles, was `recordAttempt` des Repositories für ein Wort braucht. */
@@ -120,6 +122,7 @@ function resetBlock(): Pick<
   | "failedWords"
   | "settledWords"
   | "helpedWords"
+  | "settledAt"
   | "lastFeedback"
 > {
   return {
@@ -130,6 +133,7 @@ function resetBlock(): Pick<
     failedWords: [],
     settledWords: [],
     helpedWords: [],
+    settledAt: {},
     lastFeedback: undefined,
   };
 }
@@ -224,6 +228,7 @@ export function submitWordAnswer(
 
   const failedWords = new Set(state.failedWords);
   const settledWords = new Set(state.settledWords);
+  const settledAt = { ...state.settledAt };
   const attempts: AttemptRecord[] = [];
   for (const entry of evaluation.words) {
     if (settledWords.has(entry.word)) continue;
@@ -236,8 +241,10 @@ export function submitWordAnswer(
       stage: state.stage,
       attemptId: `${state.index}:${attemptNumber}`,
     });
-    if (entry.correct) settledWords.add(entry.word);
-    else failedWords.add(entry.word);
+    if (entry.correct) {
+      settledWords.add(entry.word);
+      settledAt[entry.word] = attemptNumber;
+    } else failedWords.add(entry.word);
   }
 
   const feedback: WordRoundFeedback = {
@@ -256,6 +263,7 @@ export function submitWordAnswer(
     firstKinds,
     failedWords: [...failedWords],
     settledWords: [...settledWords],
+    settledAt,
     lastFeedback: feedback,
   };
 
@@ -269,7 +277,7 @@ export function submitWordAnswer(
     return {
       word,
       firstTry: firstResult === "richtig" && !helped,
-      attempts: attemptNumber,
+      attempts: settledAt[word] ?? attemptNumber,
       usedHelp: helped,
       firstResult,
     };

@@ -767,7 +767,7 @@ export function LearningWordApp({
           setEditorNotice(undefined);
           setEditorId(id);
         }}
-        onCreate={(title) => void createBox(title)}
+        onCreate={createBox}
         onMixed={() => openStart(FALLIGE_ID)}
         worksheetHref={WORD_STORE_WORKSHEET_PATH}
       />

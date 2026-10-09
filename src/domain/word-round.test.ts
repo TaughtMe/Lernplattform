@@ -219,6 +219,21 @@ describe("answers", () => {
     expect(wordRoundPercent(done.results)).toBe(67);
   });
 
+  it("counts attempts per word in stage 5", () => {
+    let state = finishMemorize(start(5));
+    const first = submitWordAnswer(state, "Sonne\nMond\nSterm");
+    state = finishMemorize(continueAfterFeedback(first.state));
+    const second = submitWordAnswer(state, "Sonne\nMond\nSterm");
+    state = finishMemorize(continueAfterFeedback(second.state));
+    const third = submitWordAnswer(state, "Sonne\nMond\nStern");
+    const done = advanceWordRound(third.state);
+    expect(done.results.map((r) => [r.word, r.attempts])).toEqual([
+      ["Sonne", 1],
+      ["Mond", 1],
+      ["Stern", 3],
+    ]);
+  });
+
   it("shows extra words in stage 5 without penalty", () => {
     const result = submitWordAnswer(
       finishMemorize(start(5, ["Sonne"])),

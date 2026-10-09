@@ -48,6 +48,16 @@ describe("wordBoxSchema", () => {
     ).toBe(false);
   });
 
+  it("rejects mismatched id and kind", () => {
+    expect(
+      wordBoxSchema.safeParse(box([], { id: "unterricht", kind: "eigen" }))
+        .success,
+    ).toBe(false);
+    expect(
+      wordBoxSchema.safeParse(box([], { kind: "unterricht" })).success,
+    ).toBe(false);
+  });
+
   it("rejects markup and control characters in words", () => {
     expect(wordBoxSchema.safeParse(box(["<b>"])).success).toBe(false);
     expect(wordBoxSchema.safeParse(box(["a\u0007b"])).success).toBe(false);
