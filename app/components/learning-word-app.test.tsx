@@ -1,7 +1,8 @@
 import "fake-indexeddb/auto";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { resetSpeechState } from "../../src/speech/speaker";
 import { resolveStages, resolveVisibility } from "../../src/domain/release";
 import type { LearningWordStage } from "../../src/domain/learning-word";
 import {
@@ -305,9 +306,10 @@ describe("Startblatt", () => {
     expect(
       within(sheet).getByRole("button", { name: /Stufe 3:.*empfohlen/ }),
     ).toBeInTheDocument();
+    // Ohne deutsche Stimme ist Stufe 6 sichtbar, aber nicht wählbar.
     expect(
-      within(sheet).queryByRole("button", { name: /Stufe 6/ }),
-    ).not.toBeInTheDocument();
+      within(sheet).getByRole("button", { name: /Stufe 6/ }),
+    ).toBeDisabled();
   });
 
   it("öffnet sich mit ?sammlung= für die passende Wortbox", async () => {
@@ -652,5 +654,216 @@ describe("Brücke zur Textbox", () => {
     expect(
       screen.getByRole("link", { name: "Andere Übung wählen" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Stufe 6: Hören und schreiben", () => {
+  type Utter = {
+    text: string;
+    lang: string;
+    voice: unknown;
+    volume: number;
+    onend: (() => void) | null;
+    onerror: (() => void) | null;
+  };
+
+  function stubSpeech(
+    voices: {
+      name: string;
+      lang: string;
+      voiceURI: string;
+      default: boolean;
+    }[],
+  ) {
+    const spoken: Utter[] = [];
+    class FakeUtterance {
+      text: string;
+      lang = "";
+      voice: unknown = null;
+      rate = 1;
+      volume = 1;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+    vi.stubGlobal("SpeechSynthesisUtterance", FakeUtterance);
+    vi.stubGlobal("speechSynthesis", {
+      speaking: false,
+      pending: false,
+      getVoices: () => voices,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      cancel: () => undefined,
+      speak: (utterance: Utter) => {
+        spoken.push(utterance);
+        setTimeout(() => utterance.onend?.(), 5);
+      },
+    });
+    return spoken;
+  }
+
+  const anna = {
+    name: "Anna (Premium)",
+    lang: "de-DE",
+    voiceURI: "anna",
+    default: true,
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetSpeechState();
+  });
+
+  async function openStage6(
+    user: ReturnType<typeof userEvent.setup>,
+    words: string[],
+  ) {
+    await setup({
+      prepare: async ({ boxes }) => {
+        await boxes.create("Hören", words);
+      },
+    });
+    await openBox(user, "Hören");
+    const sheet = await screen.findByRole("dialog");
+    return sheet;
+  }
+
+  it("ist ohne deutsche Stimme deaktiviert", async () => {
+    stubSpeech([]);
+    const user = userEvent.setup();
+    const sheet = await openStage6(user, ["Rad"]);
+    const card = await within(sheet).findByRole("button", {
+      name: /^Stufe 6:/,
+    });
+    await waitFor(() => expect(card).toBeDisabled());
+    await waitFor(
+      () =>
+        expect(card).toHaveTextContent(
+          "Auf diesem Gerät gibt es keine deutsche Stimme.",
+        ),
+      SLOW,
+    );
+  });
+
+  it("wärmt die Stimme stumm auf, spricht das erste Wort mit Stimme und zählt „Anhören“ nicht als Hilfe", async () => {
+    const spoken = stubSpeech([anna]);
+    const user = userEvent.setup();
+    const sheet = await openStage6(user, ["Rad", "Sonne"]);
+    const card = await within(sheet).findByRole("button", {
+      name: /^Stufe 6:/,
+    });
+    await waitFor(() => expect(card).toBeEnabled());
+    await user.click(card);
+    await user.selectOptions(
+      within(sheet).getByLabelText("Wörter in dieser Runde"),
+      "all",
+    );
+    await user.click(within(sheet).getByRole("button", { name: "Starten" }));
+
+    await screen.findByRole("button", { name: "Anhören" }, SLOW);
+    await waitFor(
+      () => expect(spoken.map((u) => u.text)).toEqual([" ", "Rad"]),
+      SLOW,
+    );
+    expect(spoken[0]).toMatchObject({ volume: 0, voice: anna });
+    expect(spoken[1]).toMatchObject({ lang: "de-DE", voice: anna });
+    // Kein Schriftbild, aber die Bedeutungshilfe für das gleich klingende Wort.
+    expect(
+      screen.queryByRole("heading", { name: /Rad/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Bedeutung: zum Fahren")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Anhören" }));
+    await user.click(screen.getByRole("button", { name: "Anhören" }));
+    await waitFor(() =>
+      expect(
+        spoken.filter((u) => u.text === "Rad").length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+
+    // „Rat“ statt „Rad“: besondere Rückmeldung.
+    await answer(user, "Rat");
+    expect(
+      await screen.findByText(
+        "Das klingt genauso. Gemeint war ‚Rad‘ (zum Fahren).",
+      ),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Noch einmal versuchen" }),
+    );
+    await answer(user, "Rad");
+    await screen.findByLabelText("Deine Lösung", {}, SLOW);
+    await answer(user, "Sonne");
+    expect(
+      await screen.findByRole("heading", { name: "Geschafft!" }, SLOW),
+    ).toBeInTheDocument();
+    // Rad war nur mit Selbstkorrektur richtig, Sonne auf Anhieb: 50 %.
+    expect(screen.getByText("50 %")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("mit Hilfe")[0]!.previousSibling,
+    ).toHaveTextContent("0");
+  });
+
+  it("zählt „Wort zeigen“ als Hilfe", async () => {
+    stubSpeech([anna]);
+    const user = userEvent.setup();
+    const sheet = await openStage6(user, ["Sonne"]);
+    const card = await within(sheet).findByRole("button", {
+      name: /^Stufe 6:/,
+    });
+    await waitFor(() => expect(card).toBeEnabled());
+    await user.click(card);
+    await user.click(within(sheet).getByRole("button", { name: "Starten" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Wort zeigen" }, SLOW),
+    );
+    await answer(user, "Sonne");
+    expect(
+      await screen.findByRole("heading", { name: "Geschafft!" }, SLOW),
+    ).toBeInTheDocument();
+    expect(screen.getByText("0 %")).toBeInTheDocument();
+  });
+});
+
+describe("Textvorschlag nach der Runde", () => {
+  async function playWiese(stages: string | undefined) {
+    const user = userEvent.setup();
+    await setup({ query: "?woerter=Wiese", stages });
+    const sheet = await screen.findByRole("dialog", {
+      name: "Wörter aus der Textbox",
+    });
+    await user.click(within(sheet).getByRole("button", { name: "Jetzt üben" }));
+    await startRound(user, 1);
+    await answer(user, "Wiese");
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+  }
+
+  it("zeigt den besten passenden Text als Karte mit Link in die Textbox", async () => {
+    await playWiese("textbox=frei");
+    const card = await screen.findByRole(
+      "region",
+      { name: "Passender Text" },
+      SLOW,
+    );
+    expect(card).toHaveTextContent("enthält 1 deiner 1 Wörter");
+    expect(
+      within(card).getByRole("link", { name: "Text üben" }),
+    ).toHaveAttribute("href", "/frei/german/textbox?woerter=Wiese");
+    expect(
+      screen.queryByRole("link", { name: "Mit einem Text weiterüben" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("zeigt die Karte nicht, solange die Textbox nicht sichtbar ist", async () => {
+    await playWiese("textbox=vorschau");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(
+      screen.queryByRole("region", { name: "Passender Text" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Mit einem Text weiterüben" }),
+    ).not.toBeInTheDocument();
   });
 });

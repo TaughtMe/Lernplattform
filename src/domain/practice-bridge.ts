@@ -95,14 +95,46 @@ export function buildTextboxLink(
   }`;
 }
 
-/** Textbox → Wortspeicher: die Wörter füllen die eigene Liste vor. */
+/** Woher die Wörter im Adressparameter `woerter` stammen (bestimmt Titel und Beschriftung). */
+export type WordsSource = "textbox" | "fehler";
+
+/** Liest `quelle=`; ohne gültigen Wert gilt „textbox“. */
+export function parseSourceParam(raw: string | null | undefined): WordsSource {
+  return raw === "fehler" ? "fehler" : "textbox";
+}
+
+/**
+ * Link in den Wortspeicher mit Wörtern: aus der Textbox (Standard) oder von der
+ * Fortschrittsseite („fehler“). Das Blatt dort bietet „Jetzt üben“ und
+ * „In eine Wortbox speichern“; es wird nichts automatisch gespeichert.
+ */
 export function buildLearningWordsLink(
   words: readonly string[],
+  source: WordsSource = "textbox",
 ): string | undefined {
   const clean = wordsForLink(words);
-  return clean.length === 0
-    ? undefined
-    : `${LEARNING_WORDS_PATH}?${wordsQuery(clean)}`;
+  if (clean.length === 0) return undefined;
+  return `${LEARNING_WORDS_PATH}?${wordsQuery(clean)}${
+    source === "fehler" ? "&quelle=fehler" : ""
+  }`;
+}
+
+const historyBoxSchema = z.string().regex(/^[a-z0-9-]{1,60}$/);
+
+/** Liest `wortbox=<id>&ansicht=verlauf`; alles andere ergibt `undefined`. */
+export function parseHistoryParams(params: {
+  get(name: string): string | null;
+}): string | undefined {
+  if (params.get("ansicht") !== "verlauf") return undefined;
+  const parsed = historyBoxSchema.safeParse(params.get("wortbox"));
+  return parsed.success ? parsed.data : undefined;
+}
+
+/** Link zum Verlauf einer Wortbox. */
+export function buildHistoryLink(boxId: string): string {
+  return historyBoxSchema.safeParse(boxId).success
+    ? `${LEARNING_WORDS_PATH}?wortbox=${boxId}&ansicht=verlauf`
+    : LEARNING_WORDS_PATH;
 }
 
 /** Link zu einer Sammlung des Wortspeichers (z. B. aus der Fortschrittsseite). */

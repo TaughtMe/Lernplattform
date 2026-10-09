@@ -40,9 +40,7 @@ describe("HistoryScreen", () => {
     expect(
       screen.getByRole("heading", { name: "Verlauf: Doppelkonsonanten" }),
     ).toBeInTheDocument();
-    const stats = screen
-      .getByRole("term", { name: "" }, { hidden: true })
-      .closest("dl");
+    const stats = document.querySelector("dl");
     expect(stats).toHaveTextContent("Bestwert80 %");
     expect(stats).toHaveTextContent("Letztes Ergebnis80 %");
     expect(stats).toHaveTextContent("Runden1");

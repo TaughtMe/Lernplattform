@@ -19,6 +19,7 @@ export function CompletionScreen({
   textboxHref,
   onAgain,
   onOtherStage,
+  onHistory,
 }: {
   title: string;
   stage: LearningWordStage;
@@ -33,6 +34,7 @@ export function CompletionScreen({
   textboxHref?: string | undefined;
   onAgain: () => void;
   onOtherStage: () => void;
+  onHistory: () => void;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -125,6 +127,9 @@ export function CompletionScreen({
         </Button>
         <Button size="lg" variant="soft" onClick={onOtherStage}>
           Andere Stufe wählen
+        </Button>
+        <Button size="lg" variant="soft" onClick={onHistory}>
+          Verlauf ansehen
         </Button>
         {textboxHref ? (
           <ButtonLink size="lg" variant="gold" href={textboxHref}>

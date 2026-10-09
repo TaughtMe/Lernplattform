@@ -7,6 +7,7 @@ import { Sheet } from "../../ui/sheet";
 import styles from "./wortspeicher.module.css";
 
 export const TEXTBOX_BOX_TITLE = "Aus der Textbox";
+export const ERROR_BOX_TITLE = "Meine Fehlerwörter";
 const NEW_BOX = "neu";
 
 /**
@@ -15,6 +16,7 @@ const NEW_BOX = "neu";
  */
 export function TextboxWordsSheet({
   words,
+  source = "textbox",
   ownBoxes,
   error,
   saved,
@@ -23,6 +25,8 @@ export function TextboxWordsSheet({
   onClose,
 }: {
   words: readonly string[];
+  /** Woher die Wörter kommen: aus der Textbox oder von den Fehlern der Fortschrittsseite. */
+  source?: "textbox" | "fehler";
   ownBoxes: readonly { id: string; title: string }[];
   error?: string | undefined;
   /** Titel der Wortbox, in der die Wörter gerade gespeichert wurden. */
@@ -32,16 +36,25 @@ export function TextboxWordsSheet({
   onSave: (target: { boxId?: string; title: string }) => void;
   onClose: () => void;
 }) {
+  const sheetTitle =
+    source === "fehler"
+      ? "Wörter mit den meisten Fehlern"
+      : "Wörter aus der Textbox";
   const [saving, setSaving] = useState(false);
   const [target, setTarget] = useState(NEW_BOX);
-  const [title, setTitle] = useState(TEXTBOX_BOX_TITLE);
+  const [title, setTitle] = useState(
+    source === "fehler" ? ERROR_BOX_TITLE : TEXTBOX_BOX_TITLE,
+  );
 
   return (
-    <Sheet open title="Wörter aus der Textbox" onClose={onClose}>
+    <Sheet open title={sheetTitle} onClose={onClose}>
       <div className="ui-stack">
         <p className="ui-small ui-muted">
-          {words.length === 1 ? "1 Wort" : `${words.length} Wörter`} aus deiner
-          Textbox-Übung:
+          {words.length === 1 ? "1 Wort" : `${words.length} Wörter`}{" "}
+          {source === "fehler"
+            ? "aus deinem Fortschritt"
+            : "aus deiner Textbox-Übung"}
+          :
         </p>
         <ul className={styles.missed} aria-label="Wörter aus der Textbox">
           {words.map((word) => (

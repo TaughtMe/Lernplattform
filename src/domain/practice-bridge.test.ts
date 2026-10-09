@@ -3,7 +3,10 @@ import {
   BRIDGE_MAX_WORDS,
   buildCollectionLink,
   buildLearningWordsLink,
+  buildHistoryLink,
   buildTextboxLink,
+  parseHistoryParams,
+  parseSourceParam,
   parseCollectionParam,
   parseWordsParam,
   roundErrorWords,
@@ -111,5 +114,40 @@ describe("roundErrorWords", () => {
         { kind: "fehlt", nearMiss: false },
       ]),
     ).toEqual(["Ball", "Katze"]);
+  });
+});
+
+describe("Wortspeicher-Links: Quelle und Verlauf", () => {
+  it("hängt die Quelle „fehler“ an und lässt „textbox“ weg", () => {
+    expect(buildLearningWordsLink(["Hund"])).toBe(
+      "/frei/german/lernwoerter?woerter=Hund",
+    );
+    expect(buildLearningWordsLink(["Hund", "Katze"], "fehler")).toBe(
+      "/frei/german/lernwoerter?woerter=Hund,Katze&quelle=fehler",
+    );
+    expect(buildLearningWordsLink([], "fehler")).toBeUndefined();
+  });
+
+  it("liest die Quelle mit Rückfall auf „textbox“", () => {
+    expect(parseSourceParam("fehler")).toBe("fehler");
+    expect(parseSourceParam("textbox")).toBe("textbox");
+    expect(parseSourceParam("anderes")).toBe("textbox");
+    expect(parseSourceParam(null)).toBe("textbox");
+  });
+
+  it("liest und baut Verlaufslinks Zod-geprüft", () => {
+    const params = (q: string) => new URLSearchParams(q);
+    expect(parseHistoryParams(params("wortbox=silent-h&ansicht=verlauf"))).toBe(
+      "silent-h",
+    );
+    expect(parseHistoryParams(params("wortbox=silent-h"))).toBeUndefined();
+    expect(
+      parseHistoryParams(params("wortbox=<b>&ansicht=verlauf")),
+    ).toBeUndefined();
+    expect(parseHistoryParams(params("ansicht=verlauf"))).toBeUndefined();
+    expect(buildHistoryLink("silent-h")).toBe(
+      "/frei/german/lernwoerter?wortbox=silent-h&ansicht=verlauf",
+    );
+    expect(buildHistoryLink("Böse Id")).toBe("/frei/german/lernwoerter");
   });
 });

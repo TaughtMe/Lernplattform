@@ -153,3 +153,152 @@ test("Stufe 5 wertet je Wort und zeigt den Merkblock", async ({ page }) => {
   await expect(page.getByText("Noch nicht: Baum")).toBeVisible();
   await expectAccessible(page);
 });
+
+/** Baut `speechSynthesis` nach; `voices` bestimmt, ob es eine deutsche Stimme gibt. */
+async function fakeSpeech(page: Page, hasVoice: boolean) {
+  await page.addInitScript((withVoice: boolean) => {
+    const voices = withVoice
+      ? [
+          {
+            name: "Anna (Premium)",
+            lang: "de-DE",
+            voiceURI: "anna",
+            default: true,
+          },
+        ]
+      : [];
+    const spoken: { text: string; volume: number; voice: boolean }[] = [];
+    (window as unknown as { __spoken: typeof spoken }).__spoken = spoken;
+    class FakeUtterance {
+      text: string;
+      lang = "";
+      voice: unknown = null;
+      rate = 1;
+      volume = 1;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+    Object.defineProperty(window, "SpeechSynthesisUtterance", {
+      value: FakeUtterance,
+      configurable: true,
+    });
+    Object.defineProperty(window, "speechSynthesis", {
+      configurable: true,
+      value: {
+        speaking: false,
+        pending: false,
+        getVoices: () => voices,
+        addEventListener() {},
+        removeEventListener() {},
+        cancel() {},
+        speak(utterance: FakeUtterance) {
+          spoken.push({
+            text: utterance.text,
+            volume: utterance.volume,
+            voice: utterance.voice !== null,
+          });
+          setTimeout(() => utterance.onend?.(), 5);
+        },
+      },
+    });
+  }, hasVoice);
+}
+
+test("Stufe 6: Stimme wird vorbereitet, das erste Wort ist hörbar, gleich klingendes Wort wird erklärt", async ({
+  page,
+}) => {
+  await fakeSpeech(page, true);
+  await createBox(page, "Hörbox", ["Rad", "Sonne"]);
+  await page.getByRole("button", { name: /^Hörbox/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Hörbox" });
+  const stageSix = sheet.getByRole("button", { name: /^Stufe 6:/ });
+  await expect(stageSix).toBeEnabled();
+  await stageSix.click();
+  await sheet.getByLabel("Wörter in dieser Runde").selectOption("all");
+  await sheet.getByRole("button", { name: "Starten" }).click();
+
+  await expect(page.getByRole("button", { name: "Anhören" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { __spoken: { text: string }[] }).__spoken.map(
+          (entry) => entry.text,
+        ),
+      ),
+    )
+    .toEqual([" ", "Rad"]);
+  const spoken = await page.evaluate(
+    () =>
+      (window as unknown as { __spoken: { volume: number; voice: boolean }[] })
+        .__spoken,
+  );
+  expect(spoken[0]).toMatchObject({ volume: 0, voice: true });
+  expect(spoken[1]).toMatchObject({ voice: true });
+  await expect(page.getByText("Bedeutung: zum Fahren")).toBeVisible();
+  await expectAccessible(page);
+
+  await answer(page, "Rat");
+  await expect(
+    page.getByText("Das klingt genauso. Gemeint war ‚Rad‘ (zum Fahren)."),
+  ).toBeVisible();
+  await expectAccessible(page);
+});
+
+test("Stufe 6 ist ohne deutsche Stimme deaktiviert", async ({ page }) => {
+  await fakeSpeech(page, false);
+  await createBox(page, "Stummbox", ["Rad"]);
+  await page.getByRole("button", { name: /^Stummbox/ }).click();
+  const stageSix = page
+    .getByRole("dialog", { name: "Stummbox" })
+    .getByRole("button", { name: /^Stufe 6:/ });
+  await expect(stageSix).toBeDisabled({ timeout: 5_000 });
+  await expect(stageSix).toContainText(
+    "Auf diesem Gerät gibt es keine deutsche Stimme.",
+  );
+  await expectAccessible(page);
+});
+
+test("Verlauf, Fortschrittsseite und Laufzettel zeigen die Runde", async ({
+  page,
+}) => {
+  await page.goto("/lernen/fortschritt");
+  await expect(page.getByText("Noch keine Wörter geübt")).toBeVisible();
+  await expectAccessible(page);
+
+  await createBox(page, "Lernbox", ["Sonne"]);
+  await page.getByRole("button", { name: /^Lernbox/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Lernbox" });
+  await sheet.getByLabel("Wörter in dieser Runde").selectOption("all");
+  await sheet.getByRole("button", { name: "Starten" }).click();
+  await answer(page, "Sonne");
+  await expect(page.getByRole("heading", { name: "Geschafft!" })).toBeVisible({
+    timeout: 3_000,
+  });
+  await page.getByRole("button", { name: "Verlauf ansehen" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Verlauf: Lernbox" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: /ein Wert, 100 Prozent/ }),
+  ).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Säulen" }).click();
+  await expectAccessible(page);
+
+  await page.goto("/lernen/fortschritt");
+  const section = page.getByRole("region", { name: "Wortspeicher" });
+  await expect(section).toContainText("Trainierte Wörter");
+  await expect(section).toContainText("Abgeschlossene Runden");
+  await expectAccessible(page);
+
+  await page.goto("/frei/german/lernwoerter/laufzettel");
+  const table = page.getByRole("table");
+  await expect(table).toContainText("Lernbox");
+  await expect(table).toContainText("100 %");
+  await page.getByLabel(/Name oder Kennung/).fill("Mia M.");
+  await expect(page.getByTestId("worksheet-name")).toHaveText("Mia M.");
+  await expectAccessible(page);
+});

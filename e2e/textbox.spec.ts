@@ -246,7 +246,9 @@ test("Wortspeicher führt zu passenden Texten und die Wörter werden ausgeblende
     await expect(page.getByText("Richtig")).toBeVisible();
   }
   await expect(page.getByRole("heading", { name: "Geschafft!" })).toBeVisible();
-  await page.getByRole("link", { name: "Mit einem Text weiterüben" }).click();
+  const card = page.getByRole("region", { name: "Passender Text" });
+  await expect(card).toContainText("enthält 2 deiner 2 Wörter");
+  await card.getByRole("link", { name: "Text üben" }).click();
 
   const panel = page.getByRole("region", {
     name: "Passende Texte zu deinen Wörtern",

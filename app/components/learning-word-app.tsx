@@ -10,10 +10,15 @@ import {
   type LearningWordBlockSize,
   type LearningWordStage,
 } from "../../src/domain/learning-word";
+import { homophoneHint } from "../../src/domain/homophones";
+import { rankTextsForWords } from "../../src/domain/textbox-progress";
+import { TEXTBOX_DIFFICULTY_LABELS } from "../../src/domain/textbox-text";
 import { learningWordId } from "../../src/domain/learning-word-progress";
 import {
   buildTextboxLink,
   parseCollectionParam,
+  parseHistoryParams,
+  parseSourceParam,
   parseWordsParam,
 } from "../../src/domain/practice-bridge";
 import type { WordBoxView } from "../../src/domain/word-box";
@@ -36,8 +41,10 @@ import {
   type WordRoundRecord,
 } from "../../src/domain/word-store-progress";
 import { useRelease } from "../release/release-context";
-import { EmptyState } from "../ui/primitives";
+import { ListenAnswer } from "../views/wortspeicher/listen-answer";
+import { ButtonLink, EmptyState } from "../ui/primitives";
 import { StudentPage } from "../ui/shell/student-page";
+import { HistoryScreen } from "../views/wortspeicher/history-screen";
 import { BoxEditorScreen } from "../views/wortspeicher/box-editor-screen";
 import { CompletionScreen } from "../views/wortspeicher/completion-screen";
 import {
@@ -51,7 +58,9 @@ import {
   TEXTBOX_BOX_TITLE,
   TextboxWordsSheet,
 } from "../views/wortspeicher/textbox-words-sheet";
+import { WORD_STORE_WORKSHEET_PATH } from "./word-store-progress-section";
 import { useHydrated } from "./use-hydrated";
+import { useSpeech } from "./use-speech";
 import { useWordStore, type WordStoreRepositories } from "./use-word-store";
 
 const SAVE_ISSUE =
@@ -91,7 +100,9 @@ function messageOf(error: unknown, fallback: string) {
     : fallback;
 }
 
-const STAGES_IN_USE = LEARNING_WORD_STAGES.filter((stage) => stage <= 5);
+const NO_VOICE = "Auf diesem Gerät gibt es keine deutsche Stimme.";
+const VOICE_FAILED =
+  "Die Stimme konnte nicht vorbereitet werden. Wähle eine andere Stufe oder versuche es noch einmal.";
 
 /**
  * Steuert den Wortspeicher: Wortboxen, Startblatt, Runden und Ergebnis. Die
@@ -107,12 +118,21 @@ export function LearningWordApp({
   const textboxVisible = useRelease()["textbox"];
   const searchParams = useSearchParams();
   const hydrated = useHydrated();
+  const speech = useSpeech("de-DE");
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string>();
   const ready = hydrated && store.status === "ready";
 
   // Vorbelegung aus der Adresse: `?woerter=` öffnet das Blatt „Wörter aus der
   // Textbox“, `?sammlung=` das Startblatt der Wortbox. Es wird nichts gespeichert.
   const [bridgeWords] = useState(() =>
     parseWordsParam(searchParams.get("woerter")),
+  );
+  const [bridgeSource] = useState(() =>
+    parseSourceParam(searchParams.get("quelle")),
+  );
+  const [historyId, setHistoryId] = useState<string | undefined>(() =>
+    parseHistoryParams(searchParams),
   );
   const [bridgeOpen, setBridgeOpen] = useState(bridgeWords.length > 0);
   const [bridgeSaved, setBridgeSaved] = useState<string>();
@@ -130,6 +150,14 @@ export function LearningWordApp({
   const [editorId, setEditorId] = useState<string>();
   const [run, setRunState] = useState<Run | null>(null);
   const [completion, setCompletion] = useState<Completion>();
+  const [suggestion, setSuggestion] = useState<{
+    forRound: string;
+    title: string;
+    difficulty: string;
+    matches: number;
+    total: number;
+    href: string | undefined;
+  }>();
   const [notice, setNotice] = useState<string>();
   const [editorNotice, setEditorNotice] = useState<string>();
   const [newBoxError, setNewBoxError] = useState<string>();
@@ -148,6 +176,8 @@ export function LearningWordApp({
     setRunState(next);
   }
 
+  const tempId = bridgeSource === "fehler" ? "fehler" : TEXTBOX_ID;
+
   /** Einheitliche Sicht auf alle Wortboxen, auch die vorübergehenden. */
   function findView(id: string): WordBoxView | undefined {
     if (id === FALLIGE_ID) {
@@ -159,11 +189,11 @@ export function LearningWordApp({
         editable: false,
       };
     }
-    if (id === TEXTBOX_ID) {
+    if (id === tempId) {
       return {
         id,
         kind: "textbox",
-        title: TEXTBOX_BOX_TITLE,
+        title: bridgeSource === "fehler" ? "Fehlerwörter" : TEXTBOX_BOX_TITLE,
         words: bridgeWords,
         editable: false,
       };
@@ -182,7 +212,8 @@ export function LearningWordApp({
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0]?.stage;
   }
 
-  function openStart(id: string) {
+  function openStart(requested: string) {
+    const id = requested === TEXTBOX_ID ? tempId : requested;
     const view = findView(id);
     if (!view) return;
     // Vorauswahl: Stufe der letzten Runde, bei „Gemischt“ die leichteste fällige.
@@ -192,13 +223,19 @@ export function LearningWordApp({
             ...store.due.map((entry) => entry.stage),
           ) as LearningWordStage)
         : undefined;
-    const stage = Math.min(
-      5,
-      lastStageOf(id) ?? dueStage ?? 1,
-    ) as LearningWordStage;
+    let stage = lastStageOf(id) ?? dueStage ?? 1;
+    // Ohne deutsche Stimme ist Stufe 6 nicht wählbar.
+    if (stage === 6 && speech.hasVoice !== true) stage = 5;
     setConfig((current) => ({ ...current, stage }));
+    setStartError(undefined);
     setNotice(undefined);
     setSheetId(id);
+  }
+
+  function openHistory(id: string) {
+    setSheetId(undefined);
+    setEditorId(undefined);
+    setHistoryId(id);
   }
 
   function begin(view: WordBoxView, chosen: Config) {
@@ -207,6 +244,7 @@ export function LearningWordApp({
     setCompletion(undefined);
     setNotice(undefined);
     setSheetId(undefined);
+    setHistoryId(undefined);
     setRun({
       state: startWordRound({
         roundId: crypto.randomUUID(),
@@ -225,7 +263,20 @@ export function LearningWordApp({
 
   function onStartRound() {
     const view = sheetId ? findView(sheetId) : undefined;
-    if (view) begin(view, config);
+    if (!view) return;
+    if (config.stage !== 6) {
+      begin(view, config);
+      return;
+    }
+    // Stufe 6: Die Stimme muss vor dem ersten Wort vollständig bereit sein. Der
+    // Aufruf steht direkt im Klick (Nutzergeste, die iOS für Ton verlangt).
+    setStartError(undefined);
+    setStarting(true);
+    void speech.prepare().then((readiness) => {
+      setStarting(false);
+      if (readiness === "ready") begin(view, config);
+      else setStartError(readiness === "no-voice" ? NO_VOICE : VOICE_FAILED);
+    });
   }
 
   function enqueue(write: () => Promise<unknown>) {
@@ -332,7 +383,21 @@ export function LearningWordApp({
     return () => window.clearTimeout(timer);
   }, [phase, justRight, attemptCount, blockIndex]); // eslint-disable-line react-hooks/exhaustive-deps -- onAdvance liest nur den Ref
 
+  // Stufe 6: Jedes Wort wird beim Erscheinen einmal gesprochen, nach einem
+  // Fehler beim erneuten Schreiben wieder.
+  const runStage = run?.state.stage;
+  const listenWord =
+    run && phase === "recall" && runStage === 6
+      ? (currentBlock(run.state)[0] ?? "")
+      : "";
+  const roundKey = run?.state.roundId;
+  const { say, stop } = speech;
+  useEffect(() => {
+    if (listenWord) void say(listenWord);
+  }, [listenWord, roundKey, blockIndex, attemptCount, say]);
+
   async function leaveRound() {
+    stop();
     setRun(null);
     setCompletion(undefined);
     await pendingWrites.current;
@@ -419,6 +484,54 @@ export function LearningWordApp({
     }
   }
 
+  // Textvorschlag nach der Runde: Die Textbibliothek wird erst jetzt geladen,
+  // damit die Übersicht klein bleibt.
+  const completedRound = completion?.view.id;
+  const completedWords = completion?.results;
+  const completionRef = completion;
+  useEffect(() => {
+    if (!textboxVisible || !completionRef) return;
+    let active = true;
+    const words = completionRef.results.map((entry) => entry.word);
+    const key = completionRef.results.map((entry) => entry.word).join("|");
+    void import("../../src/domain/textbox-library").then(
+      ({ TEXTBOX_TEXTS }) => {
+        if (!active) return;
+        const collectionId =
+          completionRef.view.kind === "fest"
+            ? completionRef.view.id
+            : undefined;
+        const best = rankTextsForWords(
+          words,
+          [...TEXTBOX_TEXTS],
+          collectionId,
+        )[0];
+        setSuggestion(
+          best
+            ? {
+                forRound: key,
+                title: best.text.title,
+                difficulty: TEXTBOX_DIFFICULTY_LABELS[best.text.difficulty],
+                matches: best.matches.length,
+                total: words.length,
+                href: buildTextboxLink(words, collectionId),
+              }
+            : {
+                forRound: key,
+                title: "",
+                difficulty: "",
+                matches: 0,
+                total: 0,
+                href: undefined,
+              },
+        );
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [textboxVisible, completedRound, completedWords]); // eslint-disable-line react-hooks/exhaustive-deps -- nur der Abschluss löst den Vorschlag aus
+
   // Fokus auf die Überschrift, wenn sich die Ansicht ändert.
   const screenKey = run
     ? "round"
@@ -451,6 +564,7 @@ export function LearningWordApp({
     };
   });
 
+  // Die vorübergehende Wortbox heißt „textbox“ bzw. „fehler“, je nach Herkunft.
   const sheetView = sheetId ? findView(sheetId) : undefined;
   const sheetSummary = sheetView
     ? summarizeWordBox(sheetView.id, store.rounds)
@@ -484,6 +598,15 @@ export function LearningWordApp({
         block={currentBlock(state)}
         usedHelp={state.usedHelp}
         feedback={state.lastFeedback}
+        listen={
+          state.stage === 6 ? (
+            <ListenAnswer
+              speaking={speech.speaking}
+              meaning={homophoneHint(currentBlock(state)[0] ?? "")}
+              onListen={() => void speech.say(currentBlock(state)[0] ?? "")}
+            />
+          ) : undefined
+        }
         onBack={() => void leaveRound()}
         onFinishMemorize={() => {
           const current = runRef.current;
@@ -511,6 +634,11 @@ export function LearningWordApp({
     );
   } else if (completion) {
     const words = completion.results.map((entry) => entry.word);
+    const key = words.join("|");
+    const best =
+      suggestion && suggestion.forRound === key && suggestion.href
+        ? suggestion
+        : undefined;
     body = (
       <CompletionScreen
         title={completion.view.title}
@@ -519,8 +647,26 @@ export function LearningWordApp({
         results={completion.results}
         record={completion.record}
         notice={completion.notice ?? notice}
+        textSuggestion={
+          best ? (
+            <section
+              className="ui-card ui-card--pad ui-stack"
+              aria-label="Passender Text"
+            >
+              <p className="ui-eyebrow">Passender Text in der Textbox</p>
+              <p className="ui-h-section">{best.title}</p>
+              <p className="ui-small ui-muted">
+                {best.difficulty} · enthält {best.matches} deiner {best.total}{" "}
+                Wörter
+              </p>
+              <ButtonLink variant="gold" href={best.href!}>
+                Text üben
+              </ButtonLink>
+            </section>
+          ) : undefined
+        }
         textboxHref={
-          textboxVisible && words.length > 0
+          !best && textboxVisible && words.length > 0
             ? buildTextboxLink(
                 words,
                 completion.view.kind === "fest"
@@ -533,6 +679,13 @@ export function LearningWordApp({
           const view = findView(completion.view.id) ?? completion.view;
           begin(view, completion.config);
         }}
+        onHistory={() => {
+          const id = completion.view.id;
+          setRun(null);
+          setCompletion(undefined);
+          void store.refresh();
+          openHistory(id);
+        }}
         onOtherStage={() => {
           const id = completion.view.id;
           setConfig(completion.config);
@@ -541,6 +694,25 @@ export function LearningWordApp({
           void store.refresh();
           setSheetId(id);
         }}
+      />
+    );
+  } else if (historyId && findView(historyId)) {
+    const view = findView(historyId)!;
+    const boxRounds = store.rounds.filter((round) => round.boxId === view.id);
+    body = (
+      <HistoryScreen
+        key={view.id}
+        title={view.title}
+        summary={summarizeWordBox(view.id, store.rounds)}
+        rounds={boxRounds}
+        initialStage={lastStageOf(view.id) ?? 1}
+        worksheetHref={WORD_STORE_WORKSHEET_PATH}
+        onPractice={(stage) => {
+          setHistoryId(undefined);
+          openStart(view.id);
+          setConfig((current) => ({ ...current, stage }));
+        }}
+        onBack={() => setHistoryId(undefined)}
       />
     );
   } else if (editorId && findView(editorId)) {
@@ -597,6 +769,7 @@ export function LearningWordApp({
         }}
         onCreate={(title) => void createBox(title)}
         onMixed={() => openStart(FALLIGE_ID)}
+        worksheetHref={WORD_STORE_WORKSHEET_PATH}
       />
     );
   }
@@ -610,11 +783,20 @@ export function LearningWordApp({
           strategy={sheetView.strategy ?? collection?.strategy}
           detail={collection?.detail}
           wordCount={sheetView.words.length}
-          stages={STAGES_IN_USE.map((stage) => ({
+          stages={LEARNING_WORD_STAGES.map((stage) => ({
             stage,
             bestPercent: sheetSummary?.[stage].bestPercent,
             recommended: recommended === stage,
+            disabledHint:
+              stage === 6 && speech.hasVoice !== true
+                ? speech.hasVoice === undefined
+                  ? "Stimmen werden geladen …"
+                  : NO_VOICE
+                : undefined,
           }))}
+          starting={starting}
+          error={startError}
+          onHistory={() => openHistory(sheetView.id)}
           stage={config.stage}
           roundSize={config.roundSize}
           blockSize={config.blockSize}
@@ -632,6 +814,7 @@ export function LearningWordApp({
       {bridgeOpen && !run && !sheetView ? (
         <TextboxWordsSheet
           words={bridgeWords}
+          source={bridgeSource}
           ownBoxes={store.ownBoxes
             .filter((box) => box.kind === "eigen")
             .map((box) => ({ id: box.id, title: box.title }))}

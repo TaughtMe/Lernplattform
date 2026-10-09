@@ -51,19 +51,19 @@ async function practiceOneWord() {
   await user.click(within(sheet).getByRole("button", { name: "Jetzt üben" }));
   const start = await screen.findByRole("dialog", { name: "Aus der Textbox" });
   await user.click(within(start).getByRole("button", { name: "Starten" }));
-  await user.type(await screen.findByLabelText("Deine Lösung"), "Ball{Enter}");
+  await user.type(await screen.findByLabelText("Deine Lösung"), "Quarz{Enter}");
   await screen.findByRole("heading", { name: "Geschafft!" }, { timeout: 4000 });
 }
 
 describe("Wortspeicher ↔ Textbox", () => {
   it("öffnet mit ?woerter= das Blatt mit den Wörtern aus der Textbox", async () => {
-    open("?woerter=Ball,Stra%C3%9Fe,ball", "textbox=frei");
+    open("?woerter=Quarz,Stra%C3%9Fe,ball", "textbox=frei");
     const sheet = await screen.findByRole("dialog", {
       name: "Wörter aus der Textbox",
     });
     expect(
       within(sheet).getByRole("list", { name: "Wörter aus der Textbox" }),
-    ).toHaveTextContent("BallStraße");
+    ).toHaveTextContent("QuarzStraße");
   });
 
   it("wählt mit ?sammlung= die Wortbox vor", async () => {
@@ -82,15 +82,15 @@ describe("Wortspeicher ↔ Textbox", () => {
   });
 
   it("zeigt am Ende „Mit einem Text weiterüben“, wenn die Textbox sichtbar ist", async () => {
-    open("?woerter=Ball", "textbox=frei");
+    open("?woerter=Quarz", "textbox=frei");
     await practiceOneWord();
     expect(
       screen.getByRole("link", { name: "Mit einem Text weiterüben" }),
-    ).toHaveAttribute("href", "/frei/german/textbox?woerter=Ball");
+    ).toHaveAttribute("href", "/frei/german/textbox?woerter=Quarz");
   });
 
   it("zeigt die Aktion nicht, solange die Textbox in der Vorschau ist", async () => {
-    open("?woerter=Ball", "textbox=vorschau");
+    open("?woerter=Quarz", "textbox=vorschau");
     await practiceOneWord();
     expect(
       screen.queryByRole("link", { name: "Mit einem Text weiterüben" }),

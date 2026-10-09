@@ -37,6 +37,7 @@ export function StartSheet({
   onBlockSize,
   onStart,
   onClose,
+  onHistory,
 }: {
   title: string;
   strategy?: string | undefined;
@@ -53,6 +54,7 @@ export function StartSheet({
   onBlockSize: (size: 1 | 2 | 3 | 5) => void;
   onStart: () => void;
   onClose: () => void;
+  onHistory?: (() => void) | undefined;
 }) {
   return (
     <Sheet open title={title} onClose={onClose}>
@@ -153,6 +155,11 @@ export function StartSheet({
           >
             {starting && stage === 6 ? "Stimme wird vorbereitet …" : "Starten"}
           </Button>
+          {onHistory ? (
+            <Button size="lg" variant="ghost" onClick={onHistory}>
+              Verlauf ansehen
+            </Button>
+          ) : null}
         </div>
       </div>
     </Sheet>

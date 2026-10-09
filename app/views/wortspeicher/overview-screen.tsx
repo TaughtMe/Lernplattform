@@ -4,7 +4,13 @@ import { useState, type FormEvent } from "react";
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 import { WORD_BOX_LIMITS } from "../../../src/domain/word-box";
 import { Icon } from "../../ui/icons";
-import { Button, IconButton, Notice, ProgressBar } from "../../ui/primitives";
+import {
+  Button,
+  ButtonLink,
+  IconButton,
+  Notice,
+  ProgressBar,
+} from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
 import styles from "./wortspeicher.module.css";
 
@@ -30,6 +36,7 @@ export function OverviewScreen({
   onMenu,
   onCreate,
   onMixed,
+  worksheetHref,
 }: {
   tiles: readonly WordBoxTile[];
   dueCount: number;
@@ -41,6 +48,7 @@ export function OverviewScreen({
   onMenu: (id: string) => void;
   onCreate: (title: string) => void;
   onMixed: () => void;
+  worksheetHref?: string | undefined;
 }) {
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
@@ -56,6 +64,11 @@ export function OverviewScreen({
         <h1 id="wortspeicher-title" className={styles.title} tabIndex={-1}>
           Wortspeicher
         </h1>
+        {worksheetHref ? (
+          <ButtonLink variant="ghost" href={worksheetHref}>
+            Laufzettel
+          </ButtonLink>
+        ) : null}
       </header>
 
       <div className="ui-card ui-card--dark ui-ws__hero">
