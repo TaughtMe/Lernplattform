@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { resolveStages, resolveVisibility } from "../../src/domain/release";
 import {
@@ -79,6 +79,9 @@ describe("WordStoreProgressSection", () => {
       ],
     );
     const section = await screen.findByRole("region", { name: "Wortspeicher" });
+    await waitFor(() =>
+      expect(section.querySelector(".ui-stats")).not.toBeNull(),
+    );
     const stats = section.querySelector(".ui-stats")!;
     expect(stats).toHaveTextContent("3Trainierte Wörter");
     expect(stats).toHaveTextContent("2Sichere Wörter");

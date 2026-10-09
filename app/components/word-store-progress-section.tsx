@@ -132,8 +132,7 @@ export function WordStoreProgressSection({
             >
               {summary.mostErrors.map((entry) => (
                 <li key={entry.word} className="ui-small">
-                  {entry.word}: {entry.incorrectAttempts}{" "}
-                  {entry.incorrectAttempts === 1 ? "Fehler" : "Fehler"}
+                  {entry.word}: {entry.incorrectAttempts} Fehler
                 </li>
               ))}
             </ul>

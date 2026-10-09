@@ -94,11 +94,7 @@ describe("WordStoreWorksheet", () => {
     const second = within(table).getByRole("row", { name: /^Meine Tiere/ });
     expect(second).toHaveTextContent("100 %");
     expect(within(table).getAllByRole("row")).toHaveLength(3);
-    const stats = screen.getByRole(
-      "group",
-      { name: "Kennzahlen" },
-      { hidden: true },
-    );
+    const stats = screen.getByLabelText("Kennzahlen");
     expect(stats).toHaveTextContent("Trainierte Wörter2");
     expect(stats).toHaveTextContent("Sichere Wörter1");
     expect(stats).toHaveTextContent("Wiederholungen6");
