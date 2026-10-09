@@ -127,6 +127,46 @@ describe("teacher live session builder", () => {
     expect(config.vocabularyTransfer).toBe("all");
   });
 
+  it("übergibt die Wortspeicher-Wahl nur bei Texten, Standard „errors“", () => {
+    const base = {
+      vocabularyDirection: "left-to-right" as const,
+      gameMode: "UEBUNG" as const,
+      shuffleWords: false,
+      repeatWrongAnswers: true,
+    };
+    expect(
+      buildTeacherRoomConfig({
+        ...base,
+        contentMode: "text",
+        source: "Ein Satz.",
+      }).wordStoreTransfer,
+    ).toBe("errors");
+    expect(
+      buildTeacherRoomConfig({
+        ...base,
+        contentMode: "text",
+        source: "Ein Satz.",
+        wordStoreTransfer: "all",
+      }).wordStoreTransfer,
+    ).toBe("all");
+    expect(
+      buildTeacherRoomConfig({
+        ...base,
+        contentMode: "vocabulary",
+        source: "house;Haus",
+        wordStoreTransfer: "all",
+      }).wordStoreTransfer,
+    ).toBe("none");
+    expect(
+      buildTeacherRoomConfig({
+        ...base,
+        contentMode: "math",
+        source: "1 + 1",
+        wordStoreTransfer: "all",
+      }).wordStoreTransfer,
+    ).toBe("none");
+  });
+
   it("preserves the distinct station and battle rules from Laufdiktat", () => {
     const station = buildTeacherRoomConfig({
       contentMode: "text",
