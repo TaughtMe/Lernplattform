@@ -25,6 +25,8 @@ export type LiveTransferTrace = {
   wordErrors: Readonly<Record<string, number>>;
   wordHelps: Readonly<Record<string, true>>;
   wordTolerated?: Readonly<Record<string, true>>;
+  /** Falsch geschriebene Wörter je Textteil (für den Wortspeicher). */
+  wordMisspellings?: Readonly<Record<string, readonly string[]>>;
 };
 
 /** Titel des Stapels vor der Umbenennung; vorhandene Stapel werden weiter gefunden. */

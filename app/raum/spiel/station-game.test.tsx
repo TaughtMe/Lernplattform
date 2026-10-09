@@ -19,6 +19,7 @@ const session: LiveSession = {
   uebungAssistanceEnabled: false,
   repeatWrongAnswers: false,
   vocabularyTransfer: "none",
+  wordStoreTransfer: "none",
   showStars: false,
   shuffleWords: false,
   strictTypingMode: false,

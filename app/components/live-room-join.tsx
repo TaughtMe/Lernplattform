@@ -1,4 +1,8 @@
 "use client";
+import {
+  WORD_STORE_FULL_NOTICE,
+  summarizeSavedWords,
+} from "../../src/integrations/laufdiktat/word-store-transfer";
 import { useLiveProgressDelivery } from "./use-live-progress-delivery";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -41,6 +45,7 @@ import {
   type RoomActivity,
 } from "./room-activity";
 import { useLiveSessionGuards } from "./use-live-session-guards";
+import { useLiveWordStoreTransfer } from "./use-live-word-store-transfer";
 import { useLiveVocabularyTransfer } from "./use-live-vocabulary-transfer";
 import { useWritingRelief } from "./use-writing-relief";
 
@@ -79,6 +84,17 @@ function roomPeerLabel(room: {
       ? room.studentName
       : null;
   return { label, animal };
+}
+
+function savedWordsSentence(words: readonly string[]) {
+  const { shown, more } = summarizeSavedWords(words);
+  const quoted = shown.map((word) => `„${word}“`);
+  const list =
+    quoted.length > 1
+      ? `${quoted.slice(0, -1).join(", ")} und ${quoted[quoted.length - 1]}`
+      : quoted.join("");
+  const total = shown.length + more;
+  return `${list}${more > 0 ? ` und ${more} weitere` : ""} ${total === 1 ? "liegt" : "liegen"} jetzt in deinem Wortspeicher.`;
 }
 
 export function LiveRoomJoin({
@@ -131,6 +147,7 @@ export function LiveRoomJoin({
   // Die beendete Runde als Zustand: Die Schreiberleichterung wird danach geprüft.
   const [endedSession, setEndedSession] = useState<LiveSession | null>(null);
   const vocabularyTransfer = useLiveVocabularyTransfer();
+  const wordStoreTransfer = useLiveWordStoreTransfer();
   const [initialProgress, setInitialProgress] = useState<LiveProgress | null>(
     null,
   );
@@ -436,6 +453,19 @@ export function LiveRoomJoin({
 
   // Vorzeitiges Ende: Vokabeln genauso übernehmen, nicht erreichte als „unseen“.
   const { transfer: transferVocabulary } = vocabularyTransfer;
+  const { transfer: transferWordStore } = wordStoreTransfer;
+  useEffect(() => {
+    if (view !== "ended" || !endedSession) return;
+    transferWordStore(
+      endedSession,
+      readLiveTrace(endedSession.sessionId) ?? {
+        currentIndex: 0,
+        finished: false,
+        wordErrors: {},
+        wordHelps: {},
+      },
+    );
+  }, [view, endedSession, transferWordStore]);
   const endedRelief = useWritingRelief(endedSession?.classSeal);
   useEffect(() => {
     if (view !== "ended" || !endedSession || endedRelief === undefined) return;
@@ -695,6 +725,28 @@ export function LiveRoomJoin({
             >
               {vocabularyTransfer.notice}
             </p>
+          ) : null}
+          {wordStoreTransfer.result.status === "success" ? (
+            <p className="ui-notice ui-notice--good" role="status">
+              {savedWordsSentence(wordStoreTransfer.result.added)}
+              {wordStoreTransfer.result.full
+                ? ` ${WORD_STORE_FULL_NOTICE}`
+                : ""}
+            </p>
+          ) : null}
+          {wordStoreTransfer.result.status === "error" ? (
+            <p className="ui-notice" role="status">
+              {wordStoreTransfer.result.notice}
+            </p>
+          ) : null}
+          {wordStoreTransfer.result.status === "success" &&
+          visibility.wortspeicher ? (
+            <Link
+              className="ui-btn ui-btn--primary ui-btn--block"
+              href="/frei/german/lernwoerter"
+            >
+              Im Wortspeicher üben
+            </Link>
           ) : null}
           {vocabularyTransfer.status === "success" && visibility.lernen ? (
             <Link

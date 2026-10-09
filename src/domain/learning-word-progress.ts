@@ -1,4 +1,5 @@
 import type { LearningWordStage } from "./learning-word";
+import { wordKey } from "./word-box";
 
 export type LearningWordBox = 1 | 2 | 3 | 4 | 5;
 
@@ -23,7 +24,7 @@ const intervalsInDays: Record<LearningWordBox, number> = {
 };
 
 export function learningWordId(word: string) {
-  return `learning-word:${word.normalize("NFC").trim().toLocaleLowerCase("de-DE")}`;
+  return `learning-word:${wordKey(word)}`;
 }
 
 export function updateLearningWordProgress(
@@ -48,7 +49,7 @@ export function updateLearningWordProgress(
   const stage = input.correct
     ? independentSuccess
       ? (Math.min(
-          5,
+          6,
           Math.max(current?.stage ?? input.stage, input.stage) + 1,
         ) as LearningWordStage)
       : (current?.stage ?? input.stage)

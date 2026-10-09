@@ -16,6 +16,7 @@ function session(overrides: Partial<LiveSession> = {}): LiveSession {
     uebungAssistanceEnabled: true,
     repeatWrongAnswers: true,
     vocabularyTransfer: "all",
+    wordStoreTransfer: "none",
     showStars: true,
     shuffleWords: false,
     strictTypingMode: false,

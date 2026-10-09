@@ -1,3 +1,4 @@
+import { reflectionQuestionsFor } from "./progress-reflection";
 import { tokenizeText } from "./text-compare";
 import type { TextboxSession } from "./textbox-session";
 import {
@@ -195,14 +196,10 @@ export function phenomenonErrorStats(
     );
 }
 
-/** Fragen aus dem Konzept (§8.3); sie erscheinen erst ab zwei Einheiten. */
-export const REFLECTION_QUESTIONS = [
-  "Bei welcher Übung war dein Ergebnis am besten?",
-  "Wie stark hast du dich verbessert?",
-  "Ist dein Ergebnis bei jeder Übung gestiegen?",
-  "Was fällt dir an deinem Diagramm auf?",
-] as const;
+export { REFLECTION_QUESTIONS } from "./progress-reflection";
 
 export function reflectionQuestions(summary: TextboxTextSummary): string[] {
-  return summary.sessions < 2 ? [] : [...REFLECTION_QUESTIONS];
+  return reflectionQuestionsFor(
+    summary.history.map((entry) => ({ percent: entry.percent })),
+  );
 }

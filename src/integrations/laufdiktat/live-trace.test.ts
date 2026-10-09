@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   markTransferDone,
+  markWordStoreTransferDone,
   readLiveTrace,
   readTransferDone,
+  readWordStoreTransferDone,
   writeLiveTrace,
 } from "./live-trace";
 
@@ -25,6 +27,14 @@ describe("live trace storage", () => {
     expect(readLiveTrace("s1")).toEqual({
       ...trace,
       wordTolerated: { "a → b": true },
+      wordMisspellings: {},
+    });
+  });
+
+  it("schreibt und liest falsch geschriebene Wörter für den Wortspeicher", () => {
+    writeLiveTrace({ ...trace, wordMisspellings: { "Satz 1": ["Hund"] } });
+    expect(readLiveTrace("s1")?.wordMisspellings).toEqual({
+      "Satz 1": ["Hund"],
     });
   });
 
@@ -33,7 +43,11 @@ describe("live trace storage", () => {
       "lernraum:live-trace:s1",
       JSON.stringify(trace),
     );
-    expect(readLiveTrace("s1")).toEqual({ ...trace, wordTolerated: {} });
+    expect(readLiveTrace("s1")).toEqual({
+      ...trace,
+      wordTolerated: {},
+      wordMisspellings: {},
+    });
   });
 
   it("liefert nichts für fremde oder fehlende Runden", () => {
@@ -77,5 +91,27 @@ describe("live trace storage", () => {
     expect(() => markTransferDone("s1", "x")).not.toThrow();
     expect(readLiveTrace("s1")).toBeUndefined();
     expect(readTransferDone("s1")).toBeUndefined();
+  });
+});
+
+describe("Markierung der Wortspeicher-Übernahme", () => {
+  it("merkt sich das Ergebnis getrennt von der Vokabelübernahme", () => {
+    markWordStoreTransferDone("s1", { added: ["Hund"], full: true });
+    expect(readWordStoreTransferDone("s1")).toEqual({
+      added: ["Hund"],
+      full: true,
+    });
+    expect(readTransferDone("s1")).toBeUndefined();
+    expect(readWordStoreTransferDone("s2")).toBeUndefined();
+  });
+
+  it("verwirft kaputte Einträge", () => {
+    window.sessionStorage.setItem("lernraum:live-wordstore-done:s1", "{kaputt");
+    expect(readWordStoreTransferDone("s1")).toBeUndefined();
+    window.sessionStorage.setItem(
+      "lernraum:live-wordstore-done:s1",
+      JSON.stringify({ added: "nein" }),
+    );
+    expect(readWordStoreTransferDone("s1")).toBeUndefined();
   });
 });

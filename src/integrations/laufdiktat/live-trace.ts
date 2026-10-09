@@ -12,6 +12,13 @@ const liveTraceSchema = z.object({
   wordHelps: z.record(z.string(), z.literal(true)),
   /** Mit Schreiberleichterung tolerant angenommene Wörter; nur lokal. */
   wordTolerated: z.record(z.string(), z.literal(true)).default({}),
+  /**
+   * Falsch geschriebene Wörter je Textteil für den Wortspeicher
+   * (Schlüssel `liveWordErrorKey`); nur lokal, geht nie an den Raum.
+   */
+  wordMisspellings: z
+    .record(z.string(), z.array(z.string().min(1).max(200)).max(200))
+    .default({}),
 });
 
 export type LiveTrace = z.output<typeof liveTraceSchema>;
@@ -19,6 +26,15 @@ export type LiveTrace = z.output<typeof liveTraceSchema>;
 const traceKey = (sessionId: string) => `lernraum:live-trace:${sessionId}`;
 const transferDoneKey = (sessionId: string) =>
   `lernraum:live-transfer-done:${sessionId}`;
+const wordStoreDoneKey = (sessionId: string) =>
+  `lernraum:live-wordstore-done:${sessionId}`;
+
+/** Ergebnis der Übernahme in den Wortspeicher, damit sie nur einmal läuft. */
+const wordStoreDoneSchema = z.object({
+  added: z.array(z.string().min(1).max(200)).max(1_000),
+  full: z.boolean(),
+});
+export type WordStoreTransferDone = z.infer<typeof wordStoreDoneSchema>;
 
 function storage(): Storage | undefined {
   try {
@@ -64,6 +80,31 @@ export function readTransferDone(sessionId: string): string | undefined {
 export function markTransferDone(sessionId: string, notice: string) {
   try {
     storage()?.setItem(transferDoneKey(sessionId), JSON.stringify(notice));
+  } catch {
+    // Ohne Speicher entfällt nur der Schutz vor einer zweiten Übernahme.
+  }
+}
+
+/** Eigene Markierung, getrennt von der Vokabelübernahme. */
+export function readWordStoreTransferDone(
+  sessionId: string,
+): WordStoreTransferDone | undefined {
+  try {
+    const raw = storage()?.getItem(wordStoreDoneKey(sessionId));
+    if (!raw) return undefined;
+    const parsed = wordStoreDoneSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function markWordStoreTransferDone(
+  sessionId: string,
+  done: WordStoreTransferDone,
+) {
+  try {
+    storage()?.setItem(wordStoreDoneKey(sessionId), JSON.stringify(done));
   } catch {
     // Ohne Speicher entfällt nur der Schutz vor einer zweiten Übernahme.
   }

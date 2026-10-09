@@ -617,3 +617,18 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 - **Freigabe:** Bereich `textbox` zunächst auf `vorschau`. Die Lehrkraft stellt ihn nach dem Probedurchlauf auf `frei`.
 
 **Bekannte Grenzen:** Auch das Gedächtnis wird trainiert; die Wirksamkeit der Methode für LRS ist nicht belegt. Ältere App-Versionen kennen `textbox` und `textboxSessions` nicht.
+
+## 55. Wortspeicher: Wortboxen, Stufe 6 und Übernahme aus dem Laufdiktat – 9. Oktober 2026
+
+**Beschlossen:** Der Wortspeicher wird überarbeitet und mit der Textbox verbunden. Die fachlichen Festlegungen stehen verbindlich in `docs/umsetzungsplan-wortspeicher.md` (Abschnitt 2); die Umsetzung läuft auf dem Branch `claude/wortspeicher-umbau`, die Lehrkraft übernimmt nach dem Probedurchlauf.
+
+- **Wortboxen:** feste (kopierbar), eigene (lokal, bearbeitbar, höchstens 500 Wörter, 50 Wortboxen) und „Aus dem Unterricht“. Neue feste Wortbox „s, ss und ß“.
+- **Merkstufen:** weiter von Hand gewählt, neu Stufe 6 „Hören und schreiben“ (nur das gesprochene Wort, Stimme vor dem ersten Wort vollständig vorbereitet, „Anhören“ ist keine Hilfe, Bedeutungshilfe bei gleich klingenden Wörtern). Das Lückensatz-Design 4e wird nicht umgesetzt.
+- **Bewertung:** Prozentwert je Runde = Wörter auf Anhieb richtig ÷ Wörter der Runde; Stufe 5 je Wort; Buchstabenvergleich nach Fehlern. Leitner-Regeln unverändert.
+- **Bestwert, Verlauf, Fortschritt, Laufzettel** wie in der Textbox; alles aus den gespeicherten Runden abgeleitet (Dexie Version 6: `wordBoxes`, `wordRounds`; Teil der persönlichen Sicherung und des Schüler-Cloud-Abgleichs).
+- **Laufdiktat:** Beim Text-Laufdiktat wählt die Lehrkraft „Aus“, „Falsch geschriebene Wörter“ (Standard) oder „Alle Wörter“ (`wordStoreTransfer`). Die Übernahme geschieht nur auf dem Schülergerät, einmal pro Runde und Gerät, nie im Stationsmodus.
+- **Textbox-Brücke:** Textvorschlag als Karte nach der Runde; `?woerter=` öffnet ein Blatt mit „Jetzt üben“ und „In eine Wortbox speichern“.
+- **Daten:** rein lokal, keine Supabase-Migration, kein Server. Bereich `wortspeicher` bleibt `frei`.
+
+**Bekannte Grenzen:** Runden aus großen Wortboxen nehmen jedes Mal andere Wörter; Prozentwerte sind nur ungefähr vergleichbar. Ältere App-Versionen kennen Stufe 6 und die neuen Sicherungsfelder nicht. Ohne deutsche Stimme gibt es keine Stufe 6. Die Fehlerwort-Erkennung im Laufdiktat ist ein Wortvergleich.
+

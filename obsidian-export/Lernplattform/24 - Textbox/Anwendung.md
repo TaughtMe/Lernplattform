@@ -41,7 +41,8 @@ Eine Einheit hat **vier Durchgänge** am selben Text. Jeder Durchgang hat drei P
 Es gibt keine zweite Trainingsanwendung. Die Textbox hat zwei Zugänge: frei über „Üben“ und nach einer Wortspeicher-Übung.
 
 - **Wortspeicher → Textbox:** Auf dem Abschlussbildschirm erscheint „Mit einem Text weiterüben“, sofern der Bereich `textbox` sichtbar ist. Der Link trägt die geübten Wörter (`?woerter=`, höchstens 50, mit Zod geprüft) und die Sammlung (`?sammlung=`). Die Textbox schlägt bis zu drei Texte mit den meisten dieser Wörter vor (Gleichstand: passender Schwerpunkt, dann niedrigere Schwierigkeit).
-- **Textbox → Wortspeicher:** Auf dem Abschlussbildschirm erscheint „Fehlerwörter im Wortspeicher üben“. Der Wortspeicher füllt damit seine eigene Liste vor. Es wird nichts automatisch gespeichert.
+- **Textbox → Wortspeicher:** Auf dem Abschlussbildschirm erscheint „Fehlerwörter im Wortspeicher üben“. Der Wortspeicher öffnet das Blatt „Wörter aus der Textbox“ mit „Jetzt üben“ (vorübergehende Wortbox) und „In eine Wortbox speichern“. Es wird nichts ohne eine dieser Aktionen gespeichert (Entscheidung 55).
+- **Wortspeicher → Textbox, erweitert:** Nach einer Runde zeigt der Wortspeicher den besten passenden Text als Karte („enthält 4 deiner 6 Wörter“); ohne Treffer bleibt „Mit einem Text weiterüben“.
 - KI-generierte Texte aus Lernwörtern sind nicht Teil dieser Version.
 
 ## Statistik und Laufzettel

@@ -36,6 +36,8 @@ const liveSessionConfigSchema = z
     repeatWrongAnswers: z.boolean().default(false),
     vocabularyTransfer: z.enum(["errors", "all", "none"]).default("errors"),
     vocabularyTag: z.string().trim().max(80).optional(),
+    /** Wörter eines Text-Laufdiktats in den Wortspeicher; ältere Sitzungen: aus. */
+    wordStoreTransfer: z.enum(["errors", "all", "none"]).default("none"),
     /** Abdruck des Klassenstempels; nur dann kann eine Freigabe wirken. */
     classSeal: classSealFingerprintSchema.optional(),
     showStars: z.boolean().default(true),
@@ -55,6 +57,7 @@ const liveSessionConfigSchema = z
 
 export type LiveWord = z.infer<typeof liveWordSchema>;
 export type VocabularyTransferChoice = LiveVocabularyTransferChoice;
+export type WordStoreTransferChoice = "none" | "errors" | "all";
 export type LiveSession = z.infer<typeof liveSessionConfigSchema> & {
   sessionId: string;
 };

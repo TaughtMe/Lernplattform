@@ -22,6 +22,9 @@ describe("Freigaberegister", () => {
     // Das längste Präfix gewinnt: die Textbox ist ein eigener Bereich.
     expect(areaForPath("/frei/german/textbox")).toBe("textbox");
     expect(areaForPath("/frei/german/textbox/laufzettel")).toBe("textbox");
+    expect(areaForPath("/frei/german/lernwoerter/laufzettel")).toBe(
+      "wortspeicher",
+    );
     expect(areaForPath("/frei/german/textboxen")).toBe("wortspeicher");
     expect(areaForPath("/frei/mathematics")).toBe("mathe");
     expect(areaForPath("/frei/typing")).toBe("tastenwelt");

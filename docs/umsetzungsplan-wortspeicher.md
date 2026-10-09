@@ -2,8 +2,58 @@
 
 Stand: 09.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `c013990` (Version 0.8.0, Textbox frei)
 
-> **Fortschritt:** noch nicht begonnen. Nach jedem Paket aktualisieren (welche Pakete fertig sind,
-> Branch, festgehaltene Abweichungen).
+> **Fortschritt:** Paket A bis E umgesetzt (Stand 09.10.2026, Branch `claude/wortspeicher-umbau`).
+> A: Fachlogik, Dexie-Version 6, Repositories, Backup. B: neue Oberfläche mit Wortboxen, Startblatt,
+> Runden, Prozentwert und Bestwert. C: Stufe 6 mit vorbereiteter Stimme (`src/speech/`). D: Verlauf,
+> Fortschrittsabschnitt, Laufzettel. E: Laufdiktat-Übernahme, Textbox-Brücke, Dokumentation. Offen sind
+> der Probedurchlauf der Lehrkraft (Teil 8), die fachliche Prüfung der Wortbox „s, ss und ß“ und der
+> gleich klingenden Wörter sowie die Kalibrierung (Abschnitt 8). `claude/lernraum-ui-v2` wurde nicht
+> verändert.
+
+> **Festgehaltene Abweichungen:**
+>
+> - `useHelp` heißt `applyHelp`, weil Funktionen mit `use…` von der Hook-Lint-Regel als React-Hook
+>   behandelt werden.
+> - `WordRoundState` trägt zusätzlich `blockAttempts`, `firstKinds`, `failedWords` und
+>   `settledWords` (Zustand des laufenden Blocks). `submitWordAnswer` liefert je Wort einen
+>   `AttemptRecord`; schon richtig abgeschlossene Wörter eines Stufe-5-Blocks werden bei
+>   Wiederholungen nicht erneut im Lernstand verbucht. Eine leere Eingabe wirft.
+> - `isNewBest` ist nur wahr, wenn es frühere Runden dieser Wortbox und Stufe gibt (wie in der
+>   Textbox: die erste Runde zeigt „erster Bestwert“ statt „Neuer Bestwert!“).
+> - `addWords` meldet in `skipped` nur ungültige Wörter und solche über der Grenze; Doppelte werden
+>   still zusammengelegt. `importFromLesson` liefert in `added` alle übernommenen Wörter (auch
+>   solche, die schon in der Wortbox standen) und `full`, wenn gültige Wörter nicht mehr passten.
+> - Das Sitzungsfeld `wordStoreTransfer` ist Pflichtfeld des geparsten `LiveSession`; vier
+>   bestehende Testdaten-Objekte wurden um `wordStoreTransfer: "none"` ergänzt.
+> - Die Liste der gleich klingenden Wörter enthält über die Beispiele des Plans hinaus weitere
+>   Gruppen (u. a. das/dass, viel/fiel, wahr/war); die Lehrkraft prüft sie.
+> - **Bedeutungshilfe in Stufe 6 (bitte prüfen):** Plan 2.4 widerspricht sich leicht: Sichtbar sein sollen
+>   nur Lautsprecher, Eingabefeld und Knöpfe („kein Schriftbild“), das Beispiel der Hilfe lautet aber
+>   „Rad – zum Fahren“. Entscheidung der Projektleitung: Die Hilfe zeigt eine Lücke statt des Wortes („__________ zum Fahren“), damit
+>   die Schreibweise nicht verraten wird. Die Rückmeldung nach einem Fehler nennt das Wort wie im Plan
+>   („Gemeint war ‚Rad‘ (zum Fahren).“).
+> - „Nochmal üben“ und jede neue Runde ziehen die Wörter zufällig (`sampleRoundWords` mit
+>   injizierbarem Zufallsgenerator); `selectLearningWordRound` bleibt als gleichmäßige Verteilung ohne
+>   Generator erhalten.
+> - „Aus dem Unterricht“ erlaubt nur Wörter und die Wortbox zu löschen (Plan 2.1), kein Hinzufügen oder
+>   Ändern. In Stufe 1 gibt es keinen Knopf „Wort zeigen“, weil das Wort ohnehin sichtbar ist.
+> - Der Link „Wörter mit den meisten Fehlern“ der Fortschrittsseite nutzt `?woerter=…&quelle=fehler`;
+>   das Blatt heißt dann „Wörter mit den meisten Fehlern“ (Speichertitel „Meine Fehlerwörter“, Runden
+>   unter der Id `fehler`). Neue Hilfen in `practice-bridge.ts`: `parseSourceParam`, `buildHistoryLink`,
+>   `parseHistoryParams`.
+> - Die Lehrerraum-Einstellung „Wörter in den Wortspeicher“ wird wie `vocabularyTransfer` aus dem
+>   gespeicherten Raum zurückgesetzt; eine ältere Vorlage ohne Feld ergibt „Aus“.
+> - `src/speech/` enthält `voices.ts` (`normalizeSpeechLang`, `rankVoice`, `pickVoice`) und `speaker.ts`
+>   (`preloadVoices`, `speak`, `isSpeechAvailable`, `prepareSpeech`, `hasVoiceFor`, `stopSpeaking`,
+>   `resetSpeechState` für Tests). `spokenMath` und die Umstellung der übrigen Stellen bleiben wie im Plan
+>   außen vor; das Vorladen beim App-Start geschieht im Hook `useSpeech` beim Öffnen des Wortspeichers,
+>   nicht in `service-worker-registration`.
+> - Ein Test (`homophones.test.ts`) hält `docs/inhalte/wortspeicher.md` und die Liste der gleich klingenden
+>   Wörter synchron.
+> - Die Browser-Tests liefen lokal nur in Chromium (Desktop, Pixel 7, 320 px) mit der vorinstallierten
+>   Chromium-Version (lokale, nicht eingecheckte Playwright-Konfiguration); `npm run test:e2e:live` lief für
+>   den neuen Test und die Vokabelübernahme in Desktop-Chromium. Die vollständige Cross-Browser-Suite
+>   bleibt in GitHub verpflichtend.
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Grundlage sind das Konzept
 „Lernraum – Konzept: Textbox und Rechtschreibtraining“ vom 08.10.2026 (§2.2, §6.3, §8.4, §10),
