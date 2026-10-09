@@ -86,6 +86,7 @@ export const PHENOMENON_TO_COLLECTION: Partial<
   doppelkonsonanten: "double-consonants",
   "dehnungs-h": "silent-h",
   ie: "long-i",
+  "s-ss-sz": "s-ss-sz",
   auslautverhaertung: "final-devoicing",
 };
 
