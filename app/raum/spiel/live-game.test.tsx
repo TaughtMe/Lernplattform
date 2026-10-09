@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import { WORD_STORE_TRANSFER_ERROR } from "../../../src/integrations/laufdiktat/word-store-transfer";
 import {
   classSealFingerprint,
   createClassSealKeyPair,
@@ -705,14 +706,17 @@ describe("Wörter in den Wortspeicher", () => {
 
   async function playWrongThenRight(
     wordStoreTransfer: LiveSession["wordStoreTransfer"],
+    mockSuccess = true,
   ) {
     const user = userEvent.setup();
     window.sessionStorage.clear();
-    importFromLesson.mockReset();
-    importFromLesson.mockResolvedValue({
-      added: ["Hund", "läuft", "Wort3", "Wort4", "Wort5", "Wort6", "Wort7"],
-      full: true,
-    });
+    if (mockSuccess) {
+      importFromLesson.mockReset();
+      importFromLesson.mockResolvedValue({
+        added: ["Hund", "läuft", "Wort3", "Wort4", "Wort5", "Wort6", "Wort7"],
+        full: true,
+      });
+    }
     const { container } = render(
       <LiveRunningDictationGame
         code="4829"
@@ -758,6 +762,13 @@ describe("Wörter in den Wortspeicher", () => {
     expect(
       screen.getByRole("link", { name: "Im Wortspeicher üben" }),
     ).toHaveAttribute("href", "/frei/german/lernwoerter");
+  });
+
+  it("zeigt einen Hinweis, wenn die Übernahme fehlschlägt", async () => {
+    importFromLesson.mockReset();
+    importFromLesson.mockRejectedValue(new Error("IndexedDB nicht verfügbar"));
+    await playWrongThenRight("errors", false);
+    expect(await screen.findByText(WORD_STORE_TRANSFER_ERROR)).toBeVisible();
   });
 
   it("übernimmt bei „Aus“ nichts", async () => {

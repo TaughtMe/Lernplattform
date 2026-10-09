@@ -202,6 +202,23 @@ describe("answers", () => {
     expect(wordRoundPercent(done.results)).toBe(67);
   });
 
+  it('keeps first-try credit for words settled before "Wort zeigen" in stage 5', () => {
+    let state = finishMemorize(start(5));
+    const first = submitWordAnswer(state, "Sonne\nMond\nSterm");
+    state = applyHelp(finishMemorize(continueAfterFeedback(first.state)));
+    const second = submitWordAnswer(state, "Stern\nSonne\nMond");
+    expect(second.attempts).toEqual([
+      expect.objectContaining({ words: ["Stern"], usedHelp: true }),
+    ]);
+    const done = advanceWordRound(second.state);
+    expect(done.results.map((r) => [r.word, r.firstTry, r.usedHelp])).toEqual([
+      ["Sonne", true, false],
+      ["Mond", true, false],
+      ["Stern", false, true],
+    ]);
+    expect(wordRoundPercent(done.results)).toBe(67);
+  });
+
   it("shows extra words in stage 5 without penalty", () => {
     const result = submitWordAnswer(
       finishMemorize(start(5, ["Sonne"])),

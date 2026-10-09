@@ -62,6 +62,8 @@ export type WordRoundState = {
   failedWords: string[];
   /** Wörter des Blocks, die schon richtig abgeschlossen sind. */
   settledWords: string[];
+  /** Wörter des Blocks, bei denen „Wort zeigen“ vor ihrem Abschluss genutzt wurde. */
+  helpedWords: string[];
 };
 
 /** Alles, was `recordAttempt` des Repositories für ein Wort braucht. */
@@ -117,6 +119,7 @@ function resetBlock(): Pick<
   | "firstKinds"
   | "failedWords"
   | "settledWords"
+  | "helpedWords"
   | "lastFeedback"
 > {
   return {
@@ -126,6 +129,7 @@ function resetBlock(): Pick<
     firstKinds: {},
     failedWords: [],
     settledWords: [],
+    helpedWords: [],
     lastFeedback: undefined,
   };
 }
@@ -168,10 +172,19 @@ export function finishMemorize(state: WordRoundState): WordRoundState {
   return { ...state, phase: "recall" };
 }
 
-/** „Wort zeigen“: zählt als Hilfe für den ganzen Block. */
+/**
+ * „Wort zeigen“: zählt als Hilfe für alle Wörter des Blocks, die noch nicht
+ * richtig abgeschlossen sind. Schon abgeschlossene Wörter behalten ihren Stand.
+ */
 export function applyHelp(state: WordRoundState): WordRoundState {
   expectPhase(state, "recall");
-  return state.usedHelp ? state : { ...state, usedHelp: true };
+  if (state.usedHelp) return state;
+  const settled = new Set(state.settledWords);
+  return {
+    ...state,
+    usedHelp: true,
+    helpedWords: currentBlock(state).filter((word) => !settled.has(word)),
+  };
 }
 
 function evaluate(
@@ -218,7 +231,7 @@ export function submitWordAnswer(
     attempts.push({
       words: [entry.word],
       correct: entry.correct,
-      usedHelp: state.usedHelp,
+      usedHelp: state.helpedWords.includes(entry.word),
       selfCorrected,
       stage: state.stage,
       attemptId: `${state.index}:${attemptNumber}`,
@@ -252,11 +265,12 @@ export function submitWordAnswer(
 
   const finished: WordRoundWordResult[] = currentBlock(state).map((word) => {
     const firstResult = firstKinds[word] ?? "fehlt";
+    const helped = state.helpedWords.includes(word);
     return {
       word,
-      firstTry: firstResult === "richtig" && !state.usedHelp,
+      firstTry: firstResult === "richtig" && !helped,
       attempts: attemptNumber,
-      usedHelp: state.usedHelp,
+      usedHelp: helped,
       firstResult,
     };
   });

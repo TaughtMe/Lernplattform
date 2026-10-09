@@ -529,6 +529,11 @@ export function LiveRunningDictationGame({
                     {transferNotice}
                   </p>
                 ) : null}
+                {wordStore.status === "error" ? (
+                  <p className="ui-notice" role="status">
+                    {wordStore.notice}
+                  </p>
+                ) : null}
                 {wordStore.status === "success" && wordStore.full ? (
                   <p className="ui-notice" role="status">
                     {WORD_STORE_FULL_NOTICE}

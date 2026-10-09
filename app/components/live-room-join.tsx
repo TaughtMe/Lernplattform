@@ -734,6 +734,11 @@ export function LiveRoomJoin({
                 : ""}
             </p>
           ) : null}
+          {wordStoreTransfer.result.status === "error" ? (
+            <p className="ui-notice" role="status">
+              {wordStoreTransfer.result.notice}
+            </p>
+          ) : null}
           {wordStoreTransfer.result.status === "success" &&
           visibility.wortspeicher ? (
             <Link
