@@ -13,6 +13,7 @@ import type {
   LearningBoxSourceLink,
 } from "../domain/learning-box";
 import { learningEventV1Schema } from "../domain/learning-bundle";
+import { WORD_BOX_LIMITS, wordKey, type WordBox } from "../domain/word-box";
 import { PersonalLearningDatabase } from "./personal-learning-events";
 
 export type PersonalBackupRestoreConflict = {
@@ -22,7 +23,9 @@ export type PersonalBackupRestoreConflict = {
     | "learningBoxCards"
     | "learningWordProgress"
     | "typingProgress"
-    | "textboxSessions";
+    | "textboxSessions"
+    | "wordBoxes"
+    | "wordRounds";
   id: string;
 };
 
@@ -69,6 +72,30 @@ function withoutSourceLinks(card: LearningBoxCard) {
   return content;
 }
 
+/**
+ * Gleiche Id: Wörter beider Stände vereinigen (über `wordKey`), Titel und
+ * Zeitstempel vom neueren Stand. Über der Wortgrenze gibt es keine Mischung.
+ */
+function mergeWordBoxes(current: WordBox, incoming: WordBox): WordBox | null {
+  const known = new Set(current.words.map((word) => wordKey(word.text)));
+  const words = [
+    ...current.words,
+    ...incoming.words.filter((word) => !known.has(wordKey(word.text))),
+  ];
+  if (words.length > WORD_BOX_LIMITS.wordsPerBox) return null;
+  const newer = incoming.updatedAt > current.updatedAt ? incoming : current;
+  return {
+    ...current,
+    title: newer.title,
+    updatedAt: newer.updatedAt,
+    createdAt:
+      incoming.createdAt < current.createdAt
+        ? incoming.createdAt
+        : current.createdAt,
+    words,
+  };
+}
+
 function sameJson(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
@@ -84,6 +111,8 @@ export async function exportPersonalLearningBackup(
     learningWordProgress: await database.learningWordProgress.toArray(),
     typingProgress: await database.typingProgress.toArray(),
     textboxSessions: await database.textboxSessions.toArray(),
+    wordBoxes: await database.wordBoxes.toArray(),
+    wordRounds: await database.wordRounds.toArray(),
   };
   return createPersonalLearningBackup(input, exportedAt);
 }
@@ -118,6 +147,8 @@ export async function restorePersonalLearningBackup(
       database.learningWordProgress,
       database.typingProgress,
       database.textboxSessions,
+      database.wordBoxes,
+      database.wordRounds,
     ],
     async () => {
       for (const event of backup.data.learningEvents) {
@@ -265,6 +296,39 @@ export async function restorePersonalLearningBackup(
         } else {
           // Lokal ist abgeschlossen oder neuer: nichts zu tun.
           result.unchanged += 1;
+        }
+      }
+
+      for (const box of backup.data.wordBoxes) {
+        const current = await database.wordBoxes.get(box.id);
+        if (!current) {
+          await database.wordBoxes.add(box);
+          result.added += 1;
+        } else if (sameJson(current, box)) {
+          result.unchanged += 1;
+        } else {
+          const merged = mergeWordBoxes(current, box);
+          if (!merged) {
+            result.conflicts.push({ collection: "wordBoxes", id: box.id });
+          } else if (sameJson(current, merged)) {
+            result.unchanged += 1;
+          } else {
+            await database.wordBoxes.put(merged);
+            result.updated += 1;
+          }
+        }
+      }
+
+      for (const round of backup.data.wordRounds) {
+        const current = await database.wordRounds.get(round.id);
+        if (!current) {
+          await database.wordRounds.add(round);
+          result.added += 1;
+        } else if (sameJson(current, round)) {
+          result.unchanged += 1;
+        } else {
+          // Abgeschlossene Runden sind unveränderlich: Inhalt weicht ab.
+          result.conflicts.push({ collection: "wordRounds", id: round.id });
         }
       }
     },

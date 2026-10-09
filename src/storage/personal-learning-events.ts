@@ -5,6 +5,26 @@ import {
   typingStatsSchema,
 } from "./progress-schema";
 import type { TextboxSession } from "../domain/textbox-session";
+import { getLearningWordCollection } from "../domain/german-learning-content";
+import {
+  UNTERRICHT_BOX_ID,
+  UNTERRICHT_BOX_TITLE,
+  WORD_BOX_LIMITS,
+  addWords,
+  copyCollection,
+  isValidWordBoxTitle,
+  isValidWordBoxWord,
+  removeWord,
+  renameWord,
+  wordBoxSchema,
+  wordKey,
+  type WordBox,
+  type WordBoxWordSource,
+} from "../domain/word-box";
+import {
+  wordRoundSchema,
+  type WordRoundRecord,
+} from "../domain/word-store-progress";
 import {
   learningEventV1Schema,
   normalizeVocabularyText,
@@ -14,7 +34,10 @@ import Dexie, { type Table } from "dexie";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import type { LearningWordStage } from "../domain/learning-word";
 import type { LearningWordProgress } from "../domain/learning-word-progress";
-import { updateLearningWordProgress } from "../domain/learning-word-progress";
+import {
+  learningWordId,
+  updateLearningWordProgress,
+} from "../domain/learning-word-progress";
 import type {
   LearningBoxCard,
   LearningBoxDeck,
@@ -51,6 +74,8 @@ export class PersonalLearningDatabase extends Dexie {
   learningWordProgress!: Table<LearningWordProgress, string>;
   typingProgress!: Table<TypingLessonProgress, string>;
   textboxSessions!: Table<TextboxSession, string>;
+  wordBoxes!: Table<WordBox, string>;
+  wordRounds!: Table<WordRoundRecord, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.personal) {
     super(name);
@@ -93,6 +118,20 @@ export class PersonalLearningDatabase extends Dexie {
       learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
       typingProgress: "id, completed, lastPracticedAt",
       textboxSessions: "id, textId, status, completedAt",
+    });
+    // Wortspeicher: eigene Wortboxen und abgeschlossene Runden.
+    this.version(6).stores({
+      learningEvents: "id, learningObjectId, occurredAt, roundId",
+      learningBoxDecks:
+        "id, title, createdAt, folderId, source.kind, source.sourceId",
+      learningBoxCards:
+        "id, deckId, fingerprint, [deckId+fingerprint], nextReview, reverseNextReview, createdAt, source.kind, source.sourceId",
+      learningBoxFolders: "id, title, createdAt",
+      learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
+      typingProgress: "id, completed, lastPracticedAt",
+      textboxSessions: "id, textId, status, completedAt",
+      wordBoxes: "id, kind, updatedAt",
+      wordRounds: "id, boxId, stage, completedAt",
     });
   }
 }
@@ -762,7 +801,7 @@ export function createLearningWordProgressRepository(
             "learning-word",
             input.roundId,
             input.attemptId,
-            word.normalize("NFC").trim().toLocaleLowerCase("de-DE"),
+            wordKey(word),
           ),
         ),
       );
@@ -772,7 +811,7 @@ export function createLearningWordProgressRepository(
         database.learningEvents,
         async () => {
           for (const [wordIndex, word] of input.words.entries()) {
-            const id = `learning-word:${word.normalize("NFC").trim().toLocaleLowerCase("de-DE")}`;
+            const id = learningWordId(word);
             const eventId = eventIds[wordIndex]!;
             if (await database.learningEvents.get(eventId)) continue;
             const stored = await database.learningWordProgress.get(id);
@@ -990,6 +1029,229 @@ export function createTextboxRepository(
           );
         },
       );
+    },
+  };
+}
+
+function newWordBoxId() {
+  return `eigen-${crypto.randomUUID()}`;
+}
+
+export type WordBoxLessonImport = {
+  /** Alle zu übernehmenden Wörter, falsch geschriebene zuerst. */
+  words: string[];
+  /** Falsch geschriebene Wörter: werden zusätzlich sofort fällig. */
+  errorWords: string[];
+  /** Die Runde, aus der die Wörter stammen (nur zur Nachvollziehbarkeit). */
+  sourceId: string;
+  now?: Date;
+};
+
+/** Eigene Wortboxen des Kindes, dauerhaft lokal gespeichert (Plan 2.2, 3.10). */
+export function createWordBoxRepository(
+  database = new PersonalLearningDatabase(),
+) {
+  const parse = (value: unknown) => wordBoxSchema.parse(value);
+  const ownCount = () =>
+    database.wordBoxes.where("kind").equals("eigen").count();
+  const load = async (id: string) => {
+    const stored = await database.wordBoxes.get(id);
+    if (!stored) throw new Error("Diese Wortbox gibt es nicht mehr.");
+    return parse(stored);
+  };
+  const assertTitle = (title: string) => {
+    if (!isValidWordBoxTitle(title)) {
+      throw new Error(
+        `Der Titel braucht 1 bis ${WORD_BOX_LIMITS.titleMax} Zeichen.`,
+      );
+    }
+  };
+  const assertRoom = async () => {
+    if ((await ownCount()) >= WORD_BOX_LIMITS.ownBoxes) {
+      throw new Error(
+        `Du kannst höchstens ${WORD_BOX_LIMITS.ownBoxes} eigene Wortboxen anlegen.`,
+      );
+    }
+  };
+
+  return {
+    list: async () => (await database.wordBoxes.toArray()).map(parse),
+    create: async (
+      title: string,
+      words: readonly string[] = [],
+      source: WordBoxWordSource = "eigen",
+      now = new Date(),
+    ) => {
+      assertTitle(title);
+      const at = now.toISOString();
+      return database.transaction("rw", database.wordBoxes, async () => {
+        await assertRoom();
+        const empty: WordBox = {
+          id: newWordBoxId(),
+          kind: "eigen",
+          title: title.trim(),
+          words: [],
+          createdAt: at,
+          updatedAt: at,
+        };
+        const box = parse(addWords(empty, words, source, at).box);
+        await database.wordBoxes.add(box);
+        return box;
+      });
+    },
+    rename: async (id: string, title: string, now = new Date()) => {
+      assertTitle(title);
+      await database.transaction("rw", database.wordBoxes, async () => {
+        const box = await load(id);
+        await database.wordBoxes.put(
+          parse({ ...box, title: title.trim(), updatedAt: now.toISOString() }),
+        );
+      });
+    },
+    addWords: async (
+      id: string,
+      words: readonly string[],
+      source: WordBoxWordSource = "eigen",
+      now = new Date(),
+    ) =>
+      database.transaction("rw", database.wordBoxes, async () => {
+        const result = addWords(
+          await load(id),
+          words,
+          source,
+          now.toISOString(),
+        );
+        await database.wordBoxes.put(parse(result.box));
+        return { added: result.added, skipped: result.skipped };
+      }),
+    renameWord: async (
+      id: string,
+      from: string,
+      to: string,
+      now = new Date(),
+    ) => {
+      await database.transaction("rw", database.wordBoxes, async () => {
+        const box = await load(id);
+        await database.wordBoxes.put(
+          parse(renameWord(box, from, to, now.toISOString())),
+        );
+      });
+    },
+    removeWord: async (id: string, word: string, now = new Date()) => {
+      await database.transaction("rw", database.wordBoxes, async () => {
+        const box = await load(id);
+        await database.wordBoxes.put(
+          parse(removeWord(box, word, now.toISOString())),
+        );
+      });
+    },
+    /** Löscht die Wortbox; der Lernstand der Wörter bleibt erhalten. */
+    remove: async (id: string) => {
+      await database.wordBoxes.delete(id);
+    },
+    copyCollection: async (collectionId: string, now = new Date()) => {
+      const collection = getLearningWordCollection(collectionId);
+      if (!collection) throw new Error("Diese Wortbox gibt es nicht.");
+      return database.transaction("rw", database.wordBoxes, async () => {
+        await assertRoom();
+        const box = parse(
+          copyCollection(collection, newWordBoxId(), now.toISOString()),
+        );
+        await database.wordBoxes.add(box);
+        return box;
+      });
+    },
+    /**
+     * Legt „Aus dem Unterricht“ an bzw. ergänzt sie und setzt die falsch
+     * geschriebenen Wörter fällig (Plan 2.8). Alles in einer Transaktion, ohne
+     * Lernereignis. Ist die Wortbox voll, gehen die Fehlerwörter vor.
+     */
+    importFromLesson: async (input: WordBoxLessonImport) => {
+      const now = (input.now ?? new Date()).toISOString();
+      const ordered = [...input.errorWords, ...input.words];
+      return database.transaction(
+        "rw",
+        database.wordBoxes,
+        database.learningWordProgress,
+        async () => {
+          const stored = await database.wordBoxes.get(UNTERRICHT_BOX_ID);
+          const box: WordBox = stored
+            ? parse(stored)
+            : {
+                id: UNTERRICHT_BOX_ID,
+                kind: "unterricht",
+                title: UNTERRICHT_BOX_TITLE,
+                words: [],
+                createdAt: now,
+                updatedAt: now,
+              };
+          const result = addWords(box, ordered, "laufdiktat", now);
+          await database.wordBoxes.put(parse(result.box));
+
+          const inBox = new Set(result.box.words.map((w) => wordKey(w.text)));
+          const taken = (word: string) => inBox.has(wordKey(word));
+          const added = [
+            ...new Map(
+              input.words.filter(taken).map((word) => [wordKey(word), word]),
+            ).values(),
+          ];
+          // Voll heißt: gültige Wörter passten nicht mehr hinein.
+          const full = input.words.some(
+            (word) => isValidWordBoxWord(word) && !taken(word),
+          );
+
+          for (const word of input.errorWords.filter(taken)) {
+            const id = learningWordId(word);
+            const current = await database.learningWordProgress.get(id);
+            await database.learningWordProgress.put(
+              learningWordProgressSchema.parse(
+                current
+                  ? { ...current, box: 1, dueAt: now }
+                  : {
+                      id,
+                      word: word.normalize("NFC").trim(),
+                      stage: 1,
+                      box: 1,
+                      dueAt: now,
+                      attempts: 0,
+                      incorrectAttempts: 0,
+                      helpUses: 0,
+                      lastPracticedAt: now,
+                    },
+              ),
+            );
+          }
+          return { added, full };
+        },
+      );
+    },
+  };
+}
+
+/** Abgeschlossene Runden des Wortspeichers; sie sind unveränderlich. */
+export function createWordRoundRepository(
+  database = new PersonalLearningDatabase(),
+) {
+  const parse = (value: unknown) => wordRoundSchema.parse(value);
+  return {
+    list: async () => (await database.wordRounds.toArray()).map(parse),
+    listByBox: async (boxId: string) =>
+      (await database.wordRounds.where("boxId").equals(boxId).toArray()).map(
+        parse,
+      ),
+    /** Idempotent über die Id; gleiche Id mit anderem Inhalt wirft. */
+    save: async (round: WordRoundRecord) => {
+      const checked = parse(round);
+      await database.transaction("rw", database.wordRounds, async () => {
+        const stored = await database.wordRounds.get(checked.id);
+        if (stored) {
+          if (JSON.stringify(parse(stored)) !== JSON.stringify(checked)) {
+            throw new Error("Abgeschlossene Runden sind unveränderlich.");
+          }
+          return;
+        }
+        await database.wordRounds.add(checked);
+      });
     },
   };
 }
