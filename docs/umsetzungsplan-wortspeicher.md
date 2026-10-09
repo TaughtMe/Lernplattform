@@ -2,8 +2,29 @@
 
 Stand: 09.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `c013990` (Version 0.8.0, Textbox frei)
 
-> **Fortschritt:** noch nicht begonnen. Nach jedem Paket aktualisieren (welche Pakete fertig sind,
-> Branch, festgehaltene Abweichungen).
+> **Fortschritt:** Paket A umgesetzt (Stand 09.10.2026, Branch `claude/wortspeicher-umbau`):
+> Fachlogik (Stufe 6, Wortboxen, Rundenautomat, Buchstabenvergleich, gleich klingende Wörter,
+> Auswertung, Übernahme aus dem Laufdiktat), Dexie-Version 6, Repositories und Backup.
+> Paket B bis E offen.
+
+> **Festgehaltene Abweichungen:**
+>
+> - `useHelp` heißt `applyHelp`, weil Funktionen mit `use…` von der Hook-Lint-Regel als React-Hook
+>   behandelt werden.
+> - `WordRoundState` trägt zusätzlich `blockAttempts`, `firstKinds`, `failedWords` und
+>   `settledWords` (Zustand des laufenden Blocks). `submitWordAnswer` liefert je Wort einen
+>   `AttemptRecord`; schon richtig abgeschlossene Wörter eines Stufe-5-Blocks werden bei
+>   Wiederholungen nicht erneut im Lernstand verbucht. Eine leere Eingabe wirft.
+> - `isNewBest` ist nur wahr, wenn es frühere Runden dieser Wortbox und Stufe gibt (wie in der
+>   Textbox: die erste Runde zeigt „erster Bestwert“ statt „Neuer Bestwert!“).
+> - `addWords` meldet in `skipped` nur ungültige Wörter und solche über der Grenze; Doppelte werden
+>   still zusammengelegt. `importFromLesson` liefert in `added` alle übernommenen Wörter (auch
+>   solche, die schon in der Wortbox standen) und `full`, wenn gültige Wörter nicht mehr passten.
+> - Das Sitzungsfeld `wordStoreTransfer` ist Pflichtfeld des geparsten `LiveSession`; vier
+>   bestehende Testdaten-Objekte wurden um `wordStoreTransfer: "none"` ergänzt.
+> - Die Liste der gleich klingenden Wörter enthält über die Beispiele des Plans hinaus weitere
+>   Gruppen (u. a. das/dass, viel/fiel, wahr/war); die Lehrkraft prüft sie.
+> - Im alten Wortspeicher-Ablauf ist Stufe 6 bis Paket C ausgeblendet.
 
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Grundlage sind das Konzept
 „Lernraum – Konzept: Textbox und Rechtschreibtraining“ vom 08.10.2026 (§2.2, §6.3, §8.4, §10),
