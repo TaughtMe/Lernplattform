@@ -11,6 +11,7 @@ const level = z.union([
   z.literal(4),
   z.literal(5),
 ]);
+const stageLevel = z.union([level, z.literal(6)]);
 const instant = z.iso.datetime({ offset: true });
 const problemChars = z.array(
   z.object({ char: z.string().min(1), errors: count }),
@@ -21,7 +22,7 @@ export const learningWordProgressSchema: z.ZodType<LearningWordProgress> =
   z.object({
     id: z.string().min(1),
     word: z.string().min(1),
-    stage: level,
+    stage: stageLevel,
     box: level,
     dueAt: instant,
     attempts: count,

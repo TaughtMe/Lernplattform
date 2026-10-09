@@ -68,6 +68,10 @@ const stageCopy: Record<LearningWordStage, { title: string; detail: string }> =
       title: "Wörter merken",
       detail: "Mehrere Wörter, Reihenfolge ist egal.",
     },
+    6: {
+      title: "Hören und schreiben",
+      detail: "Du hörst das Wort und schreibst es auf.",
+    },
   };
 
 /**
@@ -394,23 +398,25 @@ export function LearningWordApp() {
                 ) : null}
               </div>
               <ol className="ui-ws__stages" aria-label="Merkstufe wählen">
-                {LEARNING_WORD_STAGES.map((value) => (
-                  <li key={value}>
-                    <button
-                      type="button"
-                      className="ui-select-card"
-                      aria-pressed={stage === value}
-                      onClick={() => setStage(value)}
-                      disabled={!interactionReady}
-                    >
-                      <span className="ui-ws__stage-number">{value}</span>
-                      <strong>{stageCopy[value].title}</strong>
-                      <small className="ui-tiny ui-muted">
-                        {stageCopy[value].detail}
-                      </small>
-                    </button>
-                  </li>
-                ))}
+                {LEARNING_WORD_STAGES.filter((value) => value <= 5).map(
+                  (value) => (
+                    <li key={value}>
+                      <button
+                        type="button"
+                        className="ui-select-card"
+                        aria-pressed={stage === value}
+                        onClick={() => setStage(value)}
+                        disabled={!interactionReady}
+                      >
+                        <span className="ui-ws__stage-number">{value}</span>
+                        <strong>{stageCopy[value].title}</strong>
+                        <small className="ui-tiny ui-muted">
+                          {stageCopy[value].detail}
+                        </small>
+                      </button>
+                    </li>
+                  ),
+                )}
               </ol>
 
               <details className="ui-ws__words" open>

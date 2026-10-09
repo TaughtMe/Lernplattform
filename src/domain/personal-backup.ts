@@ -39,7 +39,7 @@ const learningWordProgressBackupSchema = z
   .object({
     id: z.string().min(1),
     word: z.string().min(1),
-    stage: learningBoxLevelSchema,
+    stage: z.union([learningBoxLevelSchema, z.literal(6)]),
     box: learningBoxLevelSchema,
     dueAt: z.iso.datetime({ offset: true }),
     attempts: countSchema,

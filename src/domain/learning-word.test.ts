@@ -3,6 +3,7 @@ import {
   buildLearningWordLengthPattern,
   buildLearningWordPattern,
   chunkLearningWords,
+  evaluateLearningWordBlock,
   evaluateLearningWords,
   parseLearningWords,
   selectLearningWordRound,
@@ -82,5 +83,93 @@ describe("learning-word domain", () => {
     expect(round[0]).toBe("Wort1");
     expect(round.at(-1)).toBe("Wort91");
     expect(selectLearningWordRound(words, "all")).toEqual(words);
+  });
+
+  it("climbs and drops through stage six", () => {
+    expect(
+      updateLearningWordStage(5, {
+        correct: true,
+        usedHelp: false,
+        incorrectAttempts: 0,
+      }),
+    ).toBe(6);
+    expect(
+      updateLearningWordStage(6, {
+        correct: true,
+        usedHelp: false,
+        incorrectAttempts: 0,
+      }),
+    ).toBe(6);
+    expect(
+      updateLearningWordStage(6, {
+        correct: false,
+        usedHelp: false,
+        incorrectAttempts: 2,
+      }),
+    ).toBe(5);
+  });
+});
+
+describe("evaluateLearningWordBlock", () => {
+  const block = ["Schule", "Freude", "Sonne"];
+
+  it("marks every word right regardless of order", () => {
+    const result = evaluateLearningWordBlock(block, "Sonne\nSchule\nFreude");
+    expect(result.allCorrect).toBe(true);
+    expect(result.words.map((entry) => entry.correct)).toEqual([
+      true,
+      true,
+      true,
+    ]);
+    expect(result.extra).toEqual([]);
+  });
+
+  it("scores each word on its own", () => {
+    const result = evaluateLearningWordBlock(block, "Schule\nFreude\nSone");
+    expect(result.allCorrect).toBe(false);
+    expect(result.words.map((entry) => entry.correct)).toEqual([
+      true,
+      true,
+      false,
+    ]);
+    expect(result.words[2]!.result).toMatchObject({
+      kind: "falsch",
+      nearMiss: true,
+      actual: "Sone",
+    });
+  });
+
+  it("counts a doubled input word only once", () => {
+    const result = evaluateLearningWordBlock(
+      ["Schule", "Sonne"],
+      "Schule, Schule",
+    );
+    expect(result.words.map((entry) => entry.correct)).toEqual([true, false]);
+    expect(result.words[1]!.result.kind).toBe("fehlt");
+    expect(result.extra).toEqual([]);
+  });
+
+  it("keeps additional words visible without penalty", () => {
+    const result = evaluateLearningWordBlock(["Schule"], "Schule\nHaus");
+    expect(result.allCorrect).toBe(true);
+    expect(result.extra).toEqual(["Haus"]);
+  });
+
+  it("recognises a capitalisation slip", () => {
+    const result = evaluateLearningWordBlock(
+      ["Schule", "Sonne"],
+      "schule\nSonne",
+    );
+    expect(result.words[0]).toMatchObject({
+      correct: false,
+      result: { kind: "gross-klein" },
+    });
+    expect(result.words[1]!.correct).toBe(true);
+  });
+
+  it("treats empty input as missing words", () => {
+    const result = evaluateLearningWordBlock(["Schule"], "  ");
+    expect(result.allCorrect).toBe(false);
+    expect(result.words[0]!.result.kind).toBe("fehlt");
   });
 });
