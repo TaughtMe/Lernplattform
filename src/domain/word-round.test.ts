@@ -6,6 +6,7 @@ import {
   continueAfterFeedback,
   currentBlock,
   finishMemorize,
+  sampleRoundWords,
   startWordRound,
   submitWordAnswer,
   wordRoundPercent,
@@ -260,5 +261,49 @@ describe("wordRoundPercent", () => {
     expect(wordRoundPercent([])).toBe(0);
     expect(wordRoundPercent([entry(true)])).toBe(100);
     expect(wordRoundPercent([entry(false)])).toBe(0);
+  });
+});
+
+describe("sampleRoundWords", () => {
+  const bank = Array.from({ length: 30 }, (_, i) => `Wort${i}`);
+
+  it("takes different words with different random values", () => {
+    const first = sampleRoundWords(bank, 10, () => 0);
+    const second = sampleRoundWords(bank, 10, () => 0.99);
+    expect(first).toHaveLength(10);
+    expect(new Set(first).size).toBe(10);
+    expect(second).not.toEqual(first);
+  });
+
+  it("is reproducible with the same generator", () => {
+    const make = () => {
+      let seed = 7;
+      return () => {
+        seed = (seed * 16807) % 2147483647;
+        return seed / 2147483647;
+      };
+    };
+    expect(sampleRoundWords(bank, 5, make())).toEqual(
+      sampleRoundWords(bank, 5, make()),
+    );
+  });
+
+  it("keeps the order when everything fits", () => {
+    expect(sampleRoundWords(bank, "all", () => 0.5)).toEqual(bank);
+    expect(sampleRoundWords(bank, 40, () => 0.5)).toEqual(bank);
+  });
+
+  it("is used by startWordRound when a generator is given", () => {
+    const round = startWordRound({
+      roundId: "r",
+      boxId: "b",
+      stage: 1,
+      blockSize: 1,
+      roundSize: 5,
+      words: bank,
+      random: () => 0.99,
+    });
+    expect(round.blocks).toHaveLength(5);
+    expect(round.blocks.flat()).not.toEqual(bank.slice(0, 5));
   });
 });

@@ -234,13 +234,18 @@ test("Wortspeicher führt zu passenden Texten und die Wörter werden ausgeblende
   page,
 }) => {
   await page.goto("/frei/german/lernwoerter?woerter=Ball,Wiese");
-  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
+  const sheet = page.getByRole("dialog", { name: "Wörter aus der Textbox" });
+  await sheet.getByRole("button", { name: "Jetzt üben" }).click();
+  await page
+    .getByRole("dialog", { name: "Aus der Textbox" })
+    .getByRole("button", { name: "Starten" })
+    .click();
   for (const word of ["Ball", "Wiese"]) {
     await page.getByLabel("Deine Lösung").fill(word);
     await page.getByLabel("Deine Lösung").press("Enter");
     await expect(page.getByText("Richtig")).toBeVisible();
   }
-  await expect(page.getByText("Merkstrecke abgeschlossen")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Geschafft!" })).toBeVisible();
   await page.getByRole("link", { name: "Mit einem Text weiterüben" }).click();
 
   const panel = page.getByRole("region", {
@@ -256,7 +261,7 @@ test("Wortspeicher führt zu passenden Texten und die Wörter werden ausgeblende
   await expect(page.locator("mark").filter({ hasText: "Wiese" })).toBeVisible();
 });
 
-test("Fehlerwörter aus der Textbox füllen die eigene Liste im Wortspeicher", async ({
+test("Fehlerwörter aus der Textbox lassen sich im Wortspeicher in eine Wortbox speichern", async ({
   page,
 }) => {
   await page.goto("/frei/german/textbox");
@@ -265,9 +270,21 @@ test("Fehlerwörter aus der Textbox füllen die eigene Liste im Wortspeicher", a
   await page
     .getByRole("link", { name: "Fehlerwörter im Wortspeicher üben" })
     .click();
-  const list = page.getByRole("textbox", { name: /Deine Lernwörter/ });
-  await expect(list).toHaveValue(/wohnt/);
-  await expect(list).toHaveValue(/Hund/);
+  const sheet = page.getByRole("dialog", { name: "Wörter aus der Textbox" });
+  await expect(sheet.getByRole("list")).toContainText("wohnt");
+  await expect(sheet.getByRole("list")).toContainText("Hund");
+  await sheet
+    .getByRole("button", { name: "In eine Wortbox speichern" })
+    .click();
+  await sheet.getByRole("button", { name: "Speichern" }).click();
+  await expect(sheet).toContainText("liegen jetzt in der Wortbox");
+  await sheet.getByRole("button", { name: "Schließen" }).click();
+  await page
+    .getByRole("button", { name: "Wortliste von Aus der Textbox" })
+    .click();
+  const list = page.getByRole("list", { name: "Wörter in Aus der Textbox" });
+  await expect(list).toContainText("wohnt");
+  await expect(list).toContainText("Hund");
 });
 
 test("Fortschrittsseite: leerer Zustand, dann Werte, barrierefrei", async ({

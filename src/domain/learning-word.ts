@@ -5,12 +5,6 @@ export const LEARNING_WORD_STAGES = [1, 2, 3, 4, 5, 6] as const;
 export type LearningWordStage = (typeof LEARNING_WORD_STAGES)[number];
 export type LearningWordBlockSize = 1 | 2 | 3 | 5;
 
-export type LearningWordAttempt = {
-  correct: boolean;
-  expected: readonly string[];
-  submitted: readonly string[];
-};
-
 const letterPattern = /[\p{L}\p{M}]/u;
 
 export function parseLearningWords(source: string): string[] {
@@ -44,24 +38,6 @@ export function buildLearningWordLengthPattern(word: string): string {
   return Array.from(word)
     .map((letter) => (letterPattern.test(letter) ? "_" : letter))
     .join(" ");
-}
-
-export function evaluateLearningWords(
-  expected: readonly string[],
-  input: string,
-): LearningWordAttempt {
-  const submitted = parseLearningWords(input);
-  const normalize = (word: string) => word.normalize("NFC").trim();
-  const expectedSorted = expected.map(normalize).sort();
-  const submittedSorted = submitted.map(normalize).sort();
-
-  return {
-    correct:
-      expectedSorted.length === submittedSorted.length &&
-      expectedSorted.every((word, index) => word === submittedSorted[index]),
-    expected,
-    submitted,
-  };
 }
 
 export type LearningWordBlockWord = {

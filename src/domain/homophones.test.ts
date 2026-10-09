@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { LEARNING_WORD_COLLECTIONS } from "./german-learning-content";
 import { HOMOPHONE_GROUPS, homophoneHint, isHomophoneOf } from "./homophones";
@@ -96,5 +97,20 @@ describe("isHomophoneOf", () => {
     expect(isHomophoneOf("Rad", "Rot")).toBe(false);
     expect(isHomophoneOf("Sonne", "Sonne")).toBe(false);
     expect(isHomophoneOf("Sonne", "Rad")).toBe(false);
+  });
+});
+
+describe("Prüfliste für die Lehrkraft", () => {
+  it("nennt jedes Wort und jede Hilfe in docs/inhalte/wortspeicher.md", () => {
+    // Prettier richtet die Tabellenspalten mit Leerzeichen aus.
+    const doc = readFileSync("docs/inhalte/wortspeicher.md", "utf8").replace(
+      / +/g,
+      " ",
+    );
+    for (const group of HOMOPHONE_GROUPS) {
+      for (const [word, hint] of Object.entries(group.words)) {
+        expect(doc, word).toContain(`| ${word} | ${hint} |`);
+      }
+    }
   });
 });

@@ -4,7 +4,6 @@ import {
   buildLearningWordPattern,
   chunkLearningWords,
   evaluateLearningWordBlock,
-  evaluateLearningWords,
   parseLearningWords,
   selectLearningWordRound,
   updateLearningWordStage,
@@ -28,13 +27,6 @@ describe("learning-word domain", () => {
       stageTwo.split("_").length,
     );
     expect(buildLearningWordLengthPattern("Eis-bär")).toBe("_ _ _ - _ _ _");
-  });
-
-  it("checks stage-five blocks without requiring an order", () => {
-    expect(
-      evaluateLearningWords(["Schule", "Freude"], "Freude\nSchule").correct,
-    ).toBe(true);
-    expect(evaluateLearningWords(["Schule"], "schule").correct).toBe(false);
   });
 
   it("advances only a clean retrieval and lowers a stage after repeated errors", () => {

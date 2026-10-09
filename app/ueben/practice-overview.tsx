@@ -22,7 +22,7 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     area: "wortspeicher",
     href: "/frei/german/lernwoerter",
     title: "Wortspeicher",
-    text: "Trainingswörter richtig schreiben, Sammlung für Sammlung.",
+    text: "Wörter in Wortboxen sammeln und in sechs Merkstufen sicher schreiben.",
     icon: "wortspeicher",
     tone: "#ffc58f",
   },

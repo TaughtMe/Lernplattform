@@ -5,6 +5,7 @@ import {
   createEnrollmentLink,
 } from "../src/domain/class-enrollment";
 import { createTeacherAssignmentCode } from "../src/domain/teacher-workspace";
+import { createBox, startRound } from "./wortspeicher-helpers";
 
 test.skip(
   process.env["ENABLE_PRE_PILOT_E2E"] !== "1",
@@ -325,19 +326,11 @@ test("a native Laufdiktat mistake becomes due LernBox practice", async ({
   ).toBeVisible();
 });
 
-test("the five-stage learning-word path can be tried without an account", async ({
+test("the learning-word path can be tried without an account", async ({
   page,
 }) => {
-  await page.goto("/frei/german/lernwoerter");
-  const stageFour = page.getByRole("button", {
-    name: /4 Ansehen & verdecken/,
-  });
-  await stageFour.click();
-  await expect(stageFour).toHaveAttribute("aria-pressed", "true");
-  await page
-    .getByRole("textbox", { name: "Deine Lernwörter" })
-    .fill("Schulweg");
-  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
+  await createBox(page, "Schulweg-Box", ["Schulweg"]);
+  await startRound(page, "Schulweg-Box", 4);
 
   await expect(page.getByText("Schulweg", { exact: true })).toBeVisible();
   const reveal = page.getByRole("button", { name: "Wörter verdecken" });
@@ -345,14 +338,14 @@ test("the five-stage learning-word path can be tried without an account", async 
   await page.keyboard.press("Enter");
   const answer = page.getByRole("textbox", { name: "Deine Lösung" });
   await expect(answer).toBeFocused();
-  await expect(page.locator(".ui-ws__slots i")).toHaveCount(8);
+  await expect(page.locator("i[data-active]")).toHaveCount(8);
   await answer.fill("Schulweck");
   await page.keyboard.press("Enter");
   await expect(
     page.getByRole("heading", { name: "Noch nicht sicher" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Verdeckt noch einmal versuchen" }),
+    page.getByRole("button", { name: "Noch einmal versuchen" }),
   ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(reveal).toBeFocused();
@@ -361,42 +354,39 @@ test("the five-stage learning-word path can be tried without an account", async 
   await answer.fill("Schulweg");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toContainText("Richtig");
-  await expect(
-    page.getByRole("heading", { name: "Du hast die Stufe ausprobiert." }),
-  ).toBeVisible({ timeout: 3_000 });
-
-  await page.getByRole("button", { name: "Andere Stufe testen" }).click();
-  const stageTwo = page.getByRole("button", { name: /2 Wenige Lücken/ });
-  await stageTwo.click();
-  await expect(stageTwo).toHaveAttribute("aria-pressed", "true");
-  await page
-    .getByRole("textbox", { name: "Deine Lernwörter" })
-    .fill("Sonne\nMutter");
-  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
-  const directAnswer = page.getByRole("textbox", { name: "Deine Lösung" });
-  await expect(directAnswer).toBeFocused();
-  await directAnswer.fill("Sonne");
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("status")).toContainText("Richtig");
-  await expect(page.locator(".ui-ws__progress strong")).toHaveText("2 / 2", {
+  await expect(page.getByRole("heading", { name: "Geschafft!" })).toBeVisible({
     timeout: 3_000,
   });
+
+  await page.getByRole("button", { name: "Andere Stufe wählen" }).click();
+  const sheet = page.getByRole("dialog", { name: "Schulweg-Box" });
+  const stageTwo = sheet.getByRole("button", { name: /^Stufe 2:/ });
+  await stageTwo.click();
+  await expect(stageTwo).toHaveAttribute("aria-pressed", "true");
+  await sheet.getByRole("button", { name: "Starten" }).click();
+  const directAnswer = page.getByRole("textbox", { name: "Deine Lösung" });
   await expect(directAnswer).toBeFocused();
+  await directAnswer.fill("Schulweg");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toContainText("Richtig");
+  await expect(page.getByRole("heading", { name: "Geschafft!" })).toBeVisible({
+    timeout: 3_000,
+  });
 });
 
 test("large German word banks create manageable learning rounds", async ({
   page,
 }) => {
   await page.goto("/frei/german/lernwoerter");
-  await page.getByRole("button", { name: /Merkwörter & Fremdwörter/ }).click();
-  const source = page.getByRole("textbox", { name: "Deine Lernwörter" });
-  await expect(source).toHaveValue(/Computer/);
-  expect((await source.inputValue()).split("\n").length).toBeGreaterThanOrEqual(
-    100,
-  );
-  await expect(page.getByLabel("Wörter in dieser Runde")).toHaveValue("10");
-  await page.getByRole("button", { name: "Stufe ausprobieren" }).click();
-  await expect(page.locator(".ui-ws__progress strong")).toHaveText("1 / 10");
+  await page.getByRole("button", { name: /^Merkwörter & Fremdwörter/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Merkwörter & Fremdwörter" });
+  await expect(sheet.getByLabel("Wörter in dieser Runde")).toHaveValue("10");
+  await sheet.getByRole("button", { name: "Starten" }).click();
+  const progress = page.getByRole("progressbar", {
+    name: "Fortschritt der Runde",
+  });
+  await expect(progress).toHaveAttribute("aria-valuemax", "10");
+  await expect(progress).toHaveAttribute("aria-valuenow", "1");
   await expect(
     page.getByRole("textbox", { name: "Deine Lösung" }),
   ).toBeFocused();

@@ -1,0 +1,504 @@
+/* Wortspeicher: Gestaltung der neuen Ansichten (Tokens aus tokens.css). */
+.screen {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 16px 32px;
+  color: var(--ink);
+  font-family: var(--font);
+}
+.screen *,
+.screen *::before,
+.screen *::after {
+  box-sizing: border-box;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.headMain {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.title {
+  margin: 0;
+  font-family: var(--font-fun);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.title:focus {
+  outline: none;
+}
+.title:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: var(--ink2);
+}
+.hint {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink2);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ---- Übersicht ---- */
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tile {
+  position: relative;
+  display: flex;
+}
+.tileMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 150px;
+  padding: 14px 58px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tileMain:hover:not(:disabled) {
+  border-color: var(--line2);
+}
+.tileMain:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.tileTitle {
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.tileExamples {
+  font-size: 14px;
+  color: var(--ink2);
+  overflow-wrap: anywhere;
+}
+.tileBest {
+  margin-top: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+.tileProgress {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+}
+.tileProgress > :first-child {
+  flex: 1;
+}
+.tileCount {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink2);
+  white-space: nowrap;
+}
+.tileMenu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.tileNew .tileMain {
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  text-align: center;
+}
+
+/* ---- Startblatt ---- */
+.stages {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stageCard {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.stageCard[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.stageCard:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.stageNumber {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface2);
+  font-size: 14px;
+  font-weight: 800;
+}
+.stageBest {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ---- Wortliste ---- */
+.wordList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wordRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+.wordText {
+  flex: 1;
+  min-width: 8ch;
+  font-size: 17px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.addForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.addForm input {
+  flex: 1;
+  min-width: 12ch;
+}
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--bad);
+  border-radius: var(--radius-m);
+  background: var(--bad-bg);
+}
+
+/* ---- Runde ---- */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: 0 6px 18px var(--shadow);
+}
+.prompt {
+  margin: 0;
+  font-family: var(--font-fun);
+  font-size: clamp(30px, 8vw, 46px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.memory {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  font-family: var(--font-fun);
+  font-size: clamp(28px, 7vw, 40px);
+  font-weight: 700;
+  text-align: center;
+}
+.helpWord {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}
+.success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-m);
+  background: var(--good-bg);
+  color: var(--good);
+  font-size: 20px;
+}
+.listen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.meaning {
+  margin: 0;
+  font-size: 16px;
+  color: var(--ink2);
+  text-align: center;
+}
+
+/* ---- Rückmeldung und Buchstabenvergleich ---- */
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.feedbackHead {
+  margin: 0;
+  font-family: var(--font-fun);
+  font-size: 22px;
+  font-weight: 700;
+}
+.compare {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px 10px;
+}
+.compareLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  font-family: var(--font-fun);
+  font-size: 26px;
+  font-weight: 700;
+}
+.letter {
+  min-width: 1.3ch;
+  padding: 1px 5px 3px;
+  border-bottom: 4px solid transparent;
+  border-radius: 6px;
+  text-align: center;
+}
+.letterWrong {
+  border-bottom-color: var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+}
+.letterMissing {
+  border: 2px dashed var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.diffList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 15px;
+}
+.kindNote {
+  margin: 0;
+  font-size: 16px;
+}
+.blockResults {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.blockResult {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+.blockResultGood {
+  border-color: var(--good);
+  background: var(--good-bg);
+}
+
+/* ---- Eingabe auf Strichen (Stufe 4) ---- */
+.slotsAnswer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.slots i {
+  display: inline-block;
+  min-width: 1.2ch;
+  padding: 0 4px 2px;
+  border-bottom: 3px solid var(--ink2);
+  font-family: var(--font-fun);
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 700;
+  text-align: center;
+}
+.slots i[data-active="true"] {
+  border-bottom-color: var(--accent);
+}
+.slotInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: text;
+}
+.slotsAnswer:focus-within .slots {
+  outline: 3px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+
+/* ---- Abschluss ---- */
+.final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  text-align: center;
+}
+.percent {
+  margin: 0;
+  font-family: var(--font-fun);
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+}
+.record {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--good);
+}
+.counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  text-align: center;
+}
+.countValue {
+  font-size: 26px;
+  font-weight: 800;
+}
+.missed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.missed li {
+  padding: 3px 10px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tileMain,
+  .stageCard {
+    transition: none;
+  }
+}

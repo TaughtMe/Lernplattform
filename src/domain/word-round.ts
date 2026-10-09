@@ -74,6 +74,26 @@ export type AttemptRecord = {
   attemptId: string;
 };
 
+/**
+ * Zufällige Auswahl für „Nochmal üben“: bei großen Wortboxen jedes Mal andere
+ * Wörter (Teilmischung nach Fisher–Yates mit injizierbarem Zufallsgenerator).
+ * Passt alles in die Runde, bleibt die Reihenfolge der Wortbox.
+ */
+export function sampleRoundWords(
+  words: readonly string[],
+  size: number | "all",
+  random: () => number,
+): string[] {
+  if (size === "all" || size >= words.length) return [...words];
+  const count = Math.max(1, Math.floor(size));
+  const pool = [...words];
+  for (let index = 0; index < count; index += 1) {
+    const pick = index + Math.floor(random() * (pool.length - index));
+    [pool[index], pool[pick]] = [pool[pick]!, pool[index]!];
+  }
+  return pool.slice(0, count);
+}
+
 export type StartWordRoundInput = {
   roundId: string;
   boxId: string;
@@ -81,6 +101,8 @@ export type StartWordRoundInput = {
   blockSize: LearningWordBlockSize;
   roundSize: number | "all";
   words: string[];
+  /** Zufallsgenerator für die Auswahl; ohne ihn gleichmäßig über die Wortbox verteilt. */
+  random?: () => number;
 };
 
 function firstPhase(stage: LearningWordStage): WordRoundPhase {
@@ -117,7 +139,9 @@ function expectPhase(state: WordRoundState, phase: WordRoundPhase) {
 }
 
 export function startWordRound(input: StartWordRoundInput): WordRoundState {
-  const words = selectLearningWordRound(input.words, input.roundSize);
+  const words = input.random
+    ? sampleRoundWords(input.words, input.roundSize, input.random)
+    : selectLearningWordRound(input.words, input.roundSize);
   if (words.length === 0) {
     throw new Error("Eine Runde braucht mindestens ein Wort.");
   }
