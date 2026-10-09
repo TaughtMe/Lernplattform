@@ -1,5 +1,6 @@
 "use client";
 
+import { useAreaVisible } from "../../release/release-context";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
@@ -37,6 +38,12 @@ import { createPersonalLearningEventRepository } from "../../../src/storage/pers
 import { MathDisplay } from "../../components/math-display";
 import { useLiveSessionGuards } from "../../components/use-live-session-guards";
 import { useLiveVocabularyTransfer } from "../../components/use-live-vocabulary-transfer";
+import { useLiveWordStoreTransfer } from "../../components/use-live-word-store-transfer";
+import {
+  WORD_STORE_FULL_NOTICE,
+  misspelledWords,
+  summarizeSavedWords,
+} from "../../../src/integrations/laufdiktat/word-store-transfer";
 import { useWritingRelief } from "../../components/use-writing-relief";
 import { Button, ButtonLink } from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
@@ -130,6 +137,10 @@ export function LiveRunningDictationGame({
   const [wordTolerated, setWordTolerated] = useState<Record<string, true>>(
     restoredTrace?.wordTolerated ?? {},
   );
+  // Falsch geschriebene Wörter je Textteil für den Wortspeicher, nur lokal.
+  const [wordMisspellings, setWordMisspellings] = useState<
+    Record<string, string[]>
+  >(restoredTrace?.wordMisspellings ?? {});
   // Ohne Klassenstempel im Raum gelten immer die Standardregeln.
   const writingRelief = useWritingRelief(session.classSeal);
   const [revealedCurrentWord, setRevealedCurrentWord] = useState(false);
@@ -161,6 +172,9 @@ export function LiveRunningDictationGame({
     notice: transferNotice,
     transfer,
   } = useLiveVocabularyTransfer();
+  const { result: wordStore, transfer: transferWordStore } =
+    useLiveWordStoreTransfer();
+  const wordStoreVisible = useAreaVisible("wortspeicher");
   const startedAt = useRef(0);
   const lastAttackId = useRef(0);
   const mathSaving = useRef(false);
@@ -213,8 +227,17 @@ export function LiveRunningDictationGame({
       wordErrors,
       wordHelps,
       wordTolerated,
+      wordMisspellings,
     });
-  }, [index, phase, session.sessionId, wordErrors, wordHelps, wordTolerated]);
+  }, [
+    index,
+    phase,
+    session.sessionId,
+    wordErrors,
+    wordHelps,
+    wordTolerated,
+    wordMisspellings,
+  ]);
 
   // Ein tolerant angenommenes Wort bleibt länger stehen: Das Kind soll die
   // richtige Schreibweise lesen können.
@@ -330,6 +353,25 @@ export function LiveRunningDictationGame({
     writingRelief,
   ]);
 
+  // Wörter in den Wortspeicher: unabhängig von der Schreiberleichterung.
+  useEffect(() => {
+    if (phase !== "complete" || session.stationMode) return;
+    transferWordStore(session, {
+      currentIndex: session.words.length - 1,
+      finished: true,
+      wordErrors,
+      wordHelps,
+      wordMisspellings,
+    });
+  }, [
+    phase,
+    session,
+    transferWordStore,
+    wordErrors,
+    wordHelps,
+    wordMisspellings,
+  ]);
+
   function revealWord() {
     // Finger und Tasten können im selben Moment auslösen: nur einmal zählen.
     if (phaseRef.current === "revealed" || phaseRef.current === "correct")
@@ -425,6 +467,9 @@ export function LiveRunningDictationGame({
       </div>
     </Sheet>
   );
+  const savedWordsShown = summarizeSavedWords(
+    wordStore.status === "success" ? wordStore.added : [],
+  );
   const common = {
     roomCode: code,
     animal,
@@ -435,7 +480,13 @@ export function LiveRunningDictationGame({
     typed: answer,
     station: { count: session.stationCount, selected: null },
     battle: { charge, shieldActive: shield },
-    result: { mistakes: errors, hints: peeks, points: tempo, savedWords: [] },
+    result: {
+      mistakes: errors,
+      hints: peeks,
+      points: tempo,
+      savedWords: savedWordsShown.shown,
+      savedWordsMore: savedWordsShown.more,
+    },
   };
 
   if (phase === "complete") {
@@ -477,6 +528,20 @@ export function LiveRunningDictationGame({
                   <p className="ui-notice ui-notice--good" role="status">
                     {transferNotice}
                   </p>
+                ) : null}
+                {wordStore.status === "success" && wordStore.full ? (
+                  <p className="ui-notice" role="status">
+                    {WORD_STORE_FULL_NOTICE}
+                  </p>
+                ) : null}
+                {wordStore.status === "success" && wordStoreVisible ? (
+                  <ButtonLink
+                    href="/frei/german/lernwoerter"
+                    variant="ghost"
+                    block
+                  >
+                    Im Wortspeicher üben
+                  </ButtonLink>
                 ) : null}
                 {hasMath ? (
                   <div className="ui-stack">
@@ -640,6 +705,15 @@ export function LiveRunningDictationGame({
     }
 
     const key = errorKey;
+    if (kind === "text" && session.wordStoreTransfer !== "none") {
+      const missed = misspelledWords(activeWord.targetWord, answer);
+      if (missed.length > 0) {
+        setWordMisspellings((current) => ({
+          ...current,
+          [key]: [...new Set([...(current[key] ?? []), ...missed])],
+        }));
+      }
+    }
     const nextErrors = errors + 1;
     const nextWordErrors = {
       ...wordErrors,

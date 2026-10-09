@@ -1,5 +1,6 @@
 "use client";
 
+import { Segmented } from "../../ui/primitives";
 import { CloudSlot } from "../../ui/cloud-slot";
 import {
   useEffect,
@@ -144,6 +145,14 @@ export type TeacherDictationScreenProps = {
   lockedSteps?: readonly TeacherStep[];
   /** Fehler oder Hinweis unter dem Inhalt. */
   notice?: string;
+  /**
+   * Text-Laufdiktat: Wörter in den Wortspeicher der Kinder. Ohne Angabe (Bereich
+   * „Wortspeicher“ nicht sichtbar) erscheint die Einstellung nicht.
+   */
+  wordStore?: {
+    value: "none" | "errors" | "all";
+    onChange: (value: "none" | "errors" | "all") => void;
+  };
   /** Vokabelheft statt Textfeld, wenn Inhaltsart Vokabeln. */
   vocabulary?: VocabularyEditorProps;
   /** Aufgaben-Generator statt Textfeld, wenn Inhaltsart Mathe. */
@@ -691,6 +700,24 @@ function ImportStep(props: TeacherDictationScreenProps) {
             </label>
           ) : null}
         </div>
+        {content.kind === "text" && props.wordStore ? (
+          <div className={styles.wordStore}>
+            <Segmented
+              label="Wörter in den Wortspeicher"
+              value={props.wordStore.value}
+              onChange={props.wordStore.onChange}
+              options={[
+                { value: "none", label: "Aus" },
+                { value: "errors", label: "Falsch geschriebene Wörter" },
+                { value: "all", label: "Alle Wörter" },
+              ]}
+            />
+            <p className={styles.hint}>
+              Wörter in den Wortspeicher: Die Wörter bleiben auf den Geräten der
+              Kinder. Du siehst sie nicht.
+            </p>
+          </div>
+        ) : null}
       </div>
       <div className={styles.column}>
         <div className={styles.between}>
