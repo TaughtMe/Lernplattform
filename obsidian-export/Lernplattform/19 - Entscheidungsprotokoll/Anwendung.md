@@ -632,3 +632,13 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 
 **Bekannte Grenzen:** Runden aus großen Wortboxen nehmen jedes Mal andere Wörter; Prozentwerte sind nur ungefähr vergleichbar. Ältere App-Versionen kennen Stufe 6 und die neuen Sicherungsfelder nicht. Ohne deutsche Stimme gibt es keine Stufe 6. Die Fehlerwort-Erkennung im Laufdiktat ist ein Wortvergleich.
 
+## 56. Textbox: Heft-Layout, Vollbild auf Wunsch, Durchgang wiederholen – 12. Oktober 2026
+
+**Beschlossen:** Auswahl und Eingabe der Textbox folgen Turn 9 der Design-Vorlage (9b–9f). Die Festlegungen stehen in `docs/umsetzungsplan-textbox-layout.md`, Abschnitt 1; die Umsetzung lief auf dem Branch `claude/lernraum-ui-v2`.
+
+- **Auswahl:** Kartenraster mit Bestwertbalken, Filter für Stufe (genau eine), Stand und Schwerpunkt, „Weitermachen“ nur am Desktop. „Gemeistert“ ab Bestwert 90 %.
+- **Eingabe:** Heft mit Linien als Standard, ruhiger Vollbildmodus per Knopf (Wahl pro Gerät im Browser). Mobil immer Heft ohne Navigation, mit Aktionsleiste unten.
+- **Durchgang wiederholen:** neue Funktion in der Kontrolle; das letzte Ergebnis wird durch den neuen Versuch ersetzt, die Lücken bleiben gleich. Fachlogik, Speicherung, Backup und Wortspeicher-Brücke sonst unverändert.
+- **Kontrolle ohne Symbole und Legende;** Abschluss mit Bestwert bleibt bewusst bestehen.
+
+**Bekannte Grenzen:** Das Zusammenspiel der klebenden Aktionsleiste mit der Bildschirmtastatur ist auf echten Geräten (iPhone, Android, Hoch- und Querformat) noch zu prüfen. Das Tier im Filterstreifen wird zufällig gewählt und im Designvergleich ausgeblendet.

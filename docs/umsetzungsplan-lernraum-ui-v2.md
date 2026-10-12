@@ -56,6 +56,16 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
   - Das Start-Overlay nennt immer die Klasse des Raums („Raum für Klasse 7b“) bzw. „Raum ohne Klasse (keine Schreiberleichterung)“, weil „Nicht zugeordnet“ die gemerkte Klasse löscht und der Raum dann ohne Schreiberleichterung startet.
   - Die Schublade ist 324 px breit (296 px Inhalt plus 14 px Innenabstand je Seite), wie die Vorlage sie misst.
   - Der Hinweis unter der Liste („Tippen öffnet die Einstellungen als Overlay …“) ist Entwurfstext und steht nur in den Beispieldaten.
+- **9b–9f Textbox** (Plan: `docs/umsetzungsplan-textbox-layout.md`):
+  - 9a ist die verworfene Alternative zu 9b und wird nicht gebaut (Status `referenz`).
+  - Nach der Kontrolle in Durchgang 4 führt der Hauptknopf weiter zu „Ergebnis ansehen“ und zum bestehenden Abschluss mit Bestwert und Wortspeicher-Brücke, nicht zu „Zurück zur Auswahl“.
+  - „Weitermachen“ gibt es nur am Desktop (9b). Mobil zeigt die Karte „Durchgang _n_ offen“; ein Tipp öffnet die Frage „Fortsetzen / Neu beginnen“.
+  - Erhalten bleiben, obwohl die Vorlage sie nicht zeigt: Speicherhinweis, Fortsetzen-Frage, „Passende Texte zu deinen Wörtern“, „Verlauf“ je geübtem Text (kleiner Textknopf in der Karte, Anzahl der Übungen nur für Screenreader neben dem Bestwert), Link „Laufzettel ansehen und drucken“, Abschluss- und Verlaufsansicht.
+  - Die Kontrolle zeigt keine Symbole und keine Legende; die Art steht in Durchstreichung, Umrandung und Kästchen, dazu unsichtbare Präfixe für Screenreader. Durchgang 4 erscheint als Fließtext.
+  - Das Tier im Filterstreifen und der Knopf „Verlauf“ werden im Designvergleich über `hide` ausgeblendet (Zufall bzw. Zusatzfunktion); das Layout bleibt dabei wie in der Vorlage.
+  - Tippflächen mindestens 44 × 44 px: Stufenpunkte (Vorlage 24 × 22 px), Chips mit ×, Segmente und Zurück-Knopf sind größer als in der Vorlage; negative Außenabstände halten das Layout gleich. Der Zurück-Knopf misst wie in der Vorlage 44/48 px Inhalt plus Rand.
+  - „Vollbild“ (9e) ist per Knopf wählbar und wird pro Gerät gemerkt; der Knopf wechselt seine Beschriftung („Vollbild“/„Vollbild beenden“) und hat kein `aria-pressed`.
+  - Jedes Wort steht in einem eigenen Inline-Kasten (Innenabstand 3 px, Außenabstand −3 px), damit der Text wie in der Vorlage gesetzt wird und gleich umbricht.
 - **Schülerbereich mobil:** Eine schmale Kopfzeile „Lernraum“ führt zur Startseite, weil die Seitenleiste mit dem Logo unter 900 px fehlt.
 
 ## Reihenfolge

@@ -57,3 +57,21 @@ leicht, 17 mittel, 17 schwer), jeder Schwerpunkt in mindestens 2 Texten.
 Beim Prüfen besonders ansehen: Zielwörter, die nur nach dem Muster als
 Schwerpunktwort erkannt werden (z. B. „Fahrrad“, „sah“, „Mutter“,
 „zusammen“), und Sätze, die nur wegen der Zielwörter da sein könnten.
+
+## Ablauf und Oberfläche (Stand Oktober 2026)
+
+Layout nach Design 9b–9f, Plan: `docs/umsetzungsplan-textbox-layout.md`.
+
+- **Auswahl:** Kartenraster mit Suche (Titel oder Schwerpunkt), Filtern für
+  Stufe (genau eine), Stand (Neu, Begonnen, Gemeistert) und Schwerpunkt
+  (Mehrfachauswahl). Am Desktop steht „Weitermachen“ für angefangene Einheiten
+  oben. **Gemeistert** heißt Bestwert ab **90 %** (`TEXTBOX_MASTERED_PERCENT`),
+  **Begonnen** mindestens eine abgeschlossene Übung oder eine angefangene Einheit.
+- **Durchgang:** Merken, Schreiben, Kontrolle. In der Kontrolle gibt es
+  **„Durchgang wiederholen“**: zurück zur Merkphase desselben Durchgangs, das
+  letzte Ergebnis wird verworfen und durch den neuen Versuch ersetzt, die Lücken
+  bleiben gleich. In Durchgang 1 löscht das auch die gespeicherte Einheit. Der
+  Bestwert zählt weiter nur Durchgang 4.
+- **Darstellung:** Am Desktop startet die Eingabe als Heft mit Linien (Navigation
+  bleibt); „Vollbild“ schaltet auf die ruhige Ansicht um, die Wahl gilt pro
+  Gerät. Mobil gilt immer das Heft ohne Navigation, mit Aktionsleiste unten.

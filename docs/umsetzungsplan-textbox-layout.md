@@ -375,4 +375,4 @@ A → B → C → D → E → F. C und D hängen beide nur an A und B; D vor E, 
 - [x] Paket C: Auswahl 9b/9c
 - [x] Paket D: Heft 9d/9f, Durchgang wiederholen, Navigation mobil
 - [x] Paket E: Vollbild 9e
-- [ ] Paket F: Browser-/Axe-Tests, Dokumentation
+- [x] Paket F: Browser-/Axe-Tests, Dokumentation
