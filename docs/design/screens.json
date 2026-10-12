@@ -449,16 +449,16 @@
       "screen": "9b",
       "width": 1180,
       "height": 1484,
-      "hide": ["[data-peek]"],
-      "status": "offen"
+      "hide": ["[data-peek]", "[data-history]"],
+      "status": "umgesetzt"
     },
     {
       "id": "9c",
       "screen": "9c",
       "width": 390,
       "height": 844,
-      "hide": ["[data-peek]"],
-      "status": "offen"
+      "hide": ["[data-peek]", "[data-history]"],
+      "status": "umgesetzt"
     },
     {
       "id": "9d",

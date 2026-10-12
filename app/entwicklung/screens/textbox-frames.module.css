@@ -1,0 +1,40 @@
+/* Nachbau der Navigation aus Turn 9 für den Designvergleich (nur Katalog). */
+.main {
+  container: student-main / inline-size;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+.phone {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+.scroll {
+  container: student-main / inline-size;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 8px 10px 22px;
+  background: var(--nav);
+}
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  color: var(--nav-ink2);
+  font-size: 11px;
+  font-weight: 600;
+}
+.tabActive {
+  color: var(--nav-accent);
+  font-weight: 700;
+}

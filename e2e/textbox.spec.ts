@@ -147,7 +147,7 @@ test("eine unterbrochene Übung lässt sich nach dem Neuladen fortsetzen", async
   await page.reload();
   await page.getByRole("button", { name: `${text.title} weiterüben` }).click();
   await expect(page.getByText(/Durchgang 3 von 4/).first()).toBeVisible();
-  await page.getByRole("button", { name: "Fortsetzen" }).click();
+  await page.getByRole("button", { name: "Fortsetzen", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Durchgang 3 von 4: Merken" }),
   ).toBeVisible();

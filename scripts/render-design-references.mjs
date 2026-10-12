@@ -106,6 +106,11 @@ for (const screen of screens) {
     console.log(`${message} → übernommen`);
     Object.assign(screen, { width, height });
   }
+  // Hohe Flächen (z. B. 9b) ragen über das Fenster hinaus: Fenster vergrößern.
+  const needed = Math.ceil(box.y + box.height + 40);
+  if (needed > (page.viewportSize()?.height ?? 0)) {
+    await page.setViewportSize({ width: 1700, height: needed });
+  }
   // Exakter Ausschnitt: Karten liegen im Canvas teils auf halben Pixeln.
   await surface.scrollIntoViewIfNeeded();
   const { x, y } = (await surface.boundingBox()) ?? box;

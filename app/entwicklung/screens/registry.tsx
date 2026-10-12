@@ -32,6 +32,9 @@ import {
 import { MODES } from "../../views/laufdiktat/teacher-dictation-screen";
 import type { Theme } from "../../views/parts/parts";
 import { LandingScreen } from "../../views/start/landing-screen";
+import { demoLibraryEntries } from "../../views/textbox/demo";
+import { LibraryScreen } from "../../views/textbox/library-screen";
+import { TextboxMain, TextboxPhone } from "./textbox-frames";
 
 /** Zustand eines Referenzbildes aus docs/design/screens.json. */
 export type ScreenState = { id: string; screen: string; theme: Theme };
@@ -61,6 +64,14 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
   if (screen === "3c" || screen === "3d") {
     return <TeacherDemo variant={variant} theme={theme} />;
   }
+  if (screen === "9b" || screen === "9c") {
+    const library = <TextboxLibrary />;
+    return screen === "9b" ? (
+      <TextboxMain>{library}</TextboxMain>
+    ) : (
+      <TextboxPhone>{library}</TextboxPhone>
+    );
+  }
   if (screen === "5a" || screen === "5b") {
     const phase = STUDENT_PHASES.find((p) => p === variant) ?? "station";
     return (
@@ -86,6 +97,21 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
     );
   }
   return null;
+}
+
+/** Auswahl der Textbox mit den Beispieltexten der Vorlage (9b/9c). */
+function TextboxLibrary() {
+  return (
+    <LibraryScreen
+      entries={demoLibraryEntries()}
+      pending={undefined}
+      onStart={() => {}}
+      onResume={() => {}}
+      onRestart={() => {}}
+      onCancelPending={() => {}}
+      onDetails={() => {}}
+    />
+  );
 }
 
 const TEACHER_STEPS: readonly TeacherStep[] = [

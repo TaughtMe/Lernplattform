@@ -2,7 +2,10 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { layoutText } from "../../../src/domain/text-compare";
-import type { TextboxRoundResult } from "../../../src/domain/textbox-session";
+import type {
+  TextboxRoundResult,
+  TextboxSession,
+} from "../../../src/domain/textbox-session";
 import { CompletionScreen } from "./completion-screen";
 import { FreeWritingScreen } from "./free-writing-screen";
 import { LibraryScreen, type LibraryEntry } from "./library-screen";
@@ -243,6 +246,7 @@ describe("LibraryScreen", () => {
     (typeof TEXTBOX_TEXTS)[number],
     (typeof TEXTBOX_TEXTS)[number],
   ];
+  const total = TEXTBOX_TEXTS.length;
   const entries: LibraryEntry[] = TEXTBOX_TEXTS.map((text) => ({
     text,
     summary:
@@ -257,6 +261,16 @@ describe("LibraryScreen", () => {
         : undefined,
     open: undefined,
   }));
+  const openSession = (textId: string, rounds: number): TextboxSession => ({
+    id: "x",
+    textId,
+    difficulty: third.difficulty,
+    status: "laufend",
+    seed: "x",
+    startedAt: "2026-10-08T08:00:00.000Z",
+    updatedAt: "2026-10-08T08:00:00.000Z",
+    rounds: Array.from({ length: rounds }, () => result(1, [])),
+  });
 
   function setup(overrides: Partial<Parameters<typeof LibraryScreen>[0]> = {}) {
     const handlers = {
@@ -276,52 +290,135 @@ describe("LibraryScreen", () => {
     );
     return handlers;
   }
+  const count = () =>
+    screen.getByRole("list", { name: "Texte" }).children.length;
+  const card = (title: string) =>
+    screen
+      .getByRole("button", { name: new RegExp(`^${title} (üben|weiterüben)$`) })
+      .closest("li")!;
 
-  it("zeigt immer den Bestwert und die Zahl der Übungen", () => {
+  it("zeigt Bestwert und Anzahl der Übungen", () => {
     setup();
-    const row = screen
-      .getByRole("heading", { name: first.title })
-      .closest("li")!;
-    expect(row).toHaveTextContent("3 Übungen");
-    expect(row).toHaveTextContent("Bestwert: 94 %");
-    expect(row).not.toHaveTextContent("60 %");
-    const untouched = screen
-      .getByRole("heading", { name: second.title })
-      .closest("li")!;
-    expect(untouched).toHaveTextContent("0 Übungen");
-    expect(untouched).toHaveTextContent("Bestwert: –");
+    expect(card(first.title)).toHaveTextContent("Bestwert: 94 %");
+    expect(card(first.title)).toHaveTextContent("3 Übungen");
+    expect(card(first.title)).toHaveTextContent("Gemeistert");
+    expect(card(first.title)).not.toHaveTextContent("60 %");
+    expect(card(second.title)).toHaveTextContent("Bestwert: –");
+    expect(card(second.title)).toHaveTextContent("0 Übungen");
+    expect(card(second.title)).toHaveTextContent("Neu");
+    expect(screen.getByText(`${total} Texte`)).toBeInTheDocument();
   });
 
-  it("filtert nach Schwierigkeit, Schwerpunkt und Status", async () => {
+  it("filtert die Stufe genau und hebt sie beim zweiten Klick auf", async () => {
     const user = userEvent.setup();
     setup();
-    const count = () =>
-      screen.getByRole("list", { name: "Texte" }).children.length;
-    const total = TEXTBOX_TEXTS.length;
     const hard = TEXTBOX_TEXTS.filter((t) => t.difficulty === "schwer").length;
-    expect(count()).toBe(total);
-    await user.click(screen.getByRole("button", { name: "Schwer" }));
+    const button = screen.getByRole("button", { name: "Schwer" });
+    expect(button).not.toHaveAttribute("aria-pressed");
+    await user.click(button);
     expect(count()).toBe(hard);
-    await user.click(screen.getByRole("button", { name: "Alle" }));
-    await user.selectOptions(screen.getByLabelText("Schwerpunkt"), "ie");
+    expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText(`${hard} von ${total} Texten`)).toBeInTheDocument();
+    await user.click(button);
+    expect(count()).toBe(total);
+    expect(button).not.toHaveAttribute("aria-pressed");
+  });
+
+  it("filtert den Stand als Mehrfachauswahl", async () => {
+    const user = userEvent.setup();
+    setup();
+    const neu = screen.getByRole("button", { name: "Neu" });
+    await user.click(neu);
+    expect(neu).toHaveAttribute("aria-pressed", "true");
+    expect(count()).toBe(total - 1);
+    await user.click(screen.getByRole("button", { name: "Gemeistert" }));
+    expect(count()).toBe(total);
+    await user.click(neu);
+    expect(count()).toBe(1);
+  });
+
+  it("wählt Schwerpunkte mit Kontrollkästchen und schließt mit Fertig und Escape", async () => {
+    const user = userEvent.setup();
+    setup();
+    const opener = screen.getByRole("button", { name: "Schwerpunkt" });
+    const sheet = document.querySelector("dialog")!;
+    expect(opener).toHaveAttribute("aria-expanded", "false");
+    await user.click(opener);
+    expect(opener).toHaveAttribute("aria-expanded", "true");
+    expect(sheet).toHaveAttribute("open");
+    await user.click(screen.getByRole("checkbox", { name: /Wörter mit ie/ }));
     expect(count()).toBe(
       TEXTBOX_TEXTS.filter((t) => t.phenomena.includes("ie")).length,
     );
-    await user.selectOptions(screen.getByLabelText("Schwerpunkt"), "alle");
-    await user.selectOptions(screen.getByLabelText("Status"), "geuebt");
-    expect(count()).toBe(1);
-    await user.selectOptions(screen.getByLabelText("Status"), "neu");
-    expect(count()).toBe(total - 1);
-    // Der geübte Text hat einen anderen Schwerpunkt: keine Treffer.
-    await user.selectOptions(screen.getByLabelText("Status"), "geuebt");
-    await user.selectOptions(
-      screen.getByLabelText("Schwerpunkt"),
-      "wortbausteine",
-    );
-    expect(screen.getByText("Keine passenden Texte")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Schwerpunkt · 1" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fertig" }));
+    expect(sheet).not.toHaveAttribute("open");
+    expect(opener).toHaveFocus();
+    await user.click(opener);
+    expect(sheet).toHaveAttribute("open");
+    await user.keyboard("{Escape}");
+    expect(sheet).not.toHaveAttribute("open");
+    expect(opener).toHaveFocus();
   });
 
-  it("startet einen Text und bietet bei angefangener Übung Fortsetzen und Neu beginnen an", async () => {
+  it("sucht im Titel und in der Bezeichnung eines Schwerpunkts", async () => {
+    const user = userEvent.setup();
+    setup();
+    const search = screen.getByRole("searchbox", { name: "Text suchen" });
+    await user.type(search, first.title.toUpperCase());
+    expect(count()).toBeGreaterThanOrEqual(1);
+    expect(card(first.title)).toBeInTheDocument();
+    await user.clear(search);
+    await user.type(search, "dehnungs");
+    expect(count()).toBe(
+      TEXTBOX_TEXTS.filter(
+        (t) =>
+          t.phenomena.includes("dehnungs-h") ||
+          t.title.toLowerCase().includes("dehnungs"),
+      ).length,
+    );
+  });
+
+  it("entfernt aktive Filter einzeln und alle zusammen", async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(screen.getByRole("button", { name: "Mittel" }));
+    await user.click(screen.getByRole("button", { name: "Neu" }));
+    expect(
+      screen.getByRole("button", { name: "Filter „Mittel“ entfernen" }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Filter „Mittel“ entfernen" }),
+    );
+    expect(screen.getByRole("button", { name: "Mittel" })).not.toHaveAttribute(
+      "aria-pressed",
+    );
+    expect(count()).toBe(total - 1);
+    await user.click(screen.getByRole("button", { name: "Alle entfernen" }));
+    expect(count()).toBe(total);
+    expect(
+      screen.queryByRole("button", { name: /Filter .* entfernen/ }),
+    ).toBeNull();
+  });
+
+  it("zeigt den leeren Zustand und setzt die Filter zurück", async () => {
+    const user = userEvent.setup();
+    setup();
+    const other = first.difficulty === "schwer" ? "Leicht" : "Schwer";
+    await user.click(screen.getByRole("button", { name: other }));
+    await user.click(screen.getByRole("button", { name: "Gemeistert" }));
+    expect(
+      screen.getByText("Kein Text passt zu diesen Filtern."),
+    ).toBeVisible();
+    await user.click(
+      screen.getByRole("button", { name: "Filter zurücksetzen" }),
+    );
+    expect(count()).toBe(total);
+  });
+
+  it("startet einen Text über die ganze Karte", async () => {
     const user = userEvent.setup();
     const handlers = setup();
     await user.click(
@@ -342,27 +439,43 @@ describe("LibraryScreen", () => {
     expect(handlers.onDetails).toHaveBeenCalledWith(first.id);
   });
 
-  it("markiert angefangene Texte und zeigt die Fortsetzen-Auswahl", async () => {
+  it("setzt über „Weitermachen“ direkt fort und markiert offene Karten", async () => {
     const user = userEvent.setup();
     const openEntry: LibraryEntry = {
       ...entries[2]!,
-      open: {
-        id: "x",
-        textId: third.id,
-        difficulty: third.difficulty,
-        status: "laufend",
-        seed: "x",
-        startedAt: "2026-10-08T08:00:00.000Z",
-        updatedAt: "2026-10-08T08:00:00.000Z",
-        rounds: [result(1, []), result(1, [])],
-      },
+      open: openSession(third.id, 1),
+    };
+    const handlers = setup({
+      entries: [openEntry, entries[0]!],
+    });
+    const section = screen.getByRole("region", { name: "Weitermachen" });
+    expect(section).toHaveTextContent("Durchgang 2 von 4");
+    await user.click(
+      within(section).getByRole("button", {
+        name: `${third.title} fortsetzen`,
+      }),
+    );
+    expect(handlers.onResume).toHaveBeenCalledWith(third.id);
+    expect(handlers.onStart).not.toHaveBeenCalled();
+    const openCard = card(third.title);
+    expect(openCard).toHaveTextContent("Durchgang 2 offen");
+    await user.click(
+      screen.getByRole("button", { name: `${third.title} weiterüben` }),
+    );
+    expect(handlers.onStart).toHaveBeenCalledWith(third.id);
+  });
+
+  it("zeigt Hinweis und Fortsetzen-Auswahl", async () => {
+    const user = userEvent.setup();
+    const openEntry: LibraryEntry = {
+      ...entries[2]!,
+      open: openSession(third.id, 2),
     };
     const handlers = setup({
       entries: [openEntry],
       pending: openEntry,
       notice: "Hinweis",
     });
-    expect(screen.getByText("Angefangen")).toBeInTheDocument();
     expect(screen.getByText("Hinweis")).toBeInTheDocument();
     const group = screen.getByRole("group", { name: "Angefangene Übung" });
     expect(group).toHaveTextContent("Durchgang 3 von 4");
@@ -374,5 +487,22 @@ describe("LibraryScreen", () => {
     expect(handlers.onResume).toHaveBeenCalledWith(third.id);
     expect(handlers.onRestart).toHaveBeenCalledWith(third.id);
     expect(handlers.onCancelPending).toHaveBeenCalledOnce();
+  });
+
+  it("übernimmt einen Schwerpunkt aus dem Wortspeicher als Filter", () => {
+    setup({ initialPhenomenon: "ie" });
+    expect(count()).toBe(
+      TEXTBOX_TEXTS.filter((t) => t.phenomena.includes("ie")).length,
+    );
+    expect(
+      screen.getByRole("button", { name: "Filter „Wörter mit ie“ entfernen" }),
+    ).toBeInTheDocument();
+  });
+
+  it("verweist auf den Laufzettel", () => {
+    setup();
+    expect(
+      screen.getByRole("link", { name: "Laufzettel ansehen und drucken" }),
+    ).toBeInTheDocument();
   });
 });

@@ -122,7 +122,7 @@ describe("TextboxApp", () => {
       screen.getByRole("button", { name: "Anderen Text wählen" }),
     );
     const row = (
-      await screen.findByRole("heading", { name: text.title })
+      await screen.findByRole("heading", { name: new RegExp(text.title) })
     ).closest("li")!;
     expect(row).toHaveTextContent("1 Übung");
     expect(row).toHaveTextContent("Bestwert: 100 %");
@@ -299,9 +299,14 @@ describe("TextboxApp", () => {
       expect(
         await screen.findByText(/noch keinen passenden Text/),
       ).toBeInTheDocument();
-      expect(screen.getByLabelText("Schwerpunkt")).toHaveValue(
-        "doppelkonsonanten",
-      );
+      expect(
+        screen.getByRole("button", { name: "Schwerpunkt · 1" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: "Filter „Doppelkonsonanten“ entfernen",
+        }),
+      ).toBeInTheDocument();
     });
 
     it("ignoriert ungültige Parameter", async () => {
@@ -312,7 +317,9 @@ describe("TextboxApp", () => {
           name: "Passende Texte zu deinen Wörtern",
         }),
       ).not.toBeInTheDocument();
-      expect(screen.getByLabelText("Schwerpunkt")).toHaveValue("alle");
+      expect(
+        screen.getByRole("button", { name: "Schwerpunkt" }),
+      ).toBeInTheDocument();
     });
 
     async function finishWith(

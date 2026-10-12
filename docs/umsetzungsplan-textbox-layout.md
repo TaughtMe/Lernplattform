@@ -372,7 +372,7 @@ A → B → C → D → E → F. C und D hängen beide nur an A und B; D vor E, 
 
 - [x] Paket A: Vorlage, Referenzzustände, Beispieldaten (Katalog-Zuordnung kommt mit den Ansichten in C–E)
 - [x] Paket B: `repeatRound`, Stand, Filter, Fließtext der Kontrolle
-- [ ] Paket C: Auswahl 9b/9c
+- [x] Paket C: Auswahl 9b/9c
 - [ ] Paket D: Heft 9d/9f, Durchgang wiederholen, Navigation mobil
 - [ ] Paket E: Vollbild 9e
 - [ ] Paket F: Browser-/Axe-Tests, Dokumentation

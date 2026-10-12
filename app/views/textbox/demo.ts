@@ -8,10 +8,17 @@
  * nur hier; im Produkt stehen sie in `TEXTBOX_PHENOMENON_LABELS`.
  */
 import type { WordResult } from "../../../src/domain/text-compare";
+import type { TextboxTextSummary } from "../../../src/domain/textbox-progress";
+import type {
+  TextboxRoundResult,
+  TextboxSession,
+} from "../../../src/domain/textbox-session";
 import type {
   TextboxDifficulty,
   TextboxPhenomenon,
+  TextboxText,
 } from "../../../src/domain/textbox-text";
+import type { LibraryEntry } from "./library-screen";
 
 export const DEMO_PHENOMENON_LABELS: Record<TextboxPhenomenon, string> = {
   doppelkonsonanten: "Doppelkonsonanten",
@@ -259,3 +266,68 @@ export const DEMO_FREE_RESULTS: readonly WordResult[] = DEMO_TOKENS.map(
     return gapResult(token);
   },
 );
+
+/** Beispieleinträge für die Auswahl (9b/9c): Texte, Bestwerte und offene Einheiten der Vorlage. */
+export function demoLibraryEntries(): LibraryEntry[] {
+  return DEMO_LIBRARY.map((entry, index) => {
+    const id = `TXT-${String(900 + index)}`;
+    const text: TextboxText = {
+      id,
+      title: entry.title,
+      difficulty: entry.difficulty,
+      phenomena: [...entry.phenomena],
+      genre: "alltag",
+      text: DEMO_TEXT,
+      targetWords: [...DEMO_TARGET_WORDS],
+      usage: ["frei"],
+    };
+    const summary: TextboxTextSummary | undefined =
+      entry.count > 0
+        ? {
+            textId: id,
+            sessions: entry.count,
+            ...(entry.best === null ? {} : { bestPercent: entry.best }),
+            history: [],
+          }
+        : undefined;
+    const open: TextboxSession | undefined = entry.open
+      ? {
+          id: `demo-${id}`,
+          textId: id,
+          difficulty: entry.difficulty,
+          status: "laufend",
+          seed: id,
+          startedAt: "2026-10-12T08:00:00.000Z",
+          updatedAt: "2026-10-12T08:00:00.000Z",
+          rounds: Array.from({ length: entry.open - 1 }, (_, k) =>
+            demoRoundResult((k + 1) as 1 | 2 | 3),
+          ),
+        }
+      : undefined;
+    return { text, summary, open };
+  });
+}
+
+function demoRoundResult(round: 1 | 2 | 3): TextboxRoundResult {
+  return {
+    round,
+    blanked: [],
+    words: [],
+    score: {
+      percent: 0,
+      correct: 0,
+      total: 0,
+      extra: 0,
+      byKind: {
+        richtig: 0,
+        falsch: 0,
+        "gross-klein": 0,
+        fehlt: 0,
+        zusaetzlich: 0,
+      },
+      punctuationHints: 0,
+    },
+    memorizeMs: 0,
+    writingMs: 0,
+  };
+}

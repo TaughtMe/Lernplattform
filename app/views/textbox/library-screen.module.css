@@ -1,0 +1,971 @@
+/*
+ * Auswahl der Texte: Design 9b (Desktop) und 9c (mobil). Maße aus
+ * docs/design/lernraum-ui.dc.html, Turn 9. Umgeschaltet wird über die
+ * Container-Abfrage `student-main` (ab 900 px), nicht per JavaScript.
+ */
+.screen {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 22px 0 18px;
+  color: var(--ink);
+  font-family: var(--font);
+}
+.screen *,
+.screen *::before,
+.screen *::after {
+  box-sizing: border-box;
+}
+.screen > * {
+  flex: none;
+}
+
+/* Hilfselement: zeigt per Container-Abfrage, ob die Desktop-Fassung gilt. */
+.probe {
+  position: absolute;
+  display: none;
+}
+
+/* ---- Kopf ---- */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 18px;
+}
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.title:focus {
+  outline: none;
+}
+.title:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.search {
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  border: 1.5px solid var(--line2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.search:focus {
+  border-color: var(--accent);
+}
+.search:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- Hinweise (Notice, Fortsetzen-Frage, Vorschläge) ---- */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+.screen > :global(.ui-notice) {
+  margin: 0 18px;
+}
+.noticeTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.noticeText {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--ink2);
+}
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.suggestion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 14px;
+}
+.suggestionTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ---- Weitermachen (nur Desktop) ---- */
+.resume {
+  display: none;
+}
+.resumeTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.resumeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.resumeCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+.resumeText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.resumeName {
+  font-size: 17px;
+  font-weight: 700;
+}
+.resumeSub {
+  font-size: 13px;
+  color: var(--ink2);
+}
+.resumeButton {
+  grid-row: span 2;
+  grid-column: 2;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+.resumeProgress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.segments {
+  display: flex;
+  gap: 4px;
+  width: 150px;
+}
+.segDone,
+.segNow,
+.segTodo {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+}
+.segDone {
+  background: var(--good);
+}
+.segNow {
+  background: var(--accent);
+}
+.segTodo {
+  background: var(--line2);
+}
+.resumeRound {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+
+/* ---- Filter ---- */
+.filterArea {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.filterBar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.filterBar::-webkit-scrollbar {
+  display: none;
+}
+.filterGroup {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  scroll-snap-align: start;
+}
+/* Mobil: Stufe, Schwerpunkt, Stand. */
+.levelGroup {
+  order: 1;
+}
+.phenomenonGroup {
+  position: relative;
+  order: 2;
+}
+.standGroup {
+  order: 3;
+}
+.filterLabel {
+  display: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line2);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.levelShort {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  padding: 0 4px 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.dotButtons {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 6px;
+}
+/* Punkt klein, Trefferfläche mindestens 44 × 44 px. */
+.dotButton {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -1px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+}
+.levelDot,
+.levelDotOn {
+  display: block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.levelDot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.8px var(--line2);
+}
+.levelDotOn {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1.8px var(--accent);
+}
+.segment {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  margin: -1px 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.segment[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 700;
+}
+.dotButton:focus-visible,
+.segment:focus-visible,
+.phenomenonButton:focus-visible,
+.chip:focus-visible,
+.clearAll:focus-visible,
+.emptyButton:focus-visible,
+.sheetDone:focus-visible,
+.history:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.phenomenonButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px 0 16px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.phenomenonActive {
+  border-color: var(--ink);
+}
+.count {
+  margin: 0;
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink2);
+  order: 3;
+}
+
+/* Schwerpunkt-Feld: mobil als Blatt von unten (modal), ab 900 px als Aufklappfeld. */
+.sheet {
+  position: fixed;
+  inset: auto 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 85dvh;
+  margin: 0;
+  padding: 10px 14px 26px;
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font);
+  overflow-y: auto;
+}
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sheet:focus-visible {
+  outline: none;
+}
+.sheet::backdrop {
+  background: rgba(33, 31, 27, 0.38);
+}
+.sheetHandle {
+  align-self: center;
+  width: 40px;
+  height: 4px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: var(--line2);
+}
+.sheetTitle {
+  padding: 0 8px 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.sheetList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.option:hover {
+  background: var(--surface2);
+}
+.optionInput {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  opacity: 0;
+}
+.optionBox {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--line2);
+  border-radius: 7px;
+  color: var(--bg);
+}
+.optionBox > svg {
+  display: none;
+}
+.optionInput:checked + .optionBox {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+.optionInput:checked + .optionBox > svg {
+  display: block;
+}
+.optionInput:focus-visible + .optionBox {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.optionLabel {
+  flex: 1;
+}
+.optionCount {
+  font-size: 13px;
+  color: var(--ink2);
+}
+.sheetDone {
+  min-height: 52px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--bg);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---- Streifen mit aktiven Filtern ---- */
+/* 44 px hohe Trefferfläche, aber 36 px Platz im Layout. */
+.strip {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  margin: -4px 0;
+  padding: 0 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.strip::-webkit-scrollbar {
+  display: none;
+}
+.peek {
+  position: relative;
+  flex: none;
+  width: 58px;
+  height: 36px;
+  margin-right: 6px;
+  overflow: hidden;
+}
+.peekAnimal {
+  position: absolute;
+  bottom: 1px;
+  left: 7px;
+  width: 44px;
+  height: 50px;
+  object-fit: contain;
+  object-position: bottom;
+  transform-origin: 50% 100%;
+  animation: peek 7s ease-in-out infinite;
+}
+.peekLine {
+  position: absolute;
+  right: 6px;
+  bottom: 0;
+  left: 6px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: var(--ink3);
+  box-shadow: 0 1px 0 var(--surface);
+}
+@keyframes peek {
+  0%,
+  34% {
+    transform: translateY(110%) rotate(0);
+  }
+  42% {
+    transform: translateY(36%) rotate(0);
+  }
+  50% {
+    transform: translateY(36%) rotate(-9deg);
+  }
+  58% {
+    transform: translateY(30%) rotate(7deg);
+  }
+  64% {
+    transform: translateY(36%) rotate(0);
+  }
+  72%,
+  100% {
+    transform: translateY(110%) rotate(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .peekAnimal {
+    transform: translateY(36%);
+    animation: none;
+  }
+}
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chipFace {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  background: var(--surface2);
+}
+.clearAll {
+  display: none;
+  flex: none;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---- Kartenraster ---- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0 18px;
+  list-style: none;
+}
+.item {
+  display: flex;
+  min-width: 0;
+}
+.cardItem {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  min-height: 126px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.cardItem:hover {
+  border-color: var(--accent);
+}
+.cardItem:has(:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+.levelLine {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.dots {
+  display: flex;
+  flex: none;
+  gap: 3px;
+}
+.dotOn,
+.dotOff {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.dotOn {
+  background: var(--ink);
+}
+.dotOff {
+  background: var(--line2);
+}
+.pill {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pillOpen {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.pillDone {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.pillBest {
+  background: var(--surface2);
+  color: var(--ink2);
+}
+.pillNew {
+  background: transparent;
+  color: var(--ink2);
+  box-shadow: inset 0 0 0 1px var(--line2);
+}
+.cardTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+/* Gestreckter Knopf: der ganze Kartenbereich ist klickbar. */
+.cardButton {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cardButton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.cardButton:focus-visible {
+  outline: none;
+}
+.tags {
+  display: none;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tag {
+  padding: 4px 9px;
+  border-radius: 8px;
+  background: var(--surface2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink2);
+}
+.best {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 2px;
+}
+.bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--good);
+}
+.bestValue {
+  width: 44px;
+  font-family: var(--font-fun);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: right;
+}
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--ink2);
+}
+.footText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history {
+  position: relative;
+  z-index: 1;
+  align-self: flex-end;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -6px -8px -10px 0;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---- Leer und Fuß ---- */
+.empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin: 0 18px;
+  padding: 28px;
+  border: 1.5px dashed var(--line2);
+  border-radius: 18px;
+  font-size: 15px;
+  color: var(--ink2);
+}
+.emptyText {
+  margin: 0;
+}
+.emptyButton {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.foot {
+  display: flex;
+  padding: 0 18px;
+}
+
+/* ---- Desktop (9b) ---- */
+@container student-main (min-width: 900px) {
+  .screen {
+    gap: 24px;
+    min-height: 780px;
+    padding: 30px 40px 40px;
+  }
+  .probe {
+    display: block;
+  }
+  .head {
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+    padding: 0;
+  }
+  .title {
+    flex: 1;
+    font-size: 28px;
+  }
+  .search {
+    flex: none;
+    width: 360px;
+    font-size: 15px;
+  }
+  .card,
+  .screen > :global(.ui-notice) {
+    margin: 0;
+  }
+  .resume {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .filterArea {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "bar count"
+      "strip strip";
+    column-gap: 18px;
+    row-gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .filterBar {
+    grid-area: bar;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 0;
+    overflow: visible;
+  }
+  .levelGroup,
+  .standGroup,
+  .phenomenonGroup {
+    order: 0;
+  }
+  .filterLabel {
+    display: inline;
+  }
+  .levelShort {
+    display: none;
+  }
+  .dotButtons {
+    padding: 0 6px;
+  }
+  .phenomenonButton {
+    height: 48px;
+  }
+  .count {
+    grid-area: count;
+    align-self: center;
+    padding: 0;
+    order: 0;
+  }
+  .strip {
+    grid-area: strip;
+    padding: 0;
+  }
+  .clearAll {
+    display: inline-flex;
+  }
+  .sheet {
+    position: absolute;
+    inset: 56px auto auto 0;
+    z-index: 5;
+    width: 320px;
+    max-height: none;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px var(--shadow);
+    overflow: visible;
+  }
+  .sheetHandle,
+  .sheetTitle {
+    display: none;
+  }
+  .option {
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 14.5px;
+  }
+  .sheetDone {
+    min-height: 44px;
+    margin-top: 6px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding: 0;
+  }
+  .cardItem {
+    gap: 12px;
+    min-height: 0;
+    padding: 18px 20px;
+    border-radius: 20px;
+  }
+  .cardItem:hover {
+    box-shadow: 0 6px 18px var(--shadow);
+  }
+  .levelLine {
+    display: flex;
+  }
+  .pill {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .cardTitle {
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .tags {
+    display: flex;
+  }
+  .best {
+    display: flex;
+  }
+  .cardFoot {
+    display: none;
+  }
+  .empty,
+  .foot {
+    margin: 0;
+    padding-inline: 0;
+  }
+  .foot {
+    padding: 0;
+  }
+}
+@container student-main (min-width: 1180px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
