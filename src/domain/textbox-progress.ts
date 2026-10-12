@@ -28,6 +28,27 @@ type CompletedSession = TextboxSession & {
   finalPercent: number;
 };
 
+/** Ab diesem Bestwert (in Prozent) gilt ein Text als gemeistert. */
+export const TEXTBOX_MASTERED_PERCENT = 90;
+
+export type TextboxStand = "neu" | "begonnen" | "gemeistert";
+
+/**
+ * Stand eines Textes in der Auswahl: „gemeistert“ ab Bestwert 90 %, „begonnen“
+ * mit mindestens einer abgeschlossenen Übung oder einer angefangenen Einheit,
+ * sonst „neu“.
+ */
+export function textboxStand(
+  summary: TextboxTextSummary | undefined,
+  hasOpen: boolean,
+): TextboxStand {
+  if ((summary?.bestPercent ?? 0) >= TEXTBOX_MASTERED_PERCENT) {
+    return "gemeistert";
+  }
+  if ((summary?.sessions ?? 0) > 0 || hasOpen) return "begonnen";
+  return "neu";
+}
+
 /** Nur abgeschlossene Einheiten zählen für Bestwert, Verlauf und Statistik. */
 function completedOnly(sessions: TextboxSession[]): CompletedSession[] {
   return sessions.filter(

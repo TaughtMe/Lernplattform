@@ -348,6 +348,22 @@ export function nextRound(state: TextboxRunState): TextboxRunState {
   };
 }
 
+/** Verwirft das Ergebnis des laufenden Durchgangs und beginnt ihn neu (gleiche Lücken). */
+export function repeatRound(state: TextboxRunState): TextboxRunState {
+  requirePhase(state, "review");
+  const last = state.rounds[state.rounds.length - 1];
+  if (last === undefined || last.round !== state.round) {
+    throw new Error("Das Ergebnis des laufenden Durchgangs fehlt.");
+  }
+  const next: TextboxRunState = {
+    ...state,
+    phase: "memorize",
+    rounds: state.rounds.slice(0, -1),
+  };
+  delete next.memorizeMs;
+  return next;
+}
+
 /** Hauptwert der Einheit: das Ergebnis aus Durchgang 4. */
 export function finalPercent(state: TextboxRunState): number | undefined {
   return state.rounds.find((round) => round.round === 4)?.score.percent;

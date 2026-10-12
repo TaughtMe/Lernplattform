@@ -278,3 +278,35 @@ export function scoreWords(
     punctuationHints,
   };
 }
+
+/**
+ * Ergebnisse von Durchgang 4 als Fließtext: jedes Wort mit den Satzzeichen, die
+ * im Original direkt folgen. Die Satzzeichen hängen am Wort des Originals
+ * (`expectedIndex`); zusätzlich geschriebene Wörter bekommen keine.
+ */
+export function reviewSequence(
+  tokens: readonly LayoutToken[],
+  words: readonly WordResult[],
+): { result: WordResult; trailing: string }[] {
+  const trailingByWord = new Map<number, string>();
+  let lastWord: number | undefined;
+  for (const token of tokens) {
+    if (token.kind === "word") {
+      lastWord = token.index;
+    } else if (lastWord !== undefined && !token.spaceBefore) {
+      trailingByWord.set(
+        lastWord,
+        (trailingByWord.get(lastWord) ?? "") + token.text,
+      );
+    } else {
+      lastWord = undefined;
+    }
+  }
+  return words.map((result) => ({
+    result,
+    trailing:
+      result.expectedIndex === undefined
+        ? ""
+        : (trailingByWord.get(result.expectedIndex) ?? ""),
+  }));
+}

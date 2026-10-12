@@ -3,6 +3,7 @@ import {
   MAX_STORED_INPUT_LENGTH,
   alignWords,
   layoutText,
+  reviewSequence,
   compareGaps,
   comparePunctuation,
   scoreWords,
@@ -250,5 +251,52 @@ describe("lange Eingaben", () => {
     const [right] = alignWords([long], [long]);
     expect(right).toMatchObject({ kind: "richtig" });
     expect(right?.actual).toHaveLength(MAX_STORED_INPUT_LENGTH);
+  });
+});
+
+describe("reviewSequence", () => {
+  const original = "Wir gehen, essen Eis. Dann: heim!";
+  const tokens = layoutText(original);
+  const originalWords = wordsOf(tokenizeText(original));
+  const sequence = (typed: string) =>
+    reviewSequence(
+      tokens,
+      alignWords(originalWords, wordsOf(tokenizeText(typed))),
+    ).map(({ result, trailing }) => [
+      result.expected ?? `+${result.actual}`,
+      trailing,
+    ]);
+
+  it("hängt Komma und Punkt an das Wort davor", () => {
+    expect(sequence(original)).toEqual([
+      ["Wir", ""],
+      ["gehen", ","],
+      ["essen", ""],
+      ["Eis", "."],
+      ["Dann", ":"],
+      ["heim", "!"],
+    ]);
+  });
+
+  it("lässt das Satzzeichen beim fehlenden Wort stehen", () => {
+    expect(sequence("Wir gehen, essen. Dann: heim!")).toContainEqual([
+      "Eis",
+      ".",
+    ]);
+  });
+
+  it("gibt zusätzlichen Wörtern am Ende keine Satzzeichen", () => {
+    const result = sequence("Wir gehen essen Eis Dann heim heute");
+    expect(result[result.length - 1]).toEqual(["+heute", ""]);
+    expect(result[result.length - 2]).toEqual(["heim", "!"]);
+  });
+
+  it("ignoriert Satzzeichen mit Leerraum davor", () => {
+    const spaced = layoutText("Hallo - Welt.");
+    const words = alignWords(["Hallo", "Welt"], ["Hallo", "Welt"]);
+    expect(reviewSequence(spaced, words).map((e) => e.trailing)).toEqual([
+      "",
+      ".",
+    ]);
   });
 });

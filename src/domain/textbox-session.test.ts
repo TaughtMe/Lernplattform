@@ -7,6 +7,7 @@ import {
   finishMemorize,
   memorizeSeconds,
   nextRound,
+  repeatRound,
   runFromSession,
   sessionFromRun,
   startRun,
@@ -179,6 +180,62 @@ describe("Zustandsautomat", () => {
     const state = startRun(text, "run-5", ["Wiese"]);
     expect(state.extraTargets).toEqual(["Wiese"]);
     expect(startRun(text, "run-6", []).extraTargets).toBeUndefined();
+  });
+});
+
+describe("repeatRound", () => {
+  function reviewed(round: 1 | 2 | 3 | 4, id = "run-repeat") {
+    let state = startRun(text, id);
+    for (let r = 1; r <= round; r += 1) {
+      state = finishMemorize(state, 5000);
+      state = submitRound(state, text, perfectInput(state), 8000);
+      if (r < round) state = nextRound(state);
+    }
+    return state;
+  }
+
+  it("leert in Durchgang 1 die Ergebnisse", () => {
+    const state = repeatRound(reviewed(1));
+    expect(state).toMatchObject({ round: 1, phase: "memorize", rounds: [] });
+    expect(state).not.toHaveProperty("memorizeMs");
+  });
+
+  it("behält in Durchgang 3 die zwei früheren Ergebnisse", () => {
+    const state = repeatRound(reviewed(3));
+    expect(state.round).toBe(3);
+    expect(state.phase).toBe("memorize");
+    expect(state.rounds.map((r) => r.round)).toEqual([1, 2]);
+  });
+
+  it("führt in Durchgang 4 vor „Ergebnis ansehen“ zurück zum Merken", () => {
+    const state = repeatRound(reviewed(4));
+    expect(state).toMatchObject({ round: 4, phase: "memorize" });
+    expect(state.rounds.map((r) => r.round)).toEqual([1, 2, 3]);
+  });
+
+  it("wirft außerhalb der Kontrolle", () => {
+    const start = startRun(text, "run-repeat-phase");
+    expect(() => repeatRound(start)).toThrow();
+    expect(() => repeatRound(finishMemorize(start, 0))).toThrow();
+  });
+
+  it("wirft, wenn das letzte Ergebnis nicht zum Durchgang gehört", () => {
+    const state = reviewed(2);
+    expect(() => repeatRound({ ...state, round: 3 })).toThrow();
+    expect(() => repeatRound({ ...state, rounds: [] })).toThrow();
+  });
+
+  it("liefert nach erneutem Durchlauf dieselben Lücken", () => {
+    const first = reviewed(2);
+    const again = submitRound(
+      finishMemorize(repeatRound(first), 1000),
+      text,
+      perfectInput(first),
+      2000,
+    );
+    expect(again.rounds).toHaveLength(2);
+    expect(again.rounds[1]!.blanked).toEqual(first.rounds[1]!.blanked);
+    expect(again.rounds[1]!.memorizeMs).toBe(1000);
   });
 });
 

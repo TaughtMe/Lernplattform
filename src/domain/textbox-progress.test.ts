@@ -6,6 +6,8 @@ import {
   reflectionQuestions,
   summarizeTextboxOverall,
   summarizeTextboxProgress,
+  textboxStand,
+  TEXTBOX_MASTERED_PERCENT,
 } from "./textbox-progress";
 import type { TextboxRoundResult, TextboxSession } from "./textbox-session";
 
@@ -199,5 +201,27 @@ describe("reflectionQuestions", () => {
       "Ist dein Ergebnis bei jeder Übung gestiegen?",
       "Was fällt dir an deinem Diagramm auf?",
     ]);
+  });
+});
+
+describe("textboxStand", () => {
+  const summaryFor = (percent: number) =>
+    summarizeTextboxProgress([session("s", "TXT-001", percent, 1)]).get(
+      "TXT-001",
+    );
+
+  it("nennt einen Text ohne Übung und ohne offene Einheit neu", () => {
+    expect(textboxStand(undefined, false)).toBe("neu");
+  });
+
+  it("nennt einen Text mit nur einer offenen Einheit begonnen", () => {
+    expect(textboxStand(undefined, true)).toBe("begonnen");
+  });
+
+  it("trennt begonnen und gemeistert bei 90 Prozent", () => {
+    expect(TEXTBOX_MASTERED_PERCENT).toBe(90);
+    expect(textboxStand(summaryFor(89), false)).toBe("begonnen");
+    expect(textboxStand(summaryFor(90), false)).toBe("gemeistert");
+    expect(textboxStand(summaryFor(100), true)).toBe("gemeistert");
   });
 });
