@@ -13,6 +13,8 @@ Verbindliche Gestaltungsgrundlage seit Entscheidung 47 (Vault, 29.09.2026). Seit
 
 Vergleich: `npm run test:design` rendert jede umgesetzte Ansicht in der Größe der Vorlage und vergleicht sie mit dem Referenzbild.
 
+Der Test und das Render-Skript bilden die Systemschriften der Schaltflächen (`-apple-system`, `BlinkMacSystemFont`, „Segoe UI“) auf Liberation Sans ab, wie die Vorlage unter Linux. Der Vergleich ist damit unabhängig vom Rechner (Mac, Cloud-Container mit Inter-Umleitung, CI). Die neun Bilder aus Commit `3c08ab4` (3c, 3d, 3d-dark, 5c-import, 5c-live, 5c-live-dark, 5c-lobby, 5c-options, 5d-import) stammen aus der Ansicht, wie dort begründet, und wurden mit dieser Schrift neu aufgenommen.
+
 | Screen              | Inhalt                                                                                 | Ziel-Route                 |
 | ------------------- | -------------------------------------------------------------------------------------- | -------------------------- |
 | 1a–1c               | frühe Einstiegsvarianten (Referenz für 2a/2b)                                          | –                          |

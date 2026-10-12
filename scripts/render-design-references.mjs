@@ -87,6 +87,13 @@ await page.addStyleTag({
   content:
     "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}",
 });
+// Bedienelemente der Vorlage haben keine eigene Schrift. Fest auf Arial-Breiten
+// (Liberation Sans), damit das Ergebnis nicht von der fontconfig des Rechners
+// abhängt.
+await page.addStyleTag({
+  content:
+    'button,input,select,textarea{font-family:"Liberation Sans",Arial,sans-serif}',
+});
 
 await mkdir(outDir, { recursive: true });
 for (const screen of screens) {
