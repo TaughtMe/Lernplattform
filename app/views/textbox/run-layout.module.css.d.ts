@@ -25,6 +25,7 @@ declare const styles: {
   readonly paper: string;
   readonly paperFree: string;
   readonly primary: string;
+  readonly probe: string;
   readonly run: string;
   readonly score: string;
   readonly scoreBar: string;
@@ -45,6 +46,12 @@ declare const styles: {
   readonly timerText: string;
   readonly title: string;
   readonly titles: string;
+  readonly toggle: string;
+  readonly vbClose: string;
+  readonly vbHead: string;
+  readonly vbRound: string;
+  readonly vbTitle: string;
+  readonly vbTitles: string;
   readonly vollbild: string;
 };
 export default styles;

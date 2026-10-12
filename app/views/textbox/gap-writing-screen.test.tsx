@@ -27,6 +27,51 @@ function setup(onSubmit = vi.fn()) {
   };
 }
 
+describe("GapWritingScreen: Vollbild", () => {
+  const props = {
+    round: 1 as const,
+    textTitle: "Test",
+    textMeta: "Leicht · Test",
+    onBack: () => undefined,
+    tokens,
+    blanked,
+    onSubmit: () => undefined,
+  };
+
+  it("behält eingegebene Lücken und den Fokus beim Umschalten", async () => {
+    const user = userEvent.setup();
+    const onToggleLayout = vi.fn();
+    const { rerender } = render(
+      <GapWritingScreen
+        {...props}
+        layout="heft"
+        onToggleLayout={onToggleLayout}
+      />,
+    );
+    await user.keyboard("Hund ");
+    await user.click(screen.getByRole("button", { name: "Vollbild" }));
+    expect(onToggleLayout).toHaveBeenCalledOnce();
+    rerender(
+      <GapWritingScreen
+        {...props}
+        layout="vollbild"
+        onToggleLayout={onToggleLayout}
+      />,
+    );
+    const gaps = screen.getAllByRole("textbox") as HTMLInputElement[];
+    expect(gaps[0]).toHaveValue("Hund");
+    expect(document.querySelector("section[data-layout]")).toHaveAttribute(
+      "data-layout",
+      "vollbild",
+    );
+    const back = screen.getByRole("button", { name: "Vollbild beenden" });
+    expect(back).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Zurück zur Auswahl" }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("GapWritingScreen", () => {
   it("zählt ausgefüllte Lücken und führt mit „Zurück zur Auswahl“ zurück", async () => {
     const user = userEvent.setup();

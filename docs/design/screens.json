@@ -512,7 +512,8 @@
       "height": 800,
       "canvas": ["button[data-r=\"1\"][data-s=\"1\"]"],
       "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
-      "status": "offen"
+      "status": "umgesetzt",
+      "ready": "[data-layout=\"vollbild\"]"
     },
     {
       "id": "9e-free",
@@ -521,7 +522,8 @@
       "height": 859,
       "canvas": ["button[data-r=\"4\"][data-s=\"1\"]"],
       "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
-      "status": "offen"
+      "status": "umgesetzt",
+      "ready": "[data-layout=\"vollbild\"]"
     },
     {
       "id": "9f",

@@ -43,6 +43,7 @@ import { TextDetailScreen } from "../views/textbox/text-detail-screen";
 import { ReviewScreen } from "../views/textbox/review-screen";
 import { EmptyState, Notice } from "../ui/primitives";
 import { useTextbox, type TextboxRepository } from "./use-textbox";
+import { useTextboxLayout } from "./use-textbox-layout";
 
 type Run = {
   text: TextboxText;
@@ -104,8 +105,10 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
     setRunState(next);
   }
 
-  // Während einer Übung ist die Navigation mobil weg (9f); am Desktop bleibt sie.
-  useFullscreenFrame(run !== null, "mobile");
+  // Während einer Übung ist die Navigation mobil weg (9f); am Desktop bleibt
+  // sie im Heft (9d) und fehlt im Vollbild (9e).
+  const [layout, chooseLayout] = useTextboxLayout();
+  useFullscreenFrame(run !== null, layout === "vollbild" ? "all" : "mobile");
 
   const textId = run?.text.id;
   const phase = run?.state.phase;
@@ -346,7 +349,9 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
 
   const { state, text } = run;
   const frame = {
-    layout: "heft" as const,
+    layout,
+    onToggleLayout: () =>
+      chooseLayout(layout === "vollbild" ? "heft" : "vollbild"),
     textTitle: text.title,
     textMeta: `${TEXTBOX_DIFFICULTY_LABELS[text.difficulty]} · ${
       TEXTBOX_PHENOMENON_LABELS[text.phenomena[0]!]

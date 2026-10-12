@@ -97,6 +97,13 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
       <TextboxPhoneRun>{run}</TextboxPhoneRun>
     );
   }
+  if (screen === "9e") {
+    return (
+      <TextboxMain>
+        <TextboxRun variant={id.split("-")[1] ?? ""} layout="vollbild" />
+      </TextboxMain>
+    );
+  }
   if (screen === "5a" || screen === "5b") {
     const phase = STUDENT_PHASES.find((p) => p === variant) ?? "station";
     return (
@@ -140,10 +147,16 @@ function TextboxLibrary() {
 }
 
 /** Eingabe der Textbox mit dem Beispieltext der Vorlage (9d/9f); `variant` wählt den Schritt. */
-function TextboxRun({ variant }: { variant: string }) {
+function TextboxRun({
+  variant,
+  layout = "heft",
+}: {
+  variant: string;
+  layout?: "heft" | "vollbild";
+}) {
   const tokens = layoutText(DEMO_TEXT);
   const frame = {
-    layout: "heft" as const,
+    layout,
     textTitle: DEMO_TEXT_TITLE,
     textMeta: DEMO_TEXT_META,
     onBack: () => {},

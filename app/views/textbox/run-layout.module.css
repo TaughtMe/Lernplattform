@@ -13,6 +13,10 @@
   color: var(--ink);
   font-family: var(--font);
 }
+.probe {
+  position: absolute;
+  display: none;
+}
 .run *,
 .run *::before,
 .run *::after {
@@ -112,6 +116,28 @@
 .stepDone {
   background: var(--good-bg);
   color: var(--good);
+}
+
+/* Umschalter Heft/Vollbild: nur am Desktop. */
+.toggle {
+  display: none;
+  grid-area: toggle;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---- Inhalt ---- */
@@ -384,14 +410,20 @@
 
 /* ---- Desktop (9d) ---- */
 @container student-main (min-width: 900px) {
+  .probe {
+    display: block;
+  }
+  .toggle {
+    display: inline-flex;
+  }
   .run {
     gap: 18px;
     min-height: 0;
     padding: 28px 34px 34px;
   }
   .head {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas: "back titles steps";
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "back titles toggle steps";
     gap: 16px;
     padding: 0;
   }
@@ -552,7 +584,227 @@
   }
 }
 
-/* ---- Vollbild (9e): folgt mit Paket E ---- */
-.vollbild {
-  --layout: vollbild;
+/* ---- Vollbild (9e): nur ab 900 px (RunLayout schaltet per Messung um) ---- */
+.run.vollbild {
+  gap: 0;
+  min-height: 100dvh;
+  padding: 0;
+}
+.vbHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--line);
+}
+/* Wie in der Vorlage: 48 px Inhalt plus 1 px Rand. */
+.vbClose {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.vbClose:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.vbTitles {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.vbTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.vbRound {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink2);
+}
+.vollbild .steps {
+  gap: 6px;
+}
+.vollbild .step {
+  height: 36px;
+  padding: 0 13px;
+  font-size: 13px;
+}
+.vollbild .body {
+  flex: 1;
+  gap: 18px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 0 30px;
+}
+.vollbild .body > .title {
+  order: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.vollbild .stepName {
+  display: inline;
+}
+.vollbild .body > .hint {
+  order: 1;
+  max-width: 64ch;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.vollbild .body > .timer,
+.vollbild .body > .score {
+  order: 2;
+}
+.vollbild .body > .paper {
+  order: 3;
+}
+.vollbild .body > .note {
+  order: 4;
+}
+.vollbild .timer {
+  gap: 14px;
+}
+.vollbild .timerLong,
+.vollbild .timerShort {
+  display: none;
+}
+.vollbild .timerText {
+  font-family: var(--font-fun);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+}
+.vollbild .bar {
+  height: 6px;
+}
+.vollbild .score {
+  align-items: baseline;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.vollbild .scoreText {
+  display: block;
+  font-size: 15px;
+}
+.vollbild .scoreCount {
+  font: inherit;
+  color: inherit;
+}
+.vollbild .scoreBar {
+  display: none;
+}
+.vollbild .scorePercent {
+  order: -1;
+  font-size: 44px;
+}
+
+/* Text ohne Papier und ohne Linien. */
+.vollbild .paper {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+.vollbild .lined {
+  --lh: 52px;
+  padding: 6px 0;
+  font-size: 23px;
+  background-image: none;
+}
+.vollbild .mark {
+  margin: 0 -4px;
+  padding: 3px 4px;
+  border-radius: 6px;
+}
+.vollbild .ok,
+.vollbild .caseBox,
+.vollbild .missBox {
+  padding: 4px 7px;
+  border-radius: 8px;
+}
+.vollbild .given {
+  margin-right: 6px;
+}
+
+/* Lücken als Kästchen. */
+.vollbild .gap {
+  height: 40px;
+  margin: 0 2px;
+  padding: 0 7px;
+  border: 2px solid var(--line2);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 23px;
+  line-height: 40px;
+  vertical-align: baseline;
+}
+.vollbild .gap:focus {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  box-shadow: none;
+}
+
+/* Freies Schreiben: eigenständiges Blatt. */
+.vollbild .free {
+  --lh: 48px;
+  --rule-at: 39px;
+  --pad-top: 26px;
+  --margin-x: 54px;
+  min-height: 500px;
+  padding: 26px 36px 26px 76px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background-color: var(--surface);
+  box-shadow:
+    0 1px 0 var(--line),
+    0 4px 0 -1px var(--surface),
+    0 5px 0 -1px var(--line);
+  font-size: 22px;
+  resize: vertical;
+}
+
+/* Fußleiste über die ganze Breite. */
+.vollbild .actionBar {
+  position: sticky;
+  bottom: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.vollbild .footerStart {
+  font-size: 14px;
+  text-align: left;
+}
+.vollbild .actions {
+  flex-direction: row;
+  gap: 10px;
+  margin-left: auto;
+}
+.vollbild .button {
+  min-height: 52px;
+  padding: 0 28px;
+  border-radius: 16px;
+  font-size: 15px;
+}
+.vollbild .secondary {
+  padding: 0 22px;
 }

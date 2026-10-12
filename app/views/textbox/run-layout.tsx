@@ -1,4 +1,11 @@
-import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { Icon } from "../../ui/icons";
 import { cx } from "../parts/parts";
 import styles from "./run-layout.module.css";
@@ -61,48 +68,116 @@ export function RunLayout({
   textTitle,
   textMeta,
   onBack,
+  onToggleLayout,
   status,
   hint,
   children,
   footerStart,
   actions,
 }: RunLayoutProps) {
+  const probe = useRef<HTMLSpanElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const refocusToggle = useRef(false);
+  const [wide, setWide] = useState(false);
+  // Vollbild gibt es nur ab 900 px; darunter gilt immer das Heft (9f).
+  const full = layout === "vollbild" && wide;
+
+  useEffect(() => {
+    const element = probe.current;
+    if (!element) return;
+    const check = () => setWide(getComputedStyle(element).display !== "none");
+    check();
+    if (typeof ResizeObserver === "undefined" || !element.parentElement) {
+      return;
+    }
+    const observer = new ResizeObserver(check);
+    observer.observe(element.parentElement);
+    return () => observer.disconnect();
+  }, []);
+
+  // Der Fokus bleibt beim Umschalten auf dem Umschalter des neuen Layouts.
+  useEffect(() => {
+    if (refocusToggle.current) {
+      refocusToggle.current = false;
+      toggle.current?.focus();
+    }
+  }, [full]);
+
+  const title = (
+    <h1
+      id="textbox-title"
+      className={styles.title}
+      tabIndex={-1}
+      aria-label={`Durchgang ${round} von 4: ${TEXTBOX_STEPS[step]}`}
+    >
+      Durchgang {round} von 4
+      <span className={styles.stepName}>: {TEXTBOX_STEPS[step]}</span>
+    </h1>
+  );
+  const toggleButton = onToggleLayout ? (
+    <button
+      ref={toggle}
+      type="button"
+      className={styles.toggle}
+      onClick={() => {
+        refocusToggle.current = true;
+        onToggleLayout();
+      }}
+    >
+      {full ? "Vollbild beenden" : "Vollbild"}
+    </button>
+  ) : null;
+
   return (
     <section
-      className={cx(styles.run, layout === "vollbild" && styles.vollbild)}
-      data-layout={layout}
+      className={cx(styles.run, full && styles.vollbild)}
+      data-layout={full ? "vollbild" : "heft"}
       aria-labelledby="textbox-title"
     >
-      <header className={styles.head}>
-        <button
-          type="button"
-          className={styles.back}
-          aria-label="Zurück zur Auswahl"
-          onClick={onBack}
-        >
-          <Icon name="back" size={18} strokeWidth={2} />
-          <span className={styles.backLabel} aria-hidden="true">
-            Auswahl
-          </span>
-        </button>
-        <div className={styles.titles}>
-          <h1
-            id="textbox-title"
-            className={styles.title}
-            tabIndex={-1}
-            aria-label={`Durchgang ${round} von 4: ${TEXTBOX_STEPS[step]}`}
+      <span ref={probe} className={styles.probe} aria-hidden="true" />
+      {full ? (
+        <header className={styles.vbHead}>
+          <button
+            type="button"
+            className={styles.vbClose}
+            aria-label="Zurück zur Auswahl"
+            onClick={onBack}
           >
-            Durchgang {round} von 4
-            <span className={styles.stepName}>: {TEXTBOX_STEPS[step]}</span>
-          </h1>
-          <p className={styles.sub}>
-            {textTitle}
-            <span className={styles.subMeta}> · {textMeta}</span>
-          </p>
-        </div>
-        <StepList active={step} />
-      </header>
+            <Icon name="close" size={18} strokeWidth={2.2} />
+          </button>
+          <div className={styles.vbTitles}>
+            <p className={styles.vbTitle}>{textTitle}</p>
+            <p className={styles.vbRound}>Durchgang {round} von 4</p>
+          </div>
+          {toggleButton}
+          <StepList active={step} />
+        </header>
+      ) : (
+        <header className={styles.head}>
+          <button
+            type="button"
+            className={styles.back}
+            aria-label="Zurück zur Auswahl"
+            onClick={onBack}
+          >
+            <Icon name="back" size={18} strokeWidth={2} />
+            <span className={styles.backLabel} aria-hidden="true">
+              Auswahl
+            </span>
+          </button>
+          <div className={styles.titles}>
+            {title}
+            <p className={styles.sub}>
+              {textTitle}
+              <span className={styles.subMeta}> · {textMeta}</span>
+            </p>
+          </div>
+          {toggleButton}
+          <StepList active={step} />
+        </header>
+      )}
       <div className={styles.body}>
+        {full ? title : null}
         {status}
         <p className={styles.hint}>{hint}</p>
         {children}
