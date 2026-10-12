@@ -2,7 +2,7 @@
 
 Verbindliche Gestaltungsgrundlage seit Entscheidung 47 (Vault, 29.09.2026). Seit Entscheidung 48 wird die Oberfläche vom Design aus gebaut: [../umsetzungsplan-lernraum-ui-v2.md](../umsetzungsplan-lernraum-ui-v2.md).
 
-- `lernraum-ui.dc.html` + `support.js`: das Design-Canvas (Turns 1–8). Zum Öffnen im Browser werden React 18 und Babel von unpkg.com geladen; die Tiere kommen aus `public/animals`.
+- `lernraum-ui.dc.html` + `support.js`: das Design-Canvas (Turns 1–9). Zum Öffnen im Browser werden React 18 und Babel von unpkg.com geladen; die Tiere kommen aus `public/animals`.
 - `screens.json`: alle Referenzzustände. Jeder Eintrag nennt Screen, Größe der Fläche und die Klicks im Canvas, die den Zustand herstellen. Der Status sagt, was mit dem Zustand geschieht:
   - `umgesetzt`: Es gibt unter `/entwicklung/screens/<id>` eine Ansicht, die der Designvergleich prüft.
   - `referenz`: Der Entwurf dient als Vorlage für Ideen, wird aber nicht 1:1 gebaut, weil eine neuere Fassung ihn ersetzt (1a–1c, 1d, 2c). Er erscheint im Katalog als offen und wird nicht verglichen.
@@ -26,3 +26,4 @@ Vergleich: `npm run test:design` rendert jede umgesetzte Ansicht in der Größe 
 | 5c–5d               | Laufdiktat Lehrkraft                                                                   | `/lehrer/live`             |
 | 6a–6c               | Tastenwelt                                                                             | `/frei/typing`             |
 | 7a–7c               | Mein Haus, Häuser-Scan                                                                 | `/haus`, `/lehrer/haeuser` |
+| 9a–9f               | Textbox: Auswahl als Kartenraster (9b/9c), Eingabe auf liniertem Papier (9d–9f)        | `/frei/german/textbox`     |
