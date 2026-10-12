@@ -34,3 +34,29 @@ export function TextboxPhone({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+/** Desktop mit Seitenleiste aus Turn 9 (9d). */
+export function TextboxDesktop({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.desktop}>
+      <div className={styles.rail} aria-hidden="true">
+        <span className={styles.logo}>L</span>
+        {TABS.map((tab, index) => (
+          <span
+            key={tab.label}
+            className={cx(styles.railItem, index === 0 && styles.railActive)}
+          >
+            <Icon name={tab.icon} size={23} />
+            {tab.label}
+          </span>
+        ))}
+      </div>
+      <div className={styles.content}>{children}</div>
+    </div>
+  );
+}
+
+/** Handy ohne Navigation (9f); der Inhalt scrollt, die Aktionsleiste klebt unten. */
+export function TextboxPhoneRun({ children }: { children: ReactNode }) {
+  return <div className={styles.phoneRun}>{children}</div>;
+}

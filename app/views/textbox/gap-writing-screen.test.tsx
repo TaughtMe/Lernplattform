@@ -12,7 +12,10 @@ function setup(onSubmit = vi.fn()) {
   render(
     <GapWritingScreen
       round={1}
-      title="Test"
+      layout="heft"
+      textTitle="Test"
+      textMeta="Leicht · Test"
+      onBack={() => undefined}
       tokens={tokens}
       blanked={blanked}
       onSubmit={onSubmit}
@@ -25,6 +28,32 @@ function setup(onSubmit = vi.fn()) {
 }
 
 describe("GapWritingScreen", () => {
+  it("zählt ausgefüllte Lücken und führt mit „Zurück zur Auswahl“ zurück", async () => {
+    const user = userEvent.setup();
+    const onBack = vi.fn();
+    render(
+      <GapWritingScreen
+        round={1}
+        layout="heft"
+        textTitle="Test"
+        textMeta="Leicht · Test"
+        onBack={onBack}
+        tokens={tokens}
+        blanked={blanked}
+        onSubmit={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("0 von 3 Lücken ausgefüllt")).toBeInTheDocument();
+    await user.keyboard("Hund");
+    expect(screen.getByText("1 von 3 Lücken ausgefüllt")).toBeInTheDocument();
+    const steps = screen.getByRole("list", { name: "Ablauf eines Durchgangs" });
+    expect(steps.children[0]!.className).toMatch(/stepDone/);
+    await user.click(
+      screen.getByRole("button", { name: "Zurück zur Auswahl" }),
+    );
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
   it("beschriftet die Lücken, zeigt Satzzeichen und startet in der ersten Lücke", () => {
     const { gaps } = setup();
     expect(gaps.map((g) => g.getAttribute("aria-label"))).toEqual([

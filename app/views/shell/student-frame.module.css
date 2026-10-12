@@ -38,6 +38,19 @@
   flex-direction: column;
   min-width: 0;
 }
+/* Nur unter 900 px: Tab-Leiste, Kopfzeilen-Link und Seitenfuß weg (Eingabe der Textbox). */
+.navHiddenMobile {
+  --student-home-link: none;
+}
+@container (max-width: 899.98px) {
+  .navHiddenMobile .nav,
+  .navHiddenMobile .main > footer {
+    display: none;
+  }
+  .navHiddenMobile .main {
+    padding-bottom: 0;
+  }
+}
 .nav[hidden] {
   display: none;
 }

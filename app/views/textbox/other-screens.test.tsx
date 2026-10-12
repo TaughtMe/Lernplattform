@@ -14,6 +14,12 @@ import { ReviewScreen } from "./review-screen";
 import { TEXTBOX_TEXTS } from "../../../src/domain/textbox-library";
 
 const tokens = layoutText("Der Hund bellt laut.");
+const frame = {
+  layout: "heft" as const,
+  textTitle: "Test",
+  textMeta: "Leicht · Test",
+  onBack: vi.fn(),
+};
 
 describe("MemorizeScreen", () => {
   it("markiert in Durchgang 1 die späteren Lücken mit Farbe und Unterstreichung", async () => {
@@ -21,7 +27,7 @@ describe("MemorizeScreen", () => {
     render(
       <MemorizeScreen
         round={1}
-        title="Test"
+        {...frame}
         tokens={tokens}
         markedWords={new Set([1])}
         secondsLeft={45}
@@ -48,7 +54,7 @@ describe("MemorizeScreen", () => {
     render(
       <MemorizeScreen
         round={2}
-        title="Test"
+        {...frame}
         tokens={tokens}
         markedWords={new Set()}
         secondsLeft={5}
@@ -57,7 +63,9 @@ describe("MemorizeScreen", () => {
       />,
     );
     expect(document.querySelector("mark")).toBeNull();
-    expect(screen.getByText(/Der Hund bellt laut\./)).toBeInTheDocument();
+    expect(screen.getByText("Hund").closest("p")).toHaveTextContent(
+      "Der Hund bellt laut.",
+    );
   });
 });
 
@@ -65,7 +73,7 @@ describe("FreeWritingScreen", () => {
   it("sperrt Einfügen und gibt den Text samt Zeit weiter", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
-    render(<FreeWritingScreen title="Test" onSubmit={onSubmit} />);
+    render(<FreeWritingScreen {...frame} onSubmit={onSubmit} />);
     const field = screen.getByRole("textbox", {
       name: "Dein Text aus dem Gedächtnis",
     });
@@ -81,7 +89,7 @@ describe("FreeWritingScreen", () => {
 
   it("meldet 0 ms, wenn nichts getippt wurde", async () => {
     const onSubmit = vi.fn();
-    render(<FreeWritingScreen title="Test" onSubmit={onSubmit} />);
+    render(<FreeWritingScreen {...frame} onSubmit={onSubmit} />);
     await userEvent.click(screen.getByRole("button", { name: "Prüfen" }));
     expect(onSubmit).toHaveBeenCalledWith("", 0);
   });
@@ -115,11 +123,12 @@ function result(
 }
 
 describe("ReviewScreen", () => {
-  it("zeigt Fehlerarten mit Text und Symbol und nennt Satzzeichen nur als Hinweis", async () => {
+  it("zeigt Fehlerarten ohne Symbole mit Präfixen, Durchstreichung und Kästchen", async () => {
     const onNext = vi.fn();
+    const onRepeat = vi.fn();
     render(
       <ReviewScreen
-        title="Test"
+        {...frame}
         tokens={tokens}
         result={result(1, [
           {
@@ -138,24 +147,37 @@ describe("ReviewScreen", () => {
           },
         ])}
         onNext={onNext}
+        onRepeat={onRepeat}
       />,
     );
     expect(screen.getByText("50 %")).toBeInTheDocument();
-    expect(screen.getByText(/1 von 2 Lücken richtig/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Lücken richtig geschrieben/).closest("p"),
+    ).toHaveTextContent("1 von 2 Lücken richtig geschrieben");
     expect(screen.getByText("fast richtig:")).toBeInTheDocument();
-    expect(screen.getByText("Hunt")).toBeInTheDocument();
     expect(screen.getByText("Groß-/Kleinschreibung:")).toBeInTheDocument();
+    const wrong = screen.getByText("Hunt");
+    expect(wrong.tagName).toBe("S");
+    expect(screen.getByText("Hund").className).toMatch(/ok/);
+    expect(screen.getByText("Bellt").tagName).toBe("S");
+    expect(screen.getByText("bellt").className).toMatch(/caseBox/);
+    expect(screen.queryByText("✓")).toBeNull();
+    expect(screen.queryByRole("list", { name: /Zeichen/ })).toBeNull();
     expect(screen.getByText(/2 Unterschiede/)).toBeInTheDocument();
     await userEvent.click(
       screen.getByRole("button", { name: "Weiter zu Durchgang 2" }),
     );
     expect(onNext).toHaveBeenCalledOnce();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Durchgang wiederholen" }),
+    );
+    expect(onRepeat).toHaveBeenCalledOnce();
   });
 
-  it("listet in Durchgang 4 alle Wörter und beschriftet den letzten Schritt", () => {
+  it("zeigt in Durchgang 4 den Fließtext und beschriftet den letzten Schritt", () => {
     render(
       <ReviewScreen
-        title="Test"
+        {...frame}
         tokens={tokens}
         result={result(4, [
           {
@@ -174,16 +196,47 @@ describe("ReviewScreen", () => {
           { kind: "zusaetzlich", actual: "sehr", nearMiss: false },
         ])}
         onNext={() => undefined}
+        onRepeat={() => undefined}
       />,
     );
-    const list = screen.getByRole("list", { name: "Dein Text im Vergleich" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    expect(within(list).getByText("fehlt:")).toBeInTheDocument();
-    expect(within(list).getByText("zusätzlich:")).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: /Dein Text/ })).toBeNull();
+    const paper = screen.getByText("fehlt:").closest("p")!;
+    expect(paper).toHaveTextContent(
+      "richtig: Der fehlt: Hund zusätzlich: sehr",
+    );
+    expect(screen.getByText("Der").className).not.toMatch(/ok/);
+    expect(screen.getByText("Hund").className).toMatch(/missBox/);
+    expect(screen.getByText("sehr").tagName).toBe("S");
     expect(screen.getByText(/1 zusätzlich geschrieben/)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Ergebnis ansehen" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Durchgang 4 von 4: Kontrolle",
+    );
+  });
+
+  it("markiert erledigte Schritte und ruft „Auswahl“ auf", async () => {
+    const onBack = vi.fn();
+    render(
+      <ReviewScreen
+        {...frame}
+        onBack={onBack}
+        tokens={tokens}
+        result={result(1, [])}
+        onNext={() => undefined}
+        onRepeat={() => undefined}
+      />,
+    );
+    const steps = within(
+      screen.getByRole("list", { name: "Ablauf eines Durchgangs" }),
+    ).getAllByRole("listitem");
+    expect(steps[0]!.className).toMatch(/stepDone/);
+    expect(steps[2]).toHaveAttribute("aria-current", "step");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Zurück zur Auswahl" }),
+    );
+    expect(onBack).toHaveBeenCalledOnce();
   });
 });
 

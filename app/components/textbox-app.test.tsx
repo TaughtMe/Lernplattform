@@ -193,6 +193,48 @@ describe("TextboxApp", () => {
     expect(await repository.getOpen(text.id)).toBeUndefined();
   });
 
+  it("verwirft beim Wiederholen von Durchgang 1 die gespeicherte Einheit", async () => {
+    const user = userEvent.setup();
+    const { repository } = await setup();
+    await startText(user);
+    await playRound(user, 1);
+    await waitFor(async () =>
+      expect(await repository.getOpen(text.id)).toBeDefined(),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Durchgang wiederholen" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" }),
+    ).toBeInTheDocument();
+    await waitFor(async () =>
+      expect(await repository.getOpen(text.id)).toBeUndefined(),
+    );
+  });
+
+  it("speichert beim Wiederholen von Durchgang 2 die Einheit mit einem Ergebnis", async () => {
+    const user = userEvent.setup();
+    const { repository } = await setup();
+    await startText(user);
+    await playRound(user, 1);
+    await user.click(
+      screen.getByRole("button", { name: "Weiter zu Durchgang 2" }),
+    );
+    await playRound(user, 2);
+    await waitFor(async () =>
+      expect((await repository.getOpen(text.id))?.rounds).toHaveLength(2),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Durchgang wiederholen" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Durchgang 2 von 4: Merken" }),
+    ).toBeInTheDocument();
+    await waitFor(async () =>
+      expect((await repository.getOpen(text.id))?.rounds).toHaveLength(1),
+    );
+  });
+
   it("speichert den Abschluss bei doppeltem Klick nur einmal", async () => {
     const user = userEvent.setup();
     const { database, repository } = await setup();

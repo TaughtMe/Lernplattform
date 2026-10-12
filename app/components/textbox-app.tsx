@@ -15,6 +15,7 @@ import {
   finishMemorize,
   memorizeSeconds,
   nextRound,
+  repeatRound,
   runFromSession,
   sessionFromRun,
   startRun,
@@ -23,10 +24,13 @@ import {
 } from "../../src/domain/textbox-session";
 import {
   PHENOMENON_TO_COLLECTION,
+  TEXTBOX_DIFFICULTY_LABELS,
+  TEXTBOX_PHENOMENON_LABELS,
   type TextboxPhenomenon,
   type TextboxText,
 } from "../../src/domain/textbox-text";
 import { useRelease } from "../release/release-context";
+import { useFullscreenFrame } from "../ui/shell/fullscreen";
 import { CompletionScreen } from "../views/textbox/completion-screen";
 import { FreeWritingScreen } from "../views/textbox/free-writing-screen";
 import { GapWritingScreen } from "../views/textbox/gap-writing-screen";
@@ -99,6 +103,9 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
     runRef.current = next;
     setRunState(next);
   }
+
+  // Während einer Übung ist die Navigation mobil weg (9f); am Desktop bleibt sie.
+  useFullscreenFrame(run !== null, "mobile");
 
   const textId = run?.text.id;
   const phase = run?.state.phase;
@@ -242,6 +249,28 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
     }
   }
 
+  /** „Durchgang wiederholen“: zurück zur Merkphase, das letzte Ergebnis entfällt. */
+  async function onRepeat() {
+    const current = runRef.current;
+    if (!current || current.state.phase !== "review") return;
+    const next = repeatRound(current.state);
+    setRun({ ...current, state: next, memorizeStartedAt: Date.now() });
+    try {
+      if (next.rounds.length === 0) {
+        await discard(next.trainingId);
+      } else {
+        await saveRound(
+          sessionFromRun(next, current.text, {
+            startedAt: current.startedAt,
+            now: new Date().toISOString(),
+          }),
+        );
+      }
+    } catch {
+      setNotice(SAVE_ISSUE);
+    }
+  }
+
   function showDetails(id: string) {
     setRun(null);
     setPendingId(undefined);
@@ -316,6 +345,14 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
   }
 
   const { state, text } = run;
+  const frame = {
+    layout: "heft" as const,
+    textTitle: text.title,
+    textMeta: `${TEXTBOX_DIFFICULTY_LABELS[text.difficulty]} · ${
+      TEXTBOX_PHENOMENON_LABELS[text.phenomena[0]!]
+    }`,
+    onBack: backToLibrary,
+  };
   const banner = notice ? <Notice tone="bad">{notice}</Notice> : null;
 
   if (state.phase === "memorize") {
@@ -324,8 +361,8 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
       <>
         {banner}
         <MemorizeScreen
+          {...frame}
           round={state.round}
-          title={text.title}
           tokens={tokens}
           markedWords={state.round === 1 ? plan![0] : new Set()}
           secondsLeft={Math.max(0, totalSeconds - elapsed / 1000)}
@@ -343,14 +380,14 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
         {state.round === 4 ? (
           <FreeWritingScreen
             key={`${state.trainingId}-4`}
-            title={text.title}
+            {...frame}
             onSubmit={onSubmitRound}
           />
         ) : (
           <GapWritingScreen
             key={`${state.trainingId}-${state.round}`}
+            {...frame}
             round={state.round}
-            title={text.title}
             tokens={tokens}
             blanked={[...plan![state.round - 1]!].sort((a, b) => a - b)}
             onSubmit={onSubmitRound}
@@ -365,10 +402,11 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
       <>
         {banner}
         <ReviewScreen
-          title={text.title}
+          {...frame}
           tokens={tokens}
           result={state.rounds[state.rounds.length - 1]!}
           onNext={() => void onNext()}
+          onRepeat={() => void onRepeat()}
         />
       </>
     );

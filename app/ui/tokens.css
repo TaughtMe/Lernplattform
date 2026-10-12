@@ -27,6 +27,8 @@
   --nav-active: #332f28;
   --nav-accent: #f0cf84;
   --shadow: rgba(80, 62, 26, 0.14);
+  /* Rote Randlinie im Heft (Schmuck, nie einziges Merkmal). */
+  --margin-rule: oklch(0.7 0.12 25 / 0.5);
   --bad: #a8432c;
   --bad-bg: #f8e6df;
   --good: #26543f;
@@ -81,6 +83,7 @@
   --nav-active: #2a2723;
   --nav-accent: #f0cf84;
   --shadow: rgba(0, 0, 0, 0.55);
+  --margin-rule: oklch(0.55 0.1 25 / 0.6);
   --bad: #f09a80;
   --bad-bg: #3a2520;
   --good: #8fd1ae;

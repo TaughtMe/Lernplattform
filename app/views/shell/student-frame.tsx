@@ -29,8 +29,11 @@ export function StudentFrame({
   items: readonly StudentNavItem[];
   profileHref: string;
   profileActive?: boolean;
-  /** Vollbild (z. B. laufende Runde): ohne Navigation. */
-  hideNav?: boolean;
+  /**
+   * Vollbild (z. B. laufende Runde): `true` ohne Navigation, `"mobile"` nur
+   * unter 900 px (die Seitenleiste bleibt am Desktop).
+   */
+  hideNav?: boolean | "mobile";
   /** Eine angetippte Seite lädt noch. */
   pending?: boolean;
   onNavigate?: (href: string) => void;
@@ -40,11 +43,17 @@ export function StudentFrame({
 }) {
   return (
     <div className={styles.frame}>
-      <div className={cx(styles.layout, hideNav && styles.noNav)}>
+      <div
+        className={cx(
+          styles.layout,
+          hideNav === true && styles.noNav,
+          hideNav === "mobile" && styles.navHiddenMobile,
+        )}
+      >
         <nav
           className={styles.nav}
           aria-label="Hauptnavigation"
-          hidden={hideNav}
+          hidden={hideNav === true}
         >
           {/* Das Logo führt zur Startseite (Raumcode, Lehrer-Login). */}
           <Link href="/" className={styles.brand} aria-label="Zur Startseite">
@@ -88,7 +97,10 @@ export function StudentFrame({
             aria-label="Seite wird geladen"
           />
         ) : null}
-        <main className={cx(styles.main, hideNav && styles.bare)} id="inhalt">
+        <main
+          className={cx(styles.main, hideNav === true && styles.bare)}
+          id="inhalt"
+        >
           <div className={styles.content}>{children}</div>
           {footer}
         </main>

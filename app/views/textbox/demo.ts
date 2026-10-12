@@ -331,3 +331,32 @@ function demoRoundResult(round: 1 | 2 | 3): TextboxRoundResult {
     writingMs: 0,
   };
 }
+
+/** Kontrolle als fertiges Rundenergebnis: Durchgang 1 (Lücken) oder 4 (frei geschrieben). */
+export function demoReviewResult(round: 1 | 4): TextboxRoundResult {
+  const words = round === 1 ? DEMO_GAP_RESULTS : DEMO_FREE_RESULTS;
+  const count = (kind: WordResult["kind"]) =>
+    words.filter((word) => word.kind === kind).length;
+  const correct = count("richtig");
+  const total = words.length;
+  return {
+    ...demoRoundResult(1),
+    round,
+    blanked: round === 1 ? [...DEMO_GAP_SETS[1]] : [],
+    words: [...words],
+    score: {
+      percent: Math.round((correct / total) * 100),
+      correct,
+      total,
+      extra: count("zusaetzlich"),
+      byKind: {
+        richtig: correct,
+        falsch: count("falsch"),
+        "gross-klein": count("gross-klein"),
+        fehlt: count("fehlt"),
+        zusaetzlich: count("zusaetzlich"),
+      },
+      punctuationHints: 0,
+    },
+  };
+}

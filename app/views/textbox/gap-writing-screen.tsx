@@ -14,9 +14,10 @@ import {
   isBlockedRunningDictationInput,
 } from "../../../src/domain/running-dictation-input";
 import type { LayoutToken } from "../../../src/domain/text-compare";
-import { StepList } from "./memorize-screen";
+import type { RunFrameProps } from "./memorize-screen";
+import { RunButton, RunLayout } from "./run-layout";
+import styles from "./run-layout.module.css";
 import { TextFlow } from "./text-flow";
-import styles from "./textbox.module.css";
 
 /** Längste Eingabe in einer Lücke; schützt vor festgehaltenen Tasten. */
 export const MAX_GAP_LENGTH = 40;
@@ -32,17 +33,19 @@ function markStart(ref: { current: number | null }) {
 /** Schreibt direkt in die Lücken des Textes (Durchgang 1 bis 3). */
 export function GapWritingScreen({
   round,
-  title,
   tokens,
   blanked,
   onSubmit,
-}: {
+  initialFocus = true,
+  ...frame
+}: RunFrameProps & {
   round: 1 | 2 | 3;
-  title: string;
   tokens: readonly LayoutToken[];
   /** Wortindizes der Lücken, aufsteigend. */
   blanked: readonly number[];
   onSubmit: (inputs: string[], writingMs: number) => void;
+  /** Fokus beim Öffnen in die erste Lücke (der Katalog schaltet ihn ab). */
+  initialFocus?: boolean;
 }) {
   const [values, setValues] = useState<string[]>(() => blanked.map(() => ""));
   const inputs = useRef<Array<HTMLInputElement | null>>([]);
@@ -51,8 +54,8 @@ export function GapWritingScreen({
   const gapOf = new Map(blanked.map((word, gap) => [word, gap] as const));
 
   useEffect(() => {
-    inputs.current[0]?.focus();
-  }, []);
+    if (initialFocus) inputs.current[0]?.focus();
+  }, [initialFocus]);
 
   const touch = () => markStart(startedAt);
 
@@ -111,24 +114,32 @@ export function GapWritingScreen({
     }
   }
 
+  const filled = values.filter((value) => value !== "").length;
+
   return (
-    <section className={styles.screen} aria-labelledby="textbox-title">
-      <header className={styles.head}>
-        <div>
-          <h1 id="textbox-title" className={styles.title} tabIndex={-1}>
-            Durchgang {round} von 4: Schreiben
-          </h1>
-          <p className={styles.subtitle}>{title}</p>
-        </div>
-        <StepList active={1} />
-      </header>
-      <p className={styles.hint}>
-        Schreibe die fehlenden Wörter in die Lücken. Mit der Leertaste oder der
-        Eingabetaste springst du zur nächsten Lücke.
-      </p>
+    <RunLayout
+      {...frame}
+      round={round}
+      step={1}
+      hint="Schreibe die fehlenden Wörter in die Lücken. Mit der Leertaste oder der Eingabetaste springst du zur nächsten Lücke."
+      footerStart={`${filled} von ${blanked.length} Lücken ausgefüllt`}
+      actions={
+        <RunButton
+          ref={submitButton}
+          onClick={() =>
+            onSubmit(
+              values,
+              startedAt.current === null ? 0 : Date.now() - startedAt.current,
+            )
+          }
+        >
+          Prüfen
+        </RunButton>
+      }
+    >
       <div className={styles.paper}>
         <TextFlow
-          className={styles.text}
+          className={styles.lined}
           tokens={tokens}
           renderWord={(token) => {
             const gap = gapOf.get(token.index);
@@ -161,21 +172,6 @@ export function GapWritingScreen({
           }}
         />
       </div>
-      <div className={styles.actions}>
-        <button
-          ref={submitButton}
-          type="button"
-          className="ui-btn ui-btn--primary ui-btn--lg"
-          onClick={() =>
-            onSubmit(
-              values,
-              startedAt.current === null ? 0 : Date.now() - startedAt.current,
-            )
-          }
-        >
-          Prüfen
-        </button>
-      </div>
-    </section>
+    </RunLayout>
   );
 }

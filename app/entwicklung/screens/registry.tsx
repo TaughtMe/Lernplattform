@@ -32,9 +32,26 @@ import {
 import { MODES } from "../../views/laufdiktat/teacher-dictation-screen";
 import type { Theme } from "../../views/parts/parts";
 import { LandingScreen } from "../../views/start/landing-screen";
-import { demoLibraryEntries } from "../../views/textbox/demo";
+import { layoutText } from "../../../src/domain/text-compare";
+import {
+  DEMO_GAP_SETS,
+  DEMO_TEXT,
+  DEMO_TEXT_META,
+  DEMO_TEXT_TITLE,
+  demoLibraryEntries,
+  demoReviewResult,
+} from "../../views/textbox/demo";
+import { FreeWritingScreen } from "../../views/textbox/free-writing-screen";
+import { GapWritingScreen } from "../../views/textbox/gap-writing-screen";
+import { MemorizeScreen } from "../../views/textbox/memorize-screen";
+import { ReviewScreen } from "../../views/textbox/review-screen";
 import { LibraryScreen } from "../../views/textbox/library-screen";
-import { TextboxMain, TextboxPhone } from "./textbox-frames";
+import {
+  TextboxDesktop,
+  TextboxMain,
+  TextboxPhone,
+  TextboxPhoneRun,
+} from "./textbox-frames";
 
 /** Zustand eines Referenzbildes aus docs/design/screens.json. */
 export type ScreenState = { id: string; screen: string; theme: Theme };
@@ -70,6 +87,14 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
       <TextboxMain>{library}</TextboxMain>
     ) : (
       <TextboxPhone>{library}</TextboxPhone>
+    );
+  }
+  if (screen === "9d" || screen === "9f") {
+    const run = <TextboxRun variant={id.split("-").slice(1).join("-")} />;
+    return screen === "9d" ? (
+      <TextboxDesktop>{run}</TextboxDesktop>
+    ) : (
+      <TextboxPhoneRun>{run}</TextboxPhoneRun>
     );
   }
   if (screen === "5a" || screen === "5b") {
@@ -110,6 +135,67 @@ function TextboxLibrary() {
       onRestart={() => {}}
       onCancelPending={() => {}}
       onDetails={() => {}}
+    />
+  );
+}
+
+/** Eingabe der Textbox mit dem Beispieltext der Vorlage (9d/9f); `variant` wählt den Schritt. */
+function TextboxRun({ variant }: { variant: string }) {
+  const tokens = layoutText(DEMO_TEXT);
+  const frame = {
+    layout: "heft" as const,
+    textTitle: DEMO_TEXT_TITLE,
+    textMeta: DEMO_TEXT_META,
+    onBack: () => {},
+  };
+  if (variant === "free") {
+    return (
+      <FreeWritingScreen {...frame} initialFocus={false} onSubmit={() => {}} />
+    );
+  }
+  if (variant === "free-check") {
+    return (
+      <ReviewScreen
+        {...frame}
+        tokens={tokens}
+        result={demoReviewResult(4)}
+        onNext={() => {}}
+        onRepeat={() => {}}
+      />
+    );
+  }
+  if (variant === "gaps") {
+    return (
+      <GapWritingScreen
+        {...frame}
+        round={1}
+        tokens={tokens}
+        blanked={DEMO_GAP_SETS[1]}
+        initialFocus={false}
+        onSubmit={() => {}}
+      />
+    );
+  }
+  if (variant === "check") {
+    return (
+      <ReviewScreen
+        {...frame}
+        tokens={tokens}
+        result={demoReviewResult(1)}
+        onNext={() => {}}
+        onRepeat={() => {}}
+      />
+    );
+  }
+  return (
+    <MemorizeScreen
+      {...frame}
+      round={1}
+      tokens={tokens}
+      markedWords={new Set(DEMO_GAP_SETS[1])}
+      secondsLeft={45}
+      totalSeconds={72.6}
+      onReady={() => {}}
     />
   );
 }
