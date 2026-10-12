@@ -212,24 +212,16 @@
 .filterBar {
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 0 18px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  /* Das Einrasten respektiert den Innenabstand links und rechts. */
-  scroll-padding-inline: 18px;
-  scrollbar-width: none;
-}
-.filterBar::-webkit-scrollbar {
-  display: none;
 }
 .filterGroup {
   display: flex;
   flex: none;
   align-items: center;
   gap: 8px;
-  scroll-snap-align: start;
 }
 /* Mobil: Stufe, Schwerpunkt, Stand. */
 .levelGroup {
@@ -480,16 +472,12 @@
 .strip {
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  height: 44px;
+  gap: 0 6px;
+  min-height: 44px;
   margin: -4px 0;
   padding: 0 18px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.strip::-webkit-scrollbar {
-  display: none;
 }
 .peek {
   position: relative;
@@ -892,7 +880,11 @@
   }
   .strip {
     grid-area: strip;
+    flex-wrap: nowrap;
+    height: 44px;
     padding: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
   .clearAll {
     display: inline-flex;
