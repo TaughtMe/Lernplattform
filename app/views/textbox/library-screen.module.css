@@ -226,6 +226,9 @@
 /* Mobil: Stufe, Schwerpunkt, Stand. */
 .levelGroup {
   order: 1;
+  /* Mobil nur das linke Viertel; die Punkte bleiben hoch genug zum Tippen. */
+  flex: 0 0 max(25%, 100px);
+  min-width: 0;
 }
 .phenomenonGroup {
   position: relative;
@@ -275,15 +278,18 @@
 }
 .dotButtons {
   display: flex;
+  flex: 1;
   align-items: center;
+  justify-content: space-between;
   height: 42px;
-  padding: 0 6px;
+  padding: 0 2px;
 }
 /* Punkt klein, Trefferfläche mindestens 44 × 44 px. */
 .dotButton {
   display: grid;
   place-items: center;
-  width: 44px;
+  flex: none;
+  width: 28px;
   height: 44px;
   margin: -1px 0;
   padding: 0;
@@ -344,14 +350,14 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 44px;
+  height: 50px;
   padding: 0 14px 0 16px;
   border: 1px solid var(--line2);
   border-radius: 12px;
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -883,6 +889,14 @@
   .phenomenonGroup {
     flex: none;
     order: 0;
+  }
+  .dotButtons {
+    flex: none;
+    justify-content: flex-start;
+    padding: 0 6px;
+  }
+  .dotButton {
+    width: 44px;
   }
   .standGroup > .segmented {
     display: flex;

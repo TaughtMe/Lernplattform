@@ -497,7 +497,6 @@ export function LibraryScreen({
               {filter.stands.length > 0
                 ? `Stand · ${filter.stands.length}`
                 : "Stand"}
-              <Icon name="down" size={16} strokeWidth={2.2} />
             </button>
           </div>
           <div className={cx(styles.filterGroup, styles.phenomenonGroup)}>

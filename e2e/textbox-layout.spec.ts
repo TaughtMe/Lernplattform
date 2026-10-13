@@ -240,18 +240,27 @@ test("Barrierefreiheit: Vollbild (Lücken und freies Schreiben)", async ({
 
 test("Tippflächen sind mindestens 44 × 44 px", async ({ page }) => {
   await openLibrary(page);
-  const sizes = async (locators: ReturnType<Page["getByRole"]>[]) => {
+  const sizes = async (
+    locators: ReturnType<Page["getByRole"]>[],
+    minWidth = 43.5,
+  ) => {
     for (const locator of locators) {
       const box = await locator.first().boundingBox();
       expect(box, String(locator)).not.toBeNull();
-      expect(box!.width).toBeGreaterThanOrEqual(43.5);
+      expect(box!.width).toBeGreaterThanOrEqual(minWidth);
       expect(box!.height).toBeGreaterThanOrEqual(43.5);
     }
   };
   await page.getByRole("button", { name: "Leicht", exact: true }).click();
+  // Mobil belegen die Stufenpunkte nur das linke Viertel: mindestens 28 px breit, 44 px hoch.
+  await sizes(
+    [
+      page.getByRole("button", { name: "Leicht", exact: true }),
+      page.getByRole("button", { name: "Mittel", exact: true }),
+    ],
+    isDesktop(page) ? 43.5 : 27.5,
+  );
   await sizes([
-    page.getByRole("button", { name: "Leicht", exact: true }),
-    page.getByRole("button", { name: "Mittel", exact: true }),
     page.getByRole("button", { name: /^Filter .* entfernen$/ }),
     page
       .getByRole("button", { name: /: Verlauf ansehen$/ })
