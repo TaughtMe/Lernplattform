@@ -2434,16 +2434,6 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   cursor: pointer;
 }
-.ui-version.is-update-ready {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-.ui-version__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-}
 /* Update-Popup: fest in der Ecke, unabhängig vom Scrollen. */
 .ui-update-toast {
   position: fixed;
