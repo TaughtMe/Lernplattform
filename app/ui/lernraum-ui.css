@@ -3776,6 +3776,21 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
   font-size: 16px;
   font-weight: 700;
 }
+.ui-legal__beta {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1.5px solid var(--gold);
+  border-left-width: 6px;
+  border-radius: var(--radius-l);
+  background: var(--accent-bg);
+  color: var(--ink);
+  line-height: 1.6;
+}
+.ui .ui-legal__beta h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
 .ui-legal__sections :is(ul, ol) {
   margin: 0;
   padding-left: 20px;
