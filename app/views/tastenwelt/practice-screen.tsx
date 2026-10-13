@@ -69,6 +69,18 @@ function words(tiles: readonly PracticeTile[]) {
   return groups;
 }
 
+/** Tastenkürzel ignorieren; Alt Gr (Windows: Strg+Alt) zählt als Zeichen. */
+function isShortcut(event: {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+  getModifierState: (key: "AltGraph") => boolean;
+}) {
+  if (event.metaKey) return true;
+  if (event.getModifierState("AltGraph")) return false;
+  return event.ctrlKey || event.altKey;
+}
+
 /** Übung der Tastenwelt (Design 6b mobil, 6a mit Tastatur). */
 export function PracticeScreen(props: PracticeScreenProps) {
   const input = useRef<HTMLInputElement>(null);
@@ -93,7 +105,7 @@ export function PracticeScreen(props: PracticeScreenProps) {
       const target = event.target as HTMLElement | null;
       if (target === input.current) return;
       if (target?.closest("input, textarea, select, [contenteditable]")) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isShortcut(event)) return;
       if (event.key.length !== 1) return;
       event.preventDefault();
       input.current?.focus({ preventScroll: true });
@@ -103,8 +115,24 @@ export function PracticeScreen(props: PracticeScreenProps) {
     return () => window.removeEventListener("keydown", onWindowKey);
   }, [result]);
 
+  // Feststelltaste live anzeigen (Zustand aus dem Betriebssystem).
+  const [capsLock, setCapsLock] = useState(false);
+  useEffect(() => {
+    function sync(event: globalThis.KeyboardEvent) {
+      if (typeof event.getModifierState === "function") {
+        setCapsLock(event.getModifierState("CapsLock"));
+      }
+    }
+    window.addEventListener("keydown", sync);
+    window.addEventListener("keyup", sync);
+    return () => {
+      window.removeEventListener("keydown", sync);
+      window.removeEventListener("keyup", sync);
+    };
+  }, []);
+
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (isShortcut(event)) return;
     if (event.key.length !== 1) return;
     event.preventDefault();
     props.onChar?.(event.key);
@@ -394,6 +422,7 @@ export function PracticeScreen(props: PracticeScreenProps) {
               wrong={props.keyboard.wrong}
               fingerColors={settings.fingerColors}
               enterKey={settings.enterKey}
+              capsLock={capsLock}
             />
             <FingerLegend
               active={settings.showNext ? props.keyboard.fingers : []}

@@ -37,6 +37,11 @@ export function keyTarget(char: string | undefined): KeyTarget {
     fingers.push(shiftFinger);
     text += ` + Umschalt mit dem ${leftHand ? "rechten" : "linken"} kleinen Finger`;
   }
+  if (info.needsAltGr) {
+    codes.push("AltRight");
+    fingers.push("thumb");
+    text += " + Alt Gr mit dem rechten Daumen";
+  }
   return { codes, fingers, hint: { text, hue: FINGER_HUE[finger] } };
 }
 

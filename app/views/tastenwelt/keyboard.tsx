@@ -65,6 +65,8 @@ type KeyboardProps = {
   fingerColors?: boolean;
   /** Große Entertaste über zwei Zeilen oder kleine Taste in der mittleren Zeile. */
   enterKey?: "large" | "small";
+  /** Feststelltaste ist aktiv. */
+  capsLock?: boolean;
 };
 
 /** Deutsche ISO-Tastatur mit Fingerfarben, Zielhinweis und Wärmekarte. */
@@ -75,6 +77,7 @@ export function Keyboard({
   heat,
   fingerColors = true,
   enterKey = "large",
+  capsLock = false,
 }: KeyboardProps) {
   const small = enterKey === "small";
   return (
@@ -103,6 +106,7 @@ export function Keyboard({
                   level >= 2 && styles.hot,
                   iso && key.code === "Enter" && styles.isoTop,
                   iso && key.code === "EnterLower" && styles.isoBottom,
+                  key.code === "CapsLock" && capsLock && styles.locked,
                 )}
                 style={
                   {
@@ -113,6 +117,17 @@ export function Keyboard({
                 }
               >
                 {key.code === "Enter" && small ? "↵" : keyLabel(key)}
+                {key.kind === "character" &&
+                key.shift &&
+                !/\p{L}/u.test(key.shift) ? (
+                  <span className={styles.shift}>{key.shift}</span>
+                ) : null}
+                {key.altGr ? (
+                  <span className={styles.altgr}>{key.altGr}</span>
+                ) : null}
+                {key.code === "CapsLock" && capsLock ? (
+                  <span className={styles.led} />
+                ) : null}
                 {key.home ? <span className={styles.bump} /> : null}
               </span>
             );
