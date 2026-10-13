@@ -44,7 +44,7 @@ export function AnimalPicker({
   }
 
   return (
-    <>
+    <div className="ui-picker-set">
       <div className="ui-picker" role="group" aria-label="Tier auswählen">
         {ANIMALS.map((animal) => (
           <button
@@ -75,6 +75,6 @@ export function AnimalPicker({
           ))}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

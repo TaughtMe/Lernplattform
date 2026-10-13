@@ -70,6 +70,15 @@ test("secret figures stay hidden until the tap sequence, then can be chosen and 
     await animals.getByRole("button", { name, exact: true }).click();
   }
   await expect(figures).toBeVisible();
+  // Tiere und Figuren teilen sich ein Scrollfeld.
+  expect(
+    await page.evaluate(
+      () =>
+        document.querySelector('[aria-label="Figur auswählen"]')
+          ?.parentElement ===
+        document.querySelector('[aria-label="Tier auswählen"]')?.parentElement,
+    ),
+  ).toBe(true);
   const santa = figures.getByRole("button", {
     name: "Weihnachtsmann",
     exact: true,
