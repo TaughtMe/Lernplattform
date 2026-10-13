@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { profileAvatar } from "../../src/domain/learner-profile";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
 import { useHydrated } from "../components/use-hydrated";
@@ -29,7 +30,7 @@ export function StartPage() {
 
   return (
     <LandingScreen
-      animal={profile?.animal ?? null}
+      animal={profileAvatar(profile)}
       code={code}
       teacherHref="/lehrer"
       enterHref="/lernen"

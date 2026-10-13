@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FIGURE_IDS } from "./figures";
+import { FIGURE_IDS, figureName } from "./figures";
 
 export const ADJECTIVES = [
   "Schnell",
@@ -164,6 +164,9 @@ export function createRandomLearnerProfile(
 }
 
 export function learnerDisplayName(profile: LearnerProfile) {
+  // Eine gewählte Figur heißt so wie sie selbst, nicht wie das Tier davor.
+  const figure = figureName(profile.figure);
+  if (figure) return figure;
   if (!profile.animal) return "Lernender";
   const animal = ANIMALS.find((animal) => animal.name === profile.animal)!;
   const ending = animal.g === "m" ? "er" : animal.g === "f" ? "e" : "es";

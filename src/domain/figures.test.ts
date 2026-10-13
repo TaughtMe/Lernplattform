@@ -9,6 +9,7 @@ import {
 import {
   avatarSrc,
   createLearnerProfile,
+  learnerDisplayName,
   learnerProfileSchema,
   profileAvatar,
 } from "./learner-profile";
@@ -69,6 +70,9 @@ describe("secret figures", () => {
     const profile = { ...base, figuresUnlocked: true, figure: "yoda-1" };
     expect(learnerProfileSchema.safeParse(profile).success).toBe(true);
     expect(avatarSrc(profileAvatar(profile))).toBe("/figuren/yoda-1.svg");
+    // Der Name folgt der Figur, nicht dem vorher gewählten Tier.
+    expect(learnerDisplayName(base)).toBe("Schneller Fuchs");
+    expect(learnerDisplayName(profile)).toBe("Yoda 1");
     expect(
       learnerProfileSchema.safeParse({ ...base, figure: "unbekannt" }).success,
     ).toBe(false);

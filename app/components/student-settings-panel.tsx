@@ -77,7 +77,9 @@ export function StudentSettingsPanel() {
             <AnimalImage animal={profileAvatar(profile)} size={84} />
           </span>
           <div>
-            <p className="ui-eyebrow">Dein Tier</p>
+            <p className="ui-eyebrow">
+              {profile?.figure ? "Deine Figur" : "Dein Tier"}
+            </p>
             <h2 id="profile-title" className="ui-h-fun">
               {profile ? learnerDisplayName(profile) : "…"}
             </h2>

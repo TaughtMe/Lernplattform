@@ -86,6 +86,9 @@ test("secret figures stay hidden until the tap sequence, then can be chosen and 
   await santa.click();
   await expect(santa).toHaveAttribute("aria-pressed", "true");
   await expect(animals.locator('[aria-pressed="true"]')).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { level: 2, name: "Weihnachtsmann" }),
+  ).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   await page.reload();
@@ -98,4 +101,7 @@ test("secret figures stay hidden until the tap sequence, then can be chosen and 
   // Tier antippen wählt wieder das Tier.
   await animals.getByRole("button", { name: "Fuchs", exact: true }).click();
   await expect(santa).toHaveAttribute("aria-pressed", "false");
+  await expect(
+    page.getByRole("heading", { level: 2, name: /Fuchs$/ }),
+  ).toBeVisible();
 });
