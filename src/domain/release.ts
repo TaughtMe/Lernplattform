@@ -196,3 +196,27 @@ export function isPathVisible(pathname: string, visibility: ReleaseVisibility) {
   const area = areaForPath(pathname);
   return area === null || visibility[area];
 }
+
+/**
+ * Markdown-Tabelle der Standardstufen, Quelle für README und Test.
+ * Spalten sind wie bei Prettier auf die längste Zelle aufgefüllt.
+ */
+export function releaseStagesMarkdown(): string {
+  const header = ["Bereich", "Bezeichnung", "Routen", "Standard"];
+  const rows = AREA_IDS.map((id) => {
+    const area: AreaDefinition = RELEASE_AREAS[id];
+    return [
+      `\`${id}\``,
+      area.label,
+      area.routes.length ? area.routes.map((r) => `\`${r}\``).join(", ") : "–",
+      `\`${area.stage}\``,
+    ];
+  });
+  const widths = header.map((title, column) =>
+    Math.max(title.length, ...rows.map((row) => row[column]!.length)),
+  );
+  const line = (cells: string[]) =>
+    `| ${cells.map((cell, column) => cell.padEnd(widths[column]!)).join(" | ")} |`;
+  const separator = `| ${widths.map((width) => "-".repeat(width)).join(" | ")} |`;
+  return [line(header), separator, ...rows.map(line)].join("\n");
+}
