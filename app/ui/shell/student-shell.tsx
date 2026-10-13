@@ -41,6 +41,7 @@ const NAV: readonly NavItem[] = [
       "tastenwelt",
       "mathe",
       "laufdiktat-frei",
+      "textbox",
     ],
     also: ["/lernbox", "/frei"],
   },
@@ -68,7 +69,7 @@ export function StudentShell({
   children,
 }: {
   activePath: string;
-  hideNav?: boolean;
+  hideNav?: boolean | "mobile";
   footer?: ReactNode;
   children: ReactNode;
 }) {

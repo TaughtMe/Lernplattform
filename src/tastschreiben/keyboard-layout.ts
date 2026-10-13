@@ -17,6 +17,8 @@ export interface KeyDef {
   label: string;
   base?: string;
   shift?: string;
+  /** Drittbelegung über Alt Gr (z. B. { [ ] } auf 7 8 9 0). */
+  altGr?: string;
   finger?: Finger;
   home?: boolean;
   width?: number;
@@ -27,7 +29,7 @@ function character(
   code: string,
   base: string,
   finger: Finger,
-  options: Pick<KeyDef, "shift" | "home" | "width" | "label"> = {
+  options: Pick<KeyDef, "shift" | "altGr" | "home" | "width" | "label"> = {
     label: base,
   },
 ): KeyDef {
@@ -44,6 +46,7 @@ function character(
     kind: "character",
     label: options.label ?? base,
     ...(inferredShift === undefined ? {} : { shift: inferredShift }),
+    ...(options.altGr === undefined ? {} : { altGr: options.altGr }),
     ...(options.home === undefined ? {} : { home: options.home }),
     ...(options.width === undefined ? {} : { width: options.width }),
   };
@@ -66,20 +69,40 @@ const numberRow: KeyDef[] = [
   character("Digit4", "4", "left-index", { label: "4", shift: "$" }),
   character("Digit5", "5", "left-index", { label: "5", shift: "%" }),
   character("Digit6", "6", "right-index", { label: "6", shift: "&" }),
-  character("Digit7", "7", "right-index", { label: "7", shift: "/" }),
-  character("Digit8", "8", "right-middle", { label: "8", shift: "(" }),
-  character("Digit9", "9", "right-ring", { label: "9", shift: ")" }),
-  character("Digit0", "0", "right-pinky", { label: "0", shift: "=" }),
-  character("Minus", "ß", "right-pinky", { label: "ß", shift: "?" }),
+  character("Digit7", "7", "right-index", {
+    label: "7",
+    shift: "/",
+    altGr: "{",
+  }),
+  character("Digit8", "8", "right-middle", {
+    label: "8",
+    shift: "(",
+    altGr: "[",
+  }),
+  character("Digit9", "9", "right-ring", {
+    label: "9",
+    shift: ")",
+    altGr: "]",
+  }),
+  character("Digit0", "0", "right-pinky", {
+    label: "0",
+    shift: "=",
+    altGr: "}",
+  }),
+  character("Minus", "ß", "right-pinky", {
+    label: "ß",
+    shift: "?",
+    altGr: "\\",
+  }),
   character("Equal", "´", "right-pinky", { label: "´", shift: "`" }),
   control("Backspace", "Rück", 2.1, "system"),
 ];
 
 const upperRow: KeyDef[] = [
   control("Tab", "Tab", 1.55, "system"),
-  character("KeyQ", "q", "left-pinky"),
+  character("KeyQ", "q", "left-pinky", { label: "q", altGr: "@" }),
   character("KeyW", "w", "left-ring"),
-  character("KeyE", "e", "left-middle"),
+  character("KeyE", "e", "left-middle", { label: "e", altGr: "€" }),
   character("KeyR", "r", "left-index"),
   character("KeyT", "t", "left-index"),
   character("KeyZ", "z", "right-index"),
@@ -88,7 +111,11 @@ const upperRow: KeyDef[] = [
   character("KeyO", "o", "right-ring"),
   character("KeyP", "p", "right-pinky"),
   character("BracketLeft", "ü", "right-pinky"),
-  character("BracketRight", "+", "right-pinky", { label: "+", shift: "*" }),
+  character("BracketRight", "+", "right-pinky", {
+    label: "+",
+    shift: "*",
+    altGr: "~",
+  }),
   control("Enter", "Enter", 1.55, "system"),
 ];
 
@@ -111,7 +138,11 @@ const homeRow: KeyDef[] = [
 
 const lowerRow: KeyDef[] = [
   control("ShiftLeft", "Shift", 1.35),
-  character("IntlBackslash", "<", "left-pinky", { label: "<", shift: ">" }),
+  character("IntlBackslash", "<", "left-pinky", {
+    label: "<",
+    shift: ">",
+    altGr: "|",
+  }),
   character("KeyY", "y", "left-pinky"),
   character("KeyX", "x", "left-ring"),
   character("KeyC", "c", "left-middle"),
@@ -177,11 +208,21 @@ export const NUMPAD_ROWS: KeyDef[][] = [
   ],
 ];
 
-const characterLookup = new Map<string, { key: KeyDef; needsShift: boolean }>();
+const characterLookup = new Map<
+  string,
+  { key: KeyDef; needsShift: boolean; needsAltGr?: boolean }
+>();
 for (const key of KEYBOARD_ROWS.flat()) {
   if (key.base === undefined) continue;
   characterLookup.set(key.base, { key, needsShift: false });
   if (key.shift) characterLookup.set(key.shift, { key, needsShift: true });
+  if (key.altGr) {
+    characterLookup.set(key.altGr, {
+      key,
+      needsShift: false,
+      needsAltGr: true,
+    });
+  }
 }
 
 const numpadCharacterLookup = new Map<

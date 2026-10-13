@@ -1317,3 +1317,15 @@
   font-size: 12.5px;
   color: var(--ink2);
 }
+
+.wordStore {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.wordStore .hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink2);
+}

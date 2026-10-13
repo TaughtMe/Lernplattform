@@ -57,6 +57,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 21. [[21 - Qualitätsgrundlage und Freigabe/Anwendung|Qualitätsgrundlage und Freigabe]]
 22. [[22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]]
 23. [[23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]]
+24. [[24 - Textbox/Anwendung|Textbox]]
 
 ## Grundprinzipien
 

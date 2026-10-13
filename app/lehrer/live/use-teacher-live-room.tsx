@@ -5,6 +5,7 @@
  * Live). Die Fachregeln stammen unverändert aus dem Laufdiktat-Quellcode;
  * die Darstellung liegt in den Schritt-Komponenten dieses Ordners.
  */
+import { useAreaVisible } from "../../release/release-context";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -67,6 +68,7 @@ import {
   parseLiveSession,
   type LiveWord,
   type VocabularyTransferChoice,
+  type WordStoreTransferChoice,
 } from "../../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../../src/integrations/laufdiktat/debounce";
 import {
@@ -243,6 +245,14 @@ export function useTeacherLiveRoom(
     useState<VocabularyDirection>("left-to-right");
   const [vocabularyTransfer, setVocabularyTransfer] =
     useState<VocabularyTransferChoice>("none");
+  // Text-Laufdiktat: Wörter in den Wortspeicher der Kinder (Standard: falsch
+  // geschriebene). Ohne sichtbaren Bereich bekommt die Sitzung „none“.
+  const wordStoreVisible = useAreaVisible("wortspeicher");
+  const [wordStoreChoice, setWordStoreTransfer] =
+    useState<WordStoreTransferChoice>("errors");
+  const wordStoreTransfer: WordStoreTransferChoice = wordStoreVisible
+    ? wordStoreChoice
+    : "none";
   // Standard-Tag aus den Lehrer-Einstellungen für übernommene Vokabeln.
   const [lernboxTag, setLernboxTag] = useState("");
   // Tag dieser Runde; leer gilt der Standard-Tag aus den Einstellungen.
@@ -770,6 +780,7 @@ export function useTeacherLiveRoom(
         source,
         vocabularyDirection: direction,
         vocabularyTransfer,
+        wordStoreTransfer,
         vocabularyTag,
         ...(classSeal ? { classSeal } : {}),
         gameMode,
@@ -827,6 +838,7 @@ export function useTeacherLiveRoom(
       gameMode,
       repeatWrongAnswers,
       vocabularyTransfer,
+      wordStoreTransfer,
       vocabularyTag,
       classSeal,
       showStars,
@@ -1021,6 +1033,7 @@ export function useTeacherLiveRoom(
         setStationShuffle(restored.stationShuffle);
         setRepeatWrongAnswers(restored.repeatWrongAnswers);
         setVocabularyTransfer(restored.vocabularyTransfer);
+        setWordStoreTransfer(restored.wordStoreTransfer);
         setRoundTag(restored.vocabularyTag ?? "");
         setRestoredClassSeal(restored.classSeal);
         setAssistance(restored.uebungAssistanceEnabled);
@@ -1766,6 +1779,9 @@ export function useTeacherLiveRoom(
     setDirection,
     vocabularyTransfer,
     setVocabularyTransfer,
+    wordStoreVisible,
+    wordStoreTransfer: wordStoreChoice,
+    setWordStoreTransfer,
     lernboxTag,
     liveClasses,
     classChoice: activeClass,

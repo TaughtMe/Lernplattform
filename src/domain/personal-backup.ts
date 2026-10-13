@@ -2,6 +2,9 @@ import * as z from "zod";
 import { learningEventV1Schema, type LearningEventV1 } from "./learning-bundle";
 import type { LearningBoxCard, LearningBoxDeck } from "./learning-box";
 import type { LearningWordProgress } from "./learning-word-progress";
+import { textboxSessionSchema, type TextboxSession } from "./textbox-session";
+import { wordBoxSchema, type WordBox } from "./word-box";
+import { wordRoundSchema, type WordRoundRecord } from "./word-store-progress";
 import type { TypingLessonProgress } from "../tastschreiben/typing-progress";
 
 export const PERSONAL_BACKUP_SCHEMA_VERSION = 1 as const;
@@ -38,7 +41,7 @@ const learningWordProgressBackupSchema = z
   .object({
     id: z.string().min(1),
     word: z.string().min(1),
-    stage: learningBoxLevelSchema,
+    stage: z.union([learningBoxLevelSchema, z.literal(6)]),
     box: learningBoxLevelSchema,
     dueAt: z.iso.datetime({ offset: true }),
     attempts: countSchema,
@@ -107,6 +110,11 @@ const personalDataSchema = z
       .array(learningWordProgressBackupSchema)
       .max(100_000),
     typingProgress: z.array(typingProgressBackupSchema).max(100_000),
+    // Ältere Sicherungen kennen die Textbox nicht.
+    textboxSessions: z.array(textboxSessionSchema).max(100_000).default([]),
+    // Ältere Sicherungen kennen Wortboxen und Wortspeicher-Runden nicht.
+    wordBoxes: z.array(wordBoxSchema).max(1_000).default([]),
+    wordRounds: z.array(wordRoundSchema).max(100_000).default([]),
   })
   .strict();
 
@@ -130,6 +138,9 @@ export type PersonalLearningBackupInput = {
   learningBoxCards: readonly LearningBoxCard[];
   learningWordProgress: readonly LearningWordProgress[];
   typingProgress: readonly TypingLessonProgress[];
+  textboxSessions?: readonly TextboxSession[];
+  wordBoxes?: readonly WordBox[];
+  wordRounds?: readonly WordRoundRecord[];
 };
 
 const legacyBackupSchema = z
@@ -154,6 +165,9 @@ export function createPersonalLearningBackup(
       learningBoxCards: [...input.learningBoxCards],
       learningWordProgress: [...input.learningWordProgress],
       typingProgress: [...input.typingProgress],
+      textboxSessions: [...(input.textboxSessions ?? [])],
+      wordBoxes: [...(input.wordBoxes ?? [])],
+      wordRounds: [...(input.wordRounds ?? [])],
     },
   });
 }
@@ -170,6 +184,9 @@ export function parsePersonalLearningBackup(value: unknown) {
       learningBoxCards: legacy.data.cards,
       learningWordProgress: [],
       typingProgress: [],
+      textboxSessions: [],
+      wordBoxes: [],
+      wordRounds: [],
     });
   }
 

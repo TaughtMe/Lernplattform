@@ -100,6 +100,22 @@ const silentH = wordList(`
   Ohrwurm Bohrmaschine Ruhestand Stuhllehne Fahrstuhl Wohnraum
 `);
 
+const sSsSz = wordList(`
+  Straße Fuß Gruß Spaß Maß Maße groß heiß weiß draußen außen außer außerdem
+  beißen reißen schmeißen schließen genießen gießen fließen schießen sprießen
+  Soße Größe Füße Grüße Fleiß Strauß Kloß Floß Gefäß Fußball Fußboden
+  Fußgänger Straßenbahn Süßigkeit süß bloß Spieß heißen Spaßvogel Großmutter
+  Großvater Weißbrot Fußweg Grußkarte Schließfach Fußabdruck Straßenschild
+  Wasser Fluss Nuss Kuss Schloss Schluss muss Biss Riss Pass Fass Kasse Klasse
+  Tasse Messer essen lassen passen nass blass fassen Schüssel Schlüssel küssen
+  müssen wissen Genuss Gewissen Abschluss Entschluss Kissen fressen Rasse Masse
+  Gasse hässlich Gewässer Fässer Nüsse Küsse Flüsse Schlösser Pässe Klassenzimmer
+  Passwort Flussufer
+  Hase Nase Rose Hose Vase Käse Gänse Mäuse Häuser Haus Maus Laus Eis Eisen
+  Reis Reise reisen lesen Besen Fliese Brause Pause Ferse Gans Gras Glas Preis
+  Kreis Hals Sonne Sand Salz Suppe Sofa Insel Esel das dass
+`);
+
 const memoryAndLoanWords = wordList(`
   Baby Ballett Balkon Banane Büro Café Cent Chance Chaos Charakter
   Chef Chemie Chip Chor Clown Computer Cousin Dame Detail Detektiv
@@ -157,6 +173,14 @@ export const LEARNING_WORD_COLLECTIONS: readonly LearningWordCollection[] = [
     detail: "Das h ist nicht zuverlässig hörbar und wird mitgelernt.",
     strategy: "Merken",
     words: silentH,
+  },
+  {
+    id: "s-ss-sz",
+    title: "s, ss und ß",
+    detail:
+      "Nach langem Vokal steht ß, nach kurzem Vokal ss. Sprich das Wort deutlich in Silben.",
+    strategy: "Ableiten",
+    words: sSsSz,
   },
   {
     id: "memory-words",

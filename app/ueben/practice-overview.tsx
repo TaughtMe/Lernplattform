@@ -22,7 +22,7 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     area: "wortspeicher",
     href: "/frei/german/lernwoerter",
     title: "Wortspeicher",
-    text: "Trainingswörter richtig schreiben, Sammlung für Sammlung.",
+    text: "Wörter in Wortboxen sammeln und in sechs Merkstufen sicher schreiben.",
     icon: "wortspeicher",
     tone: "#ffc58f",
   },
@@ -49,6 +49,14 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
     text: "Sätze einprägen und aus dem Gedächtnis schreiben.",
     icon: "laufdiktat",
     tone: "#cdb6f2",
+  },
+  {
+    area: "textbox",
+    href: "/frei/german/textbox",
+    title: "Textbox",
+    text: "Texte einprägen und Schritt für Schritt aus dem Gedächtnis schreiben.",
+    icon: "textbox",
+    tone: "#f2d58a",
   },
 ];
 

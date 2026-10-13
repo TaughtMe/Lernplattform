@@ -6,7 +6,7 @@ import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-r
 import { BackgroundRoomPresence } from "../../components/background-room-presence";
 import { SiteFooter } from "../site-footer";
 import { areaOf } from "./areas";
-import { FullscreenContext } from "./fullscreen";
+import { FullscreenContext, type FullscreenMode } from "./fullscreen";
 import { StudentShell } from "./student-shell";
 import { TeacherShell } from "./teacher-shell";
 
@@ -23,7 +23,7 @@ export function AreaFrame({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const [fullscreen, setFullscreen] = useState(false);
+  const [fullscreen, setFullscreen] = useState<FullscreenMode>(false);
   const area = areaOf(pathname);
   return (
     <FullscreenContext.Provider value={setFullscreen}>
@@ -36,8 +36,8 @@ export function AreaFrame({
       {area === "student" ? (
         <StudentShell
           activePath={pathname}
-          hideNav={fullscreen}
-          footer={fullscreen ? null : <SiteFooter compact />}
+          hideNav={fullscreen === "all" ? true : fullscreen}
+          footer={fullscreen === "all" ? null : <SiteFooter compact />}
         >
           {children}
         </StudentShell>

@@ -18,6 +18,7 @@ import {
   ThemeSwitch,
   type Theme,
 } from "../parts/parts";
+import { AnimalImage } from "../../ui/animal";
 import styles from "./student-dictation-screen.module.css";
 import { useAutoFitText } from "./use-auto-fit-text";
 
@@ -54,6 +55,8 @@ export type StudentDictationScreenProps = {
     hints: number;
     points: number;
     savedWords: readonly string[];
+    /** Weitere übernommene Wörter, die nicht einzeln genannt werden. */
+    savedWordsMore?: number;
   };
   /*
    * Ab hier optional: was das laufende Spiel zusätzlich braucht. Ohne diese
@@ -105,9 +108,9 @@ export type StudentDictationScreenProps = {
   battleBar?: {
     powers: readonly BattlePower[];
     picking: BattlePower | null;
-    targets: readonly string[];
+    targets: readonly { key: string; label: string; animal: string | null }[];
     message: string;
-    onPickTarget?: (name: string) => void;
+    onPickTarget?: (key: string) => void;
     onCancelPick?: () => void;
   };
   /** Stationen: blättern zwischen den Aufgaben einer Nummer. */
@@ -564,14 +567,17 @@ function BattleBar({
         <div className={styles.targets}>
           <strong>Wen möchtest du treffen?</strong>
           <div className={styles.targetList}>
-            {battleBar.targets.map((name) => (
+            {battleBar.targets.map((target) => (
               <button
-                key={name}
+                key={target.key}
                 type="button"
                 className={styles.ghost}
-                onClick={() => battleBar.onPickTarget?.(name)}
+                onClick={() => battleBar.onPickTarget?.(target.key)}
               >
-                {name}
+                {target.animal ? (
+                  <AnimalImage animal={target.animal} size={24} />
+                ) : null}{" "}
+                {target.label}
               </button>
             ))}
           </div>
@@ -699,7 +705,12 @@ function DonePhase({
   done,
   onFinish,
 }: StudentDictationScreenProps) {
+  const more = result.savedWordsMore ?? 0;
   const words = result.savedWords.map((word) => `„${word}"`);
+  const wordList =
+    words.length > 1
+      ? `${words.slice(0, -1).join(", ")} und ${words[words.length - 1]}`
+      : words.join("");
   const stars = done?.stars;
   return (
     <section
@@ -740,8 +751,10 @@ function DonePhase({
       </div>
       {words.length ? (
         <p className={styles.doneNote}>
-          {words.join(" und ")} {words.length === 1 ? "liegt" : "liegen"} jetzt
-          in deinem Wortspeicher.
+          {wordList}
+          {more > 0 ? ` und ${more} weitere` : ""}{" "}
+          {words.length + more === 1 ? "liegt" : "liegen"} jetzt in deinem
+          Wortspeicher.
         </p>
       ) : null}
       {done?.extras}

@@ -21,6 +21,20 @@ import { expect, test } from "@playwright/test";
  */
 const MAX_DIFF_RATIO = Number(process.env["DESIGN_MAX_DIFF"] ?? 0.012);
 
+/*
+ * Die Referenzbilder sind mit Arial-Breiten (Liberation Sans) gerendert. Die
+ * Systemschriften der Schaltflächen (--font-control) lösen sich je nach
+ * fontconfig des Rechners unterschiedlich auf. Damit der Vergleich nicht von der
+ * Maschine abhängt, werden diese Namen nur im Test auf Liberation Sans/Arial
+ * gelegt. Das Produkt zeigt weiter die Systemschrift.
+ */
+const CONTROL_FONT_CSS = ["-apple-system", "BlinkMacSystemFont", "Segoe UI"]
+  .map(
+    (name) =>
+      `@font-face { font-family: "${name}"; src: local("Liberation Sans"), local("Arial"); }`,
+  )
+  .join("\n");
+
 const manifest = JSON.parse(
   readFileSync(
     new URL("../../docs/design/screens.json", import.meta.url),
@@ -45,6 +59,7 @@ for (const screen of manifest.screens) {
     );
     await page.setViewportSize({ width: screen.width, height: screen.height });
     await page.goto(`/entwicklung/screens/${screen.id}`);
+    await page.addStyleTag({ content: CONTROL_FONT_CSS });
     const frame = page.locator(`[data-screen="${screen.id}"]`);
     await expect(frame).toBeVisible();
     if (screen.ready) await frame.locator(screen.ready).waitFor();

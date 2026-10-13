@@ -1,5 +1,6 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
+  readonly altgr: string;
   readonly board: string;
   readonly bump: string;
   readonly chip: string;
@@ -9,11 +10,16 @@ declare const styles: {
   readonly hand: string;
   readonly heat: string;
   readonly hot: string;
+  readonly isoBottom: string;
+  readonly isoTop: string;
   readonly key: string;
   readonly large: string;
+  readonly led: string;
   readonly legend: string;
+  readonly locked: string;
   readonly on: string;
   readonly row: string;
+  readonly shift: string;
   readonly small: string;
   readonly target: string;
   readonly wrong: string;

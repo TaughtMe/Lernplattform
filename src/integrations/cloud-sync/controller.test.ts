@@ -95,9 +95,17 @@ describe("sync controller", () => {
     expect(board.onData).toHaveBeenCalled();
 
     // Änderung auf dem Laptop: nach 2 s hochgeladen, die Tafel holt sie beim nächsten Takt.
+    const before = (await home.controller.snapshot()).revision;
     await home.library.put(material("m2", "Vokabeln"));
     home.controller.notifyChange();
     await home.fake.advance(2_500);
+    // Erst wenn der Laptop geschrieben hat, darf der Takt der Tafel laufen;
+    // sonst prüft sie vor dem Hochladen und der Test hängt vom Zufall ab.
+    await vi.waitFor(async () =>
+      expect((await home.controller.snapshot()).revision).toBeGreaterThan(
+        before,
+      ),
+    );
     await board.fake.advance(10_000);
     await vi.waitFor(async () =>
       expect((await board.library.list()).map((m) => m.title).sort()).toEqual([

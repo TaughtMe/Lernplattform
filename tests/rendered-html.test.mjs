@@ -99,6 +99,9 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/frei/typing", "Bereiche von der Grundstellung"],
     ["/lernen/material", "Lernwerkstatt"],
     ["/frei/german/lernwoerter", "Lernwörter"],
+    ["/frei/german/textbox", "Textbox"],
+    ["/frei/german/textbox/laufzettel", "Laufzettel Textbox"],
+    ["/lernen/fortschritt", "Mein Fortschritt"],
     ["/klasse/7b", "Klasse 7b"],
     ["/lernbox", "LernBox"],
     ["/lehrer", "Inhalte"],
@@ -127,6 +130,13 @@ test("server-renders the houses once motivation is switched on", async () => {
   } finally {
     delete process.env["LERNRAUM_FREIGABE"];
   }
+});
+
+test("offers the automatic teacher sync without preview", async () => {
+  // Entscheidung 53: Der Geräte-Abgleich ist seit dem Pilot frei.
+  const html = await (await render("/lehrer/einstellungen", null)).text();
+  assert.match(html, /Geräte abgleichen/);
+  assert.doesNotMatch(html, />Cloud-Synchronisation</);
 });
 
 test("shows only released areas without preview and redirects the rest", async () => {
@@ -174,6 +184,20 @@ test("shows only released areas without preview and redirects the rest", async (
         path,
       );
     }
+  }
+
+  // Die Textbox ist freigegeben und lässt sich per Freigabe zurückhalten.
+  assert.equal((await render("/frei/german/textbox", null)).status, 200);
+  assert.equal(
+    (await render("/frei/german/textbox/laufzettel", null)).status,
+    200,
+  );
+  process.env["LERNRAUM_FREIGABE"] = "textbox=vorschau";
+  try {
+    assert.equal((await render("/frei/german/textbox", null)).status, 307);
+    assert.equal((await render("/frei/german/textbox")).status, 200);
+  } finally {
+    delete process.env["LERNRAUM_FREIGABE"];
   }
 
   // Bereiche in der Vorschau erscheinen nur mit Vorschau-Cookie.

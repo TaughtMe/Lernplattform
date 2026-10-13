@@ -34,7 +34,7 @@ import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-clas
 import { CloudStatusPanel, useTick } from "../ui/cloud-badge";
 import { Button, Notice, Toggle } from "../ui/primitives";
 import { toBadgeModel } from "./cloud-badge-connected";
-import { CloudSyncPanel } from "./cloud-sync-panel";
+import { CloudSyncPanel, readSettings } from "./cloud-sync-panel";
 import { useCloudClientIds } from "./cloud-client-ids";
 import { useAreaVisible } from "../release/release-context";
 import { useSyncSnapshot } from "./cloud-sync-client";
@@ -167,8 +167,15 @@ function SetupWizard({ controller }: { controller: SyncController }) {
   const heading = useRef<HTMLHeadingElement>(null);
 
   // Nach der Rückkehr von OneDrive geht es mit dem gewählten Anbieter weiter.
+  // WebDAV-Adresse und Benutzername aus dem Handabgleich werden übernommen.
   useEffect(() => {
     const id = window.setTimeout(() => {
+      const previous = readSettings();
+      setWebdav((value) => ({
+        ...value,
+        url: value.url || previous.url,
+        username: value.username || previous.username,
+      }));
       try {
         const saved = window.sessionStorage.getItem(PENDING_KEY);
         if (saved === "onedrive" || saved === "google-drive") {

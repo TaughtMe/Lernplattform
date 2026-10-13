@@ -127,6 +127,20 @@ describe("native Laufdiktat live sessions", () => {
     ).toThrow();
   });
 
+  it("lässt Sitzungen ohne Wortspeicher-Übernahme auf „none“ stehen", () => {
+    const words = [{ id: "1", kind: "text", targetWord: "Schule" }];
+    expect(parseLiveSession({ words }, "s", "seed").wordStoreTransfer).toBe(
+      "none",
+    );
+    expect(
+      parseLiveSession({ words, wordStoreTransfer: "all" }, "s", "seed")
+        .wordStoreTransfer,
+    ).toBe("all");
+    expect(() =>
+      parseLiveSession({ words, wordStoreTransfer: "viele" }, "s", "seed"),
+    ).toThrow();
+  });
+
   it("rejects malformed session data", () => {
     expect(() =>
       parseLiveSession({ words: [] }, "session-1", "seed"),

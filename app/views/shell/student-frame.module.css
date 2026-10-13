@@ -25,11 +25,22 @@
   flex-direction: column;
   min-width: 0;
   /* Platz für die Tab-Leiste unten. */
-  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
   container: student-main / inline-size;
 }
 .main.bare {
   padding-bottom: 0;
+}
+/*
+ * Mobil klebt der Seitenfuß (Impressum, Datenschutz, Version) direkt über der
+ * Tab-Leiste und ist ohne Scrollen sichtbar; am Seitenende sitzt er an
+ * seinem normalen Platz.
+ */
+.main > footer {
+  position: sticky;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  z-index: 10;
+  background: var(--bg);
 }
 /* Inhalt füllt den Platz; der Seitenfuß bleibt darunter im Bild. */
 .content {
@@ -37,6 +48,19 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
+}
+/* Nur unter 900 px: Tab-Leiste, Kopfzeilen-Link und Seitenfuß weg (Eingabe der Textbox). */
+.navHiddenMobile {
+  --student-home-link: none;
+}
+@container (max-width: 899.98px) {
+  .navHiddenMobile .nav,
+  .navHiddenMobile .main > footer {
+    display: none;
+  }
+  .navHiddenMobile .main {
+    padding-bottom: 0;
+  }
 }
 .nav[hidden] {
   display: none;
@@ -133,6 +157,9 @@
   }
   .main {
     padding-bottom: 0;
+  }
+  .main > footer {
+    position: static;
   }
   .nav {
     position: sticky;

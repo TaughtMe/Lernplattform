@@ -9,8 +9,7 @@ Empfehlung.
 
 ## Umsetzungsstand (5. Oktober 2026)
 
-Umgesetzt auf `claude/lernraum-ui-v2` (Version 0.7.0, Bereich `geraete-sync` auf
-`vorschau`). Abweichungen vom Plan sind begründet:
+Umgesetzt auf `claude/lernraum-ui-v2` (Version 0.7.0, Bereich `geraete-sync` seit 7. Oktober 2026 auf `frei`, siehe `docs/cloud-sync.md`). Abweichungen vom Plan sind begründet:
 
 | Phase                               | Stand           | Anmerkung                                                                                                                                                                      |
 | ----------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

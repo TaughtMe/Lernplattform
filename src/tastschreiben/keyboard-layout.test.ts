@@ -61,4 +61,16 @@ describe("German typing keyboard", () => {
       home: true,
     });
   });
+
+  it("kennt Alt-Gr-Zeichen und Umschaltzeichen der Zahlenreihe", () => {
+    expect(lookupTypingCharacter("{")).toMatchObject({
+      key: { code: "Digit7" },
+      needsAltGr: true,
+    });
+    expect(lookupTypingCharacter("]")?.key.code).toBe("Digit9");
+    expect(lookupTypingCharacter("(")).toMatchObject({
+      key: { code: "Digit8" },
+      needsShift: true,
+    });
+  });
 });

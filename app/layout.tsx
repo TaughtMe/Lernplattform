@@ -7,6 +7,7 @@ import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
 import { AreaFrame } from "./ui/shell/area-frame";
 import { ServiceWorkerRegistration } from "./ui/service-worker-registration";
+import { UpdateToast } from "./ui/update-toast";
 import { SiteFooter } from "./ui/site-footer";
 import "@fontsource-variable/work-sans/wght.css";
 import "@fontsource-variable/fredoka/wght.css";
@@ -118,6 +119,7 @@ export default async function RootLayout({
           </CloudClientIdsProvider>
           <SiteFooter />
           <ServiceWorkerRegistration />
+          <UpdateToast />
         </ReleaseProvider>
       </body>
     </html>

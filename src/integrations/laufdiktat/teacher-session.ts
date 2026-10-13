@@ -6,7 +6,11 @@ import {
   type VocabularyDirection,
   type VocabularyLocales,
 } from "../../domain/running-dictation";
-import type { LiveWord, VocabularyTransferChoice } from "./live-session";
+import type {
+  LiveWord,
+  VocabularyTransferChoice,
+  WordStoreTransferChoice,
+} from "./live-session";
 import {
   generateMentalMathTasks,
   normalizeMathChainInput,
@@ -27,6 +31,8 @@ export type TeacherSessionOptions = {
   shuffleWords: boolean;
   repeatWrongAnswers: boolean;
   vocabularyTransfer?: VocabularyTransferChoice;
+  /** Wörter eines Text-Laufdiktats in den Wortspeicher der Kinder (nur Text). */
+  wordStoreTransfer?: WordStoreTransferChoice;
   /** Standard-Tag der Lehrkraft für übernommene Vokabeln. */
   vocabularyTag?: string;
   /** Abdruck des Klassenstempels, wenn die Runde für eine Klasse startet. */
@@ -56,6 +62,7 @@ export type TeacherRoomConfig = {
   uebungAssistanceEnabled: boolean;
   repeatWrongAnswers: boolean;
   vocabularyTransfer: VocabularyTransferChoice;
+  wordStoreTransfer: WordStoreTransferChoice;
   vocabularyTag?: string;
   classSeal?: string;
   showStars: boolean;
@@ -159,6 +166,10 @@ export function buildTeacherRoomConfig(
     vocabularyTransfer:
       options.contentMode === "vocabulary"
         ? (options.vocabularyTransfer ?? "errors")
+        : "none",
+    wordStoreTransfer:
+      options.contentMode === "text"
+        ? (options.wordStoreTransfer ?? "errors")
         : "none",
     ...(options.contentMode === "vocabulary" && options.vocabularyTag?.trim()
       ? { vocabularyTag: options.vocabularyTag.trim() }

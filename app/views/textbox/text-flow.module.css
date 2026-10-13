@@ -1,0 +1,13 @@
+/* Wort und folgende Satzzeichen bleiben in einer Zeile. */
+.nowrap {
+  white-space: nowrap;
+}
+/*
+ * Jedes Wort steht in einem eigenen Inline-Kasten (Innenabstand und Außenabstand
+ * heben sich auf). Wie in der Vorlage wird der Text dort neu gesetzt; das
+ * entscheidet über Teilpixel im Zeilenumbruch.
+ */
+.word {
+  margin: 0 -3px;
+  padding: 2px 3px;
+}

@@ -26,6 +26,34 @@ function keyLabel(key: (typeof KEYBOARD_ROWS)[number][number]) {
   return key.label === "ß" ? "ß" : key.label.toLocaleUpperCase("de-DE");
 }
 
+type KeyDef = (typeof KEYBOARD_ROWS)[number][number];
+
+/**
+ * Große Entertaste: deutsche ISO-Form über zwei Zeilen (oben breit, unten schmal).
+ * Kleine Entertaste: eine einzelne Taste in der mittleren Zeile, das „#“ rückt nach oben.
+ */
+function layoutRows(enterKey: "large" | "small"): KeyDef[][] {
+  if (enterKey === "large") return KEYBOARD_ROWS;
+  const hash = KEYBOARD_ROWS.flat().find((key) => key.code === "Backslash");
+  return KEYBOARD_ROWS.map((row) => {
+    if (row.some((key) => key.code === "Enter") && hash) {
+      return [
+        ...row.filter((key) => key.code !== "Enter"),
+        { ...hash, width: 1.55 },
+      ];
+    }
+    if (row.some((key) => key.code === "EnterLower")) {
+      return [
+        ...row.filter(
+          (key) => key.code !== "Backslash" && key.code !== "EnterLower",
+        ),
+        { id: "Enter", code: "Enter", label: "↵", width: 2.25, kind: "system" },
+      ];
+    }
+    return row;
+  });
+}
+
 type KeyboardProps = {
   size: "large" | "small";
   /** Codes der nächsten Taste(n), z. B. Buchstabe und Umschalt. */
@@ -35,6 +63,10 @@ type KeyboardProps = {
   /** Fehlerstärke 1–3 je Tastencode (Wärmekarte „Unsichere Tasten“). */
   heat?: Readonly<Record<string, number>>;
   fingerColors?: boolean;
+  /** Große Entertaste über zwei Zeilen oder kleine Taste in der mittleren Zeile. */
+  enterKey?: "large" | "small";
+  /** Feststelltaste ist aktiv. */
+  capsLock?: boolean;
 };
 
 /** Deutsche ISO-Tastatur mit Fingerfarben, Zielhinweis und Wärmekarte. */
@@ -44,15 +76,21 @@ export function Keyboard({
   wrong = null,
   heat,
   fingerColors = true,
+  enterKey = "large",
+  capsLock = false,
 }: KeyboardProps) {
+  const small = enterKey === "small";
   return (
     <div className={cx(styles.board, styles[size])} aria-hidden="true">
-      {KEYBOARD_ROWS.map((row, index) => (
+      {layoutRows(enterKey).map((row, index) => (
         <div key={index} className={styles.row}>
           {row.map((key) => {
             const level = heat?.[key.code] ?? 0;
             const colored =
               !heat && fingerColors && key.finger && key.finger !== "thumb";
+            // Beide Teile der großen Entertaste leuchten zusammen.
+            const code = key.code === "EnterLower" ? "Enter" : key.code;
+            const iso = !small && code === "Enter";
             return (
               <span
                 key={key.code}
@@ -60,10 +98,15 @@ export function Keyboard({
                   styles.key,
                   key.kind !== "character" && styles.control,
                   colored && styles.finger,
-                  !heat && targets.includes(key.code) && styles.target,
-                  !heat && wrong === key.code && styles.wrong,
+                  !heat && targets.includes(code) && styles.target,
+                  !heat &&
+                    (wrong === key.code || (iso && wrong === "Enter")) &&
+                    styles.wrong,
                   level > 0 && styles.heat,
                   level >= 2 && styles.hot,
+                  iso && key.code === "Enter" && styles.isoTop,
+                  iso && key.code === "EnterLower" && styles.isoBottom,
+                  key.code === "CapsLock" && capsLock && styles.locked,
                 )}
                 style={
                   {
@@ -73,7 +116,18 @@ export function Keyboard({
                   } as CSSProperties
                 }
               >
-                {keyLabel(key)}
+                {key.code === "Enter" && small ? "↵" : keyLabel(key)}
+                {key.kind === "character" &&
+                key.shift &&
+                !/\p{L}/u.test(key.shift) ? (
+                  <span className={styles.shift}>{key.shift}</span>
+                ) : null}
+                {key.altGr ? (
+                  <span className={styles.altgr}>{key.altGr}</span>
+                ) : null}
+                {key.code === "CapsLock" && capsLock ? (
+                  <span className={styles.led} />
+                ) : null}
                 {key.home ? <span className={styles.bump} /> : null}
               </span>
             );
