@@ -9,6 +9,8 @@ declare const styles: {
   readonly hand: string;
   readonly heat: string;
   readonly hot: string;
+  readonly isoBottom: string;
+  readonly isoTop: string;
   readonly key: string;
   readonly large: string;
   readonly legend: string;

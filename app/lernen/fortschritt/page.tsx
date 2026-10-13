@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { AdaptiveProgressPanel } from "../../components/adaptive-progress-panel";
+import { WordStoreProgressSection } from "../../components/word-store-progress-section";
+import { TextboxProgressSection } from "../../components/textbox-progress-section";
 import { StudentPage } from "../../ui/shell/student-page";
 import { PageHeader } from "../../ui/primitives";
 
@@ -13,6 +15,8 @@ export default function Page() {
           Was du geübt und Schritt für Schritt verbessert hast.
         </PageHeader>
         <AdaptiveProgressPanel />
+        <WordStoreProgressSection />
+        <TextboxProgressSection />
       </div>
     </StudentPage>
   );

@@ -243,6 +243,10 @@ describe("syncOnce", () => {
     const open = await b.store.listConflicts();
     expect(open).toHaveLength(1);
     expect(open[0]?.other?.data["title"]).toBe("Von A");
+    // Der nächste Takt ohne Änderung (schneller Weg) meldet den offenen
+    // Konflikt weiter, statt den Zustand auf „abgeglichen“ zu setzen.
+    expect(await run(b, cloud)).toMatchObject({ status: "conflict" });
+    expect((await b.store.getState()).status).toBe("conflict");
     await run(a, cloud);
     expect((await a.material.get("m1"))?.title).toBe(
       (await b.material.get("m1"))?.title,

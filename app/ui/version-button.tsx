@@ -10,8 +10,6 @@ const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 
 export function VersionButton() {
   const registration = useRef<ServiceWorkerRegistration | null>(null);
-  const reloading = useRef(false);
-  const reloadOnControllerChange = useRef(false);
   const [state, setState] = useState<UpdateState>("idle");
 
   const markReady = useCallback(() => setState("ready"), []);
@@ -69,17 +67,6 @@ export function VersionButton() {
     let cancelled = false;
     let stopWatchingRegistration = () => {};
 
-    const handleControllerChange = () => {
-      if (!reloadOnControllerChange.current) return;
-      if (reloading.current) return;
-      reloading.current = true;
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener(
-      "controllerchange",
-      handleControllerChange,
-    );
-
     // Registriert wird zentral in `ServiceWorkerRegistration`.
     void navigator.serviceWorker.ready
       .then((nextRegistration) => {
@@ -104,28 +91,17 @@ export function VersionButton() {
       cancelled = true;
       stopWatchingRegistration();
       window.clearInterval(interval);
-      navigator.serviceWorker.removeEventListener(
-        "controllerchange",
-        handleControllerChange,
-      );
       document.removeEventListener("visibilitychange", checkWhenVisible);
       window.removeEventListener("online", checkWhenOnline);
     };
   }, [checkForUpdate, watchRegistration]);
 
   function handleClick() {
-    if (state === "ready") {
-      reloadOnControllerChange.current = true;
-      registration.current?.waiting?.postMessage({ type: "SKIP_WAITING" });
-      return;
-    }
     void checkForUpdate(true);
   }
 
   const label =
-    state === "ready"
-      ? "Update laden"
-      : state === "checking"
+    state === "checking"
         ? "Suche …"
         : state === "current"
           ? "Aktuell"
@@ -136,16 +112,11 @@ export function VersionButton() {
   return (
     <button
       type="button"
-      className={`ui-version${state === "ready" ? " is-update-ready" : ""}`}
+      className="ui-version"
       onClick={handleClick}
-      title={
-        state === "ready"
-          ? "Neue Version verfügbar – klicken zum Aktualisieren"
-          : "Nach einer neuen Version suchen"
-      }
+      title="Nach einer neuen Version suchen"
       aria-live="polite"
     >
-      {state === "ready" ? <span className="ui-version__dot" /> : null}
       {label}
       {state === "current" ? <Icon name="check" size={14} /> : null}
     </button>

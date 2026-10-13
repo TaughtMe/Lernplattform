@@ -35,7 +35,8 @@ const STORAGE_KEY = "lernraum:cloud-sync";
 
 type StoredSettings = { url: string; username: string };
 
-function readSettings(): StoredSettings {
+/** WebDAV-Adresse und Benutzername des Handabgleichs (ohne Passwort). */
+export function readSettings(): StoredSettings {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const value = raw ? (JSON.parse(raw) as Partial<StoredSettings>) : {};

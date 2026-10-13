@@ -189,6 +189,10 @@ test("zwei Geräte gleichen Material über WebDAV ab, verschlüsselt, mit Konfli
   expect(header).toContain('"encryption"');
 
   // Beide ändern dasselbe Material: Konflikt auf dem Gerät mit der älteren Fassung.
+  // Die Tafel ist dabei offline. Sonst holt ihr automatischer Takt die
+  // Laptop-Fassung manchmal vor ihrer eigenen Änderung, und es entsteht zu
+  // Recht kein Konflikt.
+  await tafel.context.setOffline(true);
   await putMaterial(
     laptop.page,
     material("Diktat Laptop 2", "2026-10-05T09:00:00.000Z"),
@@ -198,6 +202,7 @@ test("zwei Geräte gleichen Material über WebDAV ab, verschlüsselt, mit Konfli
     material("Diktat Tafel 2", "2026-10-05T09:00:05.000Z"),
   );
   await syncNow(laptop.page);
+  await tafel.context.setOffline(false);
   await syncNow(tafel.page);
   const badge = tafel.page.getByRole("button", {
     name: /Cloud-Abgleich: \d Konflikte? zu prüfen/,

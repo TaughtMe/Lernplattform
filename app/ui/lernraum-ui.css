@@ -2434,16 +2434,60 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   cursor: pointer;
 }
-.ui-version.is-update-ready {
+/* Update-Popup: fest in der Ecke, unabhängig vom Scrollen. */
+.ui-update-toast {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(320px, calc(100vw - 32px));
+  padding: 14px;
+  border: 2px solid var(--line2);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  color: var(--ink);
+  box-shadow: 0 14px 36px var(--shadow);
+}
+.ui-update-toast__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: 13.5px;
+}
+.ui-update-toast__text span {
+  color: var(--ink2);
+}
+.ui-update-toast__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.ui-update-toast__actions button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ui-update-toast__later {
+  background: none;
+  color: var(--ink2);
+}
+.ui-update-toast__update {
   background: var(--accent);
   color: var(--accent-ink);
 }
-.ui-version__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
+.ui-update-toast__actions button:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
+
 /* Kompakter Seitenfuß im Schüler- und Lehrerrahmen: eine Zeile, im Bild. */
 .ui-footer--compact {
   justify-content: center;
@@ -2961,6 +3005,11 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
 @media print {
   .ui-print-hidden,
   .ui-footer {
+    display: none !important;
+  }
+  /* Druckbare Seiten (z. B. Laufzettel) ohne Navigation und Kopfzeile. */
+  body:has([data-print-sheet]) nav[aria-label="Hauptnavigation"],
+  body:has([data-print-sheet]) .ui-student-page__head {
     display: none !important;
   }
 }

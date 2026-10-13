@@ -436,6 +436,121 @@
       "width": 1180,
       "height": 740,
       "status": "offen"
+    },
+    {
+      "id": "9a",
+      "screen": "9a",
+      "width": 1180,
+      "height": 867,
+      "status": "referenz"
+    },
+    {
+      "id": "9b",
+      "screen": "9b",
+      "width": 1180,
+      "height": 1484,
+      "hide": ["[data-peek]", "[data-history]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9c",
+      "screen": "9c",
+      "width": 390,
+      "height": 844,
+      "hide": ["[data-peek]", "[data-history]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9d",
+      "screen": "9d",
+      "width": 1180,
+      "height": 800,
+      "canvas": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9d-gaps",
+      "screen": "9d",
+      "width": 1180,
+      "height": 800,
+      "canvas": ["button[data-r=\"1\"][data-s=\"1\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9d-check",
+      "screen": "9d",
+      "width": 1180,
+      "height": 800,
+      "canvas": ["button[data-r=\"1\"][data-s=\"2\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9d-free",
+      "screen": "9d",
+      "width": 1180,
+      "height": 800,
+      "canvas": ["button[data-r=\"4\"][data-s=\"1\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9d-free-check",
+      "screen": "9d",
+      "width": 1180,
+      "height": 800,
+      "canvas": ["button[data-r=\"4\"][data-s=\"2\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9e-gaps",
+      "screen": "9e",
+      "width": 1180,
+      "height": 800,
+      "canvas": ["button[data-r=\"1\"][data-s=\"1\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt",
+      "ready": "[data-layout=\"vollbild\"]"
+    },
+    {
+      "id": "9e-free",
+      "screen": "9e",
+      "width": 1180,
+      "height": 859,
+      "canvas": ["button[data-r=\"4\"][data-s=\"1\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt",
+      "ready": "[data-layout=\"vollbild\"]"
+    },
+    {
+      "id": "9f",
+      "screen": "9f",
+      "width": 390,
+      "height": 844,
+      "canvas": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9f-gaps",
+      "screen": "9f",
+      "width": 390,
+      "height": 844,
+      "canvas": ["button[data-r=\"1\"][data-s=\"1\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
+    },
+    {
+      "id": "9f-check",
+      "screen": "9f",
+      "width": 390,
+      "height": 844,
+      "canvas": ["button[data-r=\"1\"][data-s=\"2\"]"],
+      "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
+      "status": "umgesetzt"
     }
   ]
 }

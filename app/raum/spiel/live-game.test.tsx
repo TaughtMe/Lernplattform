@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import { WORD_STORE_TRANSFER_ERROR } from "../../../src/integrations/laufdiktat/word-store-transfer";
 import {
   classSealFingerprint,
   createClassSealKeyPair,
@@ -12,7 +13,8 @@ import { createStudentClassesRepository } from "../../../src/storage/student-cla
 import { revealWithTwoFingers } from "./hold-test-utils";
 import { LiveRunningDictationGame } from "./live-game";
 
-const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
+const { ingestBundle, putLearningEvent, importFromLesson } = vi.hoisted(() => ({
+  importFromLesson: vi.fn(),
   ingestBundle: vi.fn().mockResolvedValue({
     deckId: "deck-1",
     added: 1,
@@ -24,6 +26,7 @@ const { ingestBundle, putLearningEvent } = vi.hoisted(() => ({
 
 vi.mock("../../../src/storage/personal-learning-events", () => ({
   createLearningBoxRepository: () => ({ ingestBundle }),
+  createWordBoxRepository: () => ({ importFromLesson }),
   createPersonalLearningEventRepository: () => ({ put: putLearningEvent }),
 }));
 
@@ -38,6 +41,7 @@ const session: LiveSession = {
   uebungAssistanceEnabled: false,
   repeatWrongAnswers: false,
   vocabularyTransfer: "none",
+  wordStoreTransfer: "none",
   showStars: true,
   shuffleWords: false,
   strictTypingMode: false,
@@ -689,4 +693,98 @@ it("preserves a math answer after local storage failure", async () => {
   expect(putLearningEvent.mock.calls[0]![0]).toEqual(
     putLearningEvent.mock.calls[1]![0],
   );
+});
+
+describe("Wörter in den Wortspeicher", () => {
+  const textSession = (
+    wordStoreTransfer: LiveSession["wordStoreTransfer"],
+  ) => ({
+    ...session,
+    words: [{ id: "t1", kind: "text" as const, targetWord: "Der Hund läuft." }],
+    wordStoreTransfer,
+  });
+
+  async function playWrongThenRight(
+    wordStoreTransfer: LiveSession["wordStoreTransfer"],
+    mockSuccess = true,
+  ) {
+    const user = userEvent.setup();
+    window.sessionStorage.clear();
+    if (mockSuccess) {
+      importFromLesson.mockReset();
+      importFromLesson.mockResolvedValue({
+        added: ["Hund", "läuft", "Wort3", "Wort4", "Wort5", "Wort6", "Wort7"],
+        full: true,
+      });
+    }
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={textSession(wordStoreTransfer)}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+    revealWithTwoFingers(container);
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "Der Hunt läuft.{Enter}",
+    );
+    await screen.findByText(/Noch nicht richtig/);
+    revealWithTwoFingers(container);
+    await user.type(
+      screen.getByRole("textbox", { name: "Deine Antwort" }),
+      "Der Hund läuft.{Enter}",
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Geschafft, Mia!")).toBeVisible(),
+    );
+  }
+
+  it("übernimmt falsch geschriebene Wörter und nennt höchstens fünf davon", async () => {
+    await playWrongThenRight("errors");
+    await waitFor(() => expect(importFromLesson).toHaveBeenCalledTimes(1));
+    expect(importFromLesson.mock.calls[0]?.[0]).toMatchObject({
+      words: ["Hund"],
+      errorWords: ["Hund"],
+      sourceId: "session-1",
+    });
+    expect(
+      await screen.findByText(
+        /„Hund", „läuft", „Wort3", „Wort4" und „Wort5" und 2 weitere liegen jetzt in deinem Wortspeicher/,
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Wortbox ‚Aus dem Unterricht‘ ist voll/),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Im Wortspeicher üben" }),
+    ).toHaveAttribute("href", "/frei/german/lernwoerter");
+  });
+
+  it("zeigt einen Hinweis, wenn die Übernahme fehlschlägt", async () => {
+    importFromLesson.mockReset();
+    importFromLesson.mockRejectedValue(new Error("IndexedDB nicht verfügbar"));
+    await playWrongThenRight("errors", false);
+    expect(await screen.findByText(WORD_STORE_TRANSFER_ERROR)).toBeVisible();
+  });
+
+  it("übernimmt bei „Aus“ nichts", async () => {
+    await playWrongThenRight("none");
+    expect(importFromLesson).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText(/in deinem Wortspeicher/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("übernimmt bei „Alle Wörter“ auch richtig geschriebene lange Wörter", async () => {
+    await playWrongThenRight("all");
+    await waitFor(() => expect(importFromLesson).toHaveBeenCalledTimes(1));
+    expect(importFromLesson.mock.calls[0]?.[0]).toMatchObject({
+      words: ["Hund", "läuft"],
+      errorWords: ["Hund"],
+    });
+  });
 });

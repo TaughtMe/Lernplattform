@@ -41,6 +41,7 @@ declare const styles: {
   readonly grabber: string;
   readonly handle: string;
   readonly header: string;
+  readonly hint: string;
   readonly joined: string;
   readonly joinedCard: string;
   readonly label: string;
@@ -145,6 +146,7 @@ declare const styles: {
   readonly track: string;
   readonly waiting: string;
   readonly wideOnly: string;
+  readonly wordStore: string;
   readonly zoomHint: string;
 };
 export default styles;

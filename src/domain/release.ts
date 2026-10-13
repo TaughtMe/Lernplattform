@@ -72,6 +72,12 @@ export const RELEASE_AREAS = {
     routes: ["/frei/german"],
     stage: "frei",
   },
+  textbox: {
+    label: "Textbox",
+    routes: ["/frei/german/textbox"],
+    // Von der Lehrkraft am 08.10.2026 freigegeben (Entscheidung 54).
+    stage: "frei",
+  },
   "laufdiktat-frei": {
     label: "Laufdiktat allein üben",
     routes: ["/frei/german/laufdiktat"],
@@ -97,8 +103,10 @@ export const RELEASE_AREAS = {
     label: "Geräte abgleichen (Lehrkraft)",
     // Kein eigener Pfad: schaltet Einrichtung und Cloud-Symbol im Lehrerbereich.
     routes: [],
-    // Entscheidung 53: erst nach dem Pilot mit einer Lehrkraft frei.
-    stage: "vorschau",
+    // Entscheidung 53: frei seit dem Pilot der projektverantwortlichen
+    // Lehrkraft (7. Oktober 2026); mit LERNRAUM_FREIGABE=geraete-sync=vorschau
+    // erscheint wieder der Handabgleich.
+    stage: "frei",
   },
   motivation: {
     label: "Häuser, Serie und Abzeichen",

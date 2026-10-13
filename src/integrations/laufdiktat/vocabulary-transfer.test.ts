@@ -25,6 +25,7 @@ function session(
     uebungAssistanceEnabled: true,
     repeatWrongAnswers: true,
     vocabularyTransfer,
+    wordStoreTransfer: "none",
     showStars: true,
     shuffleWords: false,
     strictTypingMode: false,

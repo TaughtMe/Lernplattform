@@ -36,4 +36,27 @@ describe("learning word progress", () => {
     });
     expect(progress).toMatchObject({ stage: 4, box: 1, helpUses: 1 });
   });
+
+  it("advances up to stage six while the repetition box stops at five", () => {
+    let progress = updateLearningWordProgress(undefined, {
+      word: "Rad",
+      correct: true,
+      usedHelp: false,
+      selfCorrected: false,
+      stage: 5,
+      now: "2026-08-24T10:00:00.000Z",
+    });
+    expect(progress.stage).toBe(6);
+    for (let day = 0; day < 8; day += 1) {
+      progress = updateLearningWordProgress(progress, {
+        word: "Rad",
+        correct: true,
+        usedHelp: false,
+        selfCorrected: false,
+        stage: 6,
+        now: "2026-08-25T10:00:00.000Z",
+      });
+    }
+    expect(progress).toMatchObject({ stage: 6, box: 5 });
+  });
 });

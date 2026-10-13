@@ -31,7 +31,273 @@ input{font:inherit}
 @keyframes tt-wob0{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
 @keyframes tt-wob1{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
 @keyframes tt-pop{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes tb-peek{0%,34%{transform:translateY(110%) rotate(0)}42%{transform:translateY(36%) rotate(0)}50%{transform:translateY(36%) rotate(-9deg)}58%{transform:translateY(30%) rotate(7deg)}64%{transform:translateY(36%) rotate(0)}72%,100%{transform:translateY(110%) rotate(0)}}
 </style></helmet>
+
+<section class="dv-turn" id="t9">
+<div class="dv-thd"><a class="dv-tid" href="#t9">9</a><span class="dv-tname">Textbox · Textauswahl als Kartenraster, Eingabe auf liniertem Papier</span></div>
+<p class="dv-note">Auswahl: Suche und alle Filter als Chips auf einer Seite, darunter ein kompaktes Raster. Jede Karte zeigt Stufe, Schwerpunkt und Stand. <a href="#9a">9a</a> ist dicht mit vier Spalten, <a href="#9b">9b</a> stellt offene Texte nach oben und zeigt den Bestwert als Balken. Eingabe: Merken, Schreiben, Kontrolle bleiben die drei Schritte. <a href="#9d">9d</a> ist ein Heft mit Linien und Navigation, <a href="#9e">9e</a> ein ruhiger Vollbildmodus mit Lückenfeldern. Durchgang 4 zeigt in beiden nur liniertes Papier, nichts vom Text.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="9a">
+<div class="dv-olabel"><a class="dv-oid" href="#9a">9a</a>Auswahl · Desktop · Chips oben, Raster mit vier Spalten</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="display:grid;grid-template-columns:100px minmax(0,1fr);min-height:780px;color:var(--ink,#211f1b)">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 10px;background:var(--nav,#211f1b);color:var(--nav-ink,#f7f4ee)">
+<span style="display:grid;place-items:center;width:38px;height:38px;margin-bottom:10px;border-radius:12px;background:var(--nav-active,#332f28);color:var(--nav-accent,#f0cf84);font-size:15px;font-weight:800">L</span>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:var(--nav-active,#332f28);color:var(--nav-accent,#f0cf84);font-size:11px;font-weight:700;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M8 9h8M8 13h5"></path></svg>Lernen</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><path d="M14 17h6M17 14v6"></path></svg>Raum</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h3l10.5 10.5"></path><path d="M20 4.5h-3L6.5 15"></path><path d="M14.5 17.5 18 21l3-3-3.5-3.5"></path><path d="M9.5 17.5 6 21l-3-3 3.5-3.5"></path></svg>Duell</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5V20H4z"></path><path d="M9.5 20v-5h5v5"></path></svg>Haus</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:22px;padding:28px 34px 34px;min-width:0">
+<div style="display:flex;align-items:center;gap:18px">
+<span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:28px;font-weight:700;letter-spacing:-.025em">Textbox</span><span style="font-size:14px;color:var(--ink2,#6b6252)">Text lesen, merken und aus dem Gedächtnis schreiben</span></span>
+<span style="flex:1"></span>
+<input value="{{ tbQ }}" onInput="{{ tbQIn }}" placeholder="Text suchen …" aria-label="Text suchen" autoComplete="off" style="box-sizing:border-box;width:300px;height:50px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:15px;outline:none" style-focus="border-color:var(--accent,#7a5a12)">
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700;color:var(--ink2,#6b6252)">{{ tbLvlTitle }}</span><div style="display:flex;gap:2px;padding:3px;border:1px solid var(--line2,#d5cbb6);border-radius:13px;background:var(--surface,#fffdf7)"><div style="display:flex;align-items:center;height:42px;padding:0 6px"><span style="display:flex"><sc-for list="{{ tbLvlDots }}" as="c" hint-placeholder-count="3"><button onClick="{{ tbLvlPick }}" data-v="{{ c.id }}" aria-label="{{ c.n }}" title="{{ c.n }}" style="display:grid;place-items:center;width:24px;height:22px;padding:0;border:0;background:transparent;cursor:pointer"><span style="{{ c.s }}"></span></button></sc-for></span></div></div></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700;color:var(--ink2,#6b6252)">Stand</span><div style="display:flex;gap:2px;padding:3px;border:1px solid var(--line2,#d5cbb6);border-radius:13px;background:var(--surface,#fffdf7)"><sc-for list="{{ tbStSeg }}" as="c" hint-placeholder-count="3"><button onClick="{{ tbSetSt }}" data-v="{{ c.id }}" style="{{ c.s }}">{{ c.n }}</button></sc-for></div></div>
+<div style="position:relative"><button onClick="{{ tbPhToggle }}" data-v="a" style="{{ tbPhBtnA }}">{{ tbPhLabel }}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+<div style="display:{{ tbPhPopA }};flex-direction:column;gap:2px;position:absolute;left:0;top:56px;z-index:5;width:320px;padding:8px;border:1px solid var(--line,#e3dac7);border-radius:18px;background:var(--surface,#fffdf7);box-shadow:0 18px 40px var(--shadow,rgba(80,62,26,.14))">
+<sc-for list="{{ tbPhList }}" as="p" hint-placeholder-count="8"><button onClick="{{ tbSetPh }}" data-v="{{ p.id }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 10px;border:0;border-radius:10px;background:transparent;color:var(--ink,#211f1b);font:inherit;font-size:14.5px;text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="{{ p.box }}"><svg style="display:{{ p.chk }}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="flex:1">{{ p.n }}</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">{{ p.c }}</span></button></sc-for>
+<button onClick="{{ tbPhClose }}" style="margin-top:6px;min-height:44px;border:0;border-radius:12px;background:var(--ink,#211f1b);color:var(--bg,#f6f2e8);font:inherit;font-size:14px;font-weight:700;cursor:pointer">Fertig</button>
+</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;height:36px;overflow-x:auto;scrollbar-width:none"><div style="display:{{ tbHintDisp }};align-items:center;gap:12px;height:36px"><span style="position:relative;flex:none;width:58px;height:36px;overflow:hidden">{{ tbPeek }}<span style="position:absolute;left:6px;right:6px;bottom:0;height:1.5px;border-radius:999px;background:var(--ink3,#8d8677);box-shadow:0 1px 0 var(--surface,#fffdf7)"></span></span></div><sc-for list="{{ tbActive }}" as="a" hint-placeholder-count="0"><button onClick="{{ tbRemove }}" data-k="{{ a.k }}" data-v="{{ a.v }}" aria-label="Filter entfernen" style="display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 10px 0 12px;border:0;border-radius:999px;background:var(--surface2,#efe9da);color:var(--ink,#211f1b);font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ a.n }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></sc-for><button onClick="{{ tbReset }}" style="display:{{ tbActiveDisp }};align-items:center;flex:none;min-height:34px;padding:0 8px;border:0;background:transparent;color:var(--accent,#7a5a12);font:inherit;font-size:13px;font-weight:700;cursor:pointer">Alle entfernen</button></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<span style="font-size:13px;font-weight:700;color:var(--ink2,#6b6252)">{{ tbCount }}</span>
+<sc-if value="{{ tbAny }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
+<sc-for list="{{ tbLib }}" as="c" hint-placeholder-count="8">
+<button onClick="{{ tbGoText }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-height:132px;padding:16px 18px;border:1px solid var(--line,#e3dac7);border-radius:18px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;text-align:left;cursor:pointer" style-hover="border-color:var(--accent,#7a5a12);box-shadow:0 6px 18px var(--shadow,rgba(80,62,26,.14))">
+<span style="{{ c.stStyle }}">{{ c.stLabel }}</span>
+<span style="font-size:16.5px;font-weight:700;line-height:1.25;letter-spacing:-.01em;text-wrap:pretty">{{ c.t }}</span>
+<span style="flex:1"></span>
+<span style="display:flex;align-items:center;gap:10px;width:100%;font-size:12.5px;color:var(--ink2,#6b6252)"><span style="display:flex;gap:3px"><sc-for list="{{ c.dots }}" as="d" hint-placeholder-count="3"><span style="{{ d.s }}"></span></sc-for></span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.tag }}</span><span style="display:{{ c.moreDisp }};font-weight:700">{{ c.more }}</span></span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ tbEmpty }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:14px;padding:28px;border:1.5px dashed var(--line2,#d5cbb6);border-radius:18px;font-size:15px;color:var(--ink2,#6b6252)">Kein Text passt zu diesen Filtern.<button onClick="{{ tbReset }}" style="min-height:44px;padding:0 16px;border:1px solid var(--line2,#d5cbb6);border-radius:12px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;font-weight:700;cursor:pointer">Filter zurücksetzen</button></div></sc-if>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="9b">
+<div class="dv-olabel"><a class="dv-oid" href="#9b">9b</a>Auswahl · Desktop · offene Texte zuerst, Bestwert als Balken</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div style="display:flex;flex-direction:column;gap:24px;min-height:780px;padding:30px 40px 40px;box-sizing:border-box;color:var(--ink,#211f1b)">
+<div style="display:flex;align-items:center;gap:18px">
+<span style="font-size:28px;font-weight:700;letter-spacing:-.025em">Textbox</span>
+<span style="flex:1"></span>
+<input value="{{ tbQ }}" onInput="{{ tbQIn }}" placeholder="Text oder Schwerpunkt suchen …" aria-label="Text suchen" autoComplete="off" style="box-sizing:border-box;width:360px;height:50px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:15px;outline:none" style-focus="border-color:var(--accent,#7a5a12)">
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:15px;font-weight:700">Weitermachen</span>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+<sc-for list="{{ tbOpenList }}" as="o" hint-placeholder-count="2">
+<button onClick="{{ tbGoText }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 18px;padding:18px 20px;border:1px solid var(--line,#e3dac7);border-radius:20px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;text-align:left;cursor:pointer" style-hover="border-color:var(--accent,#7a5a12)">
+<span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:17px;font-weight:700">{{ o.t }}</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ o.sub }}</span></span>
+<span style="grid-row:span 2;display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:14px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font-size:14px;font-weight:700">Fortsetzen</span>
+<span style="display:flex;align-items:center;gap:10px"><span style="display:flex;gap:4px;width:150px"><sc-for list="{{ o.segs }}" as="g" hint-placeholder-count="4"><span style="{{ g.s }}"></span></sc-for></span><span style="font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)">{{ o.d }}</span></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;padding-top:6px;border-top:1px solid var(--line,#e3dac7)">
+<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding-top:14px">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700;color:var(--ink2,#6b6252)">{{ tbLvlTitle }}</span><div style="display:flex;gap:2px;padding:3px;border:1px solid var(--line2,#d5cbb6);border-radius:13px;background:var(--surface,#fffdf7)"><div style="display:flex;align-items:center;height:42px;padding:0 6px"><span style="display:flex"><sc-for list="{{ tbLvlDots }}" as="c" hint-placeholder-count="3"><button onClick="{{ tbLvlPick }}" data-v="{{ c.id }}" aria-label="{{ c.n }}" title="{{ c.n }}" style="display:grid;place-items:center;width:24px;height:22px;padding:0;border:0;background:transparent;cursor:pointer"><span style="{{ c.s }}"></span></button></sc-for></span></div></div></div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;font-weight:700;color:var(--ink2,#6b6252)">Stand</span><div style="display:flex;gap:2px;padding:3px;border:1px solid var(--line2,#d5cbb6);border-radius:13px;background:var(--surface,#fffdf7)"><sc-for list="{{ tbStSeg }}" as="c" hint-placeholder-count="3"><button onClick="{{ tbSetSt }}" data-v="{{ c.id }}" style="{{ c.s }}">{{ c.n }}</button></sc-for></div></div>
+<div style="position:relative"><button onClick="{{ tbPhToggle }}" data-v="b" style="{{ tbPhBtnB }}">{{ tbPhLabel }}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+<div style="display:{{ tbPhPopB }};flex-direction:column;gap:2px;position:absolute;left:0;top:56px;z-index:5;width:320px;padding:8px;border:1px solid var(--line,#e3dac7);border-radius:18px;background:var(--surface,#fffdf7);box-shadow:0 18px 40px var(--shadow,rgba(80,62,26,.14))">
+<sc-for list="{{ tbPhList }}" as="p" hint-placeholder-count="8"><button onClick="{{ tbSetPh }}" data-v="{{ p.id }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 10px;border:0;border-radius:10px;background:transparent;color:var(--ink,#211f1b);font:inherit;font-size:14.5px;text-align:left;cursor:pointer" style-hover="background:var(--surface2,#efe9da)"><span style="{{ p.box }}"><svg style="display:{{ p.chk }}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="flex:1">{{ p.n }}</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">{{ p.c }}</span></button></sc-for>
+<button onClick="{{ tbPhClose }}" style="margin-top:6px;min-height:44px;border:0;border-radius:12px;background:var(--ink,#211f1b);color:var(--bg,#f6f2e8);font:inherit;font-size:14px;font-weight:700;cursor:pointer">Fertig</button>
+</div></div>
+<span style="flex:1"></span><span style="font-size:13px;font-weight:700;color:var(--ink2,#6b6252)">{{ tbCount }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;height:36px;overflow-x:auto;scrollbar-width:none"><div style="display:{{ tbHintDisp }};align-items:center;gap:12px;height:36px"><span style="position:relative;flex:none;width:58px;height:36px;overflow:hidden">{{ tbPeek }}<span style="position:absolute;left:6px;right:6px;bottom:0;height:1.5px;border-radius:999px;background:var(--ink3,#8d8677);box-shadow:0 1px 0 var(--surface,#fffdf7)"></span></span></div><sc-for list="{{ tbActive }}" as="a" hint-placeholder-count="0"><button onClick="{{ tbRemove }}" data-k="{{ a.k }}" data-v="{{ a.v }}" aria-label="Filter entfernen" style="display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 10px 0 12px;border:0;border-radius:999px;background:var(--surface2,#efe9da);color:var(--ink,#211f1b);font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ a.n }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></sc-for><button onClick="{{ tbReset }}" style="display:{{ tbActiveDisp }};align-items:center;flex:none;min-height:34px;padding:0 8px;border:0;background:transparent;color:var(--accent,#7a5a12);font:inherit;font-size:13px;font-weight:700;cursor:pointer">Alle entfernen</button></div>
+</div>
+<sc-if value="{{ tbAny }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+<sc-for list="{{ tbLib }}" as="c" hint-placeholder-count="6">
+<button onClick="{{ tbGoText }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:18px 20px;border:1px solid var(--line,#e3dac7);border-radius:20px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;text-align:left;cursor:pointer" style-hover="border-color:var(--accent,#7a5a12);box-shadow:0 6px 18px var(--shadow,rgba(80,62,26,.14))">
+<span style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%"><span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink2,#6b6252)"><span style="display:flex;gap:3px"><sc-for list="{{ c.dots }}" as="d" hint-placeholder-count="3"><span style="{{ d.s }}"></span></sc-for></span>{{ c.lvl }}</span><span style="{{ c.stStyle }}">{{ c.stLabel }}</span></span>
+<span style="font-size:18px;font-weight:700;line-height:1.25;letter-spacing:-.01em;text-wrap:pretty">{{ c.t }}</span>
+<span style="display:flex;flex-wrap:wrap;gap:5px"><sc-for list="{{ c.tags }}" as="g" hint-placeholder-count="2"><span style="padding:4px 9px;border-radius:8px;background:var(--surface2,#efe9da);font-size:12px;font-weight:600;color:var(--ink2,#6b6252)">{{ g.n }}</span></sc-for></span>
+<span style="display:flex;align-items:center;gap:10px;width:100%;margin-top:2px"><span style="flex:1;height:6px;border-radius:999px;background:var(--surface2,#efe9da);overflow:hidden"><span style="{{ c.bar }}"></span></span><span style="width:44px;font:600 14px/1 Fredoka,sans-serif;text-align:right">{{ c.best }}</span></span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ tbEmpty }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:14px;padding:28px;border:1.5px dashed var(--line2,#d5cbb6);border-radius:18px;font-size:15px;color:var(--ink2,#6b6252)">Kein Text passt zu diesen Filtern.<button onClick="{{ tbReset }}" style="min-height:44px;padding:0 16px;border:1px solid var(--line2,#d5cbb6);border-radius:12px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;font-weight:700;cursor:pointer">Filter zurücksetzen</button></div></sc-if>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="9c">
+<div class="dv-olabel"><a class="dv-oid" href="#9c">9c</a>Auswahl · Mobil · Chips wischbar, zwei Spalten</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:390px;height:844px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6);border-radius:28px">
+<div style="position:relative;display:flex;flex-direction:column;height:100%;color:var(--ink,#211f1b)">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;padding:22px 0 18px;overflow-y:auto;min-height:0">
+<div style="display:flex;flex:none;flex-direction:column;gap:12px;padding:0 18px"><span style="font-size:26px;font-weight:700;letter-spacing:-.025em">Textbox</span>
+<input value="{{ tbQ }}" onInput="{{ tbQIn }}" placeholder="Text suchen …" aria-label="Text suchen" autoComplete="off" style="box-sizing:border-box;width:100%;height:50px;padding:0 16px;border:1.5px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:16px;outline:none" style-focus="border-color:var(--accent,#7a5a12)"></div>
+<div style="display:flex;flex:none;align-items:center;gap:8px;padding:0 18px;overflow-x:auto;scrollbar-width:none">
+<div style="display:flex;flex:none;gap:2px;padding:3px;border:1px solid var(--line2,#d5cbb6);border-radius:13px;background:var(--surface,#fffdf7)"><span style="display:grid;place-items:center;min-width:44px;padding:0 4px 0 10px;font-size:12px;font-weight:700;color:var(--ink2,#6b6252)">{{ tbLvlShort }}</span><div style="display:flex;align-items:center;height:42px;padding:0 6px"><span style="display:flex"><sc-for list="{{ tbLvlDots }}" as="c" hint-placeholder-count="3"><button onClick="{{ tbLvlPick }}" data-v="{{ c.id }}" aria-label="{{ c.n }}" title="{{ c.n }}" style="display:grid;place-items:center;width:24px;height:22px;padding:0;border:0;background:transparent;cursor:pointer"><span style="{{ c.s }}"></span></button></sc-for></span></div></div>
+<button onClick="{{ tbPhToggle }}" data-v="c" style="{{ tbPhBtnC }}">{{ tbPhLabel }}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+<div style="display:flex;flex:none;gap:2px;padding:3px;border:1px solid var(--line2,#d5cbb6);border-radius:13px;background:var(--surface,#fffdf7)"><sc-for list="{{ tbStSeg }}" as="c" hint-placeholder-count="3"><button onClick="{{ tbSetSt }}" data-v="{{ c.id }}" style="{{ c.sm }}">{{ c.n }}</button></sc-for></div>
+</div>
+<div style="display:flex;flex:none;align-items:center;gap:6px;flex-wrap:nowrap;height:36px;overflow-x:auto;scrollbar-width:none;padding:0 18px"><div style="display:{{ tbHintDisp }};align-items:center;gap:12px;height:36px"><span style="position:relative;flex:none;width:58px;height:36px;overflow:hidden">{{ tbPeek }}<span style="position:absolute;left:6px;right:6px;bottom:0;height:1.5px;border-radius:999px;background:var(--ink3,#8d8677);box-shadow:0 1px 0 var(--surface,#fffdf7)"></span></span></div><sc-for list="{{ tbActive }}" as="a" hint-placeholder-count="0"><button onClick="{{ tbRemove }}" data-k="{{ a.k }}" data-v="{{ a.v }}" aria-label="Filter entfernen" style="display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 10px 0 12px;border:0;border-radius:999px;background:var(--surface2,#efe9da);color:var(--ink,#211f1b);font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ a.n }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></sc-for></div>
+<span style="flex:none;padding:0 18px;font-size:13px;font-weight:700;color:var(--ink2,#6b6252)">{{ tbCount }}</span>
+<div style="display:grid;flex:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 18px">
+<sc-for list="{{ tbLib }}" as="c" hint-placeholder-count="6">
+<button onClick="{{ tbGoText }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:126px;padding:14px;border:1px solid var(--line,#e3dac7);border-radius:16px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;text-align:left;cursor:pointer">
+<span style="{{ c.stStyle }};font-size:11px;padding:3px 8px">{{ c.stLabel }}</span>
+<span style="font-size:15px;font-weight:700;line-height:1.25;text-wrap:pretty">{{ c.t }}</span>
+<span style="flex:1"></span>
+<span style="display:flex;align-items:center;gap:8px;width:100%;font-size:12px;color:var(--ink2,#6b6252)"><span style="display:flex;gap:3px;flex:none"><sc-for list="{{ c.dots }}" as="d" hint-placeholder-count="3"><span style="{{ d.s }}"></span></sc-for></span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.tag }}</span></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);padding:8px 10px 22px;background:var(--nav,#211f1b)">
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;color:var(--nav-accent,#f0cf84);font-size:11px;font-weight:700"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M8 9h8M8 13h5"></path></svg>Lernen</span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><path d="M14 17h6M17 14v6"></path></svg>Raum</span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h3l10.5 10.5"></path><path d="M20 4.5h-3L6.5 15"></path><path d="M14.5 17.5 18 21l3-3-3.5-3.5"></path><path d="M9.5 17.5 6 21l-3-3 3.5-3.5"></path></svg>Duell</span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5V20H4z"></path><path d="M9.5 20v-5h5v5"></path></svg>Haus</span>
+</div>
+<div style="display:{{ tbPhPopC }};position:absolute;inset:0;z-index:6;flex-direction:column;justify-content:flex-end;background:rgba(33,31,27,.38)">
+<div style="display:flex;flex-direction:column;gap:2px;padding:10px 14px 26px;border-radius:24px 24px 0 0;background:var(--surface,#fffdf7)">
+<span style="align-self:center;width:40px;height:4px;margin-bottom:8px;border-radius:999px;background:var(--line2,#d5cbb6)"></span>
+<span style="padding:0 8px 6px;font-size:17px;font-weight:700">Schwerpunkt</span>
+<sc-for list="{{ tbPhList }}" as="p" hint-placeholder-count="8"><button onClick="{{ tbSetPh }}" data-v="{{ p.id }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:var(--ink,#211f1b);font:inherit;font-size:15px;text-align:left;cursor:pointer"><span style="{{ p.box }}"><svg style="display:{{ p.chk }}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="flex:1">{{ p.n }}</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ p.c }}</span></button></sc-for>
+<button onClick="{{ tbPhClose }}" style="margin-top:10px;min-height:52px;border:0;border-radius:14px;background:var(--ink,#211f1b);color:var(--bg,#f6f2e8);font:inherit;font-size:15px;font-weight:700;cursor:pointer">{{ tbCount }} anzeigen</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:34px 0 18px"><span style="margin-right:6px;font-size:12px;color:rgba(0,0,0,.55)">Ablauf springen (gilt für 9d–9f):</span><sc-for list="{{ tbJumps }}" as="j" hint-placeholder-count="7"><button onClick="{{ tbJump }}" data-r="{{ j.r }}" data-s="{{ j.st }}" style="{{ j.s }}">{{ j.n }}</button></sc-for></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="9d">
+<div class="dv-olabel"><a class="dv-oid" href="#9d">9d</a>Eingabe · Desktop · Heft mit Linien, Navigation bleibt</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div data-tbroot="a" style="display:grid;grid-template-columns:100px minmax(0,1fr);min-height:800px;color:var(--ink,#211f1b)">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 10px;background:var(--nav,#211f1b);color:var(--nav-ink,#f7f4ee)">
+<span style="display:grid;place-items:center;width:38px;height:38px;margin-bottom:10px;border-radius:12px;background:var(--nav-active,#332f28);color:var(--nav-accent,#f0cf84);font-size:15px;font-weight:800">L</span>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:var(--nav-active,#332f28);color:var(--nav-accent,#f0cf84);font-size:11px;font-weight:700;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M8 9h8M8 13h5"></path></svg>Lernen</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><path d="M14 17h6M17 14v6"></path></svg>Raum</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h3l10.5 10.5"></path><path d="M20 4.5h-3L6.5 15"></path><path d="M14.5 17.5 18 21l3-3-3.5-3.5"></path><path d="M9.5 17.5 6 21l-3-3 3.5-3.5"></path></svg>Duell</button>
+<button style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:11px 4px;border:0;border-radius:14px;background:transparent;color:var(--nav-ink2,#a89e8c);font-size:11px;font-weight:600;cursor:pointer"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5V20H4z"></path><path d="M9.5 20v-5h5v5"></path></svg>Haus</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px;padding:28px 34px 34px;min-width:0">
+<div style="display:flex;align-items:center;gap:16px">
+<a href="#9a" style="display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font-size:14px;font-weight:700"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>Auswahl</a>
+<span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:24px;font-weight:700;letter-spacing:-.02em">{{ tbHead }}</span><span style="font-size:13.5px;color:var(--ink2,#6b6252)">Im Schwimmbad · Leicht · Doppelkonsonanten</span></span>
+<span style="display:flex;gap:6px"><sc-for list="{{ tbSteps }}" as="p" hint-placeholder-count="3"><span style="{{ p.s }}">{{ p.n }}</span></sc-for></span>
+</div>
+<div style="display:{{ tbMerkDisp }}"><div style="display:flex;align-items:center;gap:14px"><span style="font-size:14px;font-weight:700">Merkzeit: noch 0:45</span><span style="flex:1;height:8px;border-radius:999px;background:var(--surface2,#efe9da);overflow:hidden"><span style="display:block;width:62%;height:100%;border-radius:999px;background:var(--accent,#7a5a12)"></span></span></div></div>
+<div style="display:{{ tbCheckFlex }};align-items:center;gap:22px;padding:18px 22px;border:1px solid var(--line,#e3dac7);border-radius:20px;background:var(--surface,#fffdf7)">
+<span style="font:600 34px/1 Fredoka,sans-serif">{{ tbScore }}</span><span style="font-size:14px;color:var(--ink2,#6b6252)">{{ tbScoreSub }}</span>
+<span style="flex:1;height:8px;border-radius:999px;background:var(--surface2,#efe9da);overflow:hidden"><span style="{{ tbScoreBar }}"></span></span><span style="font:600 18px/1 Fredoka,sans-serif;color:var(--good,#26543f)">{{ tbPct }}</span>
+</div>
+<p style="max-width:70ch;margin:0;font-size:15px;line-height:1.55;color:var(--ink2,#6b6252)">{{ tbHint }}</p>
+<div style="border:1px solid var(--line,#e3dac7);border-radius:20px;background:var(--surface,#fffdf7);overflow:hidden;box-shadow:0 2px 0 var(--line,#e3dac7)">
+<div style="display:{{ tbTextDisp }};padding:22px 40px 30px;font-size:21px;line-height:44px;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 35px,var(--line,#e3dac7) 35px,var(--line,#e3dac7) 36px,transparent 36px,transparent 44px);background-position:0 22px"><sc-for list="{{ tbToks }}" as="t" hint-placeholder-count="24"><span style="white-space:nowrap"><span style="display:{{ t.wDisp }};padding:2px 3px;margin:0 -3px;border-radius:5px;background:{{ t.mkBg }};box-shadow:inset 0 -3px 0 {{ t.mkLine }}">{{ t.w }}</span><input data-k="{{ t.key }}" data-gi="{{ t.gi }}" value="{{ t.val }}" onInput="{{ tbIn }}" onKeyDown="{{ tbKey }}" onPaste="{{ tbBlock }}" onDrop="{{ tbBlock }}" aria-label="{{ t.lbl }}" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" style="display:{{ t.gDisp }};width:{{ t.gw }};box-sizing:content-box;height:32px;padding:0 5px;margin:0 2px;border:0;border-bottom:2.5px solid var(--accent,#7a5a12);border-radius:6px 6px 0 0;background:var(--accent-bg,#fdf4dd);color:var(--ink,#211f1b);font:inherit;font-size:21px;font-weight:600;line-height:32px;outline:none" style-focus="box-shadow:0 0 0 2px var(--accent,#7a5a12)">{{ t.p }}</span>{{ t.sp }}</sc-for></div>
+<div style="display:{{ tbFreeDisp }}"><textarea value="{{ tbFree }}" onInput="{{ tbFreeIn }}" onPaste="{{ tbBlock }}" onDrop="{{ tbBlock }}" aria-label="Dein Text aus dem Gedächtnis" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" style="display:block;box-sizing:border-box;width:100%;min-height:460px;padding:22px 40px 22px 70px;border:0;resize:vertical;outline:none;background-color:transparent;background-image:linear-gradient(to right,transparent 50px,oklch(0.7 0.12 25 / .5) 50px,oklch(0.7 0.12 25 / .5) 51.5px,transparent 51.5px),repeating-linear-gradient(to bottom,transparent 0,transparent 35px,var(--line,#e3dac7) 35px,var(--line,#e3dac7) 36px,transparent 36px,transparent 44px);background-position:0 0,0 22px;background-attachment:local;color:var(--ink,#211f1b);font:400 21px/44px 'Work Sans',sans-serif"></textarea></div>
+<div style="display:{{ tbCheckDisp }};padding:22px 40px 30px;font-size:21px;line-height:44px;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 35px,var(--line,#e3dac7) 35px,var(--line,#e3dac7) 36px,transparent 36px,transparent 44px);background-position:0 22px"><sc-for list="{{ tbCheck }}" as="c" hint-placeholder-count="24"><span style="white-space:nowrap"><span style="display:{{ c.plainDisp }}">{{ c.w }}</span><s style="display:{{ c.givenDisp }};margin-right:6px;color:var(--bad,#a8432c);text-decoration-thickness:2px">{{ c.given }}</s><span style="display:{{ c.wantDisp }};padding:3px 6px;border-radius:6px;font-weight:700;color:{{ c.wantC }};background:{{ c.wantBg }};box-shadow:{{ c.wantLine }}">{{ c.w }}</span>{{ c.p }}</span>{{ c.sp }}</sc-for></div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<span style="display:{{ tbGapsDisp }};font-size:14px;font-weight:600;color:var(--ink2,#6b6252)">{{ tbFilled }}</span>
+<span style="flex:1"></span>
+<button onClick="{{ tbReady }}" style="display:{{ tbReadyDisp }};align-items:center;min-height:52px;padding:0 26px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:15px;font-weight:700;cursor:pointer">Ich bin bereit</button>
+<button onClick="{{ tbSubmit }}" data-tbsubmit="1" style="display:{{ tbSubmitDisp }};align-items:center;min-height:52px;padding:0 26px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:15px;font-weight:700;cursor:pointer">Prüfen</button>
+<span style="display:{{ tbAfterDisp }};gap:10px"><button onClick="{{ tbAgain }}" style="min-height:52px;padding:0 22px;border:1px solid var(--line2,#d5cbb6);border-radius:16px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;font-size:15px;font-weight:700;cursor:pointer">Durchgang wiederholen</button><button onClick="{{ tbNext }}" style="min-height:52px;padding:0 26px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:15px;font-weight:700;cursor:pointer">{{ tbNextLabel }}</button></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="9e">
+<div class="dv-olabel"><a class="dv-oid" href="#9e">9e</a>Eingabe · Desktop · ruhiger Vollbildmodus mit Lückenfeldern</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:1180px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6)">
+<div data-tbroot="b" style="display:flex;flex-direction:column;min-height:800px;color:var(--ink,#211f1b)">
+<div style="display:flex;align-items:center;gap:14px;padding:16px 28px;border-bottom:1px solid var(--line,#e3dac7)">
+<a href="#9a" aria-label="Schließen" style="display:grid;place-items:center;width:48px;height:48px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></a>
+<span style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:16px;font-weight:700">Im Schwimmbad</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ tbRoundShort }}</span></span>
+<span style="display:flex;gap:6px"><sc-for list="{{ tbSteps }}" as="p" hint-placeholder-count="3"><span style="{{ p.s }}">{{ p.n }}</span></sc-for></span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px;width:100%;max-width:860px;margin:0 auto;padding:40px 0 30px;box-sizing:border-box">
+<span style="font-size:30px;font-weight:700;letter-spacing:-.025em">{{ tbHead }}</span>
+<p style="max-width:64ch;margin:0;font-size:16px;line-height:1.55;color:var(--ink2,#6b6252)">{{ tbHint }}</p>
+<div style="display:{{ tbMerkDisp }}"><div style="display:flex;align-items:center;gap:14px"><span style="font:600 26px/1 Fredoka,sans-serif">0:45</span><span style="flex:1;height:6px;border-radius:999px;background:var(--surface2,#efe9da);overflow:hidden"><span style="display:block;width:62%;height:100%;border-radius:999px;background:var(--accent,#7a5a12)"></span></span></div></div>
+<div style="display:{{ tbCheckFlex }};align-items:baseline;gap:14px"><span style="font:600 44px/1 Fredoka,sans-serif;color:var(--good,#26543f)">{{ tbPct }}</span><span style="font-size:15px;color:var(--ink2,#6b6252)">{{ tbScore }} {{ tbScoreSub }}</span></div>
+<div style="display:{{ tbTextDisp }};padding:6px 0;font-size:23px;line-height:52px"><sc-for list="{{ tbToks }}" as="t" hint-placeholder-count="24"><span style="white-space:nowrap"><span style="display:{{ t.wDisp }};padding:3px 4px;margin:0 -4px;border-radius:6px;background:{{ t.mkBg }};box-shadow:inset 0 -3px 0 {{ t.mkLine }}">{{ t.w }}</span><input data-k="{{ t.key }}" data-gi="{{ t.gi }}" value="{{ t.val }}" onInput="{{ tbIn }}" onKeyDown="{{ tbKey }}" onPaste="{{ tbBlock }}" onDrop="{{ tbBlock }}" aria-label="{{ t.lbl }}" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" style="display:{{ t.gDisp }};width:{{ t.gw }};box-sizing:content-box;height:40px;padding:0 7px;margin:0 2px;border:2px solid var(--line2,#d5cbb6);border-radius:10px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;font-size:23px;font-weight:600;line-height:40px;outline:none;vertical-align:baseline" style-focus="border-color:var(--accent,#7a5a12);background:var(--accent-bg,#fdf4dd)">{{ t.p }}</span>{{ t.sp }}</sc-for></div>
+<div style="display:{{ tbFreeDisp }}"><textarea value="{{ tbFree }}" onInput="{{ tbFreeIn }}" onPaste="{{ tbBlock }}" onDrop="{{ tbBlock }}" aria-label="Dein Text aus dem Gedächtnis" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" style="display:block;box-sizing:border-box;width:100%;min-height:500px;padding:26px 36px 26px 76px;border:1px solid var(--line,#e3dac7);border-radius:6px;resize:vertical;outline:none;background-color:var(--surface,#fffdf7);background-image:linear-gradient(to right,transparent 54px,oklch(0.7 0.12 25 / .5) 54px,oklch(0.7 0.12 25 / .5) 55.5px,transparent 55.5px),repeating-linear-gradient(to bottom,transparent 0,transparent 39px,var(--line,#e3dac7) 39px,var(--line,#e3dac7) 40px,transparent 40px,transparent 48px);background-position:0 0,0 26px;background-attachment:local;box-shadow:0 1px 0 var(--line,#e3dac7),0 4px 0 -1px var(--surface,#fffdf7),0 5px 0 -1px var(--line,#e3dac7);color:var(--ink,#211f1b);font:400 22px/48px 'Work Sans',sans-serif"></textarea></div>
+<div style="display:{{ tbCheckDisp }};padding:6px 0;font-size:23px;line-height:52px"><sc-for list="{{ tbCheck }}" as="c" hint-placeholder-count="24"><span style="white-space:nowrap"><span style="display:{{ c.plainDisp }}">{{ c.w }}</span><s style="display:{{ c.givenDisp }};margin-right:6px;color:var(--bad,#a8432c);text-decoration-thickness:2px">{{ c.given }}</s><span style="display:{{ c.wantDisp }};padding:4px 7px;border-radius:8px;font-weight:700;color:{{ c.wantC }};background:{{ c.wantBg }};box-shadow:{{ c.wantLine }}">{{ c.w }}</span>{{ c.p }}</span>{{ c.sp }}</sc-for></div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding:16px 28px;border-top:1px solid var(--line,#e3dac7);background:var(--surface,#fffdf7)">
+<span style="display:{{ tbGapsDisp }};font-size:14px;font-weight:600;color:var(--ink2,#6b6252)">{{ tbFilled }}</span>
+<span style="flex:1"></span>
+<button onClick="{{ tbReady }}" style="display:{{ tbReadyDisp }};align-items:center;min-height:52px;padding:0 28px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:15px;font-weight:700;cursor:pointer">Ich bin bereit</button>
+<button onClick="{{ tbSubmit }}" data-tbsubmit="1" style="display:{{ tbSubmitDisp }};align-items:center;min-height:52px;padding:0 28px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:15px;font-weight:700;cursor:pointer">Prüfen</button>
+<span style="display:{{ tbAfterDisp }};gap:10px"><button onClick="{{ tbAgain }}" style="min-height:52px;padding:0 22px;border:1px solid var(--line2,#d5cbb6);border-radius:16px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;font-size:15px;font-weight:700;cursor:pointer">Durchgang wiederholen</button><button onClick="{{ tbNext }}" style="min-height:52px;padding:0 28px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:15px;font-weight:700;cursor:pointer">{{ tbNextLabel }}</button></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="9f">
+<div class="dv-olabel"><a class="dv-oid" href="#9f">9f</a>Eingabe · Mobil · Heft wie 9d</div>
+<div style="{{ themeVars }}">
+<div class="dv-card" style="width:390px;height:844px;background:var(--bg,#f6f2e8);border-color:var(--line2,#d5cbb6);border-radius:28px">
+<div data-tbroot="c" style="display:flex;flex-direction:column;height:100%;color:var(--ink,#211f1b)">
+<div style="display:flex;flex-direction:column;gap:12px;padding:18px 16px 12px">
+<div style="display:flex;align-items:center;gap:12px"><a href="#9c" aria-label="Zurück" style="display:grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid var(--line2,#d5cbb6);border-radius:13px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a><span style="display:flex;flex-direction:column;gap:1px"><span style="font-size:17px;font-weight:700">Im Schwimmbad</span><span style="font-size:12.5px;color:var(--ink2,#6b6252)">{{ tbRoundShort }}</span></span></div>
+<span style="display:flex;gap:5px"><sc-for list="{{ tbSteps }}" as="p" hint-placeholder-count="3"><span style="{{ p.sm }}">{{ p.n }}</span></sc-for></span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;padding:0 16px 14px;overflow-y:auto;min-height:0">
+<div style="display:{{ tbMerkDisp }}"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:13px;font-weight:700">Noch 0:45</span><span style="flex:1;height:6px;border-radius:999px;background:var(--surface2,#efe9da);overflow:hidden"><span style="display:block;width:62%;height:100%;border-radius:999px;background:var(--accent,#7a5a12)"></span></span></div></div>
+<div style="display:{{ tbCheckFlex }};align-items:baseline;gap:10px"><span style="font:600 30px/1 Fredoka,sans-serif;color:var(--good,#26543f)">{{ tbPct }}</span><span style="font-size:13px;color:var(--ink2,#6b6252)">{{ tbScore }} {{ tbScoreSub }}</span></div>
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--ink2,#6b6252)">{{ tbHint }}</p>
+<div style="border:1px solid var(--line,#e3dac7);border-radius:16px;background:var(--surface,#fffdf7);overflow:hidden">
+<div style="display:{{ tbTextDisp }};padding:16px 18px 22px;font-size:19px;line-height:40px;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,var(--line,#e3dac7) 31px,var(--line,#e3dac7) 32px,transparent 32px,transparent 40px);background-position:0 16px"><sc-for list="{{ tbToks }}" as="t" hint-placeholder-count="24"><span style="white-space:nowrap"><span style="display:{{ t.wDisp }};padding:2px 3px;margin:0 -3px;border-radius:5px;background:{{ t.mkBg }};box-shadow:inset 0 -3px 0 {{ t.mkLine }}">{{ t.w }}</span><input data-k="{{ t.key }}" data-gi="{{ t.gi }}" value="{{ t.val }}" onInput="{{ tbIn }}" onKeyDown="{{ tbKey }}" onPaste="{{ tbBlock }}" onDrop="{{ tbBlock }}" aria-label="{{ t.lbl }}" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" style="display:{{ t.gDisp }};width:{{ t.gw }};box-sizing:content-box;height:30px;padding:0 4px;margin:0 2px;border:0;border-bottom:2.5px solid var(--accent,#7a5a12);border-radius:5px 5px 0 0;background:var(--accent-bg,#fdf4dd);color:var(--ink,#211f1b);font:inherit;font-size:19px;font-weight:600;line-height:30px;outline:none" style-focus="box-shadow:0 0 0 2px var(--accent,#7a5a12)">{{ t.p }}</span>{{ t.sp }}</sc-for></div>
+<div style="display:{{ tbFreeDisp }}"><textarea value="{{ tbFree }}" onInput="{{ tbFreeIn }}" onPaste="{{ tbBlock }}" onDrop="{{ tbBlock }}" aria-label="Dein Text aus dem Gedächtnis" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" style="display:block;box-sizing:border-box;width:100%;min-height:440px;padding:16px 16px 16px 44px;border:0;resize:none;outline:none;background-color:transparent;background-image:linear-gradient(to right,transparent 30px,oklch(0.7 0.12 25 / .5) 30px,oklch(0.7 0.12 25 / .5) 31.5px,transparent 31.5px),repeating-linear-gradient(to bottom,transparent 0,transparent 31px,var(--line,#e3dac7) 31px,var(--line,#e3dac7) 32px,transparent 32px,transparent 40px);background-position:0 0,0 16px;background-attachment:local;color:var(--ink,#211f1b);font:400 19px/40px 'Work Sans',sans-serif"></textarea></div>
+<div style="display:{{ tbCheckDisp }};padding:16px 18px 22px;font-size:19px;line-height:40px;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,var(--line,#e3dac7) 31px,var(--line,#e3dac7) 32px,transparent 32px,transparent 40px);background-position:0 16px"><sc-for list="{{ tbCheck }}" as="c" hint-placeholder-count="24"><span style="white-space:nowrap"><span style="display:{{ c.plainDisp }}">{{ c.w }}</span><s style="display:{{ c.givenDisp }};margin-right:5px;color:var(--bad,#a8432c);text-decoration-thickness:2px">{{ c.given }}</s><span style="display:{{ c.wantDisp }};padding:2px 5px;border-radius:6px;font-weight:700;color:{{ c.wantC }};background:{{ c.wantBg }};box-shadow:{{ c.wantLine }}">{{ c.w }}</span>{{ c.p }}</span>{{ c.sp }}</sc-for></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px 24px;border-top:1px solid var(--line,#e3dac7);background:var(--surface,#fffdf7)">
+<span style="display:{{ tbGapsDisp }};font-size:13px;font-weight:600;text-align:center;color:var(--ink2,#6b6252)">{{ tbFilled }}</span>
+<button onClick="{{ tbReady }}" style="display:{{ tbReadyDisp }};justify-content:center;align-items:center;min-height:54px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:16px;font-weight:700;cursor:pointer">Ich bin bereit</button>
+<button onClick="{{ tbSubmit }}" data-tbsubmit="1" style="display:{{ tbSubmitDisp }};justify-content:center;align-items:center;min-height:54px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:16px;font-weight:700;cursor:pointer">Prüfen</button>
+<span style="display:{{ tbAfterDisp }};flex-direction:column;gap:8px"><button onClick="{{ tbNext }}" style="min-height:54px;border:0;border-radius:16px;background:var(--accent,#7a5a12);color:var(--accent-ink,#fffdf7);font:inherit;font-size:16px;font-weight:700;cursor:pointer">{{ tbNextLabel }}</button><button onClick="{{ tbAgain }}" style="min-height:48px;border:1px solid var(--line2,#d5cbb6);border-radius:14px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;font-size:15px;font-weight:700;cursor:pointer">Durchgang wiederholen</button></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</section>
 
 <section class="dv-turn" id="t8">
 <div class="dv-thd"><a class="dv-tid" href="#t8">8</a><span class="dv-tname">LernBox aufgeräumt · Übersicht zuerst, Plus zum Hinzufügen, Stift zum Bearbeiten</span></div>
@@ -2681,6 +2947,33 @@ const HS_QR = (() => { const n = 25, out = []; let seed = 7;
   const inF = (x, y) => [[0,0],[n-8,0],[0,n-8]].some(([fx,fy]) => x>=fx && y>=fy && x<fx+8 && y<fy+8);
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const on = inF(x,y) ? finder(x,y) : rnd() > .52; out.push("width:8px;height:8px;background:" + (on ? "#211f1b" : "#fff")); }
   return out; })();
+const TB_TEXT = "Im Sommer ist es heiß. Wir gehen ins Schwimmbad und springen ins Wasser. Das Wasser ist nass und kalt. Auf der Wiese essen wir ein großes Eis. Papa isst eine Brezel. Ich muss mein Handtuch auswringen, weil es ganz nass ist. Am Abend gehen wir müde nach Hause.";
+const TB_TARGET = ["Sommer","heiß","Schwimmbad","Wasser","nass","essen","großes","isst","muss"];
+const TB_TOKS = TB_TEXT.split(" ").map((c, i) => { const m = c.match(/^(.*?)([.,!?]*)$/); return {i, w: m[1], p: m[2]}; });
+const TB_SETS = (() => { const r1 = TB_TOKS.filter(t => TB_TARGET.includes(t.w)).map(t => t.i);
+  const r2 = TB_TOKS.filter(t => r1.includes(t.i) || t.w.length >= 6).map(t => t.i);
+  const r3 = TB_TOKS.filter(t => r2.includes(t.i) || t.w.length >= 4).map(t => t.i); return {1: r1, 2: r2, 3: r3}; })();
+const TB_MISS = {Sommer: "Somer", Schwimmbad: "schwimmbad", isst: "ist", muss: "mus", großes: "grosses", Handtuch: "Hanttuch"};
+const TB_SAMPLE_FREE = TB_TOKS.filter(t => t.w !== "ganz").map(t => (TB_MISS[t.w] || t.w) + t.p).join(" ");
+const TB_PH = {doppelkonsonanten: "Doppelkonsonanten", vokallaenge: "Lange und kurze Vokale", "dehnungs-h": "Dehnungs-h", ie: "Wörter mit ie", "s-ss-sz": "s, ss und ß", "gross-klein": "Groß und klein", auslautverhaertung: "Auslautverhärtung", wortbausteine: "Wortbausteine", zusammensetzungen: "Zusammengesetzte Wörter", gemischt: "Gemischt"};
+const TB_LIB = [
+  {t: "Im Schwimmbad", d: 1, ph: ["doppelkonsonanten", "s-ss-sz"], best: 78, n: 2, open: 2},
+  {t: "Der kleine Hund", d: 1, ph: ["auslautverhaertung"], best: 92, n: 4},
+  {t: "Mein Schulweg", d: 1, ph: ["dehnungs-h"], best: null, n: 0},
+  {t: "Am Bach", d: 1, ph: ["doppelkonsonanten"], best: 64, n: 1},
+  {t: "Beim Bäcker", d: 1, ph: ["wortbausteine"], best: null, n: 0},
+  {t: "Die Biene", d: 1, ph: ["ie"], best: 100, n: 3},
+  {t: "Der Hase im Wald", d: 2, ph: ["auslautverhaertung", "ie"], best: null, n: 0},
+  {t: "Das Fußballspiel", d: 2, ph: ["s-ss-sz", "zusammensetzungen"], best: 71, n: 2},
+  {t: "Unser Klassenzimmer", d: 2, ph: ["doppelkonsonanten", "zusammensetzungen"], best: null, n: 0},
+  {t: "Der Regentag", d: 2, ph: ["dehnungs-h", "vokallaenge"], best: 58, n: 1},
+  {t: "Im Schnee", d: 2, ph: ["gross-klein"], best: null, n: 0},
+  {t: "Ein Ausflug zum Zoo", d: 2, ph: ["vokallaenge"], best: 83, n: 2},
+  {t: "Wie Bienen leben", d: 3, ph: ["ie", "gross-klein"], best: null, n: 0},
+  {t: "Die Reise nach Hamburg", d: 3, ph: ["gemischt"], best: 66, n: 1, open: 3},
+  {t: "Das Geheimnis der alten Mühle", d: 3, ph: ["dehnungs-h", "doppelkonsonanten"], best: null, n: 0},
+  {t: "Wasser auf der Erde", d: 3, ph: ["s-ss-sz", "wortbausteine"], best: null, n: 0}];
+const TB_INIT = {round: 1, step: 0, vals: {}, free: "", q: "", phs: [], lvls: [], sts: [], phOpen: ""};
 const ttNew = () => ({pos:0,errs:0,errAt:{},bad:{},combo:0,best:0,start:0,now:0,wrong:null,shake:0,miss:{}});
 
 class Component extends DCLogic {
@@ -3253,6 +3546,142 @@ class Component extends DCLogic {
     };
   }
 
+  tbVals() {
+    const tb = this.state.tb || TB_INIT;
+    const set = patch => this.setState(p => ({tb: Object.assign({}, p.tb || TB_INIT, patch)}));
+    const chip = (on, h) => `display:inline-flex;align-items:center;flex:none;min-height:${h || 40}px;padding:0 14px;border-radius:999px;border:1px solid ${on ? "var(--ink,#211f1b)" : "var(--line2,#d5cbb6)"};background:${on ? "var(--ink,#211f1b)" : "var(--surface,#fffdf7)"};color:${on ? "var(--bg,#f6f2e8)" : "var(--ink,#211f1b)"};font:inherit;font-size:13.5px;font-weight:${on ? 700 : 600};cursor:pointer;white-space:nowrap`;
+    const pill = (bg, c) => `flex:none;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;background:${bg};color:${c}`;
+    const stOf = x => x.best >= 90 ? "done" : x.n > 0 ? "started" : "new";
+    const q = tb.q.trim().toLowerCase();
+    const lib = TB_LIB.filter(x => (!q || x.t.toLowerCase().includes(q) || x.ph.some(p => TB_PH[p].toLowerCase().includes(q)))
+      && (!tb.phs.length || x.ph.some(p => tb.phs.includes(p))) && (!tb.lvls.length || tb.lvls.includes(x.d)) && (!tb.sts.length || tb.sts.includes(stOf(x))))
+      .map(x => {
+        const st = stOf(x);
+        const status = x.open ? {l: "Durchgang " + x.open + " offen", s: pill("var(--accent-bg,#fdf4dd)", "var(--accent,#7a5a12)")}
+          : st === "done" ? {l: "Gemeistert", s: pill("var(--good-bg,#e4f1e9)", "var(--good,#26543f)")}
+          : st === "started" ? {l: "Bestwert " + x.best + " %", s: pill("var(--surface2,#efe9da)", "var(--ink2,#6b6252)")}
+          : {l: "Neu", s: pill("transparent", "var(--ink2,#6b6252)") + ";box-shadow:inset 0 0 0 1px var(--line2,#d5cbb6)"};
+        return {t: x.t, lvl: ["Leicht", "Mittel", "Schwer"][x.d - 1], tag: TB_PH[x.ph[0]], more: x.ph.length > 1 ? "+" + (x.ph.length - 1) : "",
+          moreDisp: x.ph.length > 1 ? "inline" : "none", tags: x.ph.map(p => ({n: TB_PH[p]})),
+          dots: [1, 2, 3].map(k => ({s: `width:7px;height:7px;border-radius:50%;background:${k <= x.d ? "var(--ink,#211f1b)" : "var(--line2,#d5cbb6)"}`})),
+          stLabel: status.l, stStyle: status.s, best: x.best == null ? "–" : x.best + " %",
+          bar: `display:block;height:100%;border-radius:999px;background:var(--good,#26543f);width:${x.best || 0}%`};
+      });
+    const phIds = ["all"].concat(Object.keys(TB_PH).filter(k => TB_LIB.some(x => x.ph.includes(k))));
+    const goText = () => { set({round: 1, step: 0}); location.hash = "9d"; };
+    const blanked = tb.round < 4 ? TB_SETS[tb.round] : [];
+    const key = i => tb.round + ":" + i;
+    const toks = TB_TOKS.map(t => {
+      const g = blanked.indexOf(t.i), gap = tb.step === 1 && g >= 0, mark = tb.step === 0 && tb.round === 1 && TB_SETS[1].includes(t.i);
+      return {w: t.w, p: t.p, sp: " ", key: key(t.i), gi: g, val: tb.vals[key(t.i)] || "", lbl: "Lücke " + (g + 1) + " von " + blanked.length,
+        wDisp: gap ? "none" : "inline", gDisp: gap ? "inline-block" : "none", gw: (tb.round === 3 ? 11 : Math.max(3, t.w.length) + 1) + "ch",
+        mkBg: mark ? "var(--accent-bg,#fdf4dd)" : "transparent", mkLine: mark ? "var(--gold,#e0a83a)" : "transparent"};
+    });
+    const filled = blanked.filter(i => (tb.vals[key(i)] || "").length).length;
+    const ok = "var(--good,#26543f)", okBg = "var(--good-bg,#e4f1e9)", bad = "var(--bad,#a8432c)", badBg = "var(--bad-bg,#f8e6df)";
+    const item = (kind, w, p, given) => ({w, p: p || "", sp: " ", given: given || "",
+      plainDisp: kind === "plain" ? "inline" : "none", givenDisp: kind === "wrong" || kind === "extra" ? "inline" : "none",
+      wantDisp: kind === "ok" || kind === "wrong" || kind === "miss" ? "inline" : "none",
+      wantC: kind === "miss" ? "var(--ink,#211f1b)" : ok, wantBg: kind === "miss" ? badBg : okBg,
+      wantLine: kind === "miss" ? "inset 0 0 0 1.5px " + bad : "none"});
+    let check = [], right = 0, total = 0;
+    if (tb.step === 2 && tb.round < 4) {
+      total = blanked.length;
+      check = TB_TOKS.map(t => { if (!blanked.includes(t.i)) return item("plain", t.w, t.p);
+        const given = tb.vals[key(t.i)] || TB_MISS[t.w] || t.w; if (given === t.w) { right++; return item("ok", t.w, t.p); } return item("wrong", t.w, t.p, given); });
+    } else if (tb.step === 2) {
+      const a = TB_TOKS, b = (tb.free.trim() || TB_SAMPLE_FREE).split(/\s+/).map(x => x.replace(/[.,!?]+$/, "")).filter(Boolean);
+      const n = a.length, m = b.length, dp = Array.from({length: n + 1}, () => new Array(m + 1).fill(0));
+      for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = a[i].w === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+      let i = 0, j = 0; total = n;
+      while (i < n || j < m) {
+        if (i < n && j < m && a[i].w === b[j]) { check.push(item("plain", a[i].w, a[i].p)); right++; i++; j++; }
+        else if (i < n && j < m && dp[i + 1][j + 1] === dp[i][j]) { check.push(item("wrong", a[i].w, a[i].p, b[j])); i++; j++; }
+        else if (i < n && (j >= m || dp[i + 1][j] >= dp[i][j + 1])) { check.push(item("miss", a[i].w, a[i].p)); i++; }
+        else { check.push(item("extra", "", "", b[j])); j++; }
+      }
+    }
+    const focus = (el, n) => { const root = el.closest("[data-tbroot]"); if (!root) return;
+      const nx = root.querySelector('input[data-gi="' + n + '"]'); if (nx) nx.focus(); else if (n >= 0) { const b = root.querySelector("[data-tbsubmit]"); b && b.focus(); } };
+    const stepNames = ["Merken", "Schreiben", "Kontrolle"];
+    const stepStyle = (k, h) => { const on = k === tb.step, done = k < tb.step;
+      return `display:inline-flex;align-items:center;gap:7px;min-height:${h || 36}px;padding:0 13px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;background:${on ? "var(--accent,#7a5a12)" : done ? "var(--good-bg,#e4f1e9)" : "var(--surface2,#efe9da)"};color:${on ? "var(--accent-ink,#fffdf7)" : done ? "var(--good,#26543f)" : "var(--ink2,#6b6252)"}`; };
+    const hints = tb.step === 0 ? (tb.round === 1 ? "Die markierten Wörter fehlen gleich. Präge dir ihre Schreibweise besonders gut ein." : "Lies den Text in Ruhe und präge dir die Schreibweise ein.")
+      : tb.step === 1 ? (tb.round < 4 ? "Schreibe die fehlenden Wörter in die Lücken. Mit der Leertaste oder der Eingabetaste springst du zur nächsten Lücke." : "Schreibe den ganzen Text aus dem Gedächtnis auf. Wenn du nicht weiterkommst, kannst du jederzeit auf „Prüfen“ drücken.")
+      : "Grün ist richtig. Durchgestrichen ist deine Schreibweise, daneben steht das richtige Wort.";
+    const pct = total ? Math.round(right / total * 100) : 0;
+    const jumps = [[1,0,"D1 Merken"],[1,1,"D1 Lücken"],[1,2,"D1 Kontrolle"],[2,1,"D2 Lücken"],[3,1,"D3 Lücken"],[4,1,"D4 Frei"],[4,2,"D4 Kontrolle"]];
+    return {
+      tbQ: tb.q, tbQIn: e => set({q: e.target.value}),
+      ...(() => {
+        const tog = (arr, v) => arr.includes(v) ? arr.filter(x => x !== v) : arr.concat(v);
+        const segB = (on, h) => `display:grid;place-items:center;min-width:${h || 40}px;height:${h || 40}px;padding:0 12px;border:0;border-radius:10px;background:${on ? "var(--ink,#211f1b)" : "transparent"};color:${on ? "var(--bg,#f6f2e8)" : "var(--ink,#211f1b)"};font:inherit;font-size:13.5px;font-weight:${on ? 700 : 600};cursor:pointer;white-space:nowrap`;
+        const stN = {new: "Neu", started: "Begonnen", done: "Gemeistert"};
+        const active = tb.lvls.slice().sort().map(l => ({k: "l", v: String(l), n: ["Leicht", "Mittel", "Schwer"][l - 1]}))
+          .concat(tb.sts.map(v => ({k: "s", v, n: stN[v]}))).concat(tb.phs.map(v => ({k: "p", v, n: TB_PH[v]})));
+        const phBtn = v => { const open = tb.phOpen === v, n = tb.phs.length;
+          return `display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 14px 0 16px;border:1px solid ${open || n ? "var(--ink,#211f1b)" : "var(--line2,#d5cbb6)"};border-radius:12px;background:var(--surface,#fffdf7);color:var(--ink,#211f1b);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap`; };
+        return {
+          tbLvlTitle: "Schwierigkeit", tbLvlShort: "Stufe",
+          tbLvlDots: [1, 2, 3].map(k => { const sel = tb.lvls[0] || 0, on = k <= sel;
+            return {id: String(k), n: ["Leicht", "Mittel", "Schwer"][k - 1],
+              s: `display:block;width:11px;height:11px;border-radius:50%;background:${on ? "var(--accent,#7a5a12)" : "transparent"};box-shadow:inset 0 0 0 1.8px ${on ? "var(--accent,#7a5a12)" : "var(--line2,#d5cbb6)"}`}; }),
+          tbLvlPick: e => { const v = +e.currentTarget.getAttribute("data-v"); set({lvls: tb.lvls[0] === v ? [] : [v]}); },
+          tbLvlSeg: [1, 2, 3].map(l => { const on = tb.lvls.includes(l);
+            const s = `display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:62px;height:42px;padding:0 10px;border:0;border-radius:10px;background:${on ? "var(--ink,#211f1b)" : "transparent"};color:${on ? "var(--bg,#f6f2e8)" : "var(--ink2,#6b6252)"};font:inherit;font-size:11px;font-weight:700;line-height:1;cursor:pointer;white-space:nowrap`;
+            return {id: String(l), n: ["Leicht", "Mittel", "Schwer"][l - 1], s, sm: s,
+              dots: [1, 2, 3].map(k => ({s: `width:7px;height:7px;border-radius:50%;background:${k <= l ? (on ? "var(--bg,#f6f2e8)" : "var(--ink,#211f1b)") : "transparent"};box-shadow:inset 0 0 0 1.5px ${k <= l ? "transparent" : on ? "var(--ink3,#8d8677)" : "var(--line2,#d5cbb6)"}`}))}; }),
+          tbStSeg: ["new", "started", "done"].map(id => ({id, n: stN[id], s: segB(tb.sts.includes(id)), sm: segB(tb.sts.includes(id), 42)})),
+          tbPhList: phIds.filter(id => id !== "all").map(id => { const on = tb.phs.includes(id);
+            return {id, n: TB_PH[id], c: String(TB_LIB.filter(x => x.ph.includes(id)).length),
+              box: `display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:7px;border:1.5px solid ${on ? "var(--ink,#211f1b)" : "var(--line2,#d5cbb6)"};background:${on ? "var(--ink,#211f1b)" : "transparent"};color:var(--bg,#f6f2e8)`,
+              chk: on ? "block" : "none"}; }),
+          tbPhLabel: tb.phs.length ? "Schwerpunkt · " + tb.phs.length : "Schwerpunkt",
+          tbPhBtnA: phBtn("a"), tbPhBtnB: phBtn("b"), tbPhBtnC: phBtn("c") + ";height:44px",
+          tbPhPopA: tb.phOpen === "a" ? "flex" : "none", tbPhPopB: tb.phOpen === "b" ? "flex" : "none", tbPhPopC: tb.phOpen === "c" ? "flex" : "none",
+          tbPhToggle: e => { const v = e.currentTarget.getAttribute("data-v"); set({phOpen: tb.phOpen === v ? "" : v}); },
+          tbPhClose: () => set({phOpen: ""}),
+          tbActive: active, tbActiveDisp: active.length ? "flex" : "none", tbActiveVis: active.length ? "visible" : "hidden", tbHintDisp: active.length ? "none" : "flex", tbPeek: this.tbPeekEl || (this.tbPeekEl = (() => { const P = ["affe","anglerfisch","bobtail","capybara","chameleon","clownfisch","collie","dackel","deutscher_schaeferhund","eichhoernchen","einhorn","elefant","ente","erdmaennchen","esel","flamingo","fledermaus","fuchs","gepard","giraffe","gorilla","gottesanbeterin","heuschrecke","hirsch","igel","kaefer","kamel","kaninchen","katze","kiwi","koala","kobra","krabbe","krokodil","lama","libelle","loewin","mammut","mistkaefer","mops","oktopus","orca","pelikan","perserkatze","pfau","phoenix","pudel","qualle","robbe","roter_panda","schildkroete","schmetterling","schnabeltier","schwein","sphynxkatze","strauss","taube","truthahn","yak","zebra"], r = () => "./" + P[Math.floor(Math.random() * P.length)] + ".svg";
+        return React.createElement("img", {src: r(), alt: "", onAnimationIteration: e => { e.currentTarget.src = r(); }, style: {position: "absolute", left: 7, bottom: 1, width: 44, height: 50, objectFit: "contain", objectPosition: "bottom", transformOrigin: "50% 100%", animation: "tb-peek 7s ease-in-out infinite"}}); })()),
+          tbRemove: e => { const k = e.currentTarget.getAttribute("data-k"), v = e.currentTarget.getAttribute("data-v");
+            set(k === "l" ? {lvls: tb.lvls.filter(x => String(x) !== v)} : k === "s" ? {sts: tb.sts.filter(x => x !== v)} : {phs: tb.phs.filter(x => x !== v)}); },
+          tbSetPh: e => set({phs: tog(tb.phs, e.currentTarget.getAttribute("data-v"))}),
+          tbSetLvl: e => set({lvls: tog(tb.lvls, +e.currentTarget.getAttribute("data-v"))}),
+          tbSetSt: e => set({sts: tog(tb.sts, e.currentTarget.getAttribute("data-v"))}),
+          tbReset: () => set({q: "", phs: [], lvls: [], sts: [], phOpen: ""})
+        };
+      })(),
+      tbLib: lib, tbEmpty: lib.length === 0, tbAny: lib.length > 0,
+      tbCount: lib.length === TB_LIB.length ? TB_LIB.length + " Texte" : lib.length + " von " + TB_LIB.length + " Texten",
+      tbOpenList: TB_LIB.filter(x => x.open).map(x => ({t: x.t, sub: ["Leicht", "Mittel", "Schwer"][x.d - 1] + " · " + TB_PH[x.ph[0]], d: "Durchgang " + x.open + " von 4",
+        segs: [1, 2, 3, 4].map(k => ({s: `flex:1;height:6px;border-radius:999px;background:${k < x.open ? "var(--good,#26543f)" : k === x.open ? "var(--accent,#7a5a12)" : "var(--line2,#d5cbb6)"}`}))})),
+      tbGoText: goText,
+      tbHead: "Durchgang " + tb.round + " von 4: " + stepNames[tb.step], tbRoundShort: "Durchgang " + tb.round + " von 4",
+      tbSteps: stepNames.map((n, k) => ({n: (k + 1) + ". " + n, s: stepStyle(k), sm: stepStyle(k, 30) + ";padding:0 10px;font-size:12px"})),
+      tbHint: hints, tbToks: toks, tbCheck: check,
+      tbMerkDisp: tb.step === 0 ? "block" : "none", tbTextDisp: tb.step < 2 && !(tb.step === 1 && tb.round === 4) ? "block" : "none",
+      tbFreeDisp: tb.step === 1 && tb.round === 4 ? "block" : "none", tbCheckDisp: tb.step === 2 ? "block" : "none", tbCheckFlex: tb.step === 2 ? "flex" : "none",
+      tbGapsDisp: tb.step === 1 && tb.round < 4 ? "inline" : "none",
+      tbFilled: filled + " von " + blanked.length + " Lücken ausgefüllt",
+      tbReadyDisp: tb.step === 0 ? "inline-flex" : "none", tbSubmitDisp: tb.step === 1 ? "inline-flex" : "none", tbAfterDisp: tb.step === 2 ? "flex" : "none",
+      tbScore: right + " von " + total, tbScoreSub: tb.round < 4 ? "Lücken richtig geschrieben" : "Wörtern richtig geschrieben", tbPct: pct + " %",
+      tbScoreBar: `display:block;height:100%;border-radius:999px;background:var(--good,#26543f);width:${pct}%`,
+      tbNextLabel: tb.round < 4 ? "Weiter zu Durchgang " + (tb.round + 1) : "Zurück zur Auswahl",
+      tbFree: tb.free, tbFreeIn: e => set({free: e.target.value}),
+      tbIn: e => { const k = e.target.getAttribute("data-k"), raw = e.target.value, el = e.target, n = +el.getAttribute("data-gi");
+        this.setState(p => { const t = p.tb || TB_INIT; return {tb: Object.assign({}, t, {vals: Object.assign({}, t.vals, {[k]: raw.replace(/\s+/g, "")})})}; });
+        if (/\s/.test(raw)) focus(el, n + 1); },
+      tbKey: e => { const n = +e.target.getAttribute("data-gi");
+        if (e.key === " " || e.key === "Enter") { e.preventDefault(); focus(e.target, n + 1); }
+        else if (e.key === "Backspace" && !e.target.value && n > 0) { e.preventDefault(); focus(e.target, n - 1); } },
+      tbBlock: e => e.preventDefault(),
+      tbReady: () => set({step: 1}), tbSubmit: () => set({step: 2}), tbAgain: () => set({step: 0}),
+      tbNext: () => tb.round < 4 ? set({round: tb.round + 1, step: 0}) : (set({round: 1, step: 0, vals: {}, free: ""}), location.hash = "9a"),
+      tbJumps: jumps.map(([r, st, n]) => ({r: String(r), st: String(st), n, s: chip(tb.round === r && tb.step === st, 32) + ";font-size:12px;padding:0 11px"})),
+      tbJump: e => set({round: +e.currentTarget.getAttribute("data-r"), step: +e.currentTarget.getAttribute("data-s")})
+    };
+  }
+
   renderVals() {
     const s = this.state, h = s.help;
     const classes = [
@@ -3280,7 +3709,7 @@ class Component extends DCLogic {
       pill: "justify-self:start;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--surface2,#efe9da);color:var(--ink2,#6b6252)"
     }));
     return {
-      classes, items, classesV, itemsV, ...this.lernVals(), ...this.ldVals(), ...this.ttVals(), ...this.hsVals(),
+      classes, items, classesV, itemsV, ...this.lernVals(), ...this.ldVals(), ...this.ttVals(), ...this.hsVals(), ...this.tbVals(),
       themeVars: (dark ? DARK : LIGHT) + (dark ? ";--ok-bg:oklch(0.27 0.045 155);--ok-card:oklch(0.32 0.05 155);--ok-line:oklch(0.42 0.06 155);--ok-mark:oklch(0.45 0.09 155);--no-bg:oklch(0.27 0.045 30);--no-card:oklch(0.32 0.05 30);--no-line:oklch(0.42 0.06 30)" : ""),
       themeLabel: dark ? "Hell" : "Dunkel",
       moonDisp: dark ? "none" : "block", sunDisp: dark ? "block" : "none",

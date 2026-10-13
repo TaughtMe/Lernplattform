@@ -102,6 +102,14 @@ export function TeacherLiveRoom({
           sections: sectionsOf(t),
         }}
         mode={t.gameMode}
+        {...(t.wordStoreVisible
+          ? {
+              wordStore: {
+                value: t.wordStoreTransfer,
+                onChange: t.setWordStoreTransfer,
+              },
+            }
+          : {})}
         options={options}
         classChoice={{
           options: t.liveClasses,
