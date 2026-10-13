@@ -47,13 +47,13 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
 
 ## Status
 
-| Nr. | Status | Pull Request | Bemerkung |
-| --- | ------ | ------------ | --------- |
-| 1   | offen  |              |           |
-| 2   | offen  |              |           |
-| 3   | offen  |              |           |
-| 4   | offen  |              |           |
-| 5   | offen  |              |           |
+| Nr. | Status   | Pull Request                        | Bemerkung                                                     |
+| --- | -------- | ----------------------------------- | ------------------------------------------------------------- |
+| 1   | offen    |                                     |                                                               |
+| 2   | PR offen | (wird nach dem Anlegen eingetragen) | `replayLearningBoxCard` und Eigenschaftstest; Regel 3 ergänzt |
+| 3   | offen    |                                     |                                                               |
+| 4   | offen    |                                     |                                                               |
+| 5   | offen    |                                     |                                                               |
 
 ## Korrekturen an der Analyse
 
