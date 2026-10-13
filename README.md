@@ -108,6 +108,6 @@ npm run check          # Format, Lint, Typen, Unit- und Datenbanktests, Build, R
 npm run test:e2e:live  # Laufdiktat-Räume im Browser
 ```
 
-Die vollständige Plattformsuite läuft mit `ENABLE_PRE_PILOT_E2E=1`.
+`npm run test:e2e` enthält auch `e2e/platform-quality.spec.ts` (axe-Prüfung der Hauptseiten, LernBox, Lehrer-Arbeitsbereich, Einschreibung, Kopfrechnen) und ist Teil der Pflichtsuite.
 
 Die Architekturentscheidungen stehen in [docs/architecture.md](docs/architecture.md), der verbindliche Coding- und Bibliotheksstandard in [docs/engineering-quality.md](docs/engineering-quality.md) und die mobile Teststrategie in [docs/device-support.md](docs/device-support.md). Die vollständige fachliche Konzeption liegt derzeit unter `obsidian-export/Lernplattform`.

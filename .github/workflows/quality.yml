@@ -27,7 +27,7 @@ jobs:
 
   browser-quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60 # platform-quality.spec.ts läuft in allen 7 Browser-Projekten (lokal ca. 1,5 Min. je Chromium-Projekt, dazu Rest-Suite ca. 3,7 Min. je Projekt)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
