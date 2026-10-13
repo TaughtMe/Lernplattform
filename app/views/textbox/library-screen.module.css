@@ -253,6 +253,10 @@
 .standGroup > .segmented {
   display: none;
 }
+/* Ohne Pfeil steht „Stand“ mittig im Feld. */
+.standGroup > .standButton {
+  justify-content: center;
+}
 .filterLabel {
   display: none;
   font-size: 13px;
