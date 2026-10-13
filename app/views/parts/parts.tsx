@@ -4,7 +4,7 @@
  */
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { animalFileName } from "../../../src/domain/learner-profile";
+import { avatarSrc } from "../../../src/domain/learner-profile";
 import { BrandSymbol } from "../../ui/brand";
 import { Icon, type IconName } from "../../ui/icons";
 import styles from "./parts.module.css";
@@ -144,7 +144,7 @@ export function Animal({
   return (
     // eslint-disable-next-line @next/next/no-img-element -- Tier-SVG in fester Größe, keine Bildoptimierung nötig
     <img
-      src={`/animals/${animalFileName(animal)}.svg`}
+      src={avatarSrc(animal)}
       width={size}
       height={size}
       style={fluid ? undefined : { width: size, height: size }}

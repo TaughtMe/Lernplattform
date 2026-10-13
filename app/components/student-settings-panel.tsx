@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ChangeEvent } from "react";
-import { learnerDisplayName } from "../../src/domain/learner-profile";
+import {
+  learnerDisplayName,
+  profileAvatar,
+} from "../../src/domain/learner-profile";
 import {
   readPersonalBackupFile,
   savePersonalBackupToDirectory,
@@ -44,7 +47,18 @@ export function StudentSettingsPanel() {
 
   function chooseAnimal(animal: string) {
     const current = profile ?? learnerProfileRepository.ensure();
-    learnerProfileRepository.save({ ...current, animal });
+    // Ein Tier ersetzt eine gewählte Figur im selben Speichervorgang.
+    learnerProfileRepository.save({ ...current, animal, figure: null });
+  }
+
+  function chooseFigure(figure: string) {
+    const current = profile ?? learnerProfileRepository.ensure();
+    learnerProfileRepository.save({ ...current, figure });
+  }
+
+  function unlockFigures() {
+    const current = profile ?? learnerProfileRepository.ensure();
+    learnerProfileRepository.save({ ...current, figuresUnlocked: true });
   }
 
   function setTheme(next: ThemePreference) {
@@ -60,7 +74,7 @@ export function StudentSettingsPanel() {
       >
         <div className="ui-row">
           <span className="ui-animal-disc ui-profile__disc">
-            <AnimalImage animal={profile?.animal ?? null} size={84} />
+            <AnimalImage animal={profileAvatar(profile)} size={84} />
           </span>
           <div>
             <p className="ui-eyebrow">Dein Tier</p>
@@ -73,7 +87,14 @@ export function StudentSettingsPanel() {
             </p>
           </div>
         </div>
-        <AnimalPicker value={profile?.animal ?? null} onChange={chooseAnimal} />
+        <AnimalPicker
+          value={profile?.animal ?? null}
+          onChange={chooseAnimal}
+          figure={profile?.figure ?? null}
+          figuresUnlocked={profile?.figuresUnlocked ?? false}
+          onFigureChange={chooseFigure}
+          onUnlock={unlockFigures}
+        />
       </section>
 
       <div className="ui-stack">

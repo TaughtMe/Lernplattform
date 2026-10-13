@@ -25,6 +25,7 @@ import {
 } from "../../../src/tastschreiben/typing-stats";
 import { createTypingProgressRepository } from "../../../src/storage/personal-learning-events";
 import { useThemeToggle } from "../../ui/theme";
+import { profileAvatar } from "../../../src/domain/learner-profile";
 import { useLearnerProfile } from "../../ui/use-learner-profile";
 import {
   MapScreen,
@@ -216,7 +217,7 @@ export function TypingWorld() {
     }));
     return (
       <MapScreen
-        animal={profile?.animal ?? null}
+        animal={profileAvatar(profile)}
         theme={theme}
         onToggleTheme={toggleTheme}
         areas={areas}
@@ -286,7 +287,7 @@ export function TypingWorld() {
 
   return (
     <PracticeScreen
-      animal={profile?.animal ?? null}
+      animal={profileAvatar(profile)}
       theme={theme}
       onToggleTheme={toggleTheme}
       stationNumber={round.stationIndex + 1}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FIGURE_IDS } from "./figures";
 
 export const ADJECTIVES = [
   "Schnell",
@@ -90,6 +91,24 @@ const FILENAME_OVERRIDES: Record<string, string> = {
   hund: "dackel",
 };
 
+const FIGURE_PREFIX = "figur:";
+
+/** Bildquelle für ein Tier oder – mit „figur:“-Präfix – eine freigeschaltete Figur. */
+export function avatarSrc(animalOrFigure: string | null): string {
+  if (animalOrFigure?.startsWith(FIGURE_PREFIX)) {
+    return `/figuren/${animalOrFigure.slice(FIGURE_PREFIX.length)}.svg`;
+  }
+  return `/animals/${animalFileName(animalOrFigure)}.svg`;
+}
+
+/** Was im eigenen Profil als Bild erscheint: Figur, sonst Tier. */
+export function profileAvatar(
+  profile: Pick<LearnerProfile, "animal" | "figure"> | null,
+): string | null {
+  if (profile?.figure) return `${FIGURE_PREFIX}${profile.figure}`;
+  return profile?.animal ?? null;
+}
+
 export function animalFileName(animal: string | null): string {
   const lower = (animal ?? "koala").toLowerCase().trim();
   if (FILENAME_OVERRIDES[lower]) return FILENAME_OVERRIDES[lower];
@@ -107,6 +126,10 @@ export const learnerProfileSchema = z
     version: z.literal(1),
     animal: animalTokenSchema.nullable(),
     adjective: z.string().refine((value) => ADJECTIVES.includes(value)),
+    /** Freigeschaltete Figuren; ältere Profile ohne das Feld bleiben gültig. */
+    figuresUnlocked: z.boolean().optional(),
+    /** Bild statt Tier im eigenen Profil; Name und Raum bleiben beim Tier. */
+    figure: z.enum(FIGURE_IDS).nullable().optional(),
   })
   .strict();
 export type LearnerProfile = z.infer<typeof learnerProfileSchema>;

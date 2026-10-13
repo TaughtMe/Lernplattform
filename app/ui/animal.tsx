@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { animalFileName } from "../../src/domain/learner-profile";
+import { avatarSrc } from "../../src/domain/learner-profile";
 
 const FALLBACK = "/animals/koala.svg";
 
@@ -21,7 +21,7 @@ export function AnimalImage({
   label?: string;
   className?: string;
 }) {
-  const src = `/animals/${animalFileName(animal)}.svg`;
+  const src = avatarSrc(animal);
   const [failed, setFailed] = useState<string | null>(null);
   return (
     // eslint-disable-next-line @next/next/no-img-element -- eines von 60 Tier-SVGs, kein fester Bildbestand für next/image

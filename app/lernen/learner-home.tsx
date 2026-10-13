@@ -1,5 +1,6 @@
 "use client";
 
+import { profileAvatar } from "../../src/domain/learner-profile";
 import { useAreaVisible } from "../release/release-context";
 import { useThemeToggle } from "../ui/theme";
 import { useLearnerProfile } from "../ui/use-learner-profile";
@@ -28,7 +29,7 @@ export function LearnerHome() {
           ? `Klasse ${snapshot.className.replace(/^Klasse\s+/i, "")}`
           : "Lernraum"
       }
-      animal={profile?.animal ?? null}
+      animal={profileAvatar(profile)}
       theme={theme}
       onToggleTheme={toggleTheme}
       // Tagesziel und „Heute fällig“ zählen dieselben Aufgaben.
