@@ -154,6 +154,14 @@ export function LibraryScreen({
   }));
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetMode, setSheetMode] = useState<"desktop" | "mobile">("desktop");
+  const [sheetKind, setSheetKind] = useState<"thema" | "stand">("thema");
+  const standButton = useRef<HTMLButtonElement>(null);
+  const openerOf = (kind: "thema" | "stand") =>
+    kind === "stand" ? standButton : phenomenonButton;
+  const sheetKindRef = useRef<"thema" | "stand">("thema");
+  useEffect(() => {
+    sheetKindRef.current = sheetKind;
+  });
   const probe = useRef<HTMLSpanElement>(null);
   const phenomenonButton = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -168,6 +176,12 @@ export function LibraryScreen({
   );
   const resumable = rated.filter((entry) => entry.open !== undefined);
   const phenomena = phenomenaInLibrary(entries.map((entry) => entry.text));
+  const standCounts = Object.fromEntries(
+    STANDS.map((stand) => [
+      stand,
+      rated.filter((entry) => entry.stand === stand).length,
+    ]),
+  ) as Record<TextboxStand, number>;
   const chips = activeFilterChips(filter);
   const countText =
     visible.length === entries.length
@@ -201,7 +215,8 @@ export function LibraryScreen({
       const target = event.target as Node;
       if (
         dialog.current?.contains(target) ||
-        phenomenonButton.current?.contains(target)
+        phenomenonButton.current?.contains(target) ||
+        standButton.current?.contains(target)
       ) {
         return;
       }
@@ -210,7 +225,7 @@ export function LibraryScreen({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setSheetOpen(false);
-      phenomenonButton.current?.focus();
+      openerOf(sheetKind).current?.focus();
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -218,7 +233,7 @@ export function LibraryScreen({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [sheetOpen]);
+  }, [sheetOpen, sheetKind]);
 
   // Klick auf den Hintergrund (::backdrop) trifft das Dialog-Element selbst.
   useEffect(() => {
@@ -227,7 +242,7 @@ export function LibraryScreen({
     const onClick = (event: MouseEvent) => {
       if (event.target === element) {
         setSheetOpen(false);
-        phenomenonButton.current?.focus();
+        openerOf(sheetKindRef.current).current?.focus();
       }
     };
     element.addEventListener("click", onClick);
@@ -236,14 +251,15 @@ export function LibraryScreen({
 
   function closeSheet() {
     setSheetOpen(false);
-    phenomenonButton.current?.focus();
+    openerOf(sheetKind).current?.focus();
   }
 
-  function toggleSheet() {
-    if (sheetOpen) {
+  function toggleSheet(kind: "thema" | "stand") {
+    if (sheetOpen && sheetKind === kind) {
       closeSheet();
       return;
     }
+    setSheetKind(kind);
     const desktop =
       probe.current !== null &&
       getComputedStyle(probe.current).display !== "none";
@@ -464,6 +480,25 @@ export function LibraryScreen({
                 </button>
               ))}
             </div>
+            <button
+              ref={standButton}
+              type="button"
+              className={cx(
+                styles.phenomenonButton,
+                styles.standButton,
+                (sheetOpen && sheetKind === "stand") || filter.stands.length > 0
+                  ? styles.phenomenonActive
+                  : undefined,
+              )}
+              aria-expanded={sheetOpen && sheetKind === "stand"}
+              aria-controls={sheetId}
+              onClick={() => toggleSheet("stand")}
+            >
+              {filter.stands.length > 0
+                ? `Stand · ${filter.stands.length}`
+                : "Stand"}
+              <Icon name="down" size={16} strokeWidth={2.2} />
+            </button>
           </div>
           <div className={cx(styles.filterGroup, styles.phenomenonGroup)}>
             <button
@@ -471,23 +506,24 @@ export function LibraryScreen({
               type="button"
               className={cx(
                 styles.phenomenonButton,
-                (sheetOpen || filter.phenomena.length > 0) &&
+                ((sheetOpen && sheetKind === "thema") ||
+                  filter.phenomena.length > 0) &&
                   styles.phenomenonActive,
               )}
-              aria-expanded={sheetOpen}
+              aria-expanded={sheetOpen && sheetKind === "thema"}
               aria-controls={sheetId}
-              onClick={toggleSheet}
+              onClick={() => toggleSheet("thema")}
             >
               {filter.phenomena.length > 0
-                ? `Schwerpunkt · ${filter.phenomena.length}`
-                : "Schwerpunkt"}
+                ? `Thema · ${filter.phenomena.length}`
+                : "Thema"}
               <Icon name="down" size={16} strokeWidth={2.2} />
             </button>
             <dialog
               ref={dialog}
               id={sheetId}
               className={styles.sheet}
-              aria-label="Schwerpunkt"
+              aria-label={sheetKind === "stand" ? "Stand" : "Thema"}
               onCancel={(event) => {
                 // Escape: der Aufruf schließt, nicht der Browser.
                 event.preventDefault();
@@ -496,25 +532,47 @@ export function LibraryScreen({
             >
               <span className={styles.sheetHandle} aria-hidden="true" />
               <span className={styles.sheetTitle} aria-hidden="true">
-                Schwerpunkt
+                {sheetKind === "stand" ? "Stand" : "Thema"}
               </span>
               <fieldset className={styles.sheetList}>
-                <legend className="ui-sr-only">Schwerpunkt</legend>
-                {phenomena.map(({ id, label, count }) => (
-                  <label key={id} className={styles.option}>
-                    <input
-                      type="checkbox"
-                      className={styles.optionInput}
-                      checked={filter.phenomena.includes(id)}
-                      onChange={() => togglePhenomenon(id)}
-                    />
-                    <span className={styles.optionBox} aria-hidden="true">
-                      <Icon name="check" size={14} strokeWidth={3} />
-                    </span>
-                    <span className={styles.optionLabel}>{label}</span>
-                    <span className={styles.optionCount}>{count}</span>
-                  </label>
-                ))}
+                <legend className="ui-sr-only">
+                  {sheetKind === "stand" ? "Stand" : "Thema"}
+                </legend>
+                {sheetKind === "stand"
+                  ? STANDS.map((stand) => (
+                      <label key={stand} className={styles.option}>
+                        <input
+                          type="checkbox"
+                          className={styles.optionInput}
+                          checked={filter.stands.includes(stand)}
+                          onChange={() => toggleStand(stand)}
+                        />
+                        <span className={styles.optionBox} aria-hidden="true">
+                          <Icon name="check" size={14} strokeWidth={3} />
+                        </span>
+                        <span className={styles.optionLabel}>
+                          {TEXTBOX_STAND_LABELS[stand]}
+                        </span>
+                        <span className={styles.optionCount}>
+                          {standCounts[stand]}
+                        </span>
+                      </label>
+                    ))
+                  : phenomena.map(({ id, label, count }) => (
+                      <label key={id} className={styles.option}>
+                        <input
+                          type="checkbox"
+                          className={styles.optionInput}
+                          checked={filter.phenomena.includes(id)}
+                          onChange={() => togglePhenomenon(id)}
+                        />
+                        <span className={styles.optionBox} aria-hidden="true">
+                          <Icon name="check" size={14} strokeWidth={3} />
+                        </span>
+                        <span className={styles.optionLabel}>{label}</span>
+                        <span className={styles.optionCount}>{count}</span>
+                      </label>
+                    ))}
               </fieldset>
               <button
                 type="button"

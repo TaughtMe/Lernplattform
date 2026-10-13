@@ -393,7 +393,7 @@ describe("LibraryScreen", () => {
   it("wählt Schwerpunkte mit Kontrollkästchen und schließt mit Fertig und Escape", async () => {
     const user = userEvent.setup();
     setup();
-    const opener = screen.getByRole("button", { name: "Schwerpunkt" });
+    const opener = screen.getByRole("button", { name: "Thema" });
     const sheet = document.querySelector("dialog")!;
     expect(opener).toHaveAttribute("aria-expanded", "false");
     await user.click(opener);
@@ -404,7 +404,7 @@ describe("LibraryScreen", () => {
       TEXTBOX_TEXTS.filter((t) => t.phenomena.includes("ie")).length,
     );
     expect(
-      screen.getByRole("button", { name: "Schwerpunkt · 1" }),
+      screen.getByRole("button", { name: "Thema · 1" }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Fertig" }));
     expect(sheet).not.toHaveAttribute("open");
@@ -414,6 +414,21 @@ describe("LibraryScreen", () => {
     await user.keyboard("{Escape}");
     expect(sheet).not.toHaveAttribute("open");
     expect(opener).toHaveFocus();
+  });
+
+  it("wählt den Stand mobil im Auswahlfeld mit Anzahl", async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(screen.getByRole("button", { name: "Stand" }));
+    const neu = screen.getByRole("checkbox", { name: /Neu/ });
+    expect(neu.closest("label")).toHaveTextContent(`Neu${total - 1}`);
+    await user.click(neu);
+    expect(count()).toBe(total - 1);
+    expect(
+      screen.getByRole("button", { name: "Stand · 1" }),
+    ).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("button", { name: "Stand · 1" })).toHaveFocus();
   });
 
   it("sucht im Titel und in der Bezeichnung eines Schwerpunkts", async () => {

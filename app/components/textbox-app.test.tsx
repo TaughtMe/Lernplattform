@@ -342,7 +342,7 @@ describe("TextboxApp", () => {
         await screen.findByText(/noch keinen passenden Text/),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Schwerpunkt · 1" }),
+        screen.getByRole("button", { name: "Thema · 1" }),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("button", {
@@ -359,9 +359,7 @@ describe("TextboxApp", () => {
           name: "Passende Texte zu deinen Wörtern",
         }),
       ).not.toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: "Schwerpunkt" }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Thema" })).toBeInTheDocument();
     });
 
     async function finishWith(

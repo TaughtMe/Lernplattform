@@ -74,15 +74,13 @@ test("Filter: Stufe, Schwerpunkt, Chips und Suche", async ({ page }) => {
   await expect(cards).toHaveCount(hard);
   await expect(page.getByText(`${hard} von ${total} Texten`)).toBeVisible();
 
-  await page.getByRole("button", { name: /^Schwerpunkt/ }).click();
+  await page.getByRole("button", { name: /^Thema/ }).click();
   await page.getByRole("checkbox", { name: /Wörter mit ie/ }).check();
   const both = TEXTBOX_TEXTS.filter(
     (t) => t.difficulty === "schwer" && t.phenomena.includes("ie"),
   ).length;
   await page.keyboard.press("Escape");
-  await expect(
-    page.getByRole("button", { name: "Schwerpunkt · 1" }),
-  ).toBeFocused();
+  await expect(page.getByRole("button", { name: "Thema · 1" })).toBeFocused();
   await expect(cards).toHaveCount(both);
 
   await page.getByRole("button", { name: "Filter „Schwer“ entfernen" }).click();
@@ -197,7 +195,7 @@ for (const theme of ["hell", "dunkel"] as const) {
     await openLibrary(page);
     if (theme === "dunkel") await useDark(page);
     await expectAccessible(page);
-    await page.getByRole("button", { name: /^Schwerpunkt/ }).click();
+    await page.getByRole("button", { name: /^Thema/ }).click();
     await expectAccessible(page);
     await page
       .getByRole("button", { name: /^Fertig$|Texte anzeigen|Text anzeigen/ })
@@ -257,7 +255,7 @@ test("Tippflächen sind mindestens 44 × 44 px", async ({ page }) => {
     page.getByRole("button", { name: /^Filter .* entfernen$/ }),
     page
       .getByRole("button", { name: /: Verlauf ansehen$/ })
-      .or(page.getByRole("button", { name: "Schwerpunkt" })),
+      .or(page.getByRole("button", { name: "Thema" })),
   ]);
   await page
     .getByRole("button", { name: `${text.title} üben` })

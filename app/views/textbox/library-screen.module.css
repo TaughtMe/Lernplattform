@@ -234,6 +234,22 @@
 .standGroup {
   order: 3;
 }
+/* Mobil teilen sich Thema und Stand die Zeile neben den Stufenpunkten. */
+.phenomenonGroup,
+.standGroup {
+  flex: 1 1 80px;
+  min-width: 0;
+}
+.phenomenonGroup > .phenomenonButton,
+.standGroup > .phenomenonButton {
+  flex: 1;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0 10px 0 14px;
+}
+.standGroup > .segmented {
+  display: none;
+}
 .filterLabel {
   display: none;
   font-size: 13px;
@@ -249,7 +265,7 @@
   background: var(--surface);
 }
 .levelShort {
-  display: grid;
+  display: none;
   place-items: center;
   min-width: 44px;
   padding: 0 4px 0 10px;
@@ -339,6 +355,9 @@
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
+}
+.phenomenonButton > svg {
+  flex: none;
 }
 .phenomenonActive {
   border-color: var(--ink);
@@ -472,12 +491,16 @@
 .strip {
   display: flex;
   flex: none;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0 6px;
-  min-height: 44px;
+  gap: 6px;
+  height: 44px;
   margin: -4px 0;
   padding: 0 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.strip::-webkit-scrollbar {
+  display: none;
 }
 .peek {
   position: relative;
@@ -858,7 +881,18 @@
   .levelGroup,
   .standGroup,
   .phenomenonGroup {
+    flex: none;
     order: 0;
+  }
+  .standGroup > .segmented {
+    display: flex;
+  }
+  .standGroup > .standButton {
+    display: none;
+  }
+  .phenomenonGroup > .phenomenonButton {
+    flex: none;
+    padding: 0 14px 0 16px;
   }
   .filterLabel {
     display: inline;
@@ -880,11 +914,7 @@
   }
   .strip {
     grid-area: strip;
-    flex-wrap: nowrap;
-    height: 44px;
     padding: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
   }
   .clearAll {
     display: inline-flex;

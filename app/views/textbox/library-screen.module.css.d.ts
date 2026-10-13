@@ -81,6 +81,7 @@ declare const styles: {
   readonly sheetHandle: string;
   readonly sheetList: string;
   readonly sheetTitle: string;
+  readonly standButton: string;
   readonly standGroup: string;
   readonly strip: string;
   readonly suggestion: string;
