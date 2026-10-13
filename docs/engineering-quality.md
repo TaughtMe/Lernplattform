@@ -67,11 +67,15 @@ Zusätzlich muss mindestens `npm run test:e2e:chromium` laufen. Vor einem Meilen
 
 ### Mindestabdeckung
 
-Für `src/domain` und `src/storage` gelten derzeit mindestens:
+Für `src/domain`, `src/storage` und `src/speech` gelten derzeit mindestens:
 
 - 90 Prozent Zeilen, Statements und Funktionen
 - 85 Prozent Verzweigungen
 - 100 Prozent für sicherheitskritische Parser, Migrationen und Rollenentscheidungen wird pro Modul angestrebt und bei deren Einführung gesondert festgelegt
+
+Für `src/integrations` (Cloud-Sync, Kryptografie, Raum-API, Inhaltsübertragung, Sicherung) gelten eigene Grenzen in `vitest.config.ts`: 95 Prozent Zeilen und Statements, 93 Prozent Funktionen, 90 Prozent Verzweigungen. Für den Sicherheitskern (`crypto/`, `content-transfer/crypto.ts` sowie Merge, Engine, Umschlag, Uhr, Hash und Deduplizierung in `cloud-sync/`) gilt strenger: 93 Prozent Zeilen, 90 Prozent Statements, 95 Prozent Funktionen, 88 Prozent Verzweigungen. Ausgenommen sind Tests, der Testaufbau `cloud-sync/testing/` und reine Browser-Anbindung ohne eigene Logik (`google-identity.ts`, `live-room-client.ts`); jede Ausnahme steht mit Begründung in der Konfiguration.
+
+Hinweis zum Lesen des Berichts: Läuft Vitest unter einem KI-Agenten, blendet die Text-Tabelle vollständig gedeckte Dateien aus (`skipFull`). Das Fehlen einer Datei im Bericht heißt dann nicht, dass sie nicht gemessen wird; `coverage/coverage-summary.json` enthält alle Dateien.
 
 Abdeckung beweist keine Qualität. Sie ist eine Untergrenze gegen ungetesteten Kerncode und wird durch Eigenschafts-, Browser- und manuelle Tests ergänzt.
 
