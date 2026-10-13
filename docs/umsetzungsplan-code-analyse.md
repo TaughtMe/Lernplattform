@@ -47,13 +47,13 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
 
 ## Status
 
-| Nr. | Status | Pull Request | Bemerkung |
-| --- | ------ | ------------ | --------- |
-| 1   | offen  |              |           |
-| 2   | offen  |              |           |
-| 3   | offen  |              |           |
-| 4   | offen  |              |           |
-| 5   | offen  |              |           |
+| Nr. | Status    | Pull Request | Bemerkung                                                                                  |
+| --- | --------- | ------------ | ------------------------------------------------------------------------------------------ |
+| 1   | offen     |              |                                                                                            |
+| 2   | offen     |              |                                                                                            |
+| 3   | umgesetzt | _(PR folgt)_ | Audit 15 → 10 Meldungen (ausgeliefert: 0); Rest nur Entwicklungs-/Build-Zeit, siehe SR-001 |
+| 4   | offen     |              |                                                                                            |
+| 5   | offen     |              |                                                                                            |
 
 ## Korrekturen an der Analyse
 
