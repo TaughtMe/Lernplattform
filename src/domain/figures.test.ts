@@ -72,7 +72,7 @@ describe("secret figures", () => {
     expect(avatarSrc(profileAvatar(profile))).toBe("/figuren/yoda-1.svg");
     // Der Name folgt der Figur, nicht dem vorher gewählten Tier.
     expect(learnerDisplayName(base)).toBe("Schneller Fuchs");
-    expect(learnerDisplayName(profile)).toBe("Yoda 1");
+    expect(learnerDisplayName(profile)).toBe("Yoda");
     expect(
       learnerProfileSchema.safeParse({ ...base, figure: "unbekannt" }).success,
     ).toBe(false);
