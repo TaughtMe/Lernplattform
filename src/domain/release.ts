@@ -115,6 +115,13 @@ export const RELEASE_AREAS = {
     stage: "aus",
   },
   duell: { label: "Duell", routes: ["/duell"], stage: "aus" },
+  "demo-klasse": {
+    label: "Demo-Klasse 7b",
+    // Feste Demo-Klasse aus der Anfangszeit, Testgelände der Browser-Tests.
+    // Echte Klassen laufen über /klasse/[classId].
+    routes: ["/klasse/7b"],
+    stage: "vorschau",
+  },
   demo: { label: "Alte Demo-Seiten", routes: ["/demo"], stage: "aus" },
 } as const satisfies Record<string, AreaDefinition>;
 

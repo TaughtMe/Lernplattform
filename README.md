@@ -50,9 +50,14 @@ Standardstufen im Schulbetrieb (Entscheidung 48):
 | `geraete-sync`    | Geräte abgleichen (Lehrkraft) | –                                                                                                                                                                    | `frei`     |
 | `motivation`      | Häuser, Serie und Abzeichen   | `/haus`, `/lehrer/haeuser`                                                                                                                                           | `aus`      |
 | `duell`           | Duell                         | `/duell`                                                                                                                                                             | `aus`      |
+| `demo-klasse`     | Demo-Klasse 7b                | `/klasse/7b`                                                                                                                                                         | `vorschau` |
 | `demo`            | Alte Demo-Seiten              | `/demo`                                                                                                                                                              | `aus`      |
 
 <!-- freigabe:end -->
+
+`/klasse/7b` ist die feste Demo-Klasse und dient den Browser-Tests als
+Testgelände. Sie erscheint nur mit Vorschau; echte Klassen laufen über
+`/klasse/[classId]`.
 
 - Stufen ändern: `LERNRAUM_FREIGABE="lernbox=frei,motivation=vorschau"`
 - Vorschau für ein Gerät: `?vorschau=an` an eine beliebige Adresse hängen
