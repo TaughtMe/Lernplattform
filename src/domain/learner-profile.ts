@@ -101,6 +101,13 @@ export function avatarSrc(animalOrFigure: string | null): string {
   return `/animals/${animalFileName(animalOrFigure)}.svg`;
 }
 
+/** Anzeigename zu `avatarSrc`-Werten: Figurname bzw. Tiername, nie die interne Kennung. */
+export function avatarLabel(animalOrFigure: string): string {
+  if (!animalOrFigure.startsWith(FIGURE_PREFIX)) return animalOrFigure;
+  const id = animalOrFigure.slice(FIGURE_PREFIX.length);
+  return figureName(id) ?? id;
+}
+
 /** Was im eigenen Profil als Bild erscheint: Figur, sonst Tier. */
 export function profileAvatar(
   profile: Pick<LearnerProfile, "animal" | "figure"> | null,

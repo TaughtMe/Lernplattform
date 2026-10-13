@@ -7,6 +7,7 @@ import {
   isUnlockComplete,
 } from "./figures";
 import {
+  avatarLabel,
   avatarSrc,
   createLearnerProfile,
   learnerDisplayName,
@@ -70,6 +71,9 @@ describe("secret figures", () => {
     const profile = { ...base, figuresUnlocked: true, figure: "yoda-1" };
     expect(learnerProfileSchema.safeParse(profile).success).toBe(true);
     expect(avatarSrc(profileAvatar(profile))).toBe("/figuren/yoda-1.svg");
+    expect(avatarLabel(profileAvatar(profile)!)).toBe("Yoda");
+    expect(avatarLabel("figur:guy-fawkes")).toBe("Guy Fawkes");
+    expect(avatarLabel("Fuchs")).toBe("Fuchs");
     // Der Name folgt der Figur, nicht dem vorher gewählten Tier.
     expect(learnerDisplayName(base)).toBe("Schneller Fuchs");
     expect(learnerDisplayName(profile)).toBe("Yoda");

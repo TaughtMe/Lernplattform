@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
+import { avatarLabel } from "../../../src/domain/learner-profile";
 import { BrandLogo } from "../../ui/brand";
 import { Icon } from "../../ui/icons";
 import { Animal } from "../parts/parts";
@@ -85,7 +86,7 @@ export function LandingScreen({
         </Link>
         <div className={styles.greeting}>
           <h1 id="landing-greeting" className={styles.greetingTitle}>
-            {animal ? `Weiter als ${animal}` : "Dein Lernraum"}
+            {animal ? `Weiter als ${avatarLabel(animal)}` : "Dein Lernraum"}
           </h1>
           <p className={styles.greetingHint}>Tippen öffnet deinen Lernraum</p>
         </div>

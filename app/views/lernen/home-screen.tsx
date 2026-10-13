@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { avatarLabel } from "../../../src/domain/learner-profile";
 import { Icon } from "../../ui/icons";
 import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./home-screen.module.css";
@@ -106,7 +107,7 @@ export function HomeScreen(props: HomeScreenProps) {
             </div>
             <div className={styles.name}>
               <p className={styles.animalName}>
-                {props.animal ?? "Dein Lernraum"}
+                {props.animal ? avatarLabel(props.animal) : "Dein Lernraum"}
               </p>
               <p className={styles.today}>
                 {target === 0

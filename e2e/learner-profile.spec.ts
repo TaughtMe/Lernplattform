@@ -105,3 +105,27 @@ test("secret figures stay hidden until the tap sequence, then can be chosen and 
     page.getByRole("heading", { level: 2, name: /Fuchs$/ }),
   ).toBeVisible();
 });
+
+test("start and learning home name the chosen figure instead of its internal id", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "lernraum:personal:profile:v1",
+      JSON.stringify({
+        version: 1,
+        animal: "Fuchs",
+        adjective: "Schnell",
+        figuresUnlocked: true,
+        figure: "guy-fawkes",
+      }),
+    );
+  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Weiter als Guy Fawkes" }),
+  ).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("figur:");
+  await page.goto("/lernen");
+  await expect(page.locator("body")).not.toContainText("figur:");
+});
