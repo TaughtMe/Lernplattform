@@ -8,7 +8,14 @@
 import { useAreaVisible } from "../../release/release-context";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { animalTokenFromDisplayName } from "../../../src/domain/learner-profile";
 import type { ParticipantStatus } from "../../views/laufdiktat/teacher-dictation-screen";
 import {
@@ -958,6 +965,7 @@ export function useTeacherLiveRoom(
   // Nach 120 Minuten beendet dieses Gerät den Raum selbst, genau einmal.
   // Der Server-Job ist nur die Absicherung, falls das Gerät nicht offen ist.
   const closesAtMs = timeline?.closesAt.getTime() ?? null;
+  const onClockClosesRoom = useEffectEvent(() => finishClosedRoom());
   useEffect(() => {
     if (!liveRoomConfig || !room || roomClosed || closesAtMs === null) return;
     if (nowMs < closesAtMs || closingRef.current) return;
@@ -973,10 +981,8 @@ export function useTeacherLiveRoom(
       } catch {
         // Der Server schließt den Raum spätestens beim nächsten Aufräumen.
       }
-      await finishClosedRoom();
+      await onClockClosesRoom();
     })();
-    // finishClosedRoom liest nur den Stand dieses Renderns.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closesAtMs, liveRoomConfig, nowMs, room, roomClosed]);
 
   useEffect(() => {
@@ -1158,10 +1164,8 @@ export function useTeacherLiveRoom(
   // genau einmal aus. Beides löst nur Laden und Anzeigen aus; einen Raum
   // erstellt allein „Jetzt starten“, und die Absicht ist dann schon gelöscht.
   const paramsHandled = useRef(false);
-  useEffect(() => {
-    if (paramsHandled.current) return;
-    if (!hydrated || !restoreChecked || !classesLoaded) return;
-    paramsHandled.current = true;
+  // Liest den Stand dieses Renderns; Auslöser sind allein die Abhängigkeiten des Effekts.
+  const handleLaunchParams = useEffectEvent(() => {
     const contentParam = params.get("inhalt");
     const newParam = params.get("neu");
     const stepParam = params.get("schritt");
@@ -1174,7 +1178,6 @@ export function useTeacherLiveRoom(
     if (room) {
       // Ein offener Raum hat Vorrang; nichts wird überschrieben.
       if (contentParam || newParam || intent)
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
         setError(
           "Es ist schon ein Raum offen. Beende ihn zuerst, um einen anderen Inhalt zu laden.",
         );
@@ -1221,18 +1224,26 @@ export function useTeacherLiveRoom(
     })().catch(() =>
       setError("Der Inhalt konnte nicht aus der Ablage geladen werden."),
     );
-    // Läuft einmal; die Funktionen lesen nur den Stand dieses Renderns.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  useEffect(() => {
+    if (paramsHandled.current) return;
+    if (!hydrated || !restoreChecked || !classesLoaded) return;
+    paramsHandled.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmalige Auswertung der Adresse beim Start, kein Abgleich von Zuständen
+    handleLaunchParams();
   }, [classesLoaded, hydrated, params, restoreChecked, room, router]);
 
   // „Jetzt starten“: Sobald Inhalt, Modus und Klasse übernommen sind, öffnet
   // sich die Lobby mit den Standardoptionen des Modus.
-  useEffect(() => {
-    if (!startRequested || busy || room) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+  const onStartRequested = useEffectEvent(() => {
+    if (busy || room) return;
     setStartRequested(false);
     void openLobby();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  useEffect(() => {
+    if (!startRequested) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
+    onStartRequested();
   }, [startRequested]);
 
   /** Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. */

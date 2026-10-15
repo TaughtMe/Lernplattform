@@ -1,7 +1,7 @@
 "use client";
 
 import { useAreaVisible } from "../../release/release-context";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
   battleChargeGain,
@@ -409,13 +409,14 @@ export function LiveRunningDictationGame({
     onRelease: startWriting,
   });
 
+  const keysHeld = useEffectEvent(() => hold.keysHeld());
   useEffect(() => {
     if (phase !== "write") return;
     // Nach A + L erst fokussieren, wenn beide Tasten oben sind: Eine noch
     // gehaltene Taste würde sonst per Wiederholung ins Feld schreiben.
     let timer = 0;
     const focusField = () => {
-      if (hold.keysHeld()) {
+      if (keysHeld()) {
         timer = window.setTimeout(focusField, 40);
         return;
       }
@@ -423,7 +424,6 @@ export function LiveRunningDictationGame({
     };
     timer = window.setTimeout(focusField, 10);
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   if (session.stationMode) {
