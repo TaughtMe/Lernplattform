@@ -9,7 +9,10 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { buildTeacherVocabularyBundle } from "../../src/domain/teacher-content-transfer";
+import {
+  buildTeacherVocabularyBundle,
+  parseTeacherVocabularyPairs,
+} from "../../src/domain/teacher-content-transfer";
 import {
   createTeacherContentLibraryFile,
   parseTeacherContentLibraryFile,
@@ -63,10 +66,7 @@ export function TeacherContentTransfer({
   const sourceInput = useRef<HTMLTextAreaElement>(null);
   const sourceFileInput = useRef<HTMLInputElement>(null);
   const pairs = useMemo(
-    () =>
-      source
-        .split(/\r?\n/)
-        .filter((line) => line.includes(";") || line.includes("\t")).length,
+    () => parseTeacherVocabularyPairs(source).length,
     [source],
   );
 
