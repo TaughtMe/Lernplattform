@@ -2,6 +2,11 @@
 
 Stand: 15.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `17f5160`
 
+> **Fortschritt:** Die Arbeitsschritte 1 bis 4 sind umgesetzt und geprüft (Branch
+> `claude/vokabelauswahl-laufdiktat`, abgezweigt von `claude/lernraum-ui-v2` @ `84bef88`). Vorab
+> (Schritt 0): Das Tag-Feld je Vokabel ist im Vokabelheft immer sichtbar, und unter „Tabelle
+> einfügen“ steht der Hinweis zur dritten Spalte. Der Probedurchlauf (Abschnitt 4) steht noch aus.
+
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Die fachlichen Entscheidungen in
 Abschnitt 1 sind mit der projektverantwortlichen Lehrkraft abgestimmt und **verbindlich**. Wo der
 Code etwas anderes nahelegt, gilt dieser Plan. Bei echten Widersprüchen erst nachfragen und nicht
