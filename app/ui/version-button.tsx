@@ -102,12 +102,12 @@ export function VersionButton() {
 
   const label =
     state === "checking"
-        ? "Suche …"
-        : state === "current"
-          ? "Aktuell"
-          : state === "error"
-            ? `v${APP_VERSION} · offline`
-            : `v${APP_VERSION}`;
+      ? "Suche …"
+      : state === "current"
+        ? "Aktuell"
+        : state === "error"
+          ? `v${APP_VERSION} · offline`
+          : `v${APP_VERSION}`;
 
   return (
     <button
