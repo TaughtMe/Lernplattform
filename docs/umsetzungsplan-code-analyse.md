@@ -28,8 +28,9 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
   `claude/lernraum-ui-v2`. Nicht direkt auf `claude/lernraum-ui-v2` oder `main` pushen.
 - **Regeln:** `AGENTS.md`, `docs/engineering-quality.md`, `docs/architecture.md`. Sprache in
   Code-Kommentaren, Doku und Commit-Nachrichten ist Deutsch, wie im übrigen Repository.
-- **Prüfungen vor jedem Push:** `npm run format:check`, `npm run lint`, `npm run typecheck`,
-  `npm run test:coverage`, `npm run build`. Bei Änderungen an Oberfläche oder Routen zusätzlich
+- **Prüfungen vor jedem Push:** `npm run check` vollständig (Formatierung, Lint, Typen,
+  Abdeckung, Datenbankvertrag, Build und Render-Test). Danach `public/sw.js` und
+  `public/version.json` zurücksetzen, falls der Build sie verändert hat. Bei Änderungen an Oberfläche oder Routen zusätzlich
   die im Teilplan genannten Playwright-Tests (Projekte `desktop-chromium` und `mobile-chrome`).
   Die volle Cross-Browser-Suite läuft in GitHub; deren Status nach dem Push nicht wiederholt
   abfragen (siehe `AGENTS.md`).
