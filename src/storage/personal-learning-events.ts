@@ -29,6 +29,7 @@ import {
   learningEventV1Schema,
   normalizeVocabularyText,
 } from "../domain/learning-bundle";
+import { learningBoxEventFields } from "../domain/learning-box-replay";
 import { learningEventIdentity } from "./learning-event-identity";
 import Dexie, { type Table } from "dexie";
 import type { LearningEventV1 } from "../domain/learning-bundle";
@@ -346,7 +347,9 @@ export function createLearningBoxRepository(
       roundId: string;
       now?: string;
     }) => {
-      const occurredAt = input.now ?? new Date().toISOString();
+      // Gleicher Zeitpunkt wie im Kartenstand, damit das Nachspielen exakt passt.
+      const occurredAt =
+        input.now ?? new Date(input.card.lastReviewed).toISOString();
       const eventId = await learningEventIdentity(
         "learning-box",
         input.roundId,
@@ -368,22 +371,7 @@ export function createLearningBoxRepository(
               source: "learning-box",
               learningArea: "vocabulary",
               roundId: input.roundId,
-              direction:
-                input.direction === "forward"
-                  ? "prompt-to-answer"
-                  : "answer-to-prompt",
-              answerMode: input.mode === "writing" ? "typed" : "self-check",
-              help: input.mode === "writing" ? "none" : "solution",
-              assessment: {
-                knowledge: input.correct ? "correct" : "incorrect",
-                writing:
-                  input.mode === "writing"
-                    ? input.correct
-                      ? "correct"
-                      : "incorrect"
-                    : "not-assessed",
-                selfCorrected: false,
-              },
+              ...learningBoxEventFields(input),
             }),
           );
         },
