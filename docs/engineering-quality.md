@@ -63,6 +63,8 @@ Nicht ohne neue Architekturentscheidung eingeführt werden globale State-Manager
 
 ### Bei jeder Änderung an Oberfläche oder Ablauf
 
+`e2e/platform-quality.spec.ts` (axe-Prüfung aller Hauptseiten, LernBox, Lehrer-Arbeitsbereich, Einschreibung, Kopfrechnen) ist wieder Teil der Pflichtsuite und läuft in `npm run test:e2e` über alle Browser-Projekte. Die frühere Sperre über `ENABLE_PRE_PILOT_E2E` ist entfernt, weil seit Entscheidung 48 alle Lernbereiche freigegeben sind (`src/domain/release.ts`).
+
 Zusätzlich muss mindestens `npm run test:e2e:chromium` laufen. Vor einem Meilenstein läuft `npm run quality` über die vollständige Browser- und Gerätematrix.
 
 ### Mindestabdeckung
