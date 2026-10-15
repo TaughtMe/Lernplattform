@@ -1,11 +1,17 @@
 import "fake-indexeddb/auto";
 import Dexie from "dexie";
+import fc from "fast-check";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   LEARNING_BUNDLE_VERSION,
   parseLearningBundleV1,
 } from "../domain/learning-bundle";
 import { buildTeacherVocabularyBundle } from "../domain/teacher-content-transfer";
+import {
+  learningBoxProgress,
+  replayLearningBoxCard,
+} from "../domain/learning-box-replay";
+import { processLearningBoxResult } from "../domain/learning-box";
 import {
   createLearningWordProgressRepository,
   createLearningBoxRepository,
@@ -591,6 +597,126 @@ describe("learning box repository", () => {
         assessment: { writing: "incorrect" },
       },
     ]);
+  });
+});
+
+describe("learning box event consistency", () => {
+  async function setup() {
+    const database = new PersonalLearningDatabase(
+      `learning-box-replay-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const deck = await repository.createDeck({ title: "Englisch" });
+    const { card } = await repository.addCard({
+      deckId: deck.id,
+      question: "library",
+      answer: "Bibliothek",
+    });
+    return { database, repository, card };
+  }
+
+  it("stores the event at the time the card state was computed", async () => {
+    const { database, repository, card } = await setup();
+    const updated = processLearningBoxResult(card, {
+      correct: true,
+      direction: "forward",
+      mode: "writing",
+      now: Date.parse("2026-08-24T12:00:00.123Z"),
+    });
+    await repository.putCardAndEvent({
+      card: updated,
+      correct: true,
+      direction: "forward",
+      mode: "writing",
+      roundId: "round",
+    });
+    const [event] = await database.learningEvents.toArray();
+    expect(Date.parse(event!.occurredAt)).toBe(updated.lastReviewed);
+  });
+
+  const queryArbitrary = fc.record({
+    correct: fc.boolean(),
+    direction: fc.constantFrom("forward", "reverse"),
+    mode: fc.constantFrom("oral", "writing"),
+    gap: fc.integer({ min: 1, max: 3 * 24 * 60 * 60 * 1000 }),
+  });
+
+  it("replays the stored card state from its events", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.array(queryArbitrary, { minLength: 1, maxLength: 30 }),
+        async (queries) => {
+          const { database, repository, card: initial } = await setup();
+          let current = initial;
+          let at = initial.createdAt;
+          for (const query of queries) {
+            at += query.gap;
+            current = processLearningBoxResult(current, {
+              correct: query.correct,
+              direction: query.direction,
+              mode: query.mode,
+              now: at,
+            });
+            await repository.putCardAndEvent({
+              card: current,
+              correct: query.correct,
+              direction: query.direction,
+              mode: query.mode,
+              roundId: crypto.randomUUID(),
+              now: new Date(at).toISOString(),
+            });
+          }
+          const stored = await repository.getCard(initial.id);
+          const events = await database.learningEvents.toArray();
+          expect(learningBoxProgress(stored!)).toEqual(
+            learningBoxProgress(replayLearningBoxCard(initial, events)),
+          );
+          await database.delete();
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("ignores a repeated query of the same round", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        queryArbitrary,
+        fc.constantFrom("forward", "reverse"),
+        async (query, direction) => {
+          const { database, repository, card } = await setup();
+          const updated = processLearningBoxResult(card, {
+            correct: query.correct,
+            direction,
+            mode: query.mode,
+            now: card.createdAt + query.gap,
+          });
+          const write = (next: typeof card) =>
+            repository.putCardAndEvent({
+              card: next,
+              correct: query.correct,
+              direction,
+              mode: query.mode,
+              roundId: "same-round",
+            });
+          await write(updated);
+          const afterFirst = await repository.getCard(card.id);
+          await write(
+            processLearningBoxResult(updated, {
+              correct: query.correct,
+              direction,
+              mode: query.mode,
+              now: updated.lastReviewed + 1_000,
+            }),
+          );
+          expect(await repository.getCard(card.id)).toEqual(afterFirst);
+          expect(await database.learningEvents.count()).toBe(1);
+          await database.delete();
+        },
+      ),
+      { numRuns: 50 },
+    );
   });
 });
 
