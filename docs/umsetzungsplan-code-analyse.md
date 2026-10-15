@@ -53,7 +53,7 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
 | 1   | erledigt  | [#10](https://github.com/TaughtMe/Lernplattform/pull/10) | Crypto wurde schon gemessen (Vitest `skipFull`); Demo-Klasse nur mit Vorschau              |
 | 2   | erledigt  | [#9](https://github.com/TaughtMe/Lernplattform/pull/9)   | `replayLearningBoxCard` und Eigenschaftstest; Regel 3 ergänzt                              |
 | 3   | umgesetzt | [#12](https://github.com/TaughtMe/Lernplattform/pull/12) | Audit 15 → 10 Meldungen (ausgeliefert: 0); Rest nur Entwicklungs-/Build-Zeit, siehe SR-001 |
-| 4   | offen     |                                                          |                                                                                            |
+| 4   | teilweise | 4a: PR folgt                                             | 4a erledigt (Effekt-Ereignisse, ESLint-Beschreibungspflicht); 4b–4f offen                  |
 | 5   | offen     |                                                          |                                                                                            |
 
 ## Korrekturen an der Analyse

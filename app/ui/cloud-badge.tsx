@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   cloudBadgeAnnouncement,
   cloudBadgeIcon,
@@ -47,16 +47,19 @@ export function CloudBadge({
   // Ansage nur bei Wechsel in einen Zustand, der Aufmerksamkeit braucht.
   const previous = useRef<CloudBadgeStatus | null>(null);
   const [announcement, setAnnouncement] = useState("");
-  useEffect(() => {
+  // `current` und `model` liest nur der Effekt-Ereignis-Stand; Auslöser ist allein `model.status`.
+  const readAnnouncement = useEffectEvent(() => {
     const next = cloudBadgeAnnouncement(previous.current, model, current);
     previous.current = model.status;
+    return next;
+  });
+  useEffect(() => {
+    const next = readAnnouncement();
     if (next) {
       const id = window.setTimeout(() => setAnnouncement(next), 0);
       return () => window.clearTimeout(id);
     }
     return undefined;
-    // `current` absichtlich nicht als Auslöser: Nur Zustandswechsel zählen.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model.status]);
 
   return (

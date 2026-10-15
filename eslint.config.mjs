@@ -1,4 +1,5 @@
 import { defineConfig, globalIgnores } from "eslint/config";
+import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 import eslint from "@eslint/js";
 import next from "@next/eslint-plugin-next";
 import jsxA11y from "eslint-plugin-jsx-a11y";
@@ -26,6 +27,13 @@ const eslintConfig = defineConfig([
   reactHooks.configs.flat["recommended-latest"],
   jsxA11y.flatConfigs.recommended,
   next.configs["core-web-vitals"],
+  {
+    plugins: { "@eslint-community/eslint-comments": eslintComments },
+    linterOptions: { reportUnusedDisableDirectives: "error" },
+    rules: {
+      "@eslint-community/eslint-comments/require-description": "error",
+    },
+  },
   {
     languageOptions: {
       globals: {

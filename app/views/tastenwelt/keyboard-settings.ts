@@ -40,7 +40,7 @@ export function useKeyboardSettings() {
   const [settings, setSettings] = useState(DEFAULT_KEYBOARD_SETTINGS);
   useEffect(() => {
     // Erst nach dem Mounten lesen, damit Server- und Browser-Ansicht übereinstimmen.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Server und Browser müssen zuerst dieselbe Vorgabe rendern; der gespeicherte Wert wird erst nach dem Mounten gelesen
     setSettings(load());
   }, []);
   const update = useCallback((patch: Partial<KeyboardSettings>) => {
