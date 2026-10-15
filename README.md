@@ -25,9 +25,39 @@ Welche Lernbereiche Schüler sehen, steuert `src/domain/release.ts`
 - `aus`: nirgends sichtbar
 
 Nicht sichtbare Routen leiten zum Start bzw. zum Lehrkraft-Laufdiktat um, und
-Navigation und Kacheln blenden sie aus. Standard im Schulbetrieb: Laufdiktat
-(Schüler und Lehrkraft) und Kopfrechnen sind `frei`, alles Weitere liegt in der
-`vorschau`. Motivation (Häuser, Serie), Duell und alte Demo-Seiten sind `aus`.
+Navigation und Kacheln blenden sie aus. Motivation (Häuser, Serie), Duell und
+alte Demo-Seiten sind `aus`.
+
+Standardstufen im Schulbetrieb (Entscheidung 48):
+
+<!-- freigabe:start -->
+
+| Bereich           | Bezeichnung                   | Routen                                                                                                                                                               | Standard   |
+| ----------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `start`           | Start                         | `/`                                                                                                                                                                  | `frei`     |
+| `recht`           | Impressum und Datenschutz     | `/impressum`, `/datenschutz`                                                                                                                                         | `frei`     |
+| `raum`            | Laufdiktat-Raum               | `/raum`                                                                                                                                                              | `frei`     |
+| `lehrer-live`     | Laufdiktat Lehrkraft          | `/lehrer/live`                                                                                                                                                       | `frei`     |
+| `mathe`           | Kopfrechnen                   | `/frei/mathematics`                                                                                                                                                  | `frei`     |
+| `lernen`          | Mein Lernraum                 | `/lernen`, `/ueben`, `/frei`, `/klasse`, `/lernen/klasse`, `/lernen/aufgaben`, `/lernen/fortschritt`, `/lernen/einstellungen`, `/lernen/material`, `/lernen/faecher` | `frei`     |
+| `lernbox`         | LernBox                       | `/lernbox`, `/frei/vocabulary`                                                                                                                                       | `frei`     |
+| `wortspeicher`    | Wortspeicher                  | `/frei/german`                                                                                                                                                       | `frei`     |
+| `textbox`         | Textbox                       | `/frei/german/textbox`                                                                                                                                               | `frei`     |
+| `laufdiktat-frei` | Laufdiktat allein üben        | `/frei/german/laufdiktat`                                                                                                                                            | `frei`     |
+| `tastenwelt`      | Tastenwelt                    | `/frei/typing`                                                                                                                                                       | `frei`     |
+| `lehrer`          | Lehrerbereich                 | `/lehrer`                                                                                                                                                            | `frei`     |
+| `lehrer-aufgaben` | Aufgaben der Lehrkraft        | `/lehrer/aufgaben`                                                                                                                                                   | `vorschau` |
+| `geraete-sync`    | Geräte abgleichen (Lehrkraft) | –                                                                                                                                                                    | `frei`     |
+| `motivation`      | Häuser, Serie und Abzeichen   | `/haus`, `/lehrer/haeuser`                                                                                                                                           | `aus`      |
+| `duell`           | Duell                         | `/duell`                                                                                                                                                             | `aus`      |
+| `demo-klasse`     | Demo-Klasse 7b                | `/klasse/7b`                                                                                                                                                         | `vorschau` |
+| `demo`            | Alte Demo-Seiten              | `/demo`                                                                                                                                                              | `aus`      |
+
+<!-- freigabe:end -->
+
+`/klasse/7b` ist die feste Demo-Klasse und dient den Browser-Tests als
+Testgelände. Sie erscheint nur mit Vorschau; echte Klassen laufen über
+`/klasse/[classId]`.
 
 - Stufen ändern: `LERNRAUM_FREIGABE="lernbox=frei,motivation=vorschau"`
 - Vorschau für ein Gerät: `?vorschau=an` an eine beliebige Adresse hängen
