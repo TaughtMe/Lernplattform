@@ -26,7 +26,7 @@ import { AnimalPicker } from "../ui/animal-picker";
 import { Segmented } from "../ui/primitives";
 import { useLearnerProfile } from "../ui/use-learner-profile";
 import { useThemePreference, type ThemePreference } from "../ui/theme";
-import { useHydrated } from "./use-hydrated";
+import { useHydrated } from "../ui/use-hydrated";
 
 const THEME_OPTIONS: ReadonlyArray<{ value: ThemePreference; label: string }> =
   [

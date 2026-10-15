@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { learnerProfileRepository } from "../../../src/storage/learner-profile";
-import { useHydrated } from "../../components/use-hydrated";
+import { useHydrated } from "../use-hydrated";
 import { useLearnerProfile } from "../use-learner-profile";
 import type { ReleaseAreaId } from "../../../src/domain/release";
 import { useRelease } from "../../release/release-context";
