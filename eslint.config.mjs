@@ -65,6 +65,30 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    files: ["app/views/**/*.{ts,tsx}"],
+    ignores: ["app/views/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/components/*",
+                "**/src/storage/*",
+                "**/src/integrations/*",
+                "dexie",
+                "@supabase/*",
+              ],
+              message:
+                "Ansichten in app/views sind rein: Daten und Aktionen kommen über Props (umsetzungsplan-lernraum-ui-v2.md).",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

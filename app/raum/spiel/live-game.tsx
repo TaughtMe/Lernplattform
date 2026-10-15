@@ -36,15 +36,15 @@ import { LAUFDIKTAT_PILOT } from "../../../src/pilot-mode";
 import { createMathAttempt } from "../../../src/storage/math-practice";
 import { createPersonalLearningEventRepository } from "../../../src/storage/personal-learning-events";
 import { MathDisplay } from "../../components/math-display";
-import { useLiveSessionGuards } from "../../components/use-live-session-guards";
-import { useLiveVocabularyTransfer } from "../../components/use-live-vocabulary-transfer";
-import { useLiveWordStoreTransfer } from "../../components/use-live-word-store-transfer";
+import { useLiveSessionGuards } from "../use-live-session-guards";
+import { useLiveVocabularyTransfer } from "../use-live-vocabulary-transfer";
+import { useLiveWordStoreTransfer } from "../use-live-word-store-transfer";
 import {
   WORD_STORE_FULL_NOTICE,
   misspelledWords,
   summarizeSavedWords,
 } from "../../../src/integrations/laufdiktat/word-store-transfer";
-import { useWritingRelief } from "../../components/use-writing-relief";
+import { useWritingRelief } from "../use-writing-relief";
 import { Button, ButtonLink } from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
 import { useFullscreenFrame } from "../../ui/shell/fullscreen";

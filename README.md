@@ -87,6 +87,8 @@ Schritt-Komponenten) und das Schülerspiel (`app/raum/spiel/`). Die
 Bausteinübersicht liegt im Entwicklungsmodus unter `/entwicklung/ui`.
 Fachwissen zu exemplarisch gefüllten Screens steht in `docs/inhalte/`.
 
+Neue Bildschirme entstehen als reine Ansicht in `app/views/` mit einem Container, nicht als Markup in `app/components/`; Regel und Bestand stehen in `docs/architecture.md`, Abschnitt „Oberflächenschichten“.
+
 ## Häuser
 
 `/haus` (Schüler) und `/lehrer/haeuser` (Lehrkraft) setzen Konzept 10/11 um.
