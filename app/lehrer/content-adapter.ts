@@ -1,6 +1,6 @@
 import {
   DEFAULT_VOCABULARY_LOCALES,
-  VOCABULARY_LANGUAGES,
+  pickerLocale,
   type VocabularyLocales,
 } from "../../src/domain/running-dictation";
 import type { TextSplitConfig } from "../../src/domain/running-dictation-sections";
@@ -26,18 +26,6 @@ export type LiveContent = {
   /** Nur Vokabeln: Sprachen links und rechts. */
   vocabularyLocales: VocabularyLocales;
 };
-
-/** Gespeicherte Kennungen wie „en“ passen zu „en-GB“ der Sprachauswahl. */
-function pickerLocale(stored: string, fallback: string) {
-  const exact = VOCABULARY_LANGUAGES.find(({ locale }) => locale === stored);
-  if (exact) return exact.locale;
-  const base = stored.split("-")[0]?.toLowerCase();
-  return (
-    VOCABULARY_LANGUAGES.find(
-      ({ locale }) => locale.split("-")[0]?.toLowerCase() === base,
-    )?.locale ?? fallback
-  );
-}
 
 /** Paket der Ablage → Zustand des Live-Raums. */
 export function packageToLiveContent(
