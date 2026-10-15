@@ -1,3 +1,4 @@
+import { parseVocabularyTable } from "./running-dictation";
 import {
   LEARNING_BUNDLE_VERSION,
   parseLearningBundleV1,
@@ -7,22 +8,33 @@ import {
 export type TeacherVocabularyPair = {
   prompt: string;
   answer: string;
+  /** Weitere richtige Schreibweisen, im Text mit „|“ getrennt. */
+  promptAlternatives: string[];
+  answerAlternatives: string[];
+  /** Dritte Spalte: Tag für die LernBox. */
+  tag?: string;
 };
 
+/** Längste Tag-Kennung, die das Lernpaket annimmt. */
+const MAX_TAG_LENGTH = 200;
+
+/**
+ * Liest das Vokabelformat der Ablage wie das Laufdiktat: `links;rechts;tag`
+ * (Tab statt `;` erlaubt), Alternativen mit `|`.
+ */
 export function parseTeacherVocabularyPairs(
   source: string,
 ): TeacherVocabularyPair[] {
-  return source
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .flatMap((line) => {
-      const separator = line.includes("\t") ? "\t" : ";";
-      const [prompt, ...answerParts] = line.split(separator);
-      const answer = answerParts.join(separator);
-      if (!prompt?.trim() || !answer.trim()) return [];
-      return [{ prompt: prompt.trim(), answer: answer.trim() }];
-    });
+  return parseVocabularyTable(source).map((pair) => {
+    const tag = pair.tag?.slice(0, MAX_TAG_LENGTH).trim();
+    return {
+      prompt: pair.left.primary,
+      answer: pair.right.primary,
+      promptAlternatives: [...pair.left.alternatives],
+      answerAlternatives: [...pair.right.alternatives],
+      ...(tag ? { tag } : {}),
+    };
+  });
 }
 
 export function buildTeacherVocabularyBundle(input: {
@@ -47,12 +59,19 @@ export function buildTeacherVocabularyBundle(input: {
     prompt: {
       text: pair.prompt,
       locale: input.promptLocale ?? "en",
+      ...(pair.promptAlternatives.length
+        ? { alternatives: pair.promptAlternatives }
+        : {}),
     },
     answer: {
       text: pair.answer,
       locale: input.answerLocale ?? "de",
+      ...(pair.answerAlternatives.length
+        ? { alternatives: pair.answerAlternatives }
+        : {}),
     },
-    tagIds: [input.id],
+    // Die LernBox liest den ersten Eintrag als Tag der Karte.
+    tagIds: pair.tag ? [pair.tag] : [],
     createdAt: now,
     updatedAt: now,
   }));
