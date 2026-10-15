@@ -11,9 +11,67 @@ describe("teacher content transfer", () => {
         "school;Schule\nclassroom\tKlassenzimmer\nkaputt\n;leer",
       ),
     ).toEqual([
-      { prompt: "school", answer: "Schule" },
-      { prompt: "classroom", answer: "Klassenzimmer" },
+      {
+        prompt: "school",
+        answer: "Schule",
+        promptAlternatives: [],
+        answerAlternatives: [],
+      },
+      {
+        prompt: "classroom",
+        answer: "Klassenzimmer",
+        promptAlternatives: [],
+        answerAlternatives: [],
+      },
     ]);
+  });
+
+  it("reads the tag column and alternatives like the Laufdiktat", () => {
+    expect(
+      parseTeacherVocabularyPairs(
+        "school;Schule;Unit 3\nhouse|home\tHaus|Zuhause\tUnit 4\ncat;Katze; ",
+      ),
+    ).toEqual([
+      {
+        prompt: "school",
+        answer: "Schule",
+        promptAlternatives: [],
+        answerAlternatives: [],
+        tag: "Unit 3",
+      },
+      {
+        prompt: "house",
+        answer: "Haus",
+        promptAlternatives: ["home"],
+        answerAlternatives: ["Zuhause"],
+        tag: "Unit 4",
+      },
+      {
+        prompt: "cat",
+        answer: "Katze",
+        promptAlternatives: [],
+        answerAlternatives: [],
+      },
+    ]);
+  });
+
+  it("puts the tag and alternatives into the bundle, never into the answer", () => {
+    const bundle = buildTeacherVocabularyBundle({
+      id: "teacher-package-1",
+      revision: 0,
+      title: "Unit 3",
+      source: "school;Schule|Lehranstalt;Unit 3\nclassroom;Klassenzimmer",
+      now: "2026-08-25T12:00:00.000Z",
+    });
+    expect(bundle.vocabulary[0]).toMatchObject({
+      prompt: { text: "school" },
+      answer: { text: "Schule", alternatives: ["Lehranstalt"] },
+      tagIds: ["Unit 3"],
+    });
+    expect(bundle.vocabulary[0]?.prompt.alternatives).toBeUndefined();
+    // Ohne Tag bleibt die Karte ohne Tag, statt die Paket-ID zu tragen.
+    expect(bundle.vocabulary[1]?.tagIds).toEqual([]);
+    expect(bundle.vocabulary[1]?.answer.alternatives).toBeUndefined();
   });
 
   it("builds a valid content-only LearningBundle", () => {

@@ -5,6 +5,7 @@ import {
   LEARNING_BUNDLE_VERSION,
   parseLearningBundleV1,
 } from "../domain/learning-bundle";
+import { buildTeacherVocabularyBundle } from "../domain/teacher-content-transfer";
 import {
   createLearningWordProgressRepository,
   createLearningBoxRepository,
@@ -180,6 +181,35 @@ describe("learning box repository", () => {
     await repository.ingestBundle({ bundle, title: "Paket", source });
     cards = await repository.listCards(none.deckId);
     expect(cards[0]?.tag).toBe("ein-sehr-langer-tag-aus-dem-paket");
+  });
+
+  it("takes tags and alternatives of a shared teacher package into the cards", async () => {
+    const database = new PersonalLearningDatabase(
+      `learning-box-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningBoxRepository(database);
+    const bundle = buildTeacherVocabularyBundle({
+      id: "teacher-package-1",
+      revision: 0,
+      title: "Unit 3",
+      source: "school;Schule|Lehranstalt;Unit 3\nclassroom;Klassenzimmer",
+      now: "2026-08-13T08:00:00.000Z",
+    });
+
+    const result = await repository.ingestBundle({
+      bundle,
+      title: "Unit 3",
+      source: { kind: "teacher", sourceId: bundle.id },
+    });
+    const cards = await repository.listCards(result.deckId);
+    const byQuestion = new Map(cards.map((card) => [card.question, card]));
+    expect(byQuestion.get("school")).toMatchObject({
+      answer: "Schule | Lehranstalt",
+      tag: "Unit 3",
+    });
+    expect(byQuestion.get("classroom")?.answer).toBe("Klassenzimmer");
+    expect(byQuestion.get("classroom")?.tag).toBeUndefined();
   });
 
   it("keeps personal progress unchanged across repeated teacher-package revisions", async () => {

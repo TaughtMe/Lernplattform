@@ -307,11 +307,16 @@ aufruft.
 - Überschriftenzeilen im Vokabeltext (`# Unit 3`).
 - Vermerk, aus welchen Paketen eine Abfrage stammt (bräuchte ein Schemafeld, siehe 0).
 
-## 6. Nebenbefund (eigene Aufgabe, nicht hier beheben)
+## 6. Nebenbefund (behoben am 15.10.2026)
 
 `parseTeacherVocabularyPairs` in `src/domain/teacher-content-transfer.ts` (Freigabe an Schüler auf
-„Material“) kennt die Tag-Spalte nicht: `school;Schule;Unit 3` wird zur Antwort `Schule;Unit 3`.
-Alternativen mit `|` werden ebenfalls nicht getrennt. Sobald Lehrkräfte Tags pflegen, und dieser
-Plan ermutigt dazu, bekommen Schüler dadurch falsche Lösungen. Das sollte vor oder mit diesem Plan
-als eigene kleine Änderung behoben werden (Parser auf `parseVocabularyTable` umstellen, Tag als
-`tagIds` bzw. Stapel übernehmen, Tests ergänzen).
+„Material“) kannte die Tag-Spalte nicht: `school;Schule;Unit 3` wurde zur Antwort `Schule;Unit 3`.
+Alternativen mit `|` wurden ebenfalls nicht getrennt. Außerdem trug jede Vokabel die Paket-ID als
+`tagIds[0]`, und die LernBox übernimmt diesen Eintrag als Tag der Karte. Schülerkarten hießen dadurch
+„teacher-package-…“.
+
+Behoben: Der Parser nutzt jetzt `parseVocabularyTable` wie das Laufdiktat. Alternativen gehen als
+`alternatives` ins Lernpaket, der Tag der dritten Spalte als `tagIds`. Ohne Tag bleibt `tagIds`
+leer. Karten mit dem alten Paket-ID-Tag verlieren ihn, sobald die Lehrkraft das Paket erneut teilt
+und das Kind es übernimmt. Alternativen der linken Seite stehen im Lernpaket; die LernBox nutzt für
+die Frage weiterhin nur die Hauptform.
