@@ -149,22 +149,20 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
               >
                 <Icon name="trash" size={17} />
               </button>
-              {props.transfer !== "none" ? (
-                <input
-                  className={cx(styles.input, styles.tag)}
-                  aria-label={`LernBox-Tag Vokabel ${index + 1}`}
-                  placeholder={
-                    roundTag
+              <input
+                className={cx(styles.input, styles.tag)}
+                aria-label={`Tag Vokabel ${index + 1}`}
+                placeholder={
+                  props.transfer === "none"
+                    ? "Tag (optional, z. B. Unit 3)"
+                    : roundTag
                       ? `Tag: ${roundTag} (eigener Tag geht vor)`
                       : "Eigener Tag (optional)"
-                  }
-                  maxLength={80}
-                  value={pair.tag ?? ""}
-                  onChange={(event) =>
-                    props.onTag?.(pair.id, event.target.value)
-                  }
-                />
-              ) : null}
+                }
+                maxLength={80}
+                value={pair.tag ?? ""}
+                onChange={(event) => props.onTag?.(pair.id, event.target.value)}
+              />
             </li>
           ))}
         </ol>
@@ -287,12 +285,13 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
           <h3 className={styles.pasteTitle}>Tabelle einfügen</h3>
           <p className={styles.hint}>
             Zwei Spalten aus Excel/Sheets kopieren oder Semikolon verwenden.
-            Alternativen mit | trennen.
+            Eine dritte Spalte ist der Tag (optional). Alternativen mit |
+            trennen.
           </p>
           <textarea
             className={styles.table}
             aria-label="Tabelle einfügen"
-            placeholder={"Haus\thome | house\nBaum\ttree"}
+            placeholder={"Haus\thome | house\tUnit 3\nBaum\ttree"}
             value={props.tableInput}
             onChange={(event) => props.onTableInput?.(event.target.value)}
           />
