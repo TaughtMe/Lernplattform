@@ -1,6 +1,6 @@
 "use client";
 
-import { useHydrated } from "../components/use-hydrated";
+import { useHydrated } from "./use-hydrated";
 import { Icon } from "./icons";
 import { useThemePreference } from "./theme";
 

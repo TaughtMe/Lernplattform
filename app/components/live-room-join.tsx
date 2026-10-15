@@ -3,7 +3,7 @@ import {
   WORD_STORE_FULL_NOTICE,
   summarizeSavedWords,
 } from "../../src/integrations/laufdiktat/word-store-transfer";
-import { useLiveProgressDelivery } from "./use-live-progress-delivery";
+import { useLiveProgressDelivery } from "../raum/use-live-progress-delivery";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import Link from "next/link";
@@ -38,16 +38,16 @@ import { useRelease } from "../release/release-context";
 import { LiveRunningDictationGame } from "../raum/spiel/live-game";
 import { QrCodeScanner } from "../ui/qr-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
-import { useHydrated } from "./use-hydrated";
+import { useHydrated } from "../ui/use-hydrated";
 import {
   forgetActiveRoom,
   rememberActiveRoom,
   type RoomActivity,
 } from "./room-activity";
-import { useLiveSessionGuards } from "./use-live-session-guards";
-import { useLiveWordStoreTransfer } from "./use-live-word-store-transfer";
-import { useLiveVocabularyTransfer } from "./use-live-vocabulary-transfer";
-import { useWritingRelief } from "./use-writing-relief";
+import { useLiveSessionGuards } from "../raum/use-live-session-guards";
+import { useLiveWordStoreTransfer } from "../raum/use-live-word-store-transfer";
+import { useLiveVocabularyTransfer } from "../raum/use-live-vocabulary-transfer";
+import { useWritingRelief } from "../raum/use-writing-relief";
 
 import { LIVE_APP_VERSION } from "../../src/app-version";
 import { LiveVersionNotice } from "./live-version-notice";

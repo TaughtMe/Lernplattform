@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { profileAvatar } from "../../src/domain/learner-profile";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
-import { useHydrated } from "../components/use-hydrated";
+import { useHydrated } from "../ui/use-hydrated";
 import { InstallButton } from "./install-button";
 import { QrCodeScanner } from "../ui/qr-scanner";
 import { useLearnerProfile } from "../ui/use-learner-profile";

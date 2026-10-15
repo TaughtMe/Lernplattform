@@ -75,7 +75,7 @@ import {
   roomTimeline,
   roomTimeState,
 } from "../../../src/integrations/laufdiktat/room-limits";
-import { useHydrated } from "../../components/use-hydrated";
+import { useHydrated } from "../../ui/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
 import { classModuleSchema } from "../../../src/domain/class-workspace";
 import { notifyTeacherClassesChanged } from "../../ui/shell/teacher-classes";

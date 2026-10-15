@@ -853,7 +853,7 @@ alle Spalten, Namensfeld wird nicht gespeichert, Druckknopf ruft `window.print()
 - `app/raum/spiel/live-game.tsx`: Bei falscher oder tolerant angenommener Antwort auf ein
   Text-Element `misspelledWords(target, input)` berechnen und im lokalen Schnappschuss unter
   `wordMisspellings` ergänzen (nur wenn `wordStoreTransfer !== "none"`).
-- Neuer Hook `app/components/use-live-word-store-transfer.ts` nach dem Muster von
+- Neuer Hook `app/raum/use-live-word-store-transfer.ts` nach dem Muster von
   `useLiveVocabularyTransfer`, mit `runLiveWordStoreTransfer` in
   `src/integrations/laufdiktat/word-store-transfer.ts` (Stationsmodus nie, einmal pro Runde und
   Gerät mit eigener Markierung in `live-trace.ts`, parallele Aufrufe teilen sich ein Promise).
