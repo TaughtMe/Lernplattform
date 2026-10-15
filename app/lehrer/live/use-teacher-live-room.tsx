@@ -87,6 +87,7 @@ import {
 import { liveContentToPackage, packageToLiveContent } from "../content-adapter";
 import { takeLiveIntent } from "../live-intent";
 import { splitModeOf } from "./dictation-adapter";
+import { useVocabularyPicker } from "./use-vocabulary-picker";
 import type { TeacherContentPackage } from "../../../src/domain/teacher-content-library";
 
 /** Schuljahr zum Datum, z. B. „2026/27“ (ab August das neue Jahr). */
@@ -347,6 +348,20 @@ export function useTeacherLiveRoom(
   const [contentId, setContentId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [libraryNotice, setLibraryNotice] = useState("");
+  const vocabularyPicker = useVocabularyPicker({
+    activeClass,
+    liveClasses,
+    vocabularyPairs,
+    vocabularyLocales,
+    applyVocabularyPairs,
+    setVocabularyLocales,
+    contentId,
+    setContentId,
+    title,
+    setTitle,
+    setNotice: setLibraryNotice,
+    clock,
+  });
   // Die Wiederaufnahme eines offenen Raums hat Vorrang vor Adressen und Absicht.
   const [restoreChecked, setRestoreChecked] = useState(false);
   const [classesLoaded, setClassesLoaded] = useState(false);
@@ -1140,6 +1155,7 @@ export function useTeacherLiveRoom(
     }));
     setTitle(loaded.title);
     setContentId(entry.id);
+    vocabularyPicker.resetQuizFromLibrary();
     if (loaded.contentMode === "text") {
       setSplitConfig(loaded.textSplitConfig);
       setManualRanges([]);
@@ -1197,6 +1213,7 @@ export function useTeacherLiveRoom(
         chooseContentMode(newParam);
         setContentId(null);
         setTitle("");
+        vocabularyPicker.resetQuizFromLibrary();
       }
       const mode =
         intent?.mode ?? ALL_MODES.find(({ id }) => id === modeParam)?.id;
@@ -1493,7 +1510,10 @@ export function useTeacherLiveRoom(
 
   function chooseContentMode(mode: TeacherContentMode) {
     // Ein anderer Typ ist ein anderer Inhalt: nicht über das Paket schreiben.
-    if (mode !== contentMode) setContentId(null);
+    if (mode !== contentMode) {
+      setContentId(null);
+      vocabularyPicker.resetQuizFromLibrary();
+    }
     setContentMode(mode);
     if (mode === "vocabulary") {
       setShuffleWords(true);
@@ -1835,6 +1855,10 @@ export function useTeacherLiveRoom(
     setTitle,
     contentId,
     libraryNotice,
+    vocabularyPicker: vocabularyPicker.picker,
+    onPickFromLibrary: vocabularyPicker.onPickFromLibrary,
+    pickFromLibraryDisabled: vocabularyPicker.pickFromLibraryDisabled,
+    quizFromLibrary: vocabularyPicker.quizFromLibrary,
     saveContent,
     createClassNamed,
     deleteContent,

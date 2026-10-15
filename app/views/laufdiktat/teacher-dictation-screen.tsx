@@ -27,6 +27,10 @@ import {
   VocabularyEditor,
   type VocabularyEditorProps,
 } from "./vocabulary-editor";
+import {
+  VocabularyPicker,
+  type VocabularyPickerProps,
+} from "./vocabulary-picker";
 
 export type TeacherStep = "import" | "settings" | "lobby" | "live";
 export type ContentKind = "text" | "vocabulary" | "math";
@@ -133,6 +137,8 @@ export type TeacherDictationScreenProps = {
   title?: string;
   titlePlaceholder?: string;
   libraryNotice?: string;
+  /** Der Heftinhalt stammt aus dem Auswahldialog und wird neu abgelegt. */
+  quizFromLibrary?: boolean;
   onTitle?: (title: string) => void;
   onSave?: () => void;
   /** Legt unter „Speichern“ eine neue Klasse an (Name) und wählt sie aus. */
@@ -155,6 +161,8 @@ export type TeacherDictationScreenProps = {
   };
   /** Vokabelheft statt Textfeld, wenn Inhaltsart Vokabeln. */
   vocabulary?: VocabularyEditorProps;
+  /** Auswahldialog „Aus meinen Vokabeln wählen“ (nur mit Vokabelheft). */
+  vocabularyPicker?: VocabularyPickerProps;
   /** Aufgaben-Generator statt Textfeld, wenn Inhaltsart Mathe. */
   math?: MathEditorProps;
   onToggleTheme?: () => void;
@@ -615,6 +623,12 @@ function LibraryBar(props: TeacherDictationScreenProps) {
           </button>
         </span>
       ) : null}
+      {props.quizFromLibrary ? (
+        <p className={styles.libraryNotice}>
+          Wird beim Start als neue Abfrage abgelegt. Deine Vokabelpakete bleiben
+          unverändert.
+        </p>
+      ) : null}
       {props.libraryNotice ? (
         <p className={styles.libraryNotice} role="status">
           {props.libraryNotice}
@@ -642,6 +656,9 @@ function ImportStep(props: TeacherDictationScreenProps) {
         <KindChips {...props} />
         <LibraryBar {...props} />
         <VocabularyEditor {...props.vocabulary} />
+        {props.vocabularyPicker ? (
+          <VocabularyPicker {...props.vocabularyPicker} />
+        ) : null}
       </div>
     );
   }

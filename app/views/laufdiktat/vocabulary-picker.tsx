@@ -22,7 +22,7 @@ export type VocabularyPickerProps = {
   hiddenByLanguage: number;
   query: string;
   allClasses: boolean;
-  /** Name der Raumklasse für Schalter und Leerzustand. */
+  /** Name der Raumklasse; ohne Angabe gilt „Nicht zugeordnet“. */
   className?: string | undefined;
   selected: ReadonlySet<string>;
   /** Aufgeklappte Pakete (Paket-IDs). */
@@ -92,10 +92,10 @@ export function VocabularyPicker(props: VocabularyPickerProps) {
 
   function empty() {
     if (searching) return "Keine Vokabel passt zur Suche.";
-    if (!props.allClasses && props.className)
-      return `Für Klasse ${props.className} liegen keine Vokabelpakete ab. „Alle Klassen“ zeigt alle.`;
     if (props.hiddenByLanguage > 0)
       return "Keine Vokabelpakete mit diesem Sprachpaar.";
+    if (!props.allClasses)
+      return `Für ${props.className ? `Klasse ${props.className}` : "„Nicht zugeordnet“"} liegen keine Vokabelpakete ab. „Alle Klassen“ zeigt alle.`;
     return "Keine Vokabelpakete vorhanden.";
   }
 
@@ -138,8 +138,11 @@ export function VocabularyPicker(props: VocabularyPickerProps) {
             Alle Klassen
           </label>
         </div>
-        {!props.allClasses && props.className ? (
-          <p className={styles.note}>Gezeigt: Klasse {props.className}</p>
+        {!props.allClasses ? (
+          <p className={styles.note}>
+            Gezeigt:{" "}
+            {props.className ? `Klasse ${props.className}` : "Nicht zugeordnet"}
+          </p>
         ) : null}
         {props.hiddenByLanguage > 0 ? (
           <p className={styles.note}>

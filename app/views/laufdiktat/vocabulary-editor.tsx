@@ -45,6 +45,10 @@ export type VocabularyEditorProps = {
   onTableInput?: (value: string) => void;
   onImportTable?: () => void;
   onImportFile?: (file: File | undefined) => void;
+  /** Öffnet den Auswahldialog „Aus meinen Vokabeln wählen“. */
+  onPickFromLibrary?: () => void;
+  /** Gesperrt, solange die Ablage kein Vokabelpaket enthält. */
+  pickFromLibraryDisabled?: boolean;
 };
 
 /** Vokabelheft des Lehrer-Laufdiktats: Paare links, Abfrage rechts. */
@@ -172,6 +176,27 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
             <Icon name="plus" size={16} />
             Vokabel hinzufügen
           </button>
+          {props.onPickFromLibrary ? (
+            <button
+              type="button"
+              className={styles.add}
+              disabled={props.pickFromLibraryDisabled}
+              aria-describedby={
+                props.pickFromLibraryDisabled
+                  ? "pick-from-library-hint"
+                  : undefined
+              }
+              onClick={props.onPickFromLibrary}
+            >
+              <Icon name="content" size={16} />
+              Aus meinen Vokabeln wählen
+            </button>
+          ) : null}
+          {props.onPickFromLibrary && props.pickFromLibraryDisabled ? (
+            <span id="pick-from-library-hint" className={styles.hint}>
+              Noch keine Vokabelpakete in der Ablage
+            </span>
+          ) : null}
           {props.onImportFile ? (
             <label className={styles.file}>
               <Icon name="upload" size={16} />

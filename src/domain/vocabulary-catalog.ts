@@ -242,3 +242,18 @@ export function suggestQuizTitle(
     ? `${head} · ${short} + ${more} weitere`
     : `${head} · ${short}`;
 }
+
+/** Meldung nach dem Übernehmen: „10 Vokabeln übernommen, 2 standen schon im Heft.“ */
+export function describeMerge(result: {
+  added: number;
+  skipped: number;
+}): string {
+  const { added, skipped } = result;
+  if (added === 0)
+    return skipped === 1
+      ? "Diese Vokabel stand schon im Heft."
+      : `Alle ${skipped} Vokabeln standen schon im Heft.`;
+  const taken = `${added} ${added === 1 ? "Vokabel" : "Vokabeln"} übernommen`;
+  if (skipped === 0) return `${taken}.`;
+  return `${taken}, ${skipped} ${skipped === 1 ? "stand" : "standen"} schon im Heft.`;
+}

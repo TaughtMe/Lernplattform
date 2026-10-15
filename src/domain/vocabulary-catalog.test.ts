@@ -3,6 +3,7 @@ import { parseVocabularyTable, pickerLocale } from "./running-dictation";
 import type { TeacherContentPackage } from "./teacher-content-library";
 import {
   buildVocabularyCatalog,
+  describeMerge,
   filterVocabularyCatalog,
   mergeIntoHeft,
   sameLanguagePair,
@@ -255,5 +256,28 @@ describe("suggestQuizTitle", () => {
   it("kommt ohne Paket aus und kürzt lange Titel", () => {
     expect(suggestQuizTitle([], now)).toBe("Abfrage 05.10.");
     expect(suggestQuizTitle(["x".repeat(100)], now).length).toBeLessThan(80);
+  });
+});
+
+describe("describeMerge", () => {
+  it("nennt übernommene und übersprungene Vokabeln", () => {
+    expect(describeMerge({ added: 10, skipped: 2 })).toBe(
+      "10 Vokabeln übernommen, 2 standen schon im Heft.",
+    );
+    expect(describeMerge({ added: 1, skipped: 1 })).toBe(
+      "1 Vokabel übernommen, 1 stand schon im Heft.",
+    );
+    expect(describeMerge({ added: 3, skipped: 0 })).toBe(
+      "3 Vokabeln übernommen.",
+    );
+  });
+
+  it("meldet, wenn nichts Neues dabei war", () => {
+    expect(describeMerge({ added: 0, skipped: 2 })).toBe(
+      "Alle 2 Vokabeln standen schon im Heft.",
+    );
+    expect(describeMerge({ added: 0, skipped: 1 })).toBe(
+      "Diese Vokabel stand schon im Heft.",
+    );
   });
 });
