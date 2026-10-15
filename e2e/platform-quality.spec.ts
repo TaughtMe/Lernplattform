@@ -7,11 +7,6 @@ import {
 import { createTeacherAssignmentCode } from "../src/domain/teacher-workspace";
 import { createBox, startRound } from "./wortspeicher-helpers";
 
-test.skip(
-  process.env["ENABLE_PRE_PILOT_E2E"] !== "1",
-  "Vor-Pilot-Oberflächen bleiben im Repository, sind im Laufdiktat-Pilot aber nicht freigeschaltet.",
-);
-
 // Die Demo-Klasse 7b ist Testgelände und nur mit Vorschau sichtbar (Bereich
 // `demo-klasse`); die Tests, die sie aufrufen, schalten die Vorschau ein.
 async function enablePreview(page: Page) {

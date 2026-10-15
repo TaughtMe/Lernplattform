@@ -27,7 +27,7 @@ Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidu
 - [x] Seite „Inhalte“ unter `/lehrer`, alte Übersicht entfernt
 - [x] Inhalt im Laufdiktat laden, ablegen, löschen; Startfenster mit „Jetzt starten“
 - [ ] Sichtprüfung am echten Handy und Laptop durch die Lehrkraft (Abnahme nach Abschnitt 10 des Plans)
-- [ ] Axe-Prüfungen in `e2e/platform-quality.spec.ts` laufen in GitHub nicht (Schalter `ENABLE_PRE_PILOT_E2E`); Entscheidung über die Freischaltung steht aus
+- [x] Axe-Prüfungen in `e2e/platform-quality.spec.ts` laufen wieder in GitHub (Schalter `ENABLE_PRE_PILOT_E2E` entfernt)
 
 ## Jetzt: Stabilisierung vor Live-Tests
 
