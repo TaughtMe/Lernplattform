@@ -223,3 +223,118 @@ export function moveRunningDictationSection<T>(
   next.splice(to, 0, item!);
   return next;
 }
+
+/**
+ * Alle Abschnitte in der Reihenfolge der Bearbeitung (auch ausgeschlossene).
+ * Abschnitte ohne Rang bleiben hinten, in ihrer ursprünglichen Reihenfolge.
+ */
+export function displayRunningDictationSections(
+  sections: TextSection[],
+  order: string[] = [],
+) {
+  const rank = new Map(order.map((id, index) => [id, index]));
+  return [...sections].sort((left, right) => {
+    const leftRank = rank.get(left.id);
+    const rightRank = rank.get(right.id);
+    if (leftRank === undefined && rightRank === undefined) return 0;
+    if (leftRank === undefined) return 1;
+    if (rightRank === undefined) return -1;
+    return leftRank - rightRank;
+  });
+}
+
+/**
+ * Ein zusammenhängendes Stück des Rohtexts für die Markierungsansicht: die
+ * Abschnitte selbst plus alles dazwischen (Leerraum, verbrauchte Trenner).
+ * Lückenlos mit Absicht — die Ansicht muss genau dieselben Zeichen zeigen wie
+ * das einfache Textfeld, sonst passen Zeichenpositionen aus einem Klick oder
+ * einer Auswahl nicht mehr zum Rohtext.
+ */
+export type MarkerPiece = {
+  text: string;
+  start: number;
+  kind: "gap" | "auto" | "manual";
+  /**
+   * Zählt nur die automatischen Abschnitte, damit benachbarte automatische
+   * Abschnitte abwechselnd getönt werden können (die Grenze bleibt sichtbar,
+   * auch wenn noch nichts von Hand markiert ist).
+   */
+  autoIndex: number;
+};
+
+export function buildMarkerPieces(
+  source: string,
+  sections: TextSection[],
+): MarkerPiece[] {
+  const pieces: MarkerPiece[] = [];
+  let cursor = 0;
+  let autoIndex = 0;
+  for (const section of sections) {
+    if (section.start > cursor) {
+      pieces.push({
+        text: source.slice(cursor, section.start),
+        start: cursor,
+        kind: "gap",
+        autoIndex,
+      });
+    }
+    pieces.push({
+      text: section.text,
+      start: section.start,
+      kind: section.source,
+      autoIndex,
+    });
+    if (section.source === "auto") autoIndex += 1;
+    cursor = section.end;
+  }
+  if (cursor < source.length) {
+    pieces.push({
+      text: source.slice(cursor),
+      start: cursor,
+      kind: "gap",
+      autoIndex,
+    });
+  }
+  return pieces;
+}
+
+export type MarkerToken = {
+  text: string;
+  start: number;
+  end: number;
+  isWord: boolean;
+};
+
+/** Zerlegt einen Text in Wörter/Zahlen und das, was dazwischen liegt. */
+export function tokenizeMarkerText(text: string, base: number): MarkerToken[] {
+  const tokens: MarkerToken[] = [];
+  const regex = /(\p{L}+|\p{N}+)/gu;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text))) {
+    if (match.index > last) {
+      tokens.push({
+        text: text.slice(last, match.index),
+        start: base + last,
+        end: base + match.index,
+        isWord: false,
+      });
+    }
+    tokens.push({
+      text: match[0],
+      start: base + match.index,
+      end: base + regex.lastIndex,
+      isWord: true,
+    });
+    last = regex.lastIndex;
+  }
+  if (last < text.length) {
+    tokens.push({
+      text: text.slice(last),
+      start: base + last,
+      end: base + text.length,
+      isWord: false,
+    });
+  }
+  return tokens;
+}

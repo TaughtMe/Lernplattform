@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   checkMentalMathAnswer,
   countMathChainNumbers,
+  defaultMathGapIndex,
   evaluateMentalMathExpression,
   formatMathChainTokens,
   generateMentalMathTasks,
+  insertAtSelection,
   isLatexMathSyntax,
   normalizeMathChainInput,
   parseMentalMathTask,
+  splitMathLines,
   tokenizeMathChain,
   type MentalMathOperation,
 } from "./mental-math";
@@ -171,5 +174,37 @@ describe("manually typed math chains", () => {
     expect(isLatexMathSyntax("2^3")).toBe(true);
     expect(isLatexMathSyntax("3 + 4 - 2")).toBe(false);
     expect(isLatexMathSyntax("7 + 8")).toBe(false);
+  });
+});
+
+describe("Rechenzeilen und Lücken", () => {
+  it("trimmt Zeilen und lässt leere weg", () => {
+    expect(splitMathLines("  3 + 4 \n\n\t\n5 - 1\n")).toEqual([
+      "3 + 4",
+      "5 - 1",
+    ]);
+    expect(splitMathLines("")).toEqual([]);
+  });
+
+  it("verdeckt vorgabemäßig die letzte Zahl", () => {
+    expect(defaultMathGapIndex(0)).toBe(0);
+    expect(defaultMathGapIndex(1)).toBe(0);
+    expect(defaultMathGapIndex(2)).toBe(1);
+    expect(defaultMathGapIndex(5)).toBe(4);
+  });
+
+  it("fügt an der Auswahl ein und setzt den Cursor", () => {
+    expect(insertAtSelection("12", "+", 1, 1, 1)).toEqual({
+      text: "1+2",
+      cursor: 2,
+    });
+    expect(insertAtSelection("a123b", "()", 1, 4, 1)).toEqual({
+      text: "a()b",
+      cursor: 2,
+    });
+    expect(insertAtSelection("", "\\frac{}{}", 0, 0, 6)).toEqual({
+      text: "\\frac{}{}",
+      cursor: 6,
+    });
   });
 });
