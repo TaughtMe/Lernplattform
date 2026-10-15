@@ -28,6 +28,11 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
   `claude/lernraum-ui-v2`. Nicht direkt auf `claude/lernraum-ui-v2` oder `main` pushen.
 - **Regeln:** `AGENTS.md`, `docs/engineering-quality.md`, `docs/architecture.md`. Sprache in
   Code-Kommentaren, Doku und Commit-Nachrichten ist Deutsch, wie im übrigen Repository.
+- **Vorbereitung:** Vor der ersten Prüfung `npm ci` ausführen, damit die Werkzeugversionen aus
+  `package-lock.json` gelten (eine abweichende Prettier-Version meldet sonst Dutzende Dateien).
+  Passt das installierte Chromium nicht zur Playwright-Version, über eine lokale, nicht
+  committete Config mit `executablePath: "/opt/pw-browsers/chromium"` starten; nicht
+  `playwright install` ausführen.
 - **Prüfungen vor jedem Push:** `npm run check` vollständig (Formatierung, Lint, Typen,
   Abdeckung, Datenbankvertrag, Build und Render-Test). Danach `public/sw.js` und
   `public/version.json` zurücksetzen, falls der Build sie verändert hat. Bei Änderungen an Oberfläche oder Routen zusätzlich
