@@ -13,7 +13,15 @@ const TEXT = "Der Hund bellt. Die Katze miaut. Der Vogel singt.";
 
 function setup(textSource = TEXT, source = textSource) {
   return renderHook(
-    (props: { textSource: string; source: string }) => useTextContent(props),
+    (props: { textSource: string; source: string }) => {
+      const content = useTextContent(props);
+      return {
+        ...content,
+        ...content.model,
+        wordStoreTransfer: content.wordStoreTransfer,
+        wordStoreChoice: content.model.wordStoreTransfer,
+      };
+    },
     { initialProps: { textSource, source } },
   );
 }
@@ -156,7 +164,15 @@ describe("useTextContent", () => {
   it("übernimmt Wörter nur in den Wortspeicher, wenn der Bereich sichtbar ist", () => {
     const visible = resolveVisibility(resolveStages(undefined), false);
     const { result } = renderHook(
-      () => useTextContent({ textSource: TEXT, source: TEXT }),
+      () => {
+        const content = useTextContent({ textSource: TEXT, source: TEXT });
+        return {
+          ...content,
+          ...content.model,
+          wordStoreTransfer: content.wordStoreTransfer,
+          wordStoreChoice: content.model.wordStoreTransfer,
+        };
+      },
       {
         wrapper: ({ children }) => (
           <ReleaseProvider value={{ ...visible, wortspeicher: false }}>

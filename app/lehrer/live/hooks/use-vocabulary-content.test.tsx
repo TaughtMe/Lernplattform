@@ -19,7 +19,8 @@ function setup() {
       vocabulary: "",
       math: "",
     });
-    return { ...useVocabularyContent({ setSources }), sources };
+    const content = useVocabularyContent({ setSources });
+    return { ...content, ...content.model, sources };
   });
 }
 

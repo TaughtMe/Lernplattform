@@ -2,8 +2,13 @@
 
 /**
  * Zustand und Abläufe des Lehrkraft-Laufdiktats (Inhalt → Modus → Lobby →
- * Live). Die Fachregeln stammen unverändert aus dem Laufdiktat-Quellcode;
- * die Darstellung liegt in den Schritt-Komponenten dieses Ordners.
+ * Live). Dieser Hook setzt die Teil-Hooks aus `./hooks` zusammen und baut
+ * daraus das Modell für die Oberfläche. Die Fachregeln stammen unverändert
+ * aus dem Laufdiktat-Quellcode; die Darstellung liegt in den
+ * Schritt-Komponenten dieses Ordners.
+ *
+ * Die Reihenfolge der Aufrufe ist die Reihenfolge der Effekte: Teil-Hooks mit
+ * Effekten stehen so, wie diese Effekte vor der Aufteilung liefen.
  */
 import {
   useEffect,
@@ -13,22 +18,25 @@ import {
   useState,
   type SetStateAction,
 } from "react";
-import { tokenizeMarkerText } from "../../../src/domain/running-dictation-sections";
 import { defaultMathGapIndex } from "../../../src/domain/mental-math";
+import { tokenizeMarkerText } from "../../../src/domain/running-dictation-sections";
 import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
 import {
-  buildMathPracticeOptions,
-  buildTeacherRoomConfig,
   buildTeacherWords,
   type TeacherContentMode,
 } from "../../../src/integrations/laufdiktat/teacher-session";
-import {} from "../../../src/integrations/laufdiktat/teacher-results";
-import {} from "../../../src/integrations/laufdiktat/room-limits";
-import { useMathContent } from "./hooks/use-math-content";
+import { useHydrated } from "../../ui/use-hydrated";
+import { useContentLibrary } from "./hooks/use-content-library";
+import { useContentRestore } from "./hooks/use-content-restore";
+import { useGameSettings } from "./hooks/use-game-settings";
+import { useLaunchRequest } from "./hooks/use-launch-request";
 import { useLiveClassChoice } from "./hooks/use-live-class-choice";
+import { useLiveRoomSession } from "./hooks/use-live-room-session";
+import { useMathContent } from "./hooks/use-math-content";
 import { useTextContent } from "./hooks/use-text-content";
 import { useVocabularyContent } from "./hooks/use-vocabulary-content";
 import { DEFAULT_SOURCES, MODES } from "./lib/modes";
+import { buildLiveRoomConfig } from "./lib/room-config";
 import {
   forwardCommand,
   initialLiveFlow,
@@ -36,14 +44,6 @@ import {
   liveFlowReducer,
   type Stage,
 } from "./teacher-live-flow";
-import { useLiveRoomSession } from "./hooks/use-live-room-session";
-import { useContentRestore } from "./hooks/use-content-restore";
-import { useLaunchRequest } from "./hooks/use-launch-request";
-import { useGameSettings } from "./hooks/use-game-settings";
-import { useHydrated } from "../../ui/use-hydrated";
-import { createTeacherContentLibraryRepository } from "../../../src/storage/teacher-class-settings";
-import { liveContentToPackage } from "../content-adapter";
-import { splitModeOf } from "./dictation-adapter";
 
 export type { Stage };
 
@@ -66,174 +66,48 @@ export function useTeacherLiveRoom(
   const { stage, roomClosed, busy, startRequested, restoreChecked } = flow;
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sources, setSources] = useState(DEFAULT_SOURCES);
-  const {
-    settings: {
-      gameMode,
-      shuffleWords,
-      stationShuffle,
-      repeatWrongAnswers,
-      assistance,
-      attempts,
-      tts,
-      showStars,
-      strictTyping,
-      taskHelp,
-      stationCount,
-      battleInk,
-      battleFlicker,
-      mathCount,
-      mathMin,
-      mathMax,
-      mathOps,
-      mathAllowNegative,
-      mathExcludeZeroOperand,
-      mathExcludeZeroResult,
-      mathGap,
-      mathTables,
-    },
-    setGameMode,
-    setShuffleWords,
-    setStationShuffle,
-    setRepeatWrongAnswers,
-    setAssistance,
-    setAttempts,
-    setTts,
-    setShowStars,
-    setStrictTyping,
-    setTaskHelp,
-    setStationCount,
-    setBattleInk,
-    setBattleFlicker,
-    setMathCount,
-    setMathMin,
-    setMathMax,
-    setMathAllowNegative,
-    setMathExcludeZeroOperand,
-    setMathExcludeZeroResult,
-    setMathGap,
-    patchSettings,
-    toggleMathOperation,
-    toggleMathTable,
-  } = useGameSettings();
+  const source = sources[contentMode];
   const [error, setError] = useState("");
-  const {
-    mathSettingsOpen,
-    setMathSettingsOpen,
-    mathEditIndex,
-    setMathEditIndex,
-    mathDraft,
-    setMathDraft,
-    mathGaps,
-    mathEditInputRef,
-    mathLines,
-    mathWords,
-    mathDraftResult,
-    startEditMathRow,
-    setMathLineGap,
-    insertAtMathCursor,
-    commitMathEdit,
-    generateMathTasks,
-    rerollMathLine,
-    deleteMathLine,
-    startAppendMathLine,
-    cancelMathEdit,
-  } = useMathContent({
+  const [libraryNotice, setLibraryNotice] = useState("");
+
+  const game = useGameSettings();
+  const { settings, patchSettings } = game;
+  const { setGameMode, setShuffleWords } = game.model;
+  const math = useMathContent({
     mathSource: sources.math,
     contentMode,
-    settings: {
-      mathCount,
-      mathMin,
-      mathMax,
-      mathOps,
-      mathAllowNegative,
-      mathExcludeZeroOperand,
-      mathExcludeZeroResult,
-      mathTables,
-      mathGap,
-    },
+    settings,
     setSources,
     setError,
   });
-  const {
-    vocabularyPairs,
-    vocabularyCaseSensitive,
-    setVocabularyCaseSensitive,
-    vocabularyLocales,
-    setVocabularyLocales,
-    vocabularyTableInput,
-    setVocabularyTableInput,
-    direction,
-    setDirection,
-    vocabularyTransfer,
-    setVocabularyTransfer,
-    lernboxTag,
-    roundTag,
-    setRoundTag,
-    vocabularyTag,
-    applyVocabularyPairs,
-    loadPairsFromTable,
-    updateVocabularyPair,
-    updateVocabularyTag,
-    removeVocabularyPair,
-    addVocabularyPair,
-    importVocabularyTable,
-  } = useVocabularyContent({ setSources });
-  const source = sources[contentMode];
-  const {
-    markerMode,
-    markerAnchor,
-    splitConfig,
-    setSplitConfig,
-    manualRanges,
-    excludedSectionIds,
-    sectionOrder,
-    customDelimiter,
-    setCustomDelimiter,
-    wordStoreVisible,
-    wordStoreChoice,
-    setWordStoreTransfer,
-    wordStoreTransfer,
-    sourceRef,
-    markerContainerRef,
-    orderedTextSections,
-    displayedTextSections,
-    markerPieces,
-    resetTextLayout,
-    removeManualSection,
-    handleMarkerWordTap,
-    handleMarkerMouseUp,
-    togglePunctuation,
-    addCustomDelimiter,
-    removeCustomDelimiter,
-    markSelectionAsSection,
-    splitAtCursor,
-    toggleMarkerMode,
-    toggleSectionExcluded,
-    moveSection,
-    clearManualRanges,
-  } = useTextContent({ textSource: sources.text, source });
-  const [libraryNotice, setLibraryNotice] = useState("");
-  const {
-    liveClasses,
-    classChoice: activeClass,
-    classesLoaded,
-    classSeal,
-    setClassChoice,
-    setRestoredClassSeal,
-    createClassNamed,
-  } = useLiveClassChoice({ clock, setError, setLibraryNotice });
+  const vocabulary = useVocabularyContent({ setSources });
+  const text = useTextContent({ textSource: sources.text, source });
+  const classes = useLiveClassChoice({ clock, setError, setLibraryNotice });
+  const library = useContentLibrary({
+    clock,
+    contentMode,
+    source,
+    splitConfig: text.splitConfig,
+    vocabularyLocales: vocabulary.vocabularyLocales,
+    activeClass: classes.classChoice,
+    setError,
+    setLibraryNotice,
+    setSources,
+    loadPairsFromTable: vocabulary.loadPairsFromTable,
+  });
+  const { setContentId } = library;
+
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLDivElement>(null);
-  // Abgelegter Inhalt, der gerade bearbeitet wird (null = noch nicht abgelegt).
-  const [contentId, setContentId] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTop = 0;
   }, [stage]);
   useEffect(() => {
     if (builderRef.current) builderRef.current.scrollTop = 0;
   }, [contentMode]);
+
+  const { orderedTextSections } = text;
+  const { direction, vocabularyCaseSensitive, vocabularyLocales } = vocabulary;
   const words = useMemo(
     () =>
       contentMode === "text"
@@ -243,7 +117,7 @@ export function useTeacherLiveRoom(
             targetWord: section.text,
           }))
         : contentMode === "math"
-          ? mathWords
+          ? math.mathWords
           : buildTeacherWords(
               contentMode,
               source,
@@ -254,7 +128,7 @@ export function useTeacherLiveRoom(
     [
       contentMode,
       direction,
-      mathWords,
+      math.mathWords,
       orderedTextSections,
       source,
       vocabularyCaseSensitive,
@@ -262,86 +136,54 @@ export function useTeacherLiveRoom(
     ],
   );
 
+  const { vocabularyTransfer, vocabularyTag } = vocabulary;
+  const { wordStoreTransfer } = text;
+  const { classSeal } = classes;
   const roomConfig = useMemo(
     () =>
-      buildTeacherRoomConfig({
+      buildLiveRoomConfig({
         contentMode,
         source,
-        vocabularyDirection: direction,
+        direction,
         vocabularyTransfer,
         wordStoreTransfer,
         vocabularyTag,
-        ...(classSeal ? { classSeal } : {}),
-        gameMode,
-        shuffleWords,
-        repeatWrongAnswers,
-        isTtsEnabled: tts,
-        uebungMaxAttempts: attempts,
-        uebungAssistanceEnabled: assistance,
-        showStars,
-        strictTypingMode: strictTyping,
-        showTaskAfterErrors: taskHelp,
-        stationCount,
-        stationShuffle,
-        battleOptions: { ink: battleInk, flicker: battleFlicker },
-        wordsOverride: words,
-        ...(contentMode === "math"
-          ? {
-              mathPracticeOptions: buildMathPracticeOptions({
-                min: mathMin,
-                max: mathMax,
-                operations: mathOps,
-                allowNegativeResults: mathAllowNegative,
-                excludeZeroOperand: mathExcludeZeroOperand,
-                excludeZeroResult: mathExcludeZeroResult,
-                tables: mathTables,
-                gap: mathGap,
-              }),
-            }
-          : {}),
+        classSeal,
+        settings,
+        words,
       }),
     [
-      mathOps,
-      mathMin,
-      mathMax,
-      mathAllowNegative,
-      mathExcludeZeroOperand,
-      mathExcludeZeroResult,
-      mathTables,
-      mathGap,
-      assistance,
-      attempts,
-      battleFlicker,
-      battleInk,
+      classSeal,
       contentMode,
       direction,
-      gameMode,
-      repeatWrongAnswers,
+      settings,
+      source,
+      vocabularyTag,
       vocabularyTransfer,
       wordStoreTransfer,
-      vocabularyTag,
-      classSeal,
-      showStars,
-      shuffleWords,
-      source,
-      stationCount,
-      stationShuffle,
-      strictTyping,
-      taskHelp,
-      tts,
       words,
     ],
   );
 
+  function chooseContentMode(mode: TeacherContentMode) {
+    // Ein anderer Typ ist ein anderer Inhalt: nicht über das Paket schreiben.
+    if (mode !== contentMode) setContentId(null);
+    setContentMode(mode);
+    if (mode === "vocabulary") {
+      setShuffleWords(true);
+      vocabulary.loadPairsFromTable(sources.vocabulary);
+    }
+  }
+
   const { applyRestoredContent } = useContentRestore({
     setContentMode,
     setSources,
-    loadPairsFromTable,
+    loadPairsFromTable: vocabulary.loadPairsFromTable,
     patchSettings,
-    setVocabularyTransfer,
-    setWordStoreTransfer,
-    setRoundTag,
-    setRestoredClassSeal,
+    setVocabularyTransfer: vocabulary.setVocabularyTransfer,
+    setWordStoreTransfer: text.setWordStoreTransfer,
+    setRoundTag: vocabulary.setRoundTag,
+    setRestoredClassSeal: classes.setRestoredClassSeal,
   });
   const session = useLiveRoomSession({
     hydrated,
@@ -354,125 +196,34 @@ export function useTeacherLiveRoom(
     setError,
     roomConfig,
     wordCount: words.length,
-    gameMode,
-    storeContent,
+    gameMode: settings.gameMode,
+    storeContent: library.storeContent,
   });
-  const {
-    room,
-    participants,
-    students,
-    connectionWarning,
-    timeline,
-    timeState,
-    connectedNames,
-    statusFor,
-    labelFor,
-    animalFor,
-    openLobby,
-    startSession,
-    endRoom,
-    resetRoomState,
-    exportCsv,
-    removeParticipant,
-  } = session;
-
+  const { room, connectedNames, openLobby, startSession, endRoom } = session;
   useLaunchRequest({
     hydrated,
     liveRoomConfig,
     restoreChecked,
-    classesLoaded,
+    classesLoaded: classes.classesLoaded,
     room,
     busy,
     startRequested,
-    liveClasses,
+    liveClasses: classes.liveClasses,
     setError,
     dispatchFlow,
     setContentMode,
     setSources,
-    setTitle,
+    setTitle: library.setTitle,
     setContentId,
-    resetTextLayout,
-    loadPairsFromTable,
-    setVocabularyLocales,
+    resetTextLayout: text.resetTextLayout,
+    loadPairsFromTable: vocabulary.loadPairsFromTable,
+    setVocabularyLocales: vocabulary.model.setVocabularyLocales,
     setShuffleWords,
     setGameMode,
     chooseContentMode,
-    setClassChoice,
+    setClassChoice: classes.setClassChoice,
     openLobby,
   });
-
-  /** Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. */
-  async function storeContent(markUsed: boolean, moveToClass = false) {
-    const repository = createTeacherContentLibraryRepository();
-    const existing = contentId ? await repository.get(contentId) : undefined;
-    const entry = liveContentToPackage({
-      draft: {
-        contentMode,
-        source,
-        title,
-        textSplit: splitModeOf(splitConfig),
-        vocabularyLocales,
-      },
-      existing,
-      newId: `teacher-package-${crypto.randomUUID()}`,
-      now: new Date(clock()).toISOString(),
-      classId: activeClass || undefined,
-      markUsed,
-      moveToClass,
-    });
-    await repository.put(entry);
-    setContentId(entry.id);
-    setTitle(entry.title);
-    window.dispatchEvent(new Event("teacher-data-changed"));
-    return entry;
-  }
-
-  async function saveContent() {
-    setError("");
-    if (!source.trim()) {
-      setLibraryNotice("Gib zuerst etwas ein, das gespeichert werden kann.");
-      return;
-    }
-    try {
-      const entry = await storeContent(false, true);
-      setLibraryNotice(`„${entry.title}“ ist gespeichert.`);
-    } catch {
-      setLibraryNotice(
-        "Der Inhalt konnte nicht gespeichert werden. Bitte versuche es noch einmal.",
-      );
-    }
-  }
-
-  async function deleteContent() {
-    if (!contentId) return;
-    try {
-      const repository = createTeacherContentLibraryRepository();
-      const entry = await repository.get(contentId);
-      await repository.remove(contentId);
-      setContentId(null);
-      setLibraryNotice(
-        entry
-          ? `„${entry.title}“ wurde aus der Ablage gelöscht.`
-          : "Der Inhalt wurde aus der Ablage gelöscht.",
-      );
-      window.dispatchEvent(new Event("teacher-data-changed"));
-    } catch {
-      setLibraryNotice("Der Inhalt konnte nicht gelöscht werden.");
-    }
-  }
-
-  function importFile(file: File | undefined) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result ?? "");
-      setSources((current) => ({ ...current, [contentMode]: text }));
-      if (contentMode === "vocabulary") {
-        loadPairsFromTable(text);
-      }
-    };
-    reader.readAsText(file);
-  }
 
   const steps: Array<[Stage, string]> = [
     ["content", "Inhalte"],
@@ -481,12 +232,13 @@ export function useTeacherLiveRoom(
     ["live", "Durchführung & Auswertung"],
   ];
   const activeStepIndex = steps.findIndex(([id]) => id === stage);
-  const activeMode = MODES.find((mode) => mode.id === gameMode) ?? MODES[0]!;
+  const activeMode =
+    MODES.find((mode) => mode.id === settings.gameMode) ?? MODES[0]!;
   const footerDisabled =
     busy ||
     (stage === "content" && !words.length) ||
     (stage === "lobby" &&
-      gameMode !== "STATION" &&
+      settings.gameMode !== "STATION" &&
       connectedNames.length === 0);
 
   function goBack() {
@@ -501,18 +253,8 @@ export function useTeacherLiveRoom(
     if (command === "open-lobby") void openLobby();
     if (command === "start-session") void startSession();
     // Ein geschlossener Raum braucht keinen Aufruf mehr: weiter zum neuen Raum.
-    if (command === "reset-room") resetRoomState();
+    if (command === "reset-room") session.resetRoomState();
     if (command === "end-room") void endRoom();
-  }
-
-  function chooseContentMode(mode: TeacherContentMode) {
-    // Ein anderer Typ ist ein anderer Inhalt: nicht über das Paket schreiben.
-    if (mode !== contentMode) setContentId(null);
-    setContentMode(mode);
-    if (mode === "vocabulary") {
-      setShuffleWords(true);
-      loadPairsFromTable(sources.vocabulary);
-    }
   }
 
   function jumpToStage(id: Stage) {
@@ -533,165 +275,42 @@ export function useTeacherLiveRoom(
   const refs = {
     mainRef,
     builderRef,
-    sourceRef,
-    markerContainerRef,
-    mathEditInputRef,
+    sourceRef: text.sourceRef,
+    markerContainerRef: text.markerContainerRef,
+    mathEditInputRef: math.mathEditInputRef,
   };
 
   const model = {
+    ...game.model,
+    ...math.model,
+    ...vocabulary.model,
+    ...text.model,
+    ...classes.model,
+    ...library.model,
+    ...session.model,
     hydrated,
     stage,
     contentMode,
-    markerMode,
-    markerAnchor,
-    mathSettingsOpen,
-    setMathSettingsOpen,
-    mathEditIndex,
-    setMathEditIndex,
-    mathDraft,
-    setMathDraft,
-    mathGaps,
-    vocabularyPairs,
-    vocabularyCaseSensitive,
-    setVocabularyCaseSensitive,
-    vocabularyLocales,
-    setVocabularyLocales,
-    vocabularyTableInput,
-    setVocabularyTableInput,
-    applyVocabularyPairs,
     sources,
-    splitConfig,
-    manualRanges,
-    excludedSectionIds,
-    sectionOrder,
-    customDelimiter,
-    setCustomDelimiter,
-    direction,
-    setDirection,
-    vocabularyTransfer,
-    setVocabularyTransfer,
-    wordStoreVisible,
-    wordStoreTransfer: wordStoreChoice,
-    setWordStoreTransfer,
-    lernboxTag,
-    liveClasses,
-    classChoice: activeClass,
-    setClassChoice,
-    roundTag,
-    setRoundTag,
-    updateVocabularyTag,
-    gameMode,
-    setGameMode,
-    shuffleWords,
-    setShuffleWords,
-    stationShuffle,
-    setStationShuffle,
-    repeatWrongAnswers,
-    setRepeatWrongAnswers,
-    assistance,
-    setAssistance,
-    attempts,
-    setAttempts,
-    tts,
-    setTts,
-    showStars,
-    setShowStars,
-    strictTyping,
-    setStrictTyping,
-    taskHelp,
-    setTaskHelp,
-    stationCount,
-    setStationCount,
-    battleInk,
-    setBattleInk,
-    battleFlicker,
-    setBattleFlicker,
-    mathCount,
-    setMathCount,
-    mathMin,
-    setMathMin,
-    mathMax,
-    setMathMax,
-    mathOps,
-    mathAllowNegative,
-    setMathAllowNegative,
-    mathExcludeZeroOperand,
-    setMathExcludeZeroOperand,
-    mathExcludeZeroResult,
-    setMathExcludeZeroResult,
-    mathGap,
-    setMathGap,
-    mathTables,
-    title,
-    setTitle,
-    contentId,
     libraryNotice,
-    saveContent,
-    createClassNamed,
-    deleteContent,
-    room,
-    roomClosed,
-    roomTimeline: timeline,
-    roomTimeState: timeState,
-    participants,
-    students,
     busy,
     error,
-    connectionWarning,
     source,
-    displayedTextSections,
-    markerPieces,
     tokenizeMarkerText,
-    removeManualSection,
-    handleMarkerWordTap,
-    handleMarkerMouseUp,
-    mathLines,
     defaultMathGapIndex,
     words,
-    startEditMathRow,
-    setMathLineGap,
-    insertAtMathCursor,
-    mathDraftResult,
-    commitMathEdit,
-    connectedNames,
-    importFile,
-    exportCsv,
     activeStepIndex,
     activeMode,
     goBack,
     goForward,
     liveRoomConfig,
     chooseContentMode,
-    setSplitConfig,
     setSources,
-    generateMathTasks,
-    toggleMathOperation,
-    toggleMathTable,
-    rerollMathLine,
-    deleteMathLine,
-    startAppendMathLine,
-    cancelMathEdit,
-    togglePunctuation,
-    addCustomDelimiter,
-    removeCustomDelimiter,
-    markSelectionAsSection,
-    splitAtCursor,
-    toggleMarkerMode,
-    toggleSectionExcluded,
-    moveSection,
-    updateVocabularyPair,
-    removeVocabularyPair,
-    addVocabularyPair,
-    importVocabularyTable,
-    removeParticipant,
-    labelFor,
-    animalFor,
-    statusFor,
     jumpToStage,
     setStage,
+    roomClosed,
     footerDisabled,
     steps,
-    clearManualRanges,
   };
 
   return [model, refs] as const;

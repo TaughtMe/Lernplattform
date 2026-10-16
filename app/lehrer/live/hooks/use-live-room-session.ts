@@ -490,21 +490,25 @@ export function useLiveRoomSession({
 
   return {
     room,
-    participants,
-    students,
-    connectionWarning,
-    timeline,
-    timeState,
     connectedNames,
-    statusFor,
-    labelFor,
-    animalFor,
-    refresh,
     openLobby,
     startSession,
     endRoom,
     resetRoomState,
-    exportCsv,
-    removeParticipant,
+    /** Felder, die `TeacherLiveModel` unverändert übernimmt. */
+    model: {
+      room,
+      participants,
+      students,
+      connectionWarning,
+      roomTimeline: timeline,
+      roomTimeState: timeState,
+      connectedNames,
+      exportCsv,
+      removeParticipant,
+      labelFor,
+      animalFor,
+      statusFor,
+    },
   };
 }

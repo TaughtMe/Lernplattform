@@ -166,9 +166,32 @@ export function useGameSettings() {
 
   return {
     settings,
-    ...setters,
     patchSettings,
-    toggleMathOperation,
-    toggleMathTable,
+    /** Felder, die `TeacherLiveModel` unverändert übernimmt. */
+    model: {
+      ...settings,
+      setGameMode: setters.setGameMode,
+      setShuffleWords: setters.setShuffleWords,
+      setStationShuffle: setters.setStationShuffle,
+      setRepeatWrongAnswers: setters.setRepeatWrongAnswers,
+      setAssistance: setters.setAssistance,
+      setAttempts: setters.setAttempts,
+      setTts: setters.setTts,
+      setShowStars: setters.setShowStars,
+      setStrictTyping: setters.setStrictTyping,
+      setTaskHelp: setters.setTaskHelp,
+      setStationCount: setters.setStationCount,
+      setBattleInk: setters.setBattleInk,
+      setBattleFlicker: setters.setBattleFlicker,
+      setMathCount: setters.setMathCount,
+      setMathMin: setters.setMathMin,
+      setMathMax: setters.setMathMax,
+      setMathAllowNegative: setters.setMathAllowNegative,
+      setMathExcludeZeroOperand: setters.setMathExcludeZeroOperand,
+      setMathExcludeZeroResult: setters.setMathExcludeZeroResult,
+      setMathGap: setters.setMathGap,
+      toggleMathOperation,
+      toggleMathTable,
+    },
   };
 }

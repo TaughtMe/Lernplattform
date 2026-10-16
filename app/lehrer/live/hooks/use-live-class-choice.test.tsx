@@ -38,9 +38,10 @@ const CLASSES = [
 function setup(clock = () => Date.UTC(2026, 9, 1)) {
   const setError = vi.fn();
   const setLibraryNotice = vi.fn();
-  const hook = renderHook(() =>
-    useLiveClassChoice({ clock, setError, setLibraryNotice }),
-  );
+  const hook = renderHook(() => {
+    const choice = useLiveClassChoice({ clock, setError, setLibraryNotice });
+    return { ...choice, ...choice.model, classChoice: choice.classChoice };
+  });
   return { ...hook, setError, setLibraryNotice };
 }
 

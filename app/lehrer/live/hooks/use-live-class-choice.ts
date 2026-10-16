@@ -149,6 +149,12 @@ export function useLiveClassChoice({
     classSeal,
     setClassChoice,
     setRestoredClassSeal,
-    createClassNamed,
+    /** Felder, die `TeacherLiveModel` unverändert übernimmt. */
+    model: {
+      liveClasses,
+      classChoice: activeClass,
+      setClassChoice,
+      createClassNamed,
+    },
   };
 }

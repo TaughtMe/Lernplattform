@@ -25,7 +25,7 @@ function setup(
       setSources,
       setError,
     });
-    return { ...content, sources, error };
+    return { ...content, ...content.model, sources, error };
   });
 }
 
