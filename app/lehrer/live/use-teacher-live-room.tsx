@@ -18,13 +18,6 @@ import {
 } from "react";
 import type { ParticipantStatus } from "../../views/laufdiktat/teacher-dictation-screen";
 import {
-  DEFAULT_VOCABULARY_LOCALES,
-  parseVocabularyTable,
-  type VocabularyDirection,
-  type VocabularyLocales,
-  type VocabularyPair,
-} from "../../../src/domain/running-dictation";
-import {
   applyRunningDictationSectionEdits,
   buildMarkerPieces,
   buildRunningDictationSections,
@@ -54,6 +47,7 @@ import {
   saveTeacherLiveRoom,
   updateLiveSession,
   type LiveRoomParticipant,
+  type LiveRoomState,
   type LiveRoomStudent,
   type OpenedLiveRoom,
 } from "../../../src/integrations/laufdiktat/room-api";
@@ -71,7 +65,6 @@ import {
 } from "../../../src/integrations/laufdiktat/teacher-results";
 import {
   parseLiveSession,
-  type VocabularyTransferChoice,
   type WordStoreTransferChoice,
 } from "../../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../../src/integrations/laufdiktat/debounce";
@@ -80,6 +73,7 @@ import {
   roomTimeState,
 } from "../../../src/integrations/laufdiktat/room-limits";
 import { useMathContent } from "./hooks/use-math-content";
+import { useVocabularyContent } from "./hooks/use-vocabulary-content";
 import { useGameSettings } from "./hooks/use-game-settings";
 import { useHydrated } from "../../ui/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
@@ -183,12 +177,10 @@ function isOnline(participant: LiveRoomParticipant) {
   );
 }
 
-export const emptyVocabularySide = () => ({ primary: "", alternatives: [] });
-export const emptyVocabularyPair = (): VocabularyPair => ({
-  id: crypto.randomUUID(),
-  left: emptyVocabularySide(),
-  right: emptyVocabularySide(),
-});
+export {
+  emptyVocabularyPair,
+  emptyVocabularySide,
+} from "./lib/vocabulary-pairs";
 
 /** Wie oft die Uhr für die Raumfristen nachgesehen wird. */
 const ROOM_CLOCK_INTERVAL_MS = 15_000;
@@ -292,35 +284,35 @@ export function useTeacherLiveRoom(
     setSources,
     setError,
   });
+  const {
+    vocabularyPairs,
+    vocabularyCaseSensitive,
+    setVocabularyCaseSensitive,
+    vocabularyLocales,
+    setVocabularyLocales,
+    vocabularyTableInput,
+    setVocabularyTableInput,
+    direction,
+    setDirection,
+    vocabularyTransfer,
+    setVocabularyTransfer,
+    lernboxTag,
+    roundTag,
+    setRoundTag,
+    vocabularyTag,
+    applyVocabularyPairs,
+    loadPairsFromTable,
+    updateVocabularyPair,
+    updateVocabularyTag,
+    removeVocabularyPair,
+    addVocabularyPair,
+    importVocabularyTable,
+  } = useVocabularyContent({ setSources });
   const [markerMode, setMarkerMode] = useState(false);
   const [markerAnchor, setMarkerAnchor] = useState<{
     start: number;
     end: number;
   } | null>(null);
-  const [vocabularyPairs, setVocabularyPairs] = useState<VocabularyPair[]>([
-    emptyVocabularyPair(),
-  ]);
-  const [vocabularyCaseSensitive, setVocabularyCaseSensitive] = useState(false);
-  const [vocabularyLocales, setVocabularyLocales] = useState<VocabularyLocales>(
-    DEFAULT_VOCABULARY_LOCALES,
-  );
-  const [vocabularyTableInput, setVocabularyTableInput] = useState("");
-  const serializeVocabularyPairs = (pairs: VocabularyPair[]) =>
-    pairs
-      .map((pair) => {
-        const side = (value: VocabularyPair["left"]) =>
-          [value.primary, ...value.alternatives].filter(Boolean).join("|");
-        const tag = pair.tag?.trim();
-        return `${side(pair.left)};${side(pair.right)}${tag ? `;${tag}` : ""}`;
-      })
-      .join("\n");
-  const applyVocabularyPairs = (pairs: VocabularyPair[]) => {
-    setVocabularyPairs(pairs);
-    setSources((current) => ({
-      ...current,
-      vocabulary: serializeVocabularyPairs(pairs),
-    }));
-  };
   const [splitConfig, setSplitConfig] = useState<TextSplitConfig>(
     DEFAULT_TEXT_SPLIT_CONFIG,
   );
@@ -328,10 +320,6 @@ export function useTeacherLiveRoom(
   const [excludedSectionIds, setExcludedSectionIds] = useState<string[]>([]);
   const [sectionOrder, setSectionOrder] = useState<string[]>([]);
   const [customDelimiter, setCustomDelimiter] = useState("");
-  const [direction, setDirection] =
-    useState<VocabularyDirection>("left-to-right");
-  const [vocabularyTransfer, setVocabularyTransfer] =
-    useState<VocabularyTransferChoice>("none");
   // Text-Laufdiktat: Wörter in den Wortspeicher der Kinder (Standard: falsch
   // geschriebene). Ohne sichtbaren Bereich bekommt die Sitzung „none“.
   const wordStoreVisible = useAreaVisible("wortspeicher");
@@ -340,23 +328,6 @@ export function useTeacherLiveRoom(
   const wordStoreTransfer: WordStoreTransferChoice = wordStoreVisible
     ? wordStoreChoice
     : "none";
-  // Standard-Tag aus den Lehrer-Einstellungen für übernommene Vokabeln.
-  const [lernboxTag, setLernboxTag] = useState("");
-  // Tag dieser Runde; leer gilt der Standard-Tag aus den Einstellungen.
-  const [roundTag, setRoundTag] = useState("");
-  const vocabularyTag = roundTag.trim() || lernboxTag;
-  useEffect(() => {
-    let active = true;
-    void createTeacherProfileRepository()
-      .get()
-      .then((profile) => {
-        if (active && profile?.lernboxTag) setLernboxTag(profile.lernboxTag);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, []);
   // Optionale Klasse: Der Raum trägt dann nur den Abdruck ihres Stempels, damit
   // Freigaben der Schreiberleichterung genau in diesem Raum wirken.
   const [liveClasses, setLiveClasses] = useState<
@@ -801,6 +772,68 @@ export function useTeacherLiveRoom(
     })();
   }, [closesAtMs, liveRoomConfig, nowMs, room, roomClosed]);
 
+  // Übernimmt einen offenen Raum samt Inhalt und Optionen. Liest den Stand
+  // dieses Renderns; Auslöser ist allein der Effekt darunter.
+  const applyRestoredRoom = useEffectEvent(
+    (
+      stored: OpenedLiveRoom,
+      state: LiveRoomState,
+      restoreClock: () => number,
+    ) => {
+      const restored = parseLiveSession(
+        state.config,
+        state.sessionId ?? "lobby",
+        "teacher-restore",
+      );
+      const restoredContent = restored.words[0]?.kind ?? "text";
+      const nextContentMode: TeacherContentMode =
+        restoredContent === "vocabulary"
+          ? "vocabulary"
+          : restoredContent === "math"
+            ? "math"
+            : "text";
+      const restoredSource = restored.words
+        .map((word) =>
+          nextContentMode === "vocabulary"
+            ? `${word.prompt ?? ""};${word.targetWord}`
+            : nextContentMode === "math"
+              ? (word.prompt ?? word.targetWord)
+              : word.targetWord,
+        )
+        .join("\n");
+      setContentMode(nextContentMode);
+      setSources((current) => ({
+        ...current,
+        [nextContentMode]: restoredSource,
+      }));
+      if (nextContentMode === "vocabulary") {
+        loadPairsFromTable(restoredSource);
+      }
+      patchSettings({
+        gameMode: restored.stationMode ? "STATION" : restored.gameMode,
+        shuffleWords: restored.shuffleWords,
+        stationShuffle: restored.stationShuffle,
+        repeatWrongAnswers: restored.repeatWrongAnswers,
+        assistance: restored.uebungAssistanceEnabled,
+        attempts: restored.uebungMaxAttempts,
+        tts: restored.isTtsEnabled,
+        showStars: restored.showStars,
+        strictTyping: restored.strictTypingMode,
+        taskHelp: restored.showTaskAfterErrors,
+        stationCount: restored.stationCount,
+        battleInk: restored.battleOptions.ink,
+        battleFlicker: restored.battleOptions.flicker,
+      });
+      setVocabularyTransfer(restored.vocabularyTransfer);
+      setWordStoreTransfer(restored.wordStoreTransfer);
+      setRoundTag(restored.vocabularyTag ?? "");
+      setRestoredClassSeal(restored.classSeal);
+      // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
+      setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(restoreClock) });
+      setStage(state.status === "live" ? "live" : "lobby");
+      setRestoreChecked(true);
+    },
+  );
   useEffect(() => {
     if (!hydrated || !liveRoomConfig || room) return;
     const stored = readTeacherLiveRoom();
@@ -818,67 +851,13 @@ export function useTeacherLiveRoom(
           setRestoreChecked(true);
           return;
         }
-        const restored = parseLiveSession(
-          state.config,
-          state.sessionId ?? "lobby",
-          "teacher-restore",
-        );
-        const restoredContent = restored.words[0]?.kind ?? "text";
-        const nextContentMode: TeacherContentMode =
-          restoredContent === "vocabulary"
-            ? "vocabulary"
-            : restoredContent === "math"
-              ? "math"
-              : "text";
-        const restoredSource = restored.words
-          .map((word) =>
-            nextContentMode === "vocabulary"
-              ? `${word.prompt ?? ""};${word.targetWord}`
-              : nextContentMode === "math"
-                ? (word.prompt ?? word.targetWord)
-                : word.targetWord,
-          )
-          .join("\n");
-        setContentMode(nextContentMode);
-        setSources((current) => ({
-          ...current,
-          [nextContentMode]: restoredSource,
-        }));
-        if (nextContentMode === "vocabulary") {
-          const parsed = parseVocabularyTable(restoredSource);
-          setVocabularyPairs(
-            parsed.length > 0 ? parsed : [emptyVocabularyPair()],
-          );
-        }
-        patchSettings({
-          gameMode: restored.stationMode ? "STATION" : restored.gameMode,
-          shuffleWords: restored.shuffleWords,
-          stationShuffle: restored.stationShuffle,
-          repeatWrongAnswers: restored.repeatWrongAnswers,
-          assistance: restored.uebungAssistanceEnabled,
-          attempts: restored.uebungMaxAttempts,
-          tts: restored.isTtsEnabled,
-          showStars: restored.showStars,
-          strictTyping: restored.strictTypingMode,
-          taskHelp: restored.showTaskAfterErrors,
-          stationCount: restored.stationCount,
-          battleInk: restored.battleOptions.ink,
-          battleFlicker: restored.battleOptions.flicker,
-        });
-        setVocabularyTransfer(restored.vocabularyTransfer);
-        setWordStoreTransfer(restored.wordStoreTransfer);
-        setRoundTag(restored.vocabularyTag ?? "");
-        setRestoredClassSeal(restored.classSeal);
-        // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
-        setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(clock) });
-        setStage(state.status === "live" ? "live" : "lobby");
-        setRestoreChecked(true);
+        applyRestoredRoom(stored, state, clock);
       })
       .catch(() => {
         clearTeacherLiveRoom();
         setRestoreChecked(true);
       });
-  }, [clock, hydrated, liveRoomConfig, patchSettings, room]);
+  }, [clock, hydrated, liveRoomConfig, room]);
 
   useEffect(() => {
     if (!liveRoomConfig || !room || roomClosed) return;
@@ -971,8 +950,7 @@ export function useTeacherLiveRoom(
       setSectionOrder([]);
     }
     if (loaded.contentMode === "vocabulary") {
-      const parsed = parseVocabularyTable(loaded.source);
-      setVocabularyPairs(parsed.length > 0 ? parsed : [emptyVocabularyPair()]);
+      loadPairsFromTable(loaded.source);
       setVocabularyLocales(loaded.vocabularyLocales);
       setShuffleWords(true);
     }
@@ -1159,10 +1137,7 @@ export function useTeacherLiveRoom(
       const text = String(reader.result ?? "");
       setSources((current) => ({ ...current, [contentMode]: text }));
       if (contentMode === "vocabulary") {
-        const parsed = parseVocabularyTable(text);
-        setVocabularyPairs(
-          parsed.length > 0 ? parsed : [emptyVocabularyPair()],
-        );
+        loadPairsFromTable(text);
       }
     };
     reader.readAsText(file);
@@ -1310,8 +1285,7 @@ export function useTeacherLiveRoom(
     setContentMode(mode);
     if (mode === "vocabulary") {
       setShuffleWords(true);
-      const parsed = parseVocabularyTable(sources.vocabulary);
-      setVocabularyPairs(parsed.length > 0 ? parsed : [emptyVocabularyPair()]);
+      loadPairsFromTable(sources.vocabulary);
     }
   }
 
@@ -1396,52 +1370,6 @@ export function useTeacherLiveRoom(
         to,
       ),
     );
-  }
-
-  function updateVocabularyPair(
-    id: string,
-    side: "left" | "right",
-    patch: Partial<VocabularyPair["left"]>,
-  ) {
-    applyVocabularyPairs(
-      vocabularyPairs.map((entry) =>
-        entry.id === id
-          ? { ...entry, [side]: { ...entry[side], ...patch } }
-          : entry,
-      ),
-    );
-  }
-
-  /** Eigener LernBox-Tag einer Vokabel; leer nimmt den Standard-Tag. */
-  function updateVocabularyTag(id: string, tag: string) {
-    applyVocabularyPairs(
-      vocabularyPairs.map((entry) => {
-        if (entry.id !== id) return entry;
-        const next: VocabularyPair = { ...entry };
-        if (tag.trim()) next.tag = tag;
-        else delete next.tag;
-        return next;
-      }),
-    );
-  }
-
-  function removeVocabularyPair(id: string) {
-    const next = vocabularyPairs.filter((entry) => entry.id !== id);
-    applyVocabularyPairs(next.length > 0 ? next : [emptyVocabularyPair()]);
-  }
-
-  function addVocabularyPair() {
-    applyVocabularyPairs([...vocabularyPairs, emptyVocabularyPair()]);
-  }
-
-  function importVocabularyTable() {
-    const imported = parseVocabularyTable(vocabularyTableInput).map((pair) => ({
-      ...pair,
-      id: crypto.randomUUID(),
-    }));
-    if (!imported.length) return;
-    applyVocabularyPairs(imported);
-    setVocabularyTableInput("");
   }
 
   async function removeParticipant(name: string) {
