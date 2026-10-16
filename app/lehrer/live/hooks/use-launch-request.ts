@@ -21,7 +21,7 @@ import { createTeacherContentLibraryRepository } from "../../../../src/storage/t
 import { packageToLiveContent } from "../../content-adapter";
 import { takeLiveIntent } from "../../live-intent";
 import { ALL_MODES } from "../lib/modes";
-import type { Stage } from "../teacher-live-flow";
+import type { LiveFlowAction, Stage } from "../teacher-live-flow";
 
 type LaunchRequestInput = {
   hydrated: boolean;
@@ -34,9 +34,7 @@ type LaunchRequestInput = {
   startRequested: boolean;
   liveClasses: { id: string }[];
   setError: (message: string) => void;
-  setRestoreChecked: Dispatch<SetStateAction<boolean>>;
-  setStartRequested: Dispatch<SetStateAction<boolean>>;
-  setStage: Dispatch<SetStateAction<Stage>>;
+  dispatchFlow: Dispatch<LiveFlowAction>;
   setContentMode: Dispatch<SetStateAction<TeacherContentMode>>;
   setSources: Dispatch<SetStateAction<Record<TeacherContentMode, string>>>;
   setTitle: Dispatch<SetStateAction<string>>;
@@ -65,9 +63,7 @@ export function useLaunchRequest({
   startRequested,
   liveClasses,
   setError,
-  setRestoreChecked,
-  setStartRequested,
-  setStage,
+  dispatchFlow,
   setContentMode,
   setSources,
   setTitle,
@@ -85,7 +81,9 @@ export function useLaunchRequest({
   const params = useSearchParams();
 
   // Ohne Raumdienst gibt es nichts wiederherzustellen.
-  const markRestoreChecked = useEffectEvent(() => setRestoreChecked(true));
+  const markRestoreChecked = useEffectEvent(() =>
+    dispatchFlow({ type: "restoreChecked" }),
+  );
   useEffect(() => {
     if (hydrated && !liveRoomConfig) markRestoreChecked();
   }, [hydrated, liveRoomConfig]);
@@ -115,6 +113,9 @@ export function useLaunchRequest({
   const paramsHandled = useRef(false);
   // Liest den Stand dieses Renderns; Auslöser sind allein die Abhängigkeiten des Effekts.
   const handleLaunchParams = useEffectEvent(() => {
+    // Ein offener Raum hat Vorrang und führt gar nicht erst hierher.
+    const jumpTo = (stage: Stage) =>
+      dispatchFlow({ type: "jumpToStage", stage, hasRoom: false });
     const contentParam = params.get("inhalt");
     const newParam = params.get("neu");
     const stepParam = params.get("schritt");
@@ -162,13 +163,13 @@ export function useLaunchRequest({
       ) {
         await setClassChoice(classParam === "ohne" ? "" : classParam);
       }
-      if (stepParam === "inhalt") setStage("content");
-      if (stepParam === "einstellungen") setStage("settings");
+      if (stepParam === "inhalt") jumpTo("content");
+      if (stepParam === "einstellungen") jumpTo("settings");
       if (intent) {
         const known = liveClasses.some(({ id }) => id === intent.classId);
         await setClassChoice(known ? intent.classId : "");
-        setStage("settings");
-        setStartRequested(true);
+        jumpTo("settings");
+        dispatchFlow({ type: "startRequested" });
       }
     })().catch(() =>
       setError("Der Inhalt konnte nicht aus der Ablage geladen werden."),
@@ -185,7 +186,7 @@ export function useLaunchRequest({
   // sich die Lobby mit den Standardoptionen des Modus.
   const onStartRequested = useEffectEvent(() => {
     if (busy || room) return;
-    setStartRequested(false);
+    dispatchFlow({ type: "startHandled" });
     void openLobby();
   });
   useEffect(() => {

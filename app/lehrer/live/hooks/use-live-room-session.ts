@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
   type Dispatch,
-  type SetStateAction,
 } from "react";
 import { LIVE_APP_VERSION } from "../../../../src/app-version";
 import { createLiveRoomDebounce } from "../../../../src/integrations/laufdiktat/debounce";
@@ -51,7 +50,7 @@ import {
   resultNamesFor,
 } from "../../../../src/integrations/laufdiktat/teacher-results";
 import type { ParticipantStatus } from "../../../views/laufdiktat/teacher-dictation-screen";
-import type { Stage } from "../teacher-live-flow";
+import type { LiveFlowAction, Stage } from "../teacher-live-flow";
 import {
   participantAnimal,
   participantLabel,
@@ -77,11 +76,8 @@ type LiveRoomSessionInput = {
   /** Uhr in Millisekunden; die Tests setzen eine eigene, ohne zu warten. */
   clock: () => number;
   stage: Stage;
-  setStage: Dispatch<SetStateAction<Stage>>;
   roomClosed: boolean;
-  setRoomClosed: Dispatch<SetStateAction<boolean>>;
-  setBusy: Dispatch<SetStateAction<boolean>>;
-  setRestoreChecked: Dispatch<SetStateAction<boolean>>;
+  dispatchFlow: Dispatch<LiveFlowAction>;
   /** Holt Inhalt und Optionen eines wiederaufgenommenen Raums in den Editor. */
   applyRestoredContent: (restored: LiveSession) => void;
   setError: (message: string) => void;
@@ -103,11 +99,8 @@ export function useLiveRoomSession({
   liveRoomConfig,
   clock,
   stage,
-  setStage,
   roomClosed,
-  setRoomClosed,
-  setBusy,
-  setRestoreChecked,
+  dispatchFlow,
   applyRestoredContent,
   setError,
   roomConfig,
@@ -189,12 +182,11 @@ export function useLiveRoomSession({
     clearTeacherLiveRoom();
     closingRef.current = false;
     setRoom(null);
-    setRoomClosed(false);
     setParticipants([]);
     setStudents([]);
     setPresenceNames([]);
     setPracticingNames([]);
-    setStage("content");
+    dispatchFlow({ type: "roomEnded", hasRoom: room !== null });
   }
 
   // Der Raum ist zu Ende. Im Live-Schritt bleiben die letzten Ergebnisse
@@ -219,7 +211,7 @@ export function useLiveRoomSession({
       }
     }
     clearTeacherLiveRoom();
-    setRoomClosed(true);
+    dispatchFlow({ type: "roomClosed", hasRoom: true });
   }
   useEffect(() => {
     serverEndedRef.current = () => {
@@ -254,7 +246,9 @@ export function useLiveRoomSession({
 
   // Wiederaufnahme: Ein noch offener Raum aus diesem Browser-Tab kommt samt
   // Inhalt und Optionen zurück. Sie hat Vorrang vor Adressen und Absicht.
-  const markRestoreChecked = useEffectEvent(() => setRestoreChecked(true));
+  const markRestoreChecked = useEffectEvent(() =>
+    dispatchFlow({ type: "restoreChecked" }),
+  );
   const applyRestoredRoom = useEffectEvent(
     (
       stored: OpenedLiveRoom,
@@ -270,8 +264,7 @@ export function useLiveRoomSession({
       );
       // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
       setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(restoreClock) });
-      setStage(state.status === "live" ? "live" : "lobby");
-      markRestoreChecked();
+      dispatchFlow({ type: "restored", live: state.status === "live" });
     },
   );
   useEffect(() => {
@@ -390,7 +383,7 @@ export function useLiveRoomSession({
     }
     if (!wordCount)
       return setError("Bitte gib mindestens eine gültige Aufgabe ein.");
-    setBusy(true);
+    dispatchFlow({ type: "busy", busy: true });
     try {
       const opened = {
         ...(await openLiveRoom(liveRoomConfig, roomConfig)),
@@ -400,7 +393,7 @@ export function useLiveRoomSession({
       closingRef.current = false;
       setRoom(opened);
       setNowMs(clock());
-      setStage("lobby");
+      dispatchFlow({ type: "lobbyOpened" });
       // Beim Öffnen der Lobby wird der Inhalt abgelegt, ohne die Lobby
       // aufzuhalten; ein Fehler hier stoppt den Raum nicht.
       void storeContent(true).catch(() =>
@@ -413,13 +406,13 @@ export function useLiveRoomSession({
         "Der Raum konnte nicht geöffnet werden. Bitte prüfe die Verbindung.",
       );
     } finally {
-      setBusy(false);
+      dispatchFlow({ type: "busy", busy: false });
     }
   }
 
   async function startSession() {
     if (!liveRoomConfig || !room) return;
-    setBusy(true);
+    dispatchFlow({ type: "busy", busy: true });
     try {
       await updateLiveSession(
         liveRoomConfig,
@@ -436,17 +429,17 @@ export function useLiveRoomSession({
       )
         throw new Error();
       setStudents([]);
-      setStage("live");
+      dispatchFlow({ type: "sessionStarted", hasRoom: true });
     } catch {
       setError("Die Sitzung konnte nicht sicher gestartet werden.");
     } finally {
-      setBusy(false);
+      dispatchFlow({ type: "busy", busy: false });
     }
   }
 
   async function endRoom() {
     if (!liveRoomConfig || !room) return;
-    setBusy(true);
+    dispatchFlow({ type: "busy", busy: true });
     try {
       if (students.length > 0) exportCsv();
       await endLiveRoom(liveRoomConfig, room);
@@ -459,7 +452,7 @@ export function useLiveRoomSession({
     } catch {
       setError("Der Raum konnte nicht beendet werden.");
     } finally {
-      setBusy(false);
+      dispatchFlow({ type: "busy", busy: false });
     }
   }
 

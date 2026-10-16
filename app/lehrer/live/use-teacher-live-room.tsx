@@ -5,7 +5,14 @@
  * Live). Die Fachregeln stammen unverändert aus dem Laufdiktat-Quellcode;
  * die Darstellung liegt in den Schritt-Komponenten dieses Ordners.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type SetStateAction,
+} from "react";
 import { tokenizeMarkerText } from "../../../src/domain/running-dictation-sections";
 import { defaultMathGapIndex } from "../../../src/domain/mental-math";
 import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
@@ -22,7 +29,13 @@ import { useLiveClassChoice } from "./hooks/use-live-class-choice";
 import { useTextContent } from "./hooks/use-text-content";
 import { useVocabularyContent } from "./hooks/use-vocabulary-content";
 import { DEFAULT_SOURCES, MODES } from "./lib/modes";
-import type { Stage } from "./teacher-live-flow";
+import {
+  forwardCommand,
+  initialLiveFlow,
+  jumpCommand,
+  liveFlowReducer,
+  type Stage,
+} from "./teacher-live-flow";
 import { useLiveRoomSession } from "./hooks/use-live-room-session";
 import { useContentRestore } from "./hooks/use-content-restore";
 import { useLaunchRequest } from "./hooks/use-launch-request";
@@ -46,7 +59,11 @@ export function useTeacherLiveRoom(
   clock: () => number = Date.now,
 ) {
   const hydrated = useHydrated();
-  const [stage, setStage] = useState<Stage>("content");
+  const [flow, dispatchFlow] = useReducer(liveFlowReducer, initialLiveFlow);
+  // Die Wiederaufnahme eines offenen Raums (`restoreChecked`) hat Vorrang vor
+  // Adressen und Absicht; `roomClosed` heißt: Raum zu Ende, die letzten
+  // Ergebnisse bleiben sichtbar.
+  const { stage, roomClosed, busy, startRequested, restoreChecked } = flow;
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sources, setSources] = useState(DEFAULT_SOURCES);
   const {
@@ -210,12 +227,6 @@ export function useTeacherLiveRoom(
   // Abgelegter Inhalt, der gerade bearbeitet wird (null = noch nicht abgelegt).
   const [contentId, setContentId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  // Die Wiederaufnahme eines offenen Raums hat Vorrang vor Adressen und Absicht.
-  const [restoreChecked, setRestoreChecked] = useState(false);
-  const [startRequested, setStartRequested] = useState(false);
-  // Raum ist zu Ende (Frist oder Server), die letzten Ergebnisse bleiben sichtbar.
-  const [roomClosed, setRoomClosed] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTop = 0;
@@ -337,11 +348,8 @@ export function useTeacherLiveRoom(
     liveRoomConfig,
     clock,
     stage,
-    setStage,
     roomClosed,
-    setRoomClosed,
-    setBusy,
-    setRestoreChecked,
+    dispatchFlow,
     applyRestoredContent,
     setError,
     roomConfig,
@@ -378,9 +386,7 @@ export function useTeacherLiveRoom(
     startRequested,
     liveClasses,
     setError,
-    setRestoreChecked,
-    setStartRequested,
-    setStage,
+    dispatchFlow,
     setContentMode,
     setSources,
     setTitle,
@@ -485,22 +491,18 @@ export function useTeacherLiveRoom(
 
   function goBack() {
     setError("");
-    if (roomClosed) return;
-    if (stage === "settings") setStage("content");
-    if (stage === "lobby") setStage("settings");
-    if (stage === "live") setStage("lobby");
+    dispatchFlow({ type: "goBack" });
   }
 
   function goForward() {
     setError("");
-    if (stage === "content") setStage("settings");
-    if (stage === "settings") void openLobby();
-    if (stage === "lobby") void startSession();
-    if (stage === "live") {
-      // Ein geschlossener Raum braucht keinen Aufruf mehr: weiter zum neuen Raum.
-      if (roomClosed) resetRoomState();
-      else void endRoom();
-    }
+    dispatchFlow({ type: "goForward" });
+    const command = forwardCommand(flow);
+    if (command === "open-lobby") void openLobby();
+    if (command === "start-session") void startSession();
+    // Ein geschlossener Raum braucht keinen Aufruf mehr: weiter zum neuen Raum.
+    if (command === "reset-room") resetRoomState();
+    if (command === "end-room") void endRoom();
   }
 
   function chooseContentMode(mode: TeacherContentMode) {
@@ -514,8 +516,18 @@ export function useTeacherLiveRoom(
   }
 
   function jumpToStage(id: Stage) {
-    if (id === "lobby" && !room) void openLobby();
-    else setStage(id);
+    if (jumpCommand(id, room !== null)) void openLobby();
+    else
+      dispatchFlow({ type: "jumpToStage", stage: id, hasRoom: room !== null });
+  }
+
+  // Gibt es für die Oberfläche nicht mehr; bleibt für das Modell, wie es war.
+  function setStage(value: SetStateAction<Stage>) {
+    dispatchFlow({
+      type: "jumpToStage",
+      stage: typeof value === "function" ? value(stage) : value,
+      hasRoom: room !== null,
+    });
   }
 
   const refs = {
