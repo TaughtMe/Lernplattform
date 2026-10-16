@@ -82,8 +82,9 @@ je Screen) und besteht aus genau einer Gestaltungsschicht:
   Lehrerrahmen in `app/ui/shell/`.
 
 Größere Screens trennen Zustand und Darstellung, zum Beispiel das
-Lehrkraft-Laufdiktat (`app/lehrer/live/`: `useTeacherLiveRoom` plus
-Schritt-Komponenten) und das Schülerspiel (`app/raum/spiel/`). Die
+Lehrkraft-Laufdiktat (`app/lehrer/live/`: `useTeacherLiveRoom` setzt den
+Ablauf-Reducer `teacher-live-flow.ts` und die Teil-Hooks in `hooks/` zusammen;
+dazu die Schritt-Komponenten) und das Schülerspiel (`app/raum/spiel/`). Die
 Bausteinübersicht liegt im Entwicklungsmodus unter `/entwicklung/ui`.
 Fachwissen zu exemplarisch gefüllten Screens steht in `docs/inhalte/`.
 
