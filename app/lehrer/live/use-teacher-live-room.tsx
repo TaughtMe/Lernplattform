@@ -5,7 +5,6 @@
  * Live). Die Fachregeln stammen unverändert aus dem Laufdiktat-Quellcode;
  * die Darstellung liegt in den Schritt-Komponenten dieses Ordners.
  */
-import { useAreaVisible } from "../../release/release-context";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -17,18 +16,7 @@ import {
   useState,
 } from "react";
 import type { ParticipantStatus } from "../../views/laufdiktat/teacher-dictation-screen";
-import {
-  applyRunningDictationSectionEdits,
-  buildMarkerPieces,
-  buildRunningDictationSections,
-  DEFAULT_TEXT_SPLIT_CONFIG,
-  displayRunningDictationSections,
-  tokenizeMarkerText,
-  type MarkerToken,
-  moveRunningDictationSection,
-  type ManualRange,
-  type TextSplitConfig,
-} from "../../../src/domain/running-dictation-sections";
+import { tokenizeMarkerText } from "../../../src/domain/running-dictation-sections";
 import { defaultMathGapIndex } from "../../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../../src/app-version";
 import {
@@ -63,16 +51,14 @@ import {
   csvParticipantLabel,
   resultNamesFor,
 } from "../../../src/integrations/laufdiktat/teacher-results";
-import {
-  parseLiveSession,
-  type WordStoreTransferChoice,
-} from "../../../src/integrations/laufdiktat/live-session";
+import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-session";
 import { createLiveRoomDebounce } from "../../../src/integrations/laufdiktat/debounce";
 import {
   roomTimeline,
   roomTimeState,
 } from "../../../src/integrations/laufdiktat/room-limits";
 import { useMathContent } from "./hooks/use-math-content";
+import { useTextContent } from "./hooks/use-text-content";
 import { useVocabularyContent } from "./hooks/use-vocabulary-content";
 import { useGameSettings } from "./hooks/use-game-settings";
 import { useHydrated } from "../../ui/use-hydrated";
@@ -308,26 +294,40 @@ export function useTeacherLiveRoom(
     addVocabularyPair,
     importVocabularyTable,
   } = useVocabularyContent({ setSources });
-  const [markerMode, setMarkerMode] = useState(false);
-  const [markerAnchor, setMarkerAnchor] = useState<{
-    start: number;
-    end: number;
-  } | null>(null);
-  const [splitConfig, setSplitConfig] = useState<TextSplitConfig>(
-    DEFAULT_TEXT_SPLIT_CONFIG,
-  );
-  const [manualRanges, setManualRanges] = useState<ManualRange[]>([]);
-  const [excludedSectionIds, setExcludedSectionIds] = useState<string[]>([]);
-  const [sectionOrder, setSectionOrder] = useState<string[]>([]);
-  const [customDelimiter, setCustomDelimiter] = useState("");
-  // Text-Laufdiktat: Wörter in den Wortspeicher der Kinder (Standard: falsch
-  // geschriebene). Ohne sichtbaren Bereich bekommt die Sitzung „none“.
-  const wordStoreVisible = useAreaVisible("wortspeicher");
-  const [wordStoreChoice, setWordStoreTransfer] =
-    useState<WordStoreTransferChoice>("errors");
-  const wordStoreTransfer: WordStoreTransferChoice = wordStoreVisible
-    ? wordStoreChoice
-    : "none";
+  const source = sources[contentMode];
+  const {
+    markerMode,
+    markerAnchor,
+    splitConfig,
+    setSplitConfig,
+    manualRanges,
+    excludedSectionIds,
+    sectionOrder,
+    customDelimiter,
+    setCustomDelimiter,
+    wordStoreVisible,
+    wordStoreChoice,
+    setWordStoreTransfer,
+    wordStoreTransfer,
+    sourceRef,
+    markerContainerRef,
+    orderedTextSections,
+    displayedTextSections,
+    markerPieces,
+    resetTextLayout,
+    removeManualSection,
+    handleMarkerWordTap,
+    handleMarkerMouseUp,
+    togglePunctuation,
+    addCustomDelimiter,
+    removeCustomDelimiter,
+    markSelectionAsSection,
+    splitAtCursor,
+    toggleMarkerMode,
+    toggleSectionExcluded,
+    moveSection,
+    clearManualRanges,
+  } = useTextContent({ textSource: sources.text, source });
   // Optionale Klasse: Der Raum trägt dann nur den Abdruck ihres Stempels, damit
   // Freigaben der Schreiberleichterung genau in diesem Raum wirken.
   const [liveClasses, setLiveClasses] = useState<
@@ -401,105 +401,13 @@ export function useTeacherLiveRoom(
   const [busy, setBusy] = useState(false);
   const [connectionWarning, setConnectionWarning] = useState("");
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const sourceRef = useRef<HTMLTextAreaElement>(null);
-  const markerContainerRef = useRef<HTMLDivElement>(null);
 
-  const source = sources[contentMode];
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTop = 0;
   }, [stage]);
   useEffect(() => {
     if (builderRef.current) builderRef.current.scrollTop = 0;
   }, [contentMode]);
-  const textSections = useMemo(
-    () =>
-      buildRunningDictationSections(sources.text, splitConfig, manualRanges),
-    [manualRanges, sources.text, splitConfig],
-  );
-  const orderedTextSections = useMemo(
-    () =>
-      applyRunningDictationSectionEdits(
-        textSections,
-        excludedSectionIds,
-        sectionOrder,
-      ),
-    [excludedSectionIds, sectionOrder, textSections],
-  );
-  const displayedTextSections = useMemo(
-    () => displayRunningDictationSections(textSections, sectionOrder),
-    [sectionOrder, textSections],
-  );
-  const markerPieces = useMemo(
-    () => buildMarkerPieces(source, textSections),
-    [source, textSections],
-  );
-
-  // A new manual range replaces any manual range it overlaps, rather than
-  // stacking on top of it.
-  function addManualSection(start: number, end: number) {
-    setManualRanges((current) => [
-      ...current.filter(
-        (range) => Math.max(start, range.start) >= Math.min(end, range.end),
-      ),
-      { id: crypto.randomUUID(), type: "section", start, end },
-    ]);
-  }
-
-  function removeManualSection(section: { start: number; end: number }) {
-    setManualRanges((current) =>
-      current.filter(
-        (range) =>
-          Math.max(section.start, range.start) >=
-          Math.min(section.end, range.end),
-      ),
-    );
-  }
-
-  // First tapped word = anchor; second word (start or end, either order)
-  // closes the range into a new manual section. Trailing punctuation right
-  // after the second word is pulled in too, so it doesn't end up as its own
-  // tiny leftover section.
-  function handleMarkerWordTap(token: MarkerToken) {
-    if (!window.getSelection()?.isCollapsed) return;
-    if (!markerAnchor) {
-      setMarkerAnchor({ start: token.start, end: token.end });
-      return;
-    }
-    const start = Math.min(markerAnchor.start, token.start);
-    let end = Math.max(markerAnchor.end, token.end);
-    while (end < source.length && /[^\s\p{L}\p{N}]/u.test(source[end] ?? "")) {
-      end += 1;
-    }
-    setMarkerAnchor(null);
-    addManualSection(start, end);
-  }
-
-  // Desktop alternative to word-tapping: drag-select a range with the mouse.
-  function handleMarkerMouseUp() {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-      return;
-    }
-    const range = selection.getRangeAt(0);
-    const container = markerContainerRef.current;
-    if (!container || !container.contains(range.commonAncestorContainer)) {
-      return;
-    }
-    const preSelection = range.cloneRange();
-    preSelection.selectNodeContents(container);
-    preSelection.setEnd(range.startContainer, range.startOffset);
-    let start = preSelection.toString().length;
-    let end = start + range.toString().length;
-
-    const selected = source.slice(start, end);
-    start += selected.length - selected.trimStart().length;
-    end -= selected.length - selected.trimEnd().length;
-
-    selection.removeAllRanges();
-    setMarkerAnchor(null);
-    if (start < end) addManualSection(start, end);
-  }
-
   const words = useMemo(
     () =>
       contentMode === "text"
@@ -944,10 +852,7 @@ export function useTeacherLiveRoom(
     setTitle(loaded.title);
     setContentId(entry.id);
     if (loaded.contentMode === "text") {
-      setSplitConfig(loaded.textSplitConfig);
-      setManualRanges([]);
-      setExcludedSectionIds([]);
-      setSectionOrder([]);
+      resetTextLayout(loaded.textSplitConfig);
     }
     if (loaded.contentMode === "vocabulary") {
       loadPairsFromTable(loaded.source);
@@ -1289,89 +1194,6 @@ export function useTeacherLiveRoom(
     }
   }
 
-  function togglePunctuation(character: string) {
-    setSplitConfig((current) => ({
-      ...current,
-      punctuation: current.punctuation.includes(character)
-        ? current.punctuation.filter((item) => item !== character)
-        : [...current.punctuation, character],
-    }));
-  }
-
-  function addCustomDelimiter() {
-    if (!customDelimiter) return;
-    const value = customDelimiter;
-    setSplitConfig((current) => ({
-      ...current,
-      customDelimiters: [
-        ...current.customDelimiters,
-        { id: crypto.randomUUID(), value },
-      ],
-    }));
-    setCustomDelimiter("");
-  }
-
-  function removeCustomDelimiter(id: string) {
-    setSplitConfig((current) => ({
-      ...current,
-      customDelimiters: current.customDelimiters.filter(
-        (delimiter) => delimiter.id !== id,
-      ),
-    }));
-  }
-
-  /** Markierung im Textfeld als eigenen Abschnitt übernehmen. */
-  function markSelectionAsSection() {
-    const control = sourceRef.current;
-    if (!control || control.selectionEnd <= control.selectionStart) return;
-    setManualRanges((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        type: "section",
-        start: control.selectionStart,
-        end: control.selectionEnd,
-      },
-    ]);
-  }
-
-  /** An der Cursorposition einen Abschnitt beginnen. */
-  function splitAtCursor() {
-    const position = sourceRef.current?.selectionStart ?? 0;
-    setManualRanges((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        type: "split",
-        start: position,
-        end: position,
-      },
-    ]);
-  }
-
-  function toggleMarkerMode() {
-    setMarkerAnchor(null);
-    setMarkerMode((current) => !current);
-  }
-
-  function toggleSectionExcluded(id: string) {
-    setExcludedSectionIds((current) =>
-      current.includes(id)
-        ? current.filter((entry) => entry !== id)
-        : [...current, id],
-    );
-  }
-
-  function moveSection(from: number, to: number) {
-    setSectionOrder(
-      moveRunningDictationSection(
-        displayedTextSections.map(({ id }) => id),
-        from,
-        to,
-      ),
-    );
-  }
-
   async function removeParticipant(name: string) {
     if (!liveRoomConfig || !room) return;
     await removeLiveRoomParticipant(liveRoomConfig, room, name);
@@ -1380,10 +1202,6 @@ export function useTeacherLiveRoom(
 
   function labelFor(key: string | null | undefined) {
     return participantLabel(participants, key);
-  }
-
-  function clearManualRanges() {
-    setManualRanges([]);
   }
 
   function animalFor(key: string | null | undefined) {
