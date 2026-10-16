@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { TEXTBOX_TEXTS } from "../src/domain/textbox-library";
 
 /**
  * WCAG 2.4.11 (Fokus nicht verdeckt): Mobil klebt der Seitenfuß über der
@@ -19,6 +20,16 @@ test.beforeEach(async ({ context, baseURL }, testInfo) => {
     { name: "lernraum-vorschau", value: "1", url: baseURL! },
   ]);
 });
+
+const text = TEXTBOX_TEXTS[0]!;
+
+const scrollPaddingBottom = (page: Page) =>
+  page.evaluate(
+    () =>
+      Number.parseFloat(
+        getComputedStyle(document.documentElement).scrollPaddingBottom,
+      ) || 0,
+  );
 
 async function expectStickyFooter(page: Page) {
   const footer = page.locator("main > footer");
@@ -68,6 +79,13 @@ test("Tab zu „Zum Wortspeicher“ landet über dem klebenden Seitenfuß", asyn
   }
   expect(reached, "Tab erreicht „Zum Wortspeicher“").toBe(true);
   await expectFocusAboveFooter(page, "Fokus");
+
+  // Der reservierte Abstand ist Tab-Leiste (80 px) plus Höhe des Seitenfußes.
+  const footerBox = await page.locator("main > footer").boundingBox();
+  expect(await scrollPaddingBottom(page)).toBeCloseTo(
+    80 + footerBox!.height,
+    0,
+  );
 });
 
 test("Tab durch die Textbox-Liste lässt den Fokus nie unter dem Seitenfuß", async ({
@@ -83,4 +101,19 @@ test("Tab durch die Textbox-Liste lässt den Fokus nie unter dem Seitenfuß", as
     await expectFocusAboveFooter(page, `Tab ${i + 1}`);
     await page.keyboard.press("Tab");
   }
+});
+
+test("Ohne Tab-Leiste und Seitenfuß bleibt kein Scroll-Abstand reserviert", async ({
+  page,
+}) => {
+  // In der Übung ist die Navigation unter 900 px ausgeblendet (`hideNav="mobile"`).
+  await page.goto("/frei/german/textbox");
+  await page.getByRole("button", { name: `${text.title} üben` }).click();
+  await expect(page.locator("mark").first()).toBeVisible();
+  await expect(page.locator("main > footer")).toBeHidden();
+  await expect(
+    page.getByRole("navigation", { name: "Hauptnavigation" }),
+  ).toBeHidden();
+
+  expect(await scrollPaddingBottom(page)).toBe(0);
 });

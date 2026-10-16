@@ -46,18 +46,16 @@
  * Fokussierte Elemente und Sprungziele sollen über Tab-Leiste und klebendem
  * Seitenfuß landen, nicht darunter (WCAG 2.4.11). Der Scrollcontainer ist das
  * Dokument. Die Grenze 900 px entspricht dem Container-Umbruch weiter unten
- * (`.frame` ist so breit wie das Fenster). Wo der Seitenfuß fehlt oder
- * ausgeblendet ist, bleibt der Abstand 0.
+ * (`.frame` ist so breit wie das Fenster). Wo der Seitenfuß fehlt oder mit der
+ * Navigation ausgeblendet ist (`.navHiddenMobile`), gilt die Regel nicht, der
+ * Abstand bleibt 0.
  */
 :global(:root) {
   --student-tabbar-h: calc(80px + env(safe-area-inset-bottom));
 }
 @media (max-width: 899.98px) {
-  :global(:root):has(.main > footer) {
+  :global(:root):has(.main > footer):not(:has(.navHiddenMobile)) {
     scroll-padding-bottom: calc(var(--student-tabbar-h) + var(--site-footer-h));
-  }
-  :global(:root):has(.navHiddenMobile) {
-    scroll-padding-bottom: 0;
   }
 }
 /* Inhalt füllt den Platz; der Seitenfuß bleibt darunter im Bild. */
