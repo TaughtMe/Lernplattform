@@ -1,5 +1,5 @@
 import { computeRunningDictationStars } from "../../domain/running-dictation";
-import type { LiveRoomStudent } from "./room-api";
+import type { LiveRoomParticipant, LiveRoomStudent } from "./room-api";
 
 export function aggregateWordErrors(students: LiveRoomStudent[]) {
   const totals = new Map<string, number>();
@@ -14,6 +14,39 @@ export function aggregateWordErrors(students: LiveRoomStudent[]) {
 function escapeCsv(value: unknown) {
   const text = String(value ?? "");
   return /[;"\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/**
+ * Namen, die in die Ergebnisliste kommen: im Stationsmodus nur, wer eine
+ * Station hat, nach Stationsnummer; sonst alle bekannten Namen.
+ */
+export function resultNamesFor(
+  gameMode: string,
+  students: LiveRoomStudent[],
+  allNames: string[],
+) {
+  return gameMode === "STATION"
+    ? students
+        .filter((student) => student.stationNumber !== null)
+        .sort(
+          (left, right) =>
+            (left.stationNumber ?? 0) - (right.stationNumber ?? 0),
+        )
+        .map((student) => student.studentName)
+    : allNames;
+}
+
+/** Spaltenname für den CSV-Export: Tier mit Nummer, sonst Name. */
+export function csvParticipantLabel(
+  name: string,
+  participants: LiveRoomParticipant[],
+) {
+  const participant = participants.find((item) => item.studentName === name);
+  if (participant?.animalToken)
+    return participant.animalNumber > 1
+      ? `${participant.animalToken} ${participant.animalNumber}`
+      : participant.animalToken;
+  return name.startsWith("participant-") ? "Ohne Tier" : name;
 }
 
 export function buildTeacherResultCsv(

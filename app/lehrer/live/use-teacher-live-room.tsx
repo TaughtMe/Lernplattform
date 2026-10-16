@@ -16,7 +16,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { animalTokenFromDisplayName } from "../../../src/domain/learner-profile";
 import type { ParticipantStatus } from "../../views/laufdiktat/teacher-dictation-screen";
 import {
   DEFAULT_VOCABULARY_LOCALES,
@@ -27,20 +26,22 @@ import {
 } from "../../../src/domain/running-dictation";
 import {
   applyRunningDictationSectionEdits,
+  buildMarkerPieces,
   buildRunningDictationSections,
   DEFAULT_TEXT_SPLIT_CONFIG,
+  displayRunningDictationSections,
+  tokenizeMarkerText,
+  type MarkerToken,
   moveRunningDictationSection,
   type ManualRange,
   type TextSplitConfig,
 } from "../../../src/domain/running-dictation-sections";
 import {
-  countMathChainNumbers,
-  displayMathNumber,
+  defaultMathGapIndex,
   evaluateMentalMathExpression,
-  formatMathChainTokens,
-  isLatexMathSyntax,
+  insertAtSelection,
   normalizeMathChainInput,
-  tokenizeMathChain,
+  splitMathLines,
 } from "../../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../../src/app-version";
 import {
@@ -63,17 +64,24 @@ import {
   type OpenedLiveRoom,
 } from "../../../src/integrations/laufdiktat/room-api";
 import {
+  buildMathPracticeOptions,
+  buildMathWords,
   buildTeacherRoomConfig,
   buildTeacherWords,
   generateMentalMathSource,
+  generateSingleMathLine,
   type MathOperation,
+  type TeacherMathSettings,
   type TeacherContentMode,
   type TeacherGameMode,
 } from "../../../src/integrations/laufdiktat/teacher-session";
-import { buildTeacherResultCsv } from "../../../src/integrations/laufdiktat/teacher-results";
+import {
+  buildTeacherResultCsv,
+  csvParticipantLabel,
+  resultNamesFor,
+} from "../../../src/integrations/laufdiktat/teacher-results";
 import {
   parseLiveSession,
-  type LiveWord,
   type VocabularyTransferChoice,
   type WordStoreTransferChoice,
 } from "../../../src/integrations/laufdiktat/live-session";
@@ -94,6 +102,11 @@ import {
 import { liveContentToPackage, packageToLiveContent } from "../content-adapter";
 import { takeLiveIntent } from "../live-intent";
 import { splitModeOf } from "./dictation-adapter";
+import {
+  participantAnimal,
+  participantLabel,
+  participantStatus,
+} from "./lib/participant-display";
 import type { TeacherContentPackage } from "../../../src/domain/teacher-content-library";
 
 /** Schuljahr zum Datum, z. B. „2026/27“ (ab August das neue Jahr). */
@@ -397,102 +410,14 @@ export function useTeacherLiveRoom(
       ),
     [excludedSectionIds, sectionOrder, textSections],
   );
-  const displayedTextSections = useMemo(() => {
-    const rank = new Map(sectionOrder.map((id, index) => [id, index]));
-    return [...textSections].sort((left, right) => {
-      const leftRank = rank.get(left.id);
-      const rightRank = rank.get(right.id);
-      if (leftRank === undefined && rightRank === undefined) return 0;
-      if (leftRank === undefined) return 1;
-      if (rightRank === undefined) return -1;
-      return leftRank - rightRank;
-    });
-  }, [sectionOrder, textSections]);
-  // A contiguous run of the raw text for the marker view: the sections
-  // themselves plus everything between them (whitespace, consumed
-  // separators). Gapless on purpose — the marker view must render exactly
-  // the same characters as the plain textarea, or character offsets from a
-  // click/selection would no longer line up with the raw text.
-  type MarkerPiece = {
-    text: string;
-    start: number;
-    kind: "gap" | "auto" | "manual";
-    // Counts only the automatic sections, so adjacent auto sections can be
-    // colored in alternating shades (the boundary between them stays
-    // visible even when nothing manual has been marked yet).
-    autoIndex: number;
-  };
-  const markerPieces = useMemo(() => {
-    const pieces: MarkerPiece[] = [];
-    let cursor = 0;
-    let autoIndex = 0;
-    for (const section of textSections) {
-      if (section.start > cursor) {
-        pieces.push({
-          text: source.slice(cursor, section.start),
-          start: cursor,
-          kind: "gap",
-          autoIndex,
-        });
-      }
-      pieces.push({
-        text: section.text,
-        start: section.start,
-        kind: section.source,
-        autoIndex,
-      });
-      if (section.source === "auto") autoIndex += 1;
-      cursor = section.end;
-    }
-    if (cursor < source.length) {
-      pieces.push({
-        text: source.slice(cursor),
-        start: cursor,
-        kind: "gap",
-        autoIndex,
-      });
-    }
-    return pieces;
-  }, [source, textSections]);
-
-  type MarkerToken = {
-    text: string;
-    start: number;
-    end: number;
-    isWord: boolean;
-  };
-  function tokenizeMarkerText(text: string, base: number): MarkerToken[] {
-    const tokens: MarkerToken[] = [];
-    const regex = /(\p{L}+|\p{N}+)/gu;
-    let last = 0;
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(text))) {
-      if (match.index > last) {
-        tokens.push({
-          text: text.slice(last, match.index),
-          start: base + last,
-          end: base + match.index,
-          isWord: false,
-        });
-      }
-      tokens.push({
-        text: match[0],
-        start: base + match.index,
-        end: base + regex.lastIndex,
-        isWord: true,
-      });
-      last = regex.lastIndex;
-    }
-    if (last < text.length) {
-      tokens.push({
-        text: text.slice(last),
-        start: base + last,
-        end: base + text.length,
-        isWord: false,
-      });
-    }
-    return tokens;
-  }
+  const displayedTextSections = useMemo(
+    () => displayRunningDictationSections(textSections, sectionOrder),
+    [sectionOrder, textSections],
+  );
+  const markerPieces = useMemo(
+    () => buildMarkerPieces(source, textSections),
+    [source, textSections],
+  );
 
   // A new manual range replaces any manual range it overlaps, rather than
   // stacking on top of it.
@@ -560,69 +485,15 @@ export function useTeacherLiveRoom(
     if (start < end) addManualSection(start, end);
   }
 
-  const mathLines = useMemo(
+  const mathLines = useMemo(() => splitMathLines(sources.math), [sources.math]);
+
+  const mathWords = useMemo(
     () =>
-      sources.math
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0),
-    [sources.math],
+      contentMode === "math"
+        ? buildMathWords(mathLines, mathGap, mathGaps)
+        : [],
+    [contentMode, mathLines, mathGap, mathGaps],
   );
-
-  // A math line's gap is a single numeral index: 0..N-1 blanks that
-  // occurrence in the expression itself (counting only its number tokens,
-  // left to right), and N (one past the last) blanks the computed result
-  // instead. This applies uniformly to a plain two-operand task and to a
-  // multi-operator chain alike — Laufdiktat's own left/a/b/result slots are
-  // just the two-operand case of this (0 = left, 1 = right, 2 = result).
-  function defaultMathGapIndex(numberCount: number) {
-    return Math.max(0, numberCount - 1);
-  }
-
-  // Mirrors Laufdiktat's useMathImport: gaps are derived fresh from the
-  // current text + the separate mathGaps array on every render, never baked
-  // into the stored line — so editing numbers or adding a task can't lose or
-  // corrupt the gap.
-  const mathWords = useMemo(() => {
-    if (contentMode !== "math") return [];
-    const result: LiveWord[] = [];
-    mathLines.forEach((line, index) => {
-      const value = evaluateMentalMathExpression(line);
-      if (value === null) return;
-      const tokens = tokenizeMathChain(line);
-      const numberCount = tokens ? countMathChainNumbers(tokens) : 0;
-      const gapIndex =
-        mathGap && tokens
-          ? (mathGaps[index] ?? defaultMathGapIndex(numberCount))
-          : undefined;
-      if (tokens && gapIndex !== undefined) {
-        const isResultGap = gapIndex >= numberCount;
-        const shownExpression = formatMathChainTokens(
-          tokens,
-          isResultGap ? undefined : gapIndex,
-        );
-        const answer = isResultGap
-          ? value
-          : (tokens.filter((token) => token.kind === "number")[gapIndex]
-              ?.value ?? value);
-        result.push({
-          id: `math-${index}-gap-${gapIndex}`,
-          kind: "math",
-          prompt: `${shownExpression} = ${isResultGap ? "_" : displayMathNumber(value)}`,
-          targetWord: String(answer),
-        });
-        return;
-      }
-      result.push({
-        id: `math-${index}-expression`,
-        kind: "math",
-        prompt: tokens ? formatMathChainTokens(tokens) : line,
-        targetWord: String(value),
-        ...(isLatexMathSyntax(line) ? { isLatex: true } : {}),
-      });
-    });
-    return result;
-  }, [contentMode, mathLines, mathGap, mathGaps]);
 
   const words = useMemo(
     () =>
@@ -652,17 +523,19 @@ export function useTeacherLiveRoom(
     ],
   );
 
-  function generateSingleMathLine() {
-    return generateMentalMathSource({
-      count: 1,
-      min: mathMin,
-      max: mathMax,
-      operations: mathOps.length ? mathOps : ["+"],
-      allowNegativeResults: mathAllowNegative,
-      excludeZeroOperand: mathExcludeZeroOperand,
-      excludeZeroResult: mathExcludeZeroResult,
-      multiplicationTables: mathTables,
-    }).trim();
+  const mathSettings: TeacherMathSettings = {
+    min: mathMin,
+    max: mathMax,
+    operations: mathOps,
+    allowNegativeResults: mathAllowNegative,
+    excludeZeroOperand: mathExcludeZeroOperand,
+    excludeZeroResult: mathExcludeZeroResult,
+    tables: mathTables,
+    gap: mathGap,
+  };
+
+  function generateSingleLine() {
+    return generateSingleMathLine(mathSettings);
   }
 
   function commitMathLines(lines: string[]) {
@@ -686,9 +559,14 @@ export function useTeacherLiveRoom(
     const el = mathEditInputRef.current;
     const start = el?.selectionStart ?? mathDraft.length;
     const end = el?.selectionEnd ?? start;
-    const next = mathDraft.slice(0, start) + token + mathDraft.slice(end);
-    setMathDraft(next);
-    const pos = start + cursorOffset;
+    const { text, cursor: pos } = insertAtSelection(
+      mathDraft,
+      token,
+      start,
+      end,
+      cursorOffset,
+    );
+    setMathDraft(text);
     requestAnimationFrame(() => {
       el?.focus();
       el?.setSelectionRange(pos, pos);
@@ -774,11 +652,8 @@ export function useTeacherLiveRoom(
   ).sort((a, b) => a.localeCompare(b, "de"));
   const allNames = Array.from(new Set([...registeredNames, ...connectedNames]));
 
-  /** Im Raum, übt allein weiter (Raumseite verlassen) oder nicht verbunden. */
   function statusFor(name: string): ParticipantStatus {
-    if (practicingNames.includes(name)) return "practice";
-    if (connectedNames.includes(name)) return "online";
-    return "offline";
+    return participantStatus(practicingNames, connectedNames, name);
   }
   const roomConfig = useMemo(
     () =>
@@ -805,25 +680,16 @@ export function useTeacherLiveRoom(
         wordsOverride: words,
         ...(contentMode === "math"
           ? {
-              mathPracticeOptions: {
-                operations: (mathOps.length ? mathOps : ["+"]).map((op) =>
-                  op === "+"
-                    ? ("add" as const)
-                    : op === "-"
-                      ? ("subtract" as const)
-                      : op === "*"
-                        ? ("multiply" as const)
-                        : ("divide" as const),
-                ),
-                minValue: mathMin,
-                maxValue: mathMax,
-                count: 10,
+              mathPracticeOptions: buildMathPracticeOptions({
+                min: mathMin,
+                max: mathMax,
+                operations: mathOps,
                 allowNegativeResults: mathAllowNegative,
                 excludeZeroOperand: mathExcludeZeroOperand,
                 excludeZeroResult: mathExcludeZeroResult,
-                multiplicationTables: mathTables,
-                gapMode: mathGap,
-              },
+                tables: mathTables,
+                gap: mathGap,
+              }),
             }
           : {}),
       }),
@@ -1434,28 +1300,12 @@ export function useTeacherLiveRoom(
   }
 
   function exportCsv() {
-    const resultNames =
-      gameMode === "STATION"
-        ? students
-            .filter((student) => student.stationNumber !== null)
-            .sort(
-              (left, right) =>
-                (left.stationNumber ?? 0) - (right.stationNumber ?? 0),
-            )
-            .map((student) => student.studentName)
-        : allNames;
+    const resultNames = resultNamesFor(gameMode, students, allNames);
     const blob = new Blob(
       [
-        buildTeacherResultCsv(resultNames, students, words.length, (name) => {
-          const participant = participants.find(
-            (item) => item.studentName === name,
-          );
-          if (participant?.animalToken)
-            return participant.animalNumber > 1
-              ? `${participant.animalToken} ${participant.animalNumber}`
-              : participant.animalToken;
-          return name.startsWith("participant-") ? "Ohne Tier" : name;
-        }),
+        buildTeacherResultCsv(resultNames, students, words.length, (name) =>
+          csvParticipantLabel(name, participants),
+        ),
       ],
       { type: "text/csv;charset=utf-8" },
     );
@@ -1555,7 +1405,7 @@ export function useTeacherLiveRoom(
   function rerollMathLine(index: number) {
     const lines = [...mathLines];
     try {
-      lines[index] = generateSingleMathLine();
+      lines[index] = generateSingleLine();
     } catch {
       setError(MATH_RULE_ERROR);
       return;
@@ -1720,29 +1570,16 @@ export function useTeacherLiveRoom(
     await refresh();
   }
 
-  /** Anzeigename eines anonymen Raumschlüssels: Tier und Nummer. */
   function labelFor(key: string | null | undefined) {
-    const participant = participants.find((item) => item.studentName === key);
-    if (participant?.animalToken)
-      return participant.animalNumber > 1
-        ? `${participant.animalToken} ${participant.animalNumber}`
-        : participant.animalToken;
-    if (!key) return "Unbekannt";
-    return key.startsWith("participant-") ? "Ohne Tier" : key;
+    return participantLabel(participants, key);
   }
 
   function clearManualRanges() {
     setManualRanges([]);
   }
 
-  /**
-   * Tier eines Raumschlüssels für die Bildanzeige. Ältere Raumdienste liefern
-   * kein eigenes Tierfeld, sondern den Tiernamen als Schlüssel („Fuchs 2“).
-   */
   function animalFor(key: string | null | undefined) {
-    const participant = participants.find((item) => item.studentName === key);
-    if (participant?.animalToken) return participant.animalToken;
-    return key ? animalTokenFromDisplayName(key) : null;
+    return participantAnimal(participants, key);
   }
 
   function jumpToStage(id: Stage) {

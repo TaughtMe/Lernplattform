@@ -627,3 +627,39 @@ export function checkMentalMathAnswer(
     Math.abs(Number(normalized) - task.answer) < 0.01
   );
 }
+
+/** Zerlegt den Aufgabentext der Lehrkraft in getrimmte, nicht leere Zeilen. */
+export function splitMathLines(source: string) {
+  return source
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+/**
+ * Die Lücke einer Rechenzeile ist ein einzelner Zahlenindex: 0..N-1 verdeckt
+ * die jeweilige Zahl im Term (nur Zahlen gezählt, von links nach rechts), N
+ * (eins hinter der letzten) verdeckt stattdessen das Ergebnis. Das gilt
+ * gleich für eine einfache Aufgabe mit zwei Zahlen und für eine Kette.
+ * Vorgabe: die letzte Zahl des Terms.
+ */
+export function defaultMathGapIndex(numberCount: number) {
+  return Math.max(0, numberCount - 1);
+}
+
+/**
+ * Fügt `token` an der Auswahl [start, end) des Entwurfs ein und liefert den
+ * neuen Text samt Cursorposition (`start` + `cursorOffset`).
+ */
+export function insertAtSelection(
+  draft: string,
+  token: string,
+  start: number,
+  end: number,
+  cursorOffset: number,
+) {
+  return {
+    text: draft.slice(0, start) + token + draft.slice(end),
+    cursor: start + cursorOffset,
+  };
+}
