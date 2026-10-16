@@ -1,10 +1,10 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import {
   createEnrollmentCode,
   createEnrollmentLink,
 } from "../src/domain/class-enrollment";
 import { createTeacherAssignmentCode } from "../src/domain/teacher-workspace";
+import { analyzeAccessibility } from "./accessibility-helpers";
 import { createBox, startRound } from "./wortspeicher-helpers";
 
 // Die Demo-Klasse 7b ist Testgelände und nur mit Vorschau sichtbar (Bereich
@@ -98,9 +98,7 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/lehrer/einstellungen",
   ]) {
     await page.goto(path);
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-      .analyze();
+    const results = await analyzeAccessibility(page);
 
     expect(results.violations, `Accessibility violations on ${path}`).toEqual(
       [],
@@ -113,9 +111,7 @@ test("the demo class has no automatically detectable WCAG A/AA violations", asyn
 }) => {
   await enablePreview(page);
   await page.goto("/klasse/7b");
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
+  const results = await analyzeAccessibility(page);
 
   expect(results.violations, "Accessibility violations on /klasse/7b").toEqual(
     [],
@@ -546,9 +542,7 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
   }));
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
 
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
+  const results = await analyzeAccessibility(page);
   expect(results.violations).toEqual([]);
 });
 
