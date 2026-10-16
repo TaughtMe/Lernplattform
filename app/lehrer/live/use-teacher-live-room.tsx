@@ -5,115 +5,36 @@
  * Live). Die Fachregeln stammen unverändert aus dem Laufdiktat-Quellcode;
  * die Darstellung liegt in den Schritt-Komponenten dieses Ordners.
  */
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { tokenizeMarkerText } from "../../../src/domain/running-dictation-sections";
 import { defaultMathGapIndex } from "../../../src/domain/mental-math";
-import { type LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
-import {
-  clearTeacherLiveRoom,
-  getLiveRoomState,
-  readTeacherLiveRoom,
-  type LiveRoomState,
-  type OpenedLiveRoom,
-} from "../../../src/integrations/laufdiktat/room-api";
+import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
 import {
   buildMathPracticeOptions,
   buildTeacherRoomConfig,
   buildTeacherWords,
   type TeacherContentMode,
-  type TeacherGameMode,
 } from "../../../src/integrations/laufdiktat/teacher-session";
 import {} from "../../../src/integrations/laufdiktat/teacher-results";
-import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-session";
 import {} from "../../../src/integrations/laufdiktat/room-limits";
 import { useMathContent } from "./hooks/use-math-content";
 import { useLiveClassChoice } from "./hooks/use-live-class-choice";
 import { useTextContent } from "./hooks/use-text-content";
 import { useVocabularyContent } from "./hooks/use-vocabulary-content";
+import { DEFAULT_SOURCES, MODES } from "./lib/modes";
 import type { Stage } from "./teacher-live-flow";
-import {
-  useLiveRoomChannel,
-  useLiveRoomSession,
-} from "./hooks/use-live-room-session";
+import { useLiveRoomSession } from "./hooks/use-live-room-session";
+import { useContentRestore } from "./hooks/use-content-restore";
+import { useLaunchRequest } from "./hooks/use-launch-request";
 import { useGameSettings } from "./hooks/use-game-settings";
 import { useHydrated } from "../../ui/use-hydrated";
 import { createTeacherContentLibraryRepository } from "../../../src/storage/teacher-class-settings";
-import { liveContentToPackage, packageToLiveContent } from "../content-adapter";
-import { takeLiveIntent } from "../live-intent";
+import { liveContentToPackage } from "../content-adapter";
 import { splitModeOf } from "./dictation-adapter";
-import {} from "./lib/participant-display";
-import type { TeacherContentPackage } from "../../../src/domain/teacher-content-library";
 
 export type { Stage };
 
-export const LABELS: Record<TeacherContentMode, string> = {
-  text: "Text",
-  vocabulary: "Vokabeln",
-  math: "Kopfrechnen",
-};
-export const CONTENT_MODES: TeacherContentMode[] = [
-  "text",
-  "math",
-  "vocabulary",
-];
-export const ALL_MODES: Array<{
-  id: TeacherGameMode;
-  title: string;
-  text: string;
-  short: string;
-  steps: readonly [string, string, string];
-}> = [
-  {
-    id: "LAUFDIKTAT",
-    title: "Laufdiktat",
-    text: "Abschnitt ansehen, verdecken, aus dem Gedächtnis schreiben und prüfen.",
-    short: "2-Finger-Touch zum Einprägen, dann tippen.",
-    steps: [
-      "Abschnitt einprägen",
-      "Zum Schreibfeld wechseln",
-      "Eingabe prüfen & bewerten",
-    ],
-  },
-  {
-    id: "UEBUNG",
-    title: "Freies Üben",
-    text: "Einprägen, schreiben und mit optionalen Hilfen verbessern.",
-    short: "Vorlesen und gestufte Buchstaben-Hilfe.",
-    steps: ["Wort anhören", "Wort eintippen", "Buchstaben-Hilfe nutzen"],
-  },
-  {
-    id: "BATTLE",
-    title: "Battle",
-    text: "Gleichzeitig üben und durch Lernfortschritt Angriffe aufladen.",
-    short: "Gegeneinander, mit Störangriffen.",
-    steps: [
-      "Gemeinsam starten",
-      "Aufgaben lösen & Angriffe laden",
-      "Runde vollständig abschließen",
-    ],
-  },
-  {
-    id: "STATION",
-    title: "Stationen",
-    text: "Geteilte Stationsgeräte: Nummer wählen, merken und auf Papier schreiben.",
-    short: "Ohne eigenes Gerät, an nummerierten Stationen.",
-    steps: [
-      "Station auswählen",
-      "Abschnitt lesen & merken",
-      "Auf Papier schreiben",
-    ],
-  },
-];
-export const MODES = ALL_MODES;
-const DEFAULT_SOURCES: Record<TeacherContentMode, string> = {
-  text: "",
-  vocabulary: "",
-  math: "",
-};
-function nowIso(clock: () => number) {
-  return new Date(clock()).toISOString();
-}
+export { ALL_MODES, CONTENT_MODES, LABELS, MODES } from "./lib/modes";
 export {
   emptyVocabularyPair,
   emptyVocabularySide,
@@ -125,8 +46,6 @@ export function useTeacherLiveRoom(
   clock: () => number = Date.now,
 ) {
   const hydrated = useHydrated();
-  const router = useRouter();
-  const params = useSearchParams();
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
   const [sources, setSources] = useState(DEFAULT_SOURCES);
@@ -403,7 +322,18 @@ export function useTeacherLiveRoom(
     ],
   );
 
+  const { applyRestoredContent } = useContentRestore({
+    setContentMode,
+    setSources,
+    loadPairsFromTable,
+    patchSettings,
+    setVocabularyTransfer,
+    setWordStoreTransfer,
+    setRoundTag,
+    setRestoredClassSeal,
+  });
   const session = useLiveRoomSession({
+    hydrated,
     liveRoomConfig,
     clock,
     stage,
@@ -411,6 +341,8 @@ export function useTeacherLiveRoom(
     roomClosed,
     setRoomClosed,
     setBusy,
+    setRestoreChecked,
+    applyRestoredContent,
     setError,
     roomConfig,
     wordCount: words.length,
@@ -419,7 +351,6 @@ export function useTeacherLiveRoom(
   });
   const {
     room,
-    setRoom,
     participants,
     students,
     connectionWarning,
@@ -437,205 +368,32 @@ export function useTeacherLiveRoom(
     removeParticipant,
   } = session;
 
-  // Übernimmt einen offenen Raum samt Inhalt und Optionen. Liest den Stand
-  // dieses Renderns; Auslöser ist allein der Effekt darunter.
-  const applyRestoredRoom = useEffectEvent(
-    (
-      stored: OpenedLiveRoom,
-      state: LiveRoomState,
-      restoreClock: () => number,
-    ) => {
-      const restored = parseLiveSession(
-        state.config,
-        state.sessionId ?? "lobby",
-        "teacher-restore",
-      );
-      const restoredContent = restored.words[0]?.kind ?? "text";
-      const nextContentMode: TeacherContentMode =
-        restoredContent === "vocabulary"
-          ? "vocabulary"
-          : restoredContent === "math"
-            ? "math"
-            : "text";
-      const restoredSource = restored.words
-        .map((word) =>
-          nextContentMode === "vocabulary"
-            ? `${word.prompt ?? ""};${word.targetWord}`
-            : nextContentMode === "math"
-              ? (word.prompt ?? word.targetWord)
-              : word.targetWord,
-        )
-        .join("\n");
-      setContentMode(nextContentMode);
-      setSources((current) => ({
-        ...current,
-        [nextContentMode]: restoredSource,
-      }));
-      if (nextContentMode === "vocabulary") {
-        loadPairsFromTable(restoredSource);
-      }
-      patchSettings({
-        gameMode: restored.stationMode ? "STATION" : restored.gameMode,
-        shuffleWords: restored.shuffleWords,
-        stationShuffle: restored.stationShuffle,
-        repeatWrongAnswers: restored.repeatWrongAnswers,
-        assistance: restored.uebungAssistanceEnabled,
-        attempts: restored.uebungMaxAttempts,
-        tts: restored.isTtsEnabled,
-        showStars: restored.showStars,
-        strictTyping: restored.strictTypingMode,
-        taskHelp: restored.showTaskAfterErrors,
-        stationCount: restored.stationCount,
-        battleInk: restored.battleOptions.ink,
-        battleFlicker: restored.battleOptions.flicker,
-      });
-      setVocabularyTransfer(restored.vocabularyTransfer);
-      setWordStoreTransfer(restored.wordStoreTransfer);
-      setRoundTag(restored.vocabularyTag ?? "");
-      setRestoredClassSeal(restored.classSeal);
-      // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
-      setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(restoreClock) });
-      setStage(state.status === "live" ? "live" : "lobby");
-      setRestoreChecked(true);
-    },
-  );
-  useEffect(() => {
-    if (!hydrated || !liveRoomConfig || room) return;
-    const stored = readTeacherLiveRoom();
-    if (!stored) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
-      setRestoreChecked(true);
-      return;
-    }
-    getLiveRoomState(liveRoomConfig, stored.roomId, {
-      accessToken: stored.accessToken,
-    })
-      .then((state) => {
-        if (!state || state.status === "ended") {
-          clearTeacherLiveRoom();
-          setRestoreChecked(true);
-          return;
-        }
-        applyRestoredRoom(stored, state, clock);
-      })
-      .catch(() => {
-        clearTeacherLiveRoom();
-        setRestoreChecked(true);
-      });
-  }, [clock, hydrated, liveRoomConfig, room]);
-
-  useLiveRoomChannel({ liveRoomConfig, stage, roomClosed, session });
-
-  // Ohne Raumdienst gibt es nichts wiederherzustellen.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
-    if (hydrated && !liveRoomConfig) setRestoreChecked(true);
-  }, [hydrated, liveRoomConfig]);
-
-  function applyLoadedContent(entry: TeacherContentPackage) {
-    const loaded = packageToLiveContent(entry);
-    setContentMode(loaded.contentMode);
-    setSources((current) => ({
-      ...current,
-      [loaded.contentMode]: loaded.source,
-    }));
-    setTitle(loaded.title);
-    setContentId(entry.id);
-    if (loaded.contentMode === "text") {
-      resetTextLayout(loaded.textSplitConfig);
-    }
-    if (loaded.contentMode === "vocabulary") {
-      loadPairsFromTable(loaded.source);
-      setVocabularyLocales(loaded.vocabularyLocales);
-      setShuffleWords(true);
-    }
-  }
-
-  // Adresse (`inhalt`, `neu`, `schritt`, `modus`) und Start-Absicht werten wir
-  // genau einmal aus. Beides löst nur Laden und Anzeigen aus; einen Raum
-  // erstellt allein „Jetzt starten“, und die Absicht ist dann schon gelöscht.
-  const paramsHandled = useRef(false);
-  // Liest den Stand dieses Renderns; Auslöser sind allein die Abhängigkeiten des Effekts.
-  const handleLaunchParams = useEffectEvent(() => {
-    const contentParam = params.get("inhalt");
-    const newParam = params.get("neu");
-    const stepParam = params.get("schritt");
-    const modeParam = params.get("modus");
-    const classParam = params.get("klasse");
-    const intent = takeLiveIntent();
-    const hasParams = Boolean(contentParam || newParam || stepParam);
-    if (!hasParams && !intent) return;
-    if (hasParams) router.replace("/lehrer/live");
-    if (room) {
-      // Ein offener Raum hat Vorrang; nichts wird überschrieben.
-      if (contentParam || newParam || intent)
-        setError(
-          "Es ist schon ein Raum offen. Beende ihn zuerst, um einen anderen Inhalt zu laden.",
-        );
-      return;
-    }
-    void (async () => {
-      const id = intent?.contentId ?? contentParam;
-      if (id) {
-        const entry = await createTeacherContentLibraryRepository().get(id);
-        if (!entry) {
-          setError("Dieser Inhalt ist nicht mehr in der Ablage.");
-          return;
-        }
-        applyLoadedContent(entry);
-      } else if (
-        newParam === "text" ||
-        newParam === "math" ||
-        newParam === "vocabulary"
-      ) {
-        chooseContentMode(newParam);
-        setContentId(null);
-        setTitle("");
-      }
-      const mode =
-        intent?.mode ?? ALL_MODES.find(({ id }) => id === modeParam)?.id;
-      if (mode) setGameMode(mode);
-      // Die Klasse der Ablage gilt auch für neue Inhalte und den nächsten Raum.
-      if (
-        !intent &&
-        classParam &&
-        (classParam === "ohne" ||
-          liveClasses.some(({ id }) => id === classParam))
-      ) {
-        await setClassChoice(classParam === "ohne" ? "" : classParam);
-      }
-      if (stepParam === "inhalt") setStage("content");
-      if (stepParam === "einstellungen") setStage("settings");
-      if (intent) {
-        const known = liveClasses.some(({ id }) => id === intent.classId);
-        await setClassChoice(known ? intent.classId : "");
-        setStage("settings");
-        setStartRequested(true);
-      }
-    })().catch(() =>
-      setError("Der Inhalt konnte nicht aus der Ablage geladen werden."),
-    );
+  useLaunchRequest({
+    hydrated,
+    liveRoomConfig,
+    restoreChecked,
+    classesLoaded,
+    room,
+    busy,
+    startRequested,
+    liveClasses,
+    setError,
+    setRestoreChecked,
+    setStartRequested,
+    setStage,
+    setContentMode,
+    setSources,
+    setTitle,
+    setContentId,
+    resetTextLayout,
+    loadPairsFromTable,
+    setVocabularyLocales,
+    setShuffleWords,
+    setGameMode,
+    chooseContentMode,
+    setClassChoice,
+    openLobby,
   });
-  useEffect(() => {
-    if (paramsHandled.current) return;
-    if (!hydrated || !restoreChecked || !classesLoaded) return;
-    paramsHandled.current = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmalige Auswertung der Adresse beim Start, kein Abgleich von Zuständen
-    handleLaunchParams();
-  }, [classesLoaded, hydrated, params, restoreChecked, room, router]);
-
-  // „Jetzt starten“: Sobald Inhalt, Modus und Klasse übernommen sind, öffnet
-  // sich die Lobby mit den Standardoptionen des Modus.
-  const onStartRequested = useEffectEvent(() => {
-    if (busy || room) return;
-    setStartRequested(false);
-    void openLobby();
-  });
-  useEffect(() => {
-    if (!startRequested) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliges Ergebnis einer Prüfung beim Start, kein Abgleich von Zuständen
-    onStartRequested();
-  }, [startRequested]);
 
   /** Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. */
   async function storeContent(markUsed: boolean, moveToClass = false) {

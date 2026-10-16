@@ -28,13 +28,19 @@ import {
   getLiveRoomState,
   getLiveRoomStudents,
   openLiveRoom,
+  readTeacherLiveRoom,
   removeLiveRoomParticipant,
   saveTeacherLiveRoom,
   updateLiveSession,
   type LiveRoomParticipant,
+  type LiveRoomState,
   type LiveRoomStudent,
   type OpenedLiveRoom,
 } from "../../../../src/integrations/laufdiktat/room-api";
+import {
+  parseLiveSession,
+  type LiveSession,
+} from "../../../../src/integrations/laufdiktat/live-session";
 import type {
   buildTeacherRoomConfig,
   TeacherGameMode,
@@ -66,6 +72,7 @@ function isOnline(participant: LiveRoomParticipant) {
 }
 
 type LiveRoomSessionInput = {
+  hydrated: boolean;
   liveRoomConfig: LiveRoomConfig | null;
   /** Uhr in Millisekunden; die Tests setzen eine eigene, ohne zu warten. */
   clock: () => number;
@@ -74,6 +81,9 @@ type LiveRoomSessionInput = {
   roomClosed: boolean;
   setRoomClosed: Dispatch<SetStateAction<boolean>>;
   setBusy: Dispatch<SetStateAction<boolean>>;
+  setRestoreChecked: Dispatch<SetStateAction<boolean>>;
+  /** Holt Inhalt und Optionen eines wiederaufgenommenen Raums in den Editor. */
+  applyRestoredContent: (restored: LiveSession) => void;
   setError: (message: string) => void;
   /** Raumeinstellungen, die beim Öffnen und Starten an den Server gehen. */
   roomConfig: ReturnType<typeof buildTeacherRoomConfig>;
@@ -89,6 +99,7 @@ type LiveRoomSessionInput = {
  * Zeitstatus, Öffnen, Starten, Beenden, Schließen und Aufräumen.
  */
 export function useLiveRoomSession({
+  hydrated,
   liveRoomConfig,
   clock,
   stage,
@@ -96,6 +107,8 @@ export function useLiveRoomSession({
   roomClosed,
   setRoomClosed,
   setBusy,
+  setRestoreChecked,
+  applyRestoredContent,
   setError,
   roomConfig,
   wordCount,
@@ -239,6 +252,121 @@ export function useLiveRoomSession({
     })();
   }, [closesAtMs, liveRoomConfig, nowMs, room, roomClosed]);
 
+  // Wiederaufnahme: Ein noch offener Raum aus diesem Browser-Tab kommt samt
+  // Inhalt und Optionen zurück. Sie hat Vorrang vor Adressen und Absicht.
+  const markRestoreChecked = useEffectEvent(() => setRestoreChecked(true));
+  const applyRestoredRoom = useEffectEvent(
+    (
+      stored: OpenedLiveRoom,
+      state: LiveRoomState,
+      restoreClock: () => number,
+    ) => {
+      applyRestoredContent(
+        parseLiveSession(
+          state.config,
+          state.sessionId ?? "lobby",
+          "teacher-restore",
+        ),
+      );
+      // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
+      setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(restoreClock) });
+      setStage(state.status === "live" ? "live" : "lobby");
+      markRestoreChecked();
+    },
+  );
+  useEffect(() => {
+    if (!hydrated || !liveRoomConfig || room) return;
+    const stored = readTeacherLiveRoom();
+    if (!stored) {
+      markRestoreChecked();
+      return;
+    }
+    getLiveRoomState(liveRoomConfig, stored.roomId, {
+      accessToken: stored.accessToken,
+    })
+      .then((state) => {
+        if (!state || state.status === "ended") {
+          clearTeacherLiveRoom();
+          markRestoreChecked();
+          return;
+        }
+        applyRestoredRoom(stored, state, clock);
+      })
+      .catch(() => {
+        clearTeacherLiveRoom();
+        markRestoreChecked();
+      });
+  }, [clock, hydrated, liveRoomConfig, room]);
+
+  useEffect(() => {
+    if (!liveRoomConfig || !room || roomClosed) return;
+    const client = getLiveRoomClient(liveRoomConfig);
+    const channel = client.channel(`room-${room.code}`);
+    const refreshSoon = createLiveRoomDebounce(() => void refresh(), {
+      delayMs: 200,
+      maxWaitMs: 1_000,
+    });
+    channelRef.current = channel;
+    const syncPresence = () => {
+      const state = channel.presenceState<{ activity?: string }>();
+      setPresenceNames(Object.keys(state));
+      setPracticingNames(
+        Object.entries(state)
+          .filter(
+            ([, metas]) =>
+              metas.length > 0 &&
+              metas.every((meta) => meta.activity === "practice"),
+          )
+          .map(([name]) => name),
+      );
+    };
+    channel
+      .on("presence", { event: "sync" }, syncPresence)
+      .on("presence", { event: "join" }, syncPresence)
+      .on("presence", { event: "leave" }, syncPresence)
+      .on("broadcast", { event: "student-progress" }, refreshSoon.schedule)
+      .on("broadcast", { event: "student-finished" }, refreshSoon.schedule)
+      .on("broadcast", { event: "update-station-state" }, refreshSoon.schedule)
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setConnectionWarning("");
+        }
+        if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
+          setConnectionWarning(
+            "Die Verbindung zum Klassenraum wurde unterbrochen.",
+          );
+        }
+      });
+    const first = window.setTimeout(() => void refresh(), 0);
+    const interval = window.setInterval(
+      () => void refresh(),
+      stage === "live" ? 3_000 : 8_000,
+    );
+    // Teacher device wakes from standby / tab returns to the foreground
+    // (e.g. an iPad at the projector): kick the connection immediately
+    // instead of waiting for the automatic reconnect backoff, and pull the
+    // authoritative state (results + roster) right away — broadcasts missed
+    // during standby never arrive after the fact.
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      if (channel.state !== "joined") client.realtime.connect();
+      refreshSoon.schedule();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearTimeout(first);
+      window.clearInterval(interval);
+      refreshSoon.cancel();
+      if (channelRef.current === channel) channelRef.current = null;
+      void client.removeChannel(channel);
+    };
+  }, [liveRoomConfig, refresh, room, roomClosed, stage]);
+
   const registeredNames = participants.map(({ studentName }) => studentName);
   const connectedNames = Array.from(
     new Set([
@@ -369,7 +497,6 @@ export function useLiveRoomSession({
 
   return {
     room,
-    setRoom,
     participants,
     students,
     connectionWarning,
@@ -386,120 +513,5 @@ export function useLiveRoomSession({
     resetRoomState,
     exportCsv,
     removeParticipant,
-    // Für den Kanal-Hook darunter: Zustand, den der Kanal mitführt.
-    channel: {
-      channelRef,
-      setPresenceNames,
-      setPracticingNames,
-      setConnectionWarning,
-    },
   };
-}
-
-type LiveRoomChannelInput = {
-  liveRoomConfig: LiveRoomConfig | null;
-  stage: Stage;
-  roomClosed: boolean;
-  session: ReturnType<typeof useLiveRoomSession>;
-};
-
-/**
- * Der Echtzeit-Kanal des Raums: Anwesenheit, Fortschrittsmeldungen und die
- * regelmäßige Abfrage. Ein eigener Hook, damit der Effekt in der Reihenfolge
- * der übrigen Effekte des Live-Raums bleibt.
- */
-export function useLiveRoomChannel({
-  liveRoomConfig,
-  stage,
-  roomClosed,
-  session,
-}: LiveRoomChannelInput) {
-  const {
-    room,
-    refresh,
-    channel: {
-      channelRef,
-      setPresenceNames,
-      setPracticingNames,
-      setConnectionWarning,
-    },
-  } = session;
-  useEffect(() => {
-    if (!liveRoomConfig || !room || roomClosed) return;
-    const client = getLiveRoomClient(liveRoomConfig);
-    const channel = client.channel(`room-${room.code}`);
-    const refreshSoon = createLiveRoomDebounce(() => void refresh(), {
-      delayMs: 200,
-      maxWaitMs: 1_000,
-    });
-    channelRef.current = channel;
-    const syncPresence = () => {
-      const state = channel.presenceState<{ activity?: string }>();
-      setPresenceNames(Object.keys(state));
-      setPracticingNames(
-        Object.entries(state)
-          .filter(
-            ([, metas]) =>
-              metas.length > 0 &&
-              metas.every((meta) => meta.activity === "practice"),
-          )
-          .map(([name]) => name),
-      );
-    };
-    channel
-      .on("presence", { event: "sync" }, syncPresence)
-      .on("presence", { event: "join" }, syncPresence)
-      .on("presence", { event: "leave" }, syncPresence)
-      .on("broadcast", { event: "student-progress" }, refreshSoon.schedule)
-      .on("broadcast", { event: "student-finished" }, refreshSoon.schedule)
-      .on("broadcast", { event: "update-station-state" }, refreshSoon.schedule)
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          setConnectionWarning("");
-        }
-        if (
-          status === "CHANNEL_ERROR" ||
-          status === "TIMED_OUT" ||
-          status === "CLOSED"
-        ) {
-          setConnectionWarning(
-            "Die Verbindung zum Klassenraum wurde unterbrochen.",
-          );
-        }
-      });
-    const first = window.setTimeout(() => void refresh(), 0);
-    const interval = window.setInterval(
-      () => void refresh(),
-      stage === "live" ? 3_000 : 8_000,
-    );
-    // Teacher device wakes from standby / tab returns to the foreground
-    // (e.g. an iPad at the projector): kick the connection immediately
-    // instead of waiting for the automatic reconnect backoff, and pull the
-    // authoritative state (results + roster) right away — broadcasts missed
-    // during standby never arrive after the fact.
-    const onVisibilityChange = () => {
-      if (document.visibilityState !== "visible") return;
-      if (channel.state !== "joined") client.realtime.connect();
-      refreshSoon.schedule();
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.clearTimeout(first);
-      window.clearInterval(interval);
-      refreshSoon.cancel();
-      if (channelRef.current === channel) channelRef.current = null;
-      void client.removeChannel(channel);
-    };
-  }, [
-    channelRef,
-    liveRoomConfig,
-    refresh,
-    room,
-    roomClosed,
-    setConnectionWarning,
-    setPracticingNames,
-    setPresenceNames,
-    stage,
-  ]);
 }
