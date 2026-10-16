@@ -36,13 +36,7 @@ import {
   type ManualRange,
   type TextSplitConfig,
 } from "../../../src/domain/running-dictation-sections";
-import {
-  defaultMathGapIndex,
-  evaluateMentalMathExpression,
-  insertAtSelection,
-  normalizeMathChainInput,
-  splitMathLines,
-} from "../../../src/domain/mental-math";
+import { defaultMathGapIndex } from "../../../src/domain/mental-math";
 import { LIVE_APP_VERSION } from "../../../src/app-version";
 import {
   getLiveRoomClient,
@@ -65,12 +59,8 @@ import {
 } from "../../../src/integrations/laufdiktat/room-api";
 import {
   buildMathPracticeOptions,
-  buildMathWords,
   buildTeacherRoomConfig,
   buildTeacherWords,
-  generateMentalMathSource,
-  generateSingleMathLine,
-  type TeacherMathSettings,
   type TeacherContentMode,
   type TeacherGameMode,
 } from "../../../src/integrations/laufdiktat/teacher-session";
@@ -89,6 +79,7 @@ import {
   roomTimeline,
   roomTimeState,
 } from "../../../src/integrations/laufdiktat/room-limits";
+import { useMathContent } from "./hooks/use-math-content";
 import { useGameSettings } from "./hooks/use-game-settings";
 import { useHydrated } from "../../ui/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
@@ -212,23 +203,100 @@ export function useTeacherLiveRoom(
   const params = useSearchParams();
   const [stage, setStage] = useState<Stage>("content");
   const [contentMode, setContentMode] = useState<TeacherContentMode>("text");
+  const [sources, setSources] = useState(DEFAULT_SOURCES);
+  const {
+    settings: {
+      gameMode,
+      shuffleWords,
+      stationShuffle,
+      repeatWrongAnswers,
+      assistance,
+      attempts,
+      tts,
+      showStars,
+      strictTyping,
+      taskHelp,
+      stationCount,
+      battleInk,
+      battleFlicker,
+      mathCount,
+      mathMin,
+      mathMax,
+      mathOps,
+      mathAllowNegative,
+      mathExcludeZeroOperand,
+      mathExcludeZeroResult,
+      mathGap,
+      mathTables,
+    },
+    setGameMode,
+    setShuffleWords,
+    setStationShuffle,
+    setRepeatWrongAnswers,
+    setAssistance,
+    setAttempts,
+    setTts,
+    setShowStars,
+    setStrictTyping,
+    setTaskHelp,
+    setStationCount,
+    setBattleInk,
+    setBattleFlicker,
+    setMathCount,
+    setMathMin,
+    setMathMax,
+    setMathAllowNegative,
+    setMathExcludeZeroOperand,
+    setMathExcludeZeroResult,
+    setMathGap,
+    patchSettings,
+    toggleMathOperation,
+    toggleMathTable,
+  } = useGameSettings();
+  const [error, setError] = useState("");
+  const {
+    mathSettingsOpen,
+    setMathSettingsOpen,
+    mathEditIndex,
+    setMathEditIndex,
+    mathDraft,
+    setMathDraft,
+    mathGaps,
+    mathEditInputRef,
+    mathLines,
+    mathWords,
+    mathDraftResult,
+    startEditMathRow,
+    setMathLineGap,
+    insertAtMathCursor,
+    commitMathEdit,
+    generateMathTasks,
+    rerollMathLine,
+    deleteMathLine,
+    startAppendMathLine,
+    cancelMathEdit,
+  } = useMathContent({
+    mathSource: sources.math,
+    contentMode,
+    settings: {
+      mathCount,
+      mathMin,
+      mathMax,
+      mathOps,
+      mathAllowNegative,
+      mathExcludeZeroOperand,
+      mathExcludeZeroResult,
+      mathTables,
+      mathGap,
+    },
+    setSources,
+    setError,
+  });
   const [markerMode, setMarkerMode] = useState(false);
   const [markerAnchor, setMarkerAnchor] = useState<{
     start: number;
     end: number;
   } | null>(null);
-  const [mathSettingsOpen, setMathSettingsOpen] = useState(false);
-  const [mathEditIndex, setMathEditIndex] = useState<number | null>(null);
-  const [mathDraft, setMathDraft] = useState("");
-  // Gap numeral index per math line (0..N-1 = that numeral in the
-  // expression, N = the result), kept separate from the line's text
-  // (mirrors Laufdiktat's useMathImport hook) so editing/rerolling a task's
-  // numbers never has to parse a gap marker back out of the stored string.
-  const [mathGaps, setMathGaps] = useState<number[]>([]);
-  const mathEditInputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (mathEditIndex !== null) mathEditInputRef.current?.focus();
-  }, [mathEditIndex]);
   const [vocabularyPairs, setVocabularyPairs] = useState<VocabularyPair[]>([
     emptyVocabularyPair(),
   ]);
@@ -253,7 +321,6 @@ export function useTeacherLiveRoom(
       vocabulary: serializeVocabularyPairs(pairs),
     }));
   };
-  const [sources, setSources] = useState(DEFAULT_SOURCES);
   const [splitConfig, setSplitConfig] = useState<TextSplitConfig>(
     DEFAULT_TEXT_SPLIT_CONFIG,
   );
@@ -339,55 +406,6 @@ export function useTeacherLiveRoom(
   const classSeal = liveClasses.find(
     ({ id }) => id === activeClass,
   )?.fingerprint;
-  const {
-    settings: {
-      gameMode,
-      shuffleWords,
-      stationShuffle,
-      repeatWrongAnswers,
-      assistance,
-      attempts,
-      tts,
-      showStars,
-      strictTyping,
-      taskHelp,
-      stationCount,
-      battleInk,
-      battleFlicker,
-      mathCount,
-      mathMin,
-      mathMax,
-      mathOps,
-      mathAllowNegative,
-      mathExcludeZeroOperand,
-      mathExcludeZeroResult,
-      mathGap,
-      mathTables,
-    },
-    setGameMode,
-    setShuffleWords,
-    setStationShuffle,
-    setRepeatWrongAnswers,
-    setAssistance,
-    setAttempts,
-    setTts,
-    setShowStars,
-    setStrictTyping,
-    setTaskHelp,
-    setStationCount,
-    setBattleInk,
-    setBattleFlicker,
-    setMathCount,
-    setMathMin,
-    setMathMax,
-    setMathAllowNegative,
-    setMathExcludeZeroOperand,
-    setMathExcludeZeroResult,
-    setMathGap,
-    patchSettings,
-    toggleMathOperation,
-    toggleMathTable,
-  } = useGameSettings();
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLDivElement>(null);
   // Abgelegter Inhalt, der gerade bearbeitet wird (null = noch nicht abgelegt).
@@ -410,7 +428,6 @@ export function useTeacherLiveRoom(
   const [practicingNames, setPracticingNames] = useState<string[]>([]);
   const [students, setStudents] = useState<LiveRoomStudent[]>([]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
   const [connectionWarning, setConnectionWarning] = useState("");
   const channelRef = useRef<RealtimeChannel | null>(null);
   const sourceRef = useRef<HTMLTextAreaElement>(null);
@@ -512,16 +529,6 @@ export function useTeacherLiveRoom(
     if (start < end) addManualSection(start, end);
   }
 
-  const mathLines = useMemo(() => splitMathLines(sources.math), [sources.math]);
-
-  const mathWords = useMemo(
-    () =>
-      contentMode === "math"
-        ? buildMathWords(mathLines, mathGap, mathGaps)
-        : [],
-    [contentMode, mathLines, mathGap, mathGaps],
-  );
-
   const words = useMemo(
     () =>
       contentMode === "text"
@@ -549,90 +556,6 @@ export function useTeacherLiveRoom(
       vocabularyLocales,
     ],
   );
-
-  const mathSettings: TeacherMathSettings = {
-    min: mathMin,
-    max: mathMax,
-    operations: mathOps,
-    allowNegativeResults: mathAllowNegative,
-    excludeZeroOperand: mathExcludeZeroOperand,
-    excludeZeroResult: mathExcludeZeroResult,
-    tables: mathTables,
-    gap: mathGap,
-  };
-
-  function generateSingleLine() {
-    return generateSingleMathLine(mathSettings);
-  }
-
-  function commitMathLines(lines: string[]) {
-    setSources((current) => ({ ...current, math: lines.join("\n") }));
-  }
-
-  function startEditMathRow(index: number) {
-    setMathEditIndex(index);
-    setMathDraft(mathLines[index] ?? "");
-  }
-
-  function setMathLineGap(index: number, gapIndex: number) {
-    setMathGaps((current) => {
-      const next = [...current];
-      next[index] = gapIndex;
-      return next;
-    });
-  }
-
-  function insertAtMathCursor(token: string, cursorOffset: number) {
-    const el = mathEditInputRef.current;
-    const start = el?.selectionStart ?? mathDraft.length;
-    const end = el?.selectionEnd ?? start;
-    const { text, cursor: pos } = insertAtSelection(
-      mathDraft,
-      token,
-      start,
-      end,
-      cursorOffset,
-    );
-    setMathDraft(text);
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(pos, pos);
-    });
-  }
-
-  // Live "= result" (or "ungültig") feedback shown next to the math edit
-  // field while typing, before the value is committed.
-  const mathDraftResult = mathDraft.trim()
-    ? evaluateMentalMathExpression(mathDraft)
-    : null;
-
-  function commitMathEdit(continueEditing: boolean) {
-    if (mathEditIndex === null) return;
-    const editIndex = mathEditIndex;
-    const wasAppending = editIndex >= mathLines.length;
-    const lines = [...mathLines];
-    // Re-space "6+4-2" into "6 + 4 - 2" so the teacher never has to type
-    // (or read back) the spaces themselves; falls back to the raw input
-    // for anything that isn't a plain chain (e.g. \frac/\sqrt).
-    const value = normalizeMathChainInput(mathDraft) ?? mathDraft.trim();
-    if (wasAppending) {
-      if (value) lines.push(value);
-    } else if (value) {
-      lines[editIndex] = value;
-    } else {
-      lines.splice(editIndex, 1);
-      setMathGaps((current) => {
-        const next = [...current];
-        next.splice(editIndex, 1);
-        return next;
-      });
-    }
-    commitMathLines(lines);
-    setMathDraft("");
-    setMathEditIndex(
-      continueEditing && wasAppending && value ? lines.length : null,
-    );
-  }
 
   async function setClassChoice(id: string) {
     setRestoredClassSeal(undefined);
@@ -1390,62 +1313,6 @@ export function useTeacherLiveRoom(
       const parsed = parseVocabularyTable(sources.vocabulary);
       setVocabularyPairs(parsed.length > 0 ? parsed : [emptyVocabularyPair()]);
     }
-  }
-
-  const MATH_RULE_ERROR =
-    "Keine passenden Aufgaben. Bitte ändere den Zahlenraum oder die Regeln.";
-
-  function generateMathTasks() {
-    try {
-      const math = generateMentalMathSource({
-        count: mathCount,
-        min: mathMin,
-        max: mathMax,
-        operations: mathOps,
-        allowNegativeResults: mathAllowNegative,
-        excludeZeroOperand: mathExcludeZeroOperand,
-        excludeZeroResult: mathExcludeZeroResult,
-        multiplicationTables: mathTables,
-      });
-      setSources((current) => ({ ...current, math }));
-      setMathGaps([]);
-      setError("");
-    } catch {
-      setError(MATH_RULE_ERROR);
-    }
-  }
-
-  function rerollMathLine(index: number) {
-    const lines = [...mathLines];
-    try {
-      lines[index] = generateSingleLine();
-    } catch {
-      setError(MATH_RULE_ERROR);
-      return;
-    }
-    commitMathLines(lines);
-  }
-
-  function deleteMathLine(index: number) {
-    const lines = [...mathLines];
-    lines.splice(index, 1);
-    commitMathLines(lines);
-    setMathGaps((current) => {
-      const next = [...current];
-      next.splice(index, 1);
-      return next;
-    });
-    if (mathEditIndex !== null) setMathEditIndex(null);
-  }
-
-  function startAppendMathLine() {
-    setMathEditIndex(mathLines.length);
-    setMathDraft("");
-  }
-
-  function cancelMathEdit() {
-    setMathDraft("");
-    setMathEditIndex(null);
   }
 
   function togglePunctuation(character: string) {
