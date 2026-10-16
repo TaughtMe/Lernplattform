@@ -20,7 +20,14 @@ async function enablePreview(page: Page) {
 }
 
 function isKnownFrameworkDiagnostic(message: string) {
-  return message.includes("<link rel=preload> must have a valid `as` value");
+  return (
+    message.includes("<link rel=preload> must have a valid `as` value") ||
+    // `app/layout.tsx` setzt `interactive-widget` bewusst für Chrome auf
+    // Android. WebKit kennt den Schlüssel nicht und meldet das als Fehler,
+    // ignoriert ihn aber folgenlos.
+    message ===
+      'Viewport argument key "interactive-widget" not recognized and ignored.'
+  );
 }
 
 test("start page exposes the core learner actions", async ({ page }) => {
