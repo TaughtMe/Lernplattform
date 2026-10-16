@@ -715,6 +715,20 @@ test("teachers can prepare every native live-room content type", async ({
       runtimeErrors.push(message.text());
     }
   });
+  // Der Raum wertet `?neu=math` genau einmal aus und räumt die Adresse sofort
+  // mit `router.replace` auf. `toHaveURL` sähe die Zwischenadresse nur, wenn es
+  // vor dem Aufräumen abfragt. Darum hält ein Hook jeden Verlaufseintrag fest.
+  await page.addInitScript(() => {
+    const urls: string[] = [];
+    (window as unknown as { __historyUrls: string[] }).__historyUrls = urls;
+    for (const method of ["pushState", "replaceState"] as const) {
+      const original = history[method];
+      history[method] = function (...args: Parameters<typeof original>) {
+        if (args[2] != null) urls.push(String(args[2]));
+        return original.apply(this, args);
+      };
+    }
+  });
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Inhalte" })).toBeVisible();
@@ -730,7 +744,13 @@ test("teachers can prepare every native live-room content type", async ({
   await page.getByRole("button", { name: /^Mathe/ }).click();
   const next = page.getByRole("button", { name: "Weiter", exact: true });
   if (await next.isVisible()) await next.click();
-  await expect(page).toHaveURL(/\/lehrer\/live\?neu=math/);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { __historyUrls: string[] }).__historyUrls,
+      ),
+    )
+    .toContainEqual(expect.stringMatching(/\/lehrer\/live\?neu=math/));
   await page.goBack();
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),
