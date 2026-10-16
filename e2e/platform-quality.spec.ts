@@ -48,7 +48,14 @@ test("start page exposes the core learner actions", async ({ page }) => {
   const joinBox = await page
     .getByRole("group", { name: "Raumcode" })
     .boundingBox();
-  expect(discBox?.width ?? 0).toBeGreaterThanOrEqual(200);
+  // Seit e6abfa7 misst die Scheibe min(288 px, 29 dvh), damit Impressum und
+  // Datenschutz auf der Startseite ohne Scrollen sichtbar bleiben.
+  const viewportHeight = await page.evaluate(() => window.innerHeight);
+  expect(discBox?.width ?? 0).toBeCloseTo(
+    Math.min(288, viewportHeight * 0.29),
+    0,
+  );
+  expect(discBox?.width ?? 0).toBeGreaterThanOrEqual(180);
   expect(joinBox?.y ?? 0).toBeGreaterThan(
     (discBox?.y ?? 0) + (discBox?.height ?? 0),
   );
