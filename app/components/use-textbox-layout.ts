@@ -22,7 +22,7 @@ export function useTextboxLayout() {
   const [layout, setLayout] = useState<TextboxLayout>("heft");
   useEffect(() => {
     // Erst nach dem Mounten lesen, damit Server- und Browser-Ansicht übereinstimmen.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Server und Browser müssen zuerst dieselbe Vorgabe rendern; der gespeicherte Wert wird erst nach dem Mounten gelesen
     setLayout(load());
   }, []);
   const choose = useCallback((next: TextboxLayout) => {

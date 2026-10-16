@@ -12,9 +12,16 @@ import type {
   WordStoreTransferChoice,
 } from "./live-session";
 import {
+  countMathChainNumbers,
+  defaultMathGapIndex,
+  displayMathNumber,
+  evaluateMentalMathExpression,
+  formatMathChainTokens,
   generateMentalMathTasks,
+  isLatexMathSyntax,
   normalizeMathChainInput,
   parseMentalMathTask,
+  tokenizeMathChain,
   type MentalMathOperation,
 } from "../../domain/mental-math";
 import { LIVE_APP_VERSION } from "../../app-version";
@@ -234,4 +241,108 @@ export function generateMentalMathSource(options: {
           (normalizeMathChainInput(task.source) ?? task.source),
     )
     .join("\n");
+}
+
+/** Spiel-Operatoren der Lehrkraft-Oberfläche → Operationen der Übungsoptionen. */
+export function mathPracticeOperations(operations: MathOperation[]) {
+  return (operations.length ? operations : (["+"] as MathOperation[])).map(
+    (op) =>
+      op === "+"
+        ? ("add" as const)
+        : op === "-"
+          ? ("subtract" as const)
+          : op === "*"
+            ? ("multiply" as const)
+            : ("divide" as const),
+  );
+}
+
+export type TeacherMathSettings = {
+  min: number;
+  max: number;
+  operations: MathOperation[];
+  allowNegativeResults: boolean;
+  excludeZeroOperand: boolean;
+  excludeZeroResult: boolean;
+  tables: number[];
+  gap: boolean;
+};
+
+/** Übungsoptionen, die der Raum für Kopfrechnen an die Schüler weitergibt. */
+export function buildMathPracticeOptions(settings: TeacherMathSettings) {
+  return {
+    operations: mathPracticeOperations(settings.operations),
+    minValue: settings.min,
+    maxValue: settings.max,
+    count: 10,
+    allowNegativeResults: settings.allowNegativeResults,
+    excludeZeroOperand: settings.excludeZeroOperand,
+    excludeZeroResult: settings.excludeZeroResult,
+    multiplicationTables: settings.tables,
+    gapMode: settings.gap,
+  };
+}
+
+/** Eine einzelne neue Rechenzeile mit den aktuellen Kopfrechen-Einstellungen. */
+export function generateSingleMathLine(settings: TeacherMathSettings) {
+  return generateMentalMathSource({
+    count: 1,
+    min: settings.min,
+    max: settings.max,
+    operations: settings.operations.length ? settings.operations : ["+"],
+    allowNegativeResults: settings.allowNegativeResults,
+    excludeZeroOperand: settings.excludeZeroOperand,
+    excludeZeroResult: settings.excludeZeroResult,
+    multiplicationTables: settings.tables,
+  }).trim();
+}
+
+/**
+ * Wörter für Kopfrechnen aus den Rechenzeilen. Lücken werden bei jedem Aufruf
+ * frisch aus Text und `gaps` abgeleitet, nie in die Zeile eingebrannt — so
+ * kann das Ändern von Zahlen oder das Hinzufügen einer Aufgabe keine Lücke
+ * verlieren oder beschädigen.
+ */
+export function buildMathWords(
+  lines: string[],
+  gapMode: boolean,
+  gaps: number[],
+): LiveWord[] {
+  const result: LiveWord[] = [];
+  lines.forEach((line, index) => {
+    const value = evaluateMentalMathExpression(line);
+    if (value === null) return;
+    const tokens = tokenizeMathChain(line);
+    const numberCount = tokens ? countMathChainNumbers(tokens) : 0;
+    const gapIndex =
+      gapMode && tokens
+        ? (gaps[index] ?? defaultMathGapIndex(numberCount))
+        : undefined;
+    if (tokens && gapIndex !== undefined) {
+      const isResultGap = gapIndex >= numberCount;
+      const shownExpression = formatMathChainTokens(
+        tokens,
+        isResultGap ? undefined : gapIndex,
+      );
+      const answer = isResultGap
+        ? value
+        : (tokens.filter((token) => token.kind === "number")[gapIndex]?.value ??
+          value);
+      result.push({
+        id: `math-${index}-gap-${gapIndex}`,
+        kind: "math",
+        prompt: `${shownExpression} = ${isResultGap ? "_" : displayMathNumber(value)}`,
+        targetWord: String(answer),
+      });
+      return;
+    }
+    result.push({
+      id: `math-${index}-expression`,
+      kind: "math",
+      prompt: tokens ? formatMathChainTokens(tokens) : line,
+      targetWord: String(value),
+      ...(isLatexMathSyntax(line) ? { isLatex: true } : {}),
+    });
+  });
+  return result;
 }

@@ -101,7 +101,7 @@ function Peek() {
     animalFileName(ANIMALS[Math.floor(Math.random() * ANIMALS.length)]!.name);
   useEffect(() => {
     // Zufall erst im Browser: Server und Client erzeugen so dasselbe HTML.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- der Zufall darf erst im Browser entstehen, sonst weicht das Server-HTML ab
     setAnimal(pick());
   }, []);
   return (

@@ -34,6 +34,27 @@ describe("Freigaberegister", () => {
     expect(areaForPath("/entwicklung/ui")).toBeNull();
   });
 
+  it("trennt die Demo-Klasse 7b von echten Klassen", () => {
+    expect(areaForPath("/klasse/7b")).toBe("demo-klasse");
+    expect(areaForPath("/klasse/7b/aufgaben/vokabeln")).toBe("demo-klasse");
+    expect(areaForPath("/klasse/7c")).toBe("lernen");
+    expect(areaForPath("/klasse/0b6c1d2e-3f4a-4b5c-8d9e-0a1b2c3d4e5f")).toBe(
+      "lernen",
+    );
+
+    const stages = resolveStages(undefined);
+    expect(stages["demo-klasse"]).toBe("vorschau");
+    expect(isPathVisible("/klasse/7b", resolveVisibility(stages, false))).toBe(
+      false,
+    );
+    expect(isPathVisible("/klasse/7b", resolveVisibility(stages, true))).toBe(
+      true,
+    );
+    expect(isPathVisible("/klasse/7c", resolveVisibility(stages, false))).toBe(
+      true,
+    );
+  });
+
   it("nutzt Schulbetrieb-Standards und übernimmt gültige Abweichungen", () => {
     const defaults = resolveStages(undefined);
     expect(defaults.raum).toBe("frei");

@@ -6,7 +6,7 @@ Dieser Standard ist verbindlich für Lernraum, Laufdiktat und LernBox. Er übers
 
 1. **Fachlicher Kern ohne UI-Framework:** Lernregeln, Datenmigrationen und Auswertungen liegen als reine TypeScript-Funktionen unter `src/domain`. React- oder Next-Importe sind dort per ESLint verboten.
 2. **Schema-first an Systemgrenzen:** Importdateien, QR-Pakete, lokale Daten, Netzwerkantworten und Formulareingaben werden zur Laufzeit mit Zod geprüft. TypeScript-Typen allein reichen für fremde Daten nicht aus.
-3. **Ereignisse sind unveränderlich:** Lernereignisse werden ergänzt, nicht nachträglich umgedeutet. Projektionen wie Fälligkeit und Boxstand müssen reproduzierbar neu berechnet werden können.
+3. **Ereignisse sind unveränderlich:** Lernereignisse werden ergänzt, nicht nachträglich umgedeutet. Projektionen wie Fälligkeit und Boxstand müssen reproduzierbar neu berechnet werden können. Für die LernBox gilt: Der gespeicherte Kartenstand ist ein Zwischenspeicher. Ab dem letzten Ausgangsstand ergibt er sich vollständig aus den LernBox-Ereignissen (`replayLearningBoxCard`, geprüft per Eigenschaftstest). Ausgangsstände ohne Ereignis sind: neue Karte, Platzierung aus einer Unterrichtsrunde (Entscheidung 49) und Zusammenführen einer Sicherung.
 4. **Local-first über einen Adapter:** Direkter IndexedDB-Zugriff aus Komponenten ist verboten. Dexie wird ausschließlich hinter typisierten Repositories mit versionierten Migrationen verwendet.
 5. **Abhängigkeiten zeigen nach innen:** Oberfläche und Speicher dürfen den fachlichen Kern verwenden; der fachliche Kern kennt Oberfläche, Browser und Speicher nicht.
 6. **Explizite Zustände:** Laden, leer, erfolgreich, offline, eingeschränkt und fehlgeschlagen werden als eigene Zustände behandelt. Fehler dürfen nicht wie leere Daten aussehen.
@@ -63,15 +63,21 @@ Nicht ohne neue Architekturentscheidung eingeführt werden globale State-Manager
 
 ### Bei jeder Änderung an Oberfläche oder Ablauf
 
+`e2e/platform-quality.spec.ts` (axe-Prüfung aller Hauptseiten, LernBox, Lehrer-Arbeitsbereich, Einschreibung, Kopfrechnen) ist wieder Teil der Pflichtsuite und läuft in `npm run test:e2e` über alle Browser-Projekte. Die frühere Sperre über `ENABLE_PRE_PILOT_E2E` ist entfernt, weil seit Entscheidung 48 alle Lernbereiche freigegeben sind (`src/domain/release.ts`).
+
 Zusätzlich muss mindestens `npm run test:e2e:chromium` laufen. Vor einem Meilenstein läuft `npm run quality` über die vollständige Browser- und Gerätematrix.
 
 ### Mindestabdeckung
 
-Für `src/domain` und `src/storage` gelten derzeit mindestens:
+Für `src/domain`, `src/storage` und `src/speech` gelten derzeit mindestens:
 
 - 90 Prozent Zeilen, Statements und Funktionen
 - 85 Prozent Verzweigungen
 - 100 Prozent für sicherheitskritische Parser, Migrationen und Rollenentscheidungen wird pro Modul angestrebt und bei deren Einführung gesondert festgelegt
+
+Für `src/integrations` (Cloud-Sync, Kryptografie, Raum-API, Inhaltsübertragung, Sicherung) gelten eigene Grenzen in `vitest.config.ts`: 95 Prozent Zeilen und Statements, 93 Prozent Funktionen, 90 Prozent Verzweigungen. Für den Sicherheitskern (`crypto/`, `content-transfer/crypto.ts` sowie Merge, Engine, Umschlag, Uhr, Hash und Deduplizierung in `cloud-sync/`) gilt strenger: 93 Prozent Zeilen, 90 Prozent Statements, 95 Prozent Funktionen, 88 Prozent Verzweigungen. Ausgenommen sind Tests, der Testaufbau `cloud-sync/testing/` und reine Browser-Anbindung ohne eigene Logik (`google-identity.ts`, `live-room-client.ts`); jede Ausnahme steht mit Begründung in der Konfiguration.
+
+Hinweis zum Lesen des Berichts: Läuft Vitest unter einem KI-Agenten, blendet die Text-Tabelle vollständig gedeckte Dateien aus (`skipFull`). Das Fehlen einer Datei im Bericht heißt dann nicht, dass sie nicht gemessen wird; `coverage/coverage-summary.json` enthält alle Dateien.
 
 Abdeckung beweist keine Qualität. Sie ist eine Untergrenze gegen ungetesteten Kerncode und wird durch Eigenschafts-, Browser- und manuelle Tests ergänzt.
 

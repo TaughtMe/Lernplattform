@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   applyRunningDictationSectionEdits,
+  buildMarkerPieces,
   buildRunningDictationSections,
   DEFAULT_TEXT_SPLIT_CONFIG,
+  displayRunningDictationSections,
   moveRunningDictationSection,
+  tokenizeMarkerText,
 } from "./running-dictation-sections";
 
 describe("running dictation section editor", () => {
@@ -69,5 +72,65 @@ describe("running dictation section editor", () => {
     ]);
     expect(moveRunningDictationSection(original, -1, 2)).toBe(original);
     expect(original).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("Markierungsansicht", () => {
+  const text = "Eins. Zwei! Drei";
+  const sections = buildRunningDictationSections(
+    text,
+    DEFAULT_TEXT_SPLIT_CONFIG,
+  );
+
+  it("zeigt Abschnitte nach Rang, unbekannte bleiben hinten in Reihenfolge", () => {
+    const [a, b, c] = sections;
+    expect(
+      displayRunningDictationSections(sections, [c!.id, a!.id]).map(
+        ({ id }) => id,
+      ),
+    ).toEqual([c!.id, a!.id, b!.id]);
+    expect(
+      displayRunningDictationSections(sections).map(({ id }) => id),
+    ).toEqual(sections.map(({ id }) => id));
+    expect(displayRunningDictationSections(sections, [a!.id])).toHaveLength(3);
+  });
+
+  it("baut lückenlose Stücke, die den Rohtext wieder ergeben", () => {
+    const pieces = buildMarkerPieces(text, sections);
+    expect(pieces.map(({ text: piece }) => piece).join("")).toBe(text);
+    expect(pieces.some(({ kind }) => kind === "gap")).toBe(true);
+  });
+
+  it("zählt nur automatische Abschnitte für autoIndex", () => {
+    const manual = buildRunningDictationSections(
+      "abc def ghi",
+      { ...DEFAULT_TEXT_SPLIT_CONFIG, newlineEnabled: false },
+      [{ id: "m", type: "section", start: 4, end: 7 }],
+    );
+    const pieces = buildMarkerPieces("abc def ghi", manual);
+    expect(pieces.map(({ kind }) => kind)).toContain("manual");
+    expect(pieces.map(({ text: piece }) => piece).join("")).toBe("abc def ghi");
+    const autos = pieces.filter(({ kind }) => kind === "auto");
+    expect(autos.map(({ autoIndex }) => autoIndex)).toEqual(
+      autos.map((_, index) => index),
+    );
+  });
+
+  it("liefert für leere Abschnitte den ganzen Text als Lücke", () => {
+    expect(buildMarkerPieces("xyz", [])).toEqual([
+      { text: "xyz", start: 0, kind: "gap", autoIndex: 0 },
+    ]);
+    expect(buildMarkerPieces("", [])).toEqual([]);
+  });
+
+  it("zerlegt Text in Wörter, Zahlen und Zwischenstücke mit Basisversatz", () => {
+    expect(tokenizeMarkerText(", Äpfel 12!", 10)).toEqual([
+      { text: ", ", start: 10, end: 12, isWord: false },
+      { text: "Äpfel", start: 12, end: 17, isWord: true },
+      { text: " ", start: 17, end: 18, isWord: false },
+      { text: "12", start: 18, end: 20, isWord: true },
+      { text: "!", start: 20, end: 21, isWord: false },
+    ]);
+    expect(tokenizeMarkerText("", 0)).toEqual([]);
   });
 });

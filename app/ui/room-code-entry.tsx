@@ -4,7 +4,7 @@ import { useId, useState, type FormEvent } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
 import { QrCodeScanner } from "./qr-scanner";
 import { SegmentedRoomCode } from "../components/segmented-room-code";
-import { useHydrated } from "../components/use-hydrated";
+import { useHydrated } from "./use-hydrated";
 
 /**
  * Raumcode-Eingabe nach Design 2a: vier Ziffernfelder und grüner

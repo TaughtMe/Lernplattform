@@ -151,7 +151,6 @@ test("shows only released areas without preview and redirects the rest", async (
     "/frei/german/laufdiktat",
     "/frei/german/lernwoerter",
     "/frei/typing",
-    "/klasse/7b",
     "/lernbox",
     "/lernen",
     "/lernen/einstellungen",
@@ -184,6 +183,19 @@ test("shows only released areas without preview and redirects the rest", async (
         path,
       );
     }
+  }
+
+  // Die Demo-Klasse ist Testgelände und erscheint nur mit Vorschau.
+  for (const path of ["/klasse/7b", "/klasse/7b/aufgaben/vokabeln"]) {
+    const hidden = await render(path, null);
+    assert.equal(hidden.status, 307, path);
+    assert.equal(
+      new URL(hidden.headers.get("location") ?? "", "http://localhost")
+        .pathname,
+      "/",
+      path,
+    );
+    assert.equal((await render(path)).status, 200, path);
   }
 
   // Die Textbox ist freigegeben und lässt sich per Freigabe zurückhalten.

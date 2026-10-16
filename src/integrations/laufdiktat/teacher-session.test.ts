@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildMathPracticeOptions,
+  buildMathWords,
   buildTeacherRoomConfig,
   buildTeacherWords,
   generateMentalMathSource,
+  generateSingleMathLine,
+  mathPracticeOperations,
+  type TeacherMathSettings,
 } from "./teacher-session";
 
 describe("teacher live session builder", () => {
@@ -227,5 +232,95 @@ describe("teacher live session builder", () => {
     const words = buildTeacherWords("math", source, "left-to-right");
     expect(words).toHaveLength(8);
     expect(words.every((word) => word.prompt?.includes("_"))).toBe(true);
+  });
+});
+
+describe("Kopfrechnen der Lehrkraft", () => {
+  const settings: TeacherMathSettings = {
+    min: 1,
+    max: 9,
+    operations: ["+", "-", "*", "/"],
+    allowNegativeResults: true,
+    excludeZeroOperand: true,
+    excludeZeroResult: false,
+    tables: [2, 3],
+    gap: true,
+  };
+
+  it("übersetzt Operatoren und fällt ohne Auswahl auf Addition zurück", () => {
+    expect(mathPracticeOperations(["+", "-", "*", "/"])).toEqual([
+      "add",
+      "subtract",
+      "multiply",
+      "divide",
+    ]);
+    expect(mathPracticeOperations([])).toEqual(["add"]);
+  });
+
+  it("baut die Übungsoptionen mit fester Anzahl 10", () => {
+    expect(buildMathPracticeOptions(settings)).toEqual({
+      operations: ["add", "subtract", "multiply", "divide"],
+      minValue: 1,
+      maxValue: 9,
+      count: 10,
+      allowNegativeResults: true,
+      excludeZeroOperand: true,
+      excludeZeroResult: false,
+      multiplicationTables: [2, 3],
+      gapMode: true,
+    });
+  });
+
+  it("erzeugt genau eine auswertbare Zeile", () => {
+    const line = generateSingleMathLine({
+      ...settings,
+      operations: [],
+      gap: false,
+      tables: [],
+    });
+    expect(line).not.toContain("\n");
+    expect(line.length).toBeGreaterThan(0);
+  });
+
+  it("macht ohne Lückenmodus Ausdruck und Ergebnis, ungültige Zeilen entfallen", () => {
+    expect(buildMathWords(["3+4", "kein Term", "10 - 2"], false, [])).toEqual([
+      {
+        id: "math-0-expression",
+        kind: "math",
+        prompt: "3 + 4",
+        targetWord: "7",
+      },
+      {
+        id: "math-2-expression",
+        kind: "math",
+        prompt: "10 − 2",
+        targetWord: "8",
+      },
+    ]);
+  });
+
+  it("verdeckt im Lückenmodus vorgabemäßig die letzte Zahl", () => {
+    const [word] = buildMathWords(["3 + 4"], true, []);
+    expect(word).toMatchObject({
+      id: "math-0-gap-1",
+      targetWord: "4",
+      prompt: "3 + _ = 7",
+    });
+  });
+
+  it("verdeckt mit Lückenindex hinter der letzten Zahl das Ergebnis", () => {
+    const [word] = buildMathWords(["3 + 4"], true, [2]);
+    expect(word).toMatchObject({
+      id: "math-0-gap-2",
+      targetWord: "7",
+      prompt: "3 + 4 = _",
+    });
+    const [first] = buildMathWords(["3 + 4"], true, [0]);
+    expect(first).toMatchObject({ id: "math-0-gap-0", targetWord: "3" });
+  });
+
+  it("kennzeichnet LaTeX-Zeilen", () => {
+    const [word] = buildMathWords(["\\frac{1}{2}"], false, []);
+    expect(word).toMatchObject({ isLatex: true, targetWord: "0.5" });
   });
 });
