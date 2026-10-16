@@ -70,7 +70,6 @@ import {
   buildTeacherWords,
   generateMentalMathSource,
   generateSingleMathLine,
-  type MathOperation,
   type TeacherMathSettings,
   type TeacherContentMode,
   type TeacherGameMode,
@@ -90,6 +89,7 @@ import {
   roomTimeline,
   roomTimeState,
 } from "../../../src/integrations/laufdiktat/room-limits";
+import { useGameSettings } from "./hooks/use-game-settings";
 import { useHydrated } from "../../ui/use-hydrated";
 import { classSealFingerprint } from "../../../src/domain/class-seal";
 import { classModuleSchema } from "../../../src/domain/class-workspace";
@@ -339,30 +339,57 @@ export function useTeacherLiveRoom(
   const classSeal = liveClasses.find(
     ({ id }) => id === activeClass,
   )?.fingerprint;
-  const [gameMode, setGameMode] = useState<TeacherGameMode>("LAUFDIKTAT");
+  const {
+    settings: {
+      gameMode,
+      shuffleWords,
+      stationShuffle,
+      repeatWrongAnswers,
+      assistance,
+      attempts,
+      tts,
+      showStars,
+      strictTyping,
+      taskHelp,
+      stationCount,
+      battleInk,
+      battleFlicker,
+      mathCount,
+      mathMin,
+      mathMax,
+      mathOps,
+      mathAllowNegative,
+      mathExcludeZeroOperand,
+      mathExcludeZeroResult,
+      mathGap,
+      mathTables,
+    },
+    setGameMode,
+    setShuffleWords,
+    setStationShuffle,
+    setRepeatWrongAnswers,
+    setAssistance,
+    setAttempts,
+    setTts,
+    setShowStars,
+    setStrictTyping,
+    setTaskHelp,
+    setStationCount,
+    setBattleInk,
+    setBattleFlicker,
+    setMathCount,
+    setMathMin,
+    setMathMax,
+    setMathAllowNegative,
+    setMathExcludeZeroOperand,
+    setMathExcludeZeroResult,
+    setMathGap,
+    patchSettings,
+    toggleMathOperation,
+    toggleMathTable,
+  } = useGameSettings();
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLDivElement>(null);
-  const [shuffleWords, setShuffleWords] = useState(false);
-  const [stationShuffle, setStationShuffle] = useState(true);
-  const [repeatWrongAnswers, setRepeatWrongAnswers] = useState(true);
-  const [assistance, setAssistance] = useState(true);
-  const [attempts, setAttempts] = useState(3);
-  const [tts, setTts] = useState(false);
-  const [showStars, setShowStars] = useState(true);
-  const [strictTyping, setStrictTyping] = useState(false);
-  const [taskHelp, setTaskHelp] = useState(true);
-  const [stationCount, setStationCount] = useState(20);
-  const [battleInk, setBattleInk] = useState(true);
-  const [battleFlicker, setBattleFlicker] = useState(true);
-  const [mathCount, setMathCount] = useState(10);
-  const [mathMin, setMathMin] = useState(0);
-  const [mathMax, setMathMax] = useState(20);
-  const [mathOps, setMathOps] = useState<MathOperation[]>(["+", "-"]);
-  const [mathAllowNegative, setMathAllowNegative] = useState(false);
-  const [mathExcludeZeroOperand, setMathExcludeZeroOperand] = useState(false);
-  const [mathExcludeZeroResult, setMathExcludeZeroResult] = useState(false);
-  const [mathGap, setMathGap] = useState(false);
-  const [mathTables, setMathTables] = useState<number[]>([]);
   // Abgelegter Inhalt, der gerade bearbeitet wird (null = noch nicht abgelegt).
   const [contentId, setContentId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -900,23 +927,25 @@ export function useTeacherLiveRoom(
             parsed.length > 0 ? parsed : [emptyVocabularyPair()],
           );
         }
-        setGameMode(restored.stationMode ? "STATION" : restored.gameMode);
-        setShuffleWords(restored.shuffleWords);
-        setStationShuffle(restored.stationShuffle);
-        setRepeatWrongAnswers(restored.repeatWrongAnswers);
+        patchSettings({
+          gameMode: restored.stationMode ? "STATION" : restored.gameMode,
+          shuffleWords: restored.shuffleWords,
+          stationShuffle: restored.stationShuffle,
+          repeatWrongAnswers: restored.repeatWrongAnswers,
+          assistance: restored.uebungAssistanceEnabled,
+          attempts: restored.uebungMaxAttempts,
+          tts: restored.isTtsEnabled,
+          showStars: restored.showStars,
+          strictTyping: restored.strictTypingMode,
+          taskHelp: restored.showTaskAfterErrors,
+          stationCount: restored.stationCount,
+          battleInk: restored.battleOptions.ink,
+          battleFlicker: restored.battleOptions.flicker,
+        });
         setVocabularyTransfer(restored.vocabularyTransfer);
         setWordStoreTransfer(restored.wordStoreTransfer);
         setRoundTag(restored.vocabularyTag ?? "");
         setRestoredClassSeal(restored.classSeal);
-        setAssistance(restored.uebungAssistanceEnabled);
-        setAttempts(restored.uebungMaxAttempts);
-        setTts(restored.isTtsEnabled);
-        setShowStars(restored.showStars);
-        setStrictTyping(restored.strictTypingMode);
-        setTaskHelp(restored.showTaskAfterErrors);
-        setStationCount(restored.stationCount);
-        setBattleInk(restored.battleOptions.ink);
-        setBattleFlicker(restored.battleOptions.flicker);
         // Ohne gemerkte Öffnungszeit (ältere Sitzung) zählt der Moment der Wiederaufnahme.
         setRoom({ ...stored, openedAt: stored.openedAt ?? nowIso(clock) });
         setStage(state.status === "live" ? "live" : "lobby");
@@ -926,7 +955,7 @@ export function useTeacherLiveRoom(
         clearTeacherLiveRoom();
         setRestoreChecked(true);
       });
-  }, [clock, hydrated, liveRoomConfig, room]);
+  }, [clock, hydrated, liveRoomConfig, patchSettings, room]);
 
   useEffect(() => {
     if (!liveRoomConfig || !room || roomClosed) return;
@@ -1384,22 +1413,6 @@ export function useTeacherLiveRoom(
     } catch {
       setError(MATH_RULE_ERROR);
     }
-  }
-
-  function toggleMathOperation(op: MathOperation) {
-    setMathOps((current) =>
-      current.includes(op)
-        ? current.filter((item) => item !== op)
-        : [...current, op],
-    );
-  }
-
-  function toggleMathTable(table: number) {
-    setMathTables((active) =>
-      active.includes(table)
-        ? active.filter((entry) => entry !== table)
-        : [...active, table].sort((left, right) => left - right),
-    );
   }
 
   function rerollMathLine(index: number) {
