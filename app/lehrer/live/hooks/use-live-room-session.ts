@@ -186,7 +186,7 @@ export function useLiveRoomSession({
     setStudents([]);
     setPresenceNames([]);
     setPracticingNames([]);
-    dispatchFlow({ type: "roomEnded", hasRoom: room !== null });
+    dispatchFlow({ type: "roomEnded" });
   }
 
   // Der Raum ist zu Ende. Im Live-Schritt bleiben die letzten Ergebnisse

@@ -38,7 +38,7 @@ export type LiveFlowAction =
   /** Die Sitzung wurde gestartet. */
   | { type: "sessionStarted"; hasRoom: boolean }
   /** Der Raum wurde beendet oder aufgeräumt: zurück zum Inhalt. */
-  | { type: "roomEnded"; hasRoom: boolean }
+  | { type: "roomEnded" }
   /** Der Raum ist zu Ende, die Ergebnisse bleiben im Live-Schritt stehen. */
   | { type: "roomClosed"; hasRoom: boolean }
   | { type: "restoreChecked" }
@@ -82,7 +82,7 @@ export function liveFlowReducer(
     case "sessionStarted":
       return action.hasRoom ? withStage(state, "live") : state;
     case "roomEnded":
-      if (!action.hasRoom) return state;
+      // Wie das frühere Zurücksetzen: immer zum Inhalt, unabhängig vom Raum.
       return state.stage === "content" && !state.roomClosed
         ? state
         : { ...state, stage: "content", roomClosed: false };

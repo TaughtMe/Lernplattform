@@ -143,29 +143,24 @@ describe("liveFlowReducer", () => {
     it("kehrt nach dem Beenden zum Inhalt zurück und öffnet den Raum wieder", () => {
       const ended = run(at("live", { roomClosed: true }), {
         type: "roomEnded",
-        hasRoom: true,
       });
       expect(ended.stage).toBe("content");
       expect(ended.roomClosed).toBe(false);
-      expect(run(at("lobby"), { type: "roomEnded", hasRoom: true }).stage).toBe(
-        "content",
-      );
+      expect(run(at("lobby"), { type: "roomEnded" }).stage).toBe("content");
     });
 
-    it("lässt das Beenden ohne Raum unverändert", () => {
-      for (const stage of STAGES) {
-        const state = at(stage, { roomClosed: true });
-        expect(
-          liveFlowReducer(state, { type: "roomEnded", hasRoom: false }),
-        ).toBe(state);
-      }
+    it("setzt das Beenden ohne Raum aus dem geschlossenen Live-Schritt auf den Inhalt", () => {
+      // Der Reducer kennt den Raum nicht; wie das frühere Zurücksetzen gilt es immer.
+      const ended = run(at("live", { roomClosed: true }), {
+        type: "roomEnded",
+      });
+      expect(ended.stage).toBe("content");
+      expect(ended.roomClosed).toBe(false);
     });
 
     it("lässt das Beenden im Inhalt ohne Besonderheit unverändert", () => {
       const state = at("content");
-      expect(liveFlowReducer(state, { type: "roomEnded", hasRoom: true })).toBe(
-        state,
-      );
+      expect(liveFlowReducer(state, { type: "roomEnded" })).toBe(state);
     });
 
     it("merkt einen geschlossenen Raum, ohne den Schritt zu wechseln", () => {
@@ -234,7 +229,7 @@ describe("liveFlowReducer", () => {
     run(
       state,
       { type: "goBack" },
-      { type: "roomEnded", hasRoom: true },
+      { type: "roomEnded" },
       { type: "restored", live: true },
     );
     expect(state).toEqual(copy);
@@ -260,7 +255,7 @@ describe("liveFlowReducer", () => {
       startRequested: false,
       restoreChecked: true,
     });
-    expect(run(walk, { type: "roomEnded", hasRoom: true })).toEqual({
+    expect(run(walk, { type: "roomEnded" })).toEqual({
       ...initialLiveFlow,
       restoreChecked: true,
     });
