@@ -53,13 +53,13 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
 
 ## Status
 
-| Nr. | Status    | Pull Request                                                                                                               | Bemerkung                                                                                             |
-| --- | --------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 1   | erledigt  | [#10](https://github.com/TaughtMe/Lernplattform/pull/10)                                                                   | Crypto wurde schon gemessen (Vitest `skipFull`); Demo-Klasse nur mit Vorschau                         |
-| 2   | erledigt  | [#9](https://github.com/TaughtMe/Lernplattform/pull/9)                                                                     | `replayLearningBoxCard` und Eigenschaftstest; Regel 3 ergänzt                                         |
-| 3   | erledigt  | [#12](https://github.com/TaughtMe/Lernplattform/pull/12)                                                                   | Audit 15 → 10 Meldungen (ausgeliefert: 0); Rest nur Entwicklungs-/Build-Zeit, siehe SR-001            |
-| 4   | teilweise | 4a: [#15](https://github.com/TaughtMe/Lernplattform/pull/15), 4b: [#16](https://github.com/TaughtMe/Lernplattform/pull/16) | 4a, 4b erledigt (Effekt-Ereignisse; reine Logik aus dem Live-Raum-Hook); 4c–4f offen                  |
-| 5   | erledigt  | [#14](https://github.com/TaughtMe/Lernplattform/pull/14)                                                                   | ESLint-Reinheit für `app/views`, Inventar in `architecture.md`; 1 Modul entfernt, 6 Hilfen verschoben |
+| Nr. | Status    | Pull Request                                                                                                                                                                             | Bemerkung                                                                                                     |
+| --- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | erledigt  | [#10](https://github.com/TaughtMe/Lernplattform/pull/10)                                                                                                                                 | Crypto wurde schon gemessen (Vitest `skipFull`); Demo-Klasse nur mit Vorschau                                 |
+| 2   | erledigt  | [#9](https://github.com/TaughtMe/Lernplattform/pull/9)                                                                                                                                   | `replayLearningBoxCard` und Eigenschaftstest; Regel 3 ergänzt                                                 |
+| 3   | erledigt  | [#12](https://github.com/TaughtMe/Lernplattform/pull/12)                                                                                                                                 | Audit 15 → 10 Meldungen (ausgeliefert: 0); Rest nur Entwicklungs-/Build-Zeit, siehe SR-001                    |
+| 4   | teilweise | 4a: [#15](https://github.com/TaughtMe/Lernplattform/pull/15), 4b: [#16](https://github.com/TaughtMe/Lernplattform/pull/16), 4c: [#19](https://github.com/TaughtMe/Lernplattform/pull/19) | 4a–4c erledigt (Effekt-Ereignisse; reine Logik; Live-Raum-Hook in Teil-Hooks und Ablauf-Reducer); 4d–4f offen |
+| 5   | erledigt  | [#14](https://github.com/TaughtMe/Lernplattform/pull/14)                                                                                                                                 | ESLint-Reinheit für `app/views`, Inventar in `architecture.md`; 1 Modul entfernt, 6 Hilfen verschoben         |
 
 ## Korrekturen an der Analyse
 
