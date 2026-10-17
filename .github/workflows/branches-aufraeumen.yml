@@ -1,0 +1,63 @@
+name: Gemergte Branches aufräumen
+
+# Nur manuell (Actions → „Gemergte Branches aufräumen“ → Run workflow).
+# Löscht Branches, die vollständig in claude/lernraum-ui-v2 enthalten sind.
+# Ausgenommen: main, claude/lernraum-ui-v2, Branches mit offenem Pull Request
+# und Branches, deren letzter Commit jünger als 24 Stunden ist (gerade
+# angelegte Arbeitsbranches enthalten noch keine eigenen Commits).
+# Ohne Haken bei „Wirklich löschen“ zeigt der Lauf nur die Liste an.
+
+on:
+  workflow_dispatch:
+    inputs:
+      loeschen:
+        description: Wirklich löschen (ohne Haken nur anzeigen)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  aufraeumen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Branches prüfen und löschen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOESCHEN: ${{ inputs.loeschen }}
+          BASIS: claude/lernraum-ui-v2
+        run: |
+          set -euo pipefail
+          offen=$(gh pr list --state open --limit 200 --json headRefName --jq '.[].headRefName')
+          grenze=$(date -d '24 hours ago' +%s)
+          {
+            echo "## Branches (Basis: $BASIS, löschen: $LOESCHEN)"
+            echo
+            echo "| Branch | Ergebnis |"
+            echo "| --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          git for-each-ref --format='%(refname:strip=3) %(committerdate:unix)' refs/remotes/origin |
+            while read -r name zeit; do
+              case "$name" in HEAD|main|"$BASIS") continue ;; esac
+              eigene=$(git rev-list --count "origin/$BASIS..origin/$name")
+              if [ "$eigene" != 0 ]; then
+                ergebnis="bleibt: $eigene eigene Commits"
+              elif printf '%s\n' "$offen" | grep -qxF "$name"; then
+                ergebnis="bleibt: offener Pull Request"
+              elif [ "$zeit" -gt "$grenze" ]; then
+                ergebnis="bleibt: jünger als 24 Stunden"
+              elif [ "$LOESCHEN" = "true" ]; then
+                git push origin --delete "$name"
+                ergebnis="gelöscht ($(git rev-parse --short "origin/$name"))"
+              else
+                ergebnis="würde gelöscht ($(git rev-parse --short "origin/$name"))"
+              fi
+              echo "$name: $ergebnis"
+              echo "| \`$name\` | $ergebnis |" >> "$GITHUB_STEP_SUMMARY"
+            done
