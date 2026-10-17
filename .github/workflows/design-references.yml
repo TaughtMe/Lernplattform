@@ -44,7 +44,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm run test:design -- --update-snapshots=all
+      - run: npm run test:design -- --update-snapshots=changed
       - name: Geänderte Bilder committen
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -58,7 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Design-Referenzen erneuert: $views" \
-            -m "Erzeugt mit npm run test:design -- --update-snapshots=all im Playwright-Container (Workflow Design-Referenzen erneuern)."
+            -m "Erzeugt mit npm run test:design -- --update-snapshots=changed im Playwright-Container (Workflow Design-Referenzen erneuern)."
           git push origin "HEAD:refs/heads/$BRANCH"
           echo "Geändert: $views" >> "$GITHUB_STEP_SUMMARY"
 
