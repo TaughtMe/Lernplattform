@@ -12,7 +12,14 @@
  * zeigen (`react-18.3.1/package`, `react-dom-18.3.1/package`,
  * `babel-standalone-7.29.0/package`).
  *
+ * `npm run test:design` rendert die Referenzen vor dem Vergleich in ein temporäres
+ * Verzeichnis neu (scripts/run-design-tests.mjs), damit beide Bilder aus demselben
+ * Chromium stammen. Die eingecheckten PNGs ändert nur `npm run design:references`.
+ *
  * Aufruf: node scripts/render-design-references.mjs [id,id,...] [--update-sizes]
+ *          [--implemented]
+ * `--implemented` rendert nur Screens mit Status „umgesetzt“, die der Vergleich
+ * tatsächlich prüft (offene Ansichten haben ggf. veraltete Maße).
  * `--update-sizes` übernimmt abweichende Flächenmaße ins Manifest (nur für
  * neue Einträge gedacht; bestehende Maße sind Teil des Vertrags).
  */
@@ -23,10 +30,13 @@ import { chromium } from "@playwright/test";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const designDir = path.join(root, "docs/design");
-const outDir = path.join(designDir, "referenz");
+// `DESIGN_REFERENCE_DIR` leitet die Ausgabe um (siehe scripts/run-design-tests.mjs).
+const outDir =
+  process.env["DESIGN_REFERENCE_DIR"] ?? path.join(designDir, "referenz");
 const fontDir = path.join(root, "node_modules/@fontsource-variable");
 const args = process.argv.slice(2);
 const updateSizes = args.includes("--update-sizes");
+const implementedOnly = args.includes("--implemented");
 const only = args.find((arg) => !arg.startsWith("--"))?.split(",");
 
 const manifestPath = path.join(designDir, "screens.json");
@@ -95,10 +105,32 @@ await page.addStyleTag({
     'button,input,select,textarea{font-family:"Liberation Sans",Arial,sans-serif}',
 });
 
+// Die Vorlage rendert nach einem Klick asynchron; zwei Frames abwarten, damit der
+// Screenshot nicht den Zustand vor dem Klick zeigt.
+const settle = () =>
+  page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+
 await mkdir(outDir, { recursive: true });
 for (const screen of screens) {
   if (only && !only.includes(screen.id)) continue;
-  for (const selector of screen.canvas ?? []) await page.click(selector);
+  const skip = implementedOnly && screen.status !== "umgesetzt";
+  for (const selector of screen.canvas ?? []) {
+    await page.click(selector);
+    await settle();
+  }
+  if (skip) {
+    // Klicks trotzdem ausführen: Der Canvas-Zustand baut aufeinander auf.
+    for (const selector of screen.reset ?? []) {
+      await page.click(selector);
+      await settle();
+    }
+    continue;
+  }
   await page.mouse.move(0, 0);
   const surface = page
     .locator(`[id="${screen.screen}"] .dv-card > div`)
@@ -130,7 +162,10 @@ for (const screen of screens) {
       height: screen.height,
     },
   });
-  for (const selector of screen.reset ?? []) await page.click(selector);
+  for (const selector of screen.reset ?? []) {
+    await page.click(selector);
+    await settle();
+  }
   console.log(`${screen.id} ✓`);
 }
 await browser.close();

@@ -28,7 +28,8 @@
     "quality": "npm run check && npm run test:e2e && npm run test:e2e:live",
     "css-types": "node scripts/css-module-types.mjs",
     "design:references": "node scripts/render-design-references.mjs",
-    "test:design": "playwright test --config playwright.design.config.ts"
+    "test:design": "node scripts/run-design-tests.mjs",
+    "test:design:committed": "playwright test --config playwright.design.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/fredoka": "^5.3.0",
