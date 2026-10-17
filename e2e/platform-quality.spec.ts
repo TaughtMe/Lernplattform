@@ -604,16 +604,19 @@ test("the personal learning room keeps today's task focused and separates suppor
     ).toHaveAttribute("href", href);
   }
 
+  await page.waitForLoadState("networkidle");
   await page.goto("/lernen/material");
   await expect(
     page.getByRole("heading", { name: "Lernwerkstatt" }),
   ).toBeVisible();
 
+  await page.waitForLoadState("networkidle");
   await page.goto("/lernen/klasse");
   await expect(
     page.getByRole("textbox", { name: "Einschreibecode" }),
   ).toBeVisible();
 
+  await page.waitForLoadState("networkidle");
   await page.goto("/lernen/fortschritt");
   await expect(
     page.getByText(/Vollständige Antworten werden nicht übertragen/),

@@ -14,6 +14,7 @@ const walk = (suite) => {
       const row = rows.get(key) ?? { pass: 0, fail: 0, errors: new Set() };
       for (const result of test.results ?? []) {
         if (result.status === "passed") row.pass++;
+        else if (result.status === "skipped") row.skip = (row.skip ?? 0) + 1;
         else {
           row.fail++;
           const plain = (result.error?.message ?? result.status).replace(
@@ -26,7 +27,7 @@ const walk = (suite) => {
             .slice(0, 3)
             .join(" / ");
           row.errors.add(
-            `Zeile ${result.error?.location?.line}: ${lines}`.slice(0, 400),
+            `${result.status} @${(result.error?.stack ?? "").match(/spec\.ts:(\d+)/)?.[1]}: ${plain.split("\n").filter(Boolean).slice(0, 3).join(" / ")} ${lines}`.slice(0, 600),
           );
         }
       }
@@ -36,4 +37,4 @@ const walk = (suite) => {
 };
 for (const suite of report.suites ?? []) walk(suite);
 for (const [key, row] of rows)
-  console.log(`FLAKY-RESULT ${key}: ${row.fail} von ${row.pass + row.fail} fehlgeschlagen`, [...row.errors]);
+  console.log(`FLAKY-RESULT ${key}: ${row.fail} von ${row.pass + row.fail} fehlgeschlagen${row.skip ? " (" + row.skip + " übersprungen)" : ""}`, [...row.errors]);
