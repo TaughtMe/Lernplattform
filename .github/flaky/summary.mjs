@@ -26,6 +26,8 @@ const walk = (suite) => {
             .filter((l) => /^(Error|Locator|\s*- waiting for)/.test(l.trim()))
             .slice(0, 3)
             .join(" / ");
+          row.full = row.full ?? [];
+          if (row.full.length < 3) row.full.push(plain.split("\n").slice(0, 30).join("\n"));
           row.errors.add(
             `${result.status} @${(result.error?.stack ?? "").match(/spec\.ts:(\d+)/)?.[1]}: ${plain.split("\n").filter(Boolean).slice(0, 3).join(" / ")} ${lines}`.slice(0, 600),
           );
@@ -36,5 +38,7 @@ const walk = (suite) => {
   for (const child of suite.suites ?? []) walk(child);
 };
 for (const suite of report.suites ?? []) walk(suite);
+for (const [key, row] of rows)
+  for (const text of row.full ?? []) console.log(`FLAKY-DETAIL ${key}\n${text}`);
 for (const [key, row] of rows)
   console.log(`FLAKY-RESULT ${key}: ${row.fail} von ${row.pass + row.fail} fehlgeschlagen${row.skip ? " (" + row.skip + " übersprungen)" : ""}`, [...row.errors]);

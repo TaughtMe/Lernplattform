@@ -10,13 +10,18 @@ permissions:
 
 jobs:
   repeat:
-    name: repeat (${{ matrix.project }})
+    name: ${{ matrix.name }} (${{ matrix.project }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        project: [desktop-webkit, mobile-safari, tablet-safari]
+        include:
+          - { name: cloud-sync, project: mobile-safari, file: e2e/cloud-sync.spec.ts, grep: "zwei Geräte gleichen Material" }
+          - { name: cloud-sync, project: desktop-webkit, file: e2e/cloud-sync.spec.ts, grep: "zwei Geräte gleichen Material" }
+          - { name: qr, project: desktop-webkit, file: e2e/platform-quality.spec.ts, grep: "local teacher workspace manages classes" }
+          - { name: qr, project: tablet-safari, file: e2e/platform-quality.spec.ts, grep: "local teacher workspace manages classes" }
+          - { name: qr, project: mobile-safari, file: e2e/platform-quality.spec.ts, grep: "local teacher workspace manages classes" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,41 +30,14 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps webkit
-      - name: Navigation (goto) - teacher-content und Lernraum, je 30 Wiederholungen
-        continue-on-error: true
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/nav.json
-        run: >
-          npx playwright test --project=${{ matrix.project }}
-          --repeat-each=30 --retries=0 --reporter=list,json
-          e2e/teacher-content.spec.ts e2e/platform-quality.spec.ts
-          -g "Text anlegen, speichern|personal learning room keeps today"
-      - name: Fehlerkontext Navigation
-        if: always()
-        run: for f in test-results/*/error-context.md; do [ -f "$f" ] && { echo "=== CONTEXT $f"; head -70 "$f"; }; done; true
-      - name: QR und Cloud-Abgleich (Diagnose, 40 Wiederholungen)
+      - name: Wiederholungen (100, ohne Retries)
         continue-on-error: true
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/diag.json
         run: >
           npx playwright test --project=${{ matrix.project }}
-          --repeat-each=40 --retries=0 --reporter=list,json
-          e2e/cloud-sync.spec.ts e2e/platform-quality.spec.ts
-          -g "zwei Geräte gleichen Material|local teacher workspace manages classes"
-      - name: Fehlerkontext QR und Cloud
-        if: always()
-        run: for f in test-results/*/error-context.md; do [ -f "$f" ] && { echo "=== CONTEXT $f"; head -70 "$f"; }; done; true
-      - name: Live-Test (Wortschatz-Transfer, 20 Wiederholungen)
-        continue-on-error: true
-        env:
-          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/live.json
-        run: >
-          npx playwright test --config playwright.live.config.ts
-          --project=${{ matrix.project }} --repeat-each=20 --retries=0
-          --reporter=list,json e2e/live/vocabulary-transfer.spec.ts
+          --repeat-each=100 --retries=0 --reporter=list,json
+          ${{ matrix.file }} -g "${{ matrix.grep }}"
       - name: Zusammenfassung
         if: always()
-        run: |
-          { node .github/flaky/summary.mjs "$RUNNER_TEMP/nav.json"
-            node .github/flaky/summary.mjs "$RUNNER_TEMP/diag.json"
-            node .github/flaky/summary.mjs "$RUNNER_TEMP/live.json"; } | tee -a "$GITHUB_STEP_SUMMARY"
+        run: node .github/flaky/summary.mjs "$RUNNER_TEMP/diag.json" | tee -a "$GITHUB_STEP_SUMMARY"
