@@ -28,8 +28,14 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
   `claude/lernraum-ui-v2`. Nicht direkt auf `claude/lernraum-ui-v2` oder `main` pushen.
 - **Regeln:** `AGENTS.md`, `docs/engineering-quality.md`, `docs/architecture.md`. Sprache in
   Code-Kommentaren, Doku und Commit-Nachrichten ist Deutsch, wie im übrigen Repository.
-- **Prüfungen vor jedem Push:** `npm run format:check`, `npm run lint`, `npm run typecheck`,
-  `npm run test:coverage`, `npm run build`. Bei Änderungen an Oberfläche oder Routen zusätzlich
+- **Vorbereitung:** Vor der ersten Prüfung `npm ci` ausführen, damit die Werkzeugversionen aus
+  `package-lock.json` gelten (eine abweichende Prettier-Version meldet sonst Dutzende Dateien).
+  Passt das installierte Chromium nicht zur Playwright-Version, über eine lokale, nicht
+  committete Config mit `executablePath: "/opt/pw-browsers/chromium"` starten; nicht
+  `playwright install` ausführen.
+- **Prüfungen vor jedem Push:** `npm run check` vollständig (Formatierung, Lint, Typen,
+  Abdeckung, Datenbankvertrag, Build und Render-Test). Danach `public/sw.js` und
+  `public/version.json` zurücksetzen, falls der Build sie verändert hat. Bei Änderungen an Oberfläche oder Routen zusätzlich
   die im Teilplan genannten Playwright-Tests (Projekte `desktop-chromium` und `mobile-chrome`).
   Die volle Cross-Browser-Suite läuft in GitHub; deren Status nach dem Push nicht wiederholt
   abfragen (siehe `AGENTS.md`).
@@ -47,13 +53,13 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
 
 ## Status
 
-| Nr. | Status | Pull Request | Bemerkung |
-| --- | ------ | ------------ | --------- |
-| 1   | offen  |              |           |
-| 2   | offen  |              |           |
-| 3   | offen  |              |           |
-| 4   | offen  |              |           |
-| 5   | offen  |              |           |
+| Nr. | Status    | Pull Request                                                                                                                                                                             | Bemerkung                                                                                                     |
+| --- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | erledigt  | [#10](https://github.com/TaughtMe/Lernplattform/pull/10)                                                                                                                                 | Crypto wurde schon gemessen (Vitest `skipFull`); Demo-Klasse nur mit Vorschau                                 |
+| 2   | erledigt  | [#9](https://github.com/TaughtMe/Lernplattform/pull/9)                                                                                                                                   | `replayLearningBoxCard` und Eigenschaftstest; Regel 3 ergänzt                                                 |
+| 3   | erledigt  | [#12](https://github.com/TaughtMe/Lernplattform/pull/12)                                                                                                                                 | Audit 15 → 10 Meldungen (ausgeliefert: 0); Rest nur Entwicklungs-/Build-Zeit, siehe SR-001                    |
+| 4   | teilweise | 4a: [#15](https://github.com/TaughtMe/Lernplattform/pull/15), 4b: [#16](https://github.com/TaughtMe/Lernplattform/pull/16), 4c: [#19](https://github.com/TaughtMe/Lernplattform/pull/19) | 4a–4c erledigt (Effekt-Ereignisse; reine Logik; Live-Raum-Hook in Teil-Hooks und Ablauf-Reducer); 4d–4f offen |
+| 5   | erledigt  | [#14](https://github.com/TaughtMe/Lernplattform/pull/14)                                                                                                                                 | ESLint-Reinheit für `app/views`, Inventar in `architecture.md`; 1 Modul entfernt, 6 Hilfen verschoben         |
 
 ## Korrekturen an der Analyse
 

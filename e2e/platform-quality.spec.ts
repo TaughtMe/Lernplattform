@@ -1,19 +1,33 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import {
   createEnrollmentCode,
   createEnrollmentLink,
 } from "../src/domain/class-enrollment";
 import { createTeacherAssignmentCode } from "../src/domain/teacher-workspace";
+import { analyzeAccessibility } from "./accessibility-helpers";
 import { createBox, startRound } from "./wortspeicher-helpers";
 
-test.skip(
-  process.env["ENABLE_PRE_PILOT_E2E"] !== "1",
-  "Vor-Pilot-Oberflächen bleiben im Repository, sind im Laufdiktat-Pilot aber nicht freigeschaltet.",
-);
+// Die Demo-Klasse 7b ist Testgelände und nur mit Vorschau sichtbar (Bereich
+// `demo-klasse`); die Tests, die sie aufrufen, schalten die Vorschau ein.
+async function enablePreview(page: Page) {
+  await page.context().addCookies([
+    {
+      name: "lernraum-vorschau",
+      value: "1",
+      url: test.info().project.use.baseURL ?? "http://localhost:3000",
+    },
+  ]);
+}
 
 function isKnownFrameworkDiagnostic(message: string) {
-  return message.includes("<link rel=preload> must have a valid `as` value");
+  return (
+    message.includes("<link rel=preload> must have a valid `as` value") ||
+    // `app/layout.tsx` setzt `interactive-widget` bewusst für Chrome auf
+    // Android. WebKit kennt den Schlüssel nicht und meldet das als Fehler,
+    // ignoriert ihn aber folgenlos.
+    message ===
+      'Viewport argument key "interactive-widget" not recognized and ignored.'
+  );
 }
 
 test("start page exposes the core learner actions", async ({ page }) => {
@@ -34,7 +48,14 @@ test("start page exposes the core learner actions", async ({ page }) => {
   const joinBox = await page
     .getByRole("group", { name: "Raumcode" })
     .boundingBox();
-  expect(discBox?.width ?? 0).toBeGreaterThanOrEqual(200);
+  // Seit e6abfa7 misst die Scheibe min(288 px, 29 dvh), damit Impressum und
+  // Datenschutz auf der Startseite ohne Scrollen sichtbar bleiben.
+  const viewportHeight = await page.evaluate(() => window.innerHeight);
+  expect(discBox?.width ?? 0).toBeCloseTo(
+    Math.min(288, viewportHeight * 0.29),
+    0,
+  );
+  expect(discBox?.width ?? 0).toBeGreaterThanOrEqual(180);
   expect(joinBox?.y ?? 0).toBeGreaterThan(
     (discBox?.y ?? 0) + (discBox?.height ?? 0),
   );
@@ -67,7 +88,6 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/frei/german/laufdiktat",
     "/frei/german/lernwoerter",
     "/frei/mathematics",
-    "/klasse/7b",
     "/lernbox",
     "/raum",
     "/lehrer",
@@ -78,14 +98,24 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/lehrer/einstellungen",
   ]) {
     await page.goto(path);
-    const results = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-      .analyze();
+    const results = await analyzeAccessibility(page);
 
     expect(results.violations, `Accessibility violations on ${path}`).toEqual(
       [],
     );
   }
+});
+
+test("the demo class has no automatically detectable WCAG A/AA violations", async ({
+  page,
+}) => {
+  await enablePreview(page);
+  await page.goto("/klasse/7b");
+  const results = await analyzeAccessibility(page);
+
+  expect(results.violations, "Accessibility violations on /klasse/7b").toEqual(
+    [],
+  );
 });
 
 test("mobile learners retain direct access to their personal learning room", async ({
@@ -395,6 +425,7 @@ test("large German word banks create manageable learning rounds", async ({
 test("a learning result survives a page reload on the same device", async ({
   page,
 }) => {
+  await enablePreview(page);
   await page.goto("/klasse/7b/aufgaben/vokabeln");
   await page.getByRole("button", { name: "Lernrunde starten" }).click();
   await page.getByRole("textbox", { name: "Deine Antwort" }).fill("Bibliothek");
@@ -421,6 +452,7 @@ test("a learning result survives a page reload on the same device", async ({
 test("a vocabulary session advances through several due cards", async ({
   page,
 }) => {
+  await enablePreview(page);
   await page.goto("/klasse/7b/aufgaben/vokabeln");
   await expect(page.getByText("5 von 5 Karten fällig")).toBeVisible();
   await page.getByRole("button", { name: "Lernrunde starten" }).click();
@@ -437,6 +469,7 @@ test("a vocabulary session advances through several due cards", async ({
 });
 
 test("vocabulary can be written in the reverse direction", async ({ page }) => {
+  await enablePreview(page);
   await page.goto("/klasse/7b/aufgaben/vokabeln");
   const reverseDirection = page.getByRole("button", {
     name: "Deutsch → Englisch",
@@ -456,6 +489,7 @@ test("vocabulary can be written in the reverse direction", async ({ page }) => {
 });
 
 test("flashcard mode reveals and self-assesses an answer", async ({ page }) => {
+  await enablePreview(page);
   await page.goto("/klasse/7b/aufgaben/vokabeln");
   const flashcards = page.getByRole("button", { name: /Karteikarten/ });
   await flashcards.click();
@@ -485,6 +519,7 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
     "rgb(23, 21, 15)",
   );
 
+  await enablePreview(page);
   await page.goto("/klasse/7b");
   const classContent = page.getByRole("region", {
     name: "Inhalte aus dieser Klasse",
@@ -495,6 +530,7 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
   await expect(moduleTag).toHaveCSS("background-color", "rgb(47, 43, 37)");
   await expect(moduleTag).toHaveCSS("color", "rgb(168, 158, 140)");
 
+  await enablePreview(page);
   await page.goto("/klasse/7b/aufgaben/vokabeln");
   await expect(page.getByText("Deine Lernbox")).toBeVisible();
   await expect(page.getByLabel("Bedeutung: Box 1 von 5")).toBeVisible();
@@ -506,15 +542,14 @@ test("dark mode is stored and the Leitner view stays accessible", async ({
   }));
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
 
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
-    .analyze();
+  const results = await analyzeAccessibility(page);
   expect(results.violations).toEqual([]);
 });
 
 test("class content remains part of the personal learning room", async ({
   page,
 }) => {
+  await enablePreview(page);
   await page.goto("/klasse/7b");
   await expect(
     page.getByText(/Sie führt keinen zweiten Lernstand/),
@@ -680,6 +715,20 @@ test("teachers can prepare every native live-room content type", async ({
       runtimeErrors.push(message.text());
     }
   });
+  // Der Raum wertet `?neu=math` genau einmal aus und räumt die Adresse sofort
+  // mit `router.replace` auf. `toHaveURL` sähe die Zwischenadresse nur, wenn es
+  // vor dem Aufräumen abfragt. Darum hält ein Hook jeden Verlaufseintrag fest.
+  await page.addInitScript(() => {
+    const urls: string[] = [];
+    (window as unknown as { __historyUrls: string[] }).__historyUrls = urls;
+    for (const method of ["pushState", "replaceState"] as const) {
+      const original = history[method];
+      history[method] = function (...args: Parameters<typeof original>) {
+        if (args[2] != null) urls.push(String(args[2]));
+        return original.apply(this, args);
+      };
+    }
+  });
   await page.goto("/lehrer");
   await expect(page.locator("iframe")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Inhalte" })).toBeVisible();
@@ -695,7 +744,13 @@ test("teachers can prepare every native live-room content type", async ({
   await page.getByRole("button", { name: /^Mathe/ }).click();
   const next = page.getByRole("button", { name: "Weiter", exact: true });
   if (await next.isVisible()) await next.click();
-  await expect(page).toHaveURL(/\/lehrer\/live\?neu=math/);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { __historyUrls: string[] }).__historyUrls,
+      ),
+    )
+    .toContainEqual(expect.stringMatching(/\/lehrer\/live\?neu=math/));
   await page.goBack();
   await expect(
     page.getByRole("heading", { name: "Wortliste vorbereiten" }),
@@ -950,6 +1005,7 @@ test("mental math advances automatically after Enter", async ({ page }) => {
 test("a class error becomes practice and disappears after correction", async ({
   page,
 }) => {
+  await enablePreview(page);
   await page.goto("/klasse/7b/aufgaben/vokabeln");
   await page.getByRole("button", { name: "Lernrunde starten" }).click();
   await page.getByRole("textbox", { name: "Deine Antwort" }).fill("Schule");

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { LiveRoomStudent } from "./room-api";
-import { aggregateWordErrors, buildTeacherResultCsv } from "./teacher-results";
+import type { LiveRoomParticipant, LiveRoomStudent } from "./room-api";
+import {
+  aggregateWordErrors,
+  buildTeacherResultCsv,
+  csvParticipantLabel,
+  resultNamesFor,
+} from "./teacher-results";
 
 const students: LiveRoomStudent[] = [
   {
@@ -47,5 +52,46 @@ describe("teacher result export", () => {
     );
     expect(csv).toContain("Fuchs 2;Fertig;100");
     expect(csv).not.toContain("Mia;");
+  });
+});
+
+describe("Ergebnisliste für den CSV-Export", () => {
+  it("nimmt außerhalb von Stationen alle Namen", () => {
+    expect(resultNamesFor("UEBUNG", students, ["Mia", "Zoe"])).toEqual([
+      "Mia",
+      "Zoe",
+    ]);
+  });
+
+  it("sortiert im Stationsmodus nach Station und lässt Stationslose weg", () => {
+    const withStations = [
+      { ...students[0]!, studentName: "B", stationNumber: 3 },
+      { ...students[0]!, studentName: "A", stationNumber: 1 },
+      { ...students[0]!, studentName: "C", stationNumber: null },
+    ];
+    expect(resultNamesFor("STATION", withStations, ["X"])).toEqual(["A", "B"]);
+  });
+
+  it("beschriftet Tiere mit Nummer ab 2 und anonyme Schlüssel ohne Tier", () => {
+    const participants: LiveRoomParticipant[] = [
+      {
+        studentName: "p1",
+        animalToken: "Fuchs",
+        animalNumber: 1,
+        lastSeenAt: null,
+      },
+      {
+        studentName: "p2",
+        animalToken: "Fuchs",
+        animalNumber: 2,
+        lastSeenAt: null,
+      },
+    ] as LiveRoomParticipant[];
+    expect(csvParticipantLabel("p1", participants)).toBe("Fuchs");
+    expect(csvParticipantLabel("p2", participants)).toBe("Fuchs 2");
+    expect(csvParticipantLabel("participant-9", participants)).toBe(
+      "Ohne Tier",
+    );
+    expect(csvParticipantLabel("Mia", participants)).toBe("Mia");
   });
 });

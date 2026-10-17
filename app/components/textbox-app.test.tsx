@@ -21,6 +21,14 @@ import { TextboxApp } from "./textbox-app";
 const text = TEXTBOX_TEXTS[0]!; // „Der kleine Hund“
 const databases: PersonalLearningDatabase[] = [];
 
+/**
+ * Ein Durchlauf mit allen vier Durchgängen tippt den ganzen Text und rendert
+ * dabei viele Ansichten. Allein dauert er etwa 2 s; auf einem ausgelasteten
+ * Rechner (voller Testlauf, CI) reichen die 5 s Standard nicht. Gilt nur für
+ * diese Durchläufe, nicht pauschal.
+ */
+const VIER_DURCHGAENGE = 20_000;
+
 async function setup(
   prepare?: (
     repository: ReturnType<typeof createTextboxRepository>,
@@ -95,38 +103,44 @@ async function playRound(
 }
 
 describe("TextboxApp", () => {
-  it("führt einen Text durch alle vier Durchgänge und merkt sich den Bestwert", async () => {
-    const user = userEvent.setup();
-    const { database, repository } = await setup();
-    await startText(user);
-    for (const round of [1, 2, 3] as const) {
-      await playRound(user, round);
-      expect(screen.getByText("0 %")).toBeInTheDocument(); // alle Lücken leer
+  it(
+    "führt einen Text durch alle vier Durchgänge und merkt sich den Bestwert",
+    async () => {
+      const user = userEvent.setup();
+      const { database, repository } = await setup();
+      await startText(user);
+      for (const round of [1, 2, 3] as const) {
+        await playRound(user, round);
+        expect(screen.getByText("0 %")).toBeInTheDocument(); // alle Lücken leer
+        await user.click(
+          screen.getByRole("button", {
+            name: `Weiter zu Durchgang ${round + 1}`,
+          }),
+        );
+      }
+      await playRound(user, 4);
+      expect(screen.getByText("100 %")).toBeInTheDocument();
       await user.click(
-        screen.getByRole("button", {
-          name: `Weiter zu Durchgang ${round + 1}`,
-        }),
+        screen.getByRole("button", { name: "Ergebnis ansehen" }),
       );
-    }
-    await playRound(user, 4);
-    expect(screen.getByText("100 %")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Ergebnis ansehen" }));
-    expect(
-      await screen.findByRole("heading", { name: "Geschafft!" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("erster Bestwert");
-    expect(await repository.listCompleted()).toHaveLength(1);
-    expect(await database.learningEvents.count()).toBe(1);
+      expect(
+        await screen.findByRole("heading", { name: "Geschafft!" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent("erster Bestwert");
+      expect(await repository.listCompleted()).toHaveLength(1);
+      expect(await database.learningEvents.count()).toBe(1);
 
-    await user.click(
-      screen.getByRole("button", { name: "Anderen Text wählen" }),
-    );
-    const row = (
-      await screen.findByRole("heading", { name: new RegExp(text.title) })
-    ).closest("li")!;
-    expect(row).toHaveTextContent("1 Übung");
-    expect(row).toHaveTextContent("Bestwert: 100 %");
-  });
+      await user.click(
+        screen.getByRole("button", { name: "Anderen Text wählen" }),
+      );
+      const row = (
+        await screen.findByRole("heading", { name: new RegExp(text.title) })
+      ).closest("li")!;
+      expect(row).toHaveTextContent("1 Übung");
+      expect(row).toHaveTextContent("Bestwert: 100 %");
+    },
+    VIER_DURCHGAENGE,
+  );
 
   it("zeigt in Durchgang 1 Markierungen und schreibt in den Lücken", async () => {
     const user = userEvent.setup();
@@ -137,7 +151,8 @@ describe("TextboxApp", () => {
     );
     await user.click(screen.getByRole("button", { name: "Ich bin bereit" }));
     const gaps = await screen.findAllByRole("textbox");
-    expect(gaps[0]).toHaveFocus();
+    // Der Fokus wird nach dem Rendern gesetzt, nicht im selben Schritt.
+    await waitFor(() => expect(gaps[0]).toHaveFocus());
     expect(gaps[0]).toHaveAccessibleName(`Lücke 1 von ${gaps.length}`);
     // Der Originaltext ist während des Schreibens nicht abrufbar.
     expect(screen.queryByRole("timer")).not.toBeInTheDocument();
@@ -235,25 +250,29 @@ describe("TextboxApp", () => {
     );
   });
 
-  it("speichert den Abschluss bei doppeltem Klick nur einmal", async () => {
-    const user = userEvent.setup();
-    const { database, repository } = await setup();
-    await startText(user);
-    for (const round of [1, 2, 3] as const) {
-      await playRound(user, round);
-      await user.click(
-        screen.getByRole("button", {
-          name: `Weiter zu Durchgang ${round + 1}`,
-        }),
-      );
-    }
-    await playRound(user, 4, "Im Garten");
-    const finish = screen.getByRole("button", { name: "Ergebnis ansehen" });
-    await user.dblClick(finish);
-    await screen.findByRole("heading", { name: "Geschafft!" });
-    expect(await repository.listCompleted()).toHaveLength(1);
-    expect(await database.learningEvents.count()).toBe(1);
-  });
+  it(
+    "speichert den Abschluss bei doppeltem Klick nur einmal",
+    async () => {
+      const user = userEvent.setup();
+      const { database, repository } = await setup();
+      await startText(user);
+      for (const round of [1, 2, 3] as const) {
+        await playRound(user, round);
+        await user.click(
+          screen.getByRole("button", {
+            name: `Weiter zu Durchgang ${round + 1}`,
+          }),
+        );
+      }
+      await playRound(user, 4, "Im Garten");
+      const finish = screen.getByRole("button", { name: "Ergebnis ansehen" });
+      await user.dblClick(finish);
+      await screen.findByRole("heading", { name: "Geschafft!" });
+      expect(await repository.listCompleted()).toHaveLength(1);
+      expect(await database.learningEvents.count()).toBe(1);
+    },
+    VIER_DURCHGAENGE,
+  );
 
   it("geht nach Ablauf der Merkzeit von selbst zum Schreiben", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -274,41 +293,51 @@ describe("TextboxApp", () => {
     expect((await screen.findAllByRole("textbox")).length).toBeGreaterThan(0);
   });
 
-  it("führt vom Abschluss und aus der Bibliothek zum Verlauf eines Textes", async () => {
-    const user = userEvent.setup();
-    await setup();
-    await startText(user);
-    for (const round of [1, 2, 3] as const) {
-      await playRound(user, round);
+  it(
+    "führt vom Abschluss und aus der Bibliothek zum Verlauf eines Textes",
+    async () => {
+      const user = userEvent.setup();
+      await setup();
+      await startText(user);
+      for (const round of [1, 2, 3] as const) {
+        await playRound(user, round);
+        await user.click(
+          screen.getByRole("button", {
+            name: `Weiter zu Durchgang ${round + 1}`,
+          }),
+        );
+      }
+      await playRound(user, 4);
       await user.click(
-        screen.getByRole("button", {
-          name: `Weiter zu Durchgang ${round + 1}`,
+        screen.getByRole("button", { name: "Ergebnis ansehen" }),
+      );
+      await user.click(
+        await screen.findByRole("button", { name: "Verlauf ansehen" }),
+      );
+      expect(
+        await screen.findByRole("heading", { name: text.title }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Bestwert").nextSibling).toHaveTextContent(
+        "100 %",
+      );
+      expect(screen.getByRole("img")).toHaveAccessibleName(
+        /ein Wert, 100 Prozent/,
+      );
+      await user.click(screen.getByRole("button", { name: "Zur Textauswahl" }));
+      await user.click(
+        await screen.findByRole("button", {
+          name: `${text.title}: Verlauf ansehen`,
         }),
       );
-    }
-    await playRound(user, 4);
-    await user.click(screen.getByRole("button", { name: "Ergebnis ansehen" }));
-    await user.click(
-      await screen.findByRole("button", { name: "Verlauf ansehen" }),
-    );
-    expect(
-      await screen.findByRole("heading", { name: text.title }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Bestwert").nextSibling).toHaveTextContent("100 %");
-    expect(screen.getByRole("img")).toHaveAccessibleName(
-      /ein Wert, 100 Prozent/,
-    );
-    await user.click(screen.getByRole("button", { name: "Zur Textauswahl" }));
-    await user.click(
-      await screen.findByRole("button", {
-        name: `${text.title}: Verlauf ansehen`,
-      }),
-    );
-    await user.click(screen.getByRole("button", { name: "Erneut üben" }));
-    expect(
-      await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" }),
-    ).toBeInTheDocument();
-  });
+      await user.click(screen.getByRole("button", { name: "Erneut üben" }));
+      expect(
+        await screen.findByRole("heading", {
+          name: "Durchgang 1 von 4: Merken",
+        }),
+      ).toBeInTheDocument();
+    },
+    VIER_DURCHGAENGE,
+  );
 
   describe("Wortspeicher-Brücke", () => {
     it("schlägt Texte mit den mitgebrachten Wörtern vor und blendet sie aus", async () => {
@@ -381,41 +410,53 @@ describe("TextboxApp", () => {
       await screen.findByRole("heading", { name: "Geschafft!" });
     }
 
-    it("bietet nach Fehlern die Fehlerwörter im Wortspeicher an", async () => {
-      const user = userEvent.setup();
-      await setup();
-      await startText(user);
-      await finishWith(user, "Im Garten");
-      const link = screen.getByRole("link", {
-        name: "Fehlerwörter im Wortspeicher üben",
-      });
-      const url = new URL(link.getAttribute("href")!, "http://x");
-      expect(url.pathname).toBe("/frei/german/lernwoerter");
-      expect(url.searchParams.get("woerter")).toContain("wohnt");
-    });
-
-    it("zeigt den Link nicht, wenn alles richtig war oder der Wortspeicher aus ist", async () => {
-      const user = userEvent.setup();
-      await setup();
-      await startText(user);
-      await finishWith(user, text.text);
-      expect(
-        screen.queryByRole("link", {
+    it(
+      "bietet nach Fehlern die Fehlerwörter im Wortspeicher an",
+      async () => {
+        const user = userEvent.setup();
+        await setup();
+        await startText(user);
+        await finishWith(user, "Im Garten");
+        const link = screen.getByRole("link", {
           name: "Fehlerwörter im Wortspeicher üben",
-        }),
-      ).not.toBeInTheDocument();
-    });
+        });
+        const url = new URL(link.getAttribute("href")!, "http://x");
+        expect(url.pathname).toBe("/frei/german/lernwoerter");
+        expect(url.searchParams.get("woerter")).toContain("wohnt");
+      },
+      VIER_DURCHGAENGE,
+    );
 
-    it("blendet die Aktion aus, wenn der Wortspeicher nicht sichtbar ist", async () => {
-      const user = userEvent.setup();
-      await setup(undefined, { stages: "wortspeicher=aus" });
-      await startText(user);
-      await finishWith(user, "Im Garten");
-      expect(
-        screen.queryByRole("link", {
-          name: "Fehlerwörter im Wortspeicher üben",
-        }),
-      ).not.toBeInTheDocument();
-    });
+    it(
+      "zeigt den Link nicht, wenn alles richtig war oder der Wortspeicher aus ist",
+      async () => {
+        const user = userEvent.setup();
+        await setup();
+        await startText(user);
+        await finishWith(user, text.text);
+        expect(
+          screen.queryByRole("link", {
+            name: "Fehlerwörter im Wortspeicher üben",
+          }),
+        ).not.toBeInTheDocument();
+      },
+      VIER_DURCHGAENGE,
+    );
+
+    it(
+      "blendet die Aktion aus, wenn der Wortspeicher nicht sichtbar ist",
+      async () => {
+        const user = userEvent.setup();
+        await setup(undefined, { stages: "wortspeicher=aus" });
+        await startText(user);
+        await finishWith(user, "Im Garten");
+        expect(
+          screen.queryByRole("link", {
+            name: "Fehlerwörter im Wortspeicher üben",
+          }),
+        ).not.toBeInTheDocument();
+      },
+      VIER_DURCHGAENGE,
+    );
   });
 });

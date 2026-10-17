@@ -14,6 +14,13 @@ import {
   processLearningBoxResult,
   sortLearningBoxCards,
 } from "./learning-box";
+import {
+  learningBoxEventFields,
+  learningBoxProgress,
+  learningBoxResultFromEvent,
+  replayLearningBoxCard,
+} from "./learning-box-replay";
+import type { LearningEventV1 } from "./learning-bundle";
 
 vi.stubGlobal("crypto", { randomUUID: () => "fixed-id" });
 
@@ -253,4 +260,112 @@ describe("placeLiveVocabularyCard", () => {
       expect(placeLiveVocabularyCard(advanced, outcome, now)).toBeUndefined();
     },
   );
+});
+
+describe("replaying LernBox events", () => {
+  const base = createLearningBoxCard({
+    deckId: "deck",
+    question: "library",
+    answer: "Bibliothek",
+    now: 1_000,
+  });
+
+  function eventFor(
+    id: string,
+    at: number,
+    result: {
+      correct: boolean;
+      direction: "forward" | "reverse";
+      mode: "oral" | "writing";
+    },
+    overrides: Partial<LearningEventV1> = {},
+  ): LearningEventV1 {
+    return {
+      id,
+      learningObjectId: base.id,
+      occurredAt: new Date(at).toISOString(),
+      source: "learning-box",
+      learningArea: "vocabulary",
+      roundId: `round-${id}`,
+      ...learningBoxEventFields(result),
+      ...overrides,
+    };
+  }
+
+  it("returns the base card without events", () => {
+    expect(replayLearningBoxCard(base, [])).toEqual(base);
+  });
+
+  it.each([
+    ["forward", "writing"],
+    ["forward", "oral"],
+    ["reverse", "writing"],
+    ["reverse", "oral"],
+  ] as const)("replays one %s %s event", (direction, mode) => {
+    const at = 5_000;
+    const replayed = replayLearningBoxCard(base, [
+      eventFor("a", at, { correct: true, direction, mode }),
+    ]);
+    expect(learningBoxProgress(replayed)).toEqual(
+      learningBoxProgress(
+        processLearningBoxResult(base, {
+          correct: true,
+          direction,
+          mode,
+          now: at,
+        }),
+      ),
+    );
+  });
+
+  it("ignores foreign objects and sources", () => {
+    const result = {
+      correct: true,
+      direction: "forward",
+      mode: "oral",
+    } as const;
+    const replayed = replayLearningBoxCard(base, [
+      eventFor("a", 5_000, result, { learningObjectId: "other" }),
+      eventFor("b", 6_000, result, { source: "learning-word" }),
+    ]);
+    expect(replayed).toEqual(base);
+  });
+
+  it("orders by time and then id, whatever the input order", () => {
+    const right = {
+      correct: true,
+      direction: "forward",
+      mode: "oral",
+    } as const;
+    const wrong = {
+      correct: false,
+      direction: "forward",
+      mode: "oral",
+    } as const;
+    const events = [
+      eventFor("c", 3_000, right),
+      eventFor("a", 1_500, right),
+      eventFor("b", 2_000, wrong),
+    ];
+    const sorted = [events[1]!, events[2]!, events[0]!];
+    expect(replayLearningBoxCard(base, events)).toEqual(
+      replayLearningBoxCard(base, sorted),
+    );
+    expect(replayLearningBoxCard(base, events).box).toBe(2);
+
+    const tieB = eventFor("b", 2_000, wrong);
+    const tieA = eventFor("a", 2_000, right);
+    expect(replayLearningBoxCard(base, [tieB, tieA]).box).toBe(1);
+  });
+
+  it("skips events that cannot be mapped", () => {
+    const choice = eventFor(
+      "a",
+      5_000,
+      { correct: true, direction: "forward", mode: "oral" },
+      { answerMode: "choice" },
+    );
+    expect(learningBoxResultFromEvent(choice)).toBeUndefined();
+    expect(replayLearningBoxCard(base, [choice])).toEqual(base);
+  });
 });

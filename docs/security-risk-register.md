@@ -16,15 +16,24 @@ Die Gateway-Konfiguration und echte konkurrierende Requests sind vor
 Produktivfreigabe separat zu prüfen. Kurze Raumcodes bleiben ein bewusstes
 Pilotmerkmal; sie sind kein Ersatz für individuelle Klassenberechtigungen.
 
-## SR-001 · `image-size` über vinext
+## SR-001 · Indirekte Abhängigkeiten der Build-Kette (vinext, Cloudflare, Lint)
 
-- **Stand:** 12. August 2026
-- **Status:** Beobachtung, zwei offene `npm audit`-Meldungen mit Schweregrad hoch in derselben indirekten Abhängigkeit.
-- **Hinweis:** vinext verwendet indirekt `image-size@2.0.2`. Die Meldungen betreffen Endlosschleifen beim Parsen speziell präparierter ICNS-, JXL- oder HEIF-Dateien. Bildparser sind deshalb ein sensibler Verarbeitungspfad und werden vor Einführung von Uploads erneut geprüft.
-- **Reichweite:** indirekte Build-/Bildverarbeitungsabhängigkeit; Lernraum akzeptiert derzeit keine Bild-Uploads und verarbeitet keine fremden Bilder über diesen Pfad.
-- **Gegenmaßnahmen:** keine Verarbeitung nicht vertrauenswürdiger Bilddateien, keine Bild-Uploads, wöchentliche Abhängigkeitsprüfung und erneutes Threat Modeling vor Upload-Funktionen. `npm audit fix` hat die übrigen vier Meldungen ohne Versionsbruch beseitigt.
-- **Aktuelle Prüfung:** `npm audit` meldet am Stichtag zwei hohe Meldungen über `vinext → image-size`. Die angebotene automatische Behebung würde vinext inkompatibel auf `0.0.45` zurückstufen und wird deshalb nicht angewendet.
-- **Neubewertung:** vor Einführung von Uploads oder spätestens beim nächsten Meilenstein.
+- **Stand:** 13. Oktober 2026
+- **Status:** Beobachtung. `npm audit` meldet 10 Befunde (3 mittel, 7 hoch), vorher 15 (3 mittel, 12 hoch). Mit `--omit=dev` (ausgelieferte Pakete) sind es 0.
+- **Durchgeführte Updates:** `npm audit fix` (`source-map-js` 1.2.2), `@cloudflare/vite-plugin` 1.63.2 und `wrangler` 4.150.0 (beseitigt `sharp`/`miniflare`), `vinext` 1.1.0. Alle exakt gepinnt, keine Rückstufung, kein `--force`.
+- **Verbleibende Meldungen:**
+
+  | Paket (Kette)                                                                  | Schwere | Erreichbarkeit                                                                                                                                                                                                    |
+  | ------------------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `braces` → `micromatch` → `fast-glob` → `@next/eslint-plugin-next`             | hoch    | Nur Entwicklungszeit (Lint). Nicht im Bundle. Für `braces` gibt es keine gepatchte Version (3.0.3 ist die neueste), auch `@next/eslint-plugin-next` 16.4.0 nutzt weiter `fast-glob`; ein `overrides` hilft nicht. |
+  | `vinext` → `vite-plugin-commonjs` → `vite-plugin-dynamic-import` → `fast-glob` | hoch    | Nur Build-Zeit (Vite-Plugin auf dem Entwicklerrechner und in CI). Nicht im Bundle; Eingaben sind der eigene Quellcode.                                                                                            |
+  | `vinext` → `@vercel/og` → `satori` → `fflate` (ZIP64-Endlosschleife)           | mittel  | Nur bei OG-Bildern (`ImageResponse`). Die App erzeugt keine; im Build-Ausgabeordner `dist` kommt keines der Pakete vor.                                                                                           |
+
+- **Prüfung der Erreichbarkeit:** Suche nach den Paketnamen in `dist` nach `npm run build`: keine Treffer für `satori`, `fflate`, `@vercel/og`, `braces`, `micromatch`, `fast-glob`, `source-map-js` und die beiden Vite-Plugins (der Treffer „sharp“ ist das KaTeX-Symbol `\sharp`, nicht das Paket). Die App verarbeitet keine hochgeladenen Bilder.
+- **Gegenmaßnahmen:** die Updates oben; keine Bild-Uploads und keine Verarbeitung fremder Bilddateien; wöchentliche Abhängigkeitsprüfung; erneutes Threat Modeling vor Upload-Funktionen. Die angebotene Behebung `npm audit fix --force` stuft vinext auf 0.2.1 und `@next/eslint-plugin-next` auf 14.x zurück und wird nicht angewendet.
+- **Ausstiegspfad vinext:** Die App nutzt Next-APIs (`next/link` in 19, `next/navigation` in 15 und `next/headers` in 2 Dateien, Metadaten, `proxy.ts`). Ein Wechsel auf Next.js mit Cloudflare-Adapter (OpenNext) ist grundsätzlich möglich, wird aber nicht umgesetzt. Bekannte Hürden: `worker/index.ts` importiert `vinext/server/image-optimization` und `vinext/server/app-router-entry` und müsste durch den Adapter-Einstieg ersetzt werden (inklusive der Bildoptimierung über `env.IMAGES`); `vite.config.ts` und `build/sites-vite-plugin.ts` hängen an `vinext()` und `@cloudflare/vite-plugin`; vinext-Eigenheiten wie das Zurückschieben gestreamter Metadaten in den `<head>` (Manifest-Link, siehe `docs/umsetzungsplan-pwa-installierbarkeit.md`) und der Entwicklungsport sind Next-seitig neu zu prüfen.
+- **Neubewertung:** monatlich oder bei jedem neuen vinext-Release.
+- **Historie:** Am 12. August 2026 beschrieb SR-001 `vinext → image-size@2.0.2` (Endlosschleifen bei präparierten ICNS-, JXL- oder HEIF-Dateien). `image-size` ist nicht mehr im Lockfile; die damaligen Gegenmaßnahmen (keine Uploads) gelten weiter.
 
 ## SR-002 · Klassenstempel für die Schreiberleichterung
 

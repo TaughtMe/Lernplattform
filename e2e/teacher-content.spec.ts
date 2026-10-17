@@ -1,9 +1,8 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { analyzeAccessibility } from "./accessibility-helpers";
 
 const CLASS_A = "123e4567-e89b-42d3-a456-426614174001";
 const CLASS_B = "123e4567-e89b-42d3-a456-426614174002";
-const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 0) < 900;
 
@@ -279,9 +278,10 @@ for (const theme of ["light", "dark"] as const) {
     });
 
     const scan = async (page: Page) =>
-      (
-        await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze()
-      ).violations.map(({ id, nodes }) => [id, nodes.length]);
+      (await analyzeAccessibility(page)).violations.map(({ id, nodes }) => [
+        id,
+        nodes.length,
+      ]);
 
     test("Ablage", async ({ page }) => {
       expect(await scan(page)).toEqual([]);

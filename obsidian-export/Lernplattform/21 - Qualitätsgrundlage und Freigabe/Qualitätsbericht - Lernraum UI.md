@@ -47,7 +47,7 @@ status: offen
 - [ ] Migrations- und Rückwärtstests – entfällt, keine Formatänderung
 - [x] bekannte Fehlerfälle gegen Rückschritte (Live-e2e 12/12 in Chromium, neu: gemockter Lehrer-Live-Raum mit Lobby und Live-Ansicht)
 
-Die Plattformsuite (`ENABLE_PRE_PILOT_E2E=1`) lief nach Phase 12 lokal in Chromium erneut; axe meldete auf 28 Seitenansichten keine Befunde, horizontales Scrollen trat nicht auf. Zwei Fälle schlagen nur in der Entwicklungsumgebung fehl, weil dort Google Fonts per Zertifikat blockiert wird und der Test Konsolenfehler verbietet („the native LernBox creates…“, „teachers can prepare every native live-room…“). In GitHub Actions ist dieser Fehler nicht zu erwarten; bestätigt wird das erst durch den CI-Lauf.
+Die Plattformsuite lief nach Phase 12 lokal in Chromium erneut; axe meldete auf 28 Seitenansichten keine Befunde, horizontales Scrollen trat nicht auf. Zwei Fälle schlagen nur in der Entwicklungsumgebung fehl, weil dort Google Fonts per Zertifikat blockiert wird und der Test Konsolenfehler verbietet („the native LernBox creates…“, „teachers can prepare every native live-room…“). In GitHub Actions ist dieser Fehler nicht zu erwarten; bestätigt wird das erst durch den CI-Lauf.
 
 Nach dem Entfernen der ungenutzten Stilregeln wurden 22 Seiten in hell/dunkel und bei 1280/390 px vor und nach der Änderung pixelgenau verglichen. Abweichungen gab es nur beim zufällig gewählten Tier.
 

@@ -59,7 +59,7 @@ import {
   TextboxWordsSheet,
 } from "../views/wortspeicher/textbox-words-sheet";
 import { WORD_STORE_WORKSHEET_PATH } from "./word-store-progress-section";
-import { useHydrated } from "./use-hydrated";
+import { useHydrated } from "../ui/use-hydrated";
 import { useSpeech } from "./use-speech";
 import { useWordStore, type WordStoreRepositories } from "./use-word-store";
 
