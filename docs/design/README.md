@@ -9,9 +9,13 @@ Verbindliche Gestaltungsgrundlage seit Entscheidung 47 (Vault, 29.09.2026). Seit
   - `offen`: noch nicht umgesetzt.
   - Optional `hide` (Selektoren, die vor dem Vergleich ausgeblendet werden) und `ready` (Selektor, auf den vor dem Vergleich gewartet wird, z. B. `dialog[open]` für modale Dialoge, die erst nach dem Laden des Skripts erscheinen).
 - Ergänzungen ohne Vorlage (Start-Overlay, Dialog „Klassen zuordnen“) stehen nur im Katalog, in `app/entwicklung/screens/manifest.ts` (`3c-start`, `3d-start`, `3c-assign`). Sie haben kein Referenzbild und werden nicht verglichen.
-- `referenz/<id>.png`: die Innenfläche jeder Design-Karte, gerendert mit Chromium und den lokal ausgelieferten Schriften Work Sans und Fredoka. Neu erzeugen mit `npm run design:references` (ohne Netz: `DESIGN_UMD_DIR`, siehe Skript).
+- `referenz/<id>.png`: die Innenfläche jeder Design-Karte. Für noch nicht umgesetzte Ansichten wird sie aus der Vorlage gerendert, mit Chromium und den lokal ausgelieferten Schriften Work Sans und Fredoka. Neu erzeugen mit `npm run design:references` (ohne Netz: `DESIGN_UMD_DIR`, siehe Skript).
 
 Vergleich: `npm run test:design` rendert jede umgesetzte Ansicht in der Größe der Vorlage und vergleicht sie mit dem Referenzbild.
+
+**Regel für Referenzbilder.** Das Referenzbild einer umgesetzten Ansicht ist der abgenommene App-Stand (so entschieden in `3c08ab4`), nicht mehr die Vorlage. `npm run design:references` (Render aus der Vorlage) ist nur für neue Ansichten gedacht. Umgesetzte Ansichten werden ausschließlich über den Workflow „Design-Referenzen erneuern“ (`.github/workflows/design-references.yml`, manuell mit Branch als Eingabe) neu erzeugt, und erst nach Sichtprüfung der geänderten Bilder im Pull Request freigegeben.
+
+**Wo verglichen wird.** Der Job `design-quality` in `.github/workflows/quality.yml` und der Workflow laufen im offiziellen Playwright-Container (`mcr.microsoft.com/playwright:v<Version>-noble`). Die Version muss der von `@playwright/test` in `package-lock.json` entsprechen, damit Betriebssystem, Schriften und Chromium überall gleich sind. Lokal kann der Vergleich je nach Rechner abweichen; maßgeblich ist der Lauf in GitHub.
 
 Der Test und das Render-Skript bilden die Systemschriften der Schaltflächen (`-apple-system`, `BlinkMacSystemFont`, „Segoe UI“) auf Liberation Sans ab, wie die Vorlage unter Linux. Der Vergleich ist damit unabhängig vom Rechner (Mac, Cloud-Container mit Inter-Umleitung, CI). Die neun Bilder aus Commit `3c08ab4` (3c, 3d, 3d-dark, 5c-import, 5c-live, 5c-live-dark, 5c-lobby, 5c-options, 5d-import) stammen aus der Ansicht, wie dort begründet, und wurden mit dieser Schrift neu aufgenommen.
 

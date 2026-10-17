@@ -1,0 +1,53 @@
+name: Design-Referenzen erneuern
+
+# Nur manuell. Erneuert die Referenzbilder in docs/design/referenz im selben
+# Playwright-Container wie der Job design-quality und committet geänderte PNGs auf
+# den angegebenen Branch. Referenzbild einer umgesetzten Ansicht = abgenommener
+# App-Stand: Die Bilder im Pull Request vor dem Merge ansehen (siehe
+# docs/design/README.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch, auf den die geänderten Bilder committet werden
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      BRANCH: ${{ inputs.branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:design -- --update-snapshots=all
+      - name: Geänderte Bilder committen
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git add docs/design/referenz
+          if git diff --cached --quiet; then
+            echo "Keine Bildänderungen."
+            exit 0
+          fi
+          views=$(git diff --cached --name-only -- docs/design/referenz \
+            | sed -E 's#.*/([^/]+)\.png$#\1#' | paste -sd, - | sed 's/,/, /g')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Design-Referenzen erneuert: $views" \
+            -m "Erzeugt mit npm run test:design -- --update-snapshots=all im Playwright-Container (Workflow Design-Referenzen erneuern)."
+          git push origin "HEAD:refs/heads/$BRANCH"
+          echo "Geändert: $views" >> "$GITHUB_STEP_SUMMARY"

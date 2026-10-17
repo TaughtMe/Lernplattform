@@ -39,10 +39,35 @@ jobs:
       - run: npm run build
       - run: npm run test:e2e
       - run: npm run test:e2e:live
-      - run: npm run test:design
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report
           path: playwright-report
+          retention-days: 14
+
+  # Designvergleich im offiziellen Playwright-Container: Betriebssystem, Schriften
+  # und Chromium sind dort festgelegt, die Darstellung ist überall gleich. Die
+  # Image-Version muss der Version von @playwright/test in package-lock.json
+  # entsprechen (siehe auch design-references.yml).
+  design-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:design
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: design-report
+          path: |
+            playwright-report
+            test-results
           retention-days: 14
