@@ -707,10 +707,14 @@
   line-height: 1.25;
   text-wrap: pretty;
 }
-/* Gestreckter Knopf: der ganze Kartenbereich ist klickbar. */
+/*
+ * Gestreckter Knopf: der ganze Kartenbereich ist klickbar. Das senkrechte
+ * Padding hebt die eigene Box über 24 px (WCAG 2.5.8), ohne das Layout zu
+ * verschieben: bei `display: inline` zählt es nicht zur Zeilenhöhe.
+ */
 .cardButton {
   display: inline;
-  padding: 0;
+  padding: 4px 0;
   border: 0;
   background: none;
   color: inherit;

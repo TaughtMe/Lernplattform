@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { analyzeAccessibility } from "./accessibility-helpers";
 import { TEXTBOX_TEXTS } from "../src/domain/textbox-library";
 
 /**
@@ -8,8 +8,6 @@ import { TEXTBOX_TEXTS } from "../src/domain/textbox-library";
  * Fachlogik prüft textbox.spec.ts.
  */
 const text = TEXTBOX_TEXTS[0]!;
-const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
-
 test.beforeEach(async ({ context, baseURL }) => {
   await context.addCookies([
     { name: "lernraum-vorschau", value: "1", url: baseURL! },
@@ -19,7 +17,7 @@ test.beforeEach(async ({ context, baseURL }) => {
 const isDesktop = (page: Page) => (page.viewportSize()?.width ?? 0) >= 1100;
 
 async function expectAccessible(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  const results = await analyzeAccessibility(page);
   expect(results.violations).toEqual([]);
   expect(
     await page.evaluate(

@@ -2504,18 +2504,22 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
   justify-content: center;
   gap: 0;
 }
+/* Die Höhe der Zeile bestimmen die Links; der Schülerrahmen braucht sie für
+   `scroll-padding-bottom` (klebender Seitenfuß), darum als Variable. */
+:root {
+  --site-footer-h: 36px;
+}
+@media (pointer: coarse) {
+  :root {
+    --site-footer-h: 44px;
+  }
+}
 .ui-footer--compact a,
 .ui-footer--compact .ui-version {
-  min-height: 36px;
+  min-height: var(--site-footer-h);
   font-size: 12px;
   font-weight: 600;
   color: var(--ink3);
-}
-@media (pointer: coarse) {
-  .ui-footer--compact a,
-  .ui-footer--compact .ui-version {
-    min-height: 44px;
-  }
 }
 
 /* ============ Seitenrahmen und Profil ============ */

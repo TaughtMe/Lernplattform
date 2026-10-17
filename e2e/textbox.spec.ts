@@ -1,10 +1,8 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { analyzeAccessibility } from "./accessibility-helpers";
 import { TEXTBOX_TEXTS } from "../src/domain/textbox-library";
 
 const text = TEXTBOX_TEXTS[0]!;
-const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
-
 test.beforeEach(async ({ context, baseURL }) => {
   // Die Textbox ist frei; das Cookie hält die Tests unabhängig von der Freigabe.
   await context.addCookies([
@@ -13,7 +11,7 @@ test.beforeEach(async ({ context, baseURL }) => {
 });
 
 async function expectAccessible(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  const results = await analyzeAccessibility(page);
   expect(results.violations).toEqual([]);
   expect(
     await page.evaluate(
