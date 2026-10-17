@@ -13,7 +13,11 @@ Verbindliche Gestaltungsgrundlage seit Entscheidung 47 (Vault, 29.09.2026). Seit
 
 Vergleich: `npm run test:design` rendert jede umgesetzte Ansicht in der Größe der Vorlage und vergleicht sie mit dem Referenzbild.
 
-**Regel für Referenzbilder.** Das Referenzbild einer umgesetzten Ansicht ist der abgenommene App-Stand (so entschieden in `3c08ab4`), nicht mehr die Vorlage. `npm run design:references` (Render aus der Vorlage) ist nur für neue Ansichten gedacht. Umgesetzte Ansichten werden ausschließlich über den Workflow „Design-Referenzen erneuern“ (`.github/workflows/design-references.yml`, manuell mit Branch als Eingabe) neu erzeugt, und erst nach Sichtprüfung der geänderten Bilder im Pull Request freigegeben.
+**Regel für Referenzbilder.** Das Referenzbild einer umgesetzten Ansicht ist der abgenommene App-Stand (so entschieden in `3c08ab4`), nicht mehr die Vorlage. `npm run design:references` (Render aus der Vorlage) ist nur für neue Ansichten gedacht. Umgesetzte Ansichten werden ausschließlich über den Workflow „Design-Referenzen erneuern“ (`.github/workflows/design-references.yml`) neu erzeugt, und erst nach Sichtprüfung der geänderten Bilder im Pull Request freigegeben.
+
+Auslösen: Im Pull Request das Label `design-referenzen-erneuern` setzen. Der Workflow committet die geänderten PNGs auf den Branch des Pull Requests und entfernt das Label danach wieder; die Bilder dann in der Dateiansicht des Pull Requests prüfen. Alternativ „Run workflow“ im Actions-Menü (Eingabe: Branch), das aber nur erscheint, wenn die Datei auf dem Standard-Branch liegt. Pushes mit dem `GITHUB_TOKEN` starten keine weiteren Workflows: Nach dem Bilder-Commit den Job `design-quality` von Hand neu starten.
+
+Label einmalig anlegen: `gh label create design-referenzen-erneuern`.
 
 **Wo verglichen wird.** Der Job `design-quality` in `.github/workflows/quality.yml` und der Workflow laufen im offiziellen Playwright-Container (`mcr.microsoft.com/playwright:v<Version>-noble`). Die Version muss der von `@playwright/test` in `package-lock.json` entsprechen, damit Betriebssystem, Schriften und Chromium überall gleich sind. Lokal kann der Vergleich je nach Rechner abweichen; maßgeblich ist der Lauf in GitHub.
 
