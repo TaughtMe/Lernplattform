@@ -204,6 +204,7 @@
       "width": 390,
       "height": 788,
       "canvas": ["[id=\"5a\"] button[data-ph=\"hold\"]"],
+      "touch": true,
       "status": "umgesetzt"
     },
     {
@@ -265,6 +266,7 @@
       "width": 1180,
       "height": 788,
       "canvas": ["[id=\"5a\"] button[data-ph=\"hold\"]"],
+      "touch": true,
       "status": "umgesetzt"
     },
     {
