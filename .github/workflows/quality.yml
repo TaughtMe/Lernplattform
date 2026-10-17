@@ -13,6 +13,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Stellt fest, ob sich mehr als Dokumentation geändert hat. Bei reinen
+  # Doku-Änderungen (docs/ außer docs/design/, obsidian-export/, *.md) laufen
+  # nur code-quality und die Sammel-Jobs; Browser- und Designtests entfallen.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          relevant=$(
+            {
+              printf '%s\n' "$files" | grep -Ev '^(docs/|obsidian-export/)' | grep -Ev '\.md$' || true
+              printf '%s\n' "$files" | grep -E '^docs/design/' || true
+            } | grep -v '^$' || true
+          )
+          if [ -n "$relevant" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+            echo "Nur Dokumentation geändert: Browser- und Designtests entfallen." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   code-quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -25,9 +59,34 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run check
 
-  browser-quality:
+  # Die vollständige Cross-Browser-Suite (AGENTS.md): je Browser-Projekt ein
+  # eigener Job, alle gleichzeitig. Jeder Job führt test:e2e und test:e2e:live
+  # für sein Projekt aus. fail-fast ist aus, damit jeder Browser sein Ergebnis
+  # meldet.
+  browser:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    name: browser (${{ matrix.project }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60 # platform-quality.spec.ts läuft in allen 7 Browser-Projekten (lokal ca. 1,5 Min. je Chromium-Projekt, dazu Rest-Suite ca. 3,7 Min. je Projekt)
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: desktop-chromium
+            browser: chromium
+          - project: desktop-firefox
+            browser: firefox
+          - project: desktop-webkit
+            browser: webkit
+          - project: mobile-chrome
+            browser: chromium
+          - project: mobile-safari
+            browser: webkit
+          - project: tablet-safari
+            browser: webkit
+          - project: minimum-width
+            browser: chromium
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,22 +94,40 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npm run build
-      - run: npm run test:e2e
-      - run: npm run test:e2e:live
+      - run: npx playwright test --project=${{ matrix.project }}
+      - run: npx playwright test --config playwright.live.config.ts --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: playwright-report
           retention-days: 14
+
+  # Sammelstatus unter dem bisherigen Namen: grün, wenn alle Browser grün sind
+  # oder die Browser-Tests bei reinen Doku-Änderungen entfallen.
+  browser-quality:
+    needs: [changes, browser]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          CHANGES: ${{ needs.changes.result }}
+          BROWSER: ${{ needs.browser.result }}
+        run: |
+          echo "changes: $CHANGES, browser: $BROWSER"
+          [ "$CHANGES" = "success" ] || exit 1
+          [ "$BROWSER" = "success" ] || [ "$BROWSER" = "skipped" ] || exit 1
 
   # Designvergleich im offiziellen Playwright-Container: Betriebssystem, Schriften
   # und Chromium sind dort festgelegt, die Darstellung ist überall gleich. Die
   # Image-Version muss der Version von @playwright/test in package-lock.json
   # entsprechen (siehe auch design-references.yml).
-  design-quality:
+  design:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container:
@@ -71,3 +148,18 @@ jobs:
             playwright-report
             test-results
           retention-days: 14
+
+  # Sammelstatus unter dem bisherigen Namen design-quality.
+  design-quality:
+    needs: [changes, design]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          CHANGES: ${{ needs.changes.result }}
+          DESIGN: ${{ needs.design.result }}
+        run: |
+          echo "changes: $CHANGES, design: $DESIGN"
+          [ "$CHANGES" = "success" ] || exit 1
+          [ "$DESIGN" = "success" ] || [ "$DESIGN" = "skipped" ] || exit 1

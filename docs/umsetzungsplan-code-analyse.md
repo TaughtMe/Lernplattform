@@ -49,7 +49,11 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
   des Plans. Wenn eine Entscheidung nötig ist, die der Plan nicht trifft, halte an und frage nach,
   statt selbst eine fachliche Regel festzulegen.
 - **Abschluss:** Am Ende des Teilplans den Status in der Tabelle unten aktualisieren (im selben
-  Pull Request).
+  Pull Request und im selben Commit wie die Änderung, nicht als eigener Push: jeder Push startet
+  einen vollen Prüflauf). Die PR-Nummer ist vor dem Öffnen unbekannt; dann „PR folgt“ eintragen
+  und den Link beim nächsten ohnehin nötigen Push nachtragen.
+- **GitHub-Prüfungen:** `code-quality`, `browser-quality` (je Browser ein paralleler Job) und
+  `design-quality`. Bei reinen Doku-Änderungen entfallen Browser- und Designtests.
 
 ## Status
 
