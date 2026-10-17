@@ -7,7 +7,7 @@ Verbindliche Gestaltungsgrundlage seit Entscheidung 47 (Vault, 29.09.2026). Seit
   - `umgesetzt`: Es gibt unter `/entwicklung/screens/<id>` eine Ansicht, die der Designvergleich prüft.
   - `referenz`: Der Entwurf dient als Vorlage für Ideen, wird aber nicht 1:1 gebaut, weil eine neuere Fassung ihn ersetzt (1a–1c, 1d, 2c). Er erscheint im Katalog als offen und wird nicht verglichen.
   - `offen`: noch nicht umgesetzt.
-  - Optional `hide` (Selektoren, die vor dem Vergleich ausgeblendet werden) und `ready` (Selektor, auf den vor dem Vergleich gewartet wird, z. B. `dialog[open]` für modale Dialoge, die erst nach dem Laden des Skripts erscheinen).
+  - Optional `hide` (Selektoren, die vor dem Vergleich ausgeblendet werden) `touch` (der Test läuft mit hasTouch/isMobile, damit die Touch-Darstellung gewählt wird, z. B. 5a-hold/5b-hold) und `ready` (Selektor, auf den vor dem Vergleich gewartet wird, z. B. `dialog[open]` für modale Dialoge, die erst nach dem Laden des Skripts erscheinen).
 - Ergänzungen ohne Vorlage (Start-Overlay, Dialog „Klassen zuordnen“) stehen nur im Katalog, in `app/entwicklung/screens/manifest.ts` (`3c-start`, `3d-start`, `3c-assign`). Sie haben kein Referenzbild und werden nicht verglichen.
 - `referenz/<id>.png`: die Innenfläche jeder Design-Karte. Für noch nicht umgesetzte Ansichten wird sie aus der Vorlage gerendert, mit Chromium und den lokal ausgelieferten Schriften Work Sans und Fredoka. Neu erzeugen mit `npm run design:references` (ohne Netz: `DESIGN_UMD_DIR`, siehe Skript).
 
