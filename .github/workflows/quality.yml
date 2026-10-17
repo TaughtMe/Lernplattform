@@ -62,7 +62,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm run test:design
+      - run: npm run test:design -- --repeat-each=3
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
