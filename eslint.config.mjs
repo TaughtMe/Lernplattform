@@ -49,6 +49,16 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    files: ["app/**/*.{ts,tsx}"],
+    ignores: ["app/**/*.test.{ts,tsx}"],
+    rules: {
+      "max-lines": [
+        "error",
+        { max: 1000, skipBlankLines: true, skipComments: true },
+      ],
+    },
+  },
+  {
     files: ["src/domain/**/*.{ts,tsx}", "src/storage/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
