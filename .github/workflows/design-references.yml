@@ -21,6 +21,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Pro Branch nur ein Lauf gleichzeitig: Zwei Läufe (z. B. Label zweimal gesetzt)
+# würden sonst beide auf denselben Branch pushen.
+concurrency:
+  group: design-references-${{ inputs.branch || github.head_ref }}
+  cancel-in-progress: false
+
 jobs:
   update:
     # Label nur für Branches dieses Repositorys: Pull Requests aus Forks haben
@@ -62,11 +68,11 @@ jobs:
           git push origin "HEAD:refs/heads/$BRANCH"
           echo "Geändert: $views" >> "$GITHUB_STEP_SUMMARY"
 
-  # Label wieder entfernen, damit es beim nächsten Mal erneut gesetzt werden kann.
-  # Eigener Job auf dem Runner (im Playwright-Image gibt es kein gh).
+  # Label sofort entfernen (nicht erst nach dem Lauf), damit es jederzeit neu gesetzt
+  # werden kann, auch wenn der Lauf noch läuft oder fehlschlägt. Eigener Job auf
+  # dem Runner (im Playwright-Image gibt es kein gh).
   label-entfernen:
-    needs: update
-    if: always() && github.event_name == 'pull_request' && github.event.label.name == 'design-referenzen-erneuern'
+    if: github.event_name == 'pull_request' && github.event.label.name == 'design-referenzen-erneuern'
     runs-on: ubuntu-latest
     steps:
       - run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label design-referenzen-erneuern
