@@ -1,7 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-
-const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
+import { analyzeAccessibility } from "./accessibility-helpers";
 
 test("the cloud sync card opens the WebDAV form on demand and stays accessible", async ({
   page,
@@ -33,6 +31,6 @@ test("the cloud sync card opens the WebDAV form on demand and stays accessible",
   );
   expect(overflow).toBeLessThanOrEqual(0);
 
-  const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  const results = await analyzeAccessibility(page);
   expect(results.violations).toEqual([]);
 });
