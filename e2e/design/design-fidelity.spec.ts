@@ -82,17 +82,32 @@ for (const screen of manifest.screens) {
     const frame = page.locator(`[data-screen="${screen.id}"]`);
     await expect(frame).toBeVisible();
     if (screen.ready) await frame.locator(screen.ready).waitFor();
-    // Per Stilregel statt per Inline-Stil auf den vorhandenen Knoten: Auch Knoten,
-    // die React später neu anlegt, bleiben ausgeblendet.
-    if (screen.hide?.length) {
-      await page.addStyleTag({
-        content: screen.hide
-          .map(
-            (selector) =>
-              `[data-screen="${screen.id}"] ${selector} { display: none !important; }`,
-          )
-          .join("\n"),
-      });
+    // CSS-Selektoren per Stilregel statt per Inline-Stil auf den vorhandenen
+    // Knoten: Auch Knoten, die React später neu anlegt, bleiben ausgeblendet.
+    // Playwright-Selektoren (z. B. `button:has-text("…")`) sind kein CSS und
+    // werden wie bisher über den Locator auf die vorhandenen Knoten angewendet.
+    const cssRules: string[] = [];
+    for (const selector of screen.hide ?? []) {
+      const isCss = await page.evaluate(
+        (value) => CSS.supports(`selector(${value})`),
+        selector,
+      );
+      if (isCss) {
+        cssRules.push(
+          `[data-screen="${screen.id}"] ${selector} { display: none !important; }`,
+        );
+      } else {
+        await frame
+          .locator(selector)
+          .evaluateAll((nodes) =>
+            nodes.forEach(
+              (node) => ((node as HTMLElement).style.display = "none"),
+            ),
+          );
+      }
+    }
+    if (cssRules.length) {
+      await page.addStyleTag({ content: cssRules.join("\n") });
     }
     await page.evaluate(() => document.fonts.ready);
     // Zwei Frames abwarten, damit Effekte nach der Hydrierung gelaufen sind.
