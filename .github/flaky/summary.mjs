@@ -16,8 +16,17 @@ const walk = (suite) => {
         if (result.status === "passed") row.pass++;
         else {
           row.fail++;
+          const plain = (result.error?.message ?? result.status).replace(
+            /\u001b\[[0-9;]*m/g,
+            "",
+          );
+          const lines = plain
+            .split("\n")
+            .filter((l) => /^(Error|Locator|\s*- waiting for)/.test(l.trim()))
+            .slice(0, 3)
+            .join(" / ");
           row.errors.add(
-            (result.error?.message ?? result.status).split("\n")[0].slice(0, 200),
+            `Zeile ${result.error?.location?.line}: ${lines}`.slice(0, 400),
           );
         }
       }

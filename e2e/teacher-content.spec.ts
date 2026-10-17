@@ -202,6 +202,8 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page.getByText("„Morgensonne“ ist gespeichert.")).toBeVisible();
   await page.getByRole("button", { name: "Zurück zu Inhalte" }).click();
+  // Die Navigation der App zu Ende laufen lassen, bevor goto sie abbricht.
+  await expect(page).toHaveURL(/\/lehrer$/);
   await page.goto(`/lehrer?klasse=${CLASS_A}`);
   await expect(
     page.getByRole("button", { name: "Morgensonne bearbeiten" }).first(),
