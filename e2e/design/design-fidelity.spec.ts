@@ -59,18 +59,24 @@ for (const screen of manifest.screens) {
     );
     await page.setViewportSize({ width: screen.width, height: screen.height });
     await page.goto(`/entwicklung/screens/${screen.id}`);
+    // Zustände, die erst nach der Hydrierung entstehen (z. B. das zufällige Tier
+    // in 9b/9c), sollen nicht je nach Lauf früher oder später erfasst werden.
+    await page.waitForLoadState("networkidle");
     await page.addStyleTag({ content: CONTROL_FONT_CSS });
     const frame = page.locator(`[data-screen="${screen.id}"]`);
     await expect(frame).toBeVisible();
     if (screen.ready) await frame.locator(screen.ready).waitFor();
-    for (const selector of screen.hide ?? []) {
-      await frame
-        .locator(selector)
-        .evaluateAll((nodes) =>
-          nodes.forEach(
-            (node) => ((node as HTMLElement).style.display = "none"),
-          ),
-        );
+    // Per Stilregel statt per Inline-Stil auf den vorhandenen Knoten: Auch Knoten,
+    // die React später neu anlegt, bleiben ausgeblendet.
+    if (screen.hide?.length) {
+      await page.addStyleTag({
+        content: screen.hide
+          .map(
+            (selector) =>
+              `[data-screen="${screen.id}"] ${selector} { display: none !important; }`,
+          )
+          .join("\n"),
+      });
     }
     await page.evaluate(() => document.fonts.ready);
     await expect(frame).toHaveScreenshot(`${screen.id}.png`, {
