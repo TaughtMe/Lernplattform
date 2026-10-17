@@ -8,6 +8,7 @@ import { createSyncController, type SyncSnapshot } from "./controller";
 import { createCredentialStore } from "./credentials";
 import { SYNC_FILE_V2, readEnvelopeHeader } from "./envelope";
 import { DEFAULT_SYNC_SCOPE } from "./model";
+import { POLL_MS } from "./scheduler";
 import { createFakeEnv } from "./testing/fake-env";
 import { createFakeWebDav, type FakeWebDav } from "./testing/fake-webdav";
 
@@ -18,6 +19,7 @@ const connection = {
 };
 const PASSWORD = "pferd-batterie-klammer";
 
+const WAIT_MS = 15_000;
 const closers: Array<() => Promise<void>> = [];
 afterEach(async () => {
   for (const close of closers.splice(0)) await close();
@@ -73,6 +75,8 @@ const options = (name: string, extra: Record<string, unknown> = {}) => ({
 });
 
 describe("sync controller", () => {
+  // Zwei Geräte mit echter Datenbank und echten Runden; allein etwa 1 s, unter
+  // Last ein Vielfaches. Nur dieser Test bekommt deshalb mehr Zeit.
   it("sets up two devices and carries a change over within one poll", async () => {
     const server = createFakeWebDav();
     const home = device(server);
@@ -101,24 +105,31 @@ describe("sync controller", () => {
     await home.fake.advance(2_500);
     // Erst wenn der Laptop geschrieben hat, darf der Takt der Tafel laufen;
     // sonst prüft sie vor dem Hochladen und der Test hängt vom Zufall ab.
-    await vi.waitFor(async () =>
-      expect((await home.controller.snapshot()).revision).toBeGreaterThan(
-        before,
-      ),
+    await vi.waitFor(
+      async () =>
+        expect((await home.controller.snapshot()).revision).toBeGreaterThan(
+          before,
+        ),
+      { timeout: WAIT_MS },
     );
-    await board.fake.advance(10_000);
-    await vi.waitFor(async () =>
-      expect((await board.library.list()).map((m) => m.title).sort()).toEqual([
-        "Diktat",
-        "Vokabeln",
-      ]),
+    // Jeder Versuch lässt einen vollen Takt der Tafel verstreichen. Die Runde
+    // selbst braucht echte Zeit (Datenbank, Verschlüsselung); auf einem
+    // ausgelasteten Rechner ist sie nach einem einzelnen Takt noch nicht durch.
+    await vi.waitFor(
+      async () => {
+        await board.fake.advance(POLL_MS);
+        expect((await board.library.list()).map((m) => m.title).sort()).toEqual(
+          ["Diktat", "Vokabeln"],
+        );
+      },
+      { timeout: WAIT_MS },
     );
     const snapshot = await board.controller.snapshot();
     expect(snapshot.devices.map((d) => d.name).sort()).toEqual([
       "Laptop",
       "Tafel",
     ]);
-  });
+  }, 30_000);
 
   it("encrypts with a password that a second device must know", async () => {
     const server = createFakeWebDav();

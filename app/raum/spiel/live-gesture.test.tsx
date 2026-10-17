@@ -1,5 +1,11 @@
 import "fake-indexeddb/auto";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-session";
@@ -201,6 +207,22 @@ describe("math tasks must be memorised", () => {
     return view;
   }
 
+  // Das Abschicken speichert Mathe-Versuche zuerst lokal (asynchron). Erst wenn
+  // der Fehlerzähler hochgezählt hat, ist die Antwort ausgewertet und das Feld
+  // wieder frei; sonst tippt der nächste Versuch ins gesperrte Feld.
+  async function answerWrong(
+    user: ReturnType<typeof userEvent.setup>,
+    container: HTMLElement,
+    value: string,
+    mistakes: number,
+  ) {
+    await user.type(field(), `${value}{Enter}`);
+    await waitFor(() => {
+      expect(container.textContent).toContain(`Fehler ${mistakes}`);
+      expect(field()).toBeEnabled();
+    });
+  }
+
   it("does not show the task in the answer screen at first", () => {
     const { container } = renderMath(true);
     expect(field()).toBeInTheDocument();
@@ -211,18 +233,18 @@ describe("math tasks must be memorised", () => {
   it("shows the task again after two wrong answers when the teacher allows it", async () => {
     const user = userEvent.setup();
     const { container } = renderMath(true);
-    await user.type(field(), "1{Enter}");
+    await answerWrong(user, container, "1", 1);
     expect(container.textContent).not.toContain("7 · 8");
-    await user.type(field(), "2{Enter}");
+    await answerWrong(user, container, "2", 2);
     expect(container.textContent).toContain("7 · 8");
   });
 
   it("keeps the task hidden when the teacher turned the option off", async () => {
     const user = userEvent.setup();
     const { container } = renderMath(false);
-    await user.type(field(), "1{Enter}");
-    await user.type(field(), "2{Enter}");
-    await user.type(field(), "3{Enter}");
+    await answerWrong(user, container, "1", 1);
+    await answerWrong(user, container, "2", 2);
+    await answerWrong(user, container, "3", 3);
     expect(container.textContent).not.toContain("7 · 8");
   });
 });
