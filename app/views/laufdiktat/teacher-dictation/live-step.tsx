@@ -1,0 +1,179 @@
+"use client";
+
+import type { CSSProperties } from "react";
+import { Animal, cx, Eyebrow } from "../../parts/parts";
+import styles from "../teacher-dictation-screen.module.css";
+import type { ParticipantStatus, TeacherDictationScreenProps } from "./types";
+
+export function LiveStep({
+  roomCode,
+  mode,
+  live,
+  roomTimes,
+  onExportCsv,
+}: TeacherDictationScreenProps) {
+  const maxMistakes = Math.max(1, ...live.mistakes.map((entry) => entry.count));
+  return (
+    <div className={cx(styles.stage, styles.live)}>
+      <span className={styles.liveBadge}>
+        <span className={styles.dot} />
+        Live · Raum {roomCode}
+      </span>
+      {roomTimes?.closed ? (
+        <p className={styles.roomNote} role="status">
+          <strong>Raum geschlossen.</strong> Die letzten Ergebnisse bleiben
+          hier, bis du einen neuen Raum öffnest.
+        </p>
+      ) : roomTimes?.closingSoon ? (
+        <p className={styles.roomNote} role="status">
+          <strong>Raum schließt um {roomTimes.closesAt}.</strong> Ergebnisse
+          jetzt als CSV sichern.
+        </p>
+      ) : null}
+      <div className={styles.stats}>
+        <LiveStat label="Aktiv" value={live.active} dot="var(--gold)" />
+        <LiveStat label="Fertig" value={live.finished} dot="var(--green)" />
+        <LiveStat
+          label="Gesamt"
+          value={`${live.overall} %`}
+          dot="var(--ink3)"
+        />
+      </div>
+      <div className={styles.liveGrid}>
+        <div className={styles.liveStudents}>
+          <div className={cx(styles.between, styles.studentsHead)}>
+            <span className={styles.label}>Schüler</span>
+            <button type="button" className={styles.csv} onClick={onExportCsv}>
+              Ergebnisse als CSV
+            </button>
+          </div>
+          {mode === "STATION" ? (
+            <ul className={styles.stations}>
+              {live.stations.map((station) => (
+                <li
+                  key={station.number}
+                  className={cx(
+                    styles.station,
+                    station.state === "done" && styles.stationDone,
+                    station.state === "active" && styles.stationActive,
+                  )}
+                >
+                  <span className={styles.stationNumber}>{station.number}</span>
+                  <span className={styles.stationState}>{station.label}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className={styles.students}>
+              {live.students.map((student) => (
+                <li
+                  key={student.name}
+                  className={cx(
+                    styles.student,
+                    student.status === "offline" && styles.away,
+                    student.struggling && styles.struggling,
+                  )}
+                >
+                  <span className={styles.studentHead}>
+                    {student.animal ? (
+                      <Animal animal={student.animal} size={26} />
+                    ) : null}
+                    <span className={styles.studentName}>{student.name}</span>
+                    <StatusChip status={student.status} />
+                    {student.struggling ? (
+                      <span className={styles.needsHelp}>Braucht Hilfe</span>
+                    ) : null}
+                  </span>
+                  <span className={styles.studentMeta}>
+                    {student.progress >= student.total ? (
+                      <span className={styles.finished}>Fertig</span>
+                    ) : (
+                      <span className={styles.track}>
+                        <span
+                          style={{
+                            width: `${Math.round((student.progress / student.total) * 100)}%`,
+                          }}
+                        />
+                      </span>
+                    )}
+                    {student.mistakes ? (
+                      <span className={styles.errors}>
+                        {`${student.mistakes}✕`}
+                      </span>
+                    ) : null}
+                    <span className={styles.count}>
+                      {`${student.progress}/${student.total}`}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <button
+            type="button"
+            className={cx(styles.csv, styles.csvNarrow)}
+            onClick={onExportCsv}
+          >
+            Ergebnisse als CSV
+          </button>
+        </div>
+        <section className={styles.mistakes} aria-label="Häufigste Fehler">
+          <Eyebrow>Häufigste Fehler</Eyebrow>
+          {live.mistakes.map((entry) => (
+            <div key={entry.word} className={styles.mistake}>
+              <span className={styles.mistakeWord}>
+                {entry.display ?? entry.word}
+              </span>
+              <span className={styles.mistakeBar}>
+                <span
+                  style={{
+                    width: `${Math.round((entry.count / maxMistakes) * 100)}%`,
+                  }}
+                />
+              </span>
+              <span className={styles.mistakeCount}>{entry.count}</span>
+            </div>
+          ))}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function LiveStat({
+  label,
+  value,
+  dot,
+}: {
+  label: string;
+  value: number | string;
+  dot: string;
+}) {
+  return (
+    <div className={styles.stat}>
+      <span className={styles.statLabel}>
+        <span
+          className={styles.dot}
+          style={{ "--dot": dot } as CSSProperties}
+        />
+        {label}
+      </span>
+      <p className={styles.statValue}>{value}</p>
+    </div>
+  );
+}
+
+/** Nur Abweichungen zeigen: im Raum ist der Normalfall. */
+export function StatusChip({
+  status,
+}: {
+  status: ParticipantStatus | undefined;
+}) {
+  if (status === "practice")
+    return (
+      <span className={cx(styles.status, styles.practice)}>übt weiter</span>
+    );
+  if (status === "offline")
+    return <span className={cx(styles.status, styles.offline)}>getrennt</span>;
+  return null;
+}
