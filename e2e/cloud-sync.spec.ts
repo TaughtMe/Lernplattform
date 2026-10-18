@@ -236,12 +236,19 @@ test("zwei Geräte gleichen Material über WebDAV ab, verschlüsselt, mit Konfli
     .withTags(AXE_TAGS)
     .analyze();
   expect(axe.violations).toEqual([]);
+  const beforeDecision = dav.files.get(CLOUD_FILE)?.etag;
   await dialog.getByRole("button", { name: "Andere behalten" }).click();
   await expect(dialog.getByText("Keine offenen Konflikte.")).toBeVisible();
   await dialog.getByRole("button", { name: "Schließen" }).click();
 
   // Die Entscheidung geht an den Laptop; dort bleibt es still.
   await syncNow(tafel.page);
+  // Auch dieser Abgleich läuft im Hintergrund weiter: Der Laptop darf erst
+  // ziehen, wenn die Entscheidung in der Cloud liegt, sonst holt er die
+  // vorläufige Fassung der Tafel.
+  await expect
+    .poll(() => dav.files.get(CLOUD_FILE)?.etag)
+    .not.toBe(beforeDecision);
   await syncNow(laptop.page);
   await laptop.page.goto("/lehrer?vorschau=an");
   await expect(
