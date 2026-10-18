@@ -1,5 +1,11 @@
 import "fake-indexeddb/auto";
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildTeacherRoomConfig } from "../../../src/integrations/laufdiktat/teacher-session";
@@ -501,5 +507,271 @@ describe("Start-Absicht", () => {
       await screen.findByRole("img", { name: "Raumcode 1111" }),
     ).toBeInTheDocument();
     expect((await library().get("t1"))?.title).toBe("Tiere");
+  });
+});
+
+describe("Vokabeln aus der Ablage wählen", () => {
+  const vocabulary = (
+    id: string,
+    title: string,
+    source: string,
+    extra: Partial<TeacherContentPackage> = {},
+  ) =>
+    entry(id, {
+      kind: "vocabulary",
+      title,
+      source,
+      promptLocale: "en-GB",
+      answerLocale: "de-DE",
+      classIds: [CLASS_A],
+      ...extra,
+    });
+
+  async function seed() {
+    await createTeacherProfileRepository().put({
+      id: "local-teacher",
+      displayName: "Frau Test",
+      school: "",
+      email: "",
+      subjects: [],
+      lastLiveClassId: CLASS_A,
+      updatedAt: "2026-09-01T10:00:00.000Z",
+    });
+    await library().put(
+      vocabulary(
+        "u3",
+        "Unit 3",
+        "apple;Apfel;Food\nbread;Brot;Food\nhouse;Haus",
+        { updatedAt: "2026-10-01T10:00:00.000Z" },
+      ),
+    );
+    await library().put(vocabulary("u2", "Unit 2", "dog;Hund\nfish;Fisch"));
+    await library().put(
+      vocabulary("fr", "Français", "maison;Haus", {
+        promptLocale: "fr-FR",
+        updatedAt: "2026-09-10T10:00:00.000Z",
+      }),
+    );
+    await library().put(
+      vocabulary("other", "Ohne Klasse", "cat;Katze", { classIds: [] }),
+    );
+  }
+
+  async function openPicker(user: ReturnType<typeof userEvent.setup>) {
+    const button = await screen.findByRole("button", {
+      name: "Aus meinen Vokabeln wählen",
+    });
+    await waitFor(() => expect(button).toBeEnabled());
+    await user.click(button);
+    return within(await screen.findByRole("dialog"));
+  }
+
+  const abfrageDate = () => {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.`;
+  };
+
+  it("übernimmt eine Auswahl aus zwei Paketen, Dubletten nur einmal", async () => {
+    await seed();
+    await library().put(
+      vocabulary("dup", "Dublette", "Apple;apfel;Alt\nbird;Vogel", {
+        updatedAt: "2026-09-05T10:00:00.000Z",
+      }),
+    );
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const user = userEvent.setup();
+    const dialog = await openPicker(user);
+
+    // Klassenfilter: Das Paket ohne Klasse fehlt, bis „Alle Klassen“ gewählt ist.
+    expect(dialog.queryByText("Ohne Klasse")).not.toBeInTheDocument();
+    await user.click(dialog.getByRole("checkbox", { name: "Alle Klassen" }));
+    expect(dialog.getByText("Ohne Klasse")).toBeInTheDocument();
+    await user.click(dialog.getByRole("checkbox", { name: "Alle Klassen" }));
+    expect(dialog.queryByText("Ohne Klasse")).not.toBeInTheDocument();
+
+    await user.click(
+      dialog.getByRole("checkbox", {
+        name: "Alle Vokabeln aus Unit 3 auswählen",
+      }),
+    );
+    // Sprachfilter: Das französische Paket ist jetzt ausgeblendet.
+    expect(
+      dialog.getByText("1 Paket in anderen Sprachen ausgeblendet"),
+    ).toBeInTheDocument();
+    expect(dialog.queryByText("Français")).not.toBeInTheDocument();
+
+    await user.click(dialog.getByRole("button", { name: /Dublette/ }));
+    await user.click(dialog.getByRole("checkbox", { name: "Apple → apfel" }));
+    await user.click(dialog.getByRole("checkbox", { name: "bird → Vogel" }));
+    expect(dialog.getByRole("status")).toHaveTextContent("5 ausgewählt");
+    await user.click(dialog.getByRole("button", { name: "Übernehmen" }));
+
+    expect(
+      await screen.findByText("4 Vokabeln übernommen."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("4 Vokabeln")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Vokabel 1" })).toHaveValue(
+      "apple",
+    );
+    expect(screen.getByRole("textbox", { name: "Tag Vokabel 1" })).toHaveValue(
+      "Food",
+    );
+    expect(screen.getByRole("textbox", { name: "Vokabel 4" })).toHaveValue(
+      "bird",
+    );
+    expect(screen.getByRole("textbox", { name: "Titel" })).toHaveValue(
+      `Abfrage ${abfrageDate()} · Unit 3 + 1 weitere`,
+    );
+    expect(
+      screen.getByText(/Wird beim Start als neue Abfrage abgelegt/),
+    ).toBeInTheDocument();
+  });
+
+  it("legt beim Raumstart ein neues Paket an und lässt das geladene unverändert", async () => {
+    await seed();
+    const before = await library().get("u3");
+    window.history.replaceState(
+      null,
+      "",
+      "/lehrer/live?inhalt=u3&schritt=inhalt",
+    );
+    renderRoom();
+    const user = userEvent.setup();
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Titel" })).toHaveValue(
+        "Unit 3",
+      ),
+    );
+    const dialog = await openPicker(user);
+    await user.click(
+      dialog.getByRole("checkbox", {
+        name: "Alle Vokabeln aus Unit 2 auswählen",
+      }),
+    );
+    // Schon im Heft: wird übersprungen.
+    await user.click(dialog.getByRole("button", { name: /Unit 3/ }));
+    await user.click(
+      dialog.getByRole("checkbox", {
+        name: "Alle Vokabeln aus Unit 3 auswählen",
+      }),
+    );
+    await user.click(dialog.getByRole("button", { name: "Übernehmen" }));
+    expect(
+      await screen.findByText(
+        "2 Vokabeln übernommen, 3 standen schon im Heft.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Titel" })).toHaveValue(
+      `Abfrage ${abfrageDate()} · Unit 3 + 1 weitere`,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
+    await user.click(screen.getByRole("button", { name: "Raum öffnen" }));
+    await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
+
+    await waitFor(async () => expect(await library().list()).toHaveLength(5));
+    expect(await library().get("u3")).toEqual(before);
+    const created = (await library().list()).find(({ title }) =>
+      title.startsWith("Abfrage"),
+    );
+    expect(created).toMatchObject({
+      kind: "vocabulary",
+      classIds: [CLASS_A],
+      revision: 0,
+    });
+    expect(created?.source).toContain("dog;Hund");
+    expect(created?.source).toContain("apple;Apfel;Food");
+    expect(created?.lastUsedAt).toBeDefined();
+  });
+
+  it("behält einen selbst gewählten Titel", async () => {
+    await seed();
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const user = userEvent.setup();
+    await waitFor(() => expect(window.location.search).toBe(""));
+    await user.type(
+      await screen.findByRole("textbox", { name: "Titel" }),
+      "Mein Test",
+    );
+    const dialog = await openPicker(user);
+    await user.click(dialog.getByRole("button", { name: /Unit 2/ }));
+    await user.click(dialog.getByRole("checkbox", { name: "dog → Hund" }));
+    await user.click(dialog.getByRole("button", { name: "Übernehmen" }));
+    expect(
+      await screen.findByText("1 Vokabel übernommen."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Titel" })).toHaveValue(
+      "Mein Test",
+    );
+  });
+
+  it("sucht in Tags und klappt Treffer auf", async () => {
+    await seed();
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const user = userEvent.setup();
+    const dialog = await openPicker(user);
+    await user.type(
+      dialog.getByRole("searchbox", { name: "Vokabeln durchsuchen" }),
+      "food",
+    );
+    expect(
+      dialog.getByRole("checkbox", { name: "bread → Brot" }),
+    ).toBeVisible();
+    expect(dialog.queryByText("Unit 2")).not.toBeInTheDocument();
+    expect(dialog.queryByRole("checkbox", { name: "house → Haus" })).toBeNull();
+  });
+
+  it("übernimmt im leeren Heft auch das Sprachpaar", async () => {
+    await seed();
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const user = userEvent.setup();
+    const dialog = await openPicker(user);
+    await user.click(
+      dialog.getByRole("checkbox", {
+        name: "Alle Vokabeln aus Français auswählen",
+      }),
+    );
+    expect(dialog.queryByText("Unit 3")).not.toBeInTheDocument();
+    await user.click(dialog.getByRole("button", { name: "Übernehmen" }));
+    expect(
+      await screen.findByRole("combobox", { name: "Sprache links" }),
+    ).toHaveValue("fr-FR");
+  });
+
+  it("sperrt den Knopf, solange kein Vokabelpaket vorliegt", async () => {
+    await library().put(entry("t1"));
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const button = await screen.findByRole("button", {
+      name: "Aus meinen Vokabeln wählen",
+    });
+    expect(button).toBeDisabled();
+    expect(
+      screen.getByText("Noch keine Vokabelpakete in der Ablage"),
+    ).toBeInTheDocument();
+  });
+
+  it("schließt mit Escape ohne Übernahme", async () => {
+    await seed();
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const user = userEvent.setup();
+    const dialog = await openPicker(user);
+    await user.click(dialog.getByRole("button", { name: /Unit 2/ }));
+    await user.click(dialog.getByRole("checkbox", { name: "dog → Hund" }));
+    // Escape löst im Browser „cancel“ am Dialog aus (jsdom kennt das nicht).
+    fireEvent(
+      screen.getByRole("dialog"),
+      new Event("cancel", { cancelable: true }),
+    );
+    await waitFor(() =>
+      expect(document.querySelector("dialog[open]")).toBeNull(),
+    );
+    expect(screen.getByRole("textbox", { name: "Vokabel 1" })).toHaveValue("");
   });
 });

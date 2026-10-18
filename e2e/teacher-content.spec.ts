@@ -32,7 +32,10 @@ const content = (
 });
 
 /** Legt Klassen und Inhalte direkt in der lokalen Lehrerdatenbank an. */
-async function seed(page: Page) {
+async function seed(
+  page: Page,
+  extraPackages: ReadonlyArray<Record<string, unknown>> = [],
+) {
   // Die App legt die Datenbank beim ersten Öffnen an.
   await page.goto("/lehrer");
   await expect(
@@ -89,6 +92,7 @@ async function seed(page: Page) {
           classIds: [CLASS_B],
           source: "1+1\n2+2",
         }),
+        ...extraPackages,
       ],
     },
   );
@@ -327,3 +331,192 @@ for (const theme of ["light", "dark"] as const) {
     });
   });
 }
+
+/** Zwei Englisch-Pakete mit Tags und ein Französisch-Paket in Klasse 7b. */
+const PICKER_PACKAGES = [
+  content("u3", "Unit 3 · Food", {
+    classIds: [CLASS_A],
+    updatedAt: "2026-10-01T10:00:00.000Z",
+    source: "apple;Apfel;Food\nbread;Brot;Food\nhouse;Haus|Heim",
+    promptLocale: "en-GB",
+    answerLocale: "de-DE",
+  }),
+  content("u2", "Unit 2", {
+    classIds: [CLASS_A],
+    source: "dog;Hund\ncat;Katze\nfish;Fisch",
+    promptLocale: "en-GB",
+    answerLocale: "de-DE",
+  }),
+  content("fr", "Français", {
+    classIds: [CLASS_A],
+    source: "maison;Haus",
+    promptLocale: "fr-FR",
+    answerLocale: "de-DE",
+  }),
+];
+
+async function openPicker(page: Page) {
+  await seed(page, PICKER_PACKAGES);
+  await page.goto(`/lehrer/live?neu=vocabulary&klasse=${CLASS_A}`);
+  const open = page.getByRole("button", { name: "Aus meinen Vokabeln wählen" });
+  await expect(open).toBeEnabled({ timeout: 15_000 });
+  const dialog = page.getByRole("dialog", {
+    name: "Aus meinen Vokabeln wählen",
+  });
+  // Klicks vor dem Laden der Seite gehen verloren; bis zum Dialog wiederholen.
+  await expect(async () => {
+    await open.click();
+    await expect(dialog).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  return dialog;
+}
+
+/** Nichts darf horizontal überlaufen (Dialog, Liste, Seite). */
+async function overflowing(page: Page) {
+  return page.evaluate(() => {
+    const dialog = document.querySelector("dialog[open]");
+    const nodes = [
+      document.documentElement,
+      ...(dialog ? [dialog, ...dialog.querySelectorAll("*")] : []),
+    ];
+    return nodes
+      .filter((node) => node.scrollWidth > node.clientWidth + 1)
+      .map((node) => `${node.tagName}.${node.className}`);
+  });
+}
+
+for (const theme of ["light", "dark"] as const) {
+  test.describe(`Vokabelauswahl im Laufdiktat (${theme})`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(
+        (value) => localStorage.setItem("theme-preference", value),
+        theme,
+      );
+    });
+
+    test("wählen, übernehmen und Barrierefreiheit mit offenem Dialog", async ({
+      page,
+    }) => {
+      const dialog = await openPicker(page);
+      await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+      await expect(
+        dialog.getByRole("heading", { level: 3, name: /Unit 3 · Food/ }),
+      ).toContainText("3 Vokabeln · Englisch");
+
+      // Zugeklappt, dann aufgeklappt: Axe prüft beide Zustände.
+      const scan = async () =>
+        (await analyzeAccessibility(page)).violations.map(({ id, nodes }) => [
+          id,
+          nodes.length,
+        ]);
+      expect(await scan()).toEqual([]);
+
+      await dialog.getByRole("button", { name: /Unit 3 · Food/ }).click();
+      await dialog.getByRole("checkbox", { name: "apple → Apfel" }).check();
+      await dialog.getByRole("button", { name: /Unit 2/ }).click();
+      await expect(
+        dialog.getByRole("checkbox", {
+          name: "Alle Vokabeln mit Tag Food aus Unit 3 · Food auswählen",
+        }),
+      ).toHaveJSProperty("indeterminate", true);
+      await dialog.getByRole("checkbox", { name: "dog → Hund" }).check();
+      await expect(dialog.getByRole("status")).toHaveText("2 ausgewählt");
+      // Das französische Paket ist nach der ersten Wahl ausgeblendet.
+      await expect(
+        dialog.getByText("1 Paket in anderen Sprachen ausgeblendet"),
+      ).toBeVisible();
+
+      expect(await scan()).toEqual([]);
+      expect(await smallTargets(page)).toEqual([]);
+      expect(await overflowing(page)).toEqual([]);
+
+      await dialog.getByRole("button", { name: "Übernehmen" }).click();
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByText("2 Vokabeln übernommen.")).toBeVisible();
+      await expect(
+        page.getByRole("textbox", { name: "Vokabel 1", exact: true }),
+      ).toHaveValue("apple");
+      await expect(
+        page.getByRole("textbox", { name: "Tag Vokabel 1", exact: true }),
+      ).toHaveValue("Food");
+      await expect(
+        page.getByRole("textbox", { name: "Vokabel 2", exact: true }),
+      ).toHaveValue("dog");
+      await expect(
+        page.getByText(/Wird beim Start als neue Abfrage abgelegt/),
+      ).toBeVisible();
+      await expect(page.getByRole("textbox", { name: "Titel" })).toHaveValue(
+        /^Abfrage \d\d\.\d\d\. · Unit 3 · Food \+ 1 weitere$/,
+      );
+    });
+
+    test("Tastatur: Suche, Kästchen, Übernehmen; Escape schließt ohne Übernahme", async ({
+      page,
+    }) => {
+      const dialog = await openPicker(page);
+      const search = dialog.getByRole("searchbox", {
+        name: "Vokabeln durchsuchen",
+      });
+      await search.focus();
+      await page.keyboard.type("food");
+      // Treffer klappen ihr Paket auf; Unit 2 passt nicht zur Suche.
+      await expect(
+        dialog.getByRole("checkbox", { name: "bread → Brot" }),
+      ).toBeVisible();
+      await expect(dialog.getByText("Unit 2")).toHaveCount(0);
+
+      await page.keyboard.press("Tab");
+      await expect(
+        dialog.getByRole("checkbox", { name: "Alle Klassen" }),
+      ).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(
+        dialog.getByRole("checkbox", {
+          name: "Alle Vokabeln aus Unit 3 · Food auswählen",
+        }),
+      ).toBeFocused();
+      await page.keyboard.press("Space");
+      // Bei aktiver Suche zählen nur die sichtbaren Treffer.
+      await expect(dialog.getByRole("status")).toHaveText("2 ausgewählt");
+
+      await page.keyboard.press("Escape");
+      await expect(dialog).not.toBeVisible();
+      await expect(
+        page.getByRole("textbox", { name: "Vokabel 1", exact: true }),
+      ).toHaveValue("");
+
+      // Neu geöffnet beginnt die Auswahl leer; „Übernehmen“ per Tastatur.
+      await page
+        .getByRole("button", { name: "Aus meinen Vokabeln wählen" })
+        .click();
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByRole("status")).toHaveText("0 ausgewählt");
+      await dialog
+        .getByRole("checkbox", {
+          name: "Alle Vokabeln aus Unit 3 · Food auswählen",
+        })
+        .check();
+      await dialog.getByRole("button", { name: "Übernehmen" }).focus();
+      await page.keyboard.press("Enter");
+      await expect(dialog).not.toBeVisible();
+      await expect(
+        page.getByRole("textbox", { name: "Vokabel 3", exact: true }),
+      ).toHaveValue("house");
+    });
+  });
+}
+
+test("Vokabelauswahl: bei 320 px läuft nichts horizontal über", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  const dialog = await openPicker(page);
+  await dialog.getByRole("button", { name: /Unit 3 · Food/ }).click();
+  await dialog.getByRole("checkbox", { name: "house → Haus | Heim" }).check();
+  expect(await overflowing(page)).toEqual([]);
+  expect(await smallTargets(page)).toEqual([]);
+  // Der Fuß bleibt sichtbar, auch wenn die Liste lang ist.
+  await expect(
+    dialog.getByRole("button", { name: "Übernehmen" }),
+  ).toBeInViewport();
+});
