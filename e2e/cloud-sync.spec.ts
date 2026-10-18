@@ -11,6 +11,7 @@ import { createFakeWebDav } from "../src/integrations/cloud-sync/testing/fake-we
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
 const PASSWORD = "pferd-batterie-klammer";
 const DAV = "https://cloud.test/remote.php/dav/files/lea";
+const CLOUD_FILE = `${DAV}/Lernraum/lernraum-lehrkraft-v2.json`;
 
 /** WebDAV-Nachbau für beide Browser-Kontexte, inklusive CORS-Vorabfrage. */
 async function serveWebDav(
@@ -160,7 +161,7 @@ test("zwei Geräte gleichen Material über WebDAV ab, verschlüsselt, mit Konfli
   test.setTimeout(180_000);
   const laptop = await device(browser, baseURL);
   const tafel = await device(browser, baseURL);
-  await serveWebDav([laptop.context, tafel.context]);
+  const dav = await serveWebDav([laptop.context, tafel.context]);
 
   // Laptop zu Hause: einrichten, Material anlegen, abgleichen.
   await setUp(laptop.page, "Laptop", { createPassword: PASSWORD });
@@ -205,7 +206,12 @@ test("zwei Geräte gleichen Material über WebDAV ab, verschlüsselt, mit Konfli
     tafel.page,
     material("Diktat Tafel 2", "2026-10-05T09:00:05.000Z"),
   );
+  const uploaded = dav.files.get(CLOUD_FILE)?.etag;
   await syncNow(laptop.page);
+  // Der Abgleich läuft nach dem Schließen im Hintergrund weiter. Erst wenn die
+  // Laptop-Fassung in der Cloud liegt, geht die Tafel online; sonst lädt sie
+  // ihre Fassung zuerst hoch und der Konflikt entsteht auf dem Laptop.
+  await expect.poll(() => dav.files.get(CLOUD_FILE)?.etag).not.toBe(uploaded);
   await tafel.context.setOffline(false);
   await syncNow(tafel.page);
   const badge = tafel.page.getByRole("button", {
