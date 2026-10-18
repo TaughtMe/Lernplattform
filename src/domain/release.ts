@@ -108,6 +108,13 @@ export const RELEASE_AREAS = {
     // erscheint wieder der Handabgleich.
     stage: "frei",
   },
+  spiegelschrift: {
+    label: "Spiegelschrift im Lesetext",
+    // Kein eigener Pfad: schaltet Schalter in den Einstellungen und die
+    // Anzeige im Einprägen der Textbox.
+    routes: [],
+    stage: "vorschau",
+  },
   motivation: {
     label: "Häuser, Serie und Abzeichen",
     routes: ["/haus", "/lehrer/haeuser"],

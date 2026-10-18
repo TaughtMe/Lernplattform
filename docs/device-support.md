@@ -29,3 +29,7 @@ Die Breiten sind CSS-Pixel und keine bestimmten Gerätemodelle. Zusätzlich werd
 ## Definition of Done für neue Funktionen
 
 Eine Funktion gilt erst dann als fertig, wenn Layout, Navigation, Fokusreihenfolge, Touch-Ziele, Bildschirmtastatur und Offline-Verhalten für die betroffenen Geräteklassen festgelegt und geprüft wurden. Automatisierte Tests decken stabile Strukturregeln ab; echte Browser- und Gerätetests bleiben für größere Meilensteine verpflichtend.
+
+## Gerätelokale Einstellung: Spiegelschrift im Lesetext
+
+Das Kind schaltet in „Profil und Einstellungen“ → „Darstellung“ selbst, ob der Lesetext der Textbox (Ansicht „Einprägen“) gespiegelt erscheint. Die Einstellung liegt nur im `localStorage` dieses Geräts (`lernraum-spiegelschrift-bis`), gilt 7 Tage und schaltet sich danach selbst aus. Sie geht nicht in Cloud-Abgleich, Sicherungsdatei, Klassen- oder Lehrkraftansichten. Der Bereich `spiegelschrift` steht im Freigaberegister auf `vorschau`.
