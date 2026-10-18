@@ -42,7 +42,7 @@ jobs:
     env:
       BRANCH: ${{ inputs.branch || github.head_ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.branch || github.head_ref }}
           # Mit dem Geheimnis DESIGN_REFERENCES_TOKEN (Token mit Schreibrecht auf
@@ -50,7 +50,7 @@ jobs:
           # Ohne das Geheimnis gilt das GITHUB_TOKEN: Pushes damit lösen keine
           # Workflows aus (siehe docs/design/README.md).
           token: ${{ secrets.DESIGN_REFERENCES_TOKEN || github.token }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
