@@ -68,7 +68,10 @@ Bausteine, die es schon gibt:
 2. **Gerätespeicher und Hook** `app/ui/mirror-reading.ts` nach dem Muster von `theme.ts`:
    Schlüssel `lernraum-spiegelschrift-bis`, `try/catch` um jeden Zugriff, Änderungsereignis,
    `useMirrorReading()` liefert `{ active, until, turnOn, turnOff }`. Abgelaufene Werte beim Lesen
-   entfernen. Ohne Freigabe (`useAreaVisible("spiegelschrift")`) immer `active: false`.
+   entfernen. Solange die Spiegelschrift aktiv ist, einen Zeitgeber bis `until` stellen, der beim
+   Ablauf den Wert entfernt und die Abonnenten benachrichtigt; sonst bliebe der Text auf einer
+   offenen Seite gespiegelt, bis neu gerendert wird. Beim Ausschalten und Abmelden den Zeitgeber
+   löschen. Ohne Freigabe (`useAreaVisible("spiegelschrift")`) immer `active: false`.
 3. **Einstellung** in `student-settings-panel.tsx`, Abschnitt „Darstellung“: Schalter
    „Spiegelschrift im Lesetext“ mit Erklärung „Der Text zum Einprägen in der Textbox wird
    gespiegelt angezeigt. Schaltet sich nach 7 Tagen von selbst aus.“ Wenn an: „Aktiv bis
@@ -81,7 +84,7 @@ Bausteine, die es schon gibt:
 5. **Tests:**
    - Komponententest der Ansicht: mit `mirrored` hat der Lesetext die Klasse, ohne nicht.
    - Playwright mit Vorschau: Schalter einschalten → Textbox „Einprägen“ zeigt gespiegelten Text,
-     Knöpfe bleiben normal; mit `page.clock` 7 Tage plus 1 Minute vorspulen → wieder normal und
+     Knöpfe bleiben normal; mit `page.clock` 7 Tage plus 1 Minute vorspulen → ohne Neuladen wieder normal und
      der Schalter steht auf aus. Ohne Vorschau ist der Schalter nicht da. Axe auf der
      Einstellungsseite in beiden Zuständen.
 6. **Doku:** kurzer Absatz in `docs/device-support.md` oder der Textbox-Doku, dass die Einstellung
