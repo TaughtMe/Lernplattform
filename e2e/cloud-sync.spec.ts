@@ -140,6 +140,14 @@ async function setUp(
 }
 
 async function syncNow(page: Page) {
+  // DIAGNOSE-TEMP
+  const openAtStart = await page.evaluate(() =>
+    [...document.querySelectorAll("dialog[open]")].map((d) =>
+      d.getAttribute("aria-label"),
+    ),
+  );
+  if (openAtStart.length > 0)
+    console.log("SYNCNOW-OPEN-AT-START", JSON.stringify(openAtStart));
   await page
     .getByRole("button", { name: /^Cloud-Abgleich/ })
     .first()
@@ -147,6 +155,8 @@ async function syncNow(page: Page) {
   const dialog = page.getByRole("dialog", { name: "Cloud-Abgleich" });
   await dialog.getByRole("button", { name: "Jetzt abgleichen" }).click();
   await dialog.getByRole("button", { name: "Schließen" }).click();
+  // Das Blatt schließt erst nach dem Klick; sonst verdeckt es das Symbol noch.
+  await expect(dialog).toBeHidden();
 }
 
 test("zwei Geräte gleichen Material über WebDAV ab, verschlüsselt, mit Konflikt", async ({
