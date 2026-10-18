@@ -9,16 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  repeat:
-    name: ${{ matrix.name }} (${{ matrix.project }})
+  final:
+    name: alle fünf Tests (${{ matrix.project }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { name: cloud-sync, project: mobile-safari, file: e2e/cloud-sync.spec.ts, grep: "zwei Geräte gleichen Material" }
-          - { name: cloud-sync, project: tablet-safari, file: e2e/cloud-sync.spec.ts, grep: "zwei Geräte gleichen Material" }
+        project: [desktop-webkit, mobile-safari, tablet-safari]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,14 +25,50 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps webkit
-      - name: Wiederholungen (100, ohne Retries)
+      - name: Browser-Tests (4 Tests, 20 Wiederholungen, ohne Retries)
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/e2e.json
+        run: >
+          npx playwright test --project=${{ matrix.project }}
+          --repeat-each=20 --retries=0 --reporter=list,json
+          e2e/cloud-sync.spec.ts e2e/teacher-content.spec.ts e2e/platform-quality.spec.ts
+          -g "zwei Geräte gleichen Material|Text anlegen, speichern|personal learning room keeps today|local teacher workspace manages classes"
+      - name: Live-Test (20 Wiederholungen, ohne Retries)
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/live.json
+        run: >
+          npx playwright test --config playwright.live.config.ts
+          --project=${{ matrix.project }} --repeat-each=20 --retries=0
+          --reporter=list,json e2e/live/vocabulary-transfer.spec.ts
+          -g "second round with help"
+      - name: Zusammenfassung
+        if: always()
+        run: |
+          { node .github/flaky/summary.mjs "$RUNNER_TEMP/e2e.json"
+            node .github/flaky/summary.mjs "$RUNNER_TEMP/live.json"; } | tee -a "$GITHUB_STEP_SUMMARY"
+
+  cloud-sync-mobile:
+    name: cloud-sync 150x (mobile-safari)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps webkit
+      - name: Wiederholungen (150, ohne Retries)
         continue-on-error: true
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/diag.json
         run: >
-          npx playwright test --project=${{ matrix.project }}
+          npx playwright test --project=mobile-safari
           --repeat-each=150 --retries=0 --reporter=list,json
-          ${{ matrix.file }} -g "${{ matrix.grep }}"
+          e2e/cloud-sync.spec.ts -g "zwei Geräte gleichen Material"
       - name: Zusammenfassung
         if: always()
         run: node .github/flaky/summary.mjs "$RUNNER_TEMP/diag.json" | tee -a "$GITHUB_STEP_SUMMARY"

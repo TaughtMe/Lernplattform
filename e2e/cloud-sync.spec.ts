@@ -140,22 +140,16 @@ async function setUp(
 }
 
 async function syncNow(page: Page) {
-  // DIAGNOSE-TEMP
-  const openAtStart = await page.evaluate(() =>
-    [...document.querySelectorAll("dialog[open]")].map((d) =>
-      d.getAttribute("aria-label"),
-    ),
-  );
-  if (openAtStart.length > 0)
-    console.log("SYNCNOW-OPEN-AT-START", JSON.stringify(openAtStart));
   await page
     .getByRole("button", { name: /^Cloud-Abgleich/ })
     .first()
     .click();
   const dialog = page.getByRole("dialog", { name: "Cloud-Abgleich" });
   await dialog.getByRole("button", { name: "Jetzt abgleichen" }).click();
-  await dialog.getByRole("button", { name: "Schließen" }).click();
-  // Das Blatt schließt erst nach dem Klick; sonst verdeckt es das Symbol noch.
+  // Per Tastatur schließen: Während des Abgleichs ändert sich die Höhe des
+  // unten verankerten Blatts, ein Mausklick auf die berechnete Stelle trifft
+  // im schmalen Safari sonst daneben und das Blatt bliebe offen.
+  await dialog.getByRole("button", { name: "Schließen" }).press("Enter");
   await expect(dialog).toBeHidden();
 }
 
