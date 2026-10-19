@@ -88,7 +88,7 @@ export function buildRunningDictationHint(target: string, fraction: number) {
     .join(" ");
 }
 
-function normalizeVocabularyAnswer(
+export function normalizeVocabularyAnswer(
   value: string,
   caseSensitive: boolean,
   locale?: string,
@@ -194,6 +194,18 @@ export const DEFAULT_VOCABULARY_LOCALES: VocabularyLocales = {
   left: "de-DE",
   right: "en-GB",
 };
+
+/** Gespeicherte Kennungen wie „en“ passen zu „en-GB“ der Sprachauswahl. */
+export function pickerLocale(stored: string, fallback: string) {
+  const exact = VOCABULARY_LANGUAGES.find(({ locale }) => locale === stored);
+  if (exact) return exact.locale;
+  const base = stored.split("-")[0]?.toLowerCase();
+  return (
+    VOCABULARY_LANGUAGES.find(
+      ({ locale }) => locale.split("-")[0]?.toLowerCase() === base,
+    )?.locale ?? fallback
+  );
+}
 
 export function vocabularyLanguageLabel(locale: string) {
   return (

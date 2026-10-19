@@ -40,6 +40,10 @@ describe("TeacherLiveRoom (Design 5c/5d)", () => {
       "dog",
     );
     expect(screen.getByText("1 Vokabel")).toBeInTheDocument();
+    // Das Tag-Feld ist auch ohne LernBox-Übernahme da (Gruppieren in der Auswahl).
+    expect(
+      screen.getByRole("textbox", { name: "Tag Vokabel 1" }),
+    ).toHaveAttribute("placeholder", "Tag (optional, z. B. Unit 3)");
     expect(
       screen.getByRole("button", { name: "Weiter zu Modus" }),
     ).toBeEnabled();
@@ -54,13 +58,16 @@ describe("TeacherLiveRoom (Design 5c/5d)", () => {
 
     await user.type(
       screen.getByRole("textbox", { name: "Tabelle einfügen" }),
-      "Haus;maison{Enter}Baum;arbre",
+      "Haus;maison;Unit 3{Enter}Baum;arbre",
     );
     await user.click(screen.getByRole("button", { name: "Liste übernehmen" }));
     expect(screen.getByRole("textbox", { name: "Vokabel 2" })).toHaveValue(
       "Baum",
     );
     expect(screen.getByText("2 Vokabeln")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Tag Vokabel 1" })).toHaveValue(
+      "Unit 3",
+    );
   });
 
   it("erzeugt Mathe-Aufgaben und stellt Regeln ein", async () => {

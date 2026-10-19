@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { MathEditorProps } from "../math-editor";
 import type { VocabularyEditorProps } from "../vocabulary-editor";
+import type { VocabularyPickerProps } from "../vocabulary-picker";
 import type { Theme } from "../../parts/parts";
 
 export type TeacherStep = "import" | "settings" | "lobby" | "live";
@@ -108,6 +109,8 @@ export type TeacherDictationScreenProps = {
   title?: string;
   titlePlaceholder?: string;
   libraryNotice?: string;
+  /** Der Heftinhalt stammt aus dem Auswahldialog und wird neu abgelegt. */
+  quizFromLibrary?: boolean;
   onTitle?: (title: string) => void;
   onSave?: () => void;
   /** Legt unter „Speichern“ eine neue Klasse an (Name) und wählt sie aus. */
@@ -130,6 +133,8 @@ export type TeacherDictationScreenProps = {
   };
   /** Vokabelheft statt Textfeld, wenn Inhaltsart Vokabeln. */
   vocabulary?: VocabularyEditorProps;
+  /** Auswahldialog „Aus meinen Vokabeln wählen“ (nur mit Vokabelheft). */
+  vocabularyPicker?: VocabularyPickerProps;
   /** Aufgaben-Generator statt Textfeld, wenn Inhaltsart Mathe. */
   math?: MathEditorProps;
   onToggleTheme?: () => void;

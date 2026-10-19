@@ -128,6 +128,12 @@ export function LibraryBar(props: TeacherDictationScreenProps) {
           </button>
         </span>
       ) : null}
+      {props.quizFromLibrary ? (
+        <p className={styles.libraryNotice}>
+          Wird beim Start als neue Abfrage abgelegt. Deine Vokabelpakete bleiben
+          unverändert.
+        </p>
+      ) : null}
       {props.libraryNotice ? (
         <p className={styles.libraryNotice} role="status">
           {props.libraryNotice}

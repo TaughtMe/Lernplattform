@@ -178,6 +178,8 @@ export function TeacherLiveRoom({
           ? { notice: t.error || t.connectionWarning }
           : {})}
         vocabulary={vocabularyProps(t)}
+        vocabularyPicker={t.vocabularyPicker}
+        quizFromLibrary={t.quizFromLibrary}
         math={mathProps(t, refs.mathEditInputRef)}
         onToggleTheme={toggleTheme}
         onLeave={() => window.location.assign("/lehrer")}
@@ -240,6 +242,8 @@ function vocabularyProps(t: TeacherLiveModel): VocabularyEditorProps {
     onCaseSensitive: t.setVocabularyCaseSensitive,
     onTransfer: t.setVocabularyTransfer,
     onTag: t.updateVocabularyTag,
+    onPickFromLibrary: t.onPickFromLibrary,
+    pickFromLibraryDisabled: t.pickFromLibraryDisabled,
     onTableInput: t.setVocabularyTableInput,
     onImportTable: t.importVocabularyTable,
     onImportFile: t.importFile,

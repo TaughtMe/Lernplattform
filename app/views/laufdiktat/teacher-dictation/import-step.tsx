@@ -5,6 +5,7 @@ import { Segmented } from "../../../ui/primitives";
 import { Chip, cx } from "../../parts/parts";
 import { MathEditor } from "../math-editor";
 import { VocabularyEditor } from "../vocabulary-editor";
+import { VocabularyPicker } from "../vocabulary-picker";
 import styles from "../teacher-dictation-screen.module.css";
 import type { ContentKind, TeacherDictationScreenProps } from "./types";
 import { KINDS, SPLITS } from "./constants";
@@ -49,6 +50,9 @@ export function ImportStep(props: TeacherDictationScreenProps) {
         <KindChips {...props} />
         <LibraryBar {...props} />
         <VocabularyEditor {...props.vocabulary} />
+        {props.vocabularyPicker ? (
+          <VocabularyPicker {...props.vocabularyPicker} />
+        ) : null}
       </div>
     );
   }
