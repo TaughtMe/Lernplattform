@@ -120,7 +120,9 @@ export function useLearnerDashboard() {
     });
     return () => {
       active = false;
-      database.close();
+      // Dexie 4 öffnet nach `close()` nur mit `disableAutoOpen: false` wieder
+      // von selbst; sonst scheitert der zweite Effektlauf unter StrictMode.
+      database.close({ disableAutoOpen: false });
     };
   }, [classes, dailyPlan, database, recommendations]);
 

@@ -1,12 +1,42 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { DailyPlanItem } from "../../../src/domain/daily-plan";
+import { parseMentalMathTask } from "../../../src/domain/mental-math";
+import { createMathAttempt } from "../../../src/storage/math-practice";
 import { MentalMathApp } from "./mental-math-app";
 
-const { put, list } = vi.hoisted(() => ({ put: vi.fn(), list: vi.fn() }));
+const { put, list, progress, build } = vi.hoisted(() => ({
+  put: vi.fn(),
+  list: vi.fn(),
+  progress: vi.fn(),
+  build: vi.fn(),
+}));
 beforeEach(() => {
   put.mockReset().mockResolvedValue(undefined);
   list.mockReset().mockResolvedValue([]);
+  progress.mockReset().mockResolvedValue({ openItems: [] });
+  build.mockClear();
+  window.history.pushState(null, "", "/frei/mathematics");
+});
+
+vi.mock("../../../src/storage/daily-plan", () => ({
+  createDailyPlanRepository: () => ({ progress }),
+}));
+
+// Die Auswahl der Tagesportion wird über die Posten geprüft, die in die Runde gehen.
+vi.mock("../../../src/domain/math-practice", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("../../../src/domain/math-practice")>();
+  return {
+    ...original,
+    buildMathReviewRound: (
+      ...args: Parameters<typeof original.buildMathReviewRound>
+    ) => {
+      build(...args);
+      return original.buildMathReviewRound(...args);
+    },
+  };
 });
 
 vi.mock("../../../src/storage/math-practice", async (importOriginal) => ({
@@ -122,4 +152,108 @@ it("marks solutions as help and allows a short round to end", async () => {
   expect(
     screen.getByRole("link", { name: "Für heute fertig" }),
   ).toHaveAttribute("href", "/");
+});
+
+describe("Tagesportion mit ?heute=1", () => {
+  async function mistake(source: string, occurredAt: string) {
+    return createMathAttempt({
+      task: parseMentalMathTask(source)!,
+      roundId: `runde-${occurredAt}`,
+      attemptId: "1",
+      answer: "0",
+      selfCorrected: false,
+      usedHelp: false,
+      now: occurredAt,
+    });
+  }
+
+  function mathItem(key: string, ...objectIds: string[]): DailyPlanItem {
+    return { key, module: "mathematics", kind: "error", objectIds };
+  }
+
+  it("übt je offenem Mathe-Element den am längsten fälligen Posten und nur diese", async () => {
+    const oldest = await mistake("7 * 8", "2026-10-10T08:00:00.000Z");
+    const younger = await mistake("6 * 9", "2026-10-12T08:00:00.000Z");
+    const addition = await mistake("12 + 5", "2026-10-11T08:00:00.000Z");
+    // Nicht im Plan: darf nicht in die Runde kommen.
+    const outside = await mistake("20 - 4", "2026-10-09T08:00:00.000Z");
+    list.mockResolvedValue([oldest, younger, addition, outside]);
+    progress.mockResolvedValue({
+      openItems: [
+        // Eine Familie mit zwei Posten: der ältere zählt.
+        mathItem(
+          "mathematics:multiply",
+          younger.learningObjectId,
+          oldest.learningObjectId,
+        ),
+        mathItem("mathematics:add", addition.learningObjectId),
+        // Kein Posten mehr dazu: das Element zählt nicht.
+        mathItem("mathematics:gone", "gibt-es-nicht"),
+        // Klassenaufgabe und Wortschatz gehören nicht in die Runde.
+        {
+          ...mathItem("mathematics:klasse", outside.learningObjectId),
+          route: "/klasse/7b",
+        },
+        {
+          key: "vocabulary:x:forward",
+          module: "vocabulary",
+          kind: "review",
+          objectIds: [outside.learningObjectId],
+        },
+      ],
+    });
+    window.history.pushState(null, "", "/frei/mathematics?heute=1");
+    render(<MentalMathApp />);
+
+    expect(await screen.findByText(/^Aufgabe 1 von/)).toBeVisible();
+    expect(build).toHaveBeenCalledTimes(1);
+    const chosen = build.mock.calls[0]![0] as Array<{ id: string }>;
+    expect(chosen.map((entry) => entry.id)).toEqual([
+      oldest.learningObjectId,
+      addition.learningObjectId,
+    ]);
+    expect(progress).toHaveBeenCalledTimes(1);
+  });
+
+  it("sagt, dass der Teil für heute geschafft ist, wenn nichts offen ist", async () => {
+    const mistaken = await mistake("7 * 8", "2026-10-10T08:00:00.000Z");
+    list.mockResolvedValue([mistaken]);
+    // Das Element der Portion ist erledigt und taucht nicht mehr in „offen“ auf.
+    progress.mockResolvedValue({ openItems: [] });
+    window.history.pushState(null, "", "/frei/mathematics?heute=1");
+    render(<MentalMathApp />);
+
+    expect(
+      await screen.findByText(
+        "Dein Teil für heute ist geschafft. Du kannst frei weiterüben.",
+      ),
+    ).toHaveAttribute("role", "status");
+    expect(build).not.toHaveBeenCalled();
+    expect(screen.queryByText(/^Aufgabe 1 von/)).not.toBeInTheDocument();
+    // Freies Üben bleibt möglich.
+    expect(screen.getByRole("button", { name: "Runde starten" })).toBeEnabled();
+  });
+
+  it("lässt das Üben frei, wenn die Portion nicht geladen werden kann", async () => {
+    progress.mockRejectedValue(new Error("storage unavailable"));
+    window.history.pushState(null, "", "/frei/mathematics?heute=1");
+    render(<MentalMathApp />);
+    expect(
+      await screen.findByText(/Deine Tagesportion konnte nicht geladen werden/),
+    ).toHaveAttribute("role", "status");
+    expect(screen.getByRole("button", { name: "Runde starten" })).toBeEnabled();
+  });
+
+  it("lädt ohne ?heute=1 keine Portion und startet nichts", async () => {
+    const mistaken = await mistake("7 * 8", "2026-10-10T08:00:00.000Z");
+    list.mockResolvedValue([mistaken]);
+    render(<MentalMathApp />);
+    expect(
+      await screen.findByRole("button", {
+        name: "Meine Fehler und Wiederholungen üben",
+      }),
+    ).toBeVisible();
+    expect(progress).not.toHaveBeenCalled();
+    expect(screen.queryByText(/^Aufgabe 1 von/)).not.toBeInTheDocument();
+  });
 });

@@ -3,7 +3,11 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetSpeechState } from "../../src/speech/speaker";
+import type { DailyPlanItem } from "../../src/domain/daily-plan";
+import type { LearningWordProgress } from "../../src/domain/learning-word-progress";
+import { localDayKey } from "../../src/domain/local-day";
 import { resolveStages, resolveVisibility } from "../../src/domain/release";
+import { createDailyPlanRepository } from "../../src/storage/daily-plan";
 import type { LearningWordStage } from "../../src/domain/learning-word";
 import {
   PersonalLearningDatabase,
@@ -20,6 +24,8 @@ async function setup(
   options: {
     query?: string | undefined;
     stages?: string | undefined;
+    /** Speichert den Plan des heutigen Tages mit diesen Elementen. */
+    plan?: (words: LearningWordProgress[]) => DailyPlanItem[];
     prepare?: (repositories: {
       boxes: ReturnType<typeof createWordBoxRepository>;
       rounds: ReturnType<typeof createWordRoundRepository>;
@@ -33,8 +39,18 @@ async function setup(
     boxes: createWordBoxRepository(database),
     rounds: createWordRoundRepository(database),
     progress: createLearningWordProgressRepository(database),
+    plan: createDailyPlanRepository(database),
   };
   await options.prepare?.(repositories);
+  if (options.plan) {
+    const now = new Date();
+    await database.dailyPlans.put({
+      day: localDayKey(now),
+      createdAt: new Date(now.getTime() - 60_000).toISOString(),
+      size: 20,
+      items: options.plan(await repositories.progress.list()),
+    });
+  }
   window.history.pushState(
     null,
     "",
@@ -542,6 +558,68 @@ describe("Runden", () => {
     expect(
       await screen.findByRole("dialog", { name: "Trainingswörter heute" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Tagesportion mit ?heute=1", () => {
+  const germanItem = (word: LearningWordProgress): DailyPlanItem => ({
+    key: `german:${word.id}`,
+    module: "german",
+    kind: "error",
+    objectIds: [word.id],
+  });
+  const lesson = async ({
+    boxes,
+  }: {
+    boxes: ReturnType<typeof createWordBoxRepository>;
+  }) => {
+    await boxes.importFromLesson({
+      words: ["Hund", "Katze", "Maus"],
+      errorWords: ["Hund", "Katze", "Maus"],
+      sourceId: "s",
+    });
+  };
+
+  it("öffnet „Fällige“ nur mit den Wörtern der Portion", async () => {
+    const user = userEvent.setup();
+    await setup({
+      query: "?heute=1",
+      prepare: lesson,
+      // „Maus“ ist auch fällig, steht aber nicht in der Portion.
+      plan: (words) =>
+        words.filter((word) => word.word !== "Maus").map(germanItem),
+    });
+    const sheet = await screen.findByRole("dialog", {
+      name: "Trainingswörter heute",
+    });
+    expect(
+      within(sheet).getByText("2 Wörter in dieser Wortbox"),
+    ).toBeInTheDocument();
+
+    await startRound(user, 1);
+    // Die Runde hat zwei Wörter (nicht drei): „Maus“ ist nicht Teil der Portion.
+    expect(await screen.findByText("1 / 2")).toBeInTheDocument();
+  });
+
+  it("sagt, dass der Teil für heute geschafft ist, wenn nichts offen ist", async () => {
+    await setup({ query: "?heute=1", prepare: lesson, plan: () => [] });
+    expect(
+      await screen.findByText(
+        "Dein Teil für heute ist geschafft. Du kannst frei weiterüben.",
+      ),
+    ).toHaveAttribute("role", "status");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    // Das freie Üben mit allen fälligen Wörtern bleibt.
+    expect(screen.getByText("Trainingswörter heute")).toBeInTheDocument();
+  });
+
+  it("öffnet ohne ?heute=1 kein Startblatt", async () => {
+    await setup({
+      prepare: lesson,
+      plan: (words) => words.map(germanItem),
+    });
+    await screen.findByRole("button", { name: "Gemischt trainieren" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
 

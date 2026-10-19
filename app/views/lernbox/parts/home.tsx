@@ -12,7 +12,8 @@ import styles from "../lernbox-screen.module.css";
 export function Home(props: LernBoxScreenProps) {
   const { decks } = props;
   const total = decks.reduce((sum, deck) => sum + deck.total, 0);
-  const dueDecks = decks.filter((deck) => deck.due > 0).length;
+  const dueDecks =
+    props.todayDecks ?? decks.filter((deck) => deck.due > 0).length;
   const loose = decks.filter((deck) => !deck.folderId);
   const start = (scope: string) =>
     props.onOpenSheet?.({ kind: "start", scope });
@@ -47,7 +48,7 @@ export function Home(props: LernBoxScreenProps) {
               type="button"
               className={styles.heroStart}
               disabled={props.dueTotal === 0}
-              onClick={() => start("due")}
+              onClick={() => start("heute")}
             >
               Jetzt üben
             </button>

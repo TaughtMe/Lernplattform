@@ -13,7 +13,10 @@ import {
 import { homophoneHint } from "../../src/domain/homophones";
 import { rankTextsForWords } from "../../src/domain/textbox-progress";
 import { TEXTBOX_DIFFICULTY_LABELS } from "../../src/domain/textbox-text";
-import { learningWordId } from "../../src/domain/learning-word-progress";
+import {
+  learningWordId,
+  type LearningWordProgress,
+} from "../../src/domain/learning-word-progress";
 import {
   buildTextboxLink,
   parseCollectionParam,
@@ -40,6 +43,11 @@ import {
   summarizeWordBox,
   type WordRoundRecord,
 } from "../../src/domain/word-store-progress";
+import {
+  PLAN_DONE_NOTICE,
+  PLAN_FAILED_NOTICE,
+  wantsDailyPlan,
+} from "../lernen/plan-today";
 import { useRelease } from "../release/release-context";
 import { ListenAnswer } from "../views/wortspeicher/listen-answer";
 import { ButtonLink, EmptyState } from "../ui/primitives";
@@ -114,9 +122,11 @@ export function LearningWordApp({
 }: {
   repositories?: WordStoreRepositories;
 }) {
-  const store = useWordStore(repositories);
-  const textboxVisible = useRelease()["textbox"];
   const searchParams = useSearchParams();
+  // ?heute=1 (Startseite „Weiterlernen“): „Fällige“ zeigt nur die Wörter der Portion.
+  const wantsToday = wantsDailyPlan(searchParams);
+  const store = useWordStore(repositories, { dailyPlan: wantsToday });
+  const textboxVisible = useRelease()["textbox"];
   const hydrated = useHydrated();
   const speech = useSpeech("de-DE");
   const [starting, setStarting] = useState(false);
@@ -159,6 +169,10 @@ export function LearningWordApp({
     href: string | undefined;
   }>();
   const [notice, setNotice] = useState<string>();
+  /** Wörter der Portion, sobald „Fällige“ für `?heute=1` geöffnet wurde. */
+  const [todayEntries, setTodayEntries] = useState<LearningWordProgress[]>();
+  const [todayDone, setTodayDone] = useState(false);
+  const todayHandled = useRef(false);
   const [editorNotice, setEditorNotice] = useState<string>();
   const [newBoxError, setNewBoxError] = useState<string>();
   const runRef = useRef<Run | null>(null);
@@ -179,13 +193,16 @@ export function LearningWordApp({
   const tempId = bridgeSource === "fehler" ? "fehler" : TEXTBOX_ID;
 
   /** Einheitliche Sicht auf alle Wortboxen, auch die vorübergehenden. */
-  function findView(id: string): WordBoxView | undefined {
+  function findView(
+    id: string,
+    dueEntries: readonly LearningWordProgress[] = todayEntries ?? store.due,
+  ): WordBoxView | undefined {
     if (id === FALLIGE_ID) {
       return {
         id,
         kind: "faellig",
         title: "Trainingswörter heute",
-        words: store.due.map((entry) => entry.word),
+        words: dueEntries.map((entry) => entry.word),
         editable: false,
       };
     }
@@ -212,15 +229,18 @@ export function LearningWordApp({
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0]?.stage;
   }
 
-  function openStart(requested: string) {
+  function openStart(
+    requested: string,
+    dueEntries: readonly LearningWordProgress[] = todayEntries ?? store.due,
+  ) {
     const id = requested === TEXTBOX_ID ? tempId : requested;
-    const view = findView(id);
+    const view = findView(id, dueEntries);
     if (!view) return;
     // Vorauswahl: Stufe der letzten Runde, bei „Gemischt“ die leichteste fällige.
     const dueStage =
-      id === FALLIGE_ID && store.due.length > 0
+      id === FALLIGE_ID && dueEntries.length > 0
         ? (Math.min(
-            ...store.due.map((entry) => entry.stage),
+            ...dueEntries.map((entry) => entry.stage),
           ) as LearningWordStage)
         : undefined;
     let stage = lastStageOf(id) ?? dueStage ?? 1;
@@ -231,6 +251,25 @@ export function LearningWordApp({
     setNotice(undefined);
     setSheetId(id);
   }
+
+  // ?heute=1: Sobald die Portion geladen ist, öffnet „Fällige“ mit ihren Wörtern
+  // das Startblatt. Ist nichts mehr offen, erscheint ein Hinweis.
+  const todayStatus = store.todayPlan.status;
+  const todayWords = store.todayPlan.words;
+  useEffect(() => {
+    if (!wantsToday || !hydrated || todayHandled.current) return;
+    if (todayStatus === "loading" || todayStatus === "off") return;
+    todayHandled.current = true;
+    if (todayStatus === "failed") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliger Einstieg aus der Adresse
+      setNotice(PLAN_FAILED_NOTICE);
+    } else if (todayWords.length === 0) {
+      setTodayDone(true);
+    } else {
+      setTodayEntries(todayWords);
+      openStart(FALLIGE_ID, todayWords);
+    }
+  }, [wantsToday, hydrated, todayStatus, todayWords]); // eslint-disable-line react-hooks/exhaustive-deps -- läuft einmal, sobald die Portion da ist
 
   function openHistory(id: string) {
     setSheetId(undefined);
@@ -759,7 +798,8 @@ export function LearningWordApp({
       <OverviewScreen
         tiles={tiles}
         dueCount={store.due.length}
-        notice={notice}
+        notice={notice ?? (todayDone ? PLAN_DONE_NOTICE : undefined)}
+        noticeTone={notice || !todayDone ? "bad" : "good"}
         ready={ready}
         newBoxError={newBoxError}
         onStart={openStart}

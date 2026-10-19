@@ -1,5 +1,6 @@
 import "fake-indexeddb/auto";
 import { cleanup, render, screen } from "@testing-library/react";
+import { StrictMode } from "react";
 import Dexie from "dexie";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LearningEventV1 } from "../../src/domain/learning-bundle";
@@ -97,6 +98,21 @@ describe("LearnerHome", () => {
     for (const link of screen.getAllByRole("link", { name: "Weiterlernen" })) {
       expect(link).toHaveAttribute("href", "/lernbox?heute=1");
     }
+  });
+
+  it("lädt auch unter React StrictMode (Dexie öffnet nach dem Cleanup wieder)", async () => {
+    await seed(async (database) => {
+      await database.learningBoxCards.bulkPut(
+        Array.from({ length: 30 }, (_, index) => dueCard(index)),
+      );
+    });
+    // StrictMode läuft den Effekt zweimal; das Cleanup schließt die Datenbank.
+    render(
+      <StrictMode>
+        <LearnerHome />
+      </StrictMode>,
+    );
+    expect(await screen.findByText("0 von 20 Aufgaben heute")).toBeVisible();
   });
 
   it("zählt erledigte Elemente, aber freies Üben lässt das Ziel nicht wachsen", async () => {

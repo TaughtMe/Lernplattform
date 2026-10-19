@@ -17,10 +17,12 @@ import {
   type MentalMathOperation,
   type MentalMathTask,
 } from "../../../src/domain/mental-math";
+import { createDailyPlanRepository } from "../../../src/storage/daily-plan";
 import {
   createMathAttempt,
   createMathPracticeRepository,
 } from "../../../src/storage/math-practice";
+import { PersonalLearningDatabase } from "../../../src/storage/personal-learning-events";
 import {
   buildMathReviewRound,
   mathOptionsSchema,
@@ -30,6 +32,12 @@ import {
   type MathPracticeTask,
 } from "../../../src/domain/math-practice";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
+import {
+  PLAN_DONE_NOTICE,
+  PLAN_FAILED_NOTICE,
+  openModuleItems,
+  wantsDailyPlan,
+} from "../../lernen/plan-today";
 import { Icon } from "../../ui/icons";
 import {
   Button,
@@ -54,8 +62,36 @@ const symbols: Record<MentalMathOperation, string> = {
 };
 type Screen = "setup" | "round" | "complete";
 
+/**
+ * Posten der Tagesportion: je offenem Mathe-Element der am längsten fällige
+ * Posten seiner Familie. Was inzwischen nicht mehr fällig ist, zählt nicht.
+ * `buildMathReviewRound` nimmt höchstens fünf Posten; der Rest folgt in der
+ * nächsten Runde.
+ */
+function todaysReviews(
+  progress: Parameters<typeof openModuleItems>[0],
+  reviews: readonly MathReview[],
+  now: string,
+) {
+  // `mathReviews` ist nach Fälligkeit sortiert: der erste Treffer ist der älteste.
+  return openModuleItems(progress, "mathematics").flatMap((item) => {
+    const review = reviews.find(
+      (entry) => item.objectIds.includes(entry.id) && entry.dueAt <= now,
+    );
+    return review ? [review] : [];
+  });
+}
+
 export function MentalMathApp() {
-  const repository = useMemo(() => createMathPracticeRepository(), []);
+  const database = useMemo(() => new PersonalLearningDatabase(), []);
+  const repository = useMemo(
+    () => createMathPracticeRepository(database),
+    [database],
+  );
+  const dailyPlan = useMemo(
+    () => createDailyPlanRepository(database),
+    [database],
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const roundId = useRef("");
   const [screen, setScreen] = useState<Screen>("setup");
@@ -104,6 +140,11 @@ export function MentalMathApp() {
     "loading",
   );
   const [notice, setNotice] = useState("");
+  /** Hinweis der Tagesportion: nichts mehr offen (gut) oder nicht ladbar. */
+  const [planNotice, setPlanNotice] = useState<{
+    text: string;
+    tone: "good" | "bad";
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const busy = useRef(false);
   const localEvents = useRef<LearningEventV1[]>([]);
@@ -154,7 +195,25 @@ export function MentalMathApp() {
         setLoadState("ready");
         const params = new URLSearchParams(window.location.search);
         const lesson = params.get("round");
-        if (!lesson) return;
+        if (!lesson) {
+          // ?heute=1 (Startseite „Weiterlernen“): die Portion dieses Moduls.
+          if (wantsDailyPlan(params)) {
+            const now = new Date().toISOString();
+            dailyPlan
+              .progress(now)
+              .then((progress) => {
+                if (!active) return;
+                const selected = todaysReviews(progress, all, now);
+                if (selected.length) beginRound(buildMathReviewRound(selected));
+                else setPlanNotice({ text: PLAN_DONE_NOTICE, tone: "good" });
+              })
+              .catch(() => {
+                if (active)
+                  setPlanNotice({ text: PLAN_FAILED_NOTICE, tone: "bad" });
+              });
+          }
+          return;
+        }
         const lessonEvents = events.filter(
           (event) => event.roundId === lesson && event.math,
         );
@@ -184,7 +243,7 @@ export function MentalMathApp() {
       active = false;
       window.clearTimeout(nextTimer.current);
     };
-  }, [repository]);
+  }, [dailyPlan, repository]);
 
   function beginRound(next: MathPracticeTask[]) {
     if (!next.length) return;
@@ -200,6 +259,7 @@ export function MentalMathApp() {
     setMistakes(0);
     setHelpCount(0);
     setNotice("");
+    setPlanNotice(null);
     setScreen("round");
   }
 
@@ -367,6 +427,19 @@ export function MentalMathApp() {
           ) : null}
           {loadState === "ready" ? (
             <>
+              {planNotice ? (
+                // Auf der dunklen Karte bleibt der gute Hinweis schlichter Text.
+                <p
+                  className={
+                    planNotice.tone === "bad"
+                      ? "ui-notice ui-notice--bad"
+                      : "ui-small"
+                  }
+                  role="status"
+                >
+                  {planNotice.text}
+                </p>
+              ) : null}
               <p className="ui-small">
                 {due.length
                   ? due.length === 1

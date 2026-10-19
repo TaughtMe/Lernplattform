@@ -10,29 +10,46 @@ import {
   type WordBoxWordSource,
 } from "../../src/domain/word-box";
 import type { WordRoundRecord } from "../../src/domain/word-store-progress";
+import { createDailyPlanRepository } from "../../src/storage/daily-plan";
 import {
   createLearningWordProgressRepository,
   createWordBoxRepository,
   createWordRoundRepository,
 } from "../../src/storage/personal-learning-events";
+import { openModuleItems } from "../lernen/plan-today";
 
 export type WordBoxRepository = ReturnType<typeof createWordBoxRepository>;
 export type WordRoundRepository = ReturnType<typeof createWordRoundRepository>;
 export type LearningWordRepository = ReturnType<
   typeof createLearningWordProgressRepository
 >;
+export type DailyPlanRepository = ReturnType<typeof createDailyPlanRepository>;
 export type WordStoreRepositories = {
   boxes?: WordBoxRepository;
   rounds?: WordRoundRepository;
   progress?: LearningWordRepository;
+  plan?: DailyPlanRepository;
 };
 export type WordStoreStatus = "loading" | "ready" | "unavailable";
+
+/**
+ * Tagesportion der Lernwörter (`?heute=1`): Die Wörter der offenen Deutsch-
+ * Elemente. `off` heißt, dass die Portion nicht verlangt wurde.
+ */
+export type WordStorePlan = {
+  status: "off" | "loading" | "ready" | "failed";
+  words: LearningWordProgress[];
+};
 
 /**
  * Lädt Wortboxen, Lernstand und Runden und bietet die Aktionen aus Plan 3.10.
  * Bestwerte und Zähler werden jedes Mal aus den gespeicherten Daten abgeleitet.
  */
-export function useWordStore(injected?: WordStoreRepositories) {
+export function useWordStore(
+  injected?: WordStoreRepositories,
+  options: { dailyPlan?: boolean } = {},
+) {
+  const wantsPlan = options.dailyPlan === true;
   const boxes = useMemo(
     () => injected?.boxes ?? createWordBoxRepository(),
     [injected?.boxes],
@@ -45,6 +62,14 @@ export function useWordStore(injected?: WordStoreRepositories) {
     () => injected?.progress ?? createLearningWordProgressRepository(),
     [injected?.progress],
   );
+  const plan = useMemo(
+    () => (wantsPlan ? (injected?.plan ?? createDailyPlanRepository()) : null),
+    [injected?.plan, wantsPlan],
+  );
+  const [todayPlan, setTodayPlan] = useState<WordStorePlan>({
+    status: "loading",
+    words: [],
+  });
   const [status, setStatus] = useState<WordStoreStatus>("loading");
   const [ownBoxes, setOwnBoxes] = useState<WordBox[]>([]);
   const [learning, setLearning] = useState<LearningWordProgress[]>([]);
@@ -64,10 +89,26 @@ export function useWordStore(injected?: WordStoreRepositories) {
       setDue(dueNow);
       setSavedRounds(done);
       setStatus("ready");
+      if (plan) {
+        // Ein Fehler hier sperrt nicht den Wortspeicher: freies Üben bleibt möglich.
+        try {
+          const open = openModuleItems(
+            await plan.progress(new Date().toISOString()),
+            "german",
+          );
+          const ids = new Set(open.flatMap((item) => item.objectIds));
+          setTodayPlan({
+            status: "ready",
+            words: all.filter((entry) => ids.has(entry.id)),
+          });
+        } catch {
+          setTodayPlan({ status: "failed", words: [] });
+        }
+      }
     } catch {
       setStatus("unavailable");
     }
-  }, [boxes, rounds, progress]);
+  }, [boxes, rounds, progress, plan]);
 
   useEffect(() => {
     // Erstes Laden der lokalen Daten; setState folgt erst nach dem Lesen.
@@ -98,6 +139,8 @@ export function useWordStore(injected?: WordStoreRepositories) {
     views,
     progress: learning,
     due,
+    /** Wörter der Tagesportion; nur mit `options.dailyPlan`. */
+    todayPlan: wantsPlan ? todayPlan : { status: "off" as const, words: [] },
     rounds: savedRounds,
     refresh,
     createBox: (

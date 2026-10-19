@@ -12,14 +12,17 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
   const [direction, setDirection] = useState<LbDirection>(props.direction);
   const labels = props.directionLabelsFor(scope);
   const deck = props.decks.find((entry) => entry.id === scope);
-  const dueDecks = props.decks.filter((entry) => entry.due > 0).length;
+  const dueDecks =
+    props.todayDecks ?? props.decks.filter((entry) => entry.due > 0).length;
+  // Die Richtung kommt je Vokabel aus der Tagesportion.
+  const directionFromPlan = scope === props.planScope;
   const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
   const boxCount = props.decks.reduce(
     (sum, entry) => sum + (entry.boxes[box - 1] ?? 0),
     0,
   );
   const title =
-    scope === "due"
+    scope === "heute"
       ? "Heute dran"
       : scope === "errors"
         ? "Meine Fehler"
@@ -28,7 +31,7 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
           : (deck?.title ?? "Stapel");
   const subtitle = box
     ? `${plural(boxCount, "Vokabel", "Vokabeln")} · nur üben, nichts wird verschoben`
-    : scope === "due"
+    : scope === "heute"
       ? `${plural(props.dueTotal, "Vokabel", "Vokabeln")} aus ${dueDecks === props.decks.length ? "allen Stapeln" : plural(dueDecks, "Stapel", "Stapeln")}`
       : scope === "errors"
         ? `${plural(props.errorCount, "Vokabel", "Vokabeln")} zum Wiederholen`
@@ -64,34 +67,36 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
           ))}
         </div>
       </div>
-      <div className={styles.field}>
-        <span className={styles.fieldLabel} id="lb-direction-label">
-          Richtung
-        </span>
-        <div
-          className={styles.segmentSheet}
-          role="group"
-          aria-labelledby="lb-direction-label"
-        >
-          {(
-            [
-              ["forward", labels.forward],
-              ["reverse", labels.reverse],
-              ["mixed", "Gemischt"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={direction === value ? styles.segOn : styles.segOff}
-              aria-pressed={direction === value}
-              onClick={() => setDirection(value)}
-            >
-              {label}
-            </button>
-          ))}
+      {directionFromPlan ? null : (
+        <div className={styles.field}>
+          <span className={styles.fieldLabel} id="lb-direction-label">
+            Richtung
+          </span>
+          <div
+            className={styles.segmentSheet}
+            role="group"
+            aria-labelledby="lb-direction-label"
+          >
+            {(
+              [
+                ["forward", labels.forward],
+                ["reverse", labels.reverse],
+                ["mixed", "Gemischt"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={direction === value ? styles.segOn : styles.segOff}
+                aria-pressed={direction === value}
+                onClick={() => setDirection(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       <button
         type="button"
         className={styles.cta}

@@ -30,6 +30,7 @@ export function OverviewScreen({
   tiles,
   dueCount,
   notice,
+  noticeTone = "bad",
   ready,
   newBoxError,
   onStart,
@@ -41,6 +42,8 @@ export function OverviewScreen({
   tiles: readonly WordBoxTile[];
   dueCount: number;
   notice?: string | undefined;
+  /** „good“ für Hinweise ohne Fehler, z. B. „Dein Teil für heute ist geschafft“. */
+  noticeTone?: "bad" | "good";
   /** Erst nach dem Laden der Seite sind die Knöpfe bedienbar. */
   ready: boolean;
   newBoxError?: string | undefined;
@@ -102,7 +105,7 @@ export function OverviewScreen({
       </div>
 
       {notice ? (
-        <Notice tone="bad" role="status">
+        <Notice tone={noticeTone} role="status">
           {notice}
         </Notice>
       ) : null}

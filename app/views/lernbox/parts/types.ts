@@ -83,7 +83,7 @@ export type LbSheet =
   /** `initialCode`: aus Link oder Scan vorbefüllter Transfercode. */
   | { kind: "code"; initialCode?: string }
   | { kind: "deck" }
-  /** `scope`: „due“, „errors“ oder die Kennung eines Stapels. */
+  /** `scope`: „heute“, „errors“, „box:<n>“ oder die Kennung eines Stapels. */
   | { kind: "start"; scope: string };
 
 export type LbTransfer = {
@@ -100,7 +100,13 @@ export type LernBoxScreenProps = {
   notice: string;
   folders: readonly LbFolder[];
   decks: readonly LbDeck[];
+  /** Offene Vokabeln der Tagesportion („Heute dran“). */
   dueTotal: number;
+  /**
+   * Stapel, aus denen „Heute dran“ kommt. Ohne Angabe zählen die Stapel mit
+   * fälligen Karten.
+   */
+  todayDecks?: number;
   errorCount: number;
   languages: readonly LbLanguage[];
   /** Zuletzt gewählte Übungsart; Vorgabe im Start-Fenster. */
@@ -108,6 +114,11 @@ export type LernBoxScreenProps = {
   direction: LbDirection;
   /** Richtungsnamen („Deutsch → Englisch“) für einen Start-Bereich. */
   directionLabelsFor: (scope: string) => { forward: string; reverse: string };
+  /**
+   * Start-Bereich, dessen Richtung je Vokabel aus der Tagesportion kommt; dort
+   * entfällt die Richtungswahl im Start-Fenster.
+   */
+  planScope?: string;
   main:
     | { kind: "home" }
     | { kind: "edit"; edit: LbEdit }

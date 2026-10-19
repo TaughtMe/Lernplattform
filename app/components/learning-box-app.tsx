@@ -8,6 +8,7 @@ import {
   getLearningBoxPrompt,
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
+  isLearningBoxCardScheduledDue,
   learningBoxAlternatives,
   learningBoxDirectionAt,
   parseLearningBoxImport,
@@ -30,10 +31,18 @@ import {
   getLiveRoomClient,
   type LiveRoomConfig,
 } from "../../src/integrations/laufdiktat/live-room-client";
+import type { DailyPlanItem } from "../../src/domain/daily-plan";
+import { createDailyPlanRepository } from "../../src/storage/daily-plan";
 import {
+  PersonalLearningDatabase,
   createLearningBoxRepository,
   migrateLegacyLearningBox,
 } from "../../src/storage/personal-learning-events";
+import {
+  PLAN_DONE_NOTICE,
+  openModuleItems,
+  wantsDailyPlan,
+} from "../lernen/plan-today";
 import { StudentPage } from "../ui/shell/student-page";
 import { useThemeToggle } from "../ui/theme";
 import {
@@ -138,6 +147,22 @@ function buildQueue(
   });
 }
 
+/**
+ * Runde der Tagesportion: Die Richtung kommt je Element aus dem Plan. Eine Karte
+ * kann zweimal vorkommen (vorwärts und rückwärts); Elemente ohne Karte
+ * (inzwischen gelöscht) entfallen.
+ */
+function buildPlanQueue(
+  items: readonly DailyPlanItem[],
+  cards: readonly LearningBoxCard[],
+): QueueItem[] {
+  const byId = new Map(cards.map((card) => [card.id, card]));
+  return items.flatMap((item) => {
+    const card = byId.get(item.objectIds[0] ?? "");
+    return card && item.direction ? [{ card, direction: item.direction }] : [];
+  });
+}
+
 function nextLabel(card: LearningBoxCard, direction: LearningBoxDirection) {
   const next =
     direction === "forward" ? card.nextReview : card.reverseNextReview;
@@ -158,11 +183,21 @@ export function LearningBoxApp({
 }: {
   transferConfig?: LiveRoomConfig | null;
 }) {
-  const repository = useMemo(() => createLearningBoxRepository(), []);
+  const database = useMemo(() => new PersonalLearningDatabase(), []);
+  const repository = useMemo(
+    () => createLearningBoxRepository(database),
+    [database],
+  );
+  const dailyPlan = useMemo(
+    () => createDailyPlanRepository(database),
+    [database],
+  );
   const { theme, toggleTheme } = useThemeToggle();
   const [decks, setDecks] = useState<LearningBoxDeck[]>([]);
   const [folders, setFolders] = useState<LearningBoxFolder[]>([]);
   const [cards, setCards] = useState<LearningBoxCard[]>([]);
+  /** Offene LernBox-Elemente der Tagesportion; Karte und Richtung je Element. */
+  const [planItems, setPlanItems] = useState<DailyPlanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<View>("home");
@@ -186,18 +221,24 @@ export function LearningBoxApp({
 
   const refresh = useCallback(async () => {
     const revision = ++refreshRevision.current;
-    const [nextDecks, nextFolders, nextCards] = await Promise.all([
+    const [nextDecks, nextFolders, nextCards, nextPlan] = await Promise.all([
       repository.listDecks(),
       repository.listFolders(),
       repository.listAllCards(),
+      // Ohne Plan bleibt das freie Üben möglich; „Heute dran“ zeigt dann nichts.
+      dailyPlan
+        .progress(new Date().toISOString())
+        .then((progress) => openModuleItems(progress, "vocabulary"))
+        .catch(() => null),
     ]);
     if (revision !== refreshRevision.current) return undefined;
     setDecks(nextDecks);
     setFolders(nextFolders);
     setCards(nextCards);
+    setPlanItems(nextPlan ?? []);
     setLoading(false);
-    return nextDecks;
-  }, [repository]);
+    return { decks: nextDecks, plan: nextPlan ?? [] };
+  }, [dailyPlan, repository]);
 
   useEffect(() => {
     let active = true;
@@ -224,8 +265,19 @@ export function LearningBoxApp({
         );
         return;
       }
-      if (active && requested && loaded?.some((deck) => deck.id === requested))
+      if (
+        active &&
+        requested &&
+        loaded?.decks.some((deck) => deck.id === requested)
+      ) {
         setSheet({ kind: "start", scope: requested });
+        return;
+      }
+      // ?heute=1 (Startseite „Weiterlernen“): das Start-Fenster der Portion.
+      if (active && loaded && wantsDailyPlan(window.location.search)) {
+        if (loaded.plan.length > 0) setSheet({ kind: "start", scope: "heute" });
+        else setNotice(PLAN_DONE_NOTICE);
+      }
     });
     return () => {
       active = false;
@@ -237,9 +289,9 @@ export function LearningBoxApp({
     [decks],
   );
   const now = Date.now();
-  const dueCards = cards.filter((card) =>
-    isLearningBoxCardDueFor(card, "mixed", now),
-  );
+  // „Heute dran“ sind die offenen Elemente der Portion, nicht alles Fällige.
+  const todayQueue = buildPlanQueue(planItems, cards);
+  const todayDecks = new Set(todayQueue.map((entry) => entry.card.deckId)).size;
   const mistakes = cards.filter(isMistake);
 
   const lbDecks: LbDeck[] = decks.map((deck) => {
@@ -252,7 +304,7 @@ export function LearningBoxApp({
       title: deck.title,
       folderId: deck.folderId ?? null,
       total: inside.length,
-      due: inside.filter((card) => isLearningBoxCardDueFor(card, "mixed", now))
+      due: inside.filter((card) => isLearningBoxCardScheduledDue(card, now))
         .length,
       boxes,
       sourceLabel: sourceLabel(deck),
@@ -291,15 +343,14 @@ export function LearningBoxApp({
     let title = "Heute dran";
     let pool: LearningBoxCard[] = [];
     let onlyDue = false;
+    // Tagesportion: Karte und Richtung stehen je Element im Plan.
+    let planQueue: QueueItem[] | null = null;
     const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
     if (box) {
       title = `Box ${box} (nur üben)`;
       pool = cards.filter((card) => card.box === box);
-    } else if (scope === "due") {
-      pool = cards.filter((card) =>
-        isLearningBoxCardDueFor(card, choice.direction),
-      );
-      onlyDue = true;
+    } else if (scope === "heute") {
+      planQueue = todayQueue;
     } else if (scope === "errors") {
       title = "Meine Fehler";
       pool = mistakes;
@@ -313,17 +364,20 @@ export function LearningBoxApp({
       onlyDue = due.length > 0;
     }
     setMode(choice.mode);
-    setDirection(choice.direction);
+    // Die Richtungswahl gilt nicht für die Portion; die Vorgabe bleibt, wie sie war.
+    if (!planQueue) setDirection(choice.direction);
     setSheet(null);
-    if (!pool.length) {
-      setNotice("Dafür ist gerade nichts fällig.");
+    if (planQueue ? planQueue.length === 0 : pool.length === 0) {
+      setNotice(
+        planQueue ? PLAN_DONE_NOTICE : "Dafür ist gerade nichts fällig.",
+      );
       return;
     }
     setNotice("");
     setSession({
       title,
       mode: choice.mode,
-      queue: buildQueue(pool, choice.direction, onlyDue),
+      queue: planQueue ?? buildQueue(pool, choice.direction, onlyDue),
       index: 0,
       answer: "",
       revealed: false,
@@ -355,8 +409,11 @@ export function LearningBoxApp({
         roundId: session.roundId,
       });
     }
-    const queue = session.queue.map((entry, index) =>
-      index === session.index ? { ...entry, card: updated } : entry,
+    // Eine Karte kann in der Runde zweimal vorkommen (vorwärts und rückwärts):
+    // Beide Einträge bekommen den neuen Stand, sonst überschriebe die zweite
+    // Antwort die erste.
+    const queue = session.queue.map((entry) =>
+      entry.card.id === item.card.id ? { ...entry, card: updated } : entry,
     );
     const stats = {
       correct: session.stats.correct + (correct ? 1 : 0),
@@ -601,7 +658,9 @@ export function LearningBoxApp({
         notice={notice}
         folders={folders.map(({ id, title }) => ({ id, title }))}
         decks={lbDecks}
-        dueTotal={dueCards.length}
+        dueTotal={todayQueue.length}
+        todayDecks={todayDecks}
+        planScope="heute"
         errorCount={mistakes.length}
         languages={LANGUAGE_CHOICES}
         mode={mode}
