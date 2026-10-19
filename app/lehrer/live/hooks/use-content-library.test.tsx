@@ -11,6 +11,7 @@ const repository = vi.hoisted(() => ({
   get: vi.fn(),
   put: vi.fn(),
   remove: vi.fn(),
+  prepare: vi.fn(),
 }));
 vi.mock("../../../../src/storage/teacher-class-settings", () => ({
   createTeacherContentLibraryRepository: () => repository,
@@ -54,6 +55,7 @@ describe("useContentLibrary", () => {
     repository.get.mockReset().mockResolvedValue(undefined);
     repository.put.mockReset().mockResolvedValue(undefined);
     repository.remove.mockReset().mockResolvedValue(undefined);
+    repository.prepare.mockReset().mockResolvedValue(true);
   });
 
   it("legt nichts Leeres ab und sagt es", async () => {
@@ -111,6 +113,60 @@ describe("useContentLibrary", () => {
       entry = (await result.current.storeContent(true)) as { id: string };
     });
     expect(entry?.id).toBe(repository.put.mock.calls[0]![0].id);
+  });
+
+  it("nimmt bei der Durchführung Modus und Optionen der Runde mit", async () => {
+    const { result } = setup();
+    await act(async () => {
+      await result.current.storeContent(true, false, {
+        gameMode: "BATTLE",
+        battleInk: false,
+      });
+    });
+    expect(repository.put.mock.calls[0]![0]).toMatchObject({
+      lastUsedAt: "2026-10-01T08:00:00.000Z",
+      prepared: { gameMode: "BATTLE", battleInk: false },
+    });
+  });
+
+  it("bereitet vor: legt ab und speichert Modus und Optionen", async () => {
+    const { result, setLibraryNotice } = setup({ activeClass: "k5" });
+    let done: boolean | undefined;
+    await act(async () => {
+      done = await result.current.prepareContent({
+        gameMode: "STATION",
+        stationCount: 5,
+      });
+    });
+    expect(done).toBe(true);
+    const entry = repository.put.mock.calls[0]![0];
+    expect(entry.lastUsedAt).toBeUndefined();
+    expect(repository.prepare).toHaveBeenCalledWith(
+      entry.id,
+      { gameMode: "STATION", stationCount: 5 },
+      "2026-10-01T08:00:00.000Z",
+    );
+    expect(setLibraryNotice).toHaveBeenCalledWith(
+      `„${entry.title}“ ist vorbereitet.`,
+    );
+  });
+
+  it("bereitet nichts Leeres vor und meldet Fehler", async () => {
+    const empty = setup({ source: " " });
+    await act(async () => {
+      await empty.result.current.prepareContent({ gameMode: "LAUFDIKTAT" });
+    });
+    expect(empty.setLibraryNotice).toHaveBeenCalledWith(
+      "Gib zuerst etwas ein, das vorbereitet werden kann.",
+    );
+    repository.prepare.mockRejectedValue(new Error("voll"));
+    const failing = setup();
+    await act(async () => {
+      await failing.result.current.prepareContent({ gameMode: "LAUFDIKTAT" });
+    });
+    expect(failing.setLibraryNotice).toHaveBeenCalledWith(
+      "Der Inhalt konnte nicht vorbereitet werden. Bitte versuche es noch einmal.",
+    );
   });
 
   it("löscht nichts, solange nichts abgelegt ist", async () => {

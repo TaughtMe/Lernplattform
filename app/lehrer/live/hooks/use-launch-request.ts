@@ -10,7 +10,10 @@ import {
 } from "react";
 import type { TextSplitConfig } from "../../../../src/domain/running-dictation-sections";
 import type { VocabularyLocales } from "../../../../src/domain/running-dictation";
-import type { TeacherContentPackage } from "../../../../src/domain/teacher-content-library";
+import type {
+  TeacherContentPackage,
+  TeacherPreparedSettings,
+} from "../../../../src/domain/teacher-content-library";
 import type { LiveRoomConfig } from "../../../../src/integrations/laufdiktat/live-room-client";
 import type { OpenedLiveRoom } from "../../../../src/integrations/laufdiktat/room-api";
 import type {
@@ -44,6 +47,8 @@ type LaunchRequestInput = {
   setVocabularyLocales: Dispatch<SetStateAction<VocabularyLocales>>;
   setShuffleWords: Dispatch<SetStateAction<boolean>>;
   setGameMode: Dispatch<SetStateAction<TeacherGameMode>>;
+  /** Modus und Optionen eines vorbereiteten Inhalts übernehmen. */
+  applyPreparedSettings: (prepared: TeacherPreparedSettings) => void;
   chooseContentMode: (mode: TeacherContentMode) => void;
   setClassChoice: (id: string) => Promise<void>;
   openLobby: () => Promise<void>;
@@ -73,6 +78,7 @@ export function useLaunchRequest({
   setVocabularyLocales,
   setShuffleWords,
   setGameMode,
+  applyPreparedSettings,
   chooseContentMode,
   setClassChoice,
   openLobby,
@@ -105,6 +111,9 @@ export function useLaunchRequest({
       setVocabularyLocales(loaded.vocabularyLocales);
       setShuffleWords(true);
     }
+    // Ein vorbereiteter Inhalt bringt Modus und Optionen mit; ein Modus aus
+    // Adresse oder Absicht geht danach noch vor.
+    if (entry.prepared) applyPreparedSettings(entry.prepared);
   }
 
   // Adresse (`inhalt`, `neu`, `schritt`, `modus`) und Start-Absicht werten wir
@@ -182,8 +191,8 @@ export function useLaunchRequest({
     handleLaunchParams();
   }, [classesLoaded, hydrated, params, restoreChecked, room, router]);
 
-  // „Jetzt starten“: Sobald Inhalt, Modus und Klasse übernommen sind, öffnet
-  // sich die Lobby mit den Standardoptionen des Modus.
+  // „Starten“: Sobald Inhalt, Modus und Klasse übernommen sind, öffnet sich
+  // die Lobby mit den gespeicherten Optionen, sonst den Standardoptionen.
   const onStartRequested = useEffectEvent(() => {
     if (busy || room) return;
     dispatchFlow({ type: "startHandled" });

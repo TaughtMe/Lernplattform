@@ -3,9 +3,14 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { VocabularyLocales } from "../../../../src/domain/running-dictation";
 import type { TextSplitConfig } from "../../../../src/domain/running-dictation-sections";
+import type { TeacherPreparedSettings } from "../../../../src/domain/teacher-content-library";
 import type { TeacherContentMode } from "../../../../src/integrations/laufdiktat/teacher-session";
 import { createTeacherContentLibraryRepository } from "../../../../src/storage/teacher-class-settings";
 import { liveContentToPackage } from "../../content-adapter";
+import {
+  savePreparedSettings,
+  TEACHER_DATA_EVENT,
+} from "../../prepared-settings";
 import { splitModeOf } from "../dictation-adapter";
 
 type ContentLibraryInput = {
@@ -43,8 +48,16 @@ export function useContentLibrary({
   const [contentId, setContentId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
 
-  /** Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. */
-  async function storeContent(markUsed: boolean, moveToClass = false) {
+  /**
+   * Legt den Inhalt ab: neu oder als neuer Stand des geladenen Pakets. Mit
+   * `markUsed` gilt er als durchgeführt; `ranWith` sind dann Modus und
+   * Optionen der Runde.
+   */
+  async function storeContent(
+    markUsed: boolean,
+    moveToClass = false,
+    ranWith?: TeacherPreparedSettings,
+  ) {
     const repository = createTeacherContentLibraryRepository();
     const existing = contentId ? await repository.get(contentId) : undefined;
     const entry = liveContentToPackage({
@@ -61,11 +74,12 @@ export function useContentLibrary({
       classId: activeClass || undefined,
       markUsed,
       moveToClass,
+      ranWith,
     });
     await repository.put(entry);
     setContentId(entry.id);
     setTitle(entry.title);
-    window.dispatchEvent(new Event("teacher-data-changed"));
+    window.dispatchEvent(new Event(TEACHER_DATA_EVENT));
     return entry;
   }
 
@@ -85,6 +99,34 @@ export function useContentLibrary({
     }
   }
 
+  /**
+   * Schritt 2 „Vorbereiten“: legt den Inhalt ab und speichert Modus und
+   * Optionen. Danach steht er auf der Startseite unter „Vorbereitet“ und
+   * startet dort mit einem Klick in die Lobby.
+   */
+  async function prepareContent(prepared: TeacherPreparedSettings) {
+    setError("");
+    if (!source.trim()) {
+      setLibraryNotice("Gib zuerst etwas ein, das vorbereitet werden kann.");
+      return false;
+    }
+    try {
+      const entry = await storeContent(false, true);
+      await savePreparedSettings(
+        entry.id,
+        prepared,
+        new Date(clock()).toISOString(),
+      );
+      setLibraryNotice(`„${entry.title}“ ist vorbereitet.`);
+      return true;
+    } catch {
+      setLibraryNotice(
+        "Der Inhalt konnte nicht vorbereitet werden. Bitte versuche es noch einmal.",
+      );
+      return false;
+    }
+  }
+
   async function deleteContent() {
     if (!contentId) return;
     try {
@@ -97,7 +139,7 @@ export function useContentLibrary({
           ? `„${entry.title}“ wurde aus der Ablage gelöscht.`
           : "Der Inhalt wurde aus der Ablage gelöscht.",
       );
-      window.dispatchEvent(new Event("teacher-data-changed"));
+      window.dispatchEvent(new Event(TEACHER_DATA_EVENT));
     } catch {
       setLibraryNotice("Der Inhalt konnte nicht gelöscht werden.");
     }
@@ -118,6 +160,7 @@ export function useContentLibrary({
 
   return {
     storeContent,
+    prepareContent,
     setContentId,
     setTitle,
     /** Felder, die `TeacherLiveModel` unverändert übernimmt. */

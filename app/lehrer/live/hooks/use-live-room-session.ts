@@ -86,7 +86,11 @@ type LiveRoomSessionInput = {
   /** Anzahl der Aufgaben; ohne Aufgabe öffnet sich kein Raum. */
   wordCount: number;
   gameMode: TeacherGameMode;
-  /** Legt den Inhalt beim Öffnen der Lobby in der Ablage ab. */
+  /**
+   * Legt den Inhalt in der Ablage ab: beim Öffnen der Lobby ohne, beim Start
+   * der Sitzung mit Durchführung (`markUsed`). Erst dann wandert er ins Archiv;
+   * eine abgebrochene Lobby lässt ihn unter „Vorbereitet“.
+   */
   storeContent: (markUsed: boolean) => Promise<unknown>;
 };
 
@@ -396,7 +400,7 @@ export function useLiveRoomSession({
       dispatchFlow({ type: "lobbyOpened" });
       // Beim Öffnen der Lobby wird der Inhalt abgelegt, ohne die Lobby
       // aufzuhalten; ein Fehler hier stoppt den Raum nicht.
-      void storeContent(true).catch(() =>
+      void storeContent(false).catch(() =>
         setError(
           "Der Raum ist offen, aber der Inhalt konnte nicht gespeichert werden.",
         ),
@@ -430,6 +434,12 @@ export function useLiveRoomSession({
         throw new Error();
       setStudents([]);
       dispatchFlow({ type: "sessionStarted", hasRoom: true });
+      // Die Runde läuft: Der Inhalt gilt als durchgeführt (Archiv).
+      void storeContent(true).catch(() =>
+        setError(
+          "Die Sitzung läuft, aber der Inhalt konnte nicht als durchgeführt gespeichert werden.",
+        ),
+      );
     } catch {
       setError("Die Sitzung konnte nicht sicher gestartet werden.");
     } finally {
