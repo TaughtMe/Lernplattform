@@ -113,7 +113,7 @@ async function setUp(
 ) {
   await openSettings(page);
   const section = page.locator("#cloud-abgleich");
-  await section.getByRole("button", { name: "Weiter" }).click();
+  await section.getByRole("button", { name: "WebDAV einrichten" }).click();
   await section.getByLabel("Server-Adresse").fill(DAV);
   await section.getByLabel("Benutzername").fill("lea");
   await section.getByLabel("App-Passwort").fill("app-passwort");
@@ -276,7 +276,7 @@ test("ein falsches Passwort lässt die Einrichtung stehen", async ({
 
   await openSettings(guest.page);
   const section = guest.page.locator("#cloud-abgleich");
-  await section.getByRole("button", { name: "Weiter" }).click();
+  await section.getByRole("button", { name: "WebDAV einrichten" }).click();
   await section.getByLabel("Server-Adresse").fill(DAV);
   await section.getByLabel("Benutzername").fill("lea");
   await section.getByLabel("App-Passwort").fill("app-passwort");

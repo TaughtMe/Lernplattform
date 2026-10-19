@@ -32,6 +32,7 @@ import {
 import { MODES } from "../../views/laufdiktat/teacher-dictation-screen";
 import type { Theme } from "../../views/parts/parts";
 import { LandingScreen } from "../../views/start/landing-screen";
+import { renderManageScreen } from "./manage-screens";
 import { layoutText } from "../../../src/domain/text-compare";
 import {
   DEMO_GAP_SETS,
@@ -77,6 +78,9 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
         enterHref="/lernen"
       />
     );
+  }
+  if (screen === "17a" || screen === "17b" || screen === "17c") {
+    return renderManageScreen(screen, theme);
   }
   if (screen === "3c" || screen === "3d") {
     return <TeacherDemo variant={variant} theme={theme} />;

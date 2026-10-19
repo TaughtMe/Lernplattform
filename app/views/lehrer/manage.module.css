@@ -1,0 +1,350 @@
+/*
+ * Gemeinsame Bausteine der Verwalten-Seiten nach Lehrerbereich v2 (17a–c):
+ * Seitenkopf, Karten, Felder, Knöpfe, Schalter. Maße und Farben stammen aus
+ * docs/design/lehrerbereich-v2.dc.html. Anders als die älteren Ansichten
+ * erben Knöpfe und Felder dort die Schrift (Work Sans), die Box-Maße bleiben
+ * beim Browser-Standard (content-box, Knöpfe border-box).
+ */
+.page {
+  composes: view from "../parts/parts.module.css";
+  /* Farben der Vorlage ohne eigenes Token; dunkel siehe unten. */
+  --m-green-ink: var(--green);
+  --m-green-bg: #eef7f2;
+  --m-green-line: #cfe5d8;
+  --m-warn-line: #ecdcb2;
+  --m-warn-ink: #5c4209;
+  --m-gold: #f0cf84;
+  --m-icon: #5c5346;
+  --m-field: #fff;
+  --m-radio: #c9bea8;
+  --m-radio-bg: #fff;
+  --m-sub: var(--ink3);
+  --m-row: #efe9da;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 20px 16px 28px;
+  color: var(--ink);
+}
+:global([data-theme="dark"]) .page {
+  --m-green-ink: var(--good);
+  --m-green-bg: var(--good-bg);
+  --m-green-line: #2c4a3b;
+  --m-warn-line: #4a4438;
+  --m-warn-ink: var(--accent);
+  --m-icon: var(--ink2);
+  --m-field: var(--surface2);
+  --m-radio: var(--line2);
+  --m-radio-bg: var(--surface);
+  --m-sub: var(--ink2);
+  --m-row: var(--line);
+}
+.page :where(button, input, select, textarea) {
+  font-family: inherit;
+}
+/* Eingebettete ältere Bausteine (Klasse `ui`) messen mit border-box. */
+.page :global(.ui) :where(*, ::before, ::after) {
+  box-sizing: border-box;
+}
+
+/* ---------- Kopf ---------- */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 20px;
+}
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink3);
+}
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.lead {
+  max-width: 62ch;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink2);
+  text-wrap: pretty;
+}
+
+/* ---------- Karten ---------- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.cardRule {
+  border-top: 1px solid var(--line);
+}
+.label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink3);
+}
+.count {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--m-icon);
+  font-size: 12px;
+  font-weight: 700;
+}
+.saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--m-green-ink);
+}
+.notice {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.noticeBad {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+/* ---------- Felder ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.input,
+.select {
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--m-field);
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  outline: none;
+}
+.select {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.input:focus-visible,
+.select:focus-visible {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(47, 107, 79, 0.15);
+}
+
+/* ---------- Knöpfe ---------- */
+.green,
+.gold,
+.soft {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.green {
+  min-height: 46px;
+  padding: 0 20px;
+  border: 0;
+  background: var(--green);
+  color: var(--green-ink);
+  font-size: 14.5px;
+}
+.green:hover {
+  filter: brightness(1.1);
+}
+.gold {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  background: var(--m-gold);
+  color: #211f1b;
+  font-size: 14px;
+}
+.soft {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line2);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+}
+.soft:hover {
+  border-color: var(--accent);
+}
+.green:disabled,
+.soft:disabled,
+.gold:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+/* Kleiner Knopf (Vorlage 36 px); die Tippfläche bleibt 44 px hoch. */
+.small {
+  position: relative;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.small::after {
+  position: absolute;
+  inset: -4px 0;
+  content: "";
+}
+/* Textknopf (z. B. „Abgleich ausschalten …“). */
+.link {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.link::after {
+  position: absolute;
+  inset: -4px 0;
+  content: "";
+}
+.link:hover {
+  text-decoration: underline;
+}
+.danger {
+  color: var(--bad);
+}
+/* Quadratischer Symbolknopf; Tippfläche mindestens 44 px. */
+.iconBtn {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--m-icon);
+  cursor: pointer;
+}
+.iconBtn::after {
+  position: absolute;
+  inset: -4px;
+  content: "";
+}
+.iconBtn:hover {
+  border-color: var(--accent);
+}
+.iconBare {
+  border: 0;
+  background: transparent;
+  color: var(--ink3);
+}
+.iconBare:hover,
+.iconDanger:hover {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.iconDanger:hover {
+  border-color: var(--bad);
+}
+
+/* ---------- Schalter ---------- */
+.switch {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--line2);
+}
+.switchOn {
+  background: var(--green);
+}
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fffdf7;
+  transition: left 0.15s;
+}
+.switchOn .knob {
+  left: 21px;
+}
+
+@container lehrer-rahmen (min-width: 900px) {
+  .page {
+    gap: 26px;
+    padding: 32px 40px 44px;
+  }
+  .title {
+    font-size: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .knob {
+    transition: none;
+  }
+}

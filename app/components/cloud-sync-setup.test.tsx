@@ -122,7 +122,9 @@ beforeEach(() => {
 
 async function toConnect(user: ReturnType<typeof userEvent.setup>) {
   render(<CloudSyncSetup />);
-  await user.click(screen.getByRole("button", { name: "Weiter" }));
+  // WebDAV ist vorgewählt; die Einrichtung startet in der Zeile darunter.
+  expect(screen.getByRole("radio", { name: /WebDAV/ })).toBeChecked();
+  await user.click(screen.getByRole("button", { name: "WebDAV einrichten" }));
 }
 
 async function fillWebDav(user: ReturnType<typeof userEvent.setup>) {
@@ -374,10 +376,10 @@ describe("setup wizard", () => {
     const user = userEvent.setup();
     render(<CloudSyncSetup />);
     expect(screen.getByRole("radio", { name: /Google Drive/ })).toBeDisabled();
-    await user.click(screen.getByRole("radio", { name: /Microsoft OneDrive/ }));
-    await user.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByText("Noch nicht eingerichtet")).toBeVisible();
+    await user.click(screen.getByRole("radio", { name: /OneDrive/ }));
     await user.click(
-      screen.getByRole("button", { name: /Mit Microsoft OneDrive verbinden/ }),
+      screen.getByRole("button", { name: "Mit OneDrive verbinden" }),
     );
     expect(session.startConnect).toHaveBeenCalledWith(
       "onedrive",
@@ -414,10 +416,9 @@ describe("setup wizard", () => {
       new Error("Dieses Konto ist noch nicht eingerichtet."),
     );
     render(<CloudSyncSetup />);
-    await user.click(screen.getByRole("radio", { name: /Microsoft OneDrive/ }));
-    await user.click(screen.getByRole("button", { name: "Weiter" }));
+    await user.click(screen.getByRole("radio", { name: /OneDrive/ }));
     await user.click(
-      screen.getByRole("button", { name: /Mit Microsoft OneDrive verbinden/ }),
+      screen.getByRole("button", { name: "Mit OneDrive verbinden" }),
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "noch nicht eingerichtet",
@@ -427,16 +428,33 @@ describe("setup wizard", () => {
   it("keeps the earlier steps reachable with Zurück", async () => {
     const user = userEvent.setup();
     await toConnect(user);
-    await user.click(screen.getByRole("button", { name: "Zurück" }));
-    expect(screen.getByRole("heading", { name: "Speicher" })).toBeVisible();
     const steps = screen.getByRole("list", {
       name: "Schritte der Einrichtung",
     });
     expect(within(steps).getAllByRole("listitem")).toHaveLength(5);
-    expect(within(steps).getByText(/1\. Speicher/)).toHaveAttribute(
+    expect(within(steps).getByText(/2\. Verbindung/)).toHaveAttribute(
       "aria-current",
       "step",
     );
+    expect(screen.getByRole("heading", { name: "Verbindung" })).toHaveFocus();
+    await user.click(screen.getByRole("button", { name: "Zurück" }));
+    expect(
+      screen.queryByRole("list", { name: "Schritte der Einrichtung" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "WebDAV einrichten" }),
+    ).toBeVisible();
+  });
+
+  it("starts over when another storage place is picked", async () => {
+    const user = userEvent.setup();
+    await toConnect(user);
+    expect(screen.getByLabelText("Server-Adresse")).toBeVisible();
+    await user.click(screen.getByRole("radio", { name: /OneDrive/ }));
+    expect(screen.queryByLabelText("Server-Adresse")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Mit OneDrive verbinden" }),
+    ).toBeVisible();
   });
 });
 
@@ -456,7 +474,10 @@ describe("active sync", () => {
     snapshot = active();
     const user = userEvent.setup();
     render(<CloudSyncSetup />);
+    expect(screen.getByText("Dieses Gerät")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Umbenennen" }));
     const field = screen.getByLabelText("Name dieses Geräts");
+    expect(field).toHaveValue("Laptop");
     await user.clear(field);
     await user.type(field, "Tafel 2b");
     await user.click(screen.getByRole("button", { name: "Namen speichern" }));
@@ -494,9 +515,14 @@ describe("active sync", () => {
     });
     const user = userEvent.setup();
     render(<CloudSyncSetup />);
-    await user.click(
-      screen.getByRole("button", { name: "Bei OneDrive neu anmelden" }),
+    expect(
+      screen.getByText("Die Anmeldung bei OneDrive ist abgelaufen."),
+    ).toBeVisible();
+    // Nur ein Knopf zum Anmelden, oben im Hinweis.
+    expect(screen.getAllByRole("button", { name: /anmelden/i })).toHaveLength(
+      1,
     );
+    await user.click(screen.getByRole("button", { name: "Neu anmelden" }));
     expect(session.startConnect).toHaveBeenCalledWith(
       "onedrive",
       null,
@@ -519,9 +545,9 @@ describe("active sync", () => {
     expect(
       await screen.findByText(/Andere Geräte fragen beim nächsten Abgleich/),
     ).toBeVisible();
-    await user.click(
-      screen.getByRole("button", { name: "Verschlüsselung ausschalten" }),
-    );
+    const toggle = screen.getByRole("switch", { name: "Verschlüsselung" });
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    await user.click(toggle);
     expect(controller.setPassword).toHaveBeenLastCalledWith(null);
   });
 
@@ -530,9 +556,9 @@ describe("active sync", () => {
     const user = userEvent.setup();
     render(<CloudSyncSetup />);
     expect(screen.getByText(/nur durch dein Cloud-Konto/)).toBeVisible();
-    await user.click(
-      screen.getByRole("button", { name: "Verschlüsselung einschalten" }),
-    );
+    const toggle = screen.getByRole("switch", { name: "Verschlüsselung" });
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    await user.click(toggle);
     expect(screen.getByRole("button", { name: "Verschlüsseln" })).toBeVisible();
   });
 
@@ -540,19 +566,27 @@ describe("active sync", () => {
     snapshot = active();
     const user = userEvent.setup();
     render(<CloudSyncSetup />);
-    await user.click(screen.getByRole("button", { name: "Ausschalten …" }));
+    await user.click(
+      screen.getByRole("button", { name: "Abgleich ausschalten …" }),
+    );
     await user.click(
       screen.getByRole("button", { name: "Nur auf diesem Gerät ausschalten" }),
     );
     expect(controller.disable).toHaveBeenLastCalledWith();
-    await user.click(screen.getByRole("button", { name: "Ausschalten …" }));
+    await user.click(
+      screen.getByRole("button", { name: "Abgleich ausschalten …" }),
+    );
     await user.click(
       screen.getByRole("button", { name: "Auch Cloud-Datei löschen" }),
     );
     expect(controller.disable).toHaveBeenLastCalledWith({ deleteRemote: true });
-    await user.click(screen.getByRole("button", { name: "Ausschalten …" }));
+    await user.click(
+      screen.getByRole("button", { name: "Abgleich ausschalten …" }),
+    );
     await user.click(screen.getByRole("button", { name: "Abbrechen" }));
-    expect(screen.getByRole("button", { name: "Ausschalten …" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Abgleich ausschalten …" }),
+    ).toBeVisible();
   });
 
   it("shows loading until the state is read and reports action failures", async () => {
@@ -565,7 +599,9 @@ describe("active sync", () => {
     );
     rerender(<CloudSyncSetup />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Ausschalten …" }));
+    await user.click(
+      screen.getByRole("button", { name: "Abgleich ausschalten …" }),
+    );
     await user.click(
       screen.getByRole("button", { name: "Auch Cloud-Datei löschen" }),
     );

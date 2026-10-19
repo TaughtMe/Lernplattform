@@ -889,15 +889,11 @@ test("the local teacher workspace manages classes, students, assignments and QR 
   const profile = page.getByRole("form", {
     name: "Persönliche Informationen",
   });
+  // Das Profil speichert beim Tippen; „Wird gespeichert …“ verschwindet danach.
   await profile.getByLabel("Anzeigename").fill("Frau Beispiel");
   await profile.getByLabel("Schule").fill("Lernschule");
   await profile.getByLabel("Fächer").fill("Deutsch, Mathematik");
-  await profile
-    .getByRole("button", { name: "Informationen speichern" })
-    .click();
-  await expect(
-    page.getByText("Persönliche Informationen wurden lokal gespeichert."),
-  ).toBeVisible();
+  await expect(profile.getByText("Wird beim Tippen gespeichert")).toBeVisible();
 
   await page.goto("/lehrer/klassen", { waitUntil: "networkidle" });
   const classForm = page.getByRole("form", { name: "Neue Klasse anlegen" });

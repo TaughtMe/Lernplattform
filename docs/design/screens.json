@@ -624,7 +624,8 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 1422,
-      "status": "offen"
+      "status": "umgesetzt",
+      "hide": [".lernbox-tag"]
     },
     {
       "id": "17b",

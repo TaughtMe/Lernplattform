@@ -1,0 +1,35 @@
+// Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
+declare const styles: {
+  readonly card: string;
+  readonly cardRule: string;
+  readonly count: string;
+  readonly danger: string;
+  readonly eyebrow: string;
+  readonly field: string;
+  readonly gold: string;
+  readonly green: string;
+  readonly head: string;
+  readonly headText: string;
+  readonly hint: string;
+  readonly iconBare: string;
+  readonly iconBtn: string;
+  readonly iconDanger: string;
+  readonly input: string;
+  readonly knob: string;
+  readonly label: string;
+  readonly lead: string;
+  readonly link: string;
+  readonly notice: string;
+  readonly noticeBad: string;
+  readonly page: string;
+  readonly saved: string;
+  readonly select: string;
+  readonly small: string;
+  readonly soft: string;
+  readonly stack: string;
+  readonly switch: string;
+  readonly switchOn: string;
+  readonly title: string;
+  readonly ui: string;
+};
+export default styles;

@@ -1,19 +1,26 @@
 import type { Metadata } from "next";
 import { CloudSyncSetup } from "../../components/cloud-sync-setup";
-import { TeacherProfilePanel } from "../../components/teacher-workspace-manager";
+import {
+  TeacherDataPanel,
+  TeacherProfilePanel,
+} from "../../components/teacher-workspace-manager";
+import { ManagePage } from "../../views/lehrer/manage-parts";
+import { SettingsGroups } from "../../views/lehrer/settings-screen";
 
 export const metadata: Metadata = { title: "Einstellungen" };
 
+/** Einstellungen nach Lehrerbereich v2 (17a): Profil, Abgleich, Daten. */
 export default function Page() {
   return (
-    <div className="ui-page">
-      <aside className="ui-notice">
-        <strong>Dieses Gerät ist die Schutzgrenze.</strong> Lehrkraftdaten
-        bleiben lokal. Nutze deshalb ein geschütztes, nicht gemeinsam
-        verwendetes Geräteprofil.
-      </aside>
-      <TeacherProfilePanel />
-      <CloudSyncSetup />
-    </div>
+    <ManagePage
+      title="Einstellungen"
+      lead="Alles bleibt auf diesem Gerät, solange kein Abgleich eingerichtet ist."
+    >
+      <SettingsGroups>
+        <TeacherProfilePanel />
+        <CloudSyncSetup />
+        <TeacherDataPanel />
+      </SettingsGroups>
+    </ManagePage>
   );
 }
