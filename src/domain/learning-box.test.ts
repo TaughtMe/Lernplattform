@@ -8,6 +8,7 @@ import {
   filterLearningBoxCards,
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
+  isLearningBoxCardScheduledDue,
   learningBoxDirectionAt,
   parseLearningBoxImport,
   placeLiveVocabularyCard,
@@ -202,6 +203,37 @@ describe("LernBox extensions", () => {
     expect(createLearningBoxDeck({ title: "Lose" })).not.toHaveProperty(
       "folderId",
     );
+  });
+});
+
+describe("isLearningBoxCardScheduledDue", () => {
+  const DAY = 86_400_000;
+  const base = createLearningBoxCard({
+    deckId: "deck",
+    question: "library",
+    answer: "Bibliothek",
+    now: 10 * DAY,
+  });
+
+  it("zählt eine fällige Vorwärtsrichtung", () => {
+    expect(isLearningBoxCardScheduledDue(base, 10 * DAY)).toBe(true);
+  });
+
+  it("zählt die nie geübte Rückrichtung nicht als fällig", () => {
+    const card = { ...base, nextReview: 20 * DAY, interval: 7 };
+    expect(card.reverseInterval).toBe(0);
+    expect(isLearningBoxCardScheduledDue(card, 10 * DAY)).toBe(false);
+  });
+
+  it("zählt eine geübte und fällige Rückrichtung", () => {
+    const card = {
+      ...base,
+      nextReview: 20 * DAY,
+      interval: 7,
+      reverseInterval: 1,
+      reverseNextReview: 10 * DAY,
+    };
+    expect(isLearningBoxCardScheduledDue(card, 10 * DAY)).toBe(true);
   });
 });
 

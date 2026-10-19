@@ -313,6 +313,21 @@ export function isLearningBoxCardDue(
   );
 }
 
+/**
+ * Fälligkeit nach Zeitplan: Die Vorwärtsrichtung zählt, wenn sie fällig ist.
+ * Die Rückrichtung zählt erst, wenn sie schon einmal geübt wurde
+ * (`reverseInterval > 0`); sonst bliebe jede nur vorwärts gelernte Karte „fällig“.
+ */
+export function isLearningBoxCardScheduledDue(
+  card: LearningBoxCard,
+  now = Date.now(),
+) {
+  return (
+    isLearningBoxCardDue(card, "forward", now) ||
+    (card.reverseInterval > 0 && isLearningBoxCardDue(card, "reverse", now))
+  );
+}
+
 /** Port of LernBoxV2's result transition. */
 export function processLearningBoxResult(
   card: LearningBoxCard,

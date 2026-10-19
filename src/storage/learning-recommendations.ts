@@ -7,7 +7,7 @@ import {
   type LearningRecommendationCandidate,
 } from "../domain/learning-recommendation";
 import { deriveLeitnerProgress } from "../domain/leitner-schedule";
-import { isLearningBoxCardDue } from "../domain/learning-box";
+import { isLearningBoxCardScheduledDue } from "../domain/learning-box";
 import {
   TYPING_LESSONS,
   isTypingLessonUnlocked,
@@ -169,13 +169,9 @@ export function createLearningRecommendationRepository(
           dueAt: mathDue[0]!.dueAt,
         });
 
-      // Die Rückrichtung zählt erst, wenn sie schon einmal geübt wurde –
-      // sonst bliebe jede nur vorwärts gelernte Karte „fällig“.
-      const dueCards = cards.filter(
-        (card) =>
-          isLearningBoxCardDue(card, "forward", nowMs) ||
-          (card.reverseInterval > 0 &&
-            isLearningBoxCardDue(card, "reverse", nowMs)),
+      // Die Rückrichtung zählt erst, wenn sie schon einmal geübt wurde.
+      const dueCards = cards.filter((card) =>
+        isLearningBoxCardScheduledDue(card, nowMs),
       );
       if (dueCards.length > 0) {
         const errorCards = dueCards.filter(
