@@ -1,0 +1,315 @@
+/*
+ * Auswahldialog „Aus meinen Vokabeln wählen“ im Vokabelheft des Laufdiktats.
+ * Desktop: Karte mit festem Fuß. Schmal: füllt den Bildschirm, der Fuß klebt
+ * unten. Zielgrößen ab 44 px, nichts läuft bei 320 px horizontal über.
+ */
+.dialog {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 680px;
+  max-width: calc(100% - 32px);
+  height: min(760px, calc(100% - 32px));
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.dialog:focus-visible {
+  outline: none;
+}
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.inner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 18px 18px 0;
+  font-family: var(--font);
+  line-height: normal;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.closeButton {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink2);
+  cursor: pointer;
+}
+.closeButton:hover {
+  background: var(--surface2);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.search {
+  box-sizing: border-box;
+  flex: 1 1 220px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line2);
+  border-radius: 12px;
+  outline: none;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+}
+.search:focus {
+  border-color: var(--accent);
+}
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.switchBox {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.note {
+  margin: -4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink2);
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed var(--line2);
+  border-radius: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+.packages,
+.pairs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.packages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+.package {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.packageHead,
+.groupHead {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.packageHead {
+  padding-left: 4px;
+}
+.boxWrap {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+.box {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.packageTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.expand {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 14px 6px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.expand:hover {
+  background: var(--bg);
+}
+.expandText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.packageName {
+  font-size: 15px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.packageMeta {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.panel {
+  padding: 0 8px 8px;
+  border-top: 1px solid var(--line);
+}
+.panel[hidden] {
+  display: none;
+}
+.group + .group {
+  margin-top: 6px;
+}
+.groupHead {
+  padding-top: 4px;
+}
+.groupTitle {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink2);
+  overflow-wrap: anywhere;
+}
+.pair {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 2px 11px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.pair:hover {
+  background: var(--bg);
+}
+.pairText {
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 -18px;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+.count {
+  flex: 1 1 100px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+.clear,
+.confirm {
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.clear {
+  border: 1px solid var(--line2);
+  background: var(--surface);
+  color: var(--ink);
+}
+.confirm {
+  border: 0;
+  background: var(--green);
+  color: var(--green-ink);
+}
+.clear:disabled,
+.confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .dialog {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .inner {
+    padding: 12px 12px 0;
+  }
+  .foot {
+    margin: 0 -12px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+  .clear,
+  .confirm {
+    flex: 1 1 auto;
+  }
+}

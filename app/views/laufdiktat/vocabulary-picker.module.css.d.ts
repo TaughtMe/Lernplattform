@@ -1,0 +1,37 @@
+// Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
+declare const styles: {
+  readonly box: string;
+  readonly boxWrap: string;
+  readonly clear: string;
+  readonly closeButton: string;
+  readonly confirm: string;
+  readonly controls: string;
+  readonly count: string;
+  readonly dialog: string;
+  readonly empty: string;
+  readonly expand: string;
+  readonly expandText: string;
+  readonly foot: string;
+  readonly group: string;
+  readonly groupHead: string;
+  readonly groupTitle: string;
+  readonly head: string;
+  readonly inner: string;
+  readonly note: string;
+  readonly package: string;
+  readonly packageHead: string;
+  readonly packageMeta: string;
+  readonly packageName: string;
+  readonly packageTitle: string;
+  readonly packages: string;
+  readonly pair: string;
+  readonly pairText: string;
+  readonly pairs: string;
+  readonly panel: string;
+  readonly scroll: string;
+  readonly search: string;
+  readonly switch: string;
+  readonly switchBox: string;
+  readonly title: string;
+};
+export default styles;

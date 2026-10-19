@@ -35,6 +35,7 @@ import { useLiveRoomSession } from "./hooks/use-live-room-session";
 import { useMathContent } from "./hooks/use-math-content";
 import { useTextContent } from "./hooks/use-text-content";
 import { useVocabularyContent } from "./hooks/use-vocabulary-content";
+import { useVocabularyPicker } from "./hooks/use-vocabulary-picker";
 import { DEFAULT_SOURCES, MODES } from "./lib/modes";
 import { buildLiveRoomConfig } from "./lib/room-config";
 import {
@@ -96,6 +97,26 @@ export function useTeacherLiveRoom(
     loadPairsFromTable: vocabulary.loadPairsFromTable,
   });
   const { setContentId } = library;
+  const vocabularyPicker = useVocabularyPicker({
+    activeClass: classes.classChoice,
+    liveClasses: classes.liveClasses,
+    vocabularyPairs: vocabulary.model.vocabularyPairs,
+    vocabularyLocales: vocabulary.vocabularyLocales,
+    applyVocabularyPairs: vocabulary.model.applyVocabularyPairs,
+    setVocabularyLocales: vocabulary.model.setVocabularyLocales,
+    contentId: library.model.contentId,
+    setContentId,
+    title: library.model.title,
+    setTitle: library.setTitle,
+    setNotice: setLibraryNotice,
+    clock,
+  });
+  const { resetQuizFromLibrary } = vocabularyPicker;
+  // Ein geladenes oder neu begonnenes Paket ist keine Abfrage aus der Auswahl.
+  const setLoadedContentId: typeof setContentId = (id) => {
+    setContentId(id);
+    resetQuizFromLibrary();
+  };
 
   const mainRef = useRef<HTMLElement>(null);
   const builderRef = useRef<HTMLDivElement>(null);
@@ -167,7 +188,7 @@ export function useTeacherLiveRoom(
 
   function chooseContentMode(mode: TeacherContentMode) {
     // Ein anderer Typ ist ein anderer Inhalt: nicht über das Paket schreiben.
-    if (mode !== contentMode) setContentId(null);
+    if (mode !== contentMode) setLoadedContentId(null);
     setContentMode(mode);
     if (mode === "vocabulary") {
       setShuffleWords(true);
@@ -214,7 +235,7 @@ export function useTeacherLiveRoom(
     setContentMode,
     setSources,
     setTitle: library.setTitle,
-    setContentId,
+    setContentId: setLoadedContentId,
     resetTextLayout: text.resetTextLayout,
     loadPairsFromTable: vocabulary.loadPairsFromTable,
     setVocabularyLocales: vocabulary.model.setVocabularyLocales,
@@ -287,6 +308,10 @@ export function useTeacherLiveRoom(
     ...text.model,
     ...classes.model,
     ...library.model,
+    vocabularyPicker: vocabularyPicker.picker,
+    onPickFromLibrary: vocabularyPicker.onPickFromLibrary,
+    pickFromLibraryDisabled: vocabularyPicker.pickFromLibraryDisabled,
+    quizFromLibrary: vocabularyPicker.quizFromLibrary,
     ...session.model,
     hydrated,
     stage,
