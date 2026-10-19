@@ -5,6 +5,8 @@ import {
   createLearningBoxDeck,
   processLearningBoxResult,
 } from "../domain/learning-box";
+import { parseMentalMathTask } from "../domain/mental-math";
+import { createMathAttempt } from "./math-practice";
 import { createLearningRecommendationRepository } from "./learning-recommendations";
 import {
   createLearningBoxRepository,
@@ -110,6 +112,72 @@ describe("shared learning recommendations", () => {
     expect(
       recommendations.find((item) => item.module === "vocabulary"),
     ).toMatchObject({ reason: "due", route: "/lernbox" });
+  });
+
+  it("zählt die Mathe-Menge nach Aufgabenfamilien und stuft frische Fehler als Fehler ein", async () => {
+    const database = new PersonalLearningDatabase(
+      `recommendations-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const events = createPersonalLearningEventRepository(database);
+    // Fünf falsche Aufgaben: vier aus der 7er-Reihe (eine Familie), eine ÷.
+    const sources = ["7 * 7", "7 * 8", "7 * 9", "7 * 10", "56 : 8"];
+    for (const [index, source] of sources.entries())
+      await events.put(
+        await createMathAttempt({
+          task: parseMentalMathTask(source)!,
+          roundId: "runde",
+          attemptId: String(index),
+          answer: "0",
+          selfCorrected: false,
+          usedHelp: false,
+          now: "2026-08-24T10:00:00.000Z",
+        }),
+      );
+    const recommendations = await createLearningRecommendationRepository(
+      database,
+    ).list({
+      enabledModules: ["mathematics"],
+      now: "2026-08-24T12:00:00.000Z",
+    });
+    expect(recommendations).toMatchObject([
+      { id: "math-reviews", reason: "error", amount: 2 },
+    ]);
+  });
+
+  it("meldet Mathe nach mehreren sicheren Wiederholungen nur noch als fällig", async () => {
+    const database = new PersonalLearningDatabase(
+      `recommendations-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const events = createPersonalLearningEventRepository(database);
+    const task = parseMentalMathTask("7 * 8")!;
+    const attempts = [
+      ["a", "2026-08-01T10:00:00.000Z", "1"],
+      ["b", "2026-08-02T10:00:00.000Z", "56"],
+      ["c", "2026-08-05T10:00:00.000Z", "56"],
+    ] as const;
+    for (const [id, at, answer] of attempts)
+      await events.put(
+        await createMathAttempt({
+          task,
+          roundId: `runde-${id}`,
+          attemptId: id,
+          answer,
+          selfCorrected: false,
+          usedHelp: false,
+          now: at,
+        }),
+      );
+    const recommendations = await createLearningRecommendationRepository(
+      database,
+    ).list({
+      enabledModules: ["mathematics"],
+      now: "2026-08-24T12:00:00.000Z",
+    });
+    expect(recommendations).toMatchObject([
+      { id: "math-reviews", reason: "due", amount: 1 },
+    ]);
   });
 
   it("returns only recommendations for active class modules", async () => {

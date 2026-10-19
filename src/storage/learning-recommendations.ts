@@ -1,4 +1,4 @@
-import { mathReviews } from "../domain/math-practice";
+import { mathFamilyKey, mathReviews } from "../domain/math-practice";
 import { learningEventV1Schema } from "../domain/learning-bundle";
 import type { ClassModule } from "../domain/class-workspace";
 import type { LearningEventV1 } from "../domain/learning-bundle";
@@ -160,12 +160,10 @@ export function createLearningRecommendationRepository(
           detail:
             "Deine Fehler und Wiederholungen mit passenden Aufgaben üben.",
           route: "/frei/mathematics",
-          reason: mathDue.some(
-            (review) => review.errors > 0 && review.streak < 2,
-          )
+          reason: mathDue.some((review) => review.errors > 0 && review.step < 2)
             ? "error"
             : "due",
-          amount: mathDue.length,
+          amount: new Set(mathDue.map(mathFamilyKey)).size,
           dueAt: mathDue[0]!.dueAt,
         });
 

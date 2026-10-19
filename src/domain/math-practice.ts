@@ -68,10 +68,16 @@ export type MathReview = {
   task: MentalMathTask;
   options: MathOptions;
   dueAt: string;
-  streak: number;
+  /** Wiederholungsstufe: 0 = fällig nach Fehler, 1–4 = Abstand `MATH_REVIEW_DAYS[step - 1]`. */
+  step: number;
+  /** Nach der sauberen Antwort auf Stufe 4 gefestigt; `mathReviews` liefert solche Posten nicht mehr. */
+  mastered: boolean;
   errors: number;
   lastRound: string;
 };
+
+/** Abstände in Tagen für die Stufen 1 bis 4 nach einer sauberen Antwort. */
+export const MATH_REVIEW_DAYS = [1, 3, 7, 14] as const;
 
 /** Recover simple gaps; keep complex teacher expressions as exact retries. */
 export function mathTaskFromPrompt(
@@ -145,6 +151,23 @@ export function optionsForMathTask(task: MentalMathTask): MathOptions {
   };
 }
 
+/**
+ * Wiederholungsposten aus den Matheereignissen (reine Projektion).
+ *
+ * - Ist die erste Antwort sauber (richtig, ohne Hilfe, nicht selbst korrigiert),
+ *   entsteht kein Posten.
+ * - Fehler, Hilfe oder Selbstkorrektur setzen `step = 0` und machen den Posten
+ *   sofort fällig (`dueAt = occurredAt`); `errors` zählt mit.
+ * - Eine saubere Antwort in einer neuen Runde ab `dueAt` hebt um eine Stufe
+ *   (Abstände `MATH_REVIEW_DAYS`). Die saubere Antwort auf Stufe 4 festigt den
+ *   Posten (`mastered`).
+ * - Zu frühe saubere Antworten und weitere in derselben Runde sind Übung, aber
+ *   kein Aufstieg.
+ *
+ * Gefestigte Posten filtert diese Funktion selbst heraus; Aufrufer sehen nur,
+ * was noch gewiesen oder wiederholt werden muss. Ein neuer Fehler macht einen
+ * gefestigten Posten wieder fällig. Die Rückgabe ist nach `dueAt` sortiert.
+ */
 export function mathReviews(events: readonly LearningEventV1[]): MathReview[] {
   const reviews = new Map<string, MathReview>();
   for (const event of [...events].sort(
@@ -153,38 +176,127 @@ export function mathReviews(events: readonly LearningEventV1[]): MathReview[] {
   )) {
     if (!event.math) continue;
     const previous = reviews.get(event.learningObjectId);
-    const clean =
-      event.assessment.knowledge === "correct" &&
-      event.help === "none" &&
-      !event.assessment.selfCorrected;
-    const streak = clean ? (previous?.streak ?? 0) + 1 : 0;
-    const now = Date.parse(event.occurredAt);
-    const delayed =
-      previous &&
-      now >= Date.parse(previous.dueAt) &&
-      previous.lastRound !== event.roundId &&
-      previous.streak >= 2;
-    const days = clean && streak >= 2 ? (delayed ? 3 : 1) : 0;
+    const occurred = Date.parse(event.occurredAt);
+    const clean = isCleanMathAnswer(event);
+    if (clean && !previous) continue;
+    const base = {
+      id: event.learningObjectId,
+      task: previous?.task ?? event.math.task,
+      options: previous?.options ?? event.math.options,
+      lastRound: event.roundId,
+    };
+    if (!clean) {
+      reviews.set(event.learningObjectId, {
+        ...base,
+        dueAt: event.occurredAt,
+        step: 0,
+        mastered: false,
+        errors: (previous?.errors ?? 0) + 1,
+      });
+      continue;
+    }
+    const prior = previous!;
+    const rises =
+      !prior.mastered &&
+      occurred >= Date.parse(prior.dueAt) &&
+      prior.lastRound !== event.roundId;
+    if (!rises) {
+      reviews.set(event.learningObjectId, {
+        ...prior,
+        lastRound: base.lastRound,
+      });
+      continue;
+    }
+    const finished = prior.step >= MATH_REVIEW_DAYS.length;
+    const step = finished ? prior.step : prior.step + 1;
+    reviews.set(event.learningObjectId, {
+      ...base,
+      dueAt: finished
+        ? prior.dueAt
+        : new Date(
+            occurred + MATH_REVIEW_DAYS[step - 1]! * 86400000,
+          ).toISOString(),
+      step,
+      mastered: finished,
+      errors: prior.errors,
+    });
+  }
+  return [...reviews.values()]
+    .filter((review) => !review.mastered)
+    .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+}
+
+function isCleanMathAnswer(event: LearningEventV1) {
+  return (
+    event.assessment.knowledge === "correct" &&
+    event.help === "none" &&
+    !event.assessment.selfCorrected
+  );
+}
+
+/**
+ * Alle Aufgaben einer Runde als Übungsposten, auch saubere (für „Mehr üben“
+ * nach einer Raumrunde). Keine Wiederholungsplanung: `step = 0`.
+ */
+export function mathRoundReviews(
+  events: readonly LearningEventV1[],
+): MathReview[] {
+  const reviews = new Map<string, MathReview>();
+  for (const event of [...events].sort(
+    (a, b) =>
+      a.occurredAt.localeCompare(b.occurredAt) || a.id.localeCompare(b.id),
+  )) {
+    if (!event.math) continue;
+    const previous = reviews.get(event.learningObjectId);
     reviews.set(event.learningObjectId, {
       id: event.learningObjectId,
       task: previous?.task ?? event.math.task,
       options: previous?.options ?? event.math.options,
-      dueAt: new Date(
-        clean && days > 0
-          ? Math.max(
-              now + days * 86400000,
-              previous ? Date.parse(previous.dueAt) : 0,
-            )
-          : now,
-      ).toISOString(),
-      streak,
-      errors:
-        (previous?.errors ?? 0) +
-        (event.assessment.knowledge === "incorrect" ? 1 : 0),
+      dueAt: event.occurredAt,
+      step: 0,
+      mastered: false,
+      errors: (previous?.errors ?? 0) + (isCleanMathAnswer(event) ? 0 : 1),
       lastRound: event.roundId,
     });
   }
   return [...reviews.values()].sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+}
+
+/**
+ * Aufgabenfamilie eines Postens: Rechenart, Lückenposition und bei ×/÷ die
+ * Einmaleinsreihe, sonst die Zahlenraum-Stufe (≤20, ≤100, ≤1000, größer).
+ * Gemischte Ausdrücke bilden eine eigene Familie.
+ */
+export function mathFamilyKey(
+  review: Pick<MathReview, "task" | "options">,
+): string {
+  const { task, options } = review;
+  if (task.operation === "mixed-expression") return "mixed-expression";
+  const prefix = `${task.operation}:${task.gap ?? "normal"}`;
+  if (task.operation === "multiply" || task.operation === "divide") {
+    const expression = parseMentalMathExpression(task.source);
+    const matching = expression
+      ? options.multiplicationTables?.filter((table) =>
+          task.operation === "divide"
+            ? table === expression.right
+            : table === expression.left || table === expression.right,
+        )
+      : undefined;
+    const table = matching?.length
+      ? Math.min(...matching)
+      : optionsForMathTask(task).multiplicationTables?.[0];
+    if (table !== undefined) return `${prefix}:reihe-${table}`;
+  }
+  const max = options.maxValue;
+  const range =
+    max <= 20
+      ? "bis-20"
+      : max <= 100
+        ? "bis-100"
+        : max <= 1000
+          ? "bis-1000"
+          : "darueber";
+  return `${prefix}:${range}`;
 }
 
 export function buildMathReviewRound(

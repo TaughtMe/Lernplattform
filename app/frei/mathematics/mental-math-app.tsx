@@ -25,6 +25,7 @@ import {
   buildMathReviewRound,
   mathOptionsSchema,
   mathReviews,
+  mathRoundReviews,
   type MathReview,
   type MathPracticeTask,
 } from "../../../src/domain/math-practice";
@@ -157,9 +158,12 @@ export function MentalMathApp() {
         const lessonEvents = events.filter(
           (event) => event.roundId === lesson && event.math,
         );
-        const selected = mathReviews(lessonEvents).filter(
-          (review) => params.get("mode") !== "errors" || review.errors > 0,
-        );
+        // „Mehr üben“ nimmt alle Aufgaben der Runde, „Fehler“ nur die
+        // fehlerhaften; saubere Aufgaben sind sonst kein Wiederholungsposten.
+        const selected =
+          params.get("mode") === "errors"
+            ? mathReviews(lessonEvents).filter((review) => review.errors > 0)
+            : mathRoundReviews(lessonEvents);
         if (selected.length)
           beginRound(
             buildMathReviewRound(
