@@ -30,6 +30,7 @@ import {
   type TextboxText,
 } from "../../src/domain/textbox-text";
 import { useRelease } from "../release/release-context";
+import { useMirrorReading } from "../ui/mirror-reading";
 import { useFullscreenFrame } from "../ui/shell/fullscreen";
 import { CompletionScreen } from "../views/textbox/completion-screen";
 import { FreeWritingScreen } from "../views/textbox/free-writing-screen";
@@ -99,6 +100,7 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
   const [detailId, setDetailId] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const [tick, setTick] = useState(0);
+  const { active: mirrored } = useMirrorReading();
 
   function setRun(next: Run | null) {
     runRef.current = next;
@@ -372,6 +374,7 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
           markedWords={state.round === 1 ? plan![0] : new Set()}
           secondsLeft={Math.max(0, totalSeconds - elapsed / 1000)}
           totalSeconds={totalSeconds}
+          mirrored={mirrored}
           onReady={() => endMemorize(Date.now() - run.memorizeStartedAt)}
         />
       </>

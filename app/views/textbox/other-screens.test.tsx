@@ -50,6 +50,27 @@ describe("MemorizeScreen", () => {
     expect(onReady).toHaveBeenCalledOnce();
   });
 
+  it("spiegelt den Lesetext nur mit mirrored, Knöpfe bleiben normal", () => {
+    const props = {
+      round: 2 as const,
+      ...frame,
+      tokens,
+      markedWords: new Set<number>(),
+      secondsLeft: 5,
+      totalSeconds: 60,
+      onReady: () => undefined,
+    };
+    const { rerender } = render(<MemorizeScreen {...props} />);
+    const text = () => screen.getByText("Hund").closest("p")!;
+    expect(text().className).not.toContain("mirrored");
+    rerender(<MemorizeScreen {...props} mirrored />);
+    expect(text().className).toContain("mirrored");
+    expect(text()).toHaveTextContent("Der Hund bellt laut.");
+    expect(
+      screen.getByRole("button", { name: "Ich bin bereit" }).className,
+    ).not.toContain("mirrored");
+  });
+
   it("zeigt ab Durchgang 2 keine Markierung", () => {
     render(
       <MemorizeScreen

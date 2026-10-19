@@ -18,6 +18,7 @@ declare const styles: {
   readonly hint: string;
   readonly lined: string;
   readonly mark: string;
+  readonly mirrored: string;
   readonly missBox: string;
   readonly note: string;
   readonly nowrap: string;

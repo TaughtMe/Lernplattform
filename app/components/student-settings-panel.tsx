@@ -23,8 +23,10 @@ import {
 import { AnimalImage } from "../ui/animal";
 import { CloudSyncPanel } from "./cloud-sync-panel";
 import { AnimalPicker } from "../ui/animal-picker";
-import { Segmented } from "../ui/primitives";
+import { Segmented, Toggle } from "../ui/primitives";
 import { useLearnerProfile } from "../ui/use-learner-profile";
+import { useMirrorReading } from "../ui/mirror-reading";
+import { useAreaVisible } from "../release/release-context";
 import { useThemePreference, type ThemePreference } from "../ui/theme";
 import { useHydrated } from "../ui/use-hydrated";
 
@@ -40,6 +42,8 @@ export function StudentSettingsPanel() {
   const profile = useLearnerProfile();
   const hydrated = useHydrated();
   const { preference } = useThemePreference();
+  const mirrorVisible = useAreaVisible("spiegelschrift");
+  const mirror = useMirrorReading();
 
   useEffect(() => {
     if (hydrated && !profile) learnerProfileRepository.ensure();
@@ -116,6 +120,33 @@ export function StudentSettingsPanel() {
           <p className="ui-small ui-muted">
             Deine Wahl wird nur auf diesem Gerät gespeichert.
           </p>
+          {mirrorVisible && hydrated ? (
+            <div className="ui-stack">
+              <Toggle
+                label="Spiegelschrift im Lesetext"
+                hint="Der Text zum Einprägen in der Textbox wird gespiegelt angezeigt. Schaltet sich nach 7 Tagen von selbst aus."
+                checked={mirror.active}
+                onChange={(on) => (on ? mirror.turnOn() : mirror.turnOff())}
+              />
+              {mirror.active && mirror.until ? (
+                <p className="ui-small" role="status">
+                  Aktiv bis{" "}
+                  {new Date(mirror.until).toLocaleDateString("de-DE", {
+                    day: "2-digit",
+                    month: "2-digit",
+                  })}
+                  .{" "}
+                  <button
+                    type="button"
+                    className="ui-btn ui-btn--link"
+                    onClick={mirror.turnOff}
+                  >
+                    Ausschalten
+                  </button>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </section>
 
         <BackupCard />

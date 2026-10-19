@@ -24,6 +24,7 @@ export function MemorizeScreen({
   secondsLeft,
   totalSeconds,
   onReady,
+  mirrored = false,
   ...frame
 }: RunFrameProps & {
   round: 1 | 2 | 3 | 4;
@@ -33,6 +34,8 @@ export function MemorizeScreen({
   secondsLeft: number;
   totalSeconds: number;
   onReady: () => void;
+  /** Lesetext nur in der Darstellung gespiegelt (Einstellung des Kindes). */
+  mirrored?: boolean;
 }) {
   return (
     <RunLayout
@@ -51,7 +54,9 @@ export function MemorizeScreen({
     >
       <div className={styles.paper}>
         <TextFlow
-          className={styles.lined}
+          className={
+            mirrored ? `${styles.lined} ${styles.mirrored}` : styles.lined
+          }
           tokens={tokens}
           renderWord={(token) =>
             markedWords.has(token.index) ? (

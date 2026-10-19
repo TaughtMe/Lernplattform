@@ -219,6 +219,11 @@
   color: var(--good);
 }
 
+/* Spiegelschrift: nur die Darstellung; Text und DOM-Reihenfolge bleiben. */
+.mirrored {
+  transform: scaleX(-1);
+}
+
 /* ---- Papier („Heft“) ---- */
 .nowrap {
   white-space: nowrap;
