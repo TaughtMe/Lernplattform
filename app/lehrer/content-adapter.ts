@@ -7,6 +7,7 @@ import type { TextSplitConfig } from "../../src/domain/running-dictation-section
 import type {
   TeacherContentKind,
   TeacherContentPackage,
+  TeacherPreparedSettings,
   TeacherTextSplit,
 } from "../../src/domain/teacher-content-library";
 import {
@@ -55,9 +56,9 @@ export type LiveContentDraft = {
 
 /**
  * Zustand des Live-Raums → Paket der Ablage. Mit `existing` bleiben ID,
- * Erstellzeit, Klassen (außer bei `moveToClass`) und letzte Nutzung erhalten; die Revision steigt nur,
- * wenn sich Quelle oder Titel geändert haben. Ein leerer Titel wird aus
- * der Quelle vorgeschlagen.
+ * Erstellzeit, Klassen (außer bei `moveToClass`), letzte Nutzung und
+ * Vorbereitung erhalten; die Revision steigt nur, wenn sich Quelle oder Titel
+ * geändert haben. Ein leerer Titel wird aus der Quelle vorgeschlagen.
  */
 export function liveContentToPackage(input: {
   draft: LiveContentDraft;
@@ -67,8 +68,14 @@ export function liveContentToPackage(input: {
   now: string;
   /** Klasse, zu der ein neues Paket gehört; leer = „Nicht zugeordnet“. */
   classId?: string | undefined;
-  /** Raumstart: setzt die letzte Nutzung. */
+  /** Durchführung (Start einer Runde): setzt die letzte Nutzung. */
   markUsed?: boolean;
+  /**
+   * Mit `markUsed`: Modus und Optionen der Runde. Sie ersetzen die
+   * gespeicherte Vorbereitung, damit „Wieder vorbereiten“ genau diese Runde
+   * zurückholt.
+   */
+  ranWith?: TeacherPreparedSettings | undefined;
   /** Speichern: ein bestehendes Paket wechselt in `classId`, falls es dort noch fehlt. */
   moveToClass?: boolean;
 }): TeacherContentPackage {
@@ -90,6 +97,8 @@ export function liveContentToPackage(input: {
         ? [input.classId]
         : undefined;
   const lastUsedAt = input.markUsed ? now : existing?.lastUsedAt;
+  const prepared =
+    input.markUsed && input.ranWith ? input.ranWith : existing?.prepared;
   return {
     id: existing?.id ?? input.newId,
     revision: existing ? existing.revision + (changed ? 1 : 0) : 0,
@@ -108,6 +117,8 @@ export function liveContentToPackage(input: {
     kind: draft.contentMode,
     ...(classIds ? { classIds } : {}),
     ...(lastUsedAt ? { lastUsedAt } : {}),
+    ...(existing?.preparedAt ? { preparedAt: existing.preparedAt } : {}),
+    ...(prepared ? { prepared } : {}),
     ...(draft.contentMode === "text" ? { textSplit: draft.textSplit } : {}),
   };
 }

@@ -385,6 +385,43 @@ describe("apply", () => {
     expect((await store.getState()).resolved).toEqual(["x"]);
   });
 
+  it("stores material with a preparation from another device", async () => {
+    const database = open();
+    const store = createTeacherSyncStore(database);
+    const data = {
+      ...material("Vorbereitet", "2026-10-02T08:00:00.000Z"),
+      lastUsedAt: "2026-10-01T08:00:00.000Z",
+      preparedAt: "2026-10-02T08:00:00.000Z",
+      prepared: { gameMode: "STATION", stationCount: 6, tts: true },
+    };
+    const record = {
+      table: "contentPackages" as const,
+      id: data.id,
+      hlc: "000000000000001-00000-x",
+      device: "x",
+      hash: "0".repeat(64),
+      data,
+    };
+    const result = await store.apply(
+      {
+        records: [record],
+        put: [record],
+        remove: [],
+        tombstones: [],
+        needsUpload: false,
+        conflicts: [],
+      },
+      { scope: { ...DEFAULT_SYNC_SCOPE }, resolved: [] },
+    );
+    expect(result.rejected).toEqual([]);
+    expect(
+      await createTeacherContentLibraryRepository(database).get(data.id),
+    ).toMatchObject({
+      preparedAt: data.preparedAt,
+      prepared: data.prepared,
+    });
+  });
+
   it("skips records that fail validation and does not stamp them", async () => {
     const database = open();
     const store = createTeacherSyncStore(database);

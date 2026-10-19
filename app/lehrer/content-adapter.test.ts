@@ -160,6 +160,47 @@ describe("liveContentToPackage", () => {
     expect(entry).toMatchObject({ revision: 4, lastUsedAt: NOW });
   });
 
+  it("behält die Vorbereitung beim Speichern und ersetzt sie bei der Durchführung", () => {
+    const prepared = {
+      ...existing,
+      preparedAt: "2026-09-04T10:00:00.000Z",
+      prepared: { gameMode: "BATTLE" as const, battleInk: false },
+    };
+    const saved = liveContentToPackage({
+      draft: { ...draft, title: "Neu" },
+      existing: prepared,
+      newId: "x",
+      now: NOW,
+    });
+    expect(saved).toMatchObject({
+      preparedAt: prepared.preparedAt,
+      prepared: prepared.prepared,
+    });
+    const ran = liveContentToPackage({
+      draft: { ...draft, title: "Eins" },
+      existing: prepared,
+      newId: "x",
+      now: NOW,
+      markUsed: true,
+      ranWith: { gameMode: "STATION", stationCount: 6 },
+    });
+    expect(ran).toMatchObject({
+      lastUsedAt: NOW,
+      preparedAt: prepared.preparedAt,
+      prepared: { gameMode: "STATION", stationCount: 6 },
+    });
+    // Ohne Durchführung ändern die Optionen der Runde nichts.
+    expect(
+      liveContentToPackage({
+        draft: { ...draft, title: "Eins" },
+        existing: prepared,
+        newId: "x",
+        now: NOW,
+        ranWith: { gameMode: "UEBUNG" },
+      }).prepared,
+    ).toEqual(prepared.prepared);
+  });
+
   it("verschiebt beim Speichern in eine andere Klasse, sonst bleiben die Klassen", () => {
     const input = {
       draft: { ...draft, title: "Eins" },

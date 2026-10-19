@@ -95,7 +95,7 @@ describe("dedupe", () => {
     ).toEqual([]);
   });
 
-  it("merges material with identical content despite usage and class differences", () => {
+  it("merges material with identical content despite usage, preparation and class differences", () => {
     const material = (id: string, over: SyncData = {}) =>
       entry("contentPackages", id, {
         id,
@@ -110,7 +110,12 @@ describe("dedupe", () => {
       });
     const same = run([
       material("m1"),
-      material("m2", { lastUsedAt: "2026-09-09T08:00:00Z", revision: 3 }),
+      material("m2", {
+        lastUsedAt: "2026-09-09T08:00:00Z",
+        revision: 3,
+        preparedAt: "2026-09-08T08:00:00Z",
+        prepared: { gameMode: "BATTLE", tts: true },
+      }),
       entry("assignments", "a1", { materialId: "m2", classIds: ["c1"] }),
     ]);
     expect(same.merged).toEqual([

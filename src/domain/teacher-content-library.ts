@@ -12,6 +12,68 @@ export type TeacherContentKind = z.infer<typeof teacherContentKindSchema>;
 export const teacherTextSplitSchema = z.enum(["satz", "zeile", "wort"]);
 export type TeacherTextSplit = z.infer<typeof teacherTextSplitSchema>;
 
+/** Spielmodus eines Laufdiktat-Raums (wie `TeacherGameMode`). */
+export const teacherGameModeSchema = z.enum([
+  "LAUFDIKTAT",
+  "UEBUNG",
+  "BATTLE",
+  "STATION",
+]);
+
+const flag = z.boolean().optional();
+const whole = (min: number, max: number) => z.number().int().min(min).max(max);
+
+/**
+ * Vorbereitung eines Laufdiktats: Modus und Optionen, mit denen der Raum
+ * später ohne weitere Einstellungen in die Lobby geht („im Unterricht fehlt
+ * nur noch die Lobby“). Alle Optionen außer dem Modus sind freiwillig; was
+ * fehlt, nimmt der Raum aus seinen Standardwerten. Die Namen entsprechen den
+ * Spieloptionen des Lehrer-Raums (`GameSettings`).
+ */
+export const teacherPreparedSettingsSchema = z
+  .object({
+    gameMode: teacherGameModeSchema,
+    shuffleWords: flag,
+    stationShuffle: flag,
+    repeatWrongAnswers: flag,
+    assistance: flag,
+    attempts: whole(1, 20).optional(),
+    tts: flag,
+    showStars: flag,
+    strictTyping: flag,
+    taskHelp: flag,
+    stationCount: whole(1, 100).optional(),
+    battleInk: flag,
+    battleFlicker: flag,
+    mathCount: whole(1, 500).optional(),
+    mathMin: whole(-1_000_000, 1_000_000).optional(),
+    mathMax: whole(-1_000_000, 1_000_000).optional(),
+    mathOps: z
+      .array(z.enum(["+", "-", "*", "/"]))
+      .max(4)
+      .optional(),
+    mathAllowNegative: flag,
+    mathExcludeZeroOperand: flag,
+    mathExcludeZeroResult: flag,
+    mathGap: flag,
+    mathTables: z.array(whole(0, 100)).max(30).optional(),
+    /** Nur Vokabeln: Abfragerichtung. */
+    direction: z.enum(["left-to-right", "right-to-left", "mixed"]).optional(),
+    /** Nur Vokabeln: Groß- und Kleinschreibung zählt. */
+    caseSensitive: flag,
+    /** Nur Vokabeln: Übernahme in die LernBox. */
+    vocabularyTransfer: z.enum(["errors", "all", "none"]).optional(),
+    /** Nur Vokabeln: Tag dieser Runde; leer = Standard-Tag. */
+    vocabularyTag: z.string().trim().max(60).optional(),
+    /** Nur Text: Übernahme in den Wortspeicher. */
+    wordStoreTransfer: z.enum(["none", "errors", "all"]).optional(),
+  })
+  .strict();
+
+export type TeacherPreparedSettings = z.infer<
+  typeof teacherPreparedSettingsSchema
+>;
+
 export const teacherContentPackageSchema = z
   .object({
     id: z.string().trim().min(1).max(200),
@@ -26,8 +88,16 @@ export const teacherContentPackageSchema = z
     kind: teacherContentKindSchema.optional(),
     /** Zugeordnete Klassen; leer oder fehlend = „Nicht zugeordnet“. */
     classIds: z.array(z.uuid()).max(50).optional(),
-    /** Letzter Raumstart mit diesem Inhalt. */
+    /**
+     * Letzte Durchführung: Start einer Runde mit diesem Inhalt. Ist sie
+     * jünger als `preparedAt` (oder gibt es keine Vorbereitung), steht der
+     * Inhalt im Archiv.
+     */
     lastUsedAt: z.iso.datetime({ offset: true }).optional(),
+    /** Zuletzt (wieder) vorbereitet; holt den Inhalt aus dem Archiv. */
+    preparedAt: z.iso.datetime({ offset: true }).optional(),
+    /** Gespeicherter Modus und Optionen, mit denen „Starten“ den Raum öffnet. */
+    prepared: teacherPreparedSettingsSchema.optional(),
     /** Nur Text: Zerlegung in Stationen. */
     textSplit: teacherTextSplitSchema.optional(),
   })
