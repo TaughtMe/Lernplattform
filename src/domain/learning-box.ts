@@ -1,4 +1,5 @@
 import { normalizeVocabularyText } from "./learning-bundle";
+import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
 import type { LiveVocabularyOutcome } from "./live-vocabulary-placement";
 
 export type LearningBoxDirection = "forward" | "reverse";
@@ -63,6 +64,8 @@ export type LearningBoxCard = {
   updatedAt: number;
   sourceLinks?: LearningBoxSourceLink[] | undefined;
 };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function learningBoxFingerprint(question: string, answer: string) {
   return `${normalizeVocabularyText(question)}::${normalizeVocabularyText(answer)}`;
@@ -328,7 +331,16 @@ export function isLearningBoxCardScheduledDue(
   );
 }
 
-/** Port of LernBoxV2's result transition. */
+/**
+ * Ergebnis einer Abfrage. Abstände je Box wie im Leitner-Zeitplan
+ * (`LEITNER_INTERVAL_DAYS`: 1/3/7/14/30 Tage).
+ *
+ * - falsch oder zweite Chance verfehlt: Box 1, morgen wieder (jetzt fällig).
+ * - zweite Chance geschafft: Box bleibt, Abstand der Box.
+ * - richtig, aber vor der Fälligkeit (Richtung schon geübt): kein Aufstieg,
+ *   Box, Abstand und Termin bleiben; zu frühes Üben ist nur Üben.
+ * - richtig und fällig oder neu (Abstand 0): eine Box höher, höchstens 5.
+ */
 export function processLearningBoxResult(
   card: LearningBoxCard,
   input: {
@@ -341,14 +353,30 @@ export function processLearningBoxResult(
 ): LearningBoxCard {
   const now = input.now ?? Date.now();
   const currentBox = getLearningBoxLevel(card, input.direction);
+  const currentInterval =
+    input.direction === "forward" ? card.interval : card.reverseInterval;
+  const currentNextReview = getLearningBoxNextReview(card, input.direction);
+  const failed = input.secondChance === "failed" || !input.correct;
+  const early =
+    !failed &&
+    input.secondChance !== "recovered" &&
+    currentInterval > 0 &&
+    !isLearningBoxCardDue(card, input.direction, now);
+
   let nextBox: LearningBoxLevel = currentBox;
-
-  if (input.secondChance === "recovered") nextBox = currentBox;
-  else if (input.secondChance === "failed" || !input.correct) nextBox = 1;
-  else nextBox = Math.min(currentBox + 1, 5) as LearningBoxLevel;
-
-  const nextInterval = nextBox === 5 ? 7 : 1;
-  const nextReview = now + nextInterval * 24 * 60 * 60 * 1000;
+  let nextInterval = currentInterval;
+  let nextReview = currentNextReview;
+  if (failed) {
+    nextBox = 1;
+    nextInterval = 1;
+    nextReview = now;
+  } else if (!early) {
+    if (input.secondChance !== "recovered") {
+      nextBox = Math.min(currentBox + 1, 5) as LearningBoxLevel;
+    }
+    nextInterval = LEITNER_INTERVAL_DAYS[nextBox];
+    nextReview = now + nextInterval * DAY_MS;
+  }
 
   if (input.direction === "reverse") {
     return {
@@ -383,8 +411,6 @@ export function processLearningBoxResult(
     updatedAt: now,
   };
 }
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type LiveVocabularyPlacement = Pick<
   LearningBoxCard,

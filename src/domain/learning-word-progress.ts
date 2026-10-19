@@ -1,3 +1,4 @@
+import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
 import type { LearningWordStage } from "./learning-word";
 import { wordKey } from "./word-box";
 
@@ -14,14 +15,6 @@ export interface LearningWordProgress {
   helpUses: number;
   lastPracticedAt: string;
 }
-
-const intervalsInDays: Record<LearningWordBox, number> = {
-  1: 1,
-  2: 3,
-  3: 7,
-  4: 14,
-  5: 30,
-};
 
 export function learningWordId(word: string) {
   return `learning-word:${wordKey(word)}`;
@@ -58,7 +51,7 @@ export function updateLearningWordProgress(
         Math.min(current?.stage ?? input.stage, input.stage) - 1,
       ) as LearningWordStage);
   const dueAt = new Date(
-    new Date(input.now).getTime() + intervalsInDays[box] * 86_400_000,
+    new Date(input.now).getTime() + LEITNER_INTERVAL_DAYS[box] * 86_400_000,
   ).toISOString();
 
   return {
