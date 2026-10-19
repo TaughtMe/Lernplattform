@@ -553,6 +553,94 @@
       "canvas": ["button[data-r=\"1\"][data-s=\"2\"]"],
       "reset": ["button[data-r=\"1\"][data-s=\"0\"]"],
       "status": "umgesetzt"
+    },
+    {
+      "id": "15a",
+      "screen": "15a",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 1180,
+      "height": 1000,
+      "status": "offen"
+    },
+    {
+      "id": "15c",
+      "screen": "15c",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 834,
+      "height": 1112,
+      "status": "offen"
+    },
+    {
+      "id": "15d",
+      "screen": "15d",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 390,
+      "height": 844,
+      "status": "offen"
+    },
+    {
+      "id": "15b",
+      "screen": "15b",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 1180,
+      "height": 80,
+      "status": "offen"
+    },
+    {
+      "id": "14b",
+      "screen": "14b",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 1180,
+      "height": 760,
+      "status": "offen"
+    },
+    {
+      "id": "14c",
+      "screen": "14c",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 1180,
+      "height": 760,
+      "status": "offen"
+    },
+    {
+      "id": "16a",
+      "screen": "16a",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 834,
+      "height": 1112,
+      "status": "offen"
+    },
+    {
+      "id": "16b",
+      "screen": "16b",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 390,
+      "height": 844,
+      "status": "offen"
+    },
+    {
+      "id": "17a",
+      "screen": "17a",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 1180,
+      "height": 1422,
+      "status": "offen"
+    },
+    {
+      "id": "17b",
+      "screen": "17b",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 1180,
+      "height": 1003,
+      "status": "offen"
+    },
+    {
+      "id": "17c",
+      "screen": "17c",
+      "source": "lehrerbereich-v2.dc.html",
+      "width": 1180,
+      "height": 940,
+      "status": "offen"
     }
   ]
 }

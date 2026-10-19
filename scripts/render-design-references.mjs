@@ -1,5 +1,6 @@
 /**
- * Rendert die Referenzbilder aus der Design-Vorlage `docs/design/lernraum-ui.dc.html`.
+ * Rendert die Referenzbilder aus den Design-Vorlagen `docs/design/lernraum-ui.dc.html`
+ * und (Einträge mit `"source": "lehrerbereich-v2.dc.html"`) `docs/design/lehrerbereich-v2.dc.html`.
  *
  * Jeder Eintrag in `docs/design/screens.json` beschreibt einen Screen-Zustand:
  * welche Schaltflächen im Canvas vorher geklickt werden und welche Größe die
@@ -29,6 +30,7 @@ const args = process.argv.slice(2);
 const updateSizes = args.includes("--update-sizes");
 const only = args.find((arg) => !arg.startsWith("--"))?.split(",");
 
+const DEFAULT_SOURCE = "lernraum-ui.dc.html";
 const manifestPath = path.join(designDir, "screens.json");
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 const { screens } = manifest;
@@ -78,32 +80,72 @@ await context.route("https://fonts.gstatic.com/**", (route) => {
     : route.abort();
 });
 
-const page = await context.newPage();
-page.on("pageerror", (error) => console.error("Vorlage:", error.message));
-await page.goto(`file://${designDir}/lernraum-ui.dc.html`);
-await page.locator(".dv-opt").first().waitFor({ timeout: 60_000 });
-await page.evaluate(() => document.fonts.ready);
-await page.addStyleTag({
-  content:
-    "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}",
-});
-// Bedienelemente der Vorlage haben keine eigene Schrift. Fest auf Arial-Breiten
-// (Liberation Sans), damit das Ergebnis nicht von der fontconfig des Rechners
-// abhängt.
-await page.addStyleTag({
-  content:
-    'button,input,select,textarea{font-family:"Liberation Sans",Arial,sans-serif}',
-});
+/** Vorlage laden; jede Datei einmal, in eigener Seite. */
+const pages = new Map();
+async function openSource(source) {
+  const cached = pages.get(source);
+  if (cached) return cached;
+  const page = await context.newPage();
+  page.on("pageerror", (error) => console.error("Vorlage:", error.message));
+  await page.goto(`file://${designDir}/${source}`);
+  if (source === DEFAULT_SOURCE) {
+    await page.locator(".dv-opt").first().waitFor({ timeout: 60_000 });
+  } else {
+    // Die Vorlage ist gerendert, sobald keine Platzhalter mehr im Text stehen.
+    await page.waitForFunction(
+      () =>
+        document.querySelector("section") !== null &&
+        !document.body.innerText.includes("{{"),
+      undefined,
+      { timeout: 60_000 },
+    );
+  }
+  await page.evaluate(() => document.fonts.ready);
+  await page.addStyleTag({
+    content:
+      "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}",
+  });
+  // Bedienelemente der Vorlage haben keine eigene Schrift. Fest auf Arial-Breiten
+  // (Liberation Sans), damit das Ergebnis nicht von der fontconfig des Rechners
+  // abhängt.
+  await page.addStyleTag({
+    content:
+      'button,input,select,textarea{font-family:"Liberation Sans",Arial,sans-serif}',
+  });
+  pages.set(source, page);
+  return page;
+}
 
 await mkdir(outDir, { recursive: true });
 for (const screen of screens) {
   if (only && !only.includes(screen.id)) continue;
+  const source = screen.source ?? DEFAULT_SOURCE;
+  const page = await openSource(source);
   for (const selector of screen.canvas ?? []) await page.click(selector);
   await page.mouse.move(0, 0);
+  // Lernraum UI: Karte `.dv-card`; Lehrerbereich v2: zweites Kind des Abschnitts
+  // (das erste ist die Beschriftung).
   const surface = page
-    .locator(`[id="${screen.screen}"] .dv-card > div`)
+    .locator(
+      source === DEFAULT_SOURCE
+        ? `[id="${screen.screen}"] .dv-card > div`
+        : `[id="${screen.screen}"] > div:nth-child(2)`,
+    )
     .first();
-  const box = await surface.boundingBox();
+  // Die Karten der v2-Vorlage tragen ihren Rahmen selbst: nur die Innenfläche.
+  const inset =
+    source === DEFAULT_SOURCE
+      ? 0
+      : await surface.evaluate((node) =>
+          Number.parseFloat(getComputedStyle(node).borderTopWidth),
+        );
+  const outer = await surface.boundingBox();
+  const box = outer && {
+    x: outer.x + inset,
+    y: outer.y + inset,
+    width: outer.width - 2 * inset,
+    height: outer.height - 2 * inset,
+  };
   if (!box) throw new Error(`${screen.id}: Fläche nicht gefunden`);
   const width = Math.round(box.width);
   const height = Math.round(box.height);
@@ -120,7 +162,9 @@ for (const screen of screens) {
   }
   // Exakter Ausschnitt: Karten liegen im Canvas teils auf halben Pixeln.
   await surface.scrollIntoViewIfNeeded();
-  const { x, y } = (await surface.boundingBox()) ?? box;
+  const moved = (await surface.boundingBox()) ?? outer ?? box;
+  const x = moved.x + inset;
+  const y = moved.y + inset;
   await page.screenshot({
     path: path.join(outDir, `${screen.id}.png`),
     clip: {

@@ -3,6 +3,7 @@
 Verbindliche Gestaltungsgrundlage seit Entscheidung 47 (Vault, 29.09.2026). Seit Entscheidung 48 wird die Oberfläche vom Design aus gebaut: [../umsetzungsplan-lernraum-ui-v2.md](../umsetzungsplan-lernraum-ui-v2.md).
 
 - `lernraum-ui.dc.html` + `support.js`: das Design-Canvas (Turns 1–9). Zum Öffnen im Browser werden React 18 und Babel von unpkg.com geladen; die Tiere kommen aus `public/animals`.
+- `lehrerbereich-v2.dc.html` (+ dasselbe `support.js`): das Canvas „Lehrerbereich v2“ (Turns 10–17, Handoff vom 19.10.2026). Verbindlich ist der neueste Stand: 15a/15c/15d (Start), 14b (Schritt 1 Inhalt), 14c mit dem Ende aus 15b (Schritt 2 Modus), 16a/16b (Schritt 2 auf Tablet und Handy) und 17a–17c (Verwalten). 10–13 und 14a sind überholte Zwischenstände und dienen nur als Ideenquelle. Einträge in `screens.json` mit `"source": "lehrerbereich-v2.dc.html"` werden aus dieser Datei gerendert; die Fläche ist dort die Karte ohne ihren 1-px-Rahmen.
 - `screens.json`: alle Referenzzustände. Jeder Eintrag nennt Screen, Größe der Fläche und die Klicks im Canvas, die den Zustand herstellen. Der Status sagt, was mit dem Zustand geschieht:
   - `umgesetzt`: Es gibt unter `/entwicklung/screens/<id>` eine Ansicht, die der Designvergleich prüft.
   - `referenz`: Der Entwurf dient als Vorlage für Ideen, wird aber nicht 1:1 gebaut, weil eine neuere Fassung ihn ersetzt (1a–1c, 1d, 2c). Er erscheint im Katalog als offen und wird nicht verglichen.
@@ -23,17 +24,20 @@ Label einmalig anlegen: `gh label create design-referenzen-erneuern`.
 
 Der Test und das Render-Skript bilden die Systemschriften der Schaltflächen (`-apple-system`, `BlinkMacSystemFont`, „Segoe UI“) auf Liberation Sans ab, wie die Vorlage unter Linux. Der Vergleich ist damit unabhängig vom Rechner (Mac, Cloud-Container mit Inter-Umleitung, CI). Die neun Bilder aus Commit `3c08ab4` (3c, 3d, 3d-dark, 5c-import, 5c-live, 5c-live-dark, 5c-lobby, 5c-options, 5d-import) stammen aus der Ansicht, wie dort begründet, und wurden mit dieser Schrift neu aufgenommen.
 
-| Screen              | Inhalt                                                                                 | Ziel-Route                 |
-| ------------------- | -------------------------------------------------------------------------------------- | -------------------------- |
-| 1a–1c               | frühe Einstiegsvarianten (Referenz für 2a/2b)                                          | –                          |
-| 1d, 2c              | Lehrer-Cockpit, frühe Fassung (Status `referenz`)                                      | –                          |
-| 3c, 3d              | Lehrerbereich „Inhalte“ mobil/Desktop                                                  | `/lehrer`                  |
-| 2a                  | Landingpage: Tier, Raumcode, Lehrerzugang                                              | `/`                        |
-| 2b, 3a, 3b          | Schülerdashboard (Serienring, Woche, fällig, schwierige Wörter)                        | `/lernen`                  |
-| 4a–4c, 4g–4j, 8a–8b | LernBox: Übersicht mit Plus und Stift (8), Karte (4a–4c), Ergebnis einer Karte (4g–4j) | `/lernbox`                 |
-| 4d–4f               | Wortspeicher (Lernwörter)                                                              | `/frei/german/lernwoerter` |
-| 5a–5b               | Laufdiktat Schüler                                                                     | `/raum`                    |
-| 5c–5d               | Laufdiktat Lehrkraft                                                                   | `/lehrer/live`             |
-| 6a–6c               | Tastenwelt                                                                             | `/frei/typing`             |
-| 7a–7c               | Mein Haus, Häuser-Scan                                                                 | `/haus`, `/lehrer/haeuser` |
-| 9a–9f               | Textbox: Auswahl als Kartenraster (9b/9c), Eingabe auf liniertem Papier (9d–9f)        | `/frei/german/textbox`     |
+| Screen                 | Inhalt                                                                                    | Ziel-Route                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 1a–1c                  | frühe Einstiegsvarianten (Referenz für 2a/2b)                                             | –                                                              |
+| 1d, 2c                 | Lehrer-Cockpit, frühe Fassung (Status `referenz`)                                         | –                                                              |
+| 3c, 3d                 | Lehrerbereich „Inhalte“ mobil/Desktop                                                     | `/lehrer`                                                      |
+| 2a                     | Landingpage: Tier, Raumcode, Lehrerzugang                                                 | `/`                                                            |
+| 2b, 3a, 3b             | Schülerdashboard (Serienring, Woche, fällig, schwierige Wörter)                           | `/lernen`                                                      |
+| 4a–4c, 4g–4j, 8a–8b    | LernBox: Übersicht mit Plus und Stift (8), Karte (4a–4c), Ergebnis einer Karte (4g–4j)    | `/lernbox`                                                     |
+| 4d–4f                  | Wortspeicher (Lernwörter)                                                                 | `/frei/german/lernwoerter`                                     |
+| 5a–5b                  | Laufdiktat Schüler                                                                        | `/raum`                                                        |
+| 5c–5d                  | Laufdiktat Lehrkraft                                                                      | `/lehrer/live`                                                 |
+| 6a–6c                  | Tastenwelt                                                                                | `/frei/typing`                                                 |
+| 7a–7c                  | Mein Haus, Häuser-Scan                                                                    | `/haus`, `/lehrer/haeuser`                                     |
+| 9a–9f                  | Textbox: Auswahl als Kartenraster (9b/9c), Eingabe auf liniertem Papier (9d–9f)           | `/frei/german/textbox`                                         |
+| 15a, 15c, 15d          | Lehrerbereich v2: Start (Neues Laufdiktat, Vorbereitet/Archiv, aus anderen Klassen holen) | `/lehrer`                                                      |
+| 14b, 14c, 15b, 16a–16b | Lehrerbereich v2: Schritt 1 Inhalt, Schritt 2 Modus                                       | `/lehrer/live`                                                 |
+| 17a–17c                | Lehrerbereich v2: Einstellungen, Freigabe an Schüler, Klassen                             | `/lehrer/einstellungen`, `/lehrer/material`, `/lehrer/klassen` |
