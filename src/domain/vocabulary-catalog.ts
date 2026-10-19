@@ -189,9 +189,17 @@ export function selectedSourceTitles(
 const isFilled = (pair: VocabularyPair) =>
   Boolean(pair.left.primary.trim() && pair.right.primary.trim());
 
+/** Irgendein Text in der Zeile, auch nur auf einer Seite oder als Alternative. */
+export const hasContent = (pair: VocabularyPair) =>
+  [pair.left, pair.right].some(
+    (side) =>
+      side.primary.trim() || side.alternatives.some((text) => text.trim()),
+  );
+
 /**
- * Auswahl ins Vokabelheft: ein leeres Heft wird ersetzt, sonst wird angehängt
- * und alles übersprungen, was schon im Heft steht.
+ * Auswahl ins Vokabelheft: ein Heft ohne jeden Inhalt wird ersetzt, sonst wird
+ * angehängt und alles übersprungen, was schon vollständig im Heft steht.
+ * Halb ausgefüllte Zeilen bleiben erhalten; nur ganz leere fallen weg.
  */
 export function mergeIntoHeft(
   current: readonly VocabularyPair[],
@@ -202,8 +210,9 @@ export function mergeIntoHeft(
   skipped: number;
   replaced: boolean;
 } {
-  const replaced = !current.some(isFilled);
-  const known = new Set(replaced ? [] : current.filter(isFilled).map(pairKey));
+  const kept = current.filter(hasContent);
+  const replaced = kept.length === 0;
+  const known = new Set(kept.filter(isFilled).map(pairKey));
   const fresh: VocabularyPair[] = [];
   let skipped = 0;
   for (const pair of picked) {
@@ -216,7 +225,7 @@ export function mergeIntoHeft(
     fresh.push(pair);
   }
   return {
-    pairs: replaced ? fresh : [...current.filter(isFilled), ...fresh],
+    pairs: replaced ? fresh : [...kept, ...fresh],
     added: fresh.length,
     skipped,
     replaced,

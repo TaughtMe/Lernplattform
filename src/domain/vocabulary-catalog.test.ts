@@ -226,6 +226,38 @@ describe("mergeIntoHeft", () => {
     expect(result.pairs[0]).toBe(heft[0]);
   });
 
+  it("behält halb ausgefüllte Zeilen und ersetzt das Heft dann nicht", () => {
+    const half = [
+      {
+        id: "h",
+        left: { primary: "bird", alternatives: [] },
+        right: { primary: "", alternatives: [] },
+      },
+      empty[0]!,
+    ];
+    const result = mergeIntoHeft(half, picked);
+    expect(result.replaced).toBe(false);
+    expect(result.pairs.map((pair) => pair.left.primary)).toEqual([
+      "bird",
+      "cat",
+      "dog",
+    ]);
+    expect(result.pairs[0]).toBe(half[0]);
+  });
+
+  it("zählt auch Alternativen als Inhalt", () => {
+    const onlyAlt = [
+      {
+        id: "a",
+        left: { primary: "", alternatives: [] },
+        right: { primary: "", alternatives: ["Vogel"] },
+      },
+    ];
+    const result = mergeIntoHeft(onlyAlt, picked);
+    expect(result.replaced).toBe(false);
+    expect(result.pairs[0]).toBe(onlyAlt[0]);
+  });
+
   it("verwirft beim Anhängen die leere Startzeile nicht, wenn das Heft gefüllt ist", () => {
     const heft = [...parseVocabularyTable("bird;Vogel"), empty[0]!];
     const result = mergeIntoHeft(heft, picked);

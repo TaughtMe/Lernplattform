@@ -18,6 +18,7 @@ import {
   buildVocabularyCatalog,
   describeMerge,
   filterVocabularyCatalog,
+  hasContent,
   mergeIntoHeft,
   selectedPairs,
   selectedSourceTitles,
@@ -60,7 +61,7 @@ export function useVocabularyPicker(args: Args) {
     try {
       setLibrary(await createTeacherContentLibraryRepository().list());
     } catch {
-      setLibrary([]);
+      // Der bisherige Katalog bleibt, statt wie eine leere Ablage zu wirken.
     }
   }, []);
 
@@ -95,11 +96,11 @@ export function useVocabularyPicker(args: Args) {
     return fullCatalog.filter(({ id }) => inClass.has(id));
   }, [allClasses, args.activeClass, args.liveClasses, fullCatalog, library]);
 
-  const heftIsEmpty = !args.vocabularyPairs.some(
-    (pair) => pair.left.primary.trim() && pair.right.primary.trim(),
-  );
+  const heftIsEmpty = !args.vocabularyPairs.some(hasContent);
   // Leeres Heft: das Sprachpaar des ersten angehakten Pakets legt es fest.
-  const firstPickedId = [...selected][0]?.split(":")[0];
+  // Paket-IDs dürfen „:“ enthalten; der Schlüssel endet auf „:Zeilenindex“.
+  const firstKey = [...selected][0];
+  const firstPickedId = firstKey?.slice(0, firstKey.lastIndexOf(":"));
   const firstPicked = fullCatalog.find(({ id }) => id === firstPickedId);
   const firstPickedLocales = firstPicked?.promptLocale;
   const firstPickedAnswer = firstPicked?.answerLocale;

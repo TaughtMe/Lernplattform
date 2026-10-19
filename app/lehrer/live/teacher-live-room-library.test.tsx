@@ -13,6 +13,7 @@ import type { TeacherContentPackage } from "../../../src/domain/teacher-content-
 import { LOCAL_DATA_AREAS } from "../../../src/storage/local-data-boundaries";
 import {
   createTeacherClassRepository,
+  TeacherClassDatabase,
   createTeacherContentLibraryRepository,
   createTeacherProfileRepository,
 } from "../../../src/storage/teacher-class-settings";
@@ -741,6 +742,70 @@ describe("Vokabeln aus der Ablage wählen", () => {
     expect(
       await screen.findByRole("combobox", { name: "Sprache links" }),
     ).toHaveValue("fr-FR");
+  });
+
+  it("findet das Paket auch, wenn seine Kennung Doppelpunkte enthält", async () => {
+    await seed();
+    await library().put(
+      vocabulary("kurs:fr:1", "Cours", "chat;Katze", {
+        promptLocale: "fr-FR",
+        updatedAt: "2026-09-20T10:00:00.000Z",
+      }),
+    );
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const user = userEvent.setup();
+    const dialog = await openPicker(user);
+    await user.click(
+      dialog.getByRole("checkbox", {
+        name: "Alle Vokabeln aus Cours auswählen",
+      }),
+    );
+    // Das Sprachpaar des gewählten Pakets blendet die englischen aus.
+    expect(dialog.queryByText("Unit 3")).not.toBeInTheDocument();
+    await user.click(dialog.getByRole("button", { name: "Übernehmen" }));
+    expect(
+      await screen.findByRole("combobox", { name: "Sprache links" }),
+    ).toHaveValue("fr-FR");
+  });
+
+  it("behält den Katalog, wenn das Neuladen der Ablage fehlschlägt", async () => {
+    await seed();
+    window.history.replaceState(null, "", "/lehrer/live?neu=vocabulary");
+    renderRoom();
+    const user = userEvent.setup();
+    const first = await openPicker(user);
+    expect(first.getByText(/Unit 3/)).toBeInTheDocument();
+    fireEvent(
+      screen.getByRole("dialog"),
+      new Event("cancel", { cancelable: true }),
+    );
+    await waitFor(() =>
+      expect(document.querySelector("dialog[open]")).toBeNull(),
+    );
+    const failing = vi
+      .spyOn(
+        Object.getPrototypeOf(
+          Object.getPrototypeOf(new TeacherClassDatabase().contentPackages),
+        ),
+        "orderBy",
+      )
+      .mockImplementation(() => {
+        throw new Error("IndexedDB nicht erreichbar");
+      });
+    try {
+      window.dispatchEvent(new Event("teacher-data-changed"));
+      const button = screen.getByRole("button", {
+        name: "Aus meinen Vokabeln wählen",
+      });
+      await waitFor(() => expect(failing).toHaveBeenCalled());
+      expect(button).toBeEnabled();
+      await user.click(button);
+      const again = within(await screen.findByRole("dialog"));
+      expect(again.getByText(/Unit 3/)).toBeInTheDocument();
+    } finally {
+      failing.mockRestore();
+    }
   });
 
   it("sperrt den Knopf, solange kein Vokabelpaket vorliegt", async () => {
