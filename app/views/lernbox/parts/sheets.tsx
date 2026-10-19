@@ -11,7 +11,8 @@ export function Sheets(props: LernBoxScreenProps & { sheet: LbSheet }) {
   const { sheet } = props;
   if (sheet.kind === "start")
     return <StartSheet {...props} scope={sheet.scope} />;
-  if (sheet.kind === "code") return <CodeSheet {...props} />;
+  if (sheet.kind === "code")
+    return <CodeSheet {...props} initialCode={sheet.initialCode ?? ""} />;
   if (sheet.kind === "deck") return <DeckSheet {...props} />;
   if (sheet.kind === "import") return <ImportSheet {...props} />;
   return <ManualSheet {...props} />;

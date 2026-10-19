@@ -2,6 +2,8 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import {
+  extractTransferCode,
+  normalizeTransferCode,
   parseTransferQrPayload,
   retrieveLearningBundleByCode,
   retrieveLearningBundleByQr,
@@ -14,13 +16,6 @@ import { createLearningBoxRepository } from "../../src/storage/personal-learning
 import { QrCodeScanner } from "../ui/qr-scanner";
 import { Icon } from "../ui/icons";
 import { Button, ButtonLink } from "../ui/primitives";
-
-function normalizeTransferCode(value: string) {
-  return value
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 24);
-}
 
 function displayTransferCode(value: string) {
   return value.match(/.{1,4}/g)?.join(" ") ?? value;
@@ -88,37 +83,17 @@ export function StudentContentTransfer({
     }
   }
 
-  async function retrieveByScan(value: string) {
-    // Neue QR-Codes enthalten nur den Transfercode; ältere das Token-Paket.
-    if (value.startsWith("lernraum:transfer:")) return retrieveByQr(value);
-    setError("");
+  function retrieveByScan(value: string) {
+    // Legacy-QR mit Token-Paket wird direkt abgerufen; sonst füllt der Scan nur das Feld.
+    if (value.startsWith("lernraum:transfer:")) return void retrieveByQr(value);
     setSuccess(undefined);
-    const scanned = normalizeTransferCode(value);
-    if (!transferConfig) {
-      setError("Die Inhaltsübertragung ist noch nicht konfiguriert.");
-      return;
-    }
-    if (scanned.length !== 24) {
+    const scanned = extractTransferCode(value);
+    if (!scanned) {
       setError("Der QR-Code enthält keinen gültigen Transfercode.");
       return;
     }
-    setBusy(true);
-    try {
-      await ingest(
-        await retrieveLearningBundleByCode(
-          getLiveRoomClient(transferConfig),
-          scanned,
-        ),
-      );
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Der QR-Code konnte nicht gelesen werden.",
-      );
-    } finally {
-      setBusy(false);
-    }
+    setError("");
+    setCode(scanned);
   }
 
   async function retrieveByQr(value: string) {
@@ -179,7 +154,7 @@ export function StudentContentTransfer({
             setCode(normalizeTransferCode(event.target.value))
           }
         />
-        <QrCodeScanner onResult={(value) => void retrieveByScan(value)} />
+        <QrCodeScanner onResult={retrieveByScan} />
       </div>
       <Button type="submit" variant="green" disabled={busy}>
         {busy ? "Übernimmt …" : "Übernehmen"}

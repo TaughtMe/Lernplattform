@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import { buildTeacherVocabularyBundle } from "../../domain/teacher-content-transfer";
 import {
+  createTransferLink,
+  extractTransferCode,
   parseTransferQrPayload,
   publishLearningBundle,
   retrieveLearningBundleByCode,
@@ -264,5 +266,30 @@ describe("transfer messages and QR text", () => {
         damaged({ version: 1, transferId: 5, retrievalToken }),
       ),
     ).toThrow("Beschädigter Lernraum-Transfercode");
+  });
+});
+
+describe("transfer link and scanned text", () => {
+  it("round-trips the link with the code in the hash", () => {
+    const link = createTransferLink("https://lernraum.example", manualCode);
+    expect(link).toBe(`https://lernraum.example/lernbox#code=${manualCode}`);
+    expect(extractTransferCode(link)).toBe(manualCode);
+  });
+
+  it("reads codes from query links, bare codes and grouped codes", () => {
+    expect(
+      extractTransferCode(`https://x.example/lernbox?code=${manualCode}`),
+    ).toBe(manualCode);
+    expect(extractTransferCode(manualCode)).toBe(manualCode);
+    expect(
+      extractTransferCode("2345-6789-ABCD-EFGH-JKLM-NPQR".toLowerCase()),
+    ).toBe(manualCode);
+  });
+
+  it("rejects text without a complete code", () => {
+    expect(extractTransferCode("https://example.org")).toBeNull();
+    expect(extractTransferCode("hallo welt!")).toBeNull();
+    expect(extractTransferCode("2345-6789")).toBeNull();
+    expect(() => createTransferLink("https://x.example", "ABC")).toThrow();
   });
 });

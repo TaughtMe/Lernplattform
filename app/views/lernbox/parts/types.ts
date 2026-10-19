@@ -80,7 +80,8 @@ export type LbEdit = {
 export type LbSheet =
   | { kind: "manual" }
   | { kind: "import" }
-  | { kind: "code" }
+  /** `initialCode`: aus Link oder Scan vorbefüllter Transfercode. */
+  | { kind: "code"; initialCode?: string }
   | { kind: "deck" }
   /** `scope`: „due“, „errors“ oder die Kennung eines Stapels. */
   | { kind: "start"; scope: string };
@@ -138,6 +139,8 @@ export type LernBoxScreenProps = {
   /** `tag`: eigener Tag für alle Vokabeln des Pakets, leer = ohne Tag. */
   onTransferCode?: (code: string, tag: string) => void;
   onTransferQr?: (value: string, tag: string) => void;
+  /** Liest den Transfercode aus gescanntem Text (Link oder Code), sonst `null`. */
+  onReadTransferCode?: (value: string) => string | null;
   // Vokabelliste
   onQuery?: (query: string) => void;
   onFilter?: (filter: string) => void;

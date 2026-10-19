@@ -21,6 +21,7 @@ import {
 } from "../../src/domain/learning-box";
 import { VOCABULARY_LANGUAGES } from "../../src/domain/running-dictation";
 import {
+  extractTransferCode,
   parseTransferQrPayload,
   retrieveLearningBundleByCode,
   retrieveLearningBundleByQr,
@@ -212,6 +213,17 @@ export function LearningBoxApp({
       const requested = new URLSearchParams(window.location.search).get(
         "stapel",
       );
+      // QR-Link der Lehrkraft: #code=<Transfercode> öffnet das Code-Fenster.
+      const linkedCode = extractTransferCode(window.location.href);
+      if (active && linkedCode) {
+        setSheet({ kind: "code", initialCode: linkedCode });
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
+        return;
+      }
       if (active && requested && loaded?.some((deck) => deck.id === requested))
         setSheet({ kind: "start", scope: requested });
     });
@@ -668,6 +680,7 @@ export function LearningBoxApp({
         }}
         onTransferCode={receiveByCode}
         onTransferQr={receiveByQr}
+        onReadTransferCode={extractTransferCode}
         onQuery={setQuery}
         onFilter={setFilter}
         onSort={(key) =>

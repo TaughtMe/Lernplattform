@@ -164,3 +164,50 @@ export function parseTransferQrPayload(value: string): TransferQrPayload {
     retrievalToken: parsed.retrievalToken,
   };
 }
+
+export const TRANSFER_CODE_LENGTH = 24;
+const TRANSFER_PATH = "/lernbox";
+const TRANSFER_LINK_KEY = "code";
+
+/** Großbuchstaben und Ziffern, höchstens 24 Zeichen; Trennzeichen entfallen. */
+export function normalizeTransferCode(value: string) {
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, TRANSFER_CODE_LENGTH);
+}
+
+/** Link für den QR-Code: öffnet die LernBox mit vorbefülltem Code-Feld. */
+export function createTransferLink(origin: string, code: string) {
+  const normalized = normalizeTransferCode(code);
+  if (normalized.length !== TRANSFER_CODE_LENGTH) {
+    throw new Error("Ungültiger Transfercode.");
+  }
+  const url = new URL(TRANSFER_PATH, origin);
+  // Im Hash, damit der Code nie an einen Server gesendet wird.
+  url.hash = `${TRANSFER_LINK_KEY}=${normalized}`;
+  return url.toString();
+}
+
+/**
+ * Liest den 24-stelligen Transfercode aus einem gescannten Text: Link
+ * (Hash oder Query), nackter Code oder Code mit Trennzeichen.
+ */
+export function extractTransferCode(value: string): string | null {
+  const text = value.trim();
+  try {
+    const url = new URL(text);
+    const fromHash = new URLSearchParams(url.hash.replace(/^#/, "")).get(
+      TRANSFER_LINK_KEY,
+    );
+    const code = normalizeTransferCode(
+      fromHash ?? url.searchParams.get(TRANSFER_LINK_KEY) ?? "",
+    );
+    return code.length === TRANSFER_CODE_LENGTH ? code : null;
+  } catch {
+    // Kein Link: nackter Code.
+  }
+  if (!/^[A-Za-z0-9\s-]+$/.test(text)) return null;
+  const code = normalizeTransferCode(text);
+  return code.length === TRANSFER_CODE_LENGTH ? code : null;
+}

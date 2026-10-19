@@ -7,8 +7,11 @@ import { Modal } from "./modal";
 import type { LernBoxScreenProps } from "./types";
 import styles from "../lernbox-screen.module.css";
 
-export function CodeSheet(props: LernBoxScreenProps) {
-  const [code, setCode] = useState("");
+export function CodeSheet(
+  props: LernBoxScreenProps & { initialCode?: string },
+) {
+  const [code, setCode] = useState(props.initialCode ?? "");
+  const [scanError, setScanError] = useState("");
   const [tag, setTag] = useState("");
   const { transfer } = props;
   return (
@@ -22,7 +25,8 @@ export function CodeSheet(props: LernBoxScreenProps) {
       >
         <p className={styles.sheetText}>
           Tippe den Code von der Tafel oder vom Arbeitsblatt ein, oder scanne
-          den QR-Code mit der Kamera.
+          den QR-Code mit der Kamera. Mit der Kamera-App scannen öffnet den Code
+          direkt.
         </p>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Tag für diese Vokabeln</span>
@@ -39,31 +43,45 @@ export function CodeSheet(props: LernBoxScreenProps) {
           <input
             className={styles.codeInput}
             aria-label="Code"
-            aria-invalid={Boolean(transfer.error)}
+            aria-invalid={Boolean(transfer.error || scanError)}
             placeholder="····"
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
             value={groupCode(code)}
-            onChange={(event) =>
+            onChange={(event) => {
+              setScanError("");
               setCode(
                 event.target.value
                   .toUpperCase()
                   .replace(/[^A-Z0-9]/g, "")
                   .slice(0, 24),
-              )
-            }
+              );
+            }}
           />
           <QrCodeScanner
-            onResult={(value) => props.onTransferQr?.(value, tag.trim())}
+            onResult={(value) => {
+              // Neue und alte QR-Codes füllen das Feld; der Import folgt per Knopf.
+              const scanned = props.onReadTransferCode?.(value) ?? null;
+              if (scanned) {
+                setScanError("");
+                setCode(scanned);
+              } else if (value.startsWith("lernraum:transfer:")) {
+                props.onTransferQr?.(value, tag.trim());
+              } else {
+                setScanError(
+                  "Der QR-Code enthält keinen gültigen Transfercode.",
+                );
+              }
+            }}
             buttonClassName={styles.scanButton ?? ""}
             iconSize={24}
             iconStrokeWidth={2.2}
           />
         </div>
-        {transfer.error ? (
+        {scanError || transfer.error ? (
           <p className={styles.codeError} role="alert">
-            {transfer.error}
+            {scanError || transfer.error}
           </p>
         ) : null}
         {transfer.success ? (

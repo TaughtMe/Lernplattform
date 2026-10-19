@@ -19,6 +19,7 @@ import {
   type TeacherContentPackage,
 } from "../../src/domain/teacher-content-library";
 import {
+  createTransferLink,
   publishLearningBundle,
   type PublishedContentTransfer,
 } from "../../src/integrations/content-transfer/content-transfer-client";
@@ -481,7 +482,10 @@ export function TeacherContentTransfer({
             </h2>
             <div className="ui-qr-box">
               <QRCodeSVG
-                value={published.manualTransferCode}
+                value={createTransferLink(
+                  window.location.origin,
+                  published.manualTransferCode,
+                )}
                 size={220}
                 level="M"
                 marginSize={2}
