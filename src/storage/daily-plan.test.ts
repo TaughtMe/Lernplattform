@@ -368,6 +368,25 @@ describe("Tagesportion im Speicher", () => {
     expect(first.day).toBe("2026-10-19");
   });
 
+  it("berechnet einen leeren Plan neu, bis er Elemente hat", async () => {
+    const database = createDatabase();
+    const repository = createDailyPlanRepository(database);
+    // Morgens ist noch nichts da: leerer Plan.
+    const empty = await repository.today(NOW);
+    expect(empty.items).toHaveLength(0);
+    // Mittags importiert das Kind Karten: Sie kommen heute schon in die Portion.
+    const deck = createLearningBoxDeck({ title: "Englisch", now: NOW_MS });
+    await database.learningBoxDecks.put(deck);
+    await database.learningBoxCards.put(card(deck.id, 1));
+    const filled = await repository.today(local(19, 12).toISOString());
+    expect(filled.items).toHaveLength(1);
+    expect(filled.createdAt).toBe(local(19, 12).toISOString());
+    // Danach bleibt der Plan für den Tag fest.
+    await database.learningBoxCards.put(card(deck.id, 2));
+    expect(await repository.today(local(19, 18).toISOString())).toEqual(filled);
+    expect(await database.dailyPlans.count()).toBe(1);
+  });
+
   it("erzeugt nach Mitternacht einen neuen Plan", async () => {
     const database = createDatabase();
     const repository = createDailyPlanRepository(database);
@@ -398,6 +417,11 @@ describe("Tagesportion im Speicher", () => {
     await database.dailyPlans.bulkPut(
       [8, DAILY_PLAN_KEEP_DAYS, 3, 1].map(stub),
     );
+    // Eine Karte, damit der heutige Plan nicht leer ist (leere Pläne werden
+    // bei jedem Aufruf neu berechnet).
+    const deck = createLearningBoxDeck({ title: "Englisch", now: NOW_MS });
+    await database.learningBoxDecks.put(deck);
+    await database.learningBoxCards.put(card(deck.id, 1));
     await repository.today(NOW);
     expect((await database.dailyPlans.orderBy("day").keys()).sort()).toEqual([
       dayOf(DAILY_PLAN_KEEP_DAYS),

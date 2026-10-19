@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetSpeechState } from "../../src/speech/speaker";
 import type { DailyPlanItem } from "../../src/domain/daily-plan";
 import type { LearningWordProgress } from "../../src/domain/learning-word-progress";
+import { learningEventV1Schema } from "../../src/domain/learning-bundle";
 import { localDayKey } from "../../src/domain/local-day";
 import { resolveStages, resolveVisibility } from "../../src/domain/release";
 import { createDailyPlanRepository } from "../../src/storage/daily-plan";
@@ -26,6 +27,8 @@ async function setup(
     stages?: string | undefined;
     /** Speichert den Plan des heutigen Tages mit diesen Elementen. */
     plan?: (words: LearningWordProgress[]) => DailyPlanItem[];
+    /** Alle Plan-Elemente sind heute schon beantwortet. */
+    doneToday?: boolean;
     prepare?: (repositories: {
       boxes: ReturnType<typeof createWordBoxRepository>;
       rounds: ReturnType<typeof createWordRoundRepository>;
@@ -44,12 +47,22 @@ async function setup(
   await options.prepare?.(repositories);
   if (options.plan) {
     const now = new Date();
+    const items = options.plan(await repositories.progress.list());
     await database.dailyPlans.put({
       day: localDayKey(now),
       createdAt: new Date(now.getTime() - 60_000).toISOString(),
       size: 20,
-      items: options.plan(await repositories.progress.list()),
+      items,
     });
+    if (options.doneToday)
+      await database.learningEvents.bulkAdd(
+        items.map((entry) =>
+          answeredToday(
+            entry.objectIds[0]!,
+            new Date(now.getTime() - 30_000).toISOString(),
+          ),
+        ),
+      );
   }
   window.history.pushState(
     null,
@@ -64,6 +77,26 @@ async function setup(
     </ReleaseProvider>,
   );
   return { database, ...repositories };
+}
+
+/** Ein heute nach dem Plan beantwortetes Element: Es gilt als erledigt. */
+function answeredToday(objectId: string, occurredAt: string) {
+  return learningEventV1Schema.parse({
+    id: `erledigt-${objectId}`,
+    learningObjectId: objectId,
+    occurredAt,
+    source: "lesson",
+    learningArea: "german",
+    roundId: "heute-erledigt",
+    direction: "prompt-to-answer",
+    answerMode: "typed",
+    help: "none",
+    assessment: {
+      knowledge: "correct",
+      writing: "correct",
+      selfCorrected: false,
+    },
+  });
 }
 
 afterEach(async () => {
@@ -602,7 +635,13 @@ describe("Tagesportion mit ?heute=1", () => {
   });
 
   it("sagt, dass der Teil für heute geschafft ist, wenn nichts offen ist", async () => {
-    await setup({ query: "?heute=1", prepare: lesson, plan: () => [] });
+    // Die Portion ist heute schon erledigt.
+    await setup({
+      query: "?heute=1",
+      prepare: lesson,
+      plan: (words) => words.slice(0, 1).map(germanItem),
+      doneToday: true,
+    });
     expect(
       await screen.findByText(
         "Dein Teil für heute ist geschafft. Du kannst frei weiterüben.",

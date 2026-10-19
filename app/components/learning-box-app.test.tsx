@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import type { DailyPlanItem } from "../../src/domain/daily-plan";
 import type { LearningBoxCard } from "../../src/domain/learning-box";
+import { learningEventV1Schema } from "../../src/domain/learning-bundle";
 import { localDayKey } from "../../src/domain/local-day";
 import {
   PersonalLearningDatabase,
@@ -24,6 +25,8 @@ const databases: PersonalLearningDatabase[] = [];
 async function setup(options: {
   query?: string;
   items?: (card: (question: string) => LearningBoxCard) => DailyPlanItem[];
+  /** Alle Plan-Elemente sind heute schon beantwortet. */
+  doneToday?: boolean;
 }) {
   const database = new PersonalLearningDatabase();
   databases.push(database);
@@ -46,15 +49,45 @@ async function setup(options: {
     return found;
   };
   const now = new Date();
+  const items = options.items?.(card) ?? [];
   await database.dailyPlans.put({
     day: localDayKey(now),
     createdAt: new Date(now.getTime() - 60_000).toISOString(),
     size: 20,
-    items: options.items?.(card) ?? [],
+    items,
   });
+  if (options.doneToday)
+    await database.learningEvents.bulkAdd(
+      items.map((entry) =>
+        answeredToday(
+          entry.objectIds[0]!,
+          new Date(now.getTime() - 30_000).toISOString(),
+        ),
+      ),
+    );
   window.history.pushState(null, "", `/lernbox${options.query ?? ""}`);
   render(<LearningBoxApp />);
   return { database, repository, card };
+}
+
+/** Ein heute nach dem Plan beantwortetes Element: Es gilt als erledigt. */
+function answeredToday(objectId: string, occurredAt: string) {
+  return learningEventV1Schema.parse({
+    id: `erledigt-${objectId}`,
+    learningObjectId: objectId,
+    occurredAt,
+    source: "lesson",
+    learningArea: "vocabulary",
+    roundId: "heute-erledigt",
+    direction: "prompt-to-answer",
+    answerMode: "typed",
+    help: "none",
+    assessment: {
+      knowledge: "correct",
+      writing: "correct",
+      selfCorrected: false,
+    },
+  });
 }
 
 function item(
@@ -200,7 +233,12 @@ describe("LernBox: Heute dran aus der Tagesportion", () => {
   }, 20_000);
 
   it("sagt mit ?heute=1, wenn nichts offen ist, und öffnet kein Start-Fenster", async () => {
-    await setup({ query: "?heute=1", items: () => [] });
+    // Die Portion ist heute schon erledigt.
+    await setup({
+      query: "?heute=1",
+      items: (find) => [item(find("Haus"), "forward")],
+      doneToday: true,
+    });
     expect(
       await screen.findByRole("status", {}, SLOW).then((node) => node),
     ).toHaveTextContent(DONE_NOTICE);

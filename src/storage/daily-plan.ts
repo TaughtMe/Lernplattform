@@ -191,7 +191,8 @@ export function createDailyPlanRepository(
 
   /**
    * Holt den Plan des lokalen Tages oder erzeugt ihn genau einmal. Was im Laufe
-   * des Tages neu fällig wird, kommt erst morgen in die Portion.
+   * des Tages neu fällig wird, kommt erst morgen in die Portion. Nur ein leerer
+   * Plan wird bei jedem Aufruf neu berechnet, bis er Elemente hat.
    */
   const today = (now: string): Promise<DailyPlan> =>
     database.transaction(
@@ -207,8 +208,10 @@ export function createDailyPlanRepository(
         const stored = dailyPlanSchema.safeParse(
           await database.dailyPlans.get(day),
         );
-        // Ein ungültiger Plan wird verworfen und neu erzeugt.
-        if (stored.success) return stored.data;
+        // Ein ungültiger Plan wird verworfen und neu erzeugt. Ein leerer Plan
+        // auch: Wer morgens noch nichts hatte und dann Karten anlegt, soll sie
+        // heute schon in der Portion sehen.
+        if (stored.success && stored.data.items.length > 0) return stored.data;
         const plan = selectDailyPlan({
           candidates: dailyPlanCandidates(await readSources(database), now),
           day,
