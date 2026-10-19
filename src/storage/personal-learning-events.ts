@@ -4,6 +4,7 @@ import {
   typingProgressSchema,
   typingStatsSchema,
 } from "./progress-schema";
+import type { DailyPlan } from "../domain/daily-plan";
 import type { TextboxSession } from "../domain/textbox-session";
 import { getLearningWordCollection } from "../domain/german-learning-content";
 import {
@@ -77,6 +78,8 @@ export class PersonalLearningDatabase extends Dexie {
   textboxSessions!: Table<TextboxSession, string>;
   wordBoxes!: Table<WordBox, string>;
   wordRounds!: Table<WordRoundRecord, string>;
+  /** Tagesportion je lokalem Tag; kurzlebig und nicht Teil der Sicherung. */
+  dailyPlans!: Table<DailyPlan, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.personal) {
     super(name);
@@ -133,6 +136,21 @@ export class PersonalLearningDatabase extends Dexie {
       textboxSessions: "id, textId, status, completedAt",
       wordBoxes: "id, kind, updatedAt",
       wordRounds: "id, boxId, stage, completedAt",
+    });
+    // Tagesportion: ein Plan je lokalem Tag.
+    this.version(7).stores({
+      learningEvents: "id, learningObjectId, occurredAt, roundId",
+      learningBoxDecks:
+        "id, title, createdAt, folderId, source.kind, source.sourceId",
+      learningBoxCards:
+        "id, deckId, fingerprint, [deckId+fingerprint], nextReview, reverseNextReview, createdAt, source.kind, source.sourceId",
+      learningBoxFolders: "id, title, createdAt",
+      learningWordProgress: "id, dueAt, stage, box, lastPracticedAt",
+      typingProgress: "id, completed, lastPracticedAt",
+      textboxSessions: "id, textId, status, completedAt",
+      wordBoxes: "id, kind, updatedAt",
+      wordRounds: "id, boxId, stage, completedAt",
+      dailyPlans: "day",
     });
   }
 }

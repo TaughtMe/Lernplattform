@@ -41,14 +41,17 @@ function latestEvents(events: readonly LearningEventV1[]) {
   return [...latest.values()];
 }
 
-function eventCandidates(
+/**
+ * Letzte Ereignisse je Lernobjekt eines Moduls, ohne Mathe-Versuche (sie laufen
+ * über `mathReviews`) und ohne Antworten zu vorhandenen LernBox-Karten (sie
+ * zählen über die Karten).
+ */
+function latestModuleEvents(
   events: readonly LearningEventV1[],
-  now: string,
-  cardIds: ReadonlySet<string> = new Set(),
-): LearningRecommendationCandidate[] {
-  // Antworten zu vorhandenen LernBox-Karten zählen über die Karten (siehe
-  // unten), nicht doppelt.
-  const latest = latestEvents(
+  cardIds: ReadonlySet<string>,
+  learningModule: ClassModule,
+) {
+  return latestEvents(
     events.filter(
       (event) =>
         !event.math &&
@@ -56,14 +59,70 @@ function eventCandidates(
           event.source === "learning-box" && cardIds.has(event.learningObjectId)
         ),
     ),
+  ).filter((event) => eventModule(event) === learningModule);
+}
+
+/**
+ * Unsichere Ereignis-Aufgaben eines Moduls: Das jeweils letzte Ereignis eines
+ * Lernobjekts war falsch. Gemeinsame Quelle für Empfehlungen und Tagesportion.
+ */
+export function unresolvedEventErrors(
+  events: readonly LearningEventV1[],
+  cardIds: ReadonlySet<string>,
+  learningModule: ClassModule,
+): LearningEventV1[] {
+  return latestModuleEvents(events, cardIds, learningModule).filter(
+    isIncorrect,
   );
+}
+
+/**
+ * Fällige Vokabeln aus Ereignissen ohne LernBox-Karte: Das letzte Ereignis war
+ * nicht falsch, und der Leitner-Abstand ist erreicht (`dueAt` ist der frühere
+ * Termin aus Wissen und Schreiben). Gemeinsame Quelle für Empfehlungen und
+ * Tagesportion.
+ */
+export function dueEventVocabulary(
+  events: readonly LearningEventV1[],
+  now: string,
+  cardIds: ReadonlySet<string>,
+): Array<{ event: LearningEventV1; dueAt: string }> {
+  const related = new Map<string, LearningEventV1[]>();
+  for (const event of events) {
+    const list = related.get(event.learningObjectId);
+    if (list) list.push(event);
+    else related.set(event.learningObjectId, [event]);
+  }
+  return latestModuleEvents(events, cardIds, "vocabulary")
+    .filter((event) => !isIncorrect(event))
+    .flatMap((event) => {
+      const history = related.get(event.learningObjectId)!;
+      const availableAt = history
+        .map((candidate) => candidate.occurredAt)
+        .sort()[0]!;
+      const progress = deriveLeitnerProgress({
+        events: history,
+        learningObjectId: event.learningObjectId,
+        direction: event.direction,
+        availableAt,
+      });
+      const dueAt =
+        progress.knowledge.dueAt <= progress.writing.dueAt
+          ? progress.knowledge.dueAt
+          : progress.writing.dueAt;
+      return dueAt <= now ? [{ event, dueAt }] : [];
+    });
+}
+
+function eventCandidates(
+  events: readonly LearningEventV1[],
+  now: string,
+  cardIds: ReadonlySet<string> = new Set(),
+): LearningRecommendationCandidate[] {
   const candidates: LearningRecommendationCandidate[] = [];
 
   for (const learningModule of ["vocabulary", "mathematics"] as const) {
-    const moduleEvents = latest.filter(
-      (event) => eventModule(event) === learningModule,
-    );
-    const errors = moduleEvents.filter(isIncorrect);
+    const errors = unresolvedEventErrors(events, cardIds, learningModule);
     if (errors.length > 0) {
       const newest = [...errors].sort((left, right) =>
         right.occurredAt.localeCompare(left.occurredAt),
@@ -91,24 +150,9 @@ function eventCandidates(
     }
 
     if (learningModule !== "vocabulary") continue;
-    const due = moduleEvents.filter((event) => {
-      const related = events.filter(
-        (candidate) => candidate.learningObjectId === event.learningObjectId,
-      );
-      const availableAt = related
-        .map((candidate) => candidate.occurredAt)
-        .sort()[0];
-      if (!availableAt) return false;
-      const progress = deriveLeitnerProgress({
-        events: related,
-        learningObjectId: event.learningObjectId,
-        direction: event.direction,
-        availableAt,
-      });
-      return progress.knowledge.dueAt <= now || progress.writing.dueAt <= now;
-    });
+    const due = dueEventVocabulary(events, now, cardIds);
     if (due.length > 0) {
-      const first = due[0]!;
+      const first = due[0]!.event;
       candidates.push({
         id: "vocabulary-events-due",
         module: "vocabulary",
