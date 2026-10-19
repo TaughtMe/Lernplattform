@@ -171,7 +171,7 @@ describe("TeacherShell", () => {
       within(sidebar).getByRole("link", { name: "Klassen" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      within(sidebar).getByRole("link", { name: "Inhalte" }),
+      within(sidebar).getByRole("link", { name: "Start" }),
     ).not.toHaveAttribute("aria-current");
     expect(
       within(sidebar).queryByRole("link", { name: "Räume" }),
@@ -185,7 +185,7 @@ describe("TeacherShell", () => {
   });
 
   it("blendet nicht freigegebene Bereiche aus", () => {
-    renderShell("/lehrer", {
+    renderShell("/lehrer/einstellungen", {
       "lehrer-aufgaben": false,
       motivation: false,
     });
@@ -201,6 +201,26 @@ describe("TeacherShell", () => {
     ).toBeInTheDocument();
   });
 
+  it("klappt „Verwalten“ auf Start zu und auf einer Verwaltungsseite auf", async () => {
+    const { unmount } = renderShell("/lehrer");
+    let sidebar = screen.getByRole("navigation", { name: "Lehrerbereich" });
+    const toggle = within(sidebar).getByRole("button", { name: "Verwalten" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(
+      within(sidebar).queryByRole("link", { name: "Einstellungen" }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(toggle);
+    expect(
+      within(sidebar).getByRole("link", { name: "Einstellungen" }),
+    ).toBeInTheDocument();
+    unmount();
+    renderShell("/lehrer/material");
+    sidebar = screen.getByRole("navigation", { name: "Lehrerbereich" });
+    expect(
+      within(sidebar).getByRole("button", { name: "Verwalten" }),
+    ).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("öffnet die Schublade und schließt sie nach der Navigation", async () => {
     await createTeacherClassRepository().put(course(CLASS_A, "Klasse 7b"));
     renderShell("/lehrer");
@@ -208,9 +228,7 @@ describe("TeacherShell", () => {
       screen.getByRole("button", { name: "Klassen und Bereiche" }),
     );
     const drawer = screen.getByRole("dialog", { name: "Klassen und Bereiche" });
-    await userEvent.click(
-      within(drawer).getByRole("link", { name: "Inhalte" }),
-    );
+    await userEvent.click(within(drawer).getByRole("link", { name: "Start" }));
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );

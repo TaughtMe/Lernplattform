@@ -16,7 +16,7 @@ export type TeacherNavEntry = {
   label: string;
   icon: IconName;
   release: ReleaseAreaId;
-  /** „Bereich“ (Vorlage) oder die kleinere Gruppe „Verwalten“. */
+  /** Über den Klassen („Start“) oder die kleinere Gruppe „Verwalten“. */
   group: "area" | "manage";
 };
 
@@ -28,8 +28,8 @@ export const TEACHER_NAV: readonly TeacherNavEntry[] = [
   {
     area: "content",
     href: "/lehrer",
-    label: "Inhalte",
-    icon: "content",
+    label: "Start",
+    icon: "home",
     release: "lehrer",
     group: "area",
   },
@@ -75,7 +75,7 @@ export const TEACHER_NAV: readonly TeacherNavEntry[] = [
   },
 ];
 
-/** Der Raum hat keinen eigenen Eintrag; er wird über „Inhalte“ gestartet. */
+/** Der Raum hat keinen eigenen Eintrag; er wird über „Start“ gestartet. */
 const LIVE_HREF = "/lehrer/live";
 
 /** Bereich zur Adresse: der längste passende Navigationseintrag. */
@@ -94,7 +94,7 @@ export function teacherAreaOf(pathname: string): TeacherArea {
 /** Seitentitel des Bereichs. */
 export function teacherAreaTitle(area: TeacherArea): string {
   if (area === "live") return "Räume";
-  return TEACHER_NAV.find((item) => item.area === area)?.label ?? "Inhalte";
+  return TEACHER_NAV.find((item) => item.area === area)?.label ?? "Start";
 }
 
 /** Initialen für den Kreis unten in der Leiste („Anna Beispiel“ → „AB“). */

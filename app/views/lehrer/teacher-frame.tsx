@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { BrandLogo } from "../../ui/brand";
 import { Icon, type IconName } from "../../ui/icons";
 import { cx, ThemeSwitch, type Theme } from "../parts/parts";
@@ -42,9 +42,11 @@ export type TeacherProfile = {
  * Wie die Inhaltsfläche aufgebaut ist:
  * - `titled`: Seitentitel mit Klasse darüber (Vorlage 3c/3d)
  * - `plain`: Seiten in alter Oberfläche; eigener Titel im Inhalt, nur Hell/Dunkel oben
+ * - `page`: Seiten nach Lehrerbereich v2 (15a, 17a–c); Kopf, Titel und
+ *   Innenabstand bringt die Seite selbst mit, Hell/Dunkel steht in der Leiste
  * - `fill`: der Inhalt füllt die Fläche und bringt Kopf und Hell/Dunkel selbst mit
  */
-export type TeacherFrameLayout = "titled" | "plain" | "fill";
+export type TeacherFrameLayout = "titled" | "plain" | "page" | "fill";
 
 export type TeacherFrameProps = {
   /** Zeile über dem Seitentitel, z. B. „Klasse 7b“. */
@@ -55,10 +57,22 @@ export type TeacherFrameProps = {
   classes: readonly TeacherClassItem[];
   /** Eintrag „Nicht zugeordnet“; ohne Angabe steht er nicht in der Leiste. */
   unassigned?: TeacherClassItem;
-  /** Bereiche der Vorlage (Inhalte, Räume, Auswertung). */
+  /**
+   * Einträge über den Klassen (v2: nur „Start“). Mit `areasLabel` stehen sie
+   * wie in 3c/3d als Gruppe „Bereich“ unter den Klassen.
+   */
   areas: readonly TeacherAreaItem[];
+  /** Überschrift der Bereiche (3c/3d: „Bereich“); ohne Angabe Leiste nach v2. */
+  areasLabel?: string | undefined;
   /** Zweite, kleinere Gruppe „Verwalten“; ohne Angabe fehlt sie. */
   manage?: readonly TeacherAreaItem[];
+  /**
+   * Leiste nach v2: „Verwalten“ beim Laden aufgeklappt? Standard: wenn einer
+   * ihrer Einträge aktiv ist.
+   */
+  manageOpen?: boolean;
+  /** Rechts in der Kopfzeile (mobil), z. B. „Raum läuft“. */
+  barExtra?: ReactNode;
   /**
    * „Klasse anlegen“ in der Schublade (wie in der Vorlage). Mit `plusOnDesktop`
    * steht zusätzlich ein „+“ neben „Klassen“ in der Seitenleiste.
@@ -104,7 +118,10 @@ export function TeacherFrame(props: TeacherFrameProps) {
   const activeClass =
     props.classes.find((item) => item.active) ?? props.unassigned;
   return (
-    <div className={styles.frame} ref={root}>
+    <div
+      className={cx(styles.frame, props.areasLabel === undefined && styles.v2)}
+      ref={root}
+    >
       <div className={cx(styles.layout, layout !== "titled" && styles[layout])}>
         <nav className={styles.sidebar} aria-label="Lehrerbereich">
           <NavContent {...props} variant="sidebar" />
@@ -132,6 +149,7 @@ export function TeacherFrame(props: TeacherFrameProps) {
                 <span className={styles.barTitle}>{props.title}</span>
               )}
             </span>
+            {props.barExtra}
             {layout === "fill" ? null : (
               <span className={styles.barActions}>
                 {props.cloud}
@@ -144,7 +162,7 @@ export function TeacherFrame(props: TeacherFrameProps) {
           </header>
 
           <main className={styles.main} id="inhalt">
-            {layout === "fill" ? null : (
+            {layout === "fill" || layout === "page" ? null : (
               <div className={styles.head}>
                 {layout === "titled" ? (
                   <div>
@@ -195,21 +213,47 @@ export function TeacherFrame(props: TeacherFrameProps) {
   );
 }
 
-function NavContent({
-  variant,
-  classes,
-  unassigned,
-  areas,
-  manage,
-  addClass,
-  profile,
-  onNavClose,
-}: TeacherFrameProps & { variant: "sidebar" | "drawer" }) {
+function NavContent(
+  props: TeacherFrameProps & { variant: "sidebar" | "drawer" },
+) {
+  const {
+    variant,
+    classes,
+    unassigned,
+    areas,
+    areasLabel,
+    manage,
+    addClass,
+    profile,
+    onNavClose,
+  } = props;
   const drawer = variant === "drawer";
+  const v2 = areasLabel === undefined;
+  const [classesOpen, setClassesOpen] = useState(true);
+  const [manageOpen, setManageOpen] = useState(
+    props.manageOpen ?? (manage ?? []).some((item) => item.active),
+  );
   // In der Schublade schließt jede Navigation sie wieder.
   const close = () => {
     if (drawer) onNavClose?.();
   };
+  const allClasses = [...classes, ...(unassigned ? [unassigned] : [])];
+  // Zugeklappt bleibt die gewählte Klasse sichtbar (Vorlage 17a–c).
+  const shownClasses =
+    !v2 || classesOpen ? allClasses : allClasses.filter((item) => item.active);
+  const plus =
+    !drawer && addClass?.plusOnDesktop ? (
+      <Link
+        href={addClass.href}
+        className={styles.plus}
+        aria-label="Klasse anlegen"
+      >
+        <Icon name="plus" size={14} strokeWidth={2.2} />
+      </Link>
+    ) : null;
+  const areaLinks = areas.map((item) => (
+    <AreaLink key={item.id} item={item} top={v2} onClick={close} />
+  ));
   return (
     <>
       {drawer ? null : (
@@ -218,20 +262,28 @@ function NavContent({
           <span>· Lehrer</span>
         </span>
       )}
+      {v2 ? areaLinks : null}
       <div className={styles.group}>
-        <span className={styles.groupLabel}>
-          Klassen
-          {!drawer && addClass?.plusOnDesktop ? (
-            <Link
-              href={addClass.href}
-              className={styles.plus}
-              aria-label="Klasse anlegen"
+        {v2 ? (
+          <span className={styles.groupLabel}>
+            <button
+              type="button"
+              className={styles.groupToggle}
+              aria-expanded={classesOpen}
+              onClick={() => setClassesOpen((open) => !open)}
             >
-              <Icon name="plus" size={14} strokeWidth={2.2} />
-            </Link>
-          ) : null}
-        </span>
-        {[...classes, ...(unassigned ? [unassigned] : [])].map((item) => (
+              <Chevron open={classesOpen} />
+              Klassen
+            </button>
+            {plus}
+          </span>
+        ) : (
+          <span className={styles.groupLabel}>
+            Klassen
+            {plus}
+          </span>
+        )}
+        {shownClasses.map((item) => (
           <Link
             key={item.id}
             href={item.href}
@@ -241,7 +293,9 @@ function NavContent({
           >
             <span className={styles.classText}>
               <span className={styles.className}>{item.name}</span>
-              <span className={styles.classSub}>{item.sub}</span>
+              {v2 && !classesOpen ? null : (
+                <span className={styles.classSub}>{item.sub}</span>
+              )}
             </span>
             <span className={styles.count}>{item.count}</span>
           </Link>
@@ -258,19 +312,41 @@ function NavContent({
         ) : null}
       </div>
 
-      <div className={styles.areas}>
-        <span className={styles.areaLabel}>Bereich</span>
-        {areas.map((item) => (
-          <AreaLink key={item.id} item={item} onClick={close} />
-        ))}
-      </div>
+      {v2 ? null : (
+        <div className={styles.areas}>
+          <span className={styles.areaLabel}>{areasLabel}</span>
+          {areaLinks}
+        </div>
+      )}
 
       {manage && manage.length > 0 ? (
         <div className={styles.areas}>
-          <span className={styles.areaLabel}>Verwalten</span>
-          {manage.map((item) => (
-            <AreaLink key={item.id} item={item} small onClick={close} />
-          ))}
+          {v2 ? (
+            <span className={styles.groupLabel}>
+              <button
+                type="button"
+                className={styles.groupToggle}
+                aria-expanded={manageOpen}
+                onClick={() => setManageOpen((open) => !open)}
+              >
+                <Chevron open={manageOpen} />
+                Verwalten
+              </button>
+            </span>
+          ) : (
+            <span className={styles.areaLabel}>Verwalten</span>
+          )}
+          {!v2 || manageOpen
+            ? manage.map((item) => (
+                <AreaLink
+                  key={item.id}
+                  item={item}
+                  small
+                  plain={v2}
+                  onClick={close}
+                />
+              ))
+            : null}
         </div>
       ) : null}
 
@@ -302,18 +378,42 @@ function NavContent({
             <span className={styles.profileSub}>{profile.sub}</span>
           )}
         </span>
+        {!drawer && props.layout === "page" ? (
+          <span className={styles.profileActions}>
+            {props.cloud}
+            <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+          </span>
+        ) : null}
       </div>
     </>
+  );
+}
+
+/** Pfeil vor „Klassen“ und „Verwalten“ (▸, aufgeklappt nach unten). */
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <span
+      className={cx(styles.chevron, open && styles.chevronOpen)}
+      aria-hidden="true"
+    >
+      ▸
+    </span>
   );
 }
 
 function AreaLink({
   item,
   small = false,
+  top = false,
+  plain = false,
   onClick,
 }: {
   item: TeacherAreaItem;
   small?: boolean;
+  /** Eintrag über den Klassen (v2: „Start“). */
+  top?: boolean;
+  /** Ohne Symbol (v2: Einträge unter „Verwalten“). */
+  plain?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -322,12 +422,13 @@ function AreaLink({
       className={cx(
         styles.area,
         small && styles.areaSmall,
+        top && styles.areaTop,
         item.active && styles.areaActive,
       )}
       aria-current={item.active ? "page" : undefined}
       onClick={onClick}
     >
-      <Icon name={item.icon} size={17} />
+      {plain ? null : <Icon name={item.icon} size={17} />}
       {item.label}
     </Link>
   );

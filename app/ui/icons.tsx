@@ -40,6 +40,7 @@ const PATHS = {
       <path d="M9.5 17.5 6 21l-3-3 3.5-3.5" />
     </>
   ),
+  home: <path d="M4 11 12 4.5 20 11v8.5h-5.5v-5h-5v5H4z" />,
   house: (
     <>
       <path d="M4 10.5 12 4l8 6.5V20H4z" />

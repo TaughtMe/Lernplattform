@@ -291,6 +291,7 @@ function TeacherDemo({ variant, theme }: { variant: string; theme: Theme }) {
         theme={currentTheme}
         classes={DEMO_CLASSES}
         areas={DEMO_AREAS}
+        areasLabel="Bereich"
         addClass={{ href: "#" }}
         profile={{
           initials: "TB",

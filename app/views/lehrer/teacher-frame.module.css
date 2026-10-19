@@ -287,6 +287,60 @@
   min-height: 36px;
   font-size: 13px;
 }
+
+/* ---------- Leiste nach Lehrerbereich v2 (15a, 17a–c) ---------- */
+/* „Start“ über den Klassen. */
+.areaTop {
+  min-height: 44px;
+  color: #cfc7b6;
+  font-size: 14px;
+}
+.areaTop.areaActive {
+  color: var(--nav-ink);
+}
+/* „Klassen“ und „Verwalten“ klappen auf und zu. */
+.groupToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.groupToggle:hover {
+  color: var(--nav-accent);
+}
+.chevron {
+  display: inline-block;
+  transition: transform 0.15s;
+}
+.chevronOpen {
+  transform: rotate(90deg);
+}
+.v2 .group {
+  gap: 5px;
+}
+.v2 .count {
+  background: var(--nav-active);
+}
+.v2 .areaSmall {
+  color: #cfc7b6;
+}
+.v2 .areaSmall.areaActive {
+  color: var(--nav-accent);
+}
+.profileActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
 .profile {
   display: flex;
   align-items: center;
@@ -408,6 +462,12 @@ a.profileSub:hover {
   .layout {
     display: grid;
     grid-template-columns: 252px minmax(0, 1fr);
+  }
+  .v2 .sidebar {
+    gap: 14px;
+  }
+  .page .main {
+    padding: 0;
   }
   .sidebar {
     display: flex;

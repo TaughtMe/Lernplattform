@@ -36,6 +36,7 @@ function frame(overrides: Partial<TeacherFrameProps> = {}) {
       theme="light"
       classes={DEMO_CLASSES}
       areas={AREAS}
+      areasLabel="Bereich"
       profile={{
         initials: "TB",
         name: "T. Bryson",
@@ -100,6 +101,47 @@ describe("TeacherFrame", () => {
     ).toHaveAttribute("href", "/lehrer?klasse=ohne");
     expect(screen.getByText("Verwalten")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Klassen" })).toBeInTheDocument();
+  });
+
+  it("zeigt ohne `areasLabel` die Leiste nach v2: Start oben, Klassen zuklappbar", async () => {
+    render(
+      frame({
+        areas: [AREAS[0]!],
+        areasLabel: undefined,
+        manage: [
+          {
+            id: "einstellungen",
+            label: "Einstellungen",
+            icon: "gear",
+            href: "/lehrer/einstellungen",
+            active: false,
+          },
+        ],
+      }),
+    );
+    const sidebar = screen.getAllByRole("navigation", {
+      name: "Lehrerbereich",
+    })[0]!;
+    expect(within(sidebar).queryByText("Bereich")).not.toBeInTheDocument();
+    const classes = within(sidebar).getByRole("button", { name: "Klassen" });
+    expect(classes).toHaveAttribute("aria-expanded", "true");
+    await userEvent.click(classes);
+    // Zugeklappt bleibt nur die gewählte Klasse.
+    expect(
+      within(sidebar).getByRole("link", { name: /Klasse 7b/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(sidebar).queryByRole("link", { name: /Klasse 9a/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(sidebar).queryByRole("link", { name: "Einstellungen" }),
+    ).not.toBeInTheDocument();
+    await userEvent.click(
+      within(sidebar).getByRole("button", { name: "Verwalten" }),
+    );
+    expect(
+      within(sidebar).getByRole("link", { name: "Einstellungen" }),
+    ).toBeInTheDocument();
   });
 
   it("öffnet die Schublade über den Menüknopf", async () => {
