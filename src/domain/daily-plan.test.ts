@@ -108,9 +108,28 @@ describe("selectDailyPlan", () => {
     expect(plan.items.map((item) => item.key)).toEqual(["a", "b"]);
   });
 
-  it("bietet nie mehr als 4 neue an, auch wenn nur Neues da ist", () => {
+  it("bietet ohne Rückstand bis zu 10 neue an, damit die Portion nicht leer wirkt", () => {
     const plan = select(many(50, "vocabulary", "new"));
-    expect(plan.items).toHaveLength(DAILY_PLAN_QUOTAS.new);
+    expect(plan.items).toHaveLength(DAILY_PLAN_QUOTAS.newWhenFree);
+    expect(plan.items.every((item) => item.kind === "new")).toBe(true);
+  });
+
+  it("nimmt neben genug Wiederholungen nur 4 neue", () => {
+    const plan = select([
+      ...many(50, "vocabulary", "new"),
+      ...many(30, "german", "review"),
+    ]);
+    expect(count(plan, "new")).toBe(DAILY_PLAN_QUOTAS.new);
+    expect(plan.items).toHaveLength(DAILY_PLAN_SIZE);
+  });
+
+  it("füllt bei wenig Rückstand mit Neuem auf, höchstens bis 10", () => {
+    const plan = select([
+      ...many(50, "vocabulary", "new"),
+      ...many(3, "german", "review"),
+    ]);
+    expect(count(plan, "review")).toBe(3);
+    expect(count(plan, "new")).toBe(DAILY_PLAN_QUOTAS.newWhenFree);
   });
 
   it("wechselt zwischen den Modulen ab", () => {
@@ -302,7 +321,9 @@ describe("selectDailyPlan", () => {
           const keys = plan.items.map((item) => item.key);
           expect(plan.items.length).toBeLessThanOrEqual(size);
           expect(new Set(keys).size).toBe(keys.length);
-          expect(count(plan, "new")).toBeLessThanOrEqual(DAILY_PLAN_QUOTAS.new);
+          expect(count(plan, "new")).toBeLessThanOrEqual(
+            DAILY_PLAN_QUOTAS.newWhenFree,
+          );
           // Reihenfolge der Eingabe ändert nichts, wenn die Schlüssel eindeutig sind.
           const unique = [
             ...new Map(candidates.map((entry) => [entry.key, entry])).values(),

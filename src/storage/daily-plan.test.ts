@@ -247,20 +247,14 @@ describe("Kandidaten der Tagesportion", () => {
         route: "/klasse/7b/aufgaben/vokabeln",
       }),
       expect.objectContaining({
-        key: "vocabulary:event:wort-ohne-route",
-        kind: "error",
-      }),
-      expect.objectContaining({
         key: "vocabulary:event:wort-faellig",
         kind: "review",
         objectIds: ["wort-faellig"],
         route: "/klasse/7b/aufgaben/vokabeln",
       }),
     ]);
-    // Ohne Übungsroute im Ereignis bleibt das Element im Modul.
-    expect(
-      dailyPlanCandidates({ events, cards: [owned], words: [] }, NOW)[1],
-    ).not.toHaveProperty("route");
+    // Ohne Übungsroute ließe sich „wort-ohne-route“ nirgends üben: nicht in
+    // der Portion.
   });
 
   it("nimmt fällige Lernwörter: Box 1 mit Fehlern als Fehler, sonst als Wiederholung", () => {

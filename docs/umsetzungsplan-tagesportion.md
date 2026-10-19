@@ -79,7 +79,7 @@ Auswahlregeln für `selectDailyPlan` (deterministisch, ohne Zufall):
 1. **Fehler** (`kind: "error"`), der jüngste Fehler zuerst, höchstens `quotas.error`.
 2. **Wiederholungen** (`kind: "review"`), die am längsten überfälligen zuerst (`dueAt` aufsteigend). Sie füllen bis `size - min(quotas.new, verfügbare neue)` auf.
 3. **Neue** (`kind: "new"`), `createdAt` aufsteigend, höchstens `quotas.new`.
-4. Ist danach noch Platz: übrige Fehler, dann übrige Wiederholungen.
+4. Ist danach noch Platz: übrige Fehler, dann übrige Wiederholungen, dann weitere neue bis insgesamt 10 (`newWhenFree`, ergänzt bei der Durchsicht von Auftrag 3).
 5. Innerhalb jeder Stufe **Module abwechselnd** (Round-Robin über vocabulary → german → mathematics), damit nicht ein Modul die Portion füllt.
 6. Gleichstand nach `key` sortieren (stabil). Ergebnis höchstens `size` Elemente. Ohne Kandidaten gibt es einen leeren Plan.
 
@@ -94,7 +94,7 @@ Auswahlregeln für `selectDailyPlan` (deterministisch, ohne Zufall):
     - nie geübt (Richtung mit `interval === 0` bzw. `reverseInterval === 0`): `kind: "new"`. Die Rückrichtung wird nur als „new“ angeboten, wenn die Vorwärtsrichtung schon mindestens Box 2 erreicht hat. Sonst gibt es für die Rückrichtung keinen Kandidaten.
     - geübt und fällig (`isLearningBoxCardDue`): `kind: "error"`, wenn die Box der Richtung 1 ist und `lastReviewed > createdAt`, sonst `"review"`.
     - `objectIds: [card.id]`.
-  - **Vokabel-Ereignisse ohne Karte** (wie bisher in `eventCandidates` in `src/storage/learning-recommendations.ts`): die vorhandene Logik wiederverwenden. Den Teil, der fehlerhafte und fällige Ereignis-Vokabeln bestimmt, als exportierte Hilfsfunktion herausziehen, statt ihn zu kopieren.
+  - **Vokabel-Ereignisse ohne Karte** (wie bisher in `eventCandidates` in `src/storage/learning-recommendations.ts`): die vorhandene Logik wiederverwenden. Ereignisse ohne eigene Übungsroute (`practice`) kommen nicht in die Portion, weil sie sich nirgends üben ließen (ergänzt bei der Durchsicht von Auftrag 3). Den Teil, der fehlerhafte und fällige Ereignis-Vokabeln bestimmt, als exportierte Hilfsfunktion herausziehen, statt ihn zu kopieren.
   - **Lernwörter** (`learningWordProgress`, `dueAt <= now`): `"error"`, wenn `box === 1 && incorrectAttempts > 0`, sonst `"review"`; `objectIds: [word.id]` (gleich `learningWordId`, siehe `src/domain/learning-word-progress.ts`).
   - **Mathe**: fällige `mathReviews`, **nach Familie gruppiert** (siehe B1, `mathFamilyKey`). Pro Familie ein Kandidat mit `objectIds` = alle fälligen Review-IDs der Familie. Kind `"error"`, wenn ein Posten der Familie `errors > 0` hat und noch nicht gefestigt ist, sonst `"review"`.
 - `today(now)`: holt oder erzeugt den Plan für `localDayKey(now)` **idempotent** in einer Dexie-Transaktion. Existiert er schon, wird er unverändert zurückgegeben. Ein Plan entsteht genau einmal pro Tag; was im Laufe des Tages neu fällig wird (z. B. nach einem Laufdiktat), kommt erst morgen in die Portion.

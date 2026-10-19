@@ -96,11 +96,14 @@ export function dailyPlanCandidates(
   );
 
   // Vokabel-Ereignisse ohne Karte: dieselbe Auswahl wie bei den Empfehlungen.
+  // Ohne eigene Übungsroute ließen sie sich nirgends üben und blieben offen;
+  // solche Ereignisse kommen nicht in die Portion.
   for (const event of unresolvedEventErrors(
     sources.events,
     cardIds,
     "vocabulary",
   )) {
+    if (!event.practice) continue;
     candidates.push({
       key: `vocabulary:event:${event.learningObjectId}`,
       module: "vocabulary",
@@ -108,7 +111,7 @@ export function dailyPlanCandidates(
       objectIds: [event.learningObjectId],
       dueAt: event.occurredAt,
       occurredAt: event.occurredAt,
-      ...(event.practice ? { route: event.practice.route } : {}),
+      route: event.practice.route,
     });
   }
   for (const { event, dueAt } of dueEventVocabulary(
@@ -116,13 +119,14 @@ export function dailyPlanCandidates(
     now,
     cardIds,
   )) {
+    if (!event.practice) continue;
     candidates.push({
       key: `vocabulary:event:${event.learningObjectId}`,
       module: "vocabulary",
       kind: "review",
       objectIds: [event.learningObjectId],
       dueAt,
-      ...(event.practice ? { route: event.practice.route } : {}),
+      route: event.practice.route,
     });
   }
 

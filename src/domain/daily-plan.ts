@@ -8,9 +8,10 @@ export const DAILY_PLAN_SIZE = 20;
 
 /**
  * Kontingente innerhalb der Portion: höchstens so viele Fehler vorab (der Rest
- * der Fehler füllt nur übrigen Platz) und höchstens so viele neue Aufgaben.
+ * der Fehler füllt nur übrigen Platz), höchstens `new` neue Aufgaben neben
+ * Wiederholungen und höchstens `newWhenFree` neue, wenn sonst Platz bleibt.
  */
-export const DAILY_PLAN_QUOTAS = { error: 6, new: 4 } as const;
+export const DAILY_PLAN_QUOTAS = { error: 6, new: 4, newWhenFree: 10 } as const;
 
 export const DAILY_PLAN_MODULES = [
   "vocabulary",
@@ -135,7 +136,8 @@ function takeAlternating(
  * 2. Wiederholungen (am längsten überfällig zuerst); sie lassen Platz für das
  *    Kontingent neuer Aufgaben frei.
  * 3. Neue Aufgaben (ältester Eintrag zuerst), höchstens `DAILY_PLAN_QUOTAS.new`.
- * 4. Bleibt Platz: übrige Fehler, dann übrige Wiederholungen.
+ * 4. Bleibt Platz: übrige Fehler, dann übrige Wiederholungen, dann weitere
+ *    neue Aufgaben bis insgesamt `DAILY_PLAN_QUOTAS.newWhenFree`.
  *
  * Innerhalb jeder Stufe wechseln die Module ab, damit nicht eines die Portion
  * füllt. Gleichstand entscheidet der Schlüssel. Doppelte Schlüssel zählen einmal.
@@ -185,6 +187,15 @@ export function selectDailyPlan(input: {
     size - chosen.length - moreErrors.picked.length,
   );
   chosen.push(...moreErrors.picked, ...moreReviews.picked);
+  // Ohne Rückstand darf mehr Neues kommen, sonst wirkt die Portion leer.
+  const moreNew = takeAlternating(
+    newOnes.rest,
+    Math.min(
+      size - chosen.length,
+      DAILY_PLAN_QUOTAS.newWhenFree - newOnes.picked.length,
+    ),
+  );
+  chosen.push(...moreNew.picked);
 
   return {
     day: input.day,
