@@ -1,17 +1,30 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { DailyPlanModule } from "../../src/domain/daily-plan";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
+import { createDailyPlanRepository } from "../../src/storage/daily-plan";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
 import { countStreak, localDayKey } from "./dashboard-data";
 
+/** Stand der Tagesportion: erledigte und alle Elemente, offene je Modul. */
+export type DashboardPlan = {
+  done: number;
+  total: number;
+  openByModule: Record<DailyPlanModule, number>;
+  /** Modul des ersten offenen Elements; ohne offenes Element `null`. */
+  firstOpenModule: DailyPlanModule | null;
+  /** Eigene Übungsroute des ersten offenen Elements (z. B. Klassenaufgabe). */
+  firstOpenRoute: string | null;
+};
+
 export type DashboardSnapshot = {
   loaded: boolean;
   className: string | null;
   recommendations: LearningRecommendation[];
-  completedToday: number;
+  plan: DashboardPlan;
   activeDays: string[];
   streak: number;
   difficult: Array<{ label: string; detail: string; route: string }>;
@@ -21,7 +34,13 @@ const EMPTY: DashboardSnapshot = {
   loaded: false,
   className: null,
   recommendations: [],
-  completedToday: 0,
+  plan: {
+    done: 0,
+    total: 0,
+    openByModule: { vocabulary: 0, german: 0, mathematics: 0 },
+    firstOpenModule: null,
+    firstOpenRoute: null,
+  },
   activeDays: [],
   streak: 0,
   difficult: [],
@@ -34,6 +53,10 @@ export function useLearnerDashboard() {
     () => createLearningRecommendationRepository(database),
     [database],
   );
+  const dailyPlan = useMemo(
+    () => createDailyPlanRepository(database),
+    [database],
+  );
   const classes = useMemo(() => createStudentClassesRepository(), []);
   const [snapshot, setSnapshot] = useState(EMPTY);
 
@@ -41,17 +64,18 @@ export function useLearnerDashboard() {
     let active = true;
     const load = async () => {
       const now = new Date();
-      const [items, events, cards, words, memberships] = await Promise.all([
-        recommendations.list({
-          enabledModules: ["vocabulary", "german", "mathematics", "typing"],
-        }),
-        database.learningEvents.toArray(),
-        database.learningBoxCards.toArray(),
-        database.learningWordProgress.toArray(),
-        classes.list().catch(() => []),
-      ]);
+      const [items, progress, events, cards, words, memberships] =
+        await Promise.all([
+          recommendations.list({
+            enabledModules: ["vocabulary", "german", "mathematics", "typing"],
+          }),
+          dailyPlan.progress(now.toISOString()),
+          database.learningEvents.toArray(),
+          database.learningBoxCards.toArray(),
+          database.learningWordProgress.toArray(),
+          classes.list().catch(() => []),
+        ]);
       if (!active) return;
-      const today = localDayKey(now);
       const activeDays = [
         ...new Set(events.map((event) => localDayKey(event.occurredAt))),
       ];
@@ -59,9 +83,13 @@ export function useLearnerDashboard() {
         loaded: true,
         className: memberships[0]?.className ?? null,
         recommendations: items,
-        completedToday: events.filter(
-          (event) => localDayKey(event.occurredAt) === today,
-        ).length,
+        plan: {
+          done: progress.done,
+          total: progress.total,
+          openByModule: progress.openByModule,
+          firstOpenModule: progress.openItems[0]?.module ?? null,
+          firstOpenRoute: progress.openItems[0]?.route ?? null,
+        },
         activeDays,
         streak: countStreak(activeDays, now),
         // Schwierig: Lernwörter mit Fehlern und zuletzt geübte Karten in Box 1.
@@ -94,7 +122,7 @@ export function useLearnerDashboard() {
       active = false;
       database.close();
     };
-  }, [classes, database, recommendations]);
+  }, [classes, dailyPlan, database, recommendations]);
 
   return snapshot;
 }

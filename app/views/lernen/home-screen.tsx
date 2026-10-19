@@ -16,7 +16,7 @@ export type HomeScreenProps = {
   title: string;
   animal: string | null;
   theme: Theme;
-  /** Heute erledigte Aufgaben und Tagesziel für den Ring. */
+  /** Erledigte Elemente der Tagesportion und ihre Zahl (Ziel) für den Ring. */
   done: number;
   target: number;
   continueHref: string;
@@ -37,7 +37,7 @@ const RING = { size: 290, radius: 132, stroke: 11 };
 export function HomeScreen(props: HomeScreenProps) {
   const { done, target, due, difficult, week } = props;
   const length = 2 * Math.PI * RING.radius;
-  // Ohne fällige Aufgaben ist der Tag erledigt (Ring voll, wenn geübt wurde).
+  // Ohne Portion ist der Tag erledigt (Ring voll, wenn geübt wurde).
   const ratio = target > 0 ? Math.min(1, done / target) : done > 0 ? 1 : 0;
   const open = Math.max(0, due.total - due.done);
   const activeDays = week.filter((day) => day.state === "active").length;
@@ -113,10 +113,10 @@ export function HomeScreen(props: HomeScreenProps) {
                 {target === 0
                   ? done > 0
                     ? "Alles Fällige erledigt – alles Weitere ist ein Extra"
-                    : "Heute ist nichts fällig – frei üben"
+                    : "Heute ist nichts dran – frei üben"
                   : done >= target
                     ? "Tagesziel geschafft – alles Weitere ist ein Extra"
-                    : `${done} von ${target} Aufgaben heute`}
+                    : `${done} von ${target} ${target === 1 ? "Aufgabe" : "Aufgaben"} heute`}
               </p>
             </div>
             <div className={styles.actions}>
@@ -134,7 +134,7 @@ export function HomeScreen(props: HomeScreenProps) {
             <div className={styles.cards}>
               <div className={styles.card}>
                 <p className={styles.cardValue}>{open}</p>
-                <p className={styles.cardLabel}>heute fällig</p>
+                <p className={styles.cardLabel}>heute dran</p>
               </div>
               <div className={styles.card}>
                 <p className={styles.cardValue}>{difficult.length}</p>
@@ -183,7 +183,7 @@ export function HomeScreen(props: HomeScreenProps) {
           <section className={styles.panel} aria-labelledby="home-due">
             <div className={styles.panelHead}>
               <h2 id="home-due" className={styles.panelTitle}>
-                Heute fällig
+                Heute dran
               </h2>
               <span className={styles.panelCount}>
                 {due.done} / {due.total}

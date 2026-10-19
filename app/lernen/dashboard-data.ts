@@ -1,8 +1,20 @@
 /** Reine Hilfsfunktionen für die Lernen-Startseite (Tage, Woche, Serie). */
+import type { DailyPlanModule } from "../../src/domain/daily-plan";
 import { localDayKey } from "../../src/domain/local-day";
 import type { WeekDay } from "../views/lernen/home-screen";
 
 export { localDayKey };
+
+const PLAN_MODULE_ROUTES: Record<DailyPlanModule, string> = {
+  vocabulary: "/lernbox",
+  german: "/frei/german/lernwoerter",
+  mathematics: "/frei/mathematics",
+};
+
+/** Einstieg in die Tagesportion eines Moduls (`?heute=1` startet nur die Portion). */
+export function planModuleHref(module: DailyPlanModule) {
+  return `${PLAN_MODULE_ROUTES[module]}?heute=1`;
+}
 
 /** Aufeinanderfolgende Übungstage bis heute (oder gestern). */
 export function countStreak(activeDays: readonly string[], now = new Date()) {

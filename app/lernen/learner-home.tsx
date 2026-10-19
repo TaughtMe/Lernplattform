@@ -5,7 +5,7 @@ import { useAreaVisible } from "../release/release-context";
 import { useThemeToggle } from "../ui/theme";
 import { useLearnerProfile } from "../ui/use-learner-profile";
 import { HomeScreen } from "../views/lernen/home-screen";
-import { weekStates } from "./dashboard-data";
+import { planModuleHref, weekStates } from "./dashboard-data";
 import { useLearnerDashboard } from "./use-learner-dashboard";
 
 /** Lernen-Startseite (Design 3a/3b): verbindet Lernstand und Ansicht. */
@@ -17,10 +17,15 @@ export function LearnerHome() {
   const motivation = useAreaVisible("motivation");
   const duel = useAreaVisible("duell");
 
-  const primary = snapshot.recommendations[0];
-  const dueOpen = snapshot.recommendations
-    .filter((item) => item.reason === "due" || item.reason === "error")
-    .reduce((sum, item) => sum + item.amount, 0);
+  // „Weiterlernen“ führt in das Modul des ersten offenen Portionselements (bei
+  // Klassenaufgaben direkt zu deren Übungsseite); ist die Portion erledigt oder
+  // leer, bleibt die erste Empfehlung.
+  const { plan } = snapshot;
+  const continueHref =
+    plan.firstOpenRoute ??
+    (plan.firstOpenModule
+      ? planModuleHref(plan.firstOpenModule)
+      : (snapshot.recommendations[0]?.route ?? "/ueben"));
 
   return (
     <HomeScreen
@@ -32,15 +37,13 @@ export function LearnerHome() {
       animal={profileAvatar(profile)}
       theme={theme}
       onToggleTheme={toggleTheme}
-      // Tagesziel und „Heute fällig“ zählen dieselben Aufgaben.
-      done={snapshot.completedToday}
-      target={snapshot.completedToday + dueOpen}
-      continueHref={primary?.route ?? "/ueben"}
+      // Tagesziel und „Heute dran“ zählen dieselben Portionselemente; freies
+      // Üben und Rückstand ändern das Ziel nicht.
+      done={plan.done}
+      target={plan.total}
+      continueHref={continueHref}
       week={weekStates(snapshot.activeDays)}
-      due={{
-        done: snapshot.completedToday,
-        total: snapshot.completedToday + dueOpen,
-      }}
+      due={{ done: plan.done, total: plan.total }}
       difficult={snapshot.difficult}
       practiceHref={snapshot.difficult[0]?.route ?? null}
       streakDays={

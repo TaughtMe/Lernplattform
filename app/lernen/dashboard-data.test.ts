@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createCalendarMonth, currentWeek, weekStates } from "./dashboard-data";
+import {
+  createCalendarMonth,
+  currentWeek,
+  planModuleHref,
+  weekStates,
+} from "./dashboard-data";
 
 describe("createCalendarMonth", () => {
   it("builds a complete Monday-to-Sunday month including adjacent dates", () => {
@@ -66,5 +71,13 @@ describe("weekStates", () => {
       "upcoming",
     ]);
     expect(week[2]).toMatchObject({ today: true, label: "Mittwoch" });
+  });
+});
+
+describe("planModuleHref", () => {
+  it("führt in das Modul und startet nur die Tagesportion", () => {
+    expect(planModuleHref("vocabulary")).toBe("/lernbox?heute=1");
+    expect(planModuleHref("german")).toBe("/frei/german/lernwoerter?heute=1");
+    expect(planModuleHref("mathematics")).toBe("/frei/mathematics?heute=1");
   });
 });
