@@ -291,6 +291,79 @@ test("the LernBox imports, filters and practises words", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "LernBox" })).toBeVisible();
 });
 
+test("many imported words give a portion of at most 20 and 'Weiterlernen' starts it in the module", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const today = new Date();
+  // Der Plan eines Tages entsteht beim ersten Öffnen einer Lernseite und bleibt
+  // dann stehen. Die Vokabeln werden daher „gestern“ importiert; heute kommen
+  // sie als neue Aufgaben in die Portion.
+  await page.clock.setFixedTime(new Date(today.getTime() - 24 * 3_600_000));
+  await page.goto("/lernbox");
+  await createLernBoxDeck(page, "Mengenprobe");
+  await page.getByRole("button", { name: "Schließen" }).click();
+  await chooseFromPlusMenu(page, /Viele einfügen/);
+  await page
+    .getByRole("textbox", { name: "Vokabeln zum Importieren" })
+    .fill(
+      Array.from(
+        { length: 150 },
+        (_, index) => `Wort${index}\tword${index}`,
+      ).join("\n"),
+    );
+  await page.getByRole("button", { name: "Importieren", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("150 Vokabeln importiert.");
+
+  // Heute: Die Startseite zeigt die Portion, nicht die 150 Vokabeln.
+  await page.clock.setFixedTime(today);
+  await page.goto("/lernen");
+  await expect(page.getByText("0 von 10 Aufgaben heute")).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("150");
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
+
+  // „Weiterlernen“ öffnet die Portion im Modul; eine Runde läuft.
+  const next = page.getByRole("link", { name: "Weiterlernen" }).last();
+  await expect(next).toHaveAttribute("href", "/lernbox?heute=1");
+  await next.click();
+  const sheet = page.getByRole("dialog", { name: "Heute dran" });
+  await expect(sheet).toBeVisible();
+  // Die Richtung kommt aus der Portion: keine Richtungswahl.
+  await expect(sheet.getByRole("group", { name: "Richtung" })).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Mündlich" }).click();
+  await sheet.getByRole("button", { name: "Los geht's" }).click();
+  await expect(page.getByText(/10 übrig/)).toBeVisible();
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
+  await page.getByRole("button", { name: "Antwort zeigen" }).click();
+  await page.getByRole("button", { name: "Gewusst", exact: true }).click();
+  await expect(page.getByText(/9 übrig/)).toBeVisible();
+
+  // Die beantwortete Aufgabe zählt in der Portion.
+  await page.getByRole("button", { name: "Runde beenden" }).click();
+  await page.goto("/lernen");
+  await expect(page.getByText("1 von 10 Aufgaben heute")).toBeVisible();
+});
+
+test("math and learning words say when the portion for today is done", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  const done = "Dein Teil für heute ist geschafft. Du kannst frei weiterüben.";
+  // Ohne Lernstand ist die Portion leer: Beide Module sagen es und bleiben frei.
+  for (const path of [
+    "/frei/mathematics?heute=1",
+    "/frei/german/lernwoerter?heute=1",
+  ]) {
+    await page.goto(path);
+    await expect(page.getByText(done)).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const results = await analyzeAccessibility(page);
+    expect(results.violations, `Accessibility violations on ${path}`).toEqual(
+      [],
+    );
+  }
+});
+
 test("the typing world lists every lesson and starts the current one", async ({
   page,
 }) => {

@@ -123,6 +123,8 @@ Gemeinsamer Ablauf: Das Modul liest `heute=1`, lädt `today(now)` und die offene
 - **Lernwörter** `app/components/learning-word-app.tsx` (Speicher in `app/components/use-word-store.ts`): Bei `heute=1` die Runde der Sammlung „Fällige“ (`FALLIGE_ID`) auf die Wörter der Portion beschränken.
 - `/ueben` und die freien Einstiege bleiben unverändert (freies Üben zählt nicht zur Portion).
 
+Umgesetzt (Auftrag 4): Die Helfer stehen in `app/lernen/plan-today.ts`. In der LernBox öffnet `?heute=1` das Start-Fenster des Bereichs „heute“ (ohne Richtungswahl, Prop `planScope`); bei Mathe startet die Runde direkt; bei den Lernwörtern öffnet `?heute=1` das Startblatt von „Fällige“ mit den Wörtern der Portion, damit das Kind wie sonst die Stufe wählt. Beim Umsetzen fiel ein Fehler auf: Eine Karte, die in einer LernBox-Runde zweimal vorkommt (vorwärts und rückwärts), überschrieb mit der zweiten Antwort die erste Richtung; beide Einträge teilen sich jetzt den Kartenstand.
+
 ---
 
 ## Teil B: Weniger Rückstand an der Quelle
@@ -173,12 +175,12 @@ Gemeinsamer Ablauf: Das Modul liest `heute=1`, lädt `today(now)` und die offene
 
 Die Umsetzung erfolgt in vier getrennten Aufträgen. Jeder endet mit grünen Prüfungen, Commit und Push; der nächste beginnt erst nach Durchsicht.
 
-| Auftrag | Commit-Schritte | Inhalt                                                              |
-| ------- | --------------- | ------------------------------------------------------------------- |
-| 1       | 1 und 2         | Umbau ohne Verhaltensänderung, B1 Mathe                             |
-| 2       | 3               | B2 LernBox                                                          |
-| 3       | 4 und 5         | A2–A5: Portion, Speicher, Startseite                                |
-| 4       | 6               | A6: Module mit `?heute=1`, Playwright, Doku, Entscheidungsprotokoll |
+| Auftrag | Commit-Schritte | Inhalt                                                                          |
+| ------- | --------------- | ------------------------------------------------------------------------------- |
+| 1       | 1 und 2         | Umbau ohne Verhaltensänderung, B1 Mathe                                         |
+| 2       | 3               | B2 LernBox                                                                      |
+| 3       | 4 und 5         | A2–A5: Portion, Speicher, Startseite                                            |
+| 4       | 6               | A6: Module mit `?heute=1`, Playwright, Doku, Entscheidungsprotokoll (umgesetzt) |
 
 ## Reihenfolge der Commits (jeweils grün)
 
