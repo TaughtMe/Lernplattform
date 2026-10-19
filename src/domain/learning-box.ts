@@ -317,19 +317,23 @@ export function isLearningBoxCardDue(
 }
 
 /**
- * Fälligkeit nach Zeitplan: Die Vorwärtsrichtung zählt, wenn sie fällig ist.
- * Die Rückrichtung zählt erst, wenn sie schon einmal geübt wurde
- * (`reverseInterval > 0`); sonst bliebe jede nur vorwärts gelernte Karte „fällig“.
+ * Fälligkeit nach Zeitplan: Eine Richtung zählt erst, wenn sie schon einmal
+ * geübt wurde (Abstand > 0). Neue Karten und die nie geübte Rückrichtung sind
+ * „neu“, nicht fällig; sie kommen über das Kontingent für neue Aufgaben der
+ * Tagesportion oder über freies Üben eines Stapels.
  */
 export function isLearningBoxCardScheduledDue(
   card: LearningBoxCard,
   now = Date.now(),
 ) {
   return (
-    isLearningBoxCardDue(card, "forward", now) ||
+    (card.interval > 0 && isLearningBoxCardDue(card, "forward", now)) ||
     (card.reverseInterval > 0 && isLearningBoxCardDue(card, "reverse", now))
   );
 }
+
+/** Mindestabstand zum letzten Abruf, ab dem eine richtige Antwort in Box 1 aufsteigt. */
+export const LEARNING_BOX_RECOVERY_GAP_HOURS = 8;
 
 /**
  * Ergebnis einer Abfrage. Abstände je Box wie im Leitner-Zeitplan
@@ -339,6 +343,10 @@ export function isLearningBoxCardScheduledDue(
  * - zweite Chance geschafft: Box bleibt, Abstand der Box.
  * - richtig, aber vor der Fälligkeit (Richtung schon geübt): kein Aufstieg,
  *   Box, Abstand und Termin bleiben; zu frühes Üben ist nur Üben.
+ * - richtig in Box 1 kurz nach dem letzten Abruf (weniger als
+ *   `LEARNING_BOX_RECOVERY_GAP_HOURS`), etwa nach einem Fehler über „Meine
+ *   Fehler“: Der Fehler gilt als geschlossen, aber ohne Aufstieg; die Karte
+ *   kommt morgen wieder. Sofortige Verbesserung ist kein selbstständiger Abruf.
  * - richtig und fällig oder neu (Abstand 0): eine Box höher, höchstens 5.
  */
 export function processLearningBoxResult(
@@ -363,6 +371,14 @@ export function processLearningBoxResult(
     currentInterval > 0 &&
     !isLearningBoxCardDue(card, input.direction, now);
 
+  const recovering =
+    !failed &&
+    !early &&
+    input.secondChance !== "recovered" &&
+    currentBox === 1 &&
+    currentInterval > 0 &&
+    now - card.lastReviewed < LEARNING_BOX_RECOVERY_GAP_HOURS * 60 * 60 * 1000;
+
   let nextBox: LearningBoxLevel = currentBox;
   let nextInterval = currentInterval;
   let nextReview = currentNextReview;
@@ -370,6 +386,9 @@ export function processLearningBoxResult(
     nextBox = 1;
     nextInterval = 1;
     nextReview = now;
+  } else if (recovering) {
+    nextInterval = LEITNER_INTERVAL_DAYS[1];
+    nextReview = now + nextInterval * DAY_MS;
   } else if (!early) {
     if (input.secondChance !== "recovered") {
       nextBox = Math.min(currentBox + 1, 5) as LearningBoxLevel;

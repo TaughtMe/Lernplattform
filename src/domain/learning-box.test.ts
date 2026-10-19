@@ -9,6 +9,7 @@ import {
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
   isLearningBoxCardScheduledDue,
+  LEARNING_BOX_RECOVERY_GAP_HOURS,
   learningBoxDirectionAt,
   parseLearningBoxImport,
   placeLiveVocabularyCard,
@@ -216,8 +217,15 @@ describe("isLearningBoxCardScheduledDue", () => {
     now: 10 * DAY,
   });
 
-  it("zählt eine fällige Vorwärtsrichtung", () => {
-    expect(isLearningBoxCardScheduledDue(base, 10 * DAY)).toBe(true);
+  it("zählt eine neue, nie geübte Karte nicht als fällig", () => {
+    expect(base.interval).toBe(0);
+    expect(isLearningBoxCardScheduledDue(base, 10 * DAY)).toBe(false);
+  });
+
+  it("zählt eine geübte und fällige Vorwärtsrichtung", () => {
+    expect(
+      isLearningBoxCardScheduledDue({ ...base, interval: 1 }, 10 * DAY),
+    ).toBe(true);
   });
 
   it("zählt die nie geübte Rückrichtung nicht als fällig", () => {
@@ -314,9 +322,51 @@ describe("processLearningBoxResult: Abstände und Fälligkeit", () => {
       level: box,
       interval: LEITNER_INTERVAL_DAYS[box],
       nextReview: due,
+      // Zuletzt geübt genau einen Abstand vor dem Termin.
+      lastReviewed: due - LEITNER_INTERVAL_DAYS[box] * DAY,
     };
   }
   const right = { correct: true, direction: "forward", mode: "oral" } as const;
+
+  it("schließt einen Fehler bei sofortiger Verbesserung ohne Aufstieg", () => {
+    const wrong = processLearningBoxResult(practiced(3, T0), {
+      ...right,
+      correct: false,
+      now: T0,
+    });
+    expect(wrong.box).toBe(1);
+    expect(wrong.nextReview).toBe(T0);
+    // Eine Stunde später über „Meine Fehler“ richtig: Box 1, morgen wieder.
+    const soon = processLearningBoxResult(wrong, {
+      ...right,
+      now: T0 + HOUR,
+    });
+    expect(soon.box).toBe(1);
+    expect(soon.interval).toBe(1);
+    expect(soon.nextReview).toBe(T0 + HOUR + DAY);
+    // Am nächsten Tag selbstständig richtig: jetzt erst Box 2.
+    const later = processLearningBoxResult(soon, {
+      ...right,
+      now: T0 + HOUR + DAY,
+    });
+    expect(later.box).toBe(2);
+    expect(later.interval).toBe(3);
+  });
+
+  it("steigt nach einem Fehler auf, wenn der Abstand zum letzten Abruf reicht", () => {
+    const wrong = processLearningBoxResult(practiced(2, T0), {
+      ...right,
+      correct: false,
+      now: T0,
+    });
+    const gapEdge = T0 + LEARNING_BOX_RECOVERY_GAP_HOURS * HOUR;
+    expect(
+      processLearningBoxResult(wrong, { ...right, now: gapEdge - 1 }).box,
+    ).toBe(1);
+    expect(
+      processLearningBoxResult(wrong, { ...right, now: gapEdge }).box,
+    ).toBe(2);
+  });
 
   it("nutzt je Box die Abstände 1/3/7/14/30 aus dem Leitner-Plan", () => {
     const expected = { 1: 3, 2: 7, 3: 14, 4: 30, 5: 30 } as const;
@@ -538,7 +588,8 @@ describe("replaying LernBox events", () => {
       mode: "oral",
     } as const;
     const events = [
-      eventFor("c", 3_000, right),
+      // Der richtige Abruf nach dem Fehler liegt einen Tag später.
+      eventFor("c", 2_000 + 86_400_000, right),
       eventFor("a", 1_500, right),
       eventFor("b", 2_000, wrong),
     ];

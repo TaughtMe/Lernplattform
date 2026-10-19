@@ -109,9 +109,10 @@ describe("shared learning recommendations", () => {
       reason: "error",
       route: "/frei/mathematics",
     });
+    // Die Karte ist neu: ein nächster Schritt, kein Rückstand.
     expect(
       recommendations.find((item) => item.module === "vocabulary"),
-    ).toMatchObject({ reason: "due", route: "/lernbox" });
+    ).toMatchObject({ reason: "next-step", route: "/lernbox" });
   });
 
   it("zählt die Mathe-Menge nach Aufgabenfamilien und stuft frische Fehler als Fehler ein", async () => {
@@ -287,7 +288,10 @@ describe("shared learning recommendations", () => {
     await database.learningBoxCards.put({
       ...errorCard,
       lastReviewed: nowMs - 10_000,
+      // Schon geübt: vorwärts nach einem Fehler, rückwärts in Box 2.
+      interval: 1,
       nextReview: nowMs,
+      reverseInterval: 3,
       reverseNextReview: nowMs + 86_400_000,
       box: 1,
       reverseBox: 2,
@@ -364,6 +368,41 @@ describe("shared learning recommendations", () => {
     });
   });
 
+  it("offers new cards as a next step instead of counting them as due", async () => {
+    const database = new PersonalLearningDatabase(
+      `recommendations-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const nowMs = new Date("2026-08-24T12:00:00.000Z").getTime();
+    const deck = createLearningBoxDeck({ title: "Englisch", now: nowMs });
+    await database.learningBoxDecks.put(deck);
+    await database.learningBoxCards.bulkPut(
+      Array.from({ length: 150 }, (_, index) =>
+        createLearningBoxCard({
+          deckId: deck.id,
+          question: `word-${index}`,
+          answer: `Wort-${index}`,
+          now: nowMs,
+        }),
+      ),
+    );
+
+    const recommendations = await createLearningRecommendationRepository(
+      database,
+    ).list({
+      enabledModules: ["vocabulary"],
+      now: new Date(nowMs + 1000).toISOString(),
+    });
+
+    expect(recommendations).toEqual([
+      expect.objectContaining({
+        id: "learning-box-new",
+        reason: "next-step",
+        route: "/lernbox",
+      }),
+    ]);
+  });
+
   it("closes a card for today once it was answered, without counting it twice", async () => {
     const database = new PersonalLearningDatabase(
       `recommendations-${crypto.randomUUID()}`,
@@ -382,7 +421,15 @@ describe("shared learning recommendations", () => {
         now: nowMs,
       });
     });
-    await database.learningBoxCards.bulkPut(cards);
+    // Beide Karten wurden gestern vorwärts geübt und sind heute fällig; die
+    // Rückrichtung ist noch neu.
+    await database.learningBoxCards.bulkPut(
+      cards.map((card) => ({
+        ...card,
+        interval: 1,
+        lastReviewed: nowMs - 86_400_000,
+      })),
+    );
     const open = async (at: number) =>
       (
         await createLearningRecommendationRepository(database).list({
@@ -396,12 +443,15 @@ describe("shared learning recommendations", () => {
 
     // Eine Karte vorwärts richtig beantwortet: Rückrichtung bleibt ungeübt.
     await repository.putCardAndEvent({
-      card: processLearningBoxResult(cards[0]!, {
-        correct: true,
-        direction: "forward",
-        mode: "writing",
-        now: nowMs + 2000,
-      }),
+      card: processLearningBoxResult(
+        (await database.learningBoxCards.get(cards[0]!.id))!,
+        {
+          correct: true,
+          direction: "forward",
+          mode: "writing",
+          now: nowMs + 2000,
+        },
+      ),
       correct: true,
       direction: "forward",
       mode: "writing",

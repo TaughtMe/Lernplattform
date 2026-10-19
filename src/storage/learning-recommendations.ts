@@ -167,10 +167,23 @@ export function createLearningRecommendationRepository(
           dueAt: mathDue[0]!.dueAt,
         });
 
-      // Die Rückrichtung zählt erst, wenn sie schon einmal geübt wurde.
+      // Fällig ist nur, was schon einmal geübt wurde; neue Karten sind ein
+      // nächster Schritt, kein Rückstand.
       const dueCards = cards.filter((card) =>
         isLearningBoxCardScheduledDue(card, nowMs),
       );
+      const newCards = cards.filter((card) => card.interval === 0);
+      if (dueCards.length === 0 && newCards.length > 0) {
+        candidates.push({
+          id: "learning-box-new",
+          module: "vocabulary",
+          title: "Neue Vokabeln beginnen",
+          detail: "Ein paar neue Karten aus deinen Stapeln.",
+          route: "/lernbox",
+          reason: "next-step",
+          amount: newCards.length,
+        });
+      }
       if (dueCards.length > 0) {
         const errorCards = dueCards.filter(
           (card) =>
