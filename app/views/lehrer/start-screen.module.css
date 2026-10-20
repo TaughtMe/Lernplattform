@@ -17,7 +17,8 @@
   --act-line: var(--green);
   --act-tint: #eef7f2;
   --tool-ink: #5c5346;
-  --hint: #8d8677;
+  /* Hinweistext im Suchfeld: --ink3 statt #8d8677 der Vorlage (Kontrast AA). */
+  --hint: var(--ink3);
   display: flex;
   flex-direction: column;
   color: var(--ink);
@@ -28,7 +29,6 @@
   --act-line: var(--good);
   --act-tint: var(--good-bg);
   --tool-ink: var(--ink2);
-  --hint: var(--ink3);
 }
 
 /* ---------- Bühne: Titel, Raum, Kacheln ---------- */
@@ -284,6 +284,7 @@
   align-items: center;
   gap: 5px;
   min-width: 0;
+  overflow: hidden;
 }
 .kindInline,
 .otherKindChip {
@@ -531,15 +532,18 @@
 .search svg {
   flex: none;
 }
+/* Das Feld füllt die Höhe des Rahmens: Tippfläche 44 px wie die Chips. */
 .field {
   position: relative;
   display: flex;
   flex: 1;
+  align-self: stretch;
   align-items: center;
   min-width: 0;
 }
 .input {
   flex: 1;
+  align-self: stretch;
   min-width: 0;
   padding: 0;
   border: 0;
@@ -623,7 +627,7 @@
 }
 .start .notice {
   margin: 0;
-  padding: 0 16px 24px;
+  padding: 16px 16px 24px;
   font-size: 12.5px;
   line-height: 1.4;
   color: var(--ink2);

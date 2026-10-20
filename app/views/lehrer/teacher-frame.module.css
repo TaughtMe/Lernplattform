@@ -491,6 +491,10 @@ a.profileSub:hover {
 .drawerInner .area {
   min-height: 46px;
 }
+/* Klassen/Verwalten aufklappen: in der Schublade 44 px Tippfläche. */
+.drawerInner .groupToggle {
+  min-height: 44px;
+}
 .drawerInner .profile {
   padding-top: 12px;
 }

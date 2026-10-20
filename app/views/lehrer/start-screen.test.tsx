@@ -71,13 +71,11 @@ describe("StartScreen", () => {
   it("zeigt im Archiv „Wieder vorbereiten“ statt Starten", async () => {
     const onPrepareAgain = vi.fn();
     render(<StartScreen {...props({ tab: "archive", onPrepareAgain })} />);
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("button", {
-          name: "Der Hund im Hof wieder vorbereiten",
-        }),
-      );
+    await userEvent.setup().click(
+      screen.getByRole("button", {
+        name: "Der Hund im Hof wieder vorbereiten",
+      }),
+    );
     expect(onPrepareAgain).toHaveBeenCalledWith("a1");
     expect(screen.queryByRole("button", { name: /starten$/ })).toBeNull();
     expect(

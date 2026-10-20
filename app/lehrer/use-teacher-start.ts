@@ -244,7 +244,9 @@ export function useTeacherStart(): {
         filterByClass([found], candidate, activeIds).length > 0,
     )?.id;
   };
-  const classParam = `klasse=${encodeURIComponent(selection)}`;
+  // Solange die Klassen laden, steht die Wahl nur in der Adresse.
+  const linkClass = loaded ? selection : requested;
+  const classParam = linkClass ? `klasse=${encodeURIComponent(linkClass)}` : "";
   const find = (id: string) => packages.find((entry) => entry.id === id);
 
   async function change(action: () => Promise<unknown>) {
@@ -291,7 +293,10 @@ export function useTeacherStart(): {
       ...(own ? { classShort: own } : {}),
       ...(room ? { room } : {}),
       createHref: Object.fromEntries(
-        KINDS.map((kind) => [kind, `/lehrer/live?neu=${kind}&${classParam}`]),
+        KINDS.map((kind) => [
+          kind,
+          `/lehrer/live?neu=${kind}${classParam ? `&${classParam}` : ""}`,
+        ]),
       ) as Record<StartKind, string>,
       tab,
       onTab: setTab,
