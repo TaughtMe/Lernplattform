@@ -82,7 +82,7 @@ test("server-renders the released pilot entry pages", async () => {
   for (const [path, title] of [
     ["/raum", "Raum beitreten"],
     ["/frei/mathematics", "Kopfrechnen"],
-    ["/lehrer/live", "Wortliste vorbereiten"],
+    ["/lehrer/live", "Inhalt eingeben"],
     ["/impressum", "Angaben gemäß"],
     ["/datenschutz", "Persönliche Lernstände"],
   ]) {

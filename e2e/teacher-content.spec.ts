@@ -169,7 +169,7 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
     await expect(page).toHaveURL(/\/lehrer\/live/, { timeout: 1500 });
   }).toPass();
   await expect(
-    page.getByRole("heading", { name: "Wortliste vorbereiten" }),
+    page.getByRole("heading", { name: "Inhalt eingeben" }),
   ).toBeVisible();
   // Die Adresse ist nach dem Lesen aufgeräumt.
   await expect(page).toHaveURL(/\/lehrer\/live$/);
@@ -178,12 +178,15 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
     .getByRole("textbox", { name: "Text" })
     .fill("Am Morgen scheint die Sonne.");
   await page.getByRole("textbox", { name: "Titel" }).fill("Sonne am Morgen");
+  // „Speichern“ steht am Ende von Schritt 2 (Design 15b).
+  await page.getByRole("button", { name: "Weiter zu Modus" }).click();
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(
     page.getByText("„Sonne am Morgen“ ist gespeichert."),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Zurück zu Inhalte" }).click();
+  await page.getByRole("button", { name: "Zurück", exact: true }).click();
+  await page.getByRole("button", { name: "Zurück zu Start" }).click();
   await expect(page).toHaveURL(/\/lehrer$/);
   // Ein goto mitten in laufende Ladevorgänge bricht WebKit sporadisch mit
   // „internal error“ ab: erst die Seite zur Ruhe kommen lassen.
@@ -206,9 +209,11 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
     "Am Morgen scheint die Sonne.",
   );
   await page.getByRole("textbox", { name: "Titel" }).fill("Morgensonne");
+  await page.getByRole("button", { name: "Weiter zu Modus" }).click();
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(page.getByText("„Morgensonne“ ist gespeichert.")).toBeVisible();
-  await page.getByRole("button", { name: "Zurück zu Inhalte" }).click();
+  await page.getByRole("button", { name: "Zurück", exact: true }).click();
+  await page.getByRole("button", { name: "Zurück zu Start" }).click();
   await expect(page).toHaveURL(/\/lehrer$/);
   await page.waitForLoadState("networkidle");
   await page.goto(`/lehrer?klasse=${CLASS_A}`);
