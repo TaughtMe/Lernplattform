@@ -26,6 +26,20 @@ import {
 } from "../../views/lehrer/demo";
 import { StartSheet } from "../../views/lehrer/start-sheet";
 import {
+  RoomBarPill,
+  StartScreen,
+  type StartTab,
+} from "../../views/lehrer/start-screen";
+import {
+  START_DEMO_ARCHIVED,
+  START_DEMO_AREAS,
+  START_DEMO_CLASSES,
+  START_DEMO_MANAGE,
+  START_DEMO_OTHER,
+  START_DEMO_PREPARED,
+  START_DEMO_SOURCES,
+} from "../../views/lehrer/start-demo";
+import {
   TeacherFrame,
   type TeacherAreaItem,
 } from "../../views/lehrer/teacher-frame";
@@ -80,6 +94,9 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
   }
   if (screen === "3c" || screen === "3d") {
     return <TeacherDemo variant={variant} theme={theme} />;
+  }
+  if (screen === "15a" || screen === "15c" || screen === "15d") {
+    return <StartDemo theme={theme} />;
   }
   if (screen === "9b" || screen === "9c") {
     const library = <TextboxLibrary />;
@@ -346,6 +363,85 @@ function TeacherDemo({ variant, theme }: { variant: string; theme: Theme }) {
           }
           onSave={() => setAssignOpen(false)}
           onClose={() => setAssignOpen(false)}
+        />
+      </TeacherFrame>
+    </div>
+  );
+}
+
+const START_ROOM = { code: "4K2P", detail: "18 von 24", href: "#" };
+
+/**
+ * Startseite des Lehrerbereichs v2 (15a, 15c, 15d) mit den Beispieldaten der
+ * Vorlage. Reiter, Quelle, Suche und „+ Auch für 7b“ lassen sich anklicken.
+ */
+function StartDemo({ theme }: { theme: Theme }) {
+  const [currentTheme, setTheme] = useState<Theme>(theme);
+  const [navOpen, setNavOpen] = useState(false);
+  const [tab, setTab] = useState<StartTab>("prepared");
+  const [source, setSource] = useState("ohne");
+  const [query, setQuery] = useState("");
+  const [added, setAdded] = useState<readonly string[]>([]);
+  const all = Object.values(START_DEMO_OTHER).flat();
+  const needle = query.trim().toLocaleLowerCase("de");
+  const rows = (
+    needle
+      ? all.filter((row) => row.title.toLocaleLowerCase("de").includes(needle))
+      : (START_DEMO_OTHER[source] ?? [])
+  ).map((row) => ({ ...row, added: added.includes(row.id) }));
+  const toggle = (id: string) =>
+    setAdded((value) =>
+      value.includes(id)
+        ? value.filter((entry) => entry !== id)
+        : [...value, id],
+    );
+  return (
+    <div data-theme={currentTheme} style={{ display: "contents" }}>
+      <TeacherFrame
+        layout="page"
+        eyebrow="Klasse 7b"
+        title="Start"
+        theme={currentTheme}
+        classes={START_DEMO_CLASSES}
+        areas={START_DEMO_AREAS}
+        manage={START_DEMO_MANAGE}
+        addClass={{ href: "#", plusOnDesktop: true }}
+        profile={{
+          initials: "TB",
+          name: "T. Bryson",
+          sub: "Zur Startseite",
+          href: "#",
+          subHref: "#",
+        }}
+        barExtra={<RoomBarPill room={START_ROOM} />}
+        navOpen={navOpen}
+        onNavOpen={() => setNavOpen(true)}
+        onNavClose={() => setNavOpen(false)}
+        onToggleTheme={() =>
+          setTheme((value) => (value === "dark" ? "light" : "dark"))
+        }
+      >
+        <StartScreen
+          eyebrow="Klasse 7b · Start"
+          classShort="7b"
+          room={START_ROOM}
+          createHref={{ text: "#", vocabulary: "#", math: "#" }}
+          tab={tab}
+          onTab={setTab}
+          prepared={START_DEMO_PREPARED}
+          archived={START_DEMO_ARCHIVED}
+          emptyText={{ prepared: "", archive: "" }}
+          other={{
+            sources: START_DEMO_SOURCES,
+            source,
+            onSource: setSource,
+            query,
+            onQuery: setQuery,
+            rows,
+            emptyText: "Nichts gefunden.",
+            onAdd: toggle,
+            onRemove: toggle,
+          }}
         />
       </TeacherFrame>
     </div>
