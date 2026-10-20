@@ -69,7 +69,7 @@
       "screen": "3c",
       "width": 390,
       "height": 788,
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "3c-nav",
@@ -79,14 +79,14 @@
       "canvas": ["[id=\"3c\"] button[aria-label=\"Klassen und Bereiche\"]"],
       "reset": ["[id=\"3c\"] button[aria-label=\"Leiste schließen\"]"],
       "ready": "dialog[open]",
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "3d",
       "screen": "3d",
       "width": 1180,
       "height": 700,
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "3d-dark",
@@ -96,7 +96,7 @@
       "canvas": ["[id=\"3d\"] button[aria-label=\"Hell oder dunkel\"]"],
       "reset": ["[id=\"3d\"] button[aria-label=\"Hell oder dunkel\"]"],
       "theme": "dark",
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "4a",
@@ -560,7 +560,11 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 1000,
-      "status": "offen"
+      "hide": [
+        "[aria-label=\"Hell oder dunkel\"]",
+        "header [class*=\"barActions\"]"
+      ],
+      "status": "umgesetzt"
     },
     {
       "id": "15c",
@@ -568,7 +572,11 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 834,
       "height": 1112,
-      "status": "offen"
+      "hide": [
+        "[aria-label=\"Hell oder dunkel\"]",
+        "header [class*=\"barActions\"]"
+      ],
+      "status": "umgesetzt"
     },
     {
       "id": "15d",
@@ -576,7 +584,11 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 390,
       "height": 844,
-      "status": "offen"
+      "hide": [
+        "[aria-label=\"Hell oder dunkel\"]",
+        "header [class*=\"barActions\"]"
+      ],
+      "status": "umgesetzt"
     },
     {
       "id": "15b",

@@ -17,30 +17,6 @@ export type DesignScreen = {
  * Sie stehen bewusst nicht in screens.json (das nur Zustände der Vorlage kennt).
  */
 const CATALOG_ONLY: readonly DesignScreen[] = [
-  {
-    id: "3c-start",
-    screen: "3c",
-    width: 390,
-    height: 788,
-    theme: "light",
-    implemented: true,
-  },
-  {
-    id: "3c-assign",
-    screen: "3c",
-    width: 390,
-    height: 788,
-    theme: "light",
-    implemented: true,
-  },
-  {
-    id: "3d-start",
-    screen: "3d",
-    width: 1180,
-    height: 700,
-    theme: "light",
-    implemented: true,
-  },
   // Einstellungen eines Modus als Fenster (Tablet: über der Leiste, Handy: von unten).
   {
     id: "16a-pop",

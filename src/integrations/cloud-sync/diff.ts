@@ -30,6 +30,8 @@ const LABELS: Record<string, string> = {
   subjects: "Fächer",
   sequence: "Durchgang",
   completedAt: "Abgeschlossen",
+  prepared: "Modus und Optionen",
+  preparedAt: "Vorbereitet",
 };
 
 /** Felder, die sich bei jeder Änderung ohnehin mitbewegen. */

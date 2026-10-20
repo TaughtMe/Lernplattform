@@ -191,10 +191,13 @@ export function TeacherContentTransfer({
         answerLocale: value.right,
         createdAt: existing?.createdAt ?? time,
         updatedAt: time,
-        // Art, Klassenzuordnung und letzte Nutzung bleiben erhalten.
+        // Art, Klassenzuordnung, letzte Nutzung und Vorbereitung bleiben erhalten.
         ...(existing?.kind ? { kind: existing.kind } : {}),
         ...(existing?.classIds ? { classIds: existing.classIds } : {}),
         ...(existing?.lastUsedAt ? { lastUsedAt: existing.lastUsedAt } : {}),
+        ...(existing?.textSplit ? { textSplit: existing.textSplit } : {}),
+        ...(existing?.prepared ? { prepared: existing.prepared } : {}),
+        ...(existing?.preparedAt ? { preparedAt: existing.preparedAt } : {}),
       };
       await library.put(entry);
       setPackages(await library.list());

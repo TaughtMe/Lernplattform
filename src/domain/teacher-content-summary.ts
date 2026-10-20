@@ -10,6 +10,7 @@ import {
 import type {
   TeacherContentKind,
   TeacherContentPackage,
+  TeacherPreparedSettings,
   TeacherTextSplit,
 } from "./teacher-content-library";
 
@@ -185,6 +186,100 @@ export function ranDate(
         ...(timeZone ? { timeZone } : {}),
       })
     : null;
+}
+
+/**
+ * Steht der Inhalt im Archiv? Ja, wenn er durchgeführt und seitdem nicht
+ * wieder vorbereitet wurde. Alles andere einer Klasse gilt als vorbereitet,
+ * auch ein nur gespeicherter Inhalt (er startet mit den Standardoptionen).
+ */
+export function isArchived(
+  entry: Pick<TeacherContentPackage, "lastUsedAt" | "preparedAt">,
+): boolean {
+  if (!entry.lastUsedAt) return false;
+  if (!entry.preparedAt) return true;
+  return Date.parse(entry.lastUsedAt) > Date.parse(entry.preparedAt);
+}
+
+/** Vorbereitete Inhalte: zuletzt vorbereitet oder geändert zuerst. */
+export function sortPrepared<
+  T extends Pick<TeacherContentPackage, "preparedAt" | "updatedAt" | "id">,
+>(entries: readonly T[]): T[] {
+  const stamp = (entry: T) => entry.preparedAt ?? entry.updatedAt;
+  return [...entries].sort(
+    (left, right) =>
+      Date.parse(stamp(right)) - Date.parse(stamp(left)) ||
+      left.id.localeCompare(right.id),
+  );
+}
+
+/** Namen der Spielmodi wie im Laufdiktat. */
+export const GAME_MODE_LABELS: Record<
+  TeacherPreparedSettings["gameMode"],
+  string
+> = {
+  LAUFDIKTAT: "Laufdiktat",
+  UEBUNG: "Freies Üben",
+  BATTLE: "Battle",
+  STATION: "Stationen",
+};
+
+/**
+ * Modus und die wichtigsten Optionen einer Vorbereitung, z. B.
+ * „Stationen · 5 Stationen · Vorlesen an“. Ohne Vorbereitung startet der Raum
+ * als Laufdiktat mit den Standardoptionen.
+ */
+export function describePrepared(prepared?: TeacherPreparedSettings): string {
+  const settings = prepared ?? { gameMode: "LAUFDIKTAT" as const };
+  const parts: string[] = [];
+  if (settings.gameMode === "STATION" && settings.stationCount) {
+    parts.push(plural(settings.stationCount, "Station", "Stationen"));
+  }
+  if (settings.gameMode === "BATTLE") {
+    const ink = settings.battleInk ?? true;
+    const flicker = settings.battleFlicker ?? true;
+    parts.push(
+      ink && flicker
+        ? "Tinte und Flimmern"
+        : ink
+          ? "nur Tinte"
+          : flicker
+            ? "nur Flimmern"
+            : "ohne Störangriffe",
+    );
+  }
+  if (settings.tts) parts.push("Vorlesen an");
+  if (settings.mathGap) parts.push("mit Lücken");
+  if (settings.strictTyping) parts.push("genaues Tippen");
+  if (parts.length === 0) parts.push("Standard");
+  return [GAME_MODE_LABELS[settings.gameMode], ...parts].join(" · ");
+}
+
+/** Archiv: Modus der letzten Durchführung und ihr Datum. */
+export function describeRun(
+  entry: Pick<TeacherContentPackage, "lastUsedAt" | "prepared">,
+  timeZone?: string,
+): string {
+  const date = ranDate(entry, timeZone);
+  const ran = date ? `durchgeführt ${date}` : "noch nie durchgeführt";
+  return entry.prepared
+    ? `${GAME_MODE_LABELS[entry.prepared.gameMode]} · ${ran}`
+    : ran;
+}
+
+/**
+ * Stand eines Inhalts für die Liste „Aus anderen Klassen holen“:
+ * durchgeführt (mit Datum), vorbereitet oder noch nie durchgeführt.
+ */
+export function describeState(
+  entry: Pick<TeacherContentPackage, "lastUsedAt" | "preparedAt" | "prepared">,
+  timeZone?: string,
+): string {
+  if (isArchived(entry)) return `durchgeführt ${ranDate(entry, timeZone)}`;
+  if (entry.prepared || entry.preparedAt || entry.lastUsedAt) {
+    return "vorbereitet";
+  }
+  return "noch nie durchgeführt";
 }
 
 /** Änderungsdatum der Ablage, z. B. „14.09.“. */

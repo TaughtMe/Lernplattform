@@ -160,7 +160,48 @@ describe("liveContentToPackage", () => {
     expect(entry).toMatchObject({ revision: 4, lastUsedAt: NOW });
   });
 
-  it("verschiebt beim Speichern in eine andere Klasse, sonst bleiben die Klassen", () => {
+  it("behält die Vorbereitung beim Speichern und ersetzt sie bei der Durchführung", () => {
+    const prepared = {
+      ...existing,
+      preparedAt: "2026-09-04T10:00:00.000Z",
+      prepared: { gameMode: "BATTLE" as const, battleInk: false },
+    };
+    const saved = liveContentToPackage({
+      draft: { ...draft, title: "Neu" },
+      existing: prepared,
+      newId: "x",
+      now: NOW,
+    });
+    expect(saved).toMatchObject({
+      preparedAt: prepared.preparedAt,
+      prepared: prepared.prepared,
+    });
+    const ran = liveContentToPackage({
+      draft: { ...draft, title: "Eins" },
+      existing: prepared,
+      newId: "x",
+      now: NOW,
+      markUsed: true,
+      ranWith: { gameMode: "STATION", stationCount: 6 },
+    });
+    expect(ran).toMatchObject({
+      lastUsedAt: NOW,
+      preparedAt: prepared.preparedAt,
+      prepared: { gameMode: "STATION", stationCount: 6 },
+    });
+    // Ohne Durchführung ändern die Optionen der Runde nichts.
+    expect(
+      liveContentToPackage({
+        draft: { ...draft, title: "Eins" },
+        existing: prepared,
+        newId: "x",
+        now: NOW,
+        ranWith: { gameMode: "UEBUNG" },
+      }).prepared,
+    ).toEqual(prepared.prepared);
+  });
+
+  it("ergänzt beim Speichern die gewählte Klasse, sonst bleiben die Klassen", () => {
     const input = {
       draft: { ...draft, title: "Eins" },
       existing: { ...existing, classIds: [CLASS_A] },
@@ -170,11 +211,11 @@ describe("liveContentToPackage", () => {
     };
     expect(liveContentToPackage(input).classIds).toEqual([CLASS_A]);
     expect(
-      liveContentToPackage({ ...input, moveToClass: true }).classIds,
-    ).toEqual(["123e4567-e89b-42d3-a456-426614174099"]);
-    // Gehört der Inhalt schon zur Klasse, bleibt er in all seinen Klassen.
+      liveContentToPackage({ ...input, addToClass: true }).classIds,
+    ).toEqual([CLASS_A, "123e4567-e89b-42d3-a456-426614174099"]);
+    // Gehört der Inhalt schon zur Klasse, bleibt alles, wie es ist.
     expect(
-      liveContentToPackage({ ...input, moveToClass: true, classId: CLASS_A })
+      liveContentToPackage({ ...input, addToClass: true, classId: CLASS_A })
         .classIds,
     ).toEqual([CLASS_A]);
   });

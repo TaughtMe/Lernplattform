@@ -155,7 +155,8 @@ describe("useLiveRoomSession: Raum öffnen", () => {
     });
     expect(mocks.saveTeacherLiveRoom).toHaveBeenCalledWith(result.current.room);
     expect(result.current.flow).toMatchObject({ stage: "lobby", busy: false });
-    expect(storeContent).toHaveBeenCalledWith(true);
+    // Die Lobby legt nur ab; durchgeführt ist der Inhalt erst mit der Sitzung.
+    expect(storeContent).toHaveBeenCalledWith(false);
     expect(result.current.roomTimeline).not.toBeNull();
     expect(result.current.roomTimeState).not.toBeNull();
   });
@@ -195,9 +196,10 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
     return harness;
   }
 
-  it("startet die Sitzung und sagt es dem Kanal", async () => {
-    const { result } = await openRoom();
+  it("startet die Sitzung, sagt es dem Kanal und markiert die Durchführung", async () => {
+    const { result, storeContent } = await openRoom();
     await act(() => result.current.startSession());
+    expect(storeContent).toHaveBeenLastCalledWith(true);
     expect(mocks.updateLiveSession).toHaveBeenCalledWith(
       CONFIG,
       result.current.room,
@@ -208,6 +210,22 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
       expect.objectContaining({ event: "session-start" }),
     );
     expect(result.current.flow).toMatchObject({ stage: "live", busy: false });
+  });
+
+  it("lässt die Sitzung laufen, wenn nur das Markieren als durchgeführt scheitert", async () => {
+    const storeContent = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("voll"));
+    const { result, setError } = setup({ storeContent });
+    await act(() => result.current.openLobby());
+    await act(() => result.current.startSession());
+    await waitFor(() =>
+      expect(setError).toHaveBeenLastCalledWith(
+        "Die Sitzung läuft, aber der Inhalt konnte nicht als durchgeführt gespeichert werden.",
+      ),
+    );
+    expect(result.current.flow.stage).toBe("live");
   });
 
   it("startet nicht, wenn der Kanal die Nachricht nicht annimmt", async () => {

@@ -36,6 +36,7 @@ function setup(
     setVocabularyLocales: vi.fn(),
     setShuffleWords: vi.fn(),
     setGameMode: vi.fn(),
+    applyPreparedSettings: vi.fn(),
     chooseContentMode: vi.fn(),
     setClassChoice: vi.fn().mockResolvedValue(undefined),
     openLobby: vi.fn().mockResolvedValue(undefined),
@@ -149,6 +150,33 @@ describe("useLaunchRequest: Adresse", () => {
       ),
     );
     expect(mocks.get).toHaveBeenCalledWith("weg");
+  });
+
+  it("übernimmt die Vorbereitung eines Inhalts, der Modus der Adresse geht vor", async () => {
+    mocks.search = "inhalt=x&modus=UEBUNG";
+    const prepared = { gameMode: "STATION" as const, stationCount: 6 };
+    mocks.get.mockResolvedValue({
+      id: "x",
+      revision: 1,
+      title: "Herbst",
+      source: "Die Blätter fallen.",
+      promptLocale: "en",
+      answerLocale: "de",
+      createdAt: "2026-10-01T08:00:00.000Z",
+      updatedAt: "2026-10-01T08:00:00.000Z",
+      kind: "text",
+      prepared,
+    });
+    const { calls } = setup();
+    await waitFor(() =>
+      expect(calls.applyPreparedSettings).toHaveBeenCalledWith(prepared),
+    );
+    await waitFor(() =>
+      expect(calls.setGameMode).toHaveBeenCalledWith("UEBUNG"),
+    );
+    expect(
+      calls.applyPreparedSettings.mock.invocationCallOrder[0],
+    ).toBeLessThan(calls.setGameMode.mock.invocationCallOrder[0]!);
   });
 
   it("meldet einen Fehler beim Laden aus der Ablage", async () => {

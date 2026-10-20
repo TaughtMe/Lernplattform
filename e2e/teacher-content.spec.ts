@@ -39,7 +39,7 @@ async function seed(
   // Die App legt die Datenbank beim ersten Öffnen an.
   await page.goto("/lehrer");
   await expect(
-    page.getByRole("heading", { name: "Inhalte" }).first(),
+    page.getByRole("heading", { name: "Neues Laufdiktat" }),
   ).toBeVisible();
   await page.waitForFunction(async () =>
     (await indexedDB.databases()).some(
@@ -99,7 +99,7 @@ async function seed(
   await page.reload();
 }
 
-test("die Ablage zeigt nur die Inhalte der gewählten Klasse", async ({
+test("die Startseite zeigt nur die Laufdiktate der gewählten Klasse", async ({
   page,
 }) => {
   test.skip(!isMobile(page), "mobiler Ablauf");
@@ -117,43 +117,52 @@ test("die Ablage zeigt nur die Inhalte der gewählten Klasse", async ({
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator("header").getByText("Klasse 9a")).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Mathe für 9a bearbeiten" }).first(),
+    page.getByRole("button", { name: "Mathe für 9a bearbeiten" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Text für 7b bearbeiten" }),
   ).toHaveCount(0);
-  await expect(page.getByText("1 Inhalt").first()).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Vorbereitet/ })).toContainText(
+    "1",
+  );
 });
 
-test("ein nicht zugeordneter Inhalt wandert in die gewählte Klasse", async ({
+test("ein nicht zugeordnetes Laufdiktat kommt mit „+ Auch für 7b“ in die Klasse", async ({
   page,
 }) => {
   await seed(page);
-  await page.goto("/lehrer?klasse=ohne");
-
-  const assign = page.getByRole("button", {
-    name: "Altes Vokabelpaket zuordnen",
-  });
-  await expect(assign)
-    .toBeVisible({ timeout: 15_000 })
-    .catch(() => undefined);
-  if (isMobile(page)) {
-    // Mobil gibt es „Zuordnen“ nur im Start-Overlay (Scheibe 8.5).
-    test.skip(true, "Zuordnen am Handy folgt mit dem Start-Overlay");
-  }
-  await assign.click();
-  const dialog = page.getByRole("dialog", { name: "Klassen zuordnen" });
-  await dialog.getByRole("checkbox", { name: /Klasse 7b/ }).check();
-  await dialog.getByRole("button", { name: "Speichern" }).click();
-  await expect(dialog).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "Altes Vokabelpaket zuordnen" }),
-  ).toHaveCount(0);
-
   await page.goto(`/lehrer?klasse=${CLASS_A}`);
+
+  const add = page.getByRole("button", {
+    name: "Altes Vokabelpaket auch für 7b",
+  });
+  await expect(async () => {
+    await add.click({ timeout: 1500 });
+    await expect(
+      page.getByRole("button", { name: "Altes Vokabelpaket starten" }),
+    ).toBeVisible({ timeout: 1500 });
+  }).toPass();
   await expect(
-    page.getByRole("button", { name: "Altes Vokabelpaket bearbeiten" }).first(),
+    page.getByRole("button", {
+      name: "Altes Vokabelpaket bei 7b, wieder abnehmen",
+    }),
   ).toBeVisible();
+
+  // Ein Eintrag, keine Kopie: In 9a geholt, gehört er beiden Klassen.
+  await page.goto(`/lehrer?klasse=${CLASS_B}`);
+  await page
+    .getByRole("group", { name: "Quelle" })
+    .getByRole("button", { name: /Klasse 7b/ })
+    .click();
+  await page
+    .getByRole("button", { name: "Altes Vokabelpaket auch für 9a" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Altes Vokabelpaket starten" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("tabpanel").getByText("7b", { exact: true }).first(),
+  ).toBeAttached();
 });
 
 test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", async ({
@@ -163,9 +172,7 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
   await page.goto(`/lehrer?klasse=${CLASS_A}`);
 
   await expect(async () => {
-    await page.getByRole("button", { name: /^Text/ }).first().click();
-    if (isMobile(page))
-      await page.getByRole("button", { name: "Weiter" }).click();
+    await page.getByRole("link", { name: /^Text/ }).click();
     await expect(page).toHaveURL(/\/lehrer\/live/, { timeout: 1500 });
   }).toPass();
   await expect(
@@ -182,7 +189,7 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
   await page.getByRole("button", { name: "Weiter zu Modus" }).click();
   await page.getByRole("button", { name: "Speichern" }).click();
   await expect(
-    page.getByText("„Sonne am Morgen“ ist gespeichert."),
+    page.getByText("„Sonne am Morgen“ ist vorbereitet."),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Zurück", exact: true }).click();
@@ -211,7 +218,7 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
   await page.getByRole("textbox", { name: "Titel" }).fill("Morgensonne");
   await page.getByRole("button", { name: "Weiter zu Modus" }).click();
   await page.getByRole("button", { name: "Speichern" }).click();
-  await expect(page.getByText("„Morgensonne“ ist gespeichert.")).toBeVisible();
+  await expect(page.getByText("„Morgensonne“ ist vorbereitet.")).toBeVisible();
   await page.getByRole("button", { name: "Zurück", exact: true }).click();
   await page.getByRole("button", { name: "Zurück zu Start" }).click();
   await expect(page).toHaveURL(/\/lehrer$/);
@@ -264,29 +271,25 @@ async function smallTargets(page: Page) {
   });
 }
 
-async function openSheet(page: Page) {
-  const sheet = page.getByRole("dialog", { name: "Raum öffnen" });
-  await expect(async () => {
-    await page
-      .getByRole("button", { name: "Text für 7b starten" })
-      .last()
-      .click();
-    await expect(sheet).toBeVisible({ timeout: 1500 });
-  }).toPass();
-  return sheet;
-}
-
 for (const theme of ["light", "dark"] as const) {
-  test.describe(`Barrierefreiheit der Seite Inhalte (${theme})`, () => {
+  test.describe(`Barrierefreiheit der Startseite (${theme})`, () => {
     test.beforeEach(async ({ page }) => {
       await page.addInitScript(
         (value) => localStorage.setItem("theme-preference", value),
         theme,
       );
-      await seed(page);
+      await seed(page, [
+        content("p-alt-7b", "Schon durchgeführt", {
+          kind: "text",
+          classIds: [CLASS_A, CLASS_B],
+          source: "Der Hund läuft.",
+          lastUsedAt: "2026-09-10T10:00:00.000Z",
+          prepared: { gameMode: "BATTLE" },
+        }),
+      ]);
       await page.goto(`/lehrer?klasse=${CLASS_A}`);
       await expect(
-        page.getByRole("button", { name: "Text für 7b starten" }).first(),
+        page.getByRole("button", { name: "Text für 7b starten" }),
       ).toBeVisible();
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
     });
@@ -297,7 +300,18 @@ for (const theme of ["light", "dark"] as const) {
         nodes.length,
       ]);
 
-    test("Ablage", async ({ page }) => {
+    test("Vorbereitet und Holen", async ({ page }) => {
+      expect(await scan(page)).toEqual([]);
+      if (isMobile(page)) expect(await smallTargets(page)).toEqual([]);
+    });
+
+    test("Archiv", async ({ page }) => {
+      await page.getByRole("tab", { name: /Archiv/ }).click();
+      await expect(
+        page.getByRole("button", {
+          name: "Schon durchgeführt wieder vorbereiten",
+        }),
+      ).toBeVisible();
       expect(await scan(page)).toEqual([]);
       if (isMobile(page)) expect(await smallTargets(page)).toEqual([]);
     });
@@ -317,25 +331,35 @@ for (const theme of ["light", "dark"] as const) {
       await expect(drawer).toHaveCount(0);
     });
 
-    test("offenes Startfenster", async ({ page }) => {
-      const sheet = await openSheet(page);
-      await expect(sheet.getByText("Raum für Klasse 7b")).toBeVisible();
+    test("Rückfrage beim Löschen", async ({ page }) => {
+      const remove = page.getByRole("button", { name: "Text für 7b löschen" });
+      test.skip(!(await remove.isVisible()), "Handy löscht im Editor");
+      await remove.click();
+      await expect(
+        page.getByRole("group", { name: "Text für 7b löschen bestätigen" }),
+      ).toBeVisible();
       expect(await scan(page)).toEqual([]);
-      if (isMobile(page)) expect(await smallTargets(page)).toEqual([]);
-      await page.keyboard.press("Escape");
-      await expect(sheet).toHaveCount(0);
-    });
-
-    test("offener Zuordnen-Dialog", async ({ page }) => {
-      const sheet = await openSheet(page);
-      await sheet.getByRole("button", { name: /ändern/ }).click();
-      const dialog = page.getByRole("dialog", { name: "Klassen zuordnen" });
-      await expect(dialog).toBeVisible();
-      expect(await scan(page)).toEqual([]);
-      if (isMobile(page)) expect(await smallTargets(page)).toEqual([]);
     });
   });
 }
+
+test("Startseite: bei 320 px läuft nichts horizontal über", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await seed(page);
+  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+  await expect(
+    page.getByRole("button", { name: "Text für 7b starten" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth,
+    ),
+  ).toBe(false);
+});
 
 /** Zwei Englisch-Pakete mit Tags und ein Französisch-Paket in Klasse 7b. */
 const PICKER_PACKAGES = [

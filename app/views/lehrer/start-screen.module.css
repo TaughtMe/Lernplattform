@@ -1,0 +1,1073 @@
+/*
+ * Startseite des Lehrerbereichs: Lehrerbereich v2, 15d (Handy, Grundlage),
+ * 15c (Tablet ab 600 px) und 15a (Desktop ab 900 px). Maße und Farben stammen
+ * aus docs/design/lehrerbereich-v2.dc.html. Die Breite kommt vom Rahmen
+ * (`@container lehrer-rahmen`, siehe teacher-frame.module.css).
+ */
+.start {
+  composes: view from "../parts/parts.module.css";
+  --stage-bg: #2a2723;
+  --stage-ink: #f7f4ee;
+  --stage-ink2: #a89e8c;
+  --stage-pill: #211f1b;
+  --live-dot: #5fbf8a;
+  --live-link: #f0cf84;
+  --act: var(--green);
+  --act-ink: var(--green-ink);
+  --act-line: var(--green);
+  --act-tint: #eef7f2;
+  --tool-ink: #5c5346;
+  /* Hinweistext im Suchfeld: --ink3 statt #8d8677 der Vorlage (Kontrast AA). */
+  --hint: var(--ink3);
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+}
+:global([data-theme="dark"]) .start {
+  --stage-bg: #100f0b;
+  /* Umriss-Knöpfe: das Grün der Vorlage hat auf dunklem Grund zu wenig Kontrast. */
+  --act-line: var(--good);
+  --act-tint: var(--good-bg);
+  --tool-ink: var(--ink2);
+}
+
+/* ---------- Bühne: Titel, Raum, Kacheln ---------- */
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px 20px;
+  background: var(--stage-bg);
+  color: var(--stage-ink);
+}
+.stageHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.start .eyebrow {
+  display: none;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--stage-ink2);
+}
+.stage .title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.roomPill {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 14px;
+  background: var(--stage-pill);
+}
+.roomState,
+.barState {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--live-dot);
+}
+.roomLink {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--live-link);
+  color: #211f1b;
+  font-family: var(--font-control);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 6px 12px;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+}
+.glyph {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 22px;
+  font-weight: 700;
+}
+.tileText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tileLabel {
+  font-size: 15px;
+  font-weight: 700;
+}
+.tileCta,
+.tileArrow {
+  display: none;
+}
+.tileCta {
+  color: var(--ink2);
+}
+.tileArrow {
+  color: var(--act-line);
+}
+
+/* ---------- Reiter und Liste ---------- */
+.lower {
+  display: flex;
+  flex-direction: column;
+}
+.listSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 0;
+}
+.tabBar {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--line2);
+}
+.tab {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 46px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--ink2);
+  font-family: var(--font-control);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tabActive {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+}
+.long,
+.searchShort {
+  display: none;
+}
+.count {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--line);
+  color: var(--ink2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.tabActive .count {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.tabHint {
+  display: none;
+  margin-left: auto;
+  padding-bottom: 10px;
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.listBox,
+.otherBox {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.otherBox {
+  border-radius: 13px;
+}
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.start .empty {
+  margin: 0;
+  padding: 18px 16px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--ink2);
+}
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border-top: 1px solid var(--line);
+}
+.kindCol {
+  display: none;
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.rowTitle,
+.otherTitle {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowLine {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+.kindInline,
+.otherKindChip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 11px;
+  font-weight: 700;
+}
+.meta {
+  display: none;
+  margin-right: 4px;
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.chipsInline {
+  display: contents;
+}
+.chipsCol {
+  display: none;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chip {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.chipOwn {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+.startButton {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--act-line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--act-line);
+  cursor: pointer;
+}
+.startButton:hover {
+  background: var(--act-tint);
+}
+.hot,
+.hot:hover {
+  border: 0;
+  background: var(--act);
+  color: var(--act-ink);
+}
+.hot:hover {
+  filter: brightness(1.12);
+}
+.playIcon {
+  width: 26px;
+  height: 26px;
+}
+.againIcon {
+  width: 20px;
+  height: 20px;
+}
+.againText {
+  display: none;
+}
+.toolButton {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--bg);
+  color: var(--tool-ink);
+  cursor: pointer;
+}
+.edit:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.remove:hover {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+/* Handy: Die Zeile antippen bearbeitet; der Knopf liegt unsichtbar über ihr. */
+.edit {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.edit:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.edit .editIcon {
+  display: none;
+}
+.edit:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+.confirm {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.confirmButton {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-control);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.danger {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.more {
+  min-height: 48px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-control);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- Aus anderen Klassen holen ---------- */
+.other {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 16px;
+}
+.otherBar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.start .otherLabel {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: normal;
+}
+.sources {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  margin: 0 -16px;
+  padding: 0 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.source {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-control);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.source:hover {
+  border-color: var(--accent);
+}
+.sourceActive,
+.sourceActive:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+.sourceCount {
+  font-weight: 600;
+  opacity: 0.7;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--hint);
+  font-size: 13px;
+  cursor: text;
+}
+.search:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.search svg {
+  flex: none;
+}
+/* Das Feld füllt die Höhe des Rahmens: Tippfläche 44 px wie die Chips. */
+.field {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  align-items: center;
+  min-width: 0;
+}
+.input {
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+}
+.input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+.placeholder {
+  position: absolute;
+  left: 0;
+  pointer-events: none;
+}
+.input:not(:placeholder-shown) + .placeholder {
+  display: none;
+}
+.otherRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border-top: 1px solid var(--line);
+}
+.otherMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.otherTitle {
+  font-size: 14px;
+}
+.otherLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.otherKindChip,
+.otherMeta {
+  display: none;
+}
+.otherKindText {
+  font-size: 12px;
+  color: var(--ink2);
+}
+.otherMeta {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.add {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-control);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.add:hover {
+  border-color: var(--accent);
+}
+.added,
+.added:hover {
+  border-color: var(--act-line);
+  background: var(--act-tint);
+  color: var(--act-line);
+}
+.addLong {
+  display: none;
+}
+.start .notice {
+  margin: 0;
+  padding: 16px 16px 24px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink2);
+}
+
+/* ---------- Hinweis „Raum läuft“ in der Kopfzeile (15c, 15d) ---------- */
+.barPill {
+  display: inline-flex;
+  box-sizing: border-box;
+  flex: none;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--live-link, #f0cf84);
+  color: #211f1b;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.barShort {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.barDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.barLong {
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+.barPill .liveDot {
+  background: #5fbf8a;
+}
+.barLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: #f0cf84;
+  color: #211f1b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- Handy: nur die ersten Zeilen, „Alle N anzeigen“ ---------- */
+@container lehrer-rahmen (max-width: 599.98px) {
+  .collapsed .row:nth-child(n + 5) {
+    display: none;
+  }
+}
+
+/* ---------- Tablet (15c) ---------- */
+@container lehrer-rahmen (min-width: 600px) {
+  .stage {
+    gap: 16px;
+    padding: 22px 24px 26px;
+  }
+  .stage .title {
+    font-size: 34px;
+    letter-spacing: -0.035em;
+  }
+  .tiles {
+    gap: 12px;
+  }
+  .tile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "glyph arrow"
+      "text text";
+    align-items: center;
+    gap: 12px 0;
+    padding: 16px;
+    border-radius: 18px;
+    text-align: left;
+  }
+  .glyph {
+    grid-area: glyph;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    font-size: 24px;
+  }
+  .tileText {
+    grid-area: text;
+    gap: 2px;
+  }
+  .tileLabel {
+    font-size: 19px;
+    letter-spacing: -0.02em;
+  }
+  .tileCta {
+    display: block;
+    font-size: 12.5px;
+  }
+  .tileArrow {
+    display: block;
+    grid-area: arrow;
+  }
+  .lower {
+    flex: 1;
+    gap: 24px;
+    min-height: 0;
+    padding: 20px 24px 24px;
+  }
+  .listSection {
+    min-height: 0;
+    padding: 0;
+  }
+  .tabBar {
+    gap: 4px;
+  }
+  .tab {
+    flex: none;
+    gap: 8px;
+    padding: 0 16px;
+    font-size: 16px;
+  }
+  .long,
+  .searchShort {
+    display: inline;
+  }
+  .short,
+  .searchLong,
+  .more {
+    display: none;
+  }
+  .count {
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+  .listBox {
+    max-height: 316px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .row {
+    gap: 12px;
+    padding: 10px 12px 10px 16px;
+  }
+  .rowTitle {
+    font-size: 15px;
+  }
+  .rowLine {
+    flex-wrap: wrap;
+  }
+  .kindInline,
+  .otherKindChip {
+    padding: 3px 9px;
+    font-size: 11.5px;
+  }
+  .meta {
+    display: inline;
+  }
+  .startButton {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+  }
+  .playIcon {
+    width: 27px;
+    height: 27px;
+  }
+  .again {
+    display: inline-flex;
+    gap: 7px;
+    width: auto;
+    padding: 0 14px;
+    font-family: var(--font-control);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .again .againIcon {
+    width: 14px;
+    height: 14px;
+  }
+  .againText {
+    display: inline;
+  }
+  .toolButton,
+  .edit {
+    position: static;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line2);
+    border-radius: 11px;
+    background: var(--bg);
+  }
+  .edit:hover {
+    background: var(--bg);
+  }
+  .edit .editIcon {
+    display: block;
+  }
+  .edit:focus-visible {
+    outline-offset: 2px;
+  }
+  .other {
+    gap: 12px;
+    min-height: 0;
+    padding: 0;
+  }
+  .otherBar {
+    flex-flow: row wrap;
+    align-items: center;
+    gap: 12px 8px;
+  }
+  .start .otherLabel {
+    flex-basis: 100%;
+  }
+  .sources {
+    display: contents;
+  }
+  .search {
+    flex: 1;
+    min-width: 0;
+  }
+  .otherBox {
+    max-height: 316px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .otherRow {
+    gap: 12px;
+    padding: 10px 12px 10px 16px;
+  }
+  .otherTitle {
+    font-size: 14.5px;
+  }
+  .otherKindChip,
+  .otherMeta {
+    display: inline;
+  }
+  .otherKindText,
+  .addShort {
+    display: none;
+  }
+  .addLong {
+    display: inline;
+  }
+  .start .notice {
+    padding: 0;
+  }
+  .barPill {
+    gap: 10px;
+    min-height: 0;
+    padding: 5px 5px 5px 12px;
+    background: #332f28;
+    color: #f7f4ee;
+  }
+  .barShort {
+    display: none;
+  }
+  .barLong {
+    display: inline-flex;
+  }
+}
+
+/*
+ * Tablet hochkant (15c): Die Seite füllt die Höhe, beide Listen scrollen
+ * getrennt, die untere reicht bis zum Rand. Die Ebenen dazwischen
+ * (Hauptfläche des Rahmens, ältere Hülle `.ui`) geben die Höhe nur weiter,
+ * wenn sie schrumpfen dürfen. Auf niedrigen Bildschirmen (Handy quer) scrollt
+ * die Seite wie sonst.
+ */
+@media (min-height: 760px) {
+  @container lehrer-rahmen (min-width: 600px) and (max-width: 899.98px) {
+    :global(#inhalt):has(.start) {
+      min-height: 0;
+    }
+    :global(.ui):has(> .start) {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .start {
+      flex: 1;
+      min-height: 0;
+    }
+    .otherBox {
+      flex: 1;
+      max-height: none;
+      min-height: 0;
+    }
+  }
+}
+
+/* ---------- Desktop (15a) ---------- */
+@container lehrer-rahmen (min-width: 900px) {
+  .stage {
+    gap: 20px;
+    padding: 24px 36px 28px;
+  }
+  .start .eyebrow {
+    display: block;
+  }
+  .stage .title {
+    font-size: 38px;
+  }
+  .roomPill {
+    display: flex;
+  }
+  .tiles {
+    gap: 14px;
+  }
+  .tile {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "glyph text arrow";
+    gap: 0 16px;
+    /* Wie in der Vorlage ohne Innenabstand gemessen: 84 px plus 2 × 14 px. */
+    min-height: 84px;
+    padding: 14px 18px;
+  }
+  .glyph {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    font-size: 26px;
+  }
+  .tileText {
+    gap: 3px;
+  }
+  .tileLabel {
+    font-size: 20px;
+  }
+  .tileCta {
+    font-size: 13px;
+  }
+  .lower {
+    gap: 30px;
+    padding: 24px 36px 32px;
+  }
+  .tabHint {
+    display: inline;
+  }
+  .listBox {
+    max-height: 262px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) 150px auto;
+    gap: 14px;
+  }
+  .kindCol {
+    display: inline;
+  }
+  .main {
+    gap: 1px;
+  }
+  .rowTitle {
+    font-size: 14.5px;
+  }
+  .kindInline,
+  .chipsInline {
+    display: none;
+  }
+  .chipsCol {
+    display: flex;
+  }
+  .actions {
+    justify-content: flex-end;
+  }
+  .startButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .again {
+    width: auto;
+  }
+  .toolButton,
+  .edit {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .editIcon {
+    width: 15px;
+    height: 15px;
+  }
+  .confirmButton {
+    min-height: 40px;
+  }
+  .otherBar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .start .otherLabel {
+    flex-basis: auto;
+    margin-right: 6px;
+    font-size: 14px;
+  }
+  .source {
+    min-height: 38px;
+    padding: 0 13px;
+  }
+  .search {
+    flex: none;
+    width: 220px;
+    min-height: 38px;
+    margin-left: auto;
+  }
+  .searchShort {
+    display: none;
+  }
+  .searchLong {
+    display: inline;
+  }
+  .otherBox {
+    flex: none;
+    min-height: 0;
+    max-height: 208px;
+  }
+  .otherRow {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) auto;
+    gap: 14px;
+    padding: 9px 12px 9px 16px;
+  }
+  .otherMain {
+    gap: 1px;
+  }
+  .otherTitle {
+    font-size: 14px;
+  }
+  .otherKindChip {
+    display: none;
+  }
+  .add {
+    min-height: 38px;
+    border-radius: 10px;
+  }
+}

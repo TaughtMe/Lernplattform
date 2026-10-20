@@ -16,25 +16,20 @@ import {
   type TeacherStep,
 } from "../../views/laufdiktat/teacher-dictation-screen";
 import {
-  ClassAssignDialog,
-  type AssignClass,
-} from "../../views/lehrer/class-assign-dialog";
+  RoomBarPill,
+  StartScreen,
+  type StartTab,
+} from "../../views/lehrer/start-screen";
 import {
-  ContentLibraryScreen,
-  type LibraryKind,
-} from "../../views/lehrer/content-library-screen";
-import {
-  DEMO_CLASSES,
-  DEMO_COUNT,
-  DEMO_FOOTNOTE,
-  DEMO_ITEMS,
-} from "../../views/lehrer/demo";
-import { StartSheet } from "../../views/lehrer/start-sheet";
-import {
-  TeacherFrame,
-  type TeacherAreaItem,
-} from "../../views/lehrer/teacher-frame";
-import { MODES } from "../../views/laufdiktat/teacher-dictation-screen";
+  START_DEMO_ARCHIVED,
+  START_DEMO_AREAS,
+  START_DEMO_CLASSES,
+  START_DEMO_MANAGE,
+  START_DEMO_OTHER,
+  START_DEMO_PREPARED,
+  START_DEMO_SOURCES,
+} from "../../views/lehrer/start-demo";
+import { TeacherFrame } from "../../views/lehrer/teacher-frame";
 import type { Theme } from "../../views/parts/parts";
 import { LandingScreen } from "../../views/start/landing-screen";
 import { renderManageScreen } from "./manage-screens";
@@ -87,8 +82,8 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
   if (screen === "17a" || screen === "17b" || screen === "17c") {
     return renderManageScreen(screen, theme);
   }
-  if (screen === "3c" || screen === "3d") {
-    return <TeacherDemo variant={variant} theme={theme} />;
+  if (screen === "15a" || screen === "15c" || screen === "15d") {
+    return <StartDemo theme={theme} />;
   }
   if (screen === "9b" || screen === "9c") {
     const library = <TextboxLibrary />;
@@ -277,53 +272,51 @@ export function showsKeyboard({ id, screen }: ScreenState) {
   return screen === "5a" && /-(write|battle)/.test(id);
 }
 
-const DEMO_AREAS: readonly TeacherAreaItem[] = [
-  { id: "inhalte", label: "Inhalte", icon: "content", href: "#", active: true },
-  { id: "raeume", label: "Räume", icon: "room", href: "#", active: false },
-  {
-    id: "auswertung",
-    label: "Auswertung",
-    icon: "chart",
-    href: "#",
-    active: false,
-  },
-];
+const START_ROOM = { code: "4K2P", detail: "18 von 24", href: "#" };
 
 /**
- * Lehrerbereich 3c/3d mit Beispieldaten. Die Zustände (Schublade, Overlay,
- * Hell/Dunkel) lassen sich im Katalog anklicken; `variant` wählt den Start:
- * `nav` (Schublade offen), `start` (Start-Overlay), `assign` (Klassen zuordnen).
+ * Startseite des Lehrerbereichs v2 (15a, 15c, 15d) mit den Beispieldaten der
+ * Vorlage. Reiter, Quelle, Suche und „+ Auch für 7b“ lassen sich anklicken.
  */
-function TeacherDemo({ variant, theme }: { variant: string; theme: Theme }) {
+function StartDemo({ theme }: { theme: Theme }) {
   const [currentTheme, setTheme] = useState<Theme>(theme);
-  const [navOpen, setNavOpen] = useState(variant === "nav");
-  const [sheetOpen, setSheetOpen] = useState(variant === "start");
-  const [assignOpen, setAssignOpen] = useState(variant === "assign");
-  const [kind, setKind] = useState<LibraryKind>("text");
-  const [mode, setMode] = useState("LAUFDIKTAT");
-  const [checked, setChecked] = useState<readonly string[]>(["7b"]);
-  const assignClasses: AssignClass[] = DEMO_CLASSES.map((item) => ({
-    id: item.id,
-    name: item.name,
-    sub: item.sub,
-    checked: checked.includes(item.id),
-  }));
+  const [navOpen, setNavOpen] = useState(false);
+  const [tab, setTab] = useState<StartTab>("prepared");
+  const [source, setSource] = useState("ohne");
+  const [query, setQuery] = useState("");
+  const [added, setAdded] = useState<readonly string[]>([]);
+  const all = Object.values(START_DEMO_OTHER).flat();
+  const needle = query.trim().toLocaleLowerCase("de");
+  const rows = (
+    needle
+      ? all.filter((row) => row.title.toLocaleLowerCase("de").includes(needle))
+      : (START_DEMO_OTHER[source] ?? [])
+  ).map((row) => ({ ...row, added: added.includes(row.id) }));
+  const toggle = (id: string) =>
+    setAdded((value) =>
+      value.includes(id)
+        ? value.filter((entry) => entry !== id)
+        : [...value, id],
+    );
   return (
     <div data-theme={currentTheme} style={{ display: "contents" }}>
       <TeacherFrame
+        layout="page"
         eyebrow="Klasse 7b"
-        title="Inhalte"
+        title="Start"
         theme={currentTheme}
-        classes={DEMO_CLASSES}
-        areas={DEMO_AREAS}
-        areasLabel="Bereich"
-        addClass={{ href: "#" }}
+        classes={START_DEMO_CLASSES}
+        areas={START_DEMO_AREAS}
+        manage={START_DEMO_MANAGE}
+        addClass={{ href: "#", plusOnDesktop: true }}
         profile={{
           initials: "TB",
           name: "T. Bryson",
-          sub: "Abmelden",
+          sub: "Zur Startseite",
           href: "#",
+          subHref: "#",
         }}
+        barExtra={<RoomBarPill room={START_ROOM} />}
         navOpen={navOpen}
         onNavOpen={() => setNavOpen(true)}
         onNavClose={() => setNavOpen(false)}
@@ -331,46 +324,27 @@ function TeacherDemo({ variant, theme }: { variant: string; theme: Theme }) {
           setTheme((value) => (value === "dark" ? "light" : "dark"))
         }
       >
-        <ContentLibraryScreen
-          kind={kind}
-          items={DEMO_ITEMS}
-          countLabel={DEMO_COUNT}
-          footnote={DEMO_FOOTNOTE}
-          onKind={setKind}
-          onOpen={() => setSheetOpen(true)}
-        />
-        <StartSheet
-          open={sheetOpen}
-          title="Present Perfect · Unit 3"
-          classLabel="Zugeordnet zu Klassen 7b, 9a"
-          roomFor="Klasse 7b"
-          classAction="ändern"
-          modes={MODES}
-          mode={mode}
-          note="Der Raumcode erscheint in der Lobby · Code gilt 90 Minuten"
-          onClose={() => setSheetOpen(false)}
-          onMode={setMode}
-          onClasses={() => {
-            setSheetOpen(false);
-            setAssignOpen(true);
+        <StartScreen
+          eyebrow="Klasse 7b · Start"
+          classShort="7b"
+          room={START_ROOM}
+          createHref={{ text: "#", vocabulary: "#", math: "#" }}
+          tab={tab}
+          onTab={setTab}
+          prepared={START_DEMO_PREPARED}
+          archived={START_DEMO_ARCHIVED}
+          emptyText={{ prepared: "", archive: "" }}
+          other={{
+            sources: START_DEMO_SOURCES,
+            source,
+            onSource: setSource,
+            query,
+            onQuery: setQuery,
+            rows,
+            emptyText: "Nichts gefunden.",
+            onAdd: toggle,
+            onRemove: toggle,
           }}
-          onStart={() => setSheetOpen(false)}
-          onAllOptions={() => setSheetOpen(false)}
-        />
-        <ClassAssignDialog
-          open={assignOpen}
-          title="Present Perfect · Unit 3"
-          classes={assignClasses}
-          note="Ohne Häkchen steht der Inhalt unter „Nicht zugeordnet“."
-          onToggle={(id) =>
-            setChecked((value) =>
-              value.includes(id)
-                ? value.filter((entry) => entry !== id)
-                : [...value, id],
-            )
-          }
-          onSave={() => setAssignOpen(false)}
-          onClose={() => setAssignOpen(false)}
         />
       </TeacherFrame>
     </div>

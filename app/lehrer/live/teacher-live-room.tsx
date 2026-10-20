@@ -182,7 +182,7 @@ export function TeacherLiveRoom({
         title={t.title}
         stored={t.contentId !== null}
         onTitle={t.setTitle}
-        onSavePrepared={() => void t.savePrepared(t.preparedSettings)}
+        onSavePrepared={() => void t.prepareContent()}
         onCreateClass={(name) => t.createClassNamed(name)}
         {...(t.contentId ? { onDelete: () => void t.deleteContent() } : {})}
         {...(t.libraryNotice ? { libraryNotice: t.libraryNotice } : {})}

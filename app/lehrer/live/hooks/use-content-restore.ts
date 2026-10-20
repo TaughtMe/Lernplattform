@@ -1,10 +1,13 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
+import type { VocabularyDirection } from "../../../../src/domain/running-dictation";
+import type { TeacherPreparedSettings } from "../../../../src/domain/teacher-content-library";
 import type { LiveSession } from "../../../../src/integrations/laufdiktat/live-session";
 import type { VocabularyTransferChoice } from "../../../../src/integrations/laufdiktat/live-session";
 import type { WordStoreTransferChoice } from "../../../../src/integrations/laufdiktat/live-session";
 import type { TeacherContentMode } from "../../../../src/integrations/laufdiktat/teacher-session";
+import { gameSettingsPatchOf } from "../../prepared-settings";
 import type { GameSettings } from "./use-game-settings";
 
 type ContentRestoreInput = {
@@ -16,12 +19,16 @@ type ContentRestoreInput = {
   setWordStoreTransfer: Dispatch<SetStateAction<WordStoreTransferChoice>>;
   setRoundTag: Dispatch<SetStateAction<string>>;
   setRestoredClassSeal: Dispatch<SetStateAction<string | undefined>>;
+  setDirection: Dispatch<SetStateAction<VocabularyDirection>>;
+  setVocabularyCaseSensitive: Dispatch<SetStateAction<boolean>>;
 };
 
 /**
  * Inhalt und Optionen eines wiederaufgenommenen Raums zurück in den Editor
  * holen. Der Hook hat keine Effekte; den Raum selbst liest und setzt der
  * Sitzungs-Hook, der diese Funktion in seinem Wiederaufnahme-Effekt aufruft.
+ * Ebenso holt `applyPreparedSettings` Modus und Optionen eines vorbereiteten
+ * Inhalts der Ablage in den Editor.
  */
 export function useContentRestore({
   setContentMode,
@@ -32,6 +39,8 @@ export function useContentRestore({
   setWordStoreTransfer,
   setRoundTag,
   setRestoredClassSeal,
+  setDirection,
+  setVocabularyCaseSensitive,
 }: ContentRestoreInput) {
   function applyRestoredContent(restored: LiveSession) {
     const restoredContent = restored.words[0]?.kind ?? "text";
@@ -79,5 +88,23 @@ export function useContentRestore({
     setRestoredClassSeal(restored.classSeal);
   }
 
-  return { applyRestoredContent };
+  /** Gespeicherte Vorbereitung; was sie nicht nennt, bleibt beim Standard. */
+  function applyPreparedSettings(prepared: TeacherPreparedSettings) {
+    patchSettings(gameSettingsPatchOf(prepared));
+    if (prepared.direction) setDirection(prepared.direction);
+    if (prepared.caseSensitive !== undefined) {
+      setVocabularyCaseSensitive(prepared.caseSensitive);
+    }
+    if (prepared.vocabularyTransfer) {
+      setVocabularyTransfer(prepared.vocabularyTransfer);
+    }
+    if (prepared.vocabularyTag !== undefined) {
+      setRoundTag(prepared.vocabularyTag);
+    }
+    if (prepared.wordStoreTransfer) {
+      setWordStoreTransfer(prepared.wordStoreTransfer);
+    }
+  }
+
+  return { applyRestoredContent, applyPreparedSettings };
 }

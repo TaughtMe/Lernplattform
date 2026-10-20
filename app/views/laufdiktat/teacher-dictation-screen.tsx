@@ -42,7 +42,7 @@ function RoomScreen(props: TeacherDictationScreenProps) {
     <div className={styles.screen}>
       <header className={styles.header}>
         <SquareIconButton
-          label="Zurück zu Inhalte"
+          label="Zurück zu Start"
           icon="back"
           onClick={props.onLeave}
         />

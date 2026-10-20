@@ -28,6 +28,7 @@ import {
 import {
   teacherContentPackageSchema,
   type TeacherContentPackage,
+  type TeacherPreparedSettings,
 } from "../domain/teacher-content-library";
 import {
   teacherClassSettingsSchema,
@@ -272,6 +273,30 @@ export function createTeacherContentLibraryRepository(
       );
       return sortForLibrary(filterByClass(entries, selection, active));
     },
+    /**
+     * Bereitet den Inhalt (wieder) vor: Er steht danach unter „Vorbereitet“.
+     * Mit `settings` werden Modus und Optionen gespeichert, ohne Angabe
+     * bleiben die zuletzt gespeicherten („Wieder vorbereiten“). Ändert nur
+     * `updatedAt`, nicht die Revision: Der Inhalt selbst bleibt gleich.
+     */
+    prepare: async (
+      id: string,
+      settings?: TeacherPreparedSettings,
+      at = new Date().toISOString(),
+    ) =>
+      database.transaction("rw", database.contentPackages, async () => {
+        const entry = await database.contentPackages.get(id);
+        if (!entry) return false;
+        await database.contentPackages.put(
+          teacherContentPackageSchema.parse({
+            ...entry,
+            preparedAt: at,
+            updatedAt: at,
+            ...(settings ? { prepared: settings } : {}),
+          }),
+        );
+        return true;
+      }),
     /** Merkt den letzten Raumstart; Titel, Quelle und Revision bleiben. */
     markUsed: async (id: string, at: string) => {
       const lastUsedAt = teacherContentPackageSchema.shape.lastUsedAt

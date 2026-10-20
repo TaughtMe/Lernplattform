@@ -7,6 +7,7 @@ import type { TextSplitConfig } from "../../src/domain/running-dictation-section
 import type {
   TeacherContentKind,
   TeacherContentPackage,
+  TeacherPreparedSettings,
   TeacherTextSplit,
 } from "../../src/domain/teacher-content-library";
 import {
@@ -55,9 +56,9 @@ export type LiveContentDraft = {
 
 /**
  * Zustand des Live-Raums → Paket der Ablage. Mit `existing` bleiben ID,
- * Erstellzeit, Klassen (außer bei `moveToClass`) und letzte Nutzung erhalten; die Revision steigt nur,
- * wenn sich Quelle oder Titel geändert haben. Ein leerer Titel wird aus
- * der Quelle vorgeschlagen.
+ * Erstellzeit, Klassen (mit `addToClass` um `classId` ergänzt), letzte Nutzung und
+ * Vorbereitung erhalten; die Revision steigt nur, wenn sich Quelle oder Titel
+ * geändert haben. Ein leerer Titel wird aus der Quelle vorgeschlagen.
  */
 export function liveContentToPackage(input: {
   draft: LiveContentDraft;
@@ -67,29 +68,40 @@ export function liveContentToPackage(input: {
   now: string;
   /** Klasse, zu der ein neues Paket gehört; leer = „Nicht zugeordnet“. */
   classId?: string | undefined;
-  /** Raumstart: setzt die letzte Nutzung. */
+  /** Durchführung (Start einer Runde): setzt die letzte Nutzung. */
   markUsed?: boolean;
-  /** Speichern: ein bestehendes Paket wechselt in `classId`, falls es dort noch fehlt. */
-  moveToClass?: boolean;
+  /**
+   * Mit `markUsed`: Modus und Optionen der Runde. Sie ersetzen die
+   * gespeicherte Vorbereitung, damit „Wieder vorbereiten“ genau diese Runde
+   * zurückholt.
+   */
+  ranWith?: TeacherPreparedSettings | undefined;
+  /**
+   * Speichern: ein bestehendes Paket gehört danach auch zu `classId`. Es bleibt
+   * ein Eintrag, der mehreren Klassen gehört (Lehrerbereich v2, 15a).
+   */
+  addToClass?: boolean;
 }): TeacherContentPackage {
   const { draft, existing, now } = input;
   const title =
     draft.title.trim() || suggestTitle(draft.source) || "Ohne Titel";
   const changed =
     !existing || existing.source !== draft.source || existing.title !== title;
-  const moves =
+  const adds =
     existing &&
-    input.moveToClass &&
+    input.addToClass &&
     input.classId &&
     !existing.classIds?.includes(input.classId);
-  const classIds = moves
-    ? [input.classId as string]
+  const classIds = adds
+    ? [...(existing.classIds ?? []), input.classId as string]
     : existing
       ? existing.classIds
       : input.classId
         ? [input.classId]
         : undefined;
   const lastUsedAt = input.markUsed ? now : existing?.lastUsedAt;
+  const prepared =
+    input.markUsed && input.ranWith ? input.ranWith : existing?.prepared;
   return {
     id: existing?.id ?? input.newId,
     revision: existing ? existing.revision + (changed ? 1 : 0) : 0,
@@ -104,10 +116,12 @@ export function liveContentToPackage(input: {
         ? draft.vocabularyLocales.right
         : (existing?.answerLocale ?? "de"),
     createdAt: existing?.createdAt ?? now,
-    updatedAt: changed || moves || !existing ? now : existing.updatedAt,
+    updatedAt: changed || adds || !existing ? now : existing.updatedAt,
     kind: draft.contentMode,
     ...(classIds ? { classIds } : {}),
     ...(lastUsedAt ? { lastUsedAt } : {}),
+    ...(existing?.preparedAt ? { preparedAt: existing.preparedAt } : {}),
+    ...(prepared ? { prepared } : {}),
     ...(draft.contentMode === "text" ? { textSplit: draft.textSplit } : {}),
   };
 }

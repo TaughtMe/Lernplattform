@@ -141,6 +141,44 @@
   letter-spacing: -0.03em;
 }
 
+/* ---------- Kopfzeile nach Lehrerbereich v2 (15c Tablet, 15d Handy) ---------- */
+/* Dunkel wie die Leiste; die Tokens gelten auch für Hell/Dunkel und Cloud darin. */
+.page .bar {
+  --bg: #211f1b;
+  --surface: #2a2621;
+  --surface2: #332f28;
+  --line: #3a352d;
+  --line2: #4a4438;
+  --ink: #f7f4ee;
+  --ink2: #b3a995;
+  --accent: #f0cf84;
+  padding: 12px 16px;
+  border-bottom: 0;
+  background: var(--nav);
+  color: var(--nav-ink);
+}
+.page .menuButton {
+  width: 46px;
+  height: 46px;
+  margin: 0;
+  border-color: var(--nav-line);
+  background: transparent;
+  color: var(--nav-ink);
+}
+.page .barClass {
+  font-size: 15px;
+}
+.page .barTitle {
+  color: var(--nav-ink2);
+}
+@container lehrer-rahmen (min-width: 600px) {
+  .page .bar {
+    gap: 12px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--nav-line);
+  }
+}
+
 /* ---------- Leiste: Seitenleiste und Schublade ---------- */
 .brand {
   display: flex;
@@ -329,6 +367,10 @@
 .v2 .classRow:not(.active) .count {
   background: var(--nav-active);
 }
+.v2 .active .count {
+  background: var(--nav-accent);
+  color: #211f1b;
+}
 .v2 .areaSmall {
   color: #cfc7b6;
 }
@@ -448,6 +490,10 @@ a.profileSub:hover {
 }
 .drawerInner .area {
   min-height: 46px;
+}
+/* Klassen/Verwalten aufklappen: in der Schublade 44 px Tippfläche. */
+.drawerInner .groupToggle {
+  min-height: 44px;
 }
 .drawerInner .profile {
   padding-top: 12px;

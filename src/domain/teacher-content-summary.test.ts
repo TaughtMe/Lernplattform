@@ -7,7 +7,11 @@ import {
   activeClassIdsOf,
   contentKindOf,
   describeContent,
+  describePrepared,
+  describeRun,
+  describeState,
   filterByClass,
+  isArchived,
   isUnassigned,
   resolveClassSelection,
   changedDate,
@@ -15,6 +19,7 @@ import {
   shortDate,
   sortLibrary,
   sortForLibrary,
+  sortPrepared,
   suggestTitle,
   UNASSIGNED,
 } from "./teacher-content-summary";
@@ -284,5 +289,127 @@ describe("Klassenwahl", () => {
         classIds: [],
       }),
     ).toBe(UNASSIGNED);
+  });
+});
+
+describe("Vorbereitung und Archiv", () => {
+  it("liest Altpakete ohne Vorbereitung und weist fremde Optionen ab", () => {
+    expect(teacherContentPackageSchema.parse(base).prepared).toBeUndefined();
+    const prepared = teacherContentPackageSchema.parse({
+      ...base,
+      preparedAt: "2026-09-03T10:00:00.000Z",
+      prepared: { gameMode: "STATION", stationCount: 5, tts: true },
+    });
+    expect(prepared.prepared).toEqual({
+      gameMode: "STATION",
+      stationCount: 5,
+      tts: true,
+    });
+    expect(() =>
+      teacherContentPackageSchema.parse({
+        ...base,
+        prepared: { gameMode: "STATION", punkte: true },
+      }),
+    ).toThrow();
+    expect(() =>
+      teacherContentPackageSchema.parse({
+        ...base,
+        prepared: { gameMode: "TEST" },
+      }),
+    ).toThrow();
+    expect(() =>
+      teacherContentPackageSchema.parse({
+        ...base,
+        prepared: { gameMode: "STATION", stationCount: 0 },
+      }),
+    ).toThrow();
+  });
+
+  it("archiviert nach der Durchführung, bis der Inhalt wieder vorbereitet ist", () => {
+    expect(isArchived({})).toBe(false);
+    expect(isArchived({ lastUsedAt: "2026-09-05T10:00:00.000Z" })).toBe(true);
+    expect(
+      isArchived({
+        lastUsedAt: "2026-09-05T10:00:00.000Z",
+        preparedAt: "2026-09-04T10:00:00.000Z",
+      }),
+    ).toBe(true);
+    expect(
+      isArchived({
+        lastUsedAt: "2026-09-05T10:00:00.000Z",
+        preparedAt: "2026-09-06T10:00:00.000Z",
+      }),
+    ).toBe(false);
+    expect(isArchived({ preparedAt: "2026-09-06T10:00:00.000Z" })).toBe(false);
+  });
+
+  it("sortiert Vorbereitetes nach Vorbereitung, sonst Änderung", () => {
+    const entries = [
+      { ...base, id: "alt" },
+      {
+        ...base,
+        id: "vorbereitet",
+        preparedAt: "2026-09-10T10:00:00.000Z",
+      },
+      { ...base, id: "neu", updatedAt: "2026-09-05T10:00:00.000Z" },
+    ];
+    expect(sortPrepared(entries).map(({ id }) => id)).toEqual([
+      "vorbereitet",
+      "neu",
+      "alt",
+    ]);
+  });
+
+  it("beschreibt Modus und wichtige Optionen", () => {
+    expect(describePrepared()).toBe("Laufdiktat · Standard");
+    expect(describePrepared({ gameMode: "LAUFDIKTAT", tts: true })).toBe(
+      "Laufdiktat · Vorlesen an",
+    );
+    expect(describePrepared({ gameMode: "STATION", stationCount: 5 })).toBe(
+      "Stationen · 5 Stationen",
+    );
+    expect(describePrepared({ gameMode: "STATION", stationCount: 1 })).toBe(
+      "Stationen · 1 Station",
+    );
+    expect(describePrepared({ gameMode: "BATTLE" })).toBe(
+      "Battle · Tinte und Flimmern",
+    );
+    expect(describePrepared({ gameMode: "BATTLE", battleFlicker: false })).toBe(
+      "Battle · nur Tinte",
+    );
+    expect(describePrepared({ gameMode: "BATTLE", battleInk: false })).toBe(
+      "Battle · nur Flimmern",
+    );
+    expect(
+      describePrepared({
+        gameMode: "BATTLE",
+        battleInk: false,
+        battleFlicker: false,
+      }),
+    ).toBe("Battle · ohne Störangriffe");
+    expect(
+      describePrepared({
+        gameMode: "UEBUNG",
+        mathGap: true,
+        strictTyping: true,
+      }),
+    ).toBe("Freies Üben · mit Lücken · genaues Tippen");
+  });
+
+  it("nennt Durchführung und Stand", () => {
+    const ran = { lastUsedAt: "2026-10-14T10:00:00.000Z" };
+    expect(describeRun(ran, "UTC")).toBe("durchgeführt 14.10.");
+    expect(
+      describeRun({ ...ran, prepared: { gameMode: "BATTLE" } }, "UTC"),
+    ).toBe("Battle · durchgeführt 14.10.");
+    expect(describeRun({}, "UTC")).toBe("noch nie durchgeführt");
+    expect(describeState(ran, "UTC")).toBe("durchgeführt 14.10.");
+    expect(describeState({}, "UTC")).toBe("noch nie durchgeführt");
+    expect(describeState({ prepared: { gameMode: "UEBUNG" } })).toBe(
+      "vorbereitet",
+    );
+    expect(
+      describeState({ ...ran, preparedAt: "2026-10-15T10:00:00.000Z" }),
+    ).toBe("vorbereitet");
   });
 });

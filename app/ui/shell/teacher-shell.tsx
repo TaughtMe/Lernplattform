@@ -7,8 +7,10 @@ import {
   UNASSIGNED,
 } from "../../../src/domain/teacher-content-summary";
 import { CloudBadgeConnected } from "../../components/cloud-badge-connected";
+import { useRunningRoom } from "../../lehrer/running-room";
 import { SyncConflictsHost } from "../../components/sync-conflicts-host";
 import { CloudSlotProvider } from "../cloud-slot";
+import { RoomBarPill } from "../../views/lehrer/start-screen";
 import { TeacherFrame } from "../../views/lehrer/teacher-frame";
 import type {
   TeacherAreaItem,
@@ -51,6 +53,8 @@ export function TeacherShell({
   const { theme, toggleTheme } = useThemeToggle();
   const data = useTeacherNavData();
   const [navOpen, setNavOpen] = useState(false);
+  // Läuft in diesem Fenster ein Raum, zeigt Start es in der mobilen Kopfzeile.
+  const room = useRunningRoom(pathname);
   // Nur auf Lehrerseiten ist die Adresse gemeint; dort steht `?klasse=`.
   const requested = useSearchParams().get("klasse");
 
@@ -107,13 +111,7 @@ export function TeacherShell({
       <TeacherFrame
         cloud={cloud}
         layout={
-          fill
-            ? "fill"
-            : managePage
-              ? "page"
-              : area === "content"
-                ? "titled"
-                : "plain"
+          fill ? "fill" : managePage || area === "content" ? "page" : "plain"
         }
         {...(managePage ? { classesOpen: false } : {})}
         eyebrow={
@@ -123,6 +121,9 @@ export function TeacherShell({
         }
         title={teacherAreaTitle(area)}
         theme={theme}
+        {...(area === "content" && room
+          ? { barExtra: <RoomBarPill room={room} /> }
+          : {})}
         classes={visibility.lehrer ? classes : []}
         {...(visibility.lehrer && unassigned ? { unassigned } : {})}
         areas={visible.filter((entry) => entry.group === "area").map(item)}

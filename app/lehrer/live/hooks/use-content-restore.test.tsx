@@ -18,9 +18,15 @@ function setup() {
     setWordStoreTransfer: vi.fn(),
     setRoundTag: vi.fn(),
     setRestoredClassSeal: vi.fn(),
+    setDirection: vi.fn(),
+    setVocabularyCaseSensitive: vi.fn(),
   };
   const { result } = renderHook(() => useContentRestore(calls));
-  return { apply: result.current.applyRestoredContent, calls };
+  return {
+    apply: result.current.applyRestoredContent,
+    prepare: result.current.applyPreparedSettings,
+    calls,
+  };
 }
 
 function restored(options: Parameters<typeof buildTeacherRoomConfig>[0]) {
@@ -132,5 +138,32 @@ describe("useContentRestore", () => {
       "1 + 2",
     );
     expect(calls.loadPairsFromTable).not.toHaveBeenCalled();
+  });
+
+  it("holt Modus und Optionen einer Vorbereitung, ohne Ungenanntes zu ändern", () => {
+    const { prepare, calls } = setup();
+    prepare({
+      gameMode: "BATTLE",
+      battleInk: false,
+      direction: "mixed",
+      caseSensitive: true,
+      vocabularyTransfer: "all",
+      vocabularyTag: "Unit 4",
+    });
+    expect(calls.patchSettings).toHaveBeenCalledWith({
+      gameMode: "BATTLE",
+      battleInk: false,
+    });
+    expect(calls.setDirection).toHaveBeenCalledWith("mixed");
+    expect(calls.setVocabularyCaseSensitive).toHaveBeenCalledWith(true);
+    expect(calls.setVocabularyTransfer).toHaveBeenCalledWith("all");
+    expect(calls.setRoundTag).toHaveBeenCalledWith("Unit 4");
+    expect(calls.setWordStoreTransfer).not.toHaveBeenCalled();
+
+    const text = setup();
+    text.prepare({ gameMode: "LAUFDIKTAT", wordStoreTransfer: "all" });
+    expect(text.calls.setWordStoreTransfer).toHaveBeenCalledWith("all");
+    expect(text.calls.setDirection).not.toHaveBeenCalled();
+    expect(text.calls.setRoundTag).not.toHaveBeenCalled();
   });
 });

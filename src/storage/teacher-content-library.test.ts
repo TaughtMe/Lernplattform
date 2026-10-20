@@ -136,6 +136,40 @@ describe("Ablage nach Klassen", () => {
     await expect(library.markUsed("x", "gestern")).rejects.toThrow();
   });
 
+  it("bereitet vor, holt aus dem Archiv zurück und behält die Optionen", async () => {
+    const library = createTeacherContentLibraryRepository(open());
+    await library.put(
+      entry("x", {
+        lastUsedAt: "2026-09-10T08:00:00.000Z",
+        prepared: { gameMode: "BATTLE", battleInk: false },
+      }),
+    );
+    // Wieder vorbereiten: nur das Datum, die Optionen bleiben.
+    await expect(
+      library.prepare("x", undefined, "2026-09-11T08:00:00.000Z"),
+    ).resolves.toBe(true);
+    expect(await library.get("x")).toMatchObject({
+      preparedAt: "2026-09-11T08:00:00.000Z",
+      updatedAt: "2026-09-11T08:00:00.000Z",
+      revision: 3,
+      prepared: { gameMode: "BATTLE", battleInk: false },
+    });
+    // Vorbereiten mit neuen Optionen ersetzt sie.
+    await library.prepare(
+      "x",
+      { gameMode: "STATION", stationCount: 6 },
+      "2026-09-12T08:00:00.000Z",
+    );
+    expect((await library.get("x"))?.prepared).toEqual({
+      gameMode: "STATION",
+      stationCount: 6,
+    });
+    await expect(library.prepare("fehlt")).resolves.toBe(false);
+    await expect(
+      library.prepare("x", { gameMode: "STATION", stationCount: -1 }),
+    ).rejects.toThrow();
+  });
+
   it("sortiert die Ablage nach letzter Nutzung vor Änderung", async () => {
     const library = createTeacherContentLibraryRepository(open());
     await library.putMany([
@@ -160,6 +194,8 @@ describe("Sicherung und Export mit neuen Feldern", () => {
         classIds: [CLASS_A],
         lastUsedAt: "2026-09-10T10:00:00.000Z",
         textSplit: "zeile",
+        preparedAt: "2026-09-11T10:00:00.000Z",
+        prepared: { gameMode: "UEBUNG", tts: true, wordStoreTransfer: "all" },
       }),
     ]);
     const backup = await createTeacherWorkspaceRepository(source).exportData();
@@ -172,13 +208,20 @@ describe("Sicherung und Export mit neuen Feldern", () => {
       kind: "text",
       classIds: [CLASS_A],
       textSplit: "zeile",
+      preparedAt: "2026-09-11T10:00:00.000Z",
+      prepared: { gameMode: "UEBUNG", tts: true, wordStoreTransfer: "all" },
     });
   });
 
   it("übersteht die Bibliotheksdatei als Roundtrip", () => {
     const packages = [
       entry("alt"),
-      entry("neu", { kind: "math", classIds: [CLASS_A, CLASS_B] }),
+      entry("neu", {
+        kind: "math",
+        classIds: [CLASS_A, CLASS_B],
+        preparedAt: "2026-09-11T10:00:00.000Z",
+        prepared: { gameMode: "LAUFDIKTAT", mathGap: true, mathOps: ["*"] },
+      }),
     ];
     const file = createTeacherContentLibraryFile(
       packages,

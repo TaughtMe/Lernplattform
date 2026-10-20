@@ -26,6 +26,7 @@ import {
   type TeacherContentMode,
 } from "../../../src/integrations/laufdiktat/teacher-session";
 import { useHydrated } from "../../ui/use-hydrated";
+import { preparedSettingsOf } from "../prepared-settings";
 import { useContentLibrary } from "./hooks/use-content-library";
 import { useContentRestore } from "./hooks/use-content-restore";
 import { useGameSettings } from "./hooks/use-game-settings";
@@ -37,10 +38,6 @@ import { useTextContent } from "./hooks/use-text-content";
 import { useVocabularyContent } from "./hooks/use-vocabulary-content";
 import { useVocabularyPicker } from "./hooks/use-vocabulary-picker";
 import { DEFAULT_SOURCES, MODES } from "./lib/modes";
-import {
-  preparedSettingsOf,
-  type PreparedRoomSettings,
-} from "./lib/prepared-settings";
 import { buildLiveRoomConfig } from "./lib/room-config";
 import {
   forwardCommand,
@@ -200,7 +197,31 @@ export function useTeacherLiveRoom(
     }
   }
 
-  const { applyRestoredContent } = useContentRestore({
+  // Modus und Optionen, wie sie eine Vorbereitung speichert (Schritt 2
+  // „Vorbereiten“) und wie sie eine durchgeführte Runde ins Archiv mitnimmt.
+  const preparedSettings = useMemo(
+    () =>
+      preparedSettingsOf({
+        contentMode,
+        settings,
+        direction,
+        caseSensitive: vocabularyCaseSensitive,
+        vocabularyTransfer,
+        roundTag: vocabulary.model.roundTag,
+        wordStoreTransfer: text.model.wordStoreTransfer,
+      }),
+    [
+      contentMode,
+      direction,
+      settings,
+      text.model.wordStoreTransfer,
+      vocabulary.model.roundTag,
+      vocabularyCaseSensitive,
+      vocabularyTransfer,
+    ],
+  );
+
+  const { applyRestoredContent, applyPreparedSettings } = useContentRestore({
     setContentMode,
     setSources,
     loadPairsFromTable: vocabulary.loadPairsFromTable,
@@ -209,6 +230,8 @@ export function useTeacherLiveRoom(
     setWordStoreTransfer: text.setWordStoreTransfer,
     setRoundTag: vocabulary.setRoundTag,
     setRestoredClassSeal: classes.setRestoredClassSeal,
+    setDirection: vocabulary.model.setDirection,
+    setVocabularyCaseSensitive: vocabulary.model.setVocabularyCaseSensitive,
   });
   const session = useLiveRoomSession({
     hydrated,
@@ -222,7 +245,12 @@ export function useTeacherLiveRoom(
     roomConfig,
     wordCount: words.length,
     gameMode: settings.gameMode,
-    storeContent: library.storeContent,
+    storeContent: (markUsed: boolean) =>
+      library.storeContent(
+        markUsed,
+        false,
+        markUsed ? preparedSettings : undefined,
+      ),
   });
   const { room, connectedNames, openLobby, startSession, endRoom } = session;
   useLaunchRequest({
@@ -245,6 +273,7 @@ export function useTeacherLiveRoom(
     setVocabularyLocales: vocabulary.model.setVocabularyLocales,
     setShuffleWords,
     setGameMode,
+    applyPreparedSettings,
     chooseContentMode,
     setClassChoice: classes.setClassChoice,
     openLobby,
@@ -265,34 +294,6 @@ export function useTeacherLiveRoom(
     (stage === "lobby" &&
       settings.gameMode !== "STATION" &&
       connectedNames.length === 0);
-
-  /** Modus und Optionen, die „Speichern“ in Schritt 2 mit dem Inhalt ablegt. */
-  const preparedSettings = useMemo(
-    () =>
-      preparedSettingsOf({
-        settings,
-        wordStoreTransfer,
-        vocabularyTransfer,
-        roundTag: vocabulary.model.roundTag,
-        classId: classes.classChoice,
-      }),
-    [
-      classes.classChoice,
-      settings,
-      vocabulary.model.roundTag,
-      vocabularyTransfer,
-      wordStoreTransfer,
-    ],
-  );
-
-  /**
-   * Callback-Stelle für „Speichern“ am Ende von Schritt 2 (Design 15b): legt
-   * Inhalt, Modus und Optionen als vorbereitetes Laufdiktat ab. Bis die
-   * Ablage vorbereitete Laufdiktate kennt, legt sie wie bisher nur den Inhalt
-   * ab („Ablegen“); die Einstellungen kommen dann hier hinzu.
-   */
-  const savePrepared: (settings: PreparedRoomSettings) => Promise<void> = () =>
-    library.model.saveContent();
 
   function goBack() {
     setError("");
@@ -340,6 +341,9 @@ export function useTeacherLiveRoom(
     ...text.model,
     ...classes.model,
     ...library.model,
+    /** Schritt 2 „Vorbereiten“: ablegen und Modus samt Optionen speichern. */
+    prepareContent: () => library.prepareContent(preparedSettings),
+    preparedSettings,
     vocabularyPicker: vocabularyPicker.picker,
     onPickFromLibrary: vocabularyPicker.onPickFromLibrary,
     pickFromLibraryDisabled: vocabularyPicker.pickFromLibraryDisabled,
@@ -358,8 +362,6 @@ export function useTeacherLiveRoom(
     words,
     activeStepIndex,
     activeMode,
-    preparedSettings,
-    savePrepared,
     goBack,
     goForward,
     liveRoomConfig,

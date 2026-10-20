@@ -22,6 +22,7 @@ import { TeacherLiveRoom } from "./teacher-live-room";
 
 const mocks = vi.hoisted(() => ({
   openLiveRoom: vi.fn(),
+  updateLiveSession: vi.fn(),
   getLiveRoomState: vi.fn(),
   readTeacherLiveRoom: vi.fn(),
 }));
@@ -47,6 +48,7 @@ vi.mock("../../../src/integrations/laufdiktat/live-room-client", () => {
 vi.mock("../../../src/integrations/laufdiktat/room-api", async (original) => ({
   ...(await original<object>()),
   openLiveRoom: mocks.openLiveRoom,
+  updateLiveSession: mocks.updateLiveSession,
   getLiveRoomParticipants: async () => [],
   getLiveRoomStudents: async () => [],
   getLiveRoomState: mocks.getLiveRoomState,
@@ -106,6 +108,7 @@ beforeEach(async () => {
     code: "4829",
     accessToken: "token",
   });
+  mocks.updateLiveSession.mockReset().mockResolvedValue(undefined);
   mocks.getLiveRoomState.mockReset().mockResolvedValue(null);
   mocks.readTeacherLiveRoom.mockReset().mockReturnValue(null);
   await createTeacherClassRepository().put({
@@ -272,7 +275,7 @@ describe("Speichern und Löschen", () => {
     await user.type(screen.getByRole("textbox", { name: "Titel" }), "Zahlen");
     await saveInModeStep(user);
     expect(
-      await screen.findByText("„Zahlen“ ist gespeichert."),
+      await screen.findByText("„Zahlen“ ist vorbereitet."),
     ).toBeInTheDocument();
 
     let stored = await library().list();
@@ -283,6 +286,9 @@ describe("Speichern und Löschen", () => {
       revision: 0,
       source: "Eins. Zwei.",
     });
+    // „Speichern“ in Schritt 2 legt Modus und Optionen als Vorbereitung ab.
+    expect(stored[0]?.prepared?.gameMode).toBe("LAUFDIKTAT");
+    expect(stored[0]?.preparedAt).toBeDefined();
 
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     stored = await library().list();
@@ -385,14 +391,14 @@ describe("Speichern und Löschen", () => {
   });
 });
 
-describe("Lobby öffnen legt automatisch ab", () => {
+describe("Lobby öffnen legt ab, der Start der Sitzung archiviert", () => {
   async function openLobbyWithText(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
     await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
     await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
   }
 
-  it("legt ein neues Paket mit Titelvorschlag, Klasse und Nutzungsdatum an", async () => {
+  it("legt ein neues Paket mit Titelvorschlag und Klasse an, noch ohne Durchführung", async () => {
     await createTeacherProfileRepository().put({
       id: "local-teacher",
       displayName: "Frau Test",
@@ -418,7 +424,8 @@ describe("Lobby öffnen legt automatisch ab", () => {
       classIds: [CLASS_A],
       revision: 0,
     });
-    expect(stored?.lastUsedAt).toBeDefined();
+    // Eine Lobby allein ist keine Durchführung: Der Inhalt bleibt vorbereitet.
+    expect(stored?.lastUsedAt).toBeUndefined();
   });
 
   it("aktualisiert das geladene Paket statt ein zweites anzulegen", async () => {
@@ -437,12 +444,53 @@ describe("Lobby öffnen legt automatisch ab", () => {
       ),
     );
     await openLobbyWithText(user);
+    // Das Ablegen läuft nach dem Öffnen der Lobby im Hintergrund.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(await library().list()).toHaveLength(1);
+    expect((await library().get("t1"))?.lastUsedAt).toBeUndefined();
+    // Nichts geändert: Revision bleibt.
+    expect((await library().get("t1"))?.revision).toBe(3);
+  });
+});
+
+describe("Durchführung", () => {
+  it("markiert beim Start der Sitzung den Inhalt samt Modus und Optionen als durchgeführt", async () => {
+    await library().put(
+      entry("t1", {
+        classIds: [CLASS_A],
+        preparedAt: "2026-09-03T10:00:00.000Z",
+        prepared: { gameMode: "STATION", stationCount: 6, tts: true },
+      }),
+    );
+    window.sessionStorage.setItem(
+      LIVE_INTENT_KEY,
+      JSON.stringify({ contentId: "t1", mode: "STATION", classId: CLASS_A }),
+    );
+    renderRoom();
+    await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
+    // Die Lobby öffnet mit den gespeicherten Optionen.
+    const config = mocks.openLiveRoom.mock.calls[0]![1] as Record<
+      string,
+      unknown
+    >;
+    expect(config).toMatchObject({
+      stationMode: true,
+      stationCount: 6,
+      isTtsEnabled: true,
+    });
+    expect((await library().get("t1"))?.lastUsedAt).toBeUndefined();
+
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Sitzung starten" }),
+    );
     await waitFor(async () =>
       expect((await library().get("t1"))?.lastUsedAt).toBeDefined(),
     );
-    expect(await library().list()).toHaveLength(1);
-    // Nichts geändert: Revision bleibt.
-    expect((await library().get("t1"))?.revision).toBe(3);
+    expect(await library().get("t1")).toMatchObject({
+      preparedAt: "2026-09-03T10:00:00.000Z",
+      prepared: { gameMode: "STATION", stationCount: 6, tts: true },
+    });
   });
 });
 
@@ -648,7 +696,7 @@ describe("Vokabeln aus der Ablage wählen", () => {
     ).toBeInTheDocument();
   });
 
-  it("legt beim Raumstart ein neues Paket an und lässt das geladene unverändert", async () => {
+  it("legt beim Öffnen der Lobby ein neues Paket an und lässt das geladene unverändert", async () => {
     await seed();
     const before = await library().get("u3");
     window.history.replaceState(
@@ -702,7 +750,7 @@ describe("Vokabeln aus der Ablage wählen", () => {
     });
     expect(created?.source).toContain("dog;Hund");
     expect(created?.source).toContain("apple;Apfel;Food");
-    expect(created?.lastUsedAt).toBeDefined();
+    expect(created?.lastUsedAt).toBeUndefined();
   });
 
   it("behält einen selbst gewählten Titel", async () => {

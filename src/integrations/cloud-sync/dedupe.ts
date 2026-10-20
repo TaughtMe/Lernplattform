@@ -197,8 +197,15 @@ export function dedupe(input: DedupeInput): DedupeResult {
     return title || undefined;
   })) {
     const [keep, ...others] = group.members as [SyncRecord, ...SyncRecord[]];
-    // Zuordnung, Revision und letzte Nutzung unterscheiden Fassungen nicht.
-    const ignore = ["classIds", "revision", "lastUsedAt"];
+    // Zuordnung, Revision, letzte Nutzung und Vorbereitung unterscheiden
+    // Fassungen nicht: Es bleibt derselbe Inhalt.
+    const ignore = [
+      "classIds",
+      "revision",
+      "lastUsedAt",
+      "preparedAt",
+      "prepared",
+    ];
     for (const other of others) {
       if (
         bareContent(keep, ignore, ["title"]) ===
