@@ -92,7 +92,7 @@ describe("Raumstart mit Klassenwahl", () => {
   it("setzt nur den Stempelabdruck der gewählten Klasse in die Raumkonfiguration", async () => {
     const user = await openSettings();
     await user.selectOptions(
-      await screen.findByRole("combobox", { name: /Klasse \(optional\)/ }),
+      await screen.findByRole("combobox", { name: "Klasse" }),
       "Klasse 7b",
     );
     // Ältere Klassen erhalten ihren Stempel beim ersten Bedarf.
@@ -101,7 +101,7 @@ describe("Raumstart mit Klassenwahl", () => {
       expect(stored?.seal).toBeDefined();
       return stored!.seal!;
     });
-    await user.click(screen.getByRole("button", { name: "Raum öffnen" }));
+    await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
     await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
     const config = mocks.openLiveRoom.mock.calls[0]![1] as Record<
       string,
@@ -118,8 +118,8 @@ describe("Raumstart mit Klassenwahl", () => {
 
   it("lässt ohne Klassenwahl keinen Stempel in den Raum", async () => {
     const user = await openSettings();
-    await screen.findByRole("combobox", { name: /Klasse \(optional\)/ });
-    await user.click(screen.getByRole("button", { name: "Raum öffnen" }));
+    await screen.findByRole("combobox", { name: "Klasse" });
+    await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
     await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
     expect(mocks.openLiveRoom.mock.calls[0]![1]).not.toHaveProperty(
       "classSeal",
@@ -137,7 +137,7 @@ describe("Raumstart mit Klassenwahl", () => {
     });
     const user = await openSettings();
     await user.selectOptions(
-      await screen.findByRole("combobox", { name: /Klasse \(optional\)/ }),
+      await screen.findByRole("combobox", { name: "Klasse" }),
       "Klasse 7b",
     );
     await waitFor(async () =>
@@ -146,7 +146,7 @@ describe("Raumstart mit Klassenwahl", () => {
       ).toBe(classId),
     );
     await user.selectOptions(
-      screen.getByRole("combobox", { name: /Klasse \(optional\)/ }),
+      screen.getByRole("combobox", { name: "Klasse" }),
       "Keine Klasse",
     );
     await waitFor(async () =>

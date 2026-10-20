@@ -1,0 +1,1079 @@
+/*
+ * Laufdiktat-Editor nach Lehrerbereich v2: Schritt 1 „Inhalt“ (14b) und
+ * Schritt 2 „Modus“ (14c mit dem Ende aus 15b). Unter 900 px Tablet (16a),
+ * unter 600 px Handy (16b). Maße und Farben aus lehrerbereich-v2.dc.html.
+ */
+.screen {
+  composes: view from "../parts/parts.module.css";
+  container-type: inline-size;
+  --chosen-bg: #eef7f2;
+  --step-dot: #f0cf84;
+  --step-dot-ink: #211f1b;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+}
+:global([data-theme="dark"]) .screen {
+  --chosen-bg: var(--good-bg);
+}
+.phoneOnly,
+.tabletOnly {
+  display: none;
+}
+
+/* ---------- Kopf ---------- */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.back {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink2);
+  cursor: pointer;
+}
+/* Tippfläche 44 px, ohne das Maß der Vorlage (42 px mit Rand) zu ändern. */
+.back::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+}
+.back:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.eyebrow {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--ink2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.steps {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+}
+.stepItem {
+  display: flex;
+  align-items: center;
+}
+.stepLine {
+  display: none;
+}
+.step {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink3);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+/* Tippfläche 44 px, ohne das Maß der Vorlage zu ändern. */
+.step::after {
+  content: "";
+  position: absolute;
+  inset: -5px 0;
+}
+.step:disabled {
+  cursor: default;
+}
+.stepDot {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface2);
+  font-size: 11px;
+  font-weight: 800;
+}
+.step.done {
+  color: var(--green);
+  font-weight: 700;
+}
+:global([data-theme="dark"]) .step.done {
+  color: var(--good);
+}
+.step.done .stepDot {
+  background: var(--green);
+  color: var(--green-ink);
+}
+.step[aria-current="step"] {
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 700;
+}
+.step[aria-current="step"] .stepDot {
+  background: var(--step-dot);
+  color: var(--step-dot-ink);
+}
+.headerTools {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Inhalt ---------- */
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-width: thin;
+}
+.notice {
+  margin: 0 28px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--bad);
+  border-radius: 12px;
+  background: var(--bad-bg);
+  color: var(--bad);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Schritt 1: Eingabe links, Abschnitte rechts (14b). */
+.contentGrid {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 24px;
+  min-height: 0;
+  padding: 24px 28px;
+}
+.inputColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+.single {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 28px;
+}
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.titleRow {
+  display: flex;
+  gap: 10px;
+}
+.titleInput {
+  box-sizing: border-box;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1.5px solid var(--line2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-control);
+  font-size: 18px;
+  font-weight: 700;
+  outline: none;
+}
+.titleInput:focus-visible,
+.source:focus-visible {
+  border-color: var(--accent);
+}
+.titleInput::placeholder {
+  color: var(--ink3);
+  font-weight: 600;
+}
+.trash {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 1.5px solid var(--line2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink2);
+  cursor: pointer;
+}
+.trash:hover {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.smallButton {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.smallButton:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.danger {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+.inlineNote {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink2);
+}
+.source {
+  box-sizing: border-box;
+  flex: 1;
+  width: 100%;
+  min-height: 160px;
+  padding: 16px;
+  border: 1.5px solid var(--line2);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.65;
+  resize: none;
+  outline: none;
+}
+.source::placeholder {
+  color: var(--ink3);
+}
+.splitRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.splitLabel {
+  margin-right: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.splitChip {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: content-box;
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.splitChip[aria-pressed="true"] {
+  border: 0;
+  background: var(--ink);
+  color: var(--bg);
+}
+.fileButton {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px dashed var(--line2);
+  border-radius: 11px;
+  color: var(--accent);
+  font-family: var(--font-control);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fileButton:hover,
+.fileButton:focus-within {
+  border-color: var(--accent);
+}
+.fileInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.sectionsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.sectionsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.sectionsCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink2);
+}
+.sortHint {
+  font-size: 12.5px;
+  color: var(--ink3);
+}
+.sections {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+  list-style: none;
+}
+.section {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--line);
+}
+.section[draggable="true"] {
+  cursor: grab;
+}
+.dragging {
+  opacity: 0.5;
+}
+.sectionNumber {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 800;
+}
+.sectionText {
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.handle {
+  color: var(--ink3);
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+/* Schritt 2: Modi links, Optionen rechts (14c). */
+.modeGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  padding: 24px 28px;
+}
+.modeList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.modeCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.modeCard[aria-pressed="true"] {
+  border: 2px solid var(--green);
+  background: var(--chosen-bg);
+}
+.modeTexts {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+.modeTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+.modeText {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink2);
+}
+.radio {
+  box-sizing: border-box;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--line2);
+  border-radius: 50%;
+  background: var(--surface);
+}
+.modeCard[aria-pressed="true"] .radio {
+  border: 7px solid var(--green);
+}
+.modeHint {
+  padding: 4px 2px;
+  font-size: 12.5px;
+  color: var(--ink3);
+}
+.optionsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.panelTitle {
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.checkRow,
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.checkRow {
+  min-height: 48px;
+  font-family: var(--font);
+}
+.switchRow {
+  min-height: 54px;
+  border-bottom: 1px solid var(--line);
+}
+.checkbox {
+  display: grid;
+  box-sizing: border-box;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--line2);
+  border-radius: 7px;
+  color: transparent;
+}
+.checkRow[aria-pressed="true"] .checkbox {
+  border: 0;
+  background: var(--green);
+  color: var(--green-ink);
+}
+.optionTexts {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+.optionLabel {
+  font-size: 14px;
+  font-weight: 600;
+}
+.switchRow .optionLabel,
+.countRow .optionLabel {
+  font-size: 14.5px;
+}
+.optionHint {
+  font-size: 12px;
+  color: var(--ink3);
+}
+.switch {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--line2);
+}
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  transition: left 0.15s;
+}
+.switchRow[aria-pressed="true"] .switch {
+  background: var(--green);
+}
+.switchRow[aria-pressed="true"] .knob {
+  left: 21px;
+}
+.countRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  border-bottom: 1px solid var(--line);
+}
+.optionsPanel .countRow {
+  border-bottom: 0;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stepper button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 18px;
+  cursor: pointer;
+}
+.stepper output {
+  width: 26px;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+}
+.choiceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0 6px;
+}
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.choice {
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.choice[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+.classField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.select,
+.textField {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 14px;
+}
+.newClass {
+  display: flex;
+  gap: 8px;
+}
+.newClass .textField {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- Fuß ---------- */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 28px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.modeFooter {
+  gap: 14px;
+}
+/* 15b zeigt das Ende ohne die Linie darüber. */
+.bare {
+  border-top: 0;
+}
+.footerNote {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--ink2);
+}
+.next,
+.open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  border: 0;
+  border-radius: 14px;
+  background: var(--green);
+  color: var(--green-ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.next {
+  gap: 9px;
+  min-height: 50px;
+  padding: 0 24px;
+  font-family: var(--font);
+  font-size: 15px;
+}
+.open {
+  gap: 9px;
+  min-height: 52px;
+  padding: 0 26px;
+  font-size: 15.5px;
+}
+.next:hover,
+.open:hover {
+  filter: brightness(1.12);
+}
+.next:disabled,
+.open:disabled {
+  cursor: default;
+  opacity: 0.55;
+  filter: none;
+}
+.playIcon {
+  width: 15px;
+  height: 15px;
+}
+.save {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 20px;
+  border: 1px solid var(--line2);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.save:hover {
+  border-color: var(--accent);
+}
+.saveIcon {
+  width: 17px;
+  height: 17px;
+}
+
+/* ---------- Einstellungen als Fenster (16a/16b) ---------- */
+.popup {
+  position: fixed;
+  inset: auto 22px 104px;
+  width: auto;
+  max-width: none;
+  max-height: 640px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 18px 40px rgba(33, 31, 27, 0.22);
+}
+.popup::backdrop {
+  background: rgba(33, 31, 27, 0.25);
+}
+.popupInner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 18px 10px;
+}
+.grabber {
+  display: none;
+}
+.popupHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.popupTitles {
+  display: flex;
+  flex-direction: column;
+}
+.popupEyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.popupMode {
+  font-size: 18px;
+  font-weight: 700;
+}
+.popupClose {
+  display: grid;
+  place-items: center;
+  /* 44 px Tippfläche; der negative Rand hält das Maß der Vorlage (36 px). */
+  width: 44px;
+  height: 44px;
+  margin: -4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink2);
+  font-size: 18px;
+  cursor: pointer;
+}
+.popupDone {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- Tablet (16a) ---------- */
+@container (max-width: 899.98px) {
+  .tabletOnly {
+    display: initial;
+  }
+  .header {
+    gap: 14px;
+    padding: 16px 22px;
+  }
+  .back {
+    width: 46px;
+    height: 46px;
+  }
+  .titles {
+    flex: 1;
+  }
+  .steps {
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .stepItem {
+    gap: 6px;
+  }
+  .stepLine {
+    display: block;
+    width: 16px;
+    height: 2px;
+    background: var(--line);
+  }
+  .step,
+  .step[aria-current="step"] {
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+  }
+  .step::after {
+    inset: -10px;
+  }
+  .stepText {
+    display: none;
+  }
+  .stepDot {
+    width: 24px;
+    height: 24px;
+    color: var(--ink3);
+  }
+  .step[aria-current="step"] .stepDot {
+    background: var(--ink);
+    color: var(--step-dot);
+  }
+  .step.done .stepDot {
+    color: var(--green-ink);
+  }
+  .contentGrid,
+  .modeGrid {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    padding: 22px;
+  }
+  .single {
+    padding: 22px;
+  }
+  .source {
+    flex: none;
+    min-height: 240px;
+  }
+  .splitChip,
+  .fileButton {
+    min-height: 44px;
+  }
+  .splitChip:not([aria-pressed="true"]) {
+    min-height: 42px;
+  }
+  .modeGrid {
+    align-items: stretch;
+    gap: 10px;
+  }
+  .modeTitle {
+    font-size: 17px;
+  }
+  .modeText {
+    font-size: 13.5px;
+  }
+  .optionsPanel {
+    display: none;
+  }
+  .notice {
+    margin: 0 22px 16px;
+  }
+  .footer {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 22px 18px;
+  }
+  .modeFooter .footerNote {
+    order: -1;
+    flex-basis: 100%;
+  }
+  /* Ohne Meldung keine eigene Zeile; die Live-Region bleibt erhalten. */
+  .modeFooter .footerNote:empty {
+    margin-bottom: -10px;
+  }
+  .save {
+    min-height: 54px;
+    padding: 0 22px;
+  }
+  .open {
+    flex: 1;
+    min-height: 54px;
+    margin-left: 0;
+    padding: 0 18px;
+    font-size: 16px;
+  }
+  .playIcon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ---------- Handy (16b) ---------- */
+@container (max-width: 599.98px) {
+  .notPhone,
+  .tabletOnly {
+    display: none;
+  }
+  .phoneOnly {
+    display: initial;
+  }
+  .header {
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  .eyebrow {
+    font-size: 12px;
+  }
+  .title {
+    font-size: 18px;
+  }
+  .steps {
+    display: none;
+  }
+  .contentGrid,
+  .modeGrid,
+  .single {
+    padding: 14px 16px;
+  }
+  .modeGrid,
+  .modeList {
+    gap: 8px;
+  }
+  .modeTitle {
+    font-size: 16px;
+  }
+  .modeText {
+    font-size: 12.5px;
+  }
+  .notice {
+    margin: 0 16px 14px;
+  }
+  .footer {
+    gap: 8px;
+    padding: 12px 16px 16px;
+  }
+  .splitRow {
+    flex-wrap: wrap;
+  }
+  .split {
+    flex-wrap: nowrap;
+  }
+  .contentFooter .footerNote {
+    flex-basis: 100%;
+  }
+  .next {
+    flex: 1;
+    min-height: 54px;
+  }
+  .modeFooter .footerNote:empty {
+    margin-bottom: -8px;
+  }
+  .save {
+    width: 54px;
+    height: 54px;
+    padding: 0;
+  }
+  .saveIcon {
+    width: 19px;
+    height: 19px;
+  }
+  .popup {
+    inset: auto 0 0;
+    max-height: calc(100% - 40px);
+    border: 0;
+    border-radius: 22px 22px 0 0;
+    box-shadow: none;
+  }
+  .popup::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+  }
+  .popupInner {
+    gap: 0;
+    padding: 10px 18px 18px;
+  }
+  .grabber {
+    display: block;
+    align-self: center;
+    width: 40px;
+    height: 5px;
+    margin-bottom: 8px;
+    border-radius: 999px;
+    background: var(--line2);
+  }
+  .popupHead {
+    margin-bottom: 2px;
+  }
+  .popupEyebrow {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+  .switchRow {
+    min-height: 58px;
+  }
+  .countRow {
+    min-height: 56px;
+  }
+  .switchRow .optionLabel,
+  .countRow .optionLabel {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .knob {
+    transition: none;
+  }
+}

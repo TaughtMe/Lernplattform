@@ -28,18 +28,27 @@ import {
   STAGE_OF_STEP,
   STEP_OF_STAGE,
 } from "./dictation-adapter";
+import { ALL_MODES } from "./lib/modes";
 import {
   useTeacherLiveRoom,
   type TeacherLiveModel,
 } from "./use-teacher-live-room";
 import styles from "./teacher-live-room.module.css";
 
+/** Die echten Modi des Laufdiktats als Auswahlkarten (Schritt 2). */
+const EDITOR_MODES = ALL_MODES.map(({ id, title, text }) => ({
+  id,
+  title,
+  text,
+}));
+
 /**
- * Laufdiktat für Lehrkräfte (Design 5c/5d): verbindet den Live-Raum-Kern
- * mit der Design-Ansicht. Vokabeln und Mathe haben eigene Editoren
- * (Vokabelheft, Aufgaben-Generator). Funktionen ohne Entwurf (eigene
- * Trenner, Marker-Modus, Teilnehmende entfernen) sind vorerst nicht
- * sichtbar; sie kommen mit eigenem Entwurf zurück.
+ * Laufdiktat für Lehrkräfte: verbindet den Live-Raum-Kern mit der Ansicht
+ * (Inhalt und Modus nach Lehrerbereich v2, 14b/14c/16a/16b; Lobby und Live
+ * nach 5c/5d). Vokabeln und Mathe haben eigene Editoren (Vokabelheft,
+ * Aufgaben-Generator). Funktionen ohne Entwurf (eigene Trenner, Marker-Modus,
+ * Teilnehmende entfernen) sind vorerst nicht sichtbar; sie kommen mit eigenem
+ * Entwurf zurück.
  */
 export function TeacherLiveRoom({
   liveRoomConfig,
@@ -88,9 +97,13 @@ export function TeacherLiveRoom({
 
   const roomTimes = roomTimesView(t.roomTimeline, t.roomTimeState);
 
+  const next = nextLabel(t);
+  const className = t.liveClasses.find(({ id }) => id === t.classChoice)?.name;
+
   return (
     <div className={styles.page} data-hydrated={t.hydrated ? "true" : "false"}>
       <TeacherDictationScreen
+        {...(className ? { className: classLabel(className) } : {})}
         roomCode={t.room?.code ?? ""}
         joinHost={t.hydrated ? window.location.host : ""}
         theme={theme}
@@ -102,6 +115,7 @@ export function TeacherLiveRoom({
           sections: sectionsOf(t),
         }}
         mode={t.gameMode}
+        modes={EDITOR_MODES}
         {...(t.wordStoreVisible
           ? {
               wordStore: {
@@ -166,12 +180,13 @@ export function TeacherLiveRoom({
         )}
         {...(roomTimes ? { roomTimes } : {})}
         title={t.title}
+        stored={t.contentId !== null}
         onTitle={t.setTitle}
-        onSave={() => void t.saveContent()}
+        onSavePrepared={() => void t.savePrepared(t.preparedSettings)}
         onCreateClass={(name) => t.createClassNamed(name)}
         {...(t.contentId ? { onDelete: () => void t.deleteContent() } : {})}
         {...(t.libraryNotice ? { libraryNotice: t.libraryNotice } : {})}
-        nextLabel={nextLabel(t)}
+        {...(next ? { nextLabel: next } : {})}
         nextDisabled={t.footerDisabled}
         lockedSteps={lockedSteps(t)}
         {...(t.error || t.connectionWarning
@@ -186,7 +201,6 @@ export function TeacherLiveRoom({
         onStep={(step: TeacherStep) => t.jumpToStage(STAGE_OF_STEP[step])}
         onNext={t.goForward}
         onPrevious={t.goBack}
-        onKind={t.chooseContentMode}
         onText={(text) =>
           t.setSources((current) => ({ ...current, [t.contentMode]: text }))
         }
@@ -352,8 +366,14 @@ function nextLabel(t: TeacherLiveModel) {
     if (t.stage === "live") return "Beendet …";
   }
   if (t.roomClosed) return "Neuen Raum öffnen";
-  if (t.stage === "content") return "Weiter zu Modus";
-  if (t.stage === "settings") return "Raum öffnen";
+  // Inhalt und Modus beschriftet die Ansicht selbst („Raum jetzt öffnen“,
+  // auf dem Handy „Raum öffnen“).
+  if (t.stage === "content" || t.stage === "settings") return undefined;
   if (t.stage === "lobby") return "Sitzung starten";
   return "Sitzung beenden";
+}
+
+/** „7b“ statt „Klasse 7b“, damit die Zeile über dem Titel nicht doppelt. */
+function classLabel(name: string) {
+  return name.replace(/^klasse\s+/i, "");
 }

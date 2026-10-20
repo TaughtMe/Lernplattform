@@ -11,6 +11,11 @@ export type DictationMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
 export type DictationOption =
   "tts" | "shuffle" | "strict" | "taskHelp" | "stars" | "ink" | "flicker";
 
+/** Ein Modus als Auswahlkarte im Schritt „Modus“ (Design 14c/16a/16b). */
+export type EditorMode = { id: DictationMode; title: string; text: string };
+/** Eine Option des Raums mit Beschriftung und Hinweis. */
+export type EditorOption = { id: DictationOption; label: string; hint: string };
+
 /** Verbindung eines Schülers: im Raum, übt allein weiter oder getrennt. */
 export type ParticipantStatus = "online" | "practice" | "offline";
 
@@ -101,26 +106,36 @@ export type TeacherDictationScreenProps = {
     }>;
   };
   roomTimes?: RoomTimes;
-  /**
-   * Ablage im Schritt „Inhalt“ (optional, ohne Angabe zeigt die Ansicht genau
-   * die Vorlage): Titelfeld, „Speichern“ und beim Bearbeiten „Aus der Ablage
-   * löschen“ mit Bestätigung.
-   */
+  /** Titel des Inhalts (Schritt „Inhalt“, Zeile über dem Titel in „Modus“). */
   title?: string;
   titlePlaceholder?: string;
   libraryNotice?: string;
   /** Der Heftinhalt stammt aus dem Auswahldialog und wird neu abgelegt. */
   quizFromLibrary?: boolean;
   onTitle?: (title: string) => void;
-  onSave?: () => void;
-  /** Legt unter „Speichern“ eine neue Klasse an (Name) und wählt sie aus. */
+  /** Legt unter „Klasse“ eine neue Klasse an (Name) und wählt sie aus. */
   onCreateClass?: (name: string) => Promise<void> | void;
+  /** „Aus der Ablage löschen“ mit Bestätigung, nur beim abgelegten Inhalt. */
   onDelete?: () => void;
   /** Beschriftung und Sperre des Weiter-Knopfs (z. B. „Öffnet …“). */
   nextLabel?: string;
   nextDisabled?: boolean;
   /** Schritte, die gerade nicht angesprungen werden können. */
   lockedSteps?: readonly TeacherStep[];
+  /**
+   * Schritte „Inhalt“ und „Modus“ (Design 14b/14c): Modi als Karten. Ohne
+   * Angabe die Kurztexte der Ansicht; die Seite gibt die echten Modi mit.
+   */
+  modes?: readonly EditorMode[];
+  /** Beschriftung der Optionen; ohne Angabe die echten Optionen des Modus. */
+  optionList?: readonly EditorOption[];
+  /** Der Inhalt liegt schon in der Ablage (Zeile über dem Titel nennt ihn). */
+  stored?: boolean;
+  /**
+   * „Speichern“ am Ende von Schritt 2 (Design 15b): legt Inhalt, Modus und
+   * Optionen als vorbereitetes Laufdiktat ab.
+   */
+  onSavePrepared?: () => void;
   /** Fehler oder Hinweis unter dem Inhalt. */
   notice?: string;
   /**
@@ -143,10 +158,8 @@ export type TeacherDictationScreenProps = {
   onNext?: () => void;
   onPrevious?: () => void;
   onMoveSection?: (from: number, to: number) => void;
-  onKind?: (kind: ContentKind) => void;
   onText?: (text: string) => void;
   onSplit?: (split: SplitMode) => void;
-  onEditSections?: () => void;
   onImportFile?: (file: File | undefined) => void;
   onMode?: (mode: DictationMode) => void;
   onToggleOption?: (option: DictationOption) => void;

@@ -37,6 +37,10 @@ import { useTextContent } from "./hooks/use-text-content";
 import { useVocabularyContent } from "./hooks/use-vocabulary-content";
 import { useVocabularyPicker } from "./hooks/use-vocabulary-picker";
 import { DEFAULT_SOURCES, MODES } from "./lib/modes";
+import {
+  preparedSettingsOf,
+  type PreparedRoomSettings,
+} from "./lib/prepared-settings";
 import { buildLiveRoomConfig } from "./lib/room-config";
 import {
   forwardCommand,
@@ -262,6 +266,34 @@ export function useTeacherLiveRoom(
       settings.gameMode !== "STATION" &&
       connectedNames.length === 0);
 
+  /** Modus und Optionen, die „Speichern“ in Schritt 2 mit dem Inhalt ablegt. */
+  const preparedSettings = useMemo(
+    () =>
+      preparedSettingsOf({
+        settings,
+        wordStoreTransfer,
+        vocabularyTransfer,
+        roundTag: vocabulary.model.roundTag,
+        classId: classes.classChoice,
+      }),
+    [
+      classes.classChoice,
+      settings,
+      vocabulary.model.roundTag,
+      vocabularyTransfer,
+      wordStoreTransfer,
+    ],
+  );
+
+  /**
+   * Callback-Stelle für „Speichern“ am Ende von Schritt 2 (Design 15b): legt
+   * Inhalt, Modus und Optionen als vorbereitetes Laufdiktat ab. Bis die
+   * Ablage vorbereitete Laufdiktate kennt, legt sie wie bisher nur den Inhalt
+   * ab („Ablegen“); die Einstellungen kommen dann hier hinzu.
+   */
+  const savePrepared: (settings: PreparedRoomSettings) => Promise<void> = () =>
+    library.model.saveContent();
+
   function goBack() {
     setError("");
     dispatchFlow({ type: "goBack" });
@@ -326,6 +358,8 @@ export function useTeacherLiveRoom(
     words,
     activeStepIndex,
     activeMode,
+    preparedSettings,
+    savePrepared,
     goBack,
     goForward,
     liveRoomConfig,
