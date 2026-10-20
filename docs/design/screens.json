@@ -312,7 +312,7 @@
       "width": 390,
       "height": 788,
       "canvas": ["[id=\"5c\"] button[data-step=\"import\"]"],
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "5c-live",
@@ -355,7 +355,7 @@
         "[id=\"5c\"] button[data-m=\"LAUFDIKTAT\"]"
       ],
       "reset": ["[id=\"5c\"] button:has-text(\"Übernehmen\")"],
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "5c-settings",
@@ -363,7 +363,7 @@
       "width": 390,
       "height": 788,
       "canvas": ["[id=\"5c\"] button[data-step=\"settings\"]"],
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "5d-import",
@@ -371,7 +371,7 @@
       "width": 1180,
       "height": 760,
       "canvas": ["[id=\"5d\"] button[data-step=\"import\"]"],
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "5d-live",
@@ -395,7 +395,7 @@
       "width": 1180,
       "height": 760,
       "canvas": ["[id=\"5d\"] button[data-step=\"settings\"]"],
-      "status": "umgesetzt"
+      "status": "referenz"
     },
     {
       "id": "6a",
@@ -584,7 +584,7 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 80,
-      "status": "offen"
+      "status": "referenz"
     },
     {
       "id": "14b",
@@ -592,7 +592,7 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 760,
-      "status": "offen"
+      "status": "umgesetzt"
     },
     {
       "id": "14c",
@@ -600,7 +600,7 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 760,
-      "status": "offen"
+      "status": "umgesetzt"
     },
     {
       "id": "16a",
@@ -608,7 +608,7 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 834,
       "height": 1112,
-      "status": "offen"
+      "status": "umgesetzt"
     },
     {
       "id": "16b",
@@ -616,7 +616,7 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 390,
       "height": 844,
-      "status": "offen"
+      "status": "umgesetzt"
     },
     {
       "id": "17a",
