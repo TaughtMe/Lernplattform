@@ -735,10 +735,12 @@ test("teacher material and assignment tools share a consistent grid", async ({
   page,
 }) => {
   await page.goto("/lehrer/material");
-  const materialSurface = await page
-    .locator(".ui-transfer")
-    .evaluate((element) => getComputedStyle(element).backgroundColor);
-  expect(materialSurface).toBe("rgba(0, 0, 0, 0)");
+  await expect(
+    page.getByRole("heading", { name: "Freigabe an Schüler", level: 1 }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Vokabelpakete" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Datei importieren" }),
   ).toBeVisible();
@@ -889,25 +891,23 @@ test("the local teacher workspace manages classes, students, assignments and QR 
   const profile = page.getByRole("form", {
     name: "Persönliche Informationen",
   });
+  // Das Profil speichert beim Tippen; „Wird gespeichert …“ verschwindet danach.
   await profile.getByLabel("Anzeigename").fill("Frau Beispiel");
   await profile.getByLabel("Schule").fill("Lernschule");
   await profile.getByLabel("Fächer").fill("Deutsch, Mathematik");
-  await profile
-    .getByRole("button", { name: "Informationen speichern" })
-    .click();
-  await expect(
-    page.getByText("Persönliche Informationen wurden lokal gespeichert."),
-  ).toBeVisible();
+  await expect(profile.getByText("Wird beim Tippen gespeichert")).toBeVisible();
 
   await page.goto("/lehrer/klassen", { waitUntil: "networkidle" });
+  // Ohne Klasse steht die Zeile „Neue Klasse“ offen.
   const classForm = page.getByRole("form", { name: "Neue Klasse anlegen" });
   await expect(classForm.getByLabel("Lehrkraft")).toHaveValue("Frau Beispiel");
   await classForm.getByLabel("Klassenname").fill("Klasse 7a");
-  await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
+  await classForm.getByRole("button", { name: "Anlegen" }).click();
   await expect(page.getByText("Klasse wurde lokal angelegt.")).toBeVisible();
 
+  await page.getByRole("button", { name: "+ Neue Klasse" }).click();
   await classForm.getByLabel("Klassenname").fill("Klasse 8b");
-  await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
+  await classForm.getByRole("button", { name: "Anlegen" }).click();
   await expect(
     page.getByRole("navigation", { name: "Klassen" }).getByRole("button"),
   ).toHaveCount(2);
@@ -916,7 +916,7 @@ test("the local teacher workspace manages classes, students, assignments and QR 
     name: "Ausgewählte Klasse",
   });
   await studentPanel.getByLabel("Name oder Alias").fill("Alex");
-  await studentPanel.getByRole("button", { name: "Schüler anlegen" }).click();
+  await studentPanel.getByRole("button", { name: "Hinzufügen" }).click();
   await expect(studentPanel.getByText("Alex")).toBeVisible();
   await studentPanel
     .getByRole("button", { name: "Alex: QR-Code anzeigen" })
@@ -932,9 +932,7 @@ test("the local teacher workspace manages classes, students, assignments and QR 
   await studentPanel
     .getByRole("button", { name: "Alex: QR-Code schließen" })
     .click();
-  await studentPanel
-    .getByRole("button", { name: "QR-Bogen für die Klasse" })
-    .click();
+  await studentPanel.getByRole("button", { name: "QR-Bogen drucken" }).click();
   await expect(
     page.getByRole("heading", { name: "QR-Bogen für Klasse 8b" }),
   ).toBeVisible();

@@ -624,7 +624,8 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 1422,
-      "status": "offen"
+      "status": "umgesetzt",
+      "hide": [".lernbox-tag"]
     },
     {
       "id": "17b",
@@ -632,7 +633,8 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 1003,
-      "status": "offen"
+      "status": "umgesetzt",
+      "hide": [".package-delete"]
     },
     {
       "id": "17c",
@@ -640,7 +642,8 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 940,
-      "status": "offen"
+      "status": "umgesetzt",
+      "hide": [".class-relief"]
     }
   ]
 }

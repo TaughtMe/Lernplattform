@@ -4,9 +4,5 @@ import { TeacherClassConfigurator } from "../../components/teacher-class-configu
 export const metadata: Metadata = { title: "Klassen" };
 
 export default function Page() {
-  return (
-    <div className="ui-page">
-      <TeacherClassConfigurator />
-    </div>
-  );
+  return <TeacherClassConfigurator />;
 }

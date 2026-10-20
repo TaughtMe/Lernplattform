@@ -66,6 +66,8 @@ export type TeacherFrameProps = {
   areasLabel?: string | undefined;
   /** Zweite, kleinere Gruppe „Verwalten“; ohne Angabe fehlt sie. */
   manage?: readonly TeacherAreaItem[];
+  /** Leiste nach v2: „Klassen“ beim Laden aufgeklappt? Standard: ja. */
+  classesOpen?: boolean;
   /**
    * Leiste nach v2: „Verwalten“ beim Laden aufgeklappt? Standard: wenn einer
    * ihrer Einträge aktiv ist.
@@ -229,7 +231,7 @@ function NavContent(
   } = props;
   const drawer = variant === "drawer";
   const v2 = areasLabel === undefined;
-  const [classesOpen, setClassesOpen] = useState(true);
+  const [classesOpen, setClassesOpen] = useState(props.classesOpen ?? true);
   const [manageOpen, setManageOpen] = useState(
     props.manageOpen ?? (manage ?? []).some((item) => item.active),
   );

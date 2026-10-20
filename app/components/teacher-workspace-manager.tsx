@@ -1,6 +1,5 @@
 "use client";
 
-import { Icon } from "../ui/icons";
 import { QRCodeSVG } from "qrcode.react";
 import {
   useCallback,
@@ -8,7 +7,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type FormEvent,
 } from "react";
 import {
@@ -36,6 +34,15 @@ import {
 } from "../../src/storage/teacher-class-settings";
 import { Button, Card, Pill } from "../ui/primitives";
 import { QrCodeScanner } from "../ui/qr-scanner";
+import { manageStyles } from "../views/lehrer/manage-parts";
+import {
+  DeviceDataCard,
+  ProfileCard,
+  SettingsGroup,
+  type DeviceStats,
+  type ProfileField,
+  type ProfileValues,
+} from "../views/lehrer/settings-screen";
 
 const EMPTY_PROFILE: TeacherProfile = {
   id: "local-teacher",
@@ -46,15 +53,133 @@ const EMPTY_PROFILE: TeacherProfile = {
   updatedAt: new Date(0).toISOString(),
 };
 
-type DatabaseStats = {
-  classes: number;
-  students: number;
-  materials: number;
-  assignments: number;
-};
+/** Nach dem Einlesen einer Sicherung lädt das Profil neu. */
+const BACKUP_IMPORTED_EVENT = "teacher-backup-imported";
 
+/** Wartezeit nach dem letzten Tastendruck, bevor das Profil gespeichert wird. */
+const PROFILE_SAVE_DELAY = 400;
+
+function toProfileValues(profile: TeacherProfile): ProfileValues {
+  return {
+    displayName: profile.displayName,
+    school: profile.school,
+    email: profile.email,
+    subjects: profile.subjects.join(", "),
+    lernboxTag: profile.lernboxTag ?? "",
+  };
+}
+
+/**
+ * Gruppe „Profil“ der Einstellungen (17a). Speichert beim Tippen, kurz nach
+ * dem letzten Tastendruck; ohne Anzeigenamen wird nichts gespeichert.
+ */
 export function TeacherProfilePanel() {
   const profileRepository = useMemo(() => createTeacherProfileRepository(), []);
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [values, setValues] = useState<ProfileValues>(
+    toProfileValues(EMPTY_PROFILE),
+  );
+  const [error, setError] = useState("");
+  const [ready, setReady] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const pending = useRef<{ timer: number; save: () => void } | null>(null);
+
+  useEffect(() => {
+    const load = () =>
+      profileRepository
+        .get()
+        .then((stored) => {
+          if (!stored) return;
+          setProfile(stored);
+          setValues(toProfileValues(stored));
+        })
+        .catch(() =>
+          setError("Die lokale Lehrerdatenbank konnte nicht geöffnet werden."),
+        )
+        .finally(() => setReady(true));
+    void load();
+    const reload = () => void load();
+    window.addEventListener(BACKUP_IMPORTED_EVENT, reload);
+    return () => window.removeEventListener(BACKUP_IMPORTED_EVENT, reload);
+  }, [profileRepository]);
+
+  // Beim Verlassen der Seite wird eine noch wartende Änderung gespeichert.
+  useEffect(
+    () => () => {
+      if (!pending.current) return;
+      window.clearTimeout(pending.current.timer);
+      pending.current.save();
+    },
+    [],
+  );
+
+  function change(field: ProfileField, value: string) {
+    const next = { ...values, [field]: value };
+    setValues(next);
+    if (!next.displayName.trim()) {
+      setError("Ohne Anzeigenamen wird nichts gespeichert.");
+      if (pending.current) window.clearTimeout(pending.current.timer);
+      pending.current = null;
+      setSaving(false);
+      return;
+    }
+    setError("");
+    const tag = next.lernboxTag.trim();
+    const stored: TeacherProfile = {
+      ...profile,
+      displayName: next.displayName,
+      school: next.school,
+      email: next.email,
+      lernboxTag: tag || undefined,
+      subjects: next.subjects
+        .split(",")
+        .map((subject) => subject.trim())
+        .filter(Boolean),
+      updatedAt: new Date().toISOString(),
+    };
+    const save = () => {
+      pending.current = null;
+      profileRepository
+        .put(stored)
+        .then(() => {
+          setProfile(stored);
+          window.dispatchEvent(new Event("teacher-data-changed"));
+        })
+        .catch(() =>
+          setError(
+            "Die persönlichen Informationen konnten nicht gespeichert werden.",
+          ),
+        )
+        .finally(() => {
+          if (!pending.current) setSaving(false);
+        });
+    };
+    setSaving(true);
+    if (pending.current) window.clearTimeout(pending.current.timer);
+    pending.current = {
+      timer: window.setTimeout(save, PROFILE_SAVE_DELAY),
+      save,
+    };
+  }
+
+  return (
+    <SettingsGroup
+      title="Profil"
+      hint="Name und Schule erscheinen auf QR-Bögen und in neuen Klassen."
+    >
+      <ProfileCard
+        values={values}
+        disabled={!ready}
+        saving={saving}
+        error={error}
+        onChange={change}
+      />
+    </SettingsGroup>
+  );
+}
+
+/** Gruppe „Daten auf diesem Gerät“ (17a): Zahlen, Sicherung, Schutzhinweis. */
+export function TeacherDataPanel() {
   const classRepository = useMemo(() => createTeacherClassRepository(), []);
   const materialRepository = useMemo(
     () => createTeacherContentLibraryRepository(),
@@ -68,17 +193,13 @@ export function TeacherProfilePanel() {
     () => createTeacherWorkspaceRepository(),
     [],
   );
-  const importInput = useRef<HTMLInputElement>(null);
-  const [profile, setProfile] = useState(EMPTY_PROFILE);
-  const [subjects, setSubjects] = useState("");
-  const [stats, setStats] = useState<DatabaseStats>({
+  const [stats, setStats] = useState<DeviceStats>({
     classes: 0,
     students: 0,
     materials: 0,
     assignments: 0,
   });
   const [message, setMessage] = useState("");
-  const [ready, setReady] = useState(false);
 
   const refreshStats = useCallback(async () => {
     const [classes, materials, assignments] = await Promise.all([
@@ -98,48 +219,17 @@ export function TeacherProfilePanel() {
   }, [assignmentRepository, classRepository, materialRepository]);
 
   useEffect(() => {
-    void profileRepository
-      .get()
-      .then((stored) => {
-        if (!stored) return;
-        setProfile(stored);
-        setSubjects(stored.subjects.join(", "));
-      })
-      .catch(() =>
-        setMessage("Die lokale Lehrerdatenbank konnte nicht geöffnet werden."),
-      )
-      .finally(() => setReady(true));
-    const initialRefresh = window.setTimeout(() => void refreshStats(), 0);
-    const refresh = () => void refreshStats();
+    const initialRefresh = window.setTimeout(
+      () => void refreshStats().catch(() => undefined),
+      0,
+    );
+    const refresh = () => void refreshStats().catch(() => undefined);
     window.addEventListener("teacher-data-changed", refresh);
     return () => {
       window.clearTimeout(initialRefresh);
       window.removeEventListener("teacher-data-changed", refresh);
     };
-  }, [profileRepository, refreshStats]);
-
-  async function saveProfile(event: FormEvent) {
-    event.preventDefault();
-    const tag = profile.lernboxTag?.trim();
-    const next: TeacherProfile = {
-      ...profile,
-      lernboxTag: tag || undefined,
-      subjects: subjects
-        .split(",")
-        .map((subject) => subject.trim())
-        .filter(Boolean),
-      updatedAt: new Date().toISOString(),
-    };
-    try {
-      await profileRepository.put(next);
-      setProfile(next);
-      setMessage("Persönliche Informationen wurden lokal gespeichert.");
-    } catch {
-      setMessage(
-        "Die persönlichen Informationen konnten nicht gespeichert werden.",
-      );
-    }
-  }
+  }, [refreshStats]);
 
   async function exportDatabase() {
     const backup = await workspaceRepository.exportData();
@@ -156,19 +246,11 @@ export function TeacherProfilePanel() {
     setMessage("Die lokale Lehrerdatenbank wurde als Datei exportiert.");
   }
 
-  async function importDatabase(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
+  async function importDatabase(file: File) {
     try {
-      const backup = await workspaceRepository.importData(
-        JSON.parse(await file.text()),
-      );
-      if (backup.profile) {
-        setProfile(backup.profile);
-        setSubjects(backup.profile.subjects.join(", "));
-      }
+      await workspaceRepository.importData(JSON.parse(await file.text()));
       await refreshStats();
+      window.dispatchEvent(new Event(BACKUP_IMPORTED_EVENT));
       window.dispatchEvent(new Event("teacher-data-changed"));
       setMessage("Die geprüfte Lehrerdatenbank wurde lokal zusammengeführt.");
     } catch {
@@ -177,170 +259,23 @@ export function TeacherProfilePanel() {
   }
 
   return (
-    <section className="ui-stack" aria-labelledby="teacher-profile-title">
-      <div className="ui-between ui-wrap">
-        <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-          <p className="ui-eyebrow">Persönliche Informationen</p>
-          <h2 id="teacher-profile-title" className="ui-h-page">
-            Mein Lehrerarbeitsplatz
-          </h2>
-          <p className="ui-small ui-muted">
-            Diese Angaben bleiben in der lokalen Lehrerdatenbank dieses
-            Browserprofils.
+    <SettingsGroup
+      title="Daten auf diesem Gerät"
+      hint="Sicherung als Datei, ganz ohne Konto."
+    >
+      <div className={manageStyles.stack}>
+        <DeviceDataCard
+          stats={stats}
+          onExport={() => void exportDatabase()}
+          onImport={(file) => void importDatabase(file)}
+        />
+        {message ? (
+          <p className={manageStyles.notice} role="status">
+            {message}
           </p>
-        </div>
-        <Pill>IndexedDB · lokal</Pill>
+        ) : null}
       </div>
-      <div className="ui-cols ui-cols--wide-left">
-        <form
-          className="ui-card ui-card--pop ui-card--pad ui-stack"
-          aria-label="Persönliche Informationen"
-          onSubmit={saveProfile}
-        >
-          <label className="ui-labeled">
-            Anzeigename
-            <input
-              className="ui-input"
-              required
-              disabled={!ready}
-              value={profile.displayName}
-              onChange={(event) =>
-                setProfile((current) => ({
-                  ...current,
-                  displayName: event.target.value,
-                }))
-              }
-              placeholder="z. B. Tobias Becker"
-            />
-          </label>
-          <label className="ui-labeled">
-            Schule
-            <input
-              className="ui-input"
-              disabled={!ready}
-              value={profile.school}
-              onChange={(event) =>
-                setProfile((current) => ({
-                  ...current,
-                  school: event.target.value,
-                }))
-              }
-              placeholder="optional"
-            />
-          </label>
-          <label className="ui-labeled">
-            E-Mail
-            <input
-              className="ui-input"
-              type="email"
-              disabled={!ready}
-              value={profile.email}
-              onChange={(event) =>
-                setProfile((current) => ({
-                  ...current,
-                  email: event.target.value,
-                }))
-              }
-              placeholder="optional"
-            />
-          </label>
-          <label className="ui-labeled">
-            Fächer
-            <input
-              className="ui-input"
-              disabled={!ready}
-              value={subjects}
-              onChange={(event) => setSubjects(event.target.value)}
-              placeholder="Deutsch, Mathematik, Englisch"
-            />
-          </label>
-          <label className="ui-labeled">
-            LernBox-Tag für Laufdiktate
-            <input
-              className="ui-input"
-              disabled={!ready}
-              maxLength={80}
-              value={profile.lernboxTag ?? ""}
-              onChange={(event) =>
-                setProfile((current) => ({
-                  ...current,
-                  lernboxTag: event.target.value,
-                }))
-              }
-              placeholder="z. B. Buch Klasse 5"
-            />
-            <span className="ui-small ui-muted">
-              Vorschlag für den Tag jeder Runde, im Vokabelheft änderbar. Ein
-              Tag an der Vokabel geht vor.
-            </span>
-          </label>
-          <Button type="submit" disabled={!ready}>
-            Informationen speichern
-          </Button>
-        </form>
-        <Card look="soft" className="ui-stack" aria-labelledby="database-title">
-          <p className="ui-eyebrow">Lokale Datenbank</p>
-          <h3 id="database-title" className="ui-h-section">
-            Alles auf diesem Gerät
-          </h3>
-          <div className="ui-stats">
-            <div>
-              <strong>{stats.classes}</strong>
-              Klassen
-            </div>
-            <div>
-              <strong>{stats.students}</strong>
-              Schüler
-            </div>
-            <div>
-              <strong>{stats.materials}</strong>
-              Materialien
-            </div>
-            <div>
-              <strong>{stats.assignments}</strong>
-              Aufgaben
-            </div>
-          </div>
-          <p className="ui-small ui-muted">Ohne Konto. Sicherung als Datei.</p>
-          <div
-            className="ui-grid-auto"
-            style={{ ["--min" as string]: "130px" }}
-          >
-            <Button
-              variant="soft"
-              size="sm"
-              title="Lehrerdatenbank als Datei sichern"
-              onClick={() => void exportDatabase()}
-            >
-              <Icon name="download" size={16} />
-              Exportieren
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              title="Lehrerdatenbank aus einer Datei laden"
-              onClick={() => importInput.current?.click()}
-            >
-              <Icon name="upload" size={16} />
-              Importieren
-            </Button>
-            <input
-              ref={importInput}
-              className="ui-sr-only"
-              type="file"
-              accept="application/json,.json"
-              aria-label="Lehrerdatenbank auswählen"
-              onChange={(event) => void importDatabase(event)}
-            />
-          </div>
-        </Card>
-      </div>
-      {message ? (
-        <p className="ui-notice" role="status">
-          {message}
-        </p>
-      ) : null}
-    </section>
+    </SettingsGroup>
   );
 }
 

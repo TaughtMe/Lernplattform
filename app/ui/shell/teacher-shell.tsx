@@ -96,6 +96,9 @@ export function TeacherShell({
   });
   const visible = TEACHER_NAV.filter((entry) => visibility[entry.release]);
   const fill = area === "live";
+  // Verwalten-Seiten nach v2 (17a–c) bringen Kopf und Innenabstand selbst mit.
+  const managePage =
+    area === "classes" || area === "material" || area === "settings";
   // Ohne aktiven Abgleich zeichnet das Symbol nichts.
   const cloud = <CloudBadgeConnected />;
 
@@ -103,7 +106,16 @@ export function TeacherShell({
     <div style={{ height: "100dvh" }}>
       <TeacherFrame
         cloud={cloud}
-        layout={fill ? "fill" : area === "content" ? "titled" : "plain"}
+        layout={
+          fill
+            ? "fill"
+            : managePage
+              ? "page"
+              : area === "content"
+                ? "titled"
+                : "plain"
+        }
+        {...(managePage ? { classesOpen: false } : {})}
         eyebrow={
           selection === UNASSIGNED
             ? "Nicht zugeordnet"
@@ -135,6 +147,8 @@ export function TeacherShell({
         {/* Ältere Seiten brauchen die Grundlage `.ui` (Schrift, Abstände). */}
         {fill ? (
           <CloudSlotProvider value={cloud}>{children}</CloudSlotProvider>
+        ) : managePage ? (
+          children
         ) : (
           <div className="ui">{children}</div>
         )}

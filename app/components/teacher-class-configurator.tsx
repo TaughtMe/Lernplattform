@@ -1,11 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { notifyTeacherClassesChanged } from "../ui/shell/teacher-classes";
 import { QRCodeSVG } from "qrcode.react";
-import { Icon } from "../ui/icons";
-import { Button, EmptyState, Pill } from "../ui/primitives";
+import { useEffect, useMemo, useState } from "react";
+import { notifyTeacherClassesChanged } from "../ui/shell/teacher-classes";
+import { Button } from "../ui/primitives";
 import {
   createClassRemovalLink,
   createEnrollmentCode,
@@ -20,7 +19,23 @@ import {
 import {
   createTeacherClassRepository,
   createTeacherProfileRepository,
+  toggleClassModule,
 } from "../../src/storage/teacher-class-settings";
+import { cx } from "../views/parts/parts";
+import { manageStyles as m, ManagePage } from "../views/lehrer/manage-parts";
+import {
+  ClassActions,
+  ClassAreas,
+  ClassDetail,
+  ClassesLayout,
+  ClassList,
+  ClassSection,
+  ClassTabs,
+  NewClassRow,
+  StudentList,
+  type ClassTab,
+  type NewClassValues,
+} from "../views/lehrer/classes-screen";
 
 const modules: ClassModule[] = [
   "vocabulary",
@@ -30,33 +45,59 @@ const modules: ClassModule[] = [
   "running-dictation",
 ];
 
+const DEFAULT_SCHOOL_YEAR = "2026/27";
+
 const token = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(16)), (value) =>
     value.toString(16).padStart(2, "0"),
   ).join("");
 
+const changed = () => {
+  notifyTeacherClassesChanged();
+  window.dispatchEvent(new Event("teacher-data-changed"));
+};
+
+/**
+ * Klassen und Schüler (Lehrerbereich v2, 17c). Neue Klassen entstehen in einer
+ * aufklappbaren Zeile, das Archiv ist ein eigener Reiter. `?klasse=<id>`
+ * wählt eine Klasse vor (aus der Seitenleiste).
+ */
 export function TeacherClassConfigurator() {
   const repository = useMemo(() => createTeacherClassRepository(), []);
   const profileRepository = useMemo(() => createTeacherProfileRepository(), []);
   const [classes, setClasses] = useState<TeacherClass[]>([]);
   const [archivedClasses, setArchivedClasses] = useState<TeacherClass[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [loaded, setLoaded] = useState(false);
+  const [tab, setTab] = useState<ClassTab>("active");
   const [selectedId, setSelectedId] = useState("");
-  const [members, setMembers] = useState<ClassMember[]>([]);
-  const [name, setName] = useState("");
+  // Schüler der zuletzt geladenen Klasse; für eine andere Klasse leer.
+  const [loadedMembers, setLoadedMembers] = useState<{
+    classId: string;
+    list: ClassMember[];
+  }>({ classId: "", list: [] });
   const [teacherName, setTeacherName] = useState("");
-  const [schoolYear, setSchoolYear] = useState("2026/27");
-  const [studentName, setStudentName] = useState("");
+  const [creating, setCreating] = useState(false);
   const [shown, setShown] = useState<ClassMember>();
   const [showQrSheet, setShowQrSheet] = useState(false);
-  const [removalShown, setRemovalShown] = useState<TeacherClass>();
+  const [removalShown, setRemovalShown] = useState(false);
   // Löschen mit zwei Bestätigungen: erst fragen, dann endgültig bestätigen.
   const [pendingDelete, setPendingDelete] = useState<{
     course: TeacherClass;
     step: 1 | 2;
   }>();
   const [message, setMessage] = useState("");
-  const selected = classes.find((course) => course.id === selectedId);
+  const list = tab === "active" ? classes : archivedClasses;
+  const selected = list.find((course) => course.id === selectedId) ?? list[0];
+  const archived = tab === "archive";
   const appOrigin = typeof window === "undefined" ? "" : window.location.origin;
+  const members =
+    loadedMembers.classId === (selected?.id ?? "") ? loadedMembers.list : [];
+  const setMembers = (update: (current: ClassMember[]) => ClassMember[]) =>
+    setLoadedMembers((current) => ({
+      classId: current.classId,
+      list: update(current.list),
+    }));
 
   useEffect(() => {
     profileRepository
@@ -76,35 +117,42 @@ export function TeacherClassConfigurator() {
   const requested = useSearchParams().get("klasse");
   useEffect(() => {
     Promise.all([repository.list(), repository.listArchived()])
-      .then(([items, archived]) => {
+      .then(async ([items, archive]) => {
         setClasses(items);
-        setArchivedClasses(archived);
+        setArchivedClasses(archive);
+        const all = [...items, ...archive];
+        const sizes = await Promise.all(
+          all.map(async ({ id }) => [
+            id,
+            (await repository.listMembers(id)).length,
+          ]),
+        );
+        setCounts(Object.fromEntries(sizes));
         const initial = items.find(({ id }) => id === requested) ?? items[0];
         if (initial) {
-          setSelectedId((current) => {
-            if (current !== initial.id) {
-              setMembers([]);
-              setShown(undefined);
-            }
-            return initial.id;
-          });
+          setTab("active");
+          setSelectedId(initial.id);
         }
+        // Ohne Klasse steht die Zeile zum Anlegen gleich offen.
+        if (items.length === 0) setCreating(true);
       })
-      .catch(() => setMessage("Die Klassen konnten nicht geladen werden."));
+      .catch(() => setMessage("Die Klassen konnten nicht geladen werden."))
+      .finally(() => setLoaded(true));
   }, [repository, requested]);
 
   // Ältere Klassen erhalten ihren Stempel beim ersten Öffnen.
   const selectedHasSeal = Boolean(selected?.seal);
+  const currentId = selected?.id ?? "";
   useEffect(() => {
-    if (!selectedId || !selected || selectedHasSeal) return;
+    if (!currentId || archived || selectedHasSeal) return;
     let isCurrent = true;
     repository
-      .ensureSeal(selectedId)
+      .ensureSeal(currentId)
       .then((seal) => {
         if (!isCurrent || !seal) return;
         setClasses((current) =>
           current.map((course) =>
-            course.id === selectedId ? { ...course, seal } : course,
+            course.id === currentId ? { ...course, seal } : course,
           ),
         );
       })
@@ -114,15 +162,15 @@ export function TeacherClassConfigurator() {
     return () => {
       isCurrent = false;
     };
-  }, [repository, selected, selectedHasSeal, selectedId]);
+  }, [repository, archived, selectedHasSeal, currentId]);
 
   useEffect(() => {
-    if (!selectedId) return;
+    if (!currentId) return;
     let isCurrent = true;
     repository
-      .listMembers(selectedId)
+      .listMembers(currentId)
       .then((items) => {
-        if (isCurrent) setMembers(items);
+        if (isCurrent) setLoadedMembers({ classId: currentId, list: items });
       })
       .catch(() => {
         if (isCurrent) {
@@ -132,16 +180,32 @@ export function TeacherClassConfigurator() {
     return () => {
       isCurrent = false;
     };
-  }, [repository, selectedId]);
+  }, [repository, currentId]);
 
-  async function createClass(event: FormEvent) {
-    event.preventDefault();
+  function select(id: string) {
+    // Dieselbe Klasse erneut zu wählen lädt nichts neu.
+    if (id === currentId) return;
+    setSelectedId(id);
+    setShown(undefined);
+    setRemovalShown(false);
+    setPendingDelete(undefined);
+  }
+
+  function switchTab(next: ClassTab) {
+    setTab(next);
+    setSelectedId("");
+    setShown(undefined);
+    setRemovalShown(false);
+    setPendingDelete(undefined);
+  }
+
+  async function createClass(values: NewClassValues) {
     const now = new Date().toISOString();
     const course: TeacherClass = {
       id: crypto.randomUUID(),
-      name,
-      teacherName,
-      schoolYear,
+      name: values.name.trim(),
+      teacherName: values.teacherName.trim(),
+      schoolYear: values.schoolYear.trim(),
       enabledModules: modules,
       createdAt: now,
       updatedAt: now,
@@ -161,54 +225,50 @@ export function TeacherClassConfigurator() {
     } catch {
       // siehe oben
     }
-    try {
-      setClasses((current) => [...current, course]);
-      notifyTeacherClassesChanged();
-      setSelectedId(course.id);
-      setMembers([]);
-      setShown(undefined);
-      setName("");
-      setMessage("Klasse wurde lokal angelegt.");
-      window.dispatchEvent(new Event("teacher-data-changed"));
-    } catch {
-      setMessage("Die Klasse konnte nicht gespeichert werden.");
-    }
+    setClasses((current) => [...current, course]);
+    setCounts((current) => ({ ...current, [course.id]: 0 }));
+    setTab("active");
+    setSelectedId(course.id);
+    setShown(undefined);
+    setCreating(false);
+    setMessage("Klasse wurde lokal angelegt.");
+    changed();
   }
 
-  async function addStudent(event: FormEvent) {
-    event.preventDefault();
+  async function addStudent(name: string) {
     if (!selected) return;
     const member: ClassMember = {
       id: crypto.randomUUID(),
       classId: selected.id,
-      displayName: studentName,
+      displayName: name,
       enrollmentToken: token(),
       createdAt: new Date().toISOString(),
     };
     try {
       await repository.putMember(member);
       setMembers((current) => [...current, member]);
-      notifyTeacherClassesChanged();
+      setCounts((current) => ({
+        ...current,
+        [selected.id]: (current[selected.id] ?? 0) + 1,
+      }));
       setShown(undefined);
-      setStudentName("");
       setMessage("Schüler wurde lokal angelegt.");
-      window.dispatchEvent(new Event("teacher-data-changed"));
+      changed();
     } catch {
       setMessage("Der Schüler konnte nicht gespeichert werden.");
     }
   }
 
-  const code = selected && shown ? createEnrollmentCode(selected, shown) : "";
-  const qrValue =
-    code && appOrigin ? createEnrollmentLink(appOrigin, code) : "";
-
   async function removeStudent(member: ClassMember) {
     await repository.removeMember(member.id);
     setMembers((current) => current.filter(({ id }) => id !== member.id));
-    notifyTeacherClassesChanged();
+    setCounts((current) => ({
+      ...current,
+      [member.classId]: Math.max(0, (current[member.classId] ?? 1) - 1),
+    }));
     if (shown?.id === member.id) setShown(undefined);
     setMessage(`„${member.displayName}“ wurde aus der Klasse entfernt.`);
-    window.dispatchEvent(new Event("teacher-data-changed"));
+    changed();
   }
 
   async function toggleWritingRelief(member: ClassMember) {
@@ -216,8 +276,7 @@ export function TeacherClassConfigurator() {
     try {
       const updated = await repository.setWritingRelief(member.id, enabled);
       // Der Stempel kann dabei neu entstanden sein: Klasse neu laden.
-      const refreshed = await repository.list();
-      setClasses(refreshed);
+      setClasses(await repository.list());
       setMembers((current) =>
         current.map((entry) => (entry.id === member.id ? updated : entry)),
       );
@@ -241,494 +300,354 @@ export function TeacherClassConfigurator() {
     }
   }
 
+  async function toggleModule(module: ClassModule) {
+    if (!selected) return;
+    const enabledModules = toggleClassModule(selected.enabledModules, module);
+    if (enabledModules.length === selected.enabledModules.length) {
+      setMessage("Mindestens ein Bereich bleibt für die Klasse an.");
+      return;
+    }
+    const updated = {
+      ...selected,
+      enabledModules,
+      updatedAt: new Date().toISOString(),
+    };
+    try {
+      await repository.put(updated);
+      setClasses((current) =>
+        current.map((course) => (course.id === updated.id ? updated : course)),
+      );
+      setMessage(
+        "Die Bereiche gelten für QR-Codes, die die Kinder ab jetzt scannen.",
+      );
+      changed();
+    } catch {
+      setMessage("Die Bereiche konnten nicht gespeichert werden.");
+    }
+  }
+
   async function archiveSelectedClass() {
     if (!selected) return;
     await repository.archiveClass(selected.id);
-    const remaining = classes.filter(({ id }) => id !== selected.id);
-    setClasses(remaining);
-    notifyTeacherClassesChanged();
+    setClasses((current) => current.filter(({ id }) => id !== selected.id));
     setArchivedClasses((current) => [
       { ...selected, archivedAt: new Date().toISOString() },
       ...current,
     ]);
-    setSelectedId(remaining[0]?.id ?? "");
-    setMembers([]);
+    setSelectedId("");
     setShown(undefined);
     setMessage(
       `„${selected.name}“ wurde archiviert. Schüler und Zuteilungen bleiben für eine Reaktivierung erhalten.`,
     );
-    window.dispatchEvent(new Event("teacher-data-changed"));
+    changed();
+  }
+
+  async function restoreClass(course: TeacherClass) {
+    await repository.restoreClass(course.id);
+    setArchivedClasses((current) =>
+      current.filter(({ id }) => id !== course.id),
+    );
+    setClasses((current) => [...current, { ...course, archivedAt: null }]);
+    setTab("active");
+    setSelectedId(course.id);
+    setRemovalShown(false);
+    setMessage(`„${course.name}“ wurde wieder aktiviert.`);
+    changed();
   }
 
   async function deleteClass(course: TeacherClass) {
     await repository.removeClass(course.id);
-    const remaining = classes.filter(({ id }) => id !== course.id);
-    setClasses(remaining);
+    setClasses((current) => current.filter(({ id }) => id !== course.id));
     setArchivedClasses((current) =>
       current.filter(({ id }) => id !== course.id),
     );
-    if (selectedId === course.id) {
-      setSelectedId(remaining[0]?.id ?? "");
-      setMembers([]);
-      setShown(undefined);
-    }
+    setSelectedId("");
+    setShown(undefined);
     setPendingDelete(undefined);
-    notifyTeacherClassesChanged();
     setMessage(`„${course.name}“ wurde gelöscht.`);
-    window.dispatchEvent(new Event("teacher-data-changed"));
-  }
-
-  function deleteButton(course: TeacherClass) {
-    return (
-      <button
-        type="button"
-        className="ui-icon-btn"
-        aria-label={`Klasse ${course.name} löschen`}
-        title="Klasse löschen"
-        onClick={() => setPendingDelete({ course, step: 1 })}
-      >
-        <Icon name="trash" size={18} />
-      </button>
-    );
-  }
-
-  const deleteConfirmation = pendingDelete ? (
-    <div
-      className="ui-notice ui-notice--bad ui-stack"
-      role="alertdialog"
-      aria-labelledby="class-delete-title"
-      aria-describedby="class-delete-text"
-    >
-      <strong id="class-delete-title">
-        {pendingDelete.step === 1
-          ? `Klasse „${pendingDelete.course.name}“ löschen?`
-          : "Wirklich endgültig löschen?"}
-      </strong>
-      <p id="class-delete-text" className="ui-small">
-        {pendingDelete.step === 1
-          ? "Schüler, Zuteilungen und eingegangene Abgaben dieser Klasse werden auf diesem Gerät entfernt. Archivieren behält alles für später."
-          : "Das lässt sich nicht rückgängig machen. Auf Schülergeräten bleibt die Klasse, bis sie dort mit einem Entfernungscode oder von Hand entfernt wird."}
-      </p>
-      <div className="ui-row ui-wrap">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setPendingDelete(undefined)}
-        >
-          Abbrechen
-        </Button>
-        {pendingDelete.step === 1 ? (
-          <Button
-            size="sm"
-            onClick={() =>
-              setPendingDelete({ course: pendingDelete.course, step: 2 })
-            }
-          >
-            Ja, löschen
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            onClick={() => void deleteClass(pendingDelete.course)}
-          >
-            Endgültig löschen
-          </Button>
-        )}
-      </div>
-    </div>
-  ) : null;
-
-  async function restoreClass(course: TeacherClass) {
-    await repository.restoreClass(course.id);
-    const restored = { ...course, archivedAt: null };
-    setArchivedClasses((current) =>
-      current.filter(({ id }) => id !== course.id),
-    );
-    setClasses((current) => [...current, restored]);
-    notifyTeacherClassesChanged();
-    setSelectedId(course.id);
-    setRemovalShown(undefined);
-    setMessage(`„${course.name}“ wurde wieder aktiviert.`);
-    window.dispatchEvent(new Event("teacher-data-changed"));
+    changed();
   }
 
   if (showQrSheet && selected) {
     return (
-      <section
-        className="ui-stack ui-qr-sheet"
-        aria-labelledby="teacher-qr-sheet-title"
-      >
-        <div className="ui-between ui-wrap ui-print-hidden">
-          <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-            <p className="ui-eyebrow">Einschreibung</p>
-            <h1 id="teacher-qr-sheet-title" className="ui-h-page">
-              QR-Bogen für {selected.name}
-            </h1>
-            <p className="ui-small ui-muted">
-              {members.length} Schüler · {selected.schoolYear}
-            </p>
+      <div className={cx(m.page, "ui")}>
+        <section
+          className="ui-stack ui-qr-sheet"
+          aria-labelledby="teacher-qr-sheet-title"
+        >
+          <div className="ui-between ui-wrap ui-print-hidden">
+            <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
+              <p className="ui-eyebrow">Einschreibung</p>
+              <h1 id="teacher-qr-sheet-title" className="ui-h-page">
+                QR-Bogen für {selected.name}
+              </h1>
+              <p className="ui-small ui-muted">
+                {members.length} Schüler · {selected.schoolYear}
+              </p>
+            </div>
+            <div className="ui-row ui-wrap">
+              <Button variant="ghost" onClick={() => setShowQrSheet(false)}>
+                Zurück zur Klasse
+              </Button>
+              <Button onClick={() => window.print()}>
+                Drucken oder als PDF speichern
+              </Button>
+            </div>
           </div>
-          <div className="ui-row ui-wrap">
-            <Button variant="ghost" onClick={() => setShowQrSheet(false)}>
-              Zurück zur Klasse
-            </Button>
-            <Button onClick={() => window.print()}>
-              Drucken oder als PDF speichern
-            </Button>
+          <div className="ui-qr-sheet__grid">
+            {members.map((member) => (
+              <figure key={member.id} className="ui-qr-sheet__card">
+                <QRCodeSVG
+                  value={createEnrollmentLink(
+                    appOrigin,
+                    createEnrollmentCode(selected, member),
+                  )}
+                  size={180}
+                  role="img"
+                  aria-label={`Einschreibungs-QR-Code für ${member.displayName}`}
+                />
+                <figcaption>{member.displayName}</figcaption>
+              </figure>
+            ))}
           </div>
-        </div>
-        <div className="ui-qr-sheet__grid">
-          {members.map((member) => (
-            <figure key={member.id} className="ui-qr-sheet__card">
-              <QRCodeSVG
-                value={createEnrollmentLink(
-                  appOrigin,
-                  createEnrollmentCode(selected, member),
-                )}
-                size={180}
-                role="img"
-                aria-label={`Einschreibungs-QR-Code für ${member.displayName}`}
-              />
-              <figcaption>{member.displayName}</figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
+        </section>
+      </div>
     );
   }
 
-  return (
-    <section className="ui-stack" aria-labelledby="teacher-title">
-      <div className="ui-between ui-wrap">
-        <div className="ui-stack" style={{ ["--gap" as string]: "4px" }}>
-          <p className="ui-eyebrow">Klassenverwaltung</p>
-          <h1 id="teacher-title" className="ui-h-page">
-            Klassen und Schüler
-          </h1>
-          <p className="ui-small ui-muted">
-            Namen und Zuordnungen bleiben ausschließlich auf diesem Lehrergerät.
-          </p>
+  const code =
+    selected && shown && !archived ? createEnrollmentCode(selected, shown) : "";
+  const qrValue =
+    code && appOrigin ? createEnrollmentLink(appOrigin, code) : "";
+  const relief = members.filter((member) => member.writingRelief).length;
+  const removalQrValue =
+    selected && archived && appOrigin
+      ? createClassRemovalLink(appOrigin, selected.id)
+      : "";
+
+  const deleteConfirmation = pendingDelete ? (
+    <ClassSection>
+      <div
+        className={cx(m.notice, m.noticeBad)}
+        role="alertdialog"
+        aria-labelledby="class-delete-title"
+        aria-describedby="class-delete-text"
+      >
+        <strong id="class-delete-title">
+          {pendingDelete.step === 1
+            ? `Klasse „${pendingDelete.course.name}“ löschen?`
+            : "Wirklich endgültig löschen?"}
+        </strong>
+        <p id="class-delete-text" className={m.noticeText}>
+          {pendingDelete.step === 1
+            ? "Schüler, Zuteilungen und eingegangene Abgaben dieser Klasse werden auf diesem Gerät entfernt. Archivieren behält alles für später."
+            : "Das lässt sich nicht rückgängig machen. Auf Schülergeräten bleibt die Klasse, bis sie dort mit einem Entfernungscode oder von Hand entfernt wird."}
+        </p>
+        <div className={m.actions}>
+          <button
+            type="button"
+            className={m.soft}
+            onClick={() => setPendingDelete(undefined)}
+          >
+            Abbrechen
+          </button>
+          {pendingDelete.step === 1 ? (
+            <button
+              type="button"
+              className={cx(m.soft, m.danger)}
+              onClick={() =>
+                setPendingDelete({ course: pendingDelete.course, step: 2 })
+              }
+            >
+              Ja, löschen
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={cx(m.soft, m.danger)}
+              onClick={() => void deleteClass(pendingDelete.course)}
+            >
+              Endgültig löschen
+            </button>
+          )}
         </div>
       </div>
+    </ClassSection>
+  ) : null;
 
-      <form
-        onSubmit={createClass}
-        className="ui-card ui-card--pop ui-card--pad ui-stack"
-        aria-labelledby="class-create-title"
-      >
-        <div>
-          <p className="ui-eyebrow">Klasse hinzufügen</p>
-          <h2 id="class-create-title" className="ui-h-section">
-            Neue Klasse anlegen
-          </h2>
-        </div>
-        <div className="ui-grid-auto" style={{ ["--min" as string]: "200px" }}>
-          <label className="ui-labeled">
-            Klassenname
-            <input
-              className="ui-input"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              required
-              placeholder="z. B. Klasse 7b"
-            />
-          </label>
-          <label className="ui-labeled">
-            Lehrkraft
-            <input
-              className="ui-input"
-              aria-label="Lehrkraft"
-              value={teacherName}
-              onChange={(event) => setTeacherName(event.target.value)}
-              required
-              placeholder="z. B. Frau Sommer"
-            />
-          </label>
-          <label className="ui-labeled">
-            Schuljahr
-            <input
-              className="ui-input"
-              value={schoolYear}
-              onChange={(event) => setSchoolYear(event.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <p className="ui-tiny ui-muted">
-          Die Lehrkraft wird aus den Einstellungen übernommen und ist hier
-          änderbar.
-        </p>
-        <Button type="submit">Klasse anlegen</Button>
-      </form>
-
-      {classes.length === 0 ? (
-        <EmptyState title="Noch keine Klasse">
-          Lege oben deine erste Klasse an.
-        </EmptyState>
-      ) : (
-        <div className="ui-cols ui-classes">
-          <nav className="ui-stack" aria-label="Klassen">
-            <div className="ui-between">
-              <h2 className="ui-h-section">Meine Klassen</h2>
-              <Pill>{classes.length}</Pill>
-            </div>
-            {classes.map((course) => (
-              <button
-                key={course.id}
-                className="ui-select-card"
-                type="button"
-                aria-label={`${course.name}, ${course.schoolYear}`}
-                aria-pressed={course.id === selectedId}
-                onClick={() => {
-                  // Dieselbe Klasse erneut zu wählen lädt nichts neu: die
-                  // Schülerliste darf dann nicht geleert werden.
-                  if (course.id === selectedId) return;
-                  setMembers([]);
-                  setSelectedId(course.id);
-                  setShown(undefined);
-                }}
-              >
-                <strong>{course.name}</strong>
-                <span className="ui-small ui-muted">{course.schoolYear}</span>
-              </button>
-            ))}
-          </nav>
-
-          {selected ? (
-            <section
-              className="ui-card ui-card--pop ui-card--pad ui-stack"
-              aria-label="Ausgewählte Klasse"
-            >
-              <div className="ui-between ui-wrap">
-                <div>
-                  <p className="ui-eyebrow">Klasse</p>
-                  <h2 className="ui-h-section">{selected.name}</h2>
-                  <p className="ui-small ui-muted">
-                    {selected.teacherName} · {selected.schoolYear}
-                  </p>
-                </div>
-                <div className="ui-row ui-wrap">
-                  <Button
-                    variant="green"
-                    size="sm"
-                    disabled={members.length === 0}
-                    onClick={() => setShowQrSheet(true)}
-                  >
-                    QR-Bogen für die Klasse
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void archiveSelectedClass()}
-                  >
-                    Klasse archivieren
-                  </Button>
-                  {deleteButton(selected)}
-                </div>
-              </div>
-              {pendingDelete?.course.id === selected.id
-                ? deleteConfirmation
-                : null}
-
-              <form onSubmit={addStudent} className="ui-row ui-classes__add">
-                <label className="ui-labeled ui-grow">
-                  Name oder Alias
-                  <input
-                    className="ui-input"
-                    value={studentName}
-                    onChange={(event) => setStudentName(event.target.value)}
-                    required
-                    placeholder="z. B. Alex"
-                  />
-                </label>
-                <Button type="submit">Schüler anlegen</Button>
-              </form>
-
-              <div className="ui-between">
-                <h3 className="ui-h-section">Schüler</h3>
-                <Pill>{members.length}</Pill>
-              </div>
-              {members.length === 0 ? (
-                <p className="ui-small ui-muted">
-                  In dieser Klasse sind noch keine Schüler angelegt.
-                </p>
-              ) : (
-                <ul className="ui-list">
-                  {members.map((member) => {
-                    const isShown = shown?.id === member.id;
-                    return (
-                      <li
-                        key={member.id}
-                        className="ui-stack ui-classes__member"
-                      >
-                        <div className="ui-between">
-                          <button
-                            className="ui-classes__name"
-                            type="button"
-                            aria-label={`${member.displayName}: ${
-                              isShown ? "QR-Code schließen" : "QR-Code anzeigen"
-                            }`}
-                            aria-expanded={isShown}
-                            aria-controls={`member-code-${member.id}`}
-                            onClick={() =>
-                              setShown(isShown ? undefined : member)
-                            }
-                          >
-                            <strong>{member.displayName}</strong>
-                            <span className="ui-small ui-muted">
-                              {isShown
-                                ? "QR-Code schließen"
-                                : "QR-Code anzeigen"}
-                            </span>
-                          </button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            aria-label={`${member.displayName} entfernen`}
-                            onClick={() => void removeStudent(member)}
-                          >
-                            Entfernen
-                          </Button>
-                        </div>
-                        <label className="ui-row">
-                          <input
-                            type="checkbox"
-                            aria-label={`Schreiberleichterung für ${member.displayName}`}
-                            checked={member.writingRelief === true}
-                            onChange={() => void toggleWritingRelief(member)}
-                          />
-                          <span>
-                            Schreiberleichterung
-                            <span className="ui-tiny ui-muted">
-                              {" "}
-                              Wirkt nur in Laufdiktaten, die du für diese Klasse
-                              startest.
-                            </span>
-                          </span>
-                        </label>
-                        {isShown && qrValue ? (
-                          <div
-                            className="ui-stack ui-center"
-                            id={`member-code-${member.id}`}
-                          >
-                            <h4 className="ui-small">
-                              Einschreibungs-QR für {member.displayName}
-                            </h4>
-                            <div className="ui-qr-box">
-                              <QRCodeSVG
-                                value={qrValue}
-                                // Mit Freigabe ist der Code dichter: größer zeigen.
-                                size={member.writingRelief ? 280 : 220}
-                                role="img"
-                                aria-label={`Einschreibungs-QR-Code für ${member.displayName}`}
-                              />
-                            </div>
-                          </div>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              <p className="ui-tiny ui-muted">
-                Aktive Bereiche:{" "}
-                {selected.enabledModules
-                  .map((module) => CLASS_MODULE_LABELS[module])
-                  .join(", ")}
-              </p>
-            </section>
-          ) : null}
-        </div>
-      )}
-
+  return (
+    <ManagePage
+      title="Klassen und Schüler"
+      lead="Namen und Zuordnungen bleiben ausschließlich auf diesem Lehrergerät."
+      action={
+        <button
+          type="button"
+          className={m.green}
+          aria-expanded={creating}
+          onClick={() => setCreating((open) => !open)}
+        >
+          + Neue Klasse
+        </button>
+      }
+    >
+      {creating ? (
+        <NewClassRow
+          initial={{
+            name: "",
+            teacherName,
+            schoolYear: DEFAULT_SCHOOL_YEAR,
+          }}
+          onCancel={() => setCreating(false)}
+          onCreate={(values) => void createClass(values)}
+        />
+      ) : null}
       {message ? (
-        <p className="ui-notice" role="status">
+        <p className={m.notice} role="status">
           {message}
         </p>
       ) : null}
-
-      <section
-        className="ui-stack"
-        aria-labelledby="teacher-class-archive-title"
+      <ClassesLayout
+        side={
+          <>
+            <ClassTabs
+              tab={tab}
+              counts={{
+                active: classes.length,
+                archive: archivedClasses.length,
+              }}
+              onTab={switchTab}
+            />
+            <ClassList
+              items={list.map((course) => ({
+                id: course.id,
+                name: course.name,
+                sub: `${counts[course.id] ?? 0} Schüler · ${course.schoolYear}`,
+                label: `${course.name}, ${course.schoolYear}`,
+              }))}
+              selectedId={currentId}
+              empty={
+                !loaded
+                  ? "Wird geladen …"
+                  : archived
+                    ? "Noch keine archivierte Klasse."
+                    : "Noch keine Klasse. Lege oben mit „+ Neue Klasse“ deine erste an."
+              }
+              onPick={select}
+            />
+          </>
+        }
       >
-        <div className="ui-between">
-          <h2 id="teacher-class-archive-title" className="ui-h-section">
-            Klassenarchiv
-          </h2>
-          <Pill>{archivedClasses.length}</Pill>
-        </div>
-        {archivedClasses.length === 0 ? (
-          <p className="ui-small ui-muted">Noch keine archivierte Klasse.</p>
-        ) : (
-          <ul className="ui-list">
-            {archivedClasses.map((course) => {
-              const isRemovalShown = removalShown?.id === course.id;
-              const removalQrValue = appOrigin
-                ? createClassRemovalLink(appOrigin, course.id)
-                : "";
-              return (
-                <li key={course.id} className="ui-item">
-                  <div
-                    className="ui-stack"
-                    style={{ ["--gap" as string]: "2px" }}
-                  >
-                    <strong>{course.name}</strong>
-                    <span className="ui-small ui-muted">
-                      {course.teacherName} · {course.schoolYear}
-                    </span>
-                  </div>
-                  <div className="ui-item__actions">
-                    <Button
-                      variant="green"
-                      size="sm"
-                      onClick={() => void restoreClass(course)}
-                    >
-                      Reaktivieren
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-expanded={isRemovalShown}
-                      onClick={() =>
-                        setRemovalShown(isRemovalShown ? undefined : course)
-                      }
+        {selected ? (
+          <ClassDetail
+            title={selected.name}
+            meta={`${selected.teacherName} · ${selected.schoolYear}${
+              archived ? " · archiviert" : ""
+            }`}
+            actions={
+              <ClassActions
+                name={selected.name}
+                archived={archived}
+                canPrint={members.length > 0}
+                onPrint={() => setShowQrSheet(true)}
+                onArchive={() =>
+                  void (archived
+                    ? restoreClass(selected)
+                    : archiveSelectedClass())
+                }
+                onDelete={() => setPendingDelete({ course: selected, step: 1 })}
+                extra={
+                  archived ? (
+                    <button
+                      type="button"
+                      className={m.soft}
+                      aria-expanded={removalShown}
+                      onClick={() => setRemovalShown((open) => !open)}
                     >
                       Entfernungscode
-                    </Button>
-                    {deleteButton(course)}
-                  </div>
-                  {pendingDelete?.course.id === course.id
-                    ? deleteConfirmation
-                    : null}
-                  {isRemovalShown && removalQrValue ? (
-                    <div className="ui-row ui-wrap ui-classes__removal">
-                      <div className="ui-qr-box">
-                        <QRCodeSVG
-                          value={removalQrValue}
-                          size={160}
-                          role="img"
-                          aria-label={`Entfernungs-QR-Code für ${course.name}`}
-                        />
-                      </div>
-                      <div
-                        className="ui-stack ui-grow"
-                        style={{ ["--gap" as string]: "4px" }}
-                      >
-                        <strong>Auf Schülergeräten entfernen</strong>
-                        <p className="ui-small ui-muted">
-                          Schüler scannen diesen QR-Code oder fügen den Code
-                          unter „Klasse“ ein. Der persönliche Lernstand bleibt
-                          erhalten.
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-    </section>
+                    </button>
+                  ) : null
+                }
+              />
+            }
+          >
+            {pendingDelete?.course.id === selected.id
+              ? deleteConfirmation
+              : null}
+            {archived && removalShown && removalQrValue ? (
+              <ClassSection>
+                <div className={m.actions}>
+                  <span
+                    style={{
+                      padding: 10,
+                      borderRadius: 12,
+                      background: "#fff",
+                      lineHeight: 0,
+                    }}
+                  >
+                    <QRCodeSVG
+                      value={removalQrValue}
+                      size={160}
+                      role="img"
+                      aria-label={`Entfernungs-QR-Code für ${selected.name}`}
+                    />
+                  </span>
+                  <span className={m.hint} style={{ flex: "1 1 14em" }}>
+                    <strong>Auf Schülergeräten entfernen.</strong> Schüler
+                    scannen diesen QR-Code oder fügen den Code unter „Klasse“
+                    ein. Der persönliche Lernstand bleibt erhalten.
+                  </span>
+                </div>
+              </ClassSection>
+            ) : null}
+            <ClassAreas
+              disabled={archived}
+              areas={modules.map((module) => ({
+                id: module,
+                label: CLASS_MODULE_LABELS[module],
+                on: selected.enabledModules.includes(module),
+              }))}
+              onToggle={(id) => void toggleModule(id as ClassModule)}
+            />
+            <StudentList
+              students={members.map((member) => ({
+                id: member.id,
+                name: member.displayName,
+                writingRelief: member.writingRelief === true,
+              }))}
+              hint={relief > 0 ? `${relief} mit Schreiberleichterung` : ""}
+              shownId={shown?.id}
+              readOnly={archived}
+              qr={
+                qrValue ? (
+                  <QRCodeSVG
+                    value={qrValue}
+                    // Mit Freigabe ist der Code dichter: größer zeigen.
+                    size={shown?.writingRelief ? 280 : 220}
+                    role="img"
+                    aria-label={`Einschreibungs-QR-Code für ${shown?.displayName ?? ""}`}
+                  />
+                ) : null
+              }
+              onAdd={(name) => void addStudent(name)}
+              onToggleQr={(id) =>
+                setShown((current) =>
+                  current?.id === id
+                    ? undefined
+                    : members.find((member) => member.id === id),
+                )
+              }
+              onRelief={(id) => {
+                const member = members.find((entry) => entry.id === id);
+                if (member) void toggleWritingRelief(member);
+              }}
+              onRemove={(id) => {
+                const member = members.find((entry) => entry.id === id);
+                if (member) void removeStudent(member);
+              }}
+            />
+          </ClassDetail>
+        ) : null}
+      </ClassesLayout>
+    </ManagePage>
   );
 }

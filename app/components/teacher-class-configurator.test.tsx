@@ -30,14 +30,14 @@ describe("TeacherClassConfigurator", () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
     await user.type(
-      screen.getByRole("textbox", { name: "Klassenname" }),
+      await screen.findByRole("textbox", { name: "Klassenname" }),
       "Klasse 8a",
     );
     await user.type(
       screen.getByRole("textbox", { name: "Lehrkraft" }),
       "Herr Test",
     );
-    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
     await user.click(
       await screen.findByRole("button", { name: "Klasse Klasse 8a löschen" }),
     );
@@ -72,14 +72,14 @@ describe("TeacherClassConfigurator", () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
     await user.type(
-      screen.getByRole("textbox", { name: "Klassenname" }),
+      await screen.findByRole("textbox", { name: "Klassenname" }),
       "Klasse 8a",
     );
     await user.type(
       screen.getByRole("textbox", { name: "Lehrkraft" }),
       "Herr Test",
     );
-    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
     expect(
       await screen.findByText("Klasse wurde lokal angelegt."),
     ).toBeVisible();
@@ -95,14 +95,14 @@ describe("TeacherClassConfigurator", () => {
       .mockRejectedValue(new Error("kein sicherer Kontext"));
     render(<TeacherClassConfigurator />);
     await user.type(
-      screen.getByRole("textbox", { name: "Klassenname" }),
+      await screen.findByRole("textbox", { name: "Klassenname" }),
       "Klasse 8b",
     );
     await user.type(
       screen.getByRole("textbox", { name: "Lehrkraft" }),
       "Herr Test",
     );
-    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
     expect(
       await screen.findByText("Klasse wurde lokal angelegt."),
     ).toBeVisible();
@@ -116,19 +116,19 @@ describe("TeacherClassConfigurator", () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
     await user.type(
-      screen.getByRole("textbox", { name: "Klassenname" }),
+      await screen.findByRole("textbox", { name: "Klassenname" }),
       "Klasse 8a",
     );
     await user.type(
       screen.getByRole("textbox", { name: "Lehrkraft" }),
       "Herr Test",
     );
-    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
     const student = await screen.findByRole("textbox", {
       name: "Name oder Alias",
     });
     await user.type(student, "Alex");
-    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Hinzufügen" }));
     const studentButton = await screen.findByRole("button", {
       name: "Alex: QR-Code anzeigen",
     });
@@ -162,24 +162,22 @@ describe("TeacherClassConfigurator", () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
     await user.type(
-      screen.getByRole("textbox", { name: "Klassenname" }),
+      await screen.findByRole("textbox", { name: "Klassenname" }),
       "Klasse 8a",
     );
     await user.type(
       screen.getByRole("textbox", { name: "Lehrkraft" }),
       "Herr Test",
     );
-    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
     const student = await screen.findByRole("textbox", {
       name: "Name oder Alias",
     });
     await user.type(student, "Alex");
-    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Hinzufügen" }));
     await user.type(student, "Sam");
-    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
-    await user.click(
-      screen.getByRole("button", { name: "QR-Bogen für die Klasse" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Hinzufügen" }));
+    await user.click(screen.getByRole("button", { name: "QR-Bogen drucken" }));
     expect(
       screen.getByRole("heading", { name: "QR-Bogen für Klasse 8a" }),
     ).toBeVisible();
@@ -194,26 +192,29 @@ describe("TeacherClassConfigurator", () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
     await user.type(
-      screen.getByRole("textbox", { name: "Klassenname" }),
+      await screen.findByRole("textbox", { name: "Klassenname" }),
       "Klasse 8a",
     );
     await user.type(
       screen.getByRole("textbox", { name: "Lehrkraft" }),
       "Herr Test",
     );
-    await user.click(screen.getByRole("button", { name: "Klasse anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
     await user.type(
       await screen.findByRole("textbox", { name: "Name oder Alias" }),
       "Alex",
     );
-    await user.click(screen.getByRole("button", { name: "Schüler anlegen" }));
+    await user.click(screen.getByRole("button", { name: "Hinzufügen" }));
     const relief = await screen.findByRole("checkbox", {
       name: "Schreiberleichterung für Alex",
     });
     expect(relief).not.toBeChecked();
-    expect(
-      screen.getAllByText(/Wirkt nur in Laufdiktaten, die du für diese Klasse/),
-    ).not.toHaveLength(0);
+    expect(relief.closest("label")).toHaveAttribute(
+      "title",
+      expect.stringMatching(
+        /wirkt nur in Laufdiktaten, die du für diese Klasse/,
+      ),
+    );
 
     await user.click(relief);
     expect(
@@ -245,5 +246,53 @@ describe("TeacherClassConfigurator", () => {
     ).enrollment;
     expect(withdrawn.sealPublicKey).toBe(enrollment.sealPublicKey);
     expect(withdrawn.writingReliefGrant).toBeUndefined();
+  });
+
+  it("opens the new class row, switches tabs and toggles areas", async () => {
+    const user = userEvent.setup();
+    render(<TeacherClassConfigurator />);
+    // Ohne Klasse steht die Zeile offen; „+ Neue Klasse“ klappt sie zu.
+    const toggle = screen.getByRole("button", { name: "+ Neue Klasse" });
+    await waitFor(() =>
+      expect(toggle).toHaveAttribute("aria-expanded", "true"),
+    );
+    expect(screen.getByRole("textbox", { name: "Schuljahr" })).toHaveValue(
+      "2026/27",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Klassenname" }),
+      "Klasse 7b",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
+    await screen.findByText("Klasse wurde lokal angelegt.");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("textbox", { name: "Klassenname" })).toBeNull();
+    expect(screen.getByText("Noch keine Schüler")).toBeVisible();
+
+    const typing = screen.getByRole("button", { name: "Tipptraining" });
+    expect(typing).toHaveAttribute("aria-pressed", "true");
+    await user.click(typing);
+    await waitFor(() =>
+      expect(typing).toHaveAttribute("aria-pressed", "false"),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Archivieren" }));
+    expect(await screen.findByText(/wurde archiviert/)).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /^Archiv/ }));
+    expect(screen.getByRole("heading", { name: "Klasse 7b" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Entfernungscode" }));
+    expect(
+      screen.getByRole("img", { name: "Entfernungs-QR-Code für Klasse 7b" }),
+    ).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Wiederherstellen" }));
+    expect(await screen.findByText(/wieder aktiviert/)).toBeVisible();
+    expect(screen.getByRole("button", { name: /^Aktiv/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });
