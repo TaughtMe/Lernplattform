@@ -735,10 +735,12 @@ test("teacher material and assignment tools share a consistent grid", async ({
   page,
 }) => {
   await page.goto("/lehrer/material");
-  const materialSurface = await page
-    .locator(".ui-transfer")
-    .evaluate((element) => getComputedStyle(element).backgroundColor);
-  expect(materialSurface).toBe("rgba(0, 0, 0, 0)");
+  await expect(
+    page.getByRole("heading", { name: "Freigabe an Schüler", level: 1 }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Vokabelpakete" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Datei importieren" }),
   ).toBeVisible();

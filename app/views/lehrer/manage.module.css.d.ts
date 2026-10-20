@@ -1,5 +1,6 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
+  readonly actions: string;
   readonly card: string;
   readonly cardRule: string;
   readonly count: string;
@@ -21,6 +22,7 @@ declare const styles: {
   readonly link: string;
   readonly notice: string;
   readonly noticeBad: string;
+  readonly noticeText: string;
   readonly page: string;
   readonly saved: string;
   readonly select: string;

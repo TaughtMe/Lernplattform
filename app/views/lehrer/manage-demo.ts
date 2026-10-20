@@ -69,3 +69,45 @@ export const DEMO_STATS: DeviceStats = {
   materials: 18,
   assignments: 4,
 };
+
+// ---------- 17b Freigabe an Schüler ----------
+
+export const DEMO_PACKAGES = [
+  {
+    id: "a",
+    title: "Englisch · Unit 3 School",
+    meta: "7 Paare · geändert 14.10.",
+  },
+  {
+    id: "b",
+    title: "Englisch · Unit 2 Family",
+    meta: "5 Paare · geändert 02.10.",
+  },
+  {
+    id: "c",
+    title: "Französisch · Les couleurs",
+    meta: "6 Paare · geändert 19.10.",
+    live: "noch 6 h",
+  },
+] as const;
+
+/** „Läuft gerade“: die Freigabe von „Les couleurs“ läuft seit 18 Stunden. */
+export const DEMO_LIVE = [
+  {
+    id: "c",
+    title: "Französisch · Les couleurs",
+    meta: "6 Paare · Code 4K2P …",
+    left: "noch 6 h · bis 20:05",
+    fraction: 0.25,
+  },
+] as const;
+
+export const DEMO_ROWS = [
+  { a: "school", b: "Schule", tag: "Unit 3" },
+  { a: "classroom", b: "Klassenzimmer", tag: "Unit 3" },
+  { a: "library", b: "Bibliothek", tag: "Unit 3" },
+  { a: "teacher", b: "Lehrer", tag: "" },
+  { a: "pupil", b: "Schüler", tag: "" },
+  { a: "break", b: "Pause", tag: "" },
+  { a: "homework", b: "Hausaufgaben", tag: "" },
+] as const;

@@ -633,7 +633,8 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 1003,
-      "status": "offen"
+      "status": "umgesetzt",
+      "hide": [".package-delete"]
     },
     {
       "id": "17c",

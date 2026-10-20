@@ -106,7 +106,7 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/lernbox", "LernBox"],
     ["/lehrer", "Inhalte"],
     ["/lehrer/klassen", "Klassen und Schüler"],
-    ["/lehrer/material", "Material"],
+    ["/lehrer/material", "Freigabe an Schüler"],
     ["/lehrer/aufgaben", "Aufgaben"],
     ["/lehrer/einstellungen", "Einstellungen"],
   ]) {

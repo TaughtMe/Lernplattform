@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { VOCABULARY_LANGUAGES } from "../../../src/domain/running-dictation";
 import {
   DEMO_DEVICES,
+  DEMO_LIVE,
   DEMO_MANAGE,
+  DEMO_PACKAGES,
+  DEMO_ROWS,
   DEMO_PROFILE,
   DEMO_PROVIDERS,
   DEMO_SCOPE,
@@ -25,6 +29,16 @@ import {
   SyncStatusRow,
 } from "../../views/lehrer/settings-screen";
 import { TeacherFrame } from "../../views/lehrer/teacher-frame";
+import {
+  LiveTransfers,
+  PackageEditor,
+  PackageList,
+  TransferLayout,
+} from "../../views/lehrer/transfer-screen";
+import {
+  swapRows,
+  type VocabularyRowValue,
+} from "../../views/lehrer/vocabulary-rows";
 import type { Theme } from "../../views/parts/parts";
 
 /** Die Verwalten-Seiten 17a–c mit Beispieldaten der Vorlage. */
@@ -33,6 +47,13 @@ export function renderManageScreen(screen: string, theme: Theme): ReactNode {
     return (
       <ManageFrame theme={theme} active="settings">
         <SettingsDemo />
+      </ManageFrame>
+    );
+  }
+  if (screen === "17b") {
+    return (
+      <ManageFrame theme={theme} active="material">
+        <TransferDemo />
       </ManageFrame>
     );
   }
@@ -156,6 +177,54 @@ function SettingsDemo() {
           <DeviceDataCard stats={DEMO_STATS} />
         </SettingsGroup>
       </SettingsGroups>
+    </ManagePage>
+  );
+}
+
+/** 17b: „Unit 3 School“ geöffnet, „Les couleurs“ ist freigegeben. */
+function TransferDemo() {
+  const [selected, setSelected] = useState("a");
+  const [title, setTitle] = useState("Englisch · Unit 3 School");
+  const [langs, setLangs] = useState({ left: "en-GB", right: "de-DE" });
+  const [rows, setRows] = useState<VocabularyRowValue[]>(
+    DEMO_ROWS.map((row) => ({ ...row })),
+  );
+  return (
+    <ManagePage
+      title="Freigabe an Schüler"
+      lead="Vokabelpakete per QR-Code auf die Geräte der Schüler geben. Verschlüsselt und nach 24 Stunden gelöscht."
+    >
+      <TransferLayout
+        side={
+          <>
+            <PackageList
+              items={DEMO_PACKAGES}
+              selectedId={selected}
+              onPick={setSelected}
+            />
+            <LiveTransfers items={DEMO_LIVE} actionLabel="QR zeigen" />
+          </>
+        }
+      >
+        <PackageEditor
+          title={title}
+          languages={VOCABULARY_LANGUAGES}
+          left={langs.left}
+          right={langs.right}
+          rows={rows}
+          save="saved"
+          live={false}
+          onTitle={setTitle}
+          onLeft={(left) => setLangs((value) => ({ ...value, left }))}
+          onRight={(right) => setLangs((value) => ({ ...value, right }))}
+          onSwap={() => {
+            setLangs((value) => ({ left: value.right, right: value.left }));
+            setRows((value) => swapRows(value));
+          }}
+          onRows={setRows}
+          onDelete={() => {}}
+        />
+      </TransferLayout>
     </ManagePage>
   );
 }

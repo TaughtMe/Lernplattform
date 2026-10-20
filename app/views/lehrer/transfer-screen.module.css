@@ -1,0 +1,508 @@
+/*
+ * Freigabe an Schüler (Lehrerbereich v2, 17b): Pakete links, Editor rechts,
+ * bei aktiver Freigabe QR und Code darunter. Maße und Farben aus
+ * docs/design/lehrerbereich-v2.dc.html.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ---------- Paketliste ---------- */
+.listCard {
+  overflow: hidden;
+}
+.listHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px 12px 16px;
+}
+.listTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.packages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.package {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px 12px 13px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.package:hover {
+  background: var(--m-green-bg);
+}
+.packageOn {
+  border-left-color: var(--green);
+  background: var(--m-green-bg);
+}
+.packageText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.packageTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.packageMeta {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.liveBadge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--green);
+  color: var(--green-ink);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.liveBadge::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9fe0bd;
+  content: "";
+}
+.listEmpty {
+  margin: 0;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+.libraryRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px 8px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--ink3);
+}
+.libraryLabel {
+  margin-right: 4px;
+}
+
+/* ---------- Läuft gerade ---------- */
+.liveCard {
+  overflow: hidden;
+  border-color: var(--green);
+}
+.liveHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--m-green-line);
+  background: var(--m-green-bg);
+}
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.liveTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--m-green-ink);
+}
+.liveCount {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--green);
+  color: var(--green-ink);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.liveList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.liveItem {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--m-row);
+}
+.liveText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.liveName {
+  font-size: 14px;
+  font-weight: 700;
+}
+.bar {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--m-row);
+}
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--green);
+}
+.liveRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.liveLeft {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--m-green-ink);
+}
+.liveAction {
+  position: relative;
+  min-height: 36px;
+  margin: 0 0 0 auto;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.liveAction::after {
+  position: absolute;
+  inset: -4px 0;
+  content: "";
+}
+.liveAction:hover {
+  border-color: var(--accent);
+}
+.liveEmpty {
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+
+/* ---------- Editor ---------- */
+.editorBody {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+}
+.titleInput {
+  font-size: 16px;
+  font-weight: 700;
+}
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.langs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.lang {
+  flex: 1 1 0;
+  min-width: 7em;
+}
+.swap {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--m-icon);
+  font-size: 16px;
+  cursor: pointer;
+}
+.swap:hover {
+  border-color: var(--accent);
+}
+.langSpacer {
+  display: none;
+}
+.wordsHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+.importButton {
+  margin-left: auto;
+}
+.table {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.tableRow,
+.tableHead {
+  display: grid;
+  grid-template-columns:
+    28px minmax(0, 1fr) minmax(0, 1fr)
+    36px;
+  gap: 8px;
+  align-items: center;
+}
+.tableHead {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink3);
+}
+.tableBody {
+  display: flex;
+  flex-direction: column;
+  max-height: 360px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.tableRow {
+  padding: 5px 10px;
+  border-top: 1px solid var(--line);
+}
+.tableHead .tagCol,
+.tableRow .tagCell {
+  display: none;
+}
+.rowNo {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--ink3);
+}
+.cell {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+.tagCell {
+  font-size: 13.5px;
+}
+.rowDelete {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+.rowDelete::after {
+  inset: -6px;
+}
+.rowDeleteHidden {
+  visibility: hidden;
+}
+.editorFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+}
+.unsaved {
+  color: var(--ink3);
+}
+.share {
+  min-height: 50px;
+  margin-left: auto;
+  padding: 0 24px;
+  font-size: 15px;
+}
+.reshare {
+  margin-left: auto;
+}
+
+/* ---------- QR und Code ---------- */
+.result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px 28px;
+  align-items: center;
+  padding: 24px;
+  border-radius: 18px;
+  background: #211f1b;
+  color: #f7f4ee;
+}
+.qr {
+  justify-self: start;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+}
+.qr svg {
+  display: block;
+  width: 184px;
+  height: 184px;
+}
+.resultText {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.resultStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #9fe0bd;
+}
+.resultStatus::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5fbf8a;
+  content: "";
+}
+.resultTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.resultHint {
+  max-width: 46ch;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #cfc7b6;
+}
+.code {
+  font:
+    700 22px ui-monospace,
+    Menlo,
+    monospace;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+  color: #f0cf84;
+}
+.resultActions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ---------- Groß zeigen ---------- */
+.big {
+  composes: view from "../parts/parts.module.css";
+  width: min(92vw, 720px);
+  max-height: 92vh;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: #211f1b;
+  color: #f7f4ee;
+}
+.big::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+.big :where(button) {
+  font-family: inherit;
+}
+.bigInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 28px;
+  text-align: center;
+}
+.bigQr {
+  padding: 18px;
+  border-radius: 18px;
+  background: #fff;
+}
+.bigQr svg {
+  display: block;
+  width: min(70vw, 60vh, 460px);
+  height: min(70vw, 60vh, 460px);
+}
+.bigCode {
+  font:
+    700 clamp(22px, 4vw, 34px) ui-monospace,
+    Menlo,
+    monospace;
+  letter-spacing: 0.08em;
+  color: #f0cf84;
+}
+
+@container lehrer-rahmen (min-width: 600px) {
+  .tableRow,
+  .tableHead {
+    grid-template-columns:
+      28px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.7fr)
+      36px;
+  }
+  .tableHead .tagCol,
+  .tableRow .tagCell {
+    display: block;
+  }
+  .langs {
+    flex-wrap: nowrap;
+  }
+  .langSpacer {
+    display: block;
+    flex: 0.7;
+  }
+  .result {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .code {
+    font-size: 26px;
+  }
+}
+
+@container lehrer-rahmen (min-width: 900px) {
+  .layout {
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+}
