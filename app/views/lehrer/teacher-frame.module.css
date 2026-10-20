@@ -367,6 +367,10 @@
 .v2 .count {
   background: var(--nav-active);
 }
+.v2 .active .count {
+  background: var(--nav-accent);
+  color: #211f1b;
+}
 .v2 .areaSmall {
   color: #cfc7b6;
 }

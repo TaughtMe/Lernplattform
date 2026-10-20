@@ -560,6 +560,10 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 1000,
+      "hide": [
+        "[aria-label=\"Hell oder dunkel\"]",
+        "header [class*=\"barActions\"]"
+      ],
       "status": "umgesetzt"
     },
     {
@@ -568,6 +572,10 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 834,
       "height": 1112,
+      "hide": [
+        "[aria-label=\"Hell oder dunkel\"]",
+        "header [class*=\"barActions\"]"
+      ],
       "status": "umgesetzt"
     },
     {
@@ -576,6 +584,10 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 390,
       "height": 844,
+      "hide": [
+        "[aria-label=\"Hell oder dunkel\"]",
+        "header [class*=\"barActions\"]"
+      ],
       "status": "umgesetzt"
     },
     {
