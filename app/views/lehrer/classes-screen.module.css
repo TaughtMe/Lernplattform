@@ -1,0 +1,428 @@
+/*
+ * Klassen und Schüler (Lehrerbereich v2, 17c): Reiter und Klassen links,
+ * die gewählte Klasse rechts, „Neue Klasse“ als aufklappbare Zeile. Maße
+ * und Farben aus docs/design/lehrerbereich-v2.dc.html.
+ */
+.newRow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-color: var(--green);
+}
+.newGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ---------- Reiter ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line2);
+}
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  margin: 0 0 -1px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ink3);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+/* Tippfläche 44 px bei 42 px Höhe der Vorlage. */
+.tab::after {
+  position: absolute;
+  inset: -2px 0 0;
+  content: "";
+}
+.tabOn {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+.tabCount {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 11.5px;
+}
+.tabOn .tabCount {
+  background: var(--ink);
+  color: var(--m-gold);
+}
+:global([data-theme="dark"]) .tabOn .tabCount {
+  color: #211f1b;
+  background: var(--m-gold);
+}
+
+/* ---------- Klassenliste ---------- */
+.classes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.class {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 66px;
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.class:hover {
+  border-color: var(--green);
+}
+.classOn {
+  border: 1.5px solid var(--green);
+  background: var(--m-green-bg);
+}
+.classText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.className {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.classSub {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.chevron {
+  font-size: 18px;
+  color: var(--ink3);
+}
+.listEmpty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+
+/* ---------- Gewählte Klasse ---------- */
+.detailHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px;
+}
+.detailText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detailTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.detailMeta {
+  font-size: 13px;
+  color: var(--ink2);
+}
+.detailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* Wie in der Vorlage dürfen die Knöpfe schmaler werden und umbrechen. */
+.detailActions > button {
+  flex: 0 1 auto;
+}
+.delete {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--m-icon);
+  cursor: pointer;
+}
+.delete:hover {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 22px;
+  border-top: 1px solid var(--line);
+}
+.areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.area {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink2);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.area::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line2);
+  content: "";
+}
+.areaOn {
+  border-color: var(--green);
+  background: var(--m-green-bg);
+  color: var(--m-green-ink);
+}
+.areaOn::before {
+  background: var(--green);
+}
+.students {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 22px 22px;
+  border-top: 1px solid var(--line);
+}
+.studentsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.studentsTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.studentsHint {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--ink3);
+}
+.add {
+  display: flex;
+  gap: 8px;
+}
+.addInput {
+  flex: 1;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: 330px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  list-style: none;
+}
+.student {
+  border-top: 1px solid var(--m-row);
+}
+.studentRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 0 8px 0 14px;
+}
+.avatar {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface2);
+  color: var(--m-icon);
+  font-size: 12px;
+  font-weight: 700;
+}
+.studentName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Schreiberleichterung als kleiner Schalter „LRS“. */
+.relief {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  color: var(--ink3);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.relief::after {
+  position: absolute;
+  inset: -10px -4px;
+  content: "";
+}
+.relief:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.relief:has(input:focus-visible) {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.reliefInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+.qrPill {
+  position: relative;
+  margin: 0;
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--m-green-bg);
+  color: var(--m-green-ink);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.qrPill::after {
+  position: absolute;
+  inset: -12px -2px;
+  content: "";
+}
+.qrPill[aria-expanded="true"] {
+  background: var(--green);
+  color: var(--green-ink);
+}
+.qrBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 14px 16px;
+}
+.qrImage {
+  padding: 10px;
+  border-radius: 12px;
+  background: #fff;
+}
+.qrImage svg {
+  display: block;
+}
+.qrText {
+  display: flex;
+  flex: 1 1 14em;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+.qrText strong {
+  color: var(--ink);
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 20px;
+  border: 1px dashed var(--line2);
+  border-radius: 12px;
+  text-align: center;
+}
+.emptyTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.emptyText {
+  max-width: 40ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink2);
+}
+
+@container lehrer-rahmen (min-width: 600px) {
+  .detailHead,
+  .detailActions {
+    flex-wrap: nowrap;
+  }
+  .newGrid {
+    grid-template-columns:
+      minmax(0, 1.2fr) minmax(0, 1fr) 140px
+      auto;
+  }
+  .avatar {
+    display: grid;
+  }
+}
+
+@container lehrer-rahmen (min-width: 900px) {
+  .layout {
+    grid-template-columns: 270px minmax(0, 1fr);
+  }
+}

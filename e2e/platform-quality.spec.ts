@@ -898,14 +898,16 @@ test("the local teacher workspace manages classes, students, assignments and QR 
   await expect(profile.getByText("Wird beim Tippen gespeichert")).toBeVisible();
 
   await page.goto("/lehrer/klassen", { waitUntil: "networkidle" });
+  // Ohne Klasse steht die Zeile „Neue Klasse“ offen.
   const classForm = page.getByRole("form", { name: "Neue Klasse anlegen" });
   await expect(classForm.getByLabel("Lehrkraft")).toHaveValue("Frau Beispiel");
   await classForm.getByLabel("Klassenname").fill("Klasse 7a");
-  await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
+  await classForm.getByRole("button", { name: "Anlegen" }).click();
   await expect(page.getByText("Klasse wurde lokal angelegt.")).toBeVisible();
 
+  await page.getByRole("button", { name: "+ Neue Klasse" }).click();
   await classForm.getByLabel("Klassenname").fill("Klasse 8b");
-  await classForm.getByRole("button", { name: "Klasse anlegen" }).click();
+  await classForm.getByRole("button", { name: "Anlegen" }).click();
   await expect(
     page.getByRole("navigation", { name: "Klassen" }).getByRole("button"),
   ).toHaveCount(2);
@@ -914,7 +916,7 @@ test("the local teacher workspace manages classes, students, assignments and QR 
     name: "Ausgewählte Klasse",
   });
   await studentPanel.getByLabel("Name oder Alias").fill("Alex");
-  await studentPanel.getByRole("button", { name: "Schüler anlegen" }).click();
+  await studentPanel.getByRole("button", { name: "Hinzufügen" }).click();
   await expect(studentPanel.getByText("Alex")).toBeVisible();
   await studentPanel
     .getByRole("button", { name: "Alex: QR-Code anzeigen" })
@@ -930,9 +932,7 @@ test("the local teacher workspace manages classes, students, assignments and QR 
   await studentPanel
     .getByRole("button", { name: "Alex: QR-Code schließen" })
     .click();
-  await studentPanel
-    .getByRole("button", { name: "QR-Bogen für die Klasse" })
-    .click();
+  await studentPanel.getByRole("button", { name: "QR-Bogen drucken" }).click();
   await expect(
     page.getByRole("heading", { name: "QR-Bogen für Klasse 8b" }),
   ).toBeVisible();

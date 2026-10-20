@@ -642,7 +642,8 @@
       "source": "lehrerbereich-v2.dc.html",
       "width": 1180,
       "height": 940,
-      "status": "offen"
+      "status": "umgesetzt",
+      "hide": [".class-relief"]
     }
   ]
 }

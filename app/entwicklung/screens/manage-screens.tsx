@@ -3,6 +3,9 @@
 import { useState, type ReactNode } from "react";
 import { VOCABULARY_LANGUAGES } from "../../../src/domain/running-dictation";
 import {
+  DEMO_AREAS,
+  DEMO_CLASS_LIST,
+  DEMO_STUDENTS,
   DEMO_DEVICES,
   DEMO_LIVE,
   DEMO_MANAGE,
@@ -30,6 +33,17 @@ import {
 } from "../../views/lehrer/settings-screen";
 import { TeacherFrame } from "../../views/lehrer/teacher-frame";
 import {
+  ClassActions,
+  ClassAreas,
+  ClassDetail,
+  ClassesLayout,
+  ClassList,
+  ClassTabs,
+  NewClassRow,
+  StudentList,
+  type ClassTab,
+} from "../../views/lehrer/classes-screen";
+import {
   LiveTransfers,
   PackageEditor,
   PackageList,
@@ -47,6 +61,13 @@ export function renderManageScreen(screen: string, theme: Theme): ReactNode {
     return (
       <ManageFrame theme={theme} active="settings">
         <SettingsDemo />
+      </ManageFrame>
+    );
+  }
+  if (screen === "17c") {
+    return (
+      <ManageFrame theme={theme} active="classes">
+        <ClassesDemo />
       </ManageFrame>
     );
   }
@@ -225,6 +246,95 @@ function TransferDemo() {
           onDelete={() => {}}
         />
       </TransferLayout>
+    </ManagePage>
+  );
+}
+
+/** 17c: Klasse 7b mit 10 Schülern; „+ Neue Klasse“ und Bereiche anklickbar. */
+function ClassesDemo() {
+  const [creating, setCreating] = useState(false);
+  const [tab, setTab] = useState<ClassTab>("active");
+  const [selected, setSelected] = useState("7b");
+  const [areas, setAreas] = useState(DEMO_AREAS);
+  const [shown, setShown] = useState<string>();
+  return (
+    <ManagePage
+      title="Klassen und Schüler"
+      lead="Namen und Zuordnungen bleiben ausschließlich auf diesem Lehrergerät."
+      action={
+        <button
+          type="button"
+          className={m.green}
+          aria-expanded={creating}
+          onClick={() => setCreating((open) => !open)}
+        >
+          + Neue Klasse
+        </button>
+      }
+    >
+      {creating ? (
+        <NewClassRow
+          initial={{
+            name: "",
+            teacherName: "Herr Bryson",
+            schoolYear: "2026/27",
+          }}
+          onCancel={() => setCreating(false)}
+          onCreate={() => setCreating(false)}
+        />
+      ) : null}
+      <ClassesLayout
+        side={
+          <>
+            <ClassTabs
+              tab={tab}
+              counts={{ active: 3, archive: 1 }}
+              onTab={setTab}
+            />
+            <ClassList
+              items={
+                tab === "active"
+                  ? DEMO_CLASS_LIST
+                  : [
+                      {
+                        id: "6a",
+                        name: "6a",
+                        sub: "0 Schüler · 2025/26",
+                        label: "6a, 2025/26",
+                      },
+                    ]
+              }
+              selectedId={tab === "active" ? selected : "6a"}
+              empty=""
+              onPick={setSelected}
+            />
+          </>
+        }
+      >
+        <ClassDetail
+          title="Klasse 7b"
+          meta="Herr Bryson · 2026/27"
+          actions={<ClassActions name="7b" archived={false} canPrint />}
+        >
+          <ClassAreas
+            areas={areas}
+            onToggle={(id) =>
+              setAreas((value) =>
+                value.map((area) =>
+                  area.id === id ? { ...area, on: !area.on } : area,
+                ),
+              )
+            }
+          />
+          <StudentList
+            students={DEMO_STUDENTS}
+            shownId={shown}
+            onToggleQr={(id) =>
+              setShown((value) => (value === id ? undefined : id))
+            }
+          />
+        </ClassDetail>
+      </ClassesLayout>
     </ManagePage>
   );
 }

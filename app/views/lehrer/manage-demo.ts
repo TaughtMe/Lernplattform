@@ -111,3 +111,33 @@ export const DEMO_ROWS = [
   { a: "break", b: "Pause", tag: "" },
   { a: "homework", b: "Hausaufgaben", tag: "" },
 ] as const;
+
+// ---------- 17c Klassen ----------
+
+export const DEMO_CLASS_LIST = [
+  { id: "7b", name: "7b", sub: "10 Schüler · 2026/27", label: "7b, 2026/27" },
+  { id: "8a", name: "8a", sub: "0 Schüler · 2026/27", label: "8a, 2026/27" },
+  { id: "5c", name: "5c", sub: "6 Schüler · 2026/27", label: "5c, 2026/27" },
+] as const;
+
+export const DEMO_STUDENTS = [
+  "Alex",
+  "Ben",
+  "Clara",
+  "Deniz",
+  "Emma",
+  "Finn",
+  "Hanna",
+  "Jonas",
+  "Lea",
+  "Mats",
+].map((name) => ({ id: name, name, writingRelief: false }));
+
+/** Bereiche der Klasse 7b: Vokabeln, Deutsch und Laufdiktat sind an. */
+export const DEMO_AREAS = [
+  { id: "vocabulary", label: "Vokabeln", on: true },
+  { id: "german", label: "Deutsch", on: true },
+  { id: "mathematics", label: "Kopfrechnen", on: false },
+  { id: "typing", label: "Tipptraining", on: false },
+  { id: "running-dictation", label: "Laufdiktat", on: true },
+];
