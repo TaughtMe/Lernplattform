@@ -326,7 +326,7 @@
 .v2 .group {
   gap: 5px;
 }
-.v2 .count {
+.v2 .classRow:not(.active) .count {
   background: var(--nav-active);
 }
 .v2 .areaSmall {
