@@ -92,7 +92,7 @@ async function openLiveStage() {
   await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
   // Stationen lassen sich ohne beigetretene Kinder starten.
   await user.click(screen.getByRole("button", { name: /^Stationen/ }));
-  await user.click(screen.getByRole("button", { name: "Raum öffnen" }));
+  await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
   await screen.findByText("Code gilt bis " + clockTime(90));
   return user;
 }

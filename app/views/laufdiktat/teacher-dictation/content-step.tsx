@@ -1,54 +1,103 @@
 "use client";
 
 import { useState } from "react";
-import { Segmented } from "../../../ui/primitives";
-import { Chip, cx } from "../../parts/parts";
+import { Icon } from "../../../ui/icons";
+import { cx } from "../../parts/parts";
+import styles from "../dictation-editor.module.css";
 import { MathEditor } from "../math-editor";
 import { VocabularyEditor } from "../vocabulary-editor";
 import { VocabularyPicker } from "../vocabulary-picker";
-import styles from "../teacher-dictation-screen.module.css";
+import { SPLITS } from "./constants";
+import { KIND_LABELS } from "./editor-options";
 import type { ContentKind, TeacherDictationScreenProps } from "./types";
-import { KINDS, SPLITS } from "./constants";
-import { LibraryBar } from "./library-bar";
 
-export const PLACEHOLDERS: Record<ContentKind, string> = {
+const PLACEHOLDERS: Record<ContentKind, string> = {
   text: "Text einfügen oder tippen. Er wird automatisch in Abschnitte geteilt.",
   vocabulary: "Eine Vokabel pro Zeile: Wort ; Übersetzung",
   math: "Eine Aufgabe pro Zeile, z. B. 7 + 5",
 };
 
-export function KindChips({ content, onKind }: TeacherDictationScreenProps) {
+/** Titel, beim abgelegten Inhalt mit „Aus der Ablage löschen“ (Bestätigung). */
+function TitleRow(props: TeacherDictationScreenProps) {
+  const [confirming, setConfirming] = useState(false);
   return (
-    <div className={styles.chips} role="group" aria-label="Inhaltsart">
-      {KINDS.map(([kind, label]) => (
-        <Chip
-          key={kind}
-          pressed={content.kind === kind}
-          onClick={() => onKind?.(kind)}
+    <div className={styles.titleBlock}>
+      <div className={styles.titleRow}>
+        <input
+          type="text"
+          className={styles.titleInput}
+          aria-label="Titel"
+          value={props.title ?? ""}
+          maxLength={300}
+          placeholder={
+            props.titlePlaceholder ?? "Wird aus dem Text vorgeschlagen"
+          }
+          onChange={(event) => props.onTitle?.(event.target.value)}
+        />
+        {props.onDelete && !confirming ? (
+          <button
+            type="button"
+            className={styles.trash}
+            aria-label="Aus der Ablage löschen"
+            title="Aus der Ablage löschen"
+            onClick={() => setConfirming(true)}
+          >
+            <Icon name="trash" size={19} />
+          </button>
+        ) : null}
+      </div>
+      {props.onDelete && confirming ? (
+        <div
+          className={styles.confirm}
+          role="group"
+          aria-label="Löschen bestätigen"
         >
-          {label}
-        </Chip>
-      ))}
+          <span>Wirklich aus der Ablage löschen?</span>
+          <button
+            type="button"
+            className={cx(styles.smallButton, styles.danger)}
+            onClick={() => {
+              setConfirming(false);
+              props.onDelete?.();
+            }}
+          >
+            Ja, löschen
+          </button>
+          <button
+            type="button"
+            className={styles.smallButton}
+            onClick={() => setConfirming(false)}
+          >
+            Abbrechen
+          </button>
+        </div>
+      ) : null}
+      {props.quizFromLibrary ? (
+        <p className={styles.inlineNote}>
+          Wird beim Start als neue Abfrage abgelegt. Deine Vokabelpakete bleiben
+          unverändert.
+        </p>
+      ) : null}
     </div>
   );
 }
-export function ImportStep(props: TeacherDictationScreenProps) {
-  const {
-    content,
-    onText,
-    onSplit,
-    onEditSections,
-    onImportFile,
-    onMoveSection,
-  } = props;
+
+/**
+ * Schritt 1 „Inhalt“ (Design 14b): links Titel und Eingabe, rechts die
+ * Abschnitte, wie die Schüler sie sehen. Vokabeln und Mathe behalten ihre
+ * eigenen Editoren (Vokabelheft, Aufgaben-Generator mit Vorschau) über die
+ * ganze Breite.
+ */
+export function ContentStep(props: TeacherDictationScreenProps) {
+  const { content, onText, onSplit, onImportFile, onMoveSection } = props;
   const count = content.sections.length;
   const [dragged, setDragged] = useState<number | null>(null);
   const sortable = Boolean(onMoveSection) && content.kind === "text";
+
   if (content.kind === "vocabulary" && props.vocabulary) {
     return (
-      <div className={styles.editorStage}>
-        <KindChips {...props} />
-        <LibraryBar {...props} />
+      <div className={styles.single}>
+        <TitleRow {...props} />
         <VocabularyEditor {...props.vocabulary} />
         {props.vocabularyPicker ? (
           <VocabularyPicker {...props.vocabularyPicker} />
@@ -58,21 +107,19 @@ export function ImportStep(props: TeacherDictationScreenProps) {
   }
   if (content.kind === "math" && props.math) {
     return (
-      <div className={styles.editorStage}>
-        <KindChips {...props} />
-        <LibraryBar {...props} />
+      <div className={styles.single}>
+        <TitleRow {...props} />
         <MathEditor {...props.math} />
       </div>
     );
   }
   return (
-    <div className={styles.stage}>
-      <div className={styles.column}>
-        <KindChips {...props} />
-        <LibraryBar {...props} />
+    <div className={styles.contentGrid}>
+      <div className={styles.inputColumn}>
+        <TitleRow {...props} />
         <textarea
           className={styles.source}
-          aria-label={KINDS.find(([kind]) => kind === content.kind)?.[1]}
+          aria-label={KIND_LABELS[content.kind]}
           placeholder={PLACEHOLDERS[content.kind]}
           value={content.text}
           onChange={(event) => onText?.(event.target.value)}
@@ -80,17 +127,19 @@ export function ImportStep(props: TeacherDictationScreenProps) {
         <div className={styles.splitRow}>
           {content.kind === "text" ? (
             <div className={styles.split} role="group" aria-label="Teilen nach">
-              <span className={styles.label} aria-hidden="true">
+              <span className={styles.splitLabel} aria-hidden="true">
                 Teilen nach
               </span>
               {SPLITS.map(([split, label]) => (
-                <Chip
+                <button
                   key={split}
-                  pressed={content.split === split}
+                  type="button"
+                  className={styles.splitChip}
+                  aria-pressed={content.split === split}
                   onClick={() => onSplit?.(split)}
                 >
                   {label}
-                </Chip>
+                </button>
               ))}
             </div>
           ) : (
@@ -111,48 +160,14 @@ export function ImportStep(props: TeacherDictationScreenProps) {
             </label>
           ) : null}
         </div>
-        {content.kind === "text" && props.wordStore ? (
-          <div className={styles.wordStore}>
-            <Segmented
-              label="Wörter in den Wortspeicher"
-              value={props.wordStore.value}
-              onChange={props.wordStore.onChange}
-              options={[
-                { value: "none", label: "Aus" },
-                { value: "errors", label: "Falsch geschriebene Wörter" },
-                { value: "all", label: "Alle Wörter" },
-              ]}
-            />
-            <p className={styles.hint}>
-              Wörter in den Wortspeicher: Die Wörter bleiben auf den Geräten der
-              Kinder. Du siehst sie nicht.
-            </p>
-          </div>
-        ) : null}
       </div>
-      <div className={styles.column}>
-        <div className={styles.between}>
-          <span className={styles.label}>
-            <span className={styles.narrowOnly}>
-              {count} Abschnitte{sortable ? " · ziehen zum Sortieren" : ""}
-            </span>
-            <span className={styles.wideOnly}>
-              {count} Abschnitte · so sehen es die Schüler
-            </span>
+      <section className={styles.sectionsColumn} aria-label="Abschnitte">
+        <div className={styles.sectionsHead}>
+          <span className={styles.sectionsCount}>
+            {count} Abschnitte · so sehen es die Schüler
           </span>
-          {onEditSections ? (
-            <button
-              type="button"
-              className={cx(styles.linkButton, styles.narrowOnly)}
-              onClick={onEditSections}
-            >
-              Bearbeiten
-            </button>
-          ) : null}
-          {sortable ? (
-            <span className={cx(styles.muted, styles.wideOnly)}>
-              ziehen zum Sortieren
-            </span>
+          {sortable && count > 1 ? (
+            <span className={styles.sortHint}>ziehen zum Sortieren</span>
           ) : null}
         </div>
         {count ? (
@@ -188,7 +203,7 @@ export function ImportStep(props: TeacherDictationScreenProps) {
             ))}
           </ol>
         ) : null}
-      </div>
+      </section>
     </div>
   );
 }

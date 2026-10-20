@@ -1,23 +1,35 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { TeacherLiveRoom } from "./teacher-live-room";
 
-async function renderRoom() {
+/** Die Art wählt die Startseite (`?neu=`); ohne Angabe ein Text. */
+async function renderRoom(kind?: "vocabulary" | "math") {
+  window.history.replaceState(
+    null,
+    "",
+    kind ? `/lehrer/live?neu=${kind}` : "/lehrer/live",
+  );
   const user = userEvent.setup();
   render(<TeacherLiveRoom liveRoomConfig={null} />);
-  const source = screen.getByRole("textbox", { name: "Text" });
-  await waitFor(() =>
-    expect(
-      source.closest("[data-hydrated]")?.getAttribute("data-hydrated"),
-    ).toBe("true"),
-  );
-  return { user, source };
+  const marker = await waitFor(() => {
+    const node = document.querySelector("[data-hydrated]");
+    expect(node?.getAttribute("data-hydrated")).toBe("true");
+    return node;
+  });
+  return { user, marker };
 }
 
-describe("TeacherLiveRoom (Design 5c/5d)", () => {
+async function renderText() {
+  const result = await renderRoom();
+  return { ...result, source: screen.getByRole("textbox", { name: "Text" }) };
+}
+
+afterEach(() => window.history.replaceState(null, "", "/"));
+
+describe("TeacherLiveRoom (Lehrerbereich v2, 14b/14c)", () => {
   it("teilt einen Text in Abschnitte und kann nach Zeilen teilen", async () => {
-    const { user, source } = await renderRoom();
+    const { user, source } = await renderText();
     expect(
       screen.getByRole("button", { name: "Weiter zu Modus" }),
     ).toBeDisabled();
@@ -25,16 +37,18 @@ describe("TeacherLiveRoom (Design 5c/5d)", () => {
     expect(screen.getAllByText(/2 Abschnitte/)[0]).toBeInTheDocument();
     expect(screen.getByText("Drei vier.")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Zeile" }));
+    await user.click(screen.getByRole("button", { name: "Zeilen" }));
     expect(screen.getAllByText(/1 Abschnitte/)[0]).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Wort" }));
+    await user.click(screen.getByRole("button", { name: "Wörtern" }));
     expect(screen.getAllByText(/4 Abschnitte/)[0]).toBeInTheDocument();
   });
 
   it("füllt das Vokabelheft von Hand und per Tabelle", async () => {
-    const { user } = await renderRoom();
-    await user.click(screen.getByRole("button", { name: "Vokabeln" }));
-    await user.type(screen.getByRole("textbox", { name: "Vokabel 1" }), "Hund");
+    const { user } = await renderRoom("vocabulary");
+    await user.type(
+      await screen.findByRole("textbox", { name: "Vokabel 1" }),
+      "Hund",
+    );
     await user.type(
       screen.getByRole("textbox", { name: "Übersetzung 1" }),
       "dog",
@@ -71,9 +85,8 @@ describe("TeacherLiveRoom (Design 5c/5d)", () => {
   });
 
   it("erzeugt Mathe-Aufgaben und stellt Regeln ein", async () => {
-    const { user } = await renderRoom();
-    await user.click(screen.getByRole("button", { name: "Mathe" }));
-    expect(screen.getByText("0 Aufgaben")).toBeInTheDocument();
+    const { user } = await renderRoom("math");
+    expect(await screen.findByText("0 Aufgaben")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Aufgaben erzeugen" }));
     expect(screen.getByText("10 Aufgaben")).toBeInTheDocument();
 
@@ -96,31 +109,52 @@ describe("TeacherLiveRoom (Design 5c/5d)", () => {
   });
 
   it("führt zu den Modi und zeigt Optionen je Modus", async () => {
-    const { user, source } = await renderRoom();
+    const { user, source } = await renderText();
     await user.type(source, "Der Schulweg ist kurz.");
     await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
-    for (const mode of ["Laufdiktat", "Freie Übung", "Battle", "Stationen"]) {
+    expect(
+      screen.getByRole("heading", { name: "Modus wählen" }),
+    ).toBeInTheDocument();
+    // Die echten Modi des Laufdiktats (lib/modes.ts), nicht die der Vorlage.
+    for (const mode of ["Laufdiktat", "Freies Üben", "Battle", "Stationen"]) {
       expect(
-        screen.getByRole("button", { name: new RegExp(`^${mode}`) }),
+        screen.getByRole("button", { name: new RegExp(`^${mode} `) }),
       ).toBeInTheDocument();
     }
-    await user.click(screen.getByRole("button", { name: /^Stationen/ }));
-    expect(screen.getAllByText("Anzahl Stationen")[0]).toBeInTheDocument();
-    const tts = screen.getAllByRole("button", {
-      name: /Vorlesen erlauben/,
-    })[0]!;
+    expect(
+      screen.getByRole("button", { name: /^Laufdiktat / }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: /^Sterne zeigen/ }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^Stationen / }));
+    expect(screen.getByText("Anzahl Stationen")).toBeInTheDocument();
+    // Stationen haben weder Sterne noch „Nur getippte Eingaben“.
+    expect(
+      screen.queryByRole("button", { name: /^Sterne zeigen/ }),
+    ).not.toBeInTheDocument();
+    const tts = screen.getByRole("button", { name: /^Vorlesen/ });
     expect(tts).toHaveAttribute("aria-pressed", "false");
     await user.click(tts);
+    expect(screen.getByRole("button", { name: /^Vorlesen/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await user.click(screen.getByRole("button", { name: "Mehr Stationen" }));
+    expect(screen.getByText("21")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Zurück" }));
     expect(
-      screen.getAllByRole("button", { name: /Vorlesen erlauben/ })[0],
-    ).toHaveAttribute("aria-pressed", "true");
+      screen.getByRole("heading", { name: "Inhalt eingeben" }),
+    ).toBeInTheDocument();
   });
 
   it("öffnet ohne Konfiguration keinen Raum, sondern meldet es", async () => {
-    const { user, source } = await renderRoom();
+    const { user, source } = await renderText();
     await user.type(source, "Der Schulweg ist kurz.");
     await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
-    await user.click(screen.getByRole("button", { name: "Raum öffnen" }));
+    await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Live-Räume sind lokal noch nicht konfiguriert",
     );

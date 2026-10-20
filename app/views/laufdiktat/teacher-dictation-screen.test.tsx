@@ -34,12 +34,12 @@ describe("TeacherDictationScreen, Wörter in den Wortspeicher", () => {
     kind,
   });
 
-  it("zeigt bei Text die drei Werte und meldet die Wahl", async () => {
+  it("zeigt bei Text die drei Werte bei den Optionen und meldet die Wahl", async () => {
     const onChange = vi.fn();
     render(
       <TeacherDictationScreen
         {...DEMO_TEACHER}
-        step="import"
+        step="settings"
         content={content("text")}
         wordStore={{ value: "errors", onChange }}
       />,
@@ -66,7 +66,7 @@ describe("TeacherDictationScreen, Wörter in den Wortspeicher", () => {
     const { rerender } = render(
       <TeacherDictationScreen
         {...DEMO_TEACHER}
-        step="import"
+        step="settings"
         content={content("text")}
       />,
     );
@@ -76,7 +76,7 @@ describe("TeacherDictationScreen, Wörter in den Wortspeicher", () => {
     rerender(
       <TeacherDictationScreen
         {...DEMO_TEACHER}
-        step="import"
+        step="settings"
         content={content("math")}
         wordStore={{ value: "errors", onChange: vi.fn() }}
       />,

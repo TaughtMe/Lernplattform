@@ -83,6 +83,12 @@ function renderRoom() {
   );
 }
 
+/** „Speichern“ steht am Ende von Schritt 2 (Design 15b). */
+async function saveInModeStep(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
+  await user.click(screen.getByRole("button", { name: "Speichern" }));
+}
+
 async function waitHydrated() {
   const marker = await waitFor(() => {
     const node = document.querySelector("[data-hydrated]");
@@ -137,7 +143,7 @@ describe("Inhalt aus der Ablage laden", () => {
       expect(source).toHaveValue("Der Hund läuft. Die Katze schläft."),
     );
     expect(screen.getByRole("textbox", { name: "Titel" })).toHaveValue("Tiere");
-    expect(screen.getByRole("button", { name: "Zeile" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Zeilen" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -187,7 +193,7 @@ describe("Inhalt aus der Ablage laden", () => {
     );
     renderRoom();
     expect(
-      await screen.findByRole("heading", { name: "Modus und Optionen" }),
+      await screen.findByRole("heading", { name: "Modus wählen" }),
     ).toBeInTheDocument();
   });
 
@@ -209,10 +215,15 @@ describe("Speichern in eine Klasse", () => {
       await screen.findByRole("textbox", { name: "Text" }),
       "Eins. Zwei.",
     );
+    await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
     await user.selectOptions(
       await screen.findByRole("combobox", { name: "Klasse" }),
       CLASS_A,
     );
+    // Die Zeile über dem Titel nennt die Klasse ohne doppeltes „Klasse“.
+    expect(
+      screen.getByText("Klasse 7b · Neues Laufdiktat"),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(async () =>
       expect((await library().list())[0]?.classIds).toEqual([CLASS_A]),
@@ -227,6 +238,7 @@ describe("Speichern in eine Klasse", () => {
       await screen.findByRole("textbox", { name: "Text" }),
       "Eins. Zwei.",
     );
+    await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
     await user.selectOptions(
       await screen.findByRole("combobox", { name: "Klasse" }),
       "Neue Klasse …",
@@ -258,7 +270,7 @@ describe("Speichern und Löschen", () => {
       "Eins. Zwei.",
     );
     await user.type(screen.getByRole("textbox", { name: "Titel" }), "Zahlen");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await saveInModeStep(user);
     expect(
       await screen.findByText("„Zahlen“ ist gespeichert."),
     ).toBeInTheDocument();
@@ -277,8 +289,9 @@ describe("Speichern und Löschen", () => {
     expect(stored).toHaveLength(1);
     expect(stored[0]?.revision).toBe(0);
 
+    await user.click(screen.getByRole("button", { name: "Zurück" }));
     await user.type(screen.getByRole("textbox", { name: "Text" }), " Drei.");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await saveInModeStep(user);
     await waitFor(async () =>
       expect((await library().list())[0]?.revision).toBe(1),
     );
@@ -296,7 +309,7 @@ describe("Speichern und Löschen", () => {
     const source = await screen.findByRole("textbox", { name: "Text" });
     await waitFor(() => expect(window.location.search).toBe(""));
     await user.type(source, "Eins. Zwei.");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await saveInModeStep(user);
     await waitFor(async () => expect(await library().list()).toHaveLength(1));
     expect((await library().list())[0]?.classIds).toEqual([CLASS_A]);
   });
@@ -312,12 +325,17 @@ describe("Speichern und Löschen", () => {
     const source = await screen.findByRole("textbox", { name: "Text" });
     await waitFor(() => expect(window.location.search).toBe(""));
     await user.type(source, "Eins.");
-    await user.click(screen.getByRole("button", { name: "Speichern" }));
+    await saveInModeStep(user);
     await waitFor(async () => expect(await library().list()).toHaveLength(1));
     expect((await library().list())[0]?.classIds).toBeUndefined();
   });
 
   it("legt nichts Leeres ab", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/lehrer/live?neu=text&schritt=einstellungen",
+    );
     renderRoom();
     await waitHydrated();
     await userEvent.click(
@@ -370,7 +388,7 @@ describe("Speichern und Löschen", () => {
 describe("Lobby öffnen legt automatisch ab", () => {
   async function openLobbyWithText(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
-    await user.click(screen.getByRole("button", { name: "Raum öffnen" }));
+    await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
     await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
   }
 
@@ -669,7 +687,7 @@ describe("Vokabeln aus der Ablage wählen", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
-    await user.click(screen.getByRole("button", { name: "Raum öffnen" }));
+    await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
     await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
 
     await waitFor(async () => expect(await library().list()).toHaveLength(5));

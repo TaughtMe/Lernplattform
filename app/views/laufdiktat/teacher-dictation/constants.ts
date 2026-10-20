@@ -1,10 +1,5 @@
 import type { IconName } from "../../../ui/icons";
-import type {
-  ContentKind,
-  DictationMode,
-  SplitMode,
-  TeacherStep,
-} from "./types";
+import type { DictationMode, SplitMode, TeacherStep } from "./types";
 
 export const STEPS: ReadonlyArray<{
   id: TeacherStep;
@@ -28,15 +23,10 @@ export const STEPS: ReadonlyArray<{
   { id: "live", tab: "Live", title: "Live-Sitzung", next: "Sitzung beenden" },
 ];
 
-export const KINDS: ReadonlyArray<[ContentKind, string]> = [
-  ["text", "Text"],
-  ["vocabulary", "Vokabeln"],
-  ["math", "Mathe"],
-];
 export const SPLITS: ReadonlyArray<[SplitMode, string]> = [
-  ["satz", "Satz"],
-  ["zeile", "Zeile"],
-  ["wort", "Wort"],
+  ["satz", "Sätzen"],
+  ["zeile", "Zeilen"],
+  ["wort", "Wörtern"],
 ];
 
 export const MODES: ReadonlyArray<{

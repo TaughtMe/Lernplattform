@@ -68,20 +68,17 @@ test("room code entry works with the keyboard", async ({ page }) => {
 test("teacher pilot offers the complete Laufdiktat content and mode set", async ({
   page,
 }) => {
+  const hydrated = () =>
+    expect(page.locator("[data-hydrated]")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+    );
   await page.goto("/lehrer/live");
 
   await expect(
-    page.getByRole("heading", { name: "Wortliste vorbereiten" }),
+    page.getByRole("heading", { name: "Inhalt eingeben" }),
   ).toBeVisible();
-  await expect(page.locator("[data-hydrated]")).toHaveAttribute(
-    "data-hydrated",
-    "true",
-  );
-  for (const kind of ["Text", "Vokabeln", "Mathe"]) {
-    await expect(
-      page.getByRole("button", { name: kind, exact: true }),
-    ).toBeVisible();
-  }
+  await hydrated();
   await expect(
     page.getByRole("button", { name: "Weiter zu Modus" }),
   ).toBeDisabled();
@@ -90,7 +87,7 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
     .fill("Der Hund läuft. Die Katze schläft.");
   await expect(page.getByText("Die Katze schläft.").first()).toBeVisible();
 
-  // Kopf und Fuß bleiben beim Wechsel der Inhaltsart stehen.
+  // Die Art kommt von der Startseite (`?neu=`); Kopf und Fuß bleiben gleich.
   const frame = () =>
     page.evaluate(() =>
       ["header", "footer"].map((tag) => {
@@ -99,17 +96,53 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
       }),
     );
   const textFrame = await frame();
-  await page.getByRole("button", { name: "Vokabeln", exact: true }).click();
+  await page.goto("/lehrer/live?neu=vocabulary");
+  await hydrated();
+  await expect(
+    page.getByRole("heading", { name: "Vokabelheft" }),
+  ).toBeVisible();
   expect(await frame()).toEqual(textFrame);
-  await page.getByRole("button", { name: "Mathe", exact: true }).click();
+  await page.goto("/lehrer/live?neu=math");
+  await hydrated();
+  await expect(page.getByText("0 Aufgaben")).toBeVisible();
   expect(await frame()).toEqual(textFrame);
 
-  await page.getByRole("button", { name: "Text", exact: true }).click();
+  await page.goto("/lehrer/live");
+  await hydrated();
+  await page
+    .getByRole("textbox", { name: "Text" })
+    .fill("Der Hund läuft. Die Katze schläft.");
   await page.getByRole("button", { name: "Weiter zu Modus" }).click();
-  for (const mode of ["Laufdiktat", "Freie Übung", "Battle", "Stationen"]) {
+  await expect(
+    page.getByRole("heading", { name: "Modus wählen" }),
+  ).toBeVisible();
+  for (const mode of ["Laufdiktat", "Freies Üben", "Battle", "Stationen"]) {
     await expect(
-      page.getByRole("button", { name: new RegExp(`^${mode}`) }).first(),
+      page.getByRole("button", { name: new RegExp(`^${mode} `) }),
     ).toBeVisible();
+  }
+  await expect(page.getByRole("button", { name: "Speichern" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^Raum (jetzt )?öffnen$/ }),
+  ).toBeVisible();
+
+  // Unter 900 px öffnet ein Modus seine Einstellungen als Fenster (16a/16b).
+  const narrow = (page.viewportSize()?.width ?? 1280) < 900;
+  if (narrow) {
+    await page.getByRole("button", { name: /^Battle / }).click();
+    const dialog = page.getByRole("dialog", { name: "Einstellungen Battle" });
+    await expect(dialog).toBeVisible();
+    await expect(
+      dialog.getByRole("button", { name: /^Tinten-Angriff/ }),
+    ).toBeVisible();
+    const accessible = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(accessible.violations).toEqual([]);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  } else {
+    await expect(page.getByRole("region", { name: "Optionen" })).toBeVisible();
   }
 
   const dimensions = await page.evaluate(() => ({
@@ -156,7 +189,7 @@ test("a configured teacher and student can complete one live round", async ({
     .getByRole("textbox", { name: "Text" })
     .fill("Der Schulweg ist kurz.");
   await teacher.getByRole("button", { name: "Weiter zu Modus" }).click();
-  await teacher.getByRole("button", { name: "Raum öffnen" }).click();
+  await teacher.getByRole("button", { name: /^Raum (jetzt )?öffnen$/ }).click();
   const roomCode = (
     await teacher
       .locator('[aria-label^="Raumcode "]')

@@ -831,20 +831,23 @@ test("teachers can prepare every native live-room content type", async ({
     .toContainEqual(expect.stringMatching(/\/lehrer\/live\?neu=math/));
   await page.goBack();
   await expect(
-    page.getByRole("heading", { name: "Wortliste vorbereiten" }),
+    page.getByRole("heading", { name: "Inhalt eingeben" }),
   ).toHaveCount(0);
 
-  await page.goto("/lehrer/live");
-  await expect(
-    page.getByRole("heading", { name: "Wortliste vorbereiten" }),
-  ).toBeVisible();
-  await expect(page.locator("[data-hydrated]")).toHaveAttribute(
-    "data-hydrated",
-    "true",
-  );
+  // Die Art wählt die Startseite (`?neu=`); der Editor zeigt Schritt 1.
+  const openEditor = async (kind: "vocabulary" | "math") => {
+    await page.goto(`/lehrer/live?neu=${kind}`);
+    await expect(
+      page.getByRole("heading", { name: "Inhalt eingeben" }),
+    ).toBeVisible();
+    await expect(page.locator("[data-hydrated]")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+    );
+  };
 
   // Vokabelheft: Paare von Hand, Sprachen wählbar.
-  await page.getByRole("button", { name: "Vokabeln", exact: true }).click();
+  await openEditor("vocabulary");
   await page
     .getByRole("textbox", { name: "Vokabel 1", exact: true })
     .fill("Hund");
@@ -854,7 +857,7 @@ test("teachers can prepare every native live-room content type", async ({
   await expect(page.getByText("1 Vokabel", { exact: true })).toBeVisible();
 
   // Mathe: Aufgaben erzeugen und eine eigene ergänzen.
-  await page.getByRole("button", { name: "Mathe", exact: true }).click();
+  await openEditor("math");
   await page.getByRole("button", { name: "Aufgabe hinzufügen" }).click();
   await page.getByRole("textbox", { name: "Aufgabe", exact: true }).fill("7+5");
   await expect(page.getByText("= 12", { exact: true })).toBeVisible();
@@ -863,9 +866,9 @@ test("teachers can prepare every native live-room content type", async ({
   await expect.poll(() => runtimeErrors).toEqual([]);
 
   await page.getByRole("button", { name: "Weiter zu Modus" }).click();
-  for (const mode of ["Laufdiktat", "Freie Übung", "Battle", "Stationen"]) {
+  for (const mode of ["Laufdiktat", "Freies Üben", "Battle", "Stationen"]) {
     await expect(
-      page.getByRole("button", { name: new RegExp(`^${mode}`) }).first(),
+      page.getByRole("button", { name: new RegExp(`^${mode} `) }),
     ).toBeVisible();
   }
   const dimensions = await page.evaluate(() => ({
@@ -874,13 +877,13 @@ test("teachers can prepare every native live-room content type", async ({
   }));
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
 
-  await page.getByRole("button", { name: "Raum öffnen" }).click();
+  await page.getByRole("button", { name: /^Raum (jetzt )?öffnen$/ }).click();
   await expect(page.getByRole("alert")).toContainText(
     "Live-Räume sind lokal noch nicht konfiguriert",
   );
   await expect(
-    page.getByRole("button", { name: /Modus/ }).first(),
-  ).toHaveAttribute("aria-current", "step");
+    page.getByRole("heading", { name: "Modus wählen" }),
+  ).toBeVisible();
 });
 
 test("the local teacher workspace manages classes, students, assignments and QR codes", async ({

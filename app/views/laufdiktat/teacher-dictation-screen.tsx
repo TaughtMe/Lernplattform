@@ -3,27 +3,34 @@
 import { useState } from "react";
 import { CloudSlot } from "../../ui/cloud-slot";
 import { Icon } from "../../ui/icons";
-import {
-  cx,
-  GreenButton,
-  PrimaryButton,
-  SquareIconButton,
-  ThemeSwitch,
-} from "../parts/parts";
+import { cx, GreenButton, SquareIconButton, ThemeSwitch } from "../parts/parts";
 import styles from "./teacher-dictation-screen.module.css";
 import { STEPS } from "./teacher-dictation/constants";
-import { ImportStep } from "./teacher-dictation/import-step";
+import { DictationEditor } from "./teacher-dictation/editor";
 import { LiveStep } from "./teacher-dictation/live-step";
 import { LobbyStep } from "./teacher-dictation/lobby-step";
 import { QrOverlay } from "./teacher-dictation/qr-overlay";
-import { ModeDetails, SettingsStep } from "./teacher-dictation/settings-step";
 import type { TeacherDictationScreenProps } from "./teacher-dictation/types";
 
 export { MODES } from "./teacher-dictation/constants";
+export { dictationOptionList } from "./teacher-dictation/editor-options";
+export { ModeFooterPreview } from "./teacher-dictation/editor";
 export type * from "./teacher-dictation/types";
 
-/** Laufdiktat für Lehrkräfte (Design 5c mobil, 5d Desktop). */
+/**
+ * Laufdiktat für Lehrkräfte. Inhalt und Modus zeigt der Editor nach
+ * Lehrerbereich v2 (14b/14c, 16a/16b), Lobby und Live die Ansicht nach
+ * Design 5c (mobil) und 5d (Desktop).
+ */
 export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
+  if (props.step === "import" || props.step === "settings") {
+    return <DictationEditor {...props} />;
+  }
+  return <RoomScreen {...props} />;
+}
+
+/** Lobby und Live (Design 5c/5d). */
+function RoomScreen(props: TeacherDictationScreenProps) {
   const [qrOpen, setQrOpen] = useState(false);
   const joinOpen = props.roomTimes?.joinOpen ?? true;
   const showQr =
@@ -69,8 +76,6 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
       </header>
 
       <div className={styles.body}>
-        {props.step === "import" ? <ImportStep {...props} /> : null}
-        {props.step === "settings" ? <SettingsStep {...props} /> : null}
         {props.step === "lobby" ? (
           <LobbyStep {...props} onShowQr={showQr} />
         ) : null}
@@ -148,48 +153,6 @@ export function TeacherDictationScreen(props: TeacherDictationScreenProps) {
           qr={props.qrLarge}
           onClose={() => setQrOpen(false)}
         />
-      ) : null}
-
-      {props.step === "settings" && props.optionsOpen ? (
-        <>
-          <button
-            type="button"
-            className={styles.backdrop}
-            aria-label="Optionen schließen"
-            tabIndex={-1}
-            onClick={props.onCloseOptions}
-          />
-          <div
-            className={styles.sheet}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Optionen"
-          >
-            <span className={styles.grabber} />
-            <div className={styles.sheetBody}>
-              <button
-                type="button"
-                className={styles.sheetClose}
-                aria-label="Schließen"
-                onClick={props.onCloseOptions}
-              >
-                <Icon
-                  name="close"
-                  size={16}
-                  strokeWidth={2.2}
-                  strokeLinejoin="miter"
-                />
-              </button>
-              <ModeDetails {...props} />
-            </div>
-            <PrimaryButton
-              className={styles.sheetApply}
-              onClick={props.onCloseOptions}
-            >
-              Übernehmen
-            </PrimaryButton>
-          </div>
-        </>
       ) : null}
     </div>
   );

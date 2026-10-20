@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { DEMO_STUDENT, DEMO_TEACHER } from "../../views/laufdiktat/demo";
+import {
+  DEMO_EDITOR,
+  DEMO_STUDENT,
+  DEMO_TEACHER,
+} from "../../views/laufdiktat/demo";
 import {
   StudentDictationScreen,
   type StudentDictationPhase,
 } from "../../views/laufdiktat/student-dictation-screen";
 import {
+  ModeFooterPreview,
   TeacherDictationScreen,
   type TeacherStep,
 } from "../../views/laufdiktat/teacher-dictation-screen";
@@ -114,6 +119,23 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
       <StudentDictationScreen {...DEMO_STUDENT} phase={phase} theme={theme} />
     );
   }
+  if (["14b", "14c", "16a", "16b"].includes(screen)) {
+    // 16a/16b: Schritt 2 auf Tablet und Handy; `-pop` öffnet die Einstellungen.
+    return (
+      <TeacherDictationScreen
+        {...DEMO_EDITOR}
+        step={screen === "14b" ? "import" : "settings"}
+        optionsOpen={variant === "pop"}
+        theme={theme}
+        onImportFile={() => {}}
+        onMoveSection={() => {}}
+        onSavePrepared={() => {}}
+      />
+    );
+  }
+  if (screen === "15b") {
+    return <ModeFooterPreview {...DEMO_EDITOR} onSavePrepared={() => {}} />;
+  }
   if (screen === "5c" || screen === "5d") {
     const step: TeacherStep =
       variant === "options"
@@ -126,7 +148,6 @@ export function renderScreen({ id, screen, theme }: ScreenState): ReactNode {
         optionsOpen={variant === "options"}
         theme={theme}
         qr={<QrPlaceholder />}
-        onEditSections={() => {}}
         onImportFile={() => {}}
         onMoveSection={() => {}}
       />

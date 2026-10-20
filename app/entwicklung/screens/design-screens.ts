@@ -41,6 +41,23 @@ const CATALOG_ONLY: readonly DesignScreen[] = [
     theme: "light",
     implemented: true,
   },
+  // Einstellungen eines Modus als Fenster (Tablet: über der Leiste, Handy: von unten).
+  {
+    id: "16a-pop",
+    screen: "16a",
+    width: 834,
+    height: 1112,
+    theme: "light",
+    implemented: true,
+  },
+  {
+    id: "16b-pop",
+    screen: "16b",
+    width: 390,
+    height: 844,
+    theme: "light",
+    implemented: true,
+  },
 ];
 
 /** Referenzzustände aus docs/design/screens.json, danach die Ergänzungen. */

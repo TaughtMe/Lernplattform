@@ -90,3 +90,54 @@ export const DEMO_TEACHER: TeacherDictationScreenProps = {
     ],
   },
 };
+
+/**
+ * Editor nach Lehrerbereich v2 (14b/14c/15b/16a/16b) mit den Daten der
+ * Vorlage. Modi und Optionen tragen hier die Entwurfstexte; die Seite zeigt
+ * die echten Modi und Optionen des Laufdiktats.
+ */
+export const DEMO_EDITOR: TeacherDictationScreenProps = {
+  ...DEMO_TEACHER,
+  title: "Der Hund im Hof",
+  modes: [
+    {
+      id: "LAUFDIKTAT",
+      title: "Laufdiktat",
+      text: "Lesen an der Station, zurücklaufen, aus dem Kopf schreiben",
+    },
+    {
+      id: "UEBUNG",
+      title: "Freies Üben",
+      text: "Jeder in seinem Tempo, mit gestufter Hilfe",
+    },
+    {
+      id: "BATTLE",
+      title: "Battle",
+      text: "Zwei Teams, richtige Wörter laden Angriffe",
+    },
+    {
+      id: "STATION",
+      title: "Stationen",
+      text: "Klassisch mit Zetteln im Raum, Nummer eingeben",
+    },
+  ],
+  optionList: [
+    { id: "tts", label: "Vorlesen", hint: "Abschnitt wird vorgelesen" },
+    {
+      id: "shuffle",
+      label: "Reihenfolge mischen",
+      hint: "Jeder startet an einer anderen Station",
+    },
+    {
+      id: "strict",
+      label: "Genaues Tippen",
+      hint: "Groß- und Kleinschreibung zählt",
+    },
+    {
+      id: "stars",
+      label: "Sterne zeigen",
+      hint: "Belohnung nach jedem Abschnitt",
+    },
+  ],
+  options: { ...DEMO_TEACHER.options, strict: false },
+};
