@@ -210,7 +210,7 @@ describe("Übersicht", () => {
     const tile = await screen.findByRole("button", { name: /^Meine Tiere/ });
     expect(tile).toHaveTextContent("Hund, Katze, Maus");
     expect(tile).toHaveTextContent("2 / 4 sicher");
-    expect(tile).toHaveTextContent("Stufe 3 · Zuletzt 80 %");
+    expect(tile).toHaveTextContent("Stufe 3 · 25 % der Box (1 von 4 Wörtern)");
     expect(tile).not.toHaveTextContent("Bestwert");
     expect(
       screen.getByRole("button", { name: /^Doppelkonsonanten/ }),
@@ -364,12 +364,13 @@ describe("Startblatt", () => {
     await openBox(user, "Tiere");
     const sheet = await screen.findByRole("dialog");
     expect(
-      within(sheet).getByRole("button", { name: /Stufe 2:.*Zuletzt 80 %/ }),
+      within(sheet).getByRole("button", { name: /Stufe 2:.*100 % der Box/ }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(
       within(sheet).getByRole("button", { name: /Stufe 1:.*Zuletzt –/ }),
     ).toBeInTheDocument();
     expect(sheet).not.toHaveTextContent("Bestwert");
+    expect(sheet).not.toHaveTextContent("Zuletzt 80 %");
     // Richtig auf Stufe 2 setzt die Merkstufe des Wortes auf 2, ohne +1 (W-8).
     expect(
       within(sheet).getByRole("button", { name: /Stufe 2:.*empfohlen/ }),
@@ -550,6 +551,12 @@ describe("Runden", () => {
     expect(screen.getByText("0 %")).toBeInTheDocument();
     expect(screen.queryByText(/Bestwert/)).not.toBeInTheDocument();
     expect(screen.getByText("Heute 1 Wort geübt")).toBeInTheDocument();
+    // Box-Fortschritt inklusive der gerade beendeten Runde (W-10).
+    expect(
+      screen.getByText(
+        "Wortbox: 0 von 1 Wort auf Stufe 1 auf Anhieb richtig (0 %)",
+      ),
+    ).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
 
     await user.click(screen.getByRole("button", { name: "Nochmal üben" }));
@@ -558,6 +565,11 @@ describe("Runden", () => {
     expect(screen.queryByText(/Bestwert/)).not.toBeInTheDocument();
     // Die Übungsmenge des Tages zählt beide Runden.
     expect(screen.getByText("Heute 2 Wörter geübt")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Wortbox: 1 von 1 Wort auf Stufe 1 auf Anhieb richtig (100 %)",
+      ),
+    ).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(2));
 
     // Im Startblatt steht jetzt das letzte Ergebnis, nicht der Bestwert.
@@ -567,7 +579,7 @@ describe("Runden", () => {
     const sheet = await screen.findByRole("dialog");
     expect(
       await within(sheet).findByRole("button", {
-        name: /Stufe 1:.*Zuletzt 100 %/,
+        name: /Stufe 1:.*100 % der Box/,
       }),
     ).toBeInTheDocument();
   });
@@ -798,6 +810,8 @@ describe("Freies Üben und fällige Wiederholung", () => {
     await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
     expect(screen.getByText("1 Wort geübt")).toBeInTheDocument();
     expect(screen.queryByText(/ %$/)).not.toBeInTheDocument();
+    // Kein Box-Fortschritt für die vorübergehende Fehlerwörter-Box.
+    expect(screen.queryByText(/^Wortbox:/)).not.toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
     // Gespeichert wird unverändert, auch der Prozentwert.
     expect((await rounds.list())[0]).toMatchObject({

@@ -56,6 +56,30 @@ describe("CompletionScreen", () => {
     ).toBeInTheDocument();
   });
 
+  it("zeigt unter dem Rundenergebnis den Box-Fortschritt der Wortbox", () => {
+    setup({ coverage: { mastered: 20, total: 100, percent: 20 }, stage: 3 });
+    expect(screen.getByText("67 %")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Wortbox: 20 von 100 Wörtern auf Stufe 3 auf Anhieb richtig (20 %)",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("benennt eine Wortbox mit einem Wort im Singular", () => {
+    setup({ coverage: { mastered: 1, total: 1, percent: 100 } });
+    expect(
+      screen.getByText(
+        "Wortbox: 1 von 1 Wort auf Stufe 1 auf Anhieb richtig (100 %)",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("zeigt ohne Box-Fortschritt keine Zeile zur Wortbox", () => {
+    setup();
+    expect(document.body).not.toHaveTextContent("Wortbox:");
+  });
+
   it("zeigt die Übungsmenge des Tages", () => {
     setup({ practicedToday: 40 });
     expect(screen.getByText("Heute 40 Wörter geübt")).toBeInTheDocument();

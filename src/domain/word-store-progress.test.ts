@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LearningWordProgress } from "./learning-word-progress";
 import {
+  boxCoverage,
   headlineForBox,
   practicedWordsLabel,
   showsPracticedWordsOnly,
@@ -248,5 +249,141 @@ describe("summarizeWordStore", () => {
     const { mostErrors } = summarizeWordStore(many, []);
     expect(mostErrors).toHaveLength(5);
     expect(mostErrors[0]).toEqual({ word: "g", incorrectAttempts: 7 });
+  });
+});
+
+describe("boxCoverage", () => {
+  const WORDS = Array.from({ length: 100 }, (_, index) => `Wort${index}`);
+
+  /** Runde mit den Wörtern `from` bis `to` (ohne `to`); `wrong` auf Anhieb falsch. */
+  function coverageRound(
+    id: string,
+    day: number,
+    from: number,
+    to: number,
+    options: {
+      wrong?: readonly string[];
+      stage?: WordRoundRecord["stage"];
+      boxId?: string;
+    } = {},
+  ): WordRoundRecord {
+    const base = round(
+      id,
+      options.stage ?? 1,
+      100,
+      day,
+      options.boxId ?? "box",
+    );
+    return {
+      ...base,
+      words: WORDS.slice(from, to).map((word) => ({
+        ...base.words[0]!,
+        word,
+        firstTry: !options.wrong?.includes(word),
+      })),
+    };
+  }
+
+  it("zählt den Anteil der ganzen Wortbox, nicht der Runde", () => {
+    const first = coverageRound("a", 1, 0, 10);
+    expect(boxCoverage(WORDS, [first], "box", 1)).toEqual({
+      mastered: 10,
+      total: 100,
+      percent: 10,
+    });
+    const second = coverageRound("b", 2, 10, 20);
+    expect(boxCoverage(WORDS, [first, second], "box", 1)).toEqual({
+      mastered: 20,
+      total: 100,
+      percent: 20,
+    });
+    // Ein Wort der ersten Runde ist später falsch: 19 statt 20.
+    const third = coverageRound("c", 3, 0, 1, { wrong: ["Wort0"] });
+    expect(boxCoverage(WORDS, [first, second, third], "box", 1)).toEqual({
+      mastered: 19,
+      total: 100,
+      percent: 19,
+    });
+  });
+
+  it("nimmt die jüngste Abfrage, unabhängig von der Reihenfolge der Liste", () => {
+    const wrong = coverageRound("a", 1, 0, 1, { wrong: ["Wort0"] });
+    const right = coverageRound("b", 2, 0, 1);
+    expect(boxCoverage(["Wort0"], [right, wrong], "box", 1).mastered).toBe(1);
+    expect(boxCoverage(["Wort0"], [wrong, right], "box", 1).mastered).toBe(1);
+  });
+
+  it("ignoriert Wörter, die nicht mehr in der Wortbox stehen", () => {
+    const first = coverageRound("a", 1, 0, 10);
+    const remaining = WORDS.slice(1, 100);
+    expect(boxCoverage(remaining, [first], "box", 1)).toEqual({
+      mastered: 9,
+      total: 99,
+      percent: 9,
+    });
+  });
+
+  it("senkt den Anteil durch neue Wörter ohne Abfrage", () => {
+    const first = coverageRound("a", 1, 0, 10);
+    expect(
+      boxCoverage([...WORDS.slice(0, 10), "Neu"], [first], "box", 1),
+    ).toEqual({ mastered: 10, total: 11, percent: 91 });
+  });
+
+  it("zählt nur die gewählte Stufe", () => {
+    const stage1 = coverageRound("a", 1, 0, 10);
+    const stage3 = coverageRound("b", 2, 10, 15, { stage: 3 });
+    expect(boxCoverage(WORDS, [stage1, stage3], "box", 3)).toMatchObject({
+      mastered: 5,
+    });
+    expect(boxCoverage(WORDS, [stage1, stage3], "box", 2)).toMatchObject({
+      mastered: 0,
+      percent: 0,
+    });
+  });
+
+  it("zählt nur die gewählte Wortbox", () => {
+    const other = coverageRound("a", 1, 0, 10, { boxId: "andere" });
+    expect(boxCoverage(WORDS, [other], "box", 1).mastered).toBe(0);
+    expect(boxCoverage(WORDS, [other], "andere", 1).mastered).toBe(10);
+  });
+
+  it("vergleicht Wörter über wordKey und zählt Doppelte einmal", () => {
+    const first = coverageRound("a", 1, 0, 1);
+    expect(boxCoverage([" WORT0 ", "wort0"], [first], "box", 1)).toEqual({
+      mastered: 1,
+      total: 1,
+      percent: 100,
+    });
+  });
+
+  it("rundet wie das Rundenergebnis und zeigt 100 % nur bei allen Wörtern", () => {
+    const words = Array.from({ length: 500 }, (_, index) => `W${index}`);
+    const base = round("a", 1, 100, 1, "box");
+    const almost: WordRoundRecord = {
+      ...base,
+      words: words.map((word, index) => ({
+        ...base.words[0]!,
+        word,
+        firstTry: index !== 0,
+      })),
+    };
+    // 499 von 500 sind 99,8 %: gerundet 100, angezeigt höchstens 99.
+    expect(boxCoverage(words, [almost], "box", 1)).toEqual({
+      mastered: 499,
+      total: 500,
+      percent: 99,
+    });
+    const two = coverageRound("b", 1, 0, 3, { wrong: ["Wort2"] });
+    expect(boxCoverage(WORDS.slice(0, 3), [two], "box", 1).percent).toBe(67);
+    expect(boxCoverage(["a", "b", "c"], [], "box", 1).percent).toBe(0);
+  });
+
+  it("liefert bei leerer Wortbox 0 statt einer Division durch null", () => {
+    expect(boxCoverage([], [coverageRound("a", 1, 0, 5)], "box", 1)).toEqual({
+      mastered: 0,
+      total: 0,
+      percent: 0,
+    });
   });
 });

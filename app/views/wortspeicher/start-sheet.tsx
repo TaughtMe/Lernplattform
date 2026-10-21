@@ -15,10 +15,12 @@ import styles from "./wortspeicher.module.css";
 export type StartSheetStage = {
   stage: LearningWordStage;
   /**
-   * Letzte Runde dieser Stufe in dieser Wortbox; leer ohne Runde. Bei den
-   * Fehlerwörtern steht die Zahl der Wörter statt eines Prozentwerts (W-10, W-12).
+   * Letzte Runde dieser Stufe in dieser Wortbox; leer ohne Runde. Echte
+   * Wortboxen zeigen den Box-Fortschritt (W-10), die vorübergehende Textbox-Box
+   * das Ergebnis der letzten Runde, die Fehlerwörter die Zahl der Wörter (W-12).
    */
-  last?: { percent: number } | { words: number } | undefined;
+  last?:
+    { coverage: number } | { percent: number } | { words: number } | undefined;
   recommended: boolean;
   /** Grund, warum die Stufe nicht wählbar ist (z. B. keine deutsche Stimme). */
   disabledHint?: string | undefined;
@@ -98,9 +100,11 @@ export function StartSheet({
                 <span className={styles.stageBest}>
                   {entry.last === undefined
                     ? "Zuletzt –"
-                    : "percent" in entry.last
-                      ? `Zuletzt ${entry.last.percent} %`
-                      : practicedWordsLabel(entry.last.words)}
+                    : "coverage" in entry.last
+                      ? `${entry.last.coverage} % der Box`
+                      : "percent" in entry.last
+                        ? `Zuletzt ${entry.last.percent} %`
+                        : practicedWordsLabel(entry.last.words)}
                   {entry.recommended ? " · empfohlen" : ""}
                 </span>
               </button>

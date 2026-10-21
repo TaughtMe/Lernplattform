@@ -21,7 +21,7 @@ async function answer(page: Page, text: string) {
   await field.press("Enter");
 }
 
-test("Wortbox anlegen, mit Fehler üben, wiederholen und das letzte Ergebnis sehen", async ({
+test("Wortbox anlegen, mit Fehler üben, wiederholen und den Box-Fortschritt sehen", async ({
   page,
 }) => {
   await page.goto("/frei/german/lernwoerter");
@@ -68,9 +68,15 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und das letzte Ergebnis seh
   await expect(page.getByRole("heading", { name: "Geschafft!" })).toBeVisible({
     timeout: 3_000,
   });
-  await expect(page.getByText("67 %")).toBeVisible();
+  await expect(page.getByText("67 %", { exact: true })).toBeVisible();
   await expect(
     page.getByText("2 von 3 Wörtern dieser Runde auf Anhieb richtig"),
+  ).toBeVisible();
+  // Box-Fortschritt: alle drei Wörter der Wortbox waren in der Runde, ein Wort falsch.
+  await expect(
+    page.getByText(
+      "Wortbox: 2 von 3 Wörtern auf Stufe 1 auf Anhieb richtig (67 %)",
+    ),
   ).toBeVisible();
   // Alle Wörter der Wortbox waren in der Runde: keine Stichprobe, kein Rekord.
   await expect(page.getByText(/Runde aus \d+ von \d+ Wörtern/)).toHaveCount(0);
@@ -86,21 +92,28 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und das letzte Ergebnis seh
     });
     await answer(page, word);
   }
-  await expect(page.getByText("100 %")).toBeVisible({ timeout: 3_000 });
+  await expect(page.getByText("100 %", { exact: true })).toBeVisible({
+    timeout: 3_000,
+  });
+  await expect(
+    page.getByText(
+      "Wortbox: 3 von 3 Wörtern auf Stufe 1 auf Anhieb richtig (100 %)",
+    ),
+  ).toBeVisible();
   await expect(page.getByText("Heute 6 Wörter geübt")).toBeVisible();
   await expect(page.getByText(/Bestwert/)).toHaveCount(0);
 
-  // Letztes Ergebnis im Startblatt und auf der Kachel, auch nach dem Neuladen.
+  // Box-Fortschritt im Startblatt und auf der Kachel, auch nach dem Neuladen.
   await page.getByRole("button", { name: "Andere Stufe wählen" }).click();
   await expect(
     page
       .getByRole("dialog", { name: "Meine Wörter" })
-      .getByRole("button", { name: /^Stufe 1:.*Zuletzt 100 %/ }),
+      .getByRole("button", { name: /^Stufe 1:.*100 % der Box/ }),
   ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: /^Meine Wörter/ }),
-  ).toContainText("Stufe 1 · Zuletzt 100 %");
+  ).toContainText("Stufe 1 · 100 % der Box (3 von 3 Wörtern)");
 });
 
 test("Trainingswörter heute: Stufen 1 bis 3 sind gesperrt, Stufe 4 ist vorgewählt", async ({
