@@ -125,7 +125,11 @@ Nicht veraltet: `qr-scanner`, `qrcode.react`, Fontsource-Schriften.
 1. `vitest@5` + `@vitest/coverage-v8@5`: `vitest.config.ts`, `vitest.setup.ts` und
    Coverage-Schwellen prüfen.
 2. `eslint@10` + `@eslint/js@10` + `globals@17`: erst, wenn `typescript-eslint` und
-   `@next/eslint-plugin-next` ESLint 10 offiziell unterstützen.
+   `@next/eslint-plugin-next` ESLint 10 offiziell unterstützen. Stand 21.10.2026 fehlen
+   noch `eslint-plugin-react` und `eslint-plugin-jsx-a11y` (beide nur bis ESLint 9).
+   `.github/dependabot.yml` sperrt die Hauptversion von `eslint` und `@eslint/js` bis
+   dahin; die Gruppe `eslint-major` bündelt das Update danach in einem PR. Die
+   Einzel-PRs #32 und #33 scheiterten an genau diesem Konflikt und wurden geschlossen.
 3. `typescript@7`: erst, wenn `typescript-eslint` TS 7 unterstützt. Bis dahin bleibt 5.9.
 4. **Node 24 LTS** statt Node 22. Node 22 erhält nur noch Wartungs-Updates (bis April 2027).
    Dazu passen: `node-version` in `.github/workflows/quality.yml`, `engines` in
