@@ -97,6 +97,12 @@ test("a learner can generate a short round with selected tables and gaps", async
   await page
     .getByRole("button", { name: "Aufgaben erzeugen", exact: true })
     .click();
+  // Die Vorschau nennt nur Anzahl und Art, keine Aufgabe und keine Lösung.
+  await expect(
+    page.getByText("5 Aufgaben · Mal bis 100 · Reihe 7 · Lücken", {
+      exact: true,
+    }),
+  ).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(
     await page.evaluate(
@@ -106,4 +112,33 @@ test("a learner can generate a short round with selected tables and gaps", async
   await page.getByRole("button", { name: "Runde starten" }).click();
   await expect(page.getByText("Aufgabe 1 von 5")).toBeVisible();
   await expect(page.locator("#math-task-title")).toContainText("_");
+});
+
+test("the preview before a round shows no solutions and no single tasks", async ({
+  page,
+}) => {
+  await page.goto("/frei/mathematics");
+  await page.getByRole("combobox", { name: "Anzahl" }).selectOption("10");
+  await page
+    .getByRole("button", { name: "Aufgaben erzeugen", exact: true })
+    .click();
+  await expect(
+    page.getByText("10 Aufgaben · Plus und Minus bis 20", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Andere Aufgaben" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /neu würfeln|löschen/ }),
+  ).toHaveCount(0);
+  // Kein „= <Ergebnis>“ vor der Runde.
+  const setupText = await page.locator("body").innerText();
+  expect(setupText).not.toMatch(/=\s*\d/);
+
+  await page.getByRole("button", { name: "Runde starten" }).click();
+  await expect(page.getByText("Aufgabe 1 von 10")).toBeVisible();
+  const firstTask = (await page.locator("#math-task-title").innerText()).trim();
+  // Weder die erste Rundenaufgabe noch ihr Ergebnis stand in der Vorschau.
+  expect(setupText).not.toContain(firstTask);
+  expect(setupText).not.toContain(`${firstTask} =`);
 });

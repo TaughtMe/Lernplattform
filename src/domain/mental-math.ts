@@ -438,6 +438,11 @@ export function isLatexMathSyntax(input: string) {
   );
 }
 
+type MentalMathExpressionValues = Pick<
+  MentalMathExpression,
+  "left" | "right" | "result"
+>;
+
 function randomInteger(random: () => number, min: number, max: number) {
   const low = Math.min(min, max);
   const high = Math.max(min, max);
@@ -453,6 +458,8 @@ function generateOperands(
     >;
   },
   random: () => number,
+  /** Zusätzliche Bedingung an die Operanden, z. B. eine eindeutige Lücke. */
+  accept: (values: MentalMathExpressionValues) => boolean = () => true,
 ) {
   const tables = options.multiplicationTables.length
     ? options.multiplicationTables
@@ -474,7 +481,8 @@ function generateOperands(
       (options.excludeZeroResult && result === 0)
     )
       return null;
-    return { left, right, result };
+    const values = { left, right, result };
+    return accept(values) ? values : null;
   }
   for (let attempt = 0; attempt < 200; attempt += 1) {
     let left: number;
@@ -583,6 +591,47 @@ export function parseMentalMathTask(
       };
 }
 
+const GAP_SLOTS: readonly MathGapSlot[] = ["left", "right", "result"];
+
+/**
+ * Ist der Wert der Lücke durch die Gleichung eindeutig bestimmt? Mehrdeutig
+ * sind nur Lücken, die eine Null „verschluckt“: `0 · _ = 0` und `_ · 0 = 0`
+ * (jede Zahl passt) sowie `0 : _ = 0` (jede Zahl außer 0 passt). Alle anderen
+ * Lücken (auch `_ : 5 = 0`, nur 0 passt) haben genau eine Lösung. Solche
+ * Lücken werden gar nicht erst erzeugt, statt später jede passende Zahl
+ * zu akzeptieren (Audit G-009, Red Team 6.13).
+ */
+export function isGapUnique(
+  operator: MathOperator,
+  values: Pick<MentalMathExpression, "left" | "right">,
+  gap: MathGapSlot,
+) {
+  if (operator === "*")
+    return gap === "left"
+      ? values.right !== 0
+      : gap === "right"
+        ? values.left !== 0
+        : true;
+  if (operator === "/") return gap === "right" ? values.left !== 0 : true;
+  return true;
+}
+
+/**
+ * Mischt Aufgaben (Fisher-Yates) mit dem übergebenen Zufall und lässt die
+ * Eingabe unverändert. Mit festem Zufall ist die Reihenfolge reproduzierbar.
+ */
+export function shuffleMathTasks<T>(
+  tasks: readonly T[],
+  random: () => number = Math.random,
+): T[] {
+  const shuffled = [...tasks];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const other = randomInteger(random, 0, index);
+    [shuffled[index], shuffled[other]] = [shuffled[other]!, shuffled[index]!];
+  }
+  return shuffled;
+}
+
 export function generateMentalMathTasks(
   options: MentalMathOptions,
   random: () => number = Math.random,
@@ -603,29 +652,139 @@ export function generateMentalMathTasks(
   return Array.from({ length: normalized.count }, (_, index) => {
     const operation =
       operations[randomInteger(random, 0, operations.length - 1)] ?? "add";
-    const values = generateOperands(operation, normalized, random);
-    const gap = normalized.gapMode
-      ? (options.gapSlots?.[index] ??
-        (["left", "right", "result"] as const)[randomInteger(random, 0, 2)])
-      : undefined;
-    return buildMentalMathTask(
-      { ...values, operator: operationToOperator[operation] },
-      index,
-      gap,
+    const operator = operationToOperator[operation];
+    const forced = normalized.gapMode ? options.gapSlots?.[index] : undefined;
+    // Eine vorgegebene Lückenposition bleibt; dann ziehen wir die Operanden neu,
+    // bis die Lücke eindeutig ist. Sonst weichen wir auf die nächste Position aus.
+    const values = generateOperands(
+      operation,
+      normalized,
+      random,
+      forced
+        ? (candidate) => isGapUnique(operator, candidate, forced)
+        : undefined,
     );
+    let gap: MathGapSlot | undefined = forced;
+    if (normalized.gapMode && !forced) {
+      const start = randomInteger(random, 0, GAP_SLOTS.length - 1);
+      // „result“ ist immer eindeutig, die Suche endet also spätestens dort.
+      gap = [...GAP_SLOTS.slice(start), ...GAP_SLOTS.slice(0, start)].find(
+        (slot) => isGapUnique(operator, values, slot),
+      );
+    }
+    return buildMentalMathTask({ ...values, operator }, index, gap);
   });
+}
+
+/**
+ * Zerlegt eine Eingabe streng in Vorzeichen, ganze Stellen und Nachkommastellen
+ * und liefert die kanonische Dezimalschreibweise („-1000.5“) oder `null`.
+ *
+ * Erlaubt sind:
+ * - Vorzeichen `-`, `−` (U+2212) oder `–` (U+2013), davor/danach Leerraum;
+ * - Tausendertrenner „.“ oder Leerzeichen (auch geschützt) **nur in gültigen
+ *   Dreiergruppen** („1.000“, „12 345 678“), die erste Gruppe hat 1 bis 3
+ *   Ziffern und beginnt nicht mit 0;
+ * - Dezimaltrenner „,“; „.“ nur, wenn es nicht als Tausenderpunkt lesbar ist.
+ *
+ * Entscheidung zur Mehrdeutigkeit: Ein „.“ mit **genau drei** Ziffern danach
+ * ist im Deutschen ein Tausenderpunkt („1.000“ = 1000, „2.500“ = 2500), auch
+ * wenn es ein englisches Dezimalzeichen sein könnte. Mit anderen Ziffernzahlen
+ * („2.5“, „0.75“, „1234.567“) ist es ein Dezimalpunkt. Mit Tausenderpunkt
+ * ist nur „,“ als Dezimaltrenner erlaubt („1.000,5“). Das Komma ist immer
+ * Dezimaltrenner („1,000“ = 1). Alles andere („1e1“, „0x10“, „1.00.0“,
+ * „1,5,5“, „,5“, „5,“) ist ungültig.
+ */
+function parseDecimalAnswer(input: string) {
+  const value = input.trim();
+  const sign = String.raw`([-\u2212\u2013]?)\s*`;
+  const match =
+    value.match(
+      new RegExp(String.raw`^${sign}([1-9]\d{0,2}(?:\.\d{3})+)(?:,(\d+))?$`),
+    ) ??
+    value.match(
+      new RegExp(
+        String.raw`^${sign}([1-9]\d{0,2}(?:[ \u00a0\u202f]\d{3})+)(?:[,.](\d+))?$`,
+      ),
+    ) ??
+    value.match(new RegExp(String.raw`^${sign}(\d+)(?:[,.](\d+))?$`));
+  if (!match) return null;
+  return {
+    negative: match[1] !== "",
+    integer: (match[2] ?? "").replace(/[. \u00a0\u202f]/g, ""),
+    fraction: match[3] ?? "",
+  };
+}
+
+/** Kanonische Schreibweise ohne führende/nachfolgende Nullen, „-0“ gibt es nicht. */
+function canonicalDecimal(
+  negative: boolean,
+  integer: string,
+  fraction: string,
+) {
+  const whole = integer.replace(/^0+(?=\d)/, "");
+  const decimals = fraction.replace(/0+$/, "");
+  const zero = whole === "0" && decimals === "";
+  return `${negative && !zero ? "-" : ""}${whole}${decimals ? `.${decimals}` : ""}`;
+}
+
+/** Höchstzahl der Nachkommastellen, auf die eine Lösung gerundet wird. */
+const MATH_ANSWER_DECIMALS = 6;
+
+/**
+ * Die Lösung auf ihre Nachkommastellen (höchstens 6) gerundet, kanonisch
+ * geschrieben. Ein Text statt einer Zahl vermeidet jedes Epsilon: Gleichheit
+ * ist Textgleichheit.
+ */
+function canonicalSolution(solution: number) {
+  if (!Number.isFinite(solution) || Math.abs(solution) >= 1e15) return null;
+  // `toFixed` schreibt immer „123.456000“: Das ist kein Eingabeformat, daher
+  // wird hier direkt zerlegt und nicht `parseDecimalAnswer` benutzt.
+  const [integer = "0", fraction = ""] = Math.abs(solution)
+    .toFixed(MATH_ANSWER_DECIMALS)
+    .split(".");
+  return canonicalDecimal(solution < 0, integer, fraction);
+}
+
+/**
+ * Liest eine Antwort als Zahl oder liefert `null`, wenn sie keine eindeutig
+ * lesbare Zahl ist (Regeln siehe `parseDecimalAnswer`). Keine Toleranz,
+ * kein `Number()`.
+ */
+export function parseMathAnswer(input: string): number | null {
+  const parsed = parseDecimalAnswer(input);
+  return parsed
+    ? Number(canonicalDecimal(parsed.negative, parsed.integer, parsed.fraction))
+    : null;
+}
+
+/**
+ * Exakter Vergleich: Die Lösung wird auf ihre Nachkommastellen (höchstens 6)
+ * gerundet und mit der Eingabe als Dezimalzahl verglichen. Eine Eingabe mit
+ * mehr Nachkommastellen als die Lösung (außer Nullen am Ende) ist falsch.
+ */
+export function mathAnswerMatches(solution: number, input: string) {
+  const parsed = parseDecimalAnswer(input);
+  const expected = canonicalSolution(solution);
+  return (
+    parsed !== null &&
+    expected !== null &&
+    canonicalDecimal(parsed.negative, parsed.integer, parsed.fraction) ===
+      expected
+  );
+}
+
+/** Gleichheit zweier Zahlen in der Genauigkeit der Antwortprüfung (6 Stellen). */
+export function mathNumbersEqual(left: number, right: number) {
+  const expected = canonicalSolution(left);
+  return expected !== null && expected === canonicalSolution(right);
 }
 
 export function checkMentalMathAnswer(
   task: { answer: number; [key: string]: unknown },
   value: string,
 ) {
-  const normalized = value.trim().replace(",", ".");
-  return (
-    normalized !== "" &&
-    Number.isFinite(Number(normalized)) &&
-    Math.abs(Number(normalized) - task.answer) < 0.01
-  );
+  return mathAnswerMatches(task.answer, value);
 }
 
 /** Zerlegt den Aufgabentext der Lehrkraft in getrimmte, nicht leere Zeilen. */
