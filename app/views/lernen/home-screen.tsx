@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { avatarLabel } from "../../../src/domain/learner-profile";
 import { Icon } from "../../ui/icons";
 import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
@@ -29,6 +30,8 @@ export type HomeScreenProps = {
   badges?: { count: number; hint: string } | undefined;
   duelHref?: string | undefined;
   onToggleTheme?: () => void;
+  /** Hinweise zwischen Kopf und Tier (z. B. Speicherschutz); blockiert nichts. */
+  notice?: ReactNode;
 };
 
 const RING = { size: 290, radius: 132, stroke: 11 };
@@ -54,6 +57,9 @@ export function HomeScreen(props: HomeScreenProps) {
             </div>
             <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
           </header>
+          {props.notice ? (
+            <div className={styles.notice}>{props.notice}</div>
+          ) : null}
           <div className={styles.stage}>
             <div className={styles.ringWrap}>
               <svg

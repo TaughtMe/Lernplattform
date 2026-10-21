@@ -22,6 +22,7 @@ import {
 } from "../../src/storage/personal-backup";
 import { AnimalImage } from "../ui/animal";
 import { CloudSyncPanel } from "./cloud-sync-panel";
+import { InstallStorageHint } from "./storage-protection";
 import { AnimalPicker } from "../ui/animal-picker";
 import { Segmented, Toggle } from "../ui/primitives";
 import { useLearnerProfile } from "../ui/use-learner-profile";
@@ -337,6 +338,7 @@ function BackupCard() {
           {message.text}
         </p>
       ) : null}
+      <InstallStorageHint />
       <p className="ui-tiny ui-muted">
         Die Datei enthält LernBox, Lernwörter, Tipptraining und Lernverlauf.
         Beim Laden werden vorhandene Daten ergänzt, nicht gelöscht.

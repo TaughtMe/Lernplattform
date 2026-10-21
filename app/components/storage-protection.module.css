@@ -1,0 +1,30 @@
+/* Hinweise zum Schutz vor Speicherverlust: schmal, umbrechend, ohne Blockade. */
+.notices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 470px;
+  margin-inline: auto;
+}
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.text {
+  margin: 0;
+}
+.steps {
+  margin: 0;
+  padding-left: 20px;
+}
+/* Lange Beschriftungen dürfen umbrechen; die Fläche bleibt mindestens 44 px hoch. */
+/* Mit Elementnamen, damit die Regeln `.ui-btn` unabhängig von der Ladereihenfolge schlagen. */
+a.action,
+button.action {
+  min-height: 44px;
+  padding-block: 8px;
+  white-space: normal;
+  line-height: 1.25;
+}

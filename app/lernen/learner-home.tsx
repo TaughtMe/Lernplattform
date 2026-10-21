@@ -1,5 +1,6 @@
 "use client";
 
+import { StorageProtectionNotice } from "../components/storage-protection";
 import { profileAvatar } from "../../src/domain/learner-profile";
 import { useAreaVisible } from "../release/release-context";
 import { useThemeToggle } from "../ui/theme";
@@ -50,6 +51,9 @@ export function LearnerHome() {
         motivation && snapshot.streak > 0 ? snapshot.streak : undefined
       }
       duelHref={duel ? "/duell" : undefined}
+      notice={
+        <StorageProtectionNotice hasLearningState={snapshot.hasLearningState} />
+      }
     />
   );
 }
