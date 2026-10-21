@@ -243,6 +243,37 @@ describe("answers", () => {
     expect(result.state.lastFeedback?.extra).toEqual(["Haus"]);
   });
 
+  it("marks only the first attempt at a word as firstAttempt", () => {
+    const first = submitWordAnswer(start(1), "x");
+    const again = submitWordAnswer(continueAfterFeedback(first.state), "y");
+    expect(first.attempts[0]!.firstAttempt).toBe(true);
+    expect(again.attempts[0]!.firstAttempt).toBe(false);
+  });
+
+  it("marks every word of a stage 5 block as first attempt exactly once", () => {
+    let state = finishMemorize(start(5));
+    const first = submitWordAnswer(state, "Sonne\nMond\nSterm");
+    expect(first.attempts.map((a) => [a.words[0], a.firstAttempt])).toEqual([
+      ["Sonne", true],
+      ["Mond", true],
+      ["Stern", true],
+    ]);
+    state = finishMemorize(continueAfterFeedback(first.state));
+    const second = submitWordAnswer(state, "Stern\nSonne\nMond");
+    expect(second.attempts.map((a) => [a.words[0], a.firstAttempt])).toEqual([
+      ["Stern", false],
+    ]);
+  });
+
+  it('counts "Wort zeigen" before the first attempt as help on that attempt', () => {
+    const helped = submitWordAnswer(applyHelp(start(1)), "Sonne");
+    expect(helped.attempts[0]).toMatchObject({
+      firstAttempt: true,
+      usedHelp: true,
+      correct: true,
+    });
+  });
+
   it("creates deterministic attempt ids for retries", () => {
     const first = submitWordAnswer(start(1), "x");
     const again = submitWordAnswer(continueAfterFeedback(first.state), "y");

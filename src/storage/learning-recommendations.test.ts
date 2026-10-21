@@ -53,7 +53,8 @@ describe("shared learning recommendations", () => {
       selfCorrected: false,
       stage: 2,
       roundId: "word-round",
-      now,
+      // Am Vortag: Ein Fehler macht das Wort erst am nächsten Tag fällig.
+      now: "2026-08-23T12:00:00.000Z",
     });
     await createTypingProgressRepository(database).recordAttempt(
       "grundstellung-zeigefinger",

@@ -1,6 +1,7 @@
 "use client";
 
 import type { LearningWordStage } from "../../../src/domain/learning-word";
+import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
 import { Button, Notice } from "../../ui/primitives";
 import { Sheet } from "../../ui/sheet";
 import {
@@ -13,8 +14,11 @@ import styles from "./wortspeicher.module.css";
 
 export type StartSheetStage = {
   stage: LearningWordStage;
-  /** Bestwert dieser Stufe in dieser Wortbox; leer ohne Runde. */
-  bestPercent?: number | undefined;
+  /**
+   * Letzte Runde dieser Stufe in dieser Wortbox; leer ohne Runde. Bei den
+   * Fehlerwörtern steht die Zahl der Wörter statt eines Prozentwerts (W-10, W-12).
+   */
+  last?: { percent: number } | { words: number } | undefined;
   recommended: boolean;
   /** Grund, warum die Stufe nicht wählbar ist (z. B. keine deutsche Stimme). */
   disabledHint?: string | undefined;
@@ -92,9 +96,11 @@ export function StartSheet({
                   {entry.disabledHint ?? STAGE_COPY[entry.stage].detail}
                 </small>
                 <span className={styles.stageBest}>
-                  {entry.bestPercent === undefined
-                    ? "Bestwert –"
-                    : `Bestwert ${entry.bestPercent} %`}
+                  {entry.last === undefined
+                    ? "Zuletzt –"
+                    : "percent" in entry.last
+                      ? `Zuletzt ${entry.last.percent} %`
+                      : practicedWordsLabel(entry.last.words)}
                   {entry.recommended ? " · empfohlen" : ""}
                 </span>
               </button>

@@ -558,8 +558,12 @@ describe("learning box repository", () => {
       "2026-08-24T11:00:00.000Z",
     );
 
+    // Ein Fehler macht das Wort am nächsten Tag fällig, nicht sofort.
     expect(
       await learningWords.listDue("2026-08-24T10:00:00.000Z"),
+    ).toHaveLength(0);
+    expect(
+      await learningWords.listDue("2026-08-26T10:00:00.000Z"),
     ).toHaveLength(1);
     expect(await typing.list()).toMatchObject([
       { id: "grundstellung-links", completed: true },

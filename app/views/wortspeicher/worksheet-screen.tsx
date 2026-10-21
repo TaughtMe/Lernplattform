@@ -5,6 +5,7 @@ import {
   LEARNING_WORD_STAGES,
   type LearningWordStage,
 } from "../../../src/domain/learning-word";
+import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
 import { Button, EmptyState } from "../../ui/primitives";
 import styles from "./worksheet-screen.module.css";
 
@@ -13,6 +14,11 @@ export type WordWorksheetRow = {
   title: string;
   /** Bestwert je Stufe; `undefined` heißt „noch nicht geübt“. */
   bestByStage: Record<LearningWordStage, number | undefined>;
+  /**
+   * Fehlerwörter (W-12): Wörter der letzten Runde je Stufe statt Prozentwert.
+   * Gesetzt heißt: keine Prozentwerte in dieser Zeile.
+   */
+  practicedByStage?: Record<LearningWordStage, number | undefined> | undefined;
   rounds: number;
   lastPracticedAt: string | undefined;
 };
@@ -26,6 +32,16 @@ export type WordWorksheetStats = {
 
 export const WORD_WORKSHEET_NOTICE =
   "Dieser Laufzettel wurde auf deinem Gerät erstellt. Er ist eine Übersicht und kein Prüfungsnachweis.";
+
+/** Prozentwert oder, bei den Fehlerwörtern, „n Wörter geübt“. */
+function cellText(row: WordWorksheetRow, stage: LearningWordStage): string {
+  if (row.practicedByStage) {
+    const words = row.practicedByStage[stage];
+    return words === undefined ? "–" : practicedWordsLabel(words);
+  }
+  const best = row.bestByStage[stage];
+  return best === undefined ? "–" : `${best} %`;
+}
 
 const dateFormat = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" });
 
@@ -98,11 +114,7 @@ export function WordWorksheetScreen({
               <tr key={row.boxId}>
                 <th scope="row">{row.title}</th>
                 {LEARNING_WORD_STAGES.map((stage) => (
-                  <td key={stage}>
-                    {row.bestByStage[stage] === undefined
-                      ? "–"
-                      : `${row.bestByStage[stage]} %`}
-                  </td>
+                  <td key={stage}>{cellText(row, stage)}</td>
                 ))}
                 <td>{row.rounds}</td>
                 <td>
@@ -115,6 +127,12 @@ export function WordWorksheetScreen({
           </tbody>
         </table>
       )}
+      {rows.some((row) => row.practicedByStage) ? (
+        <p className={styles.meta}>
+          Bei den Fehlerwörtern steht die Zahl der Wörter der letzten Runde
+          statt eines Prozentwerts.
+        </p>
+      ) : null}
       <dl className={styles.stats} aria-label="Kennzahlen">
         <div className={styles.stat}>
           <dt>Trainierte Wörter</dt>

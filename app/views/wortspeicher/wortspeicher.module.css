@@ -452,11 +452,9 @@
   font-weight: 800;
   line-height: 1;
 }
-.record {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--good);
+/* „n Wörter geübt“ statt Prozentwert (Fehlerwörter): kleiner als die 64 px. */
+.percentWords {
+  font-size: 34px;
 }
 .counts {
   display: grid;

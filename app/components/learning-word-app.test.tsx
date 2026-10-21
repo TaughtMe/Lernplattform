@@ -4,7 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetSpeechState } from "../../src/speech/speaker";
 import type { DailyPlanItem } from "../../src/domain/daily-plan";
-import type { LearningWordProgress } from "../../src/domain/learning-word-progress";
+import {
+  learningWordId,
+  type LearningWordProgress,
+} from "../../src/domain/learning-word-progress";
 import { learningEventV1Schema } from "../../src/domain/learning-bundle";
 import { localDayKey } from "../../src/domain/local-day";
 import { resolveStages, resolveVisibility } from "../../src/domain/release";
@@ -30,6 +33,7 @@ async function setup(
     /** Alle Plan-Elemente sind heute schon beantwortet. */
     doneToday?: boolean;
     prepare?: (repositories: {
+      database: PersonalLearningDatabase;
       boxes: ReturnType<typeof createWordBoxRepository>;
       rounds: ReturnType<typeof createWordRoundRepository>;
       progress: ReturnType<typeof createLearningWordProgressRepository>;
@@ -44,7 +48,7 @@ async function setup(
     progress: createLearningWordProgressRepository(database),
     plan: createDailyPlanRepository(database),
   };
-  await options.prepare?.(repositories);
+  await options.prepare?.({ database, ...repositories });
   if (options.plan) {
     const now = new Date();
     const items = options.plan(await repositories.progress.list());
@@ -77,6 +81,29 @@ async function setup(
     </ReleaseProvider>,
   );
   return { database, ...repositories };
+}
+
+/** Schreibt einen Lernstand direkt: Boxen steigen nur in der fälligen Wiederholung. */
+async function seedProgress(
+  database: PersonalLearningDatabase,
+  word: string,
+  values: {
+    box: LearningWordProgress["box"];
+    stage?: LearningWordStage;
+    dueAt?: string;
+  },
+) {
+  await database.learningWordProgress.put({
+    id: learningWordId(word),
+    word,
+    stage: values.stage ?? 1,
+    box: values.box,
+    dueAt: values.dueAt ?? "2099-01-01T00:00:00.000Z",
+    attempts: 4,
+    incorrectAttempts: 0,
+    helpUses: 0,
+    lastPracticedAt: "2026-10-01T08:00:00.000Z",
+  });
 }
 
 /** Ein heute nach dem Plan beantwortetes Element: Es gilt als erledigt. */
@@ -147,28 +174,18 @@ async function answer(user: ReturnType<typeof userEvent.setup>, text: string) {
 }
 
 describe("Übersicht", () => {
-  it("zeigt Wortboxen als Kacheln mit Fortschritt und Bestwert", async () => {
+  it("zeigt Wortboxen als Kacheln mit Fortschritt und letztem Ergebnis", async () => {
     await setup({
-      prepare: async ({ boxes, rounds, progress }) => {
+      prepare: async ({ database, boxes, rounds }) => {
         const box = await boxes.create("Meine Tiere", [
           "Hund",
           "Katze",
           "Maus",
           "Pferd",
         ]);
+        // Box 3 und höher gilt als „sicher“.
         for (const word of ["Hund", "Katze"]) {
-          // Dreimal sicher richtig: Box 4, also „sicher“.
-          for (let attempt = 0; attempt < 3; attempt += 1) {
-            await progress.recordAttempt({
-              words: [word],
-              correct: true,
-              usedHelp: false,
-              selfCorrected: false,
-              stage: 1,
-              roundId: "r",
-              attemptId: `${attempt}`,
-            });
-          }
+          await seedProgress(database, word, { box: 4 });
         }
         await rounds.save({
           id: "alt",
@@ -193,7 +210,8 @@ describe("Übersicht", () => {
     const tile = await screen.findByRole("button", { name: /^Meine Tiere/ });
     expect(tile).toHaveTextContent("Hund, Katze, Maus");
     expect(tile).toHaveTextContent("2 / 4 sicher");
-    expect(tile).toHaveTextContent("Stufe 3 · Bestwert 80 %");
+    expect(tile).toHaveTextContent("Stufe 3 · Zuletzt 80 %");
+    expect(tile).not.toHaveTextContent("Bestwert");
     expect(
       screen.getByRole("button", { name: /^Doppelkonsonanten/ }),
     ).toHaveTextContent("Noch nicht geübt");
@@ -309,7 +327,7 @@ describe("Wortlisten", () => {
 });
 
 describe("Startblatt", () => {
-  it("zeigt den Bestwert je Stufe und die empfohlene Stufe", async () => {
+  it("zeigt das letzte Ergebnis je Stufe und die empfohlene Stufe", async () => {
     const user = userEvent.setup();
     await setup({
       prepare: async ({ boxes, rounds, progress }) => {
@@ -346,14 +364,15 @@ describe("Startblatt", () => {
     await openBox(user, "Tiere");
     const sheet = await screen.findByRole("dialog");
     expect(
-      within(sheet).getByRole("button", { name: /Stufe 2:.*Bestwert 80 %/ }),
+      within(sheet).getByRole("button", { name: /Stufe 2:.*Zuletzt 80 %/ }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(
-      within(sheet).getByRole("button", { name: /Stufe 1:.*Bestwert –/ }),
+      within(sheet).getByRole("button", { name: /Stufe 1:.*Zuletzt –/ }),
     ).toBeInTheDocument();
-    // Der Lernstand des Wortes steht jetzt auf Stufe 3.
+    expect(sheet).not.toHaveTextContent("Bestwert");
+    // Richtig auf Stufe 2 setzt die Merkstufe des Wortes auf 2, ohne +1 (W-8).
     expect(
-      within(sheet).getByRole("button", { name: /Stufe 3:.*empfohlen/ }),
+      within(sheet).getByRole("button", { name: /Stufe 2:.*empfohlen/ }),
     ).toBeInTheDocument();
     // Ohne deutsche Stimme ist Stufe 6 sichtbar, aber nicht wählbar.
     expect(
@@ -464,7 +483,7 @@ describe("Runden", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("67 %")).toBeInTheDocument();
     expect(
-      screen.getByText("2 von 3 Wörtern auf Anhieb richtig"),
+      screen.getByText("2 von 3 Wörtern dieser Runde auf Anhieb richtig"),
     ).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
   });
@@ -515,7 +534,7 @@ describe("Runden", () => {
     ).toHaveTextContent("1");
   });
 
-  it("zeigt „erster Bestwert“, dann „Neuer Bestwert!“ und speichert jede Runde nur einmal", async () => {
+  it("zeigt keinen Rekord, speichert jede Runde nur einmal und zeigt im Startblatt das letzte Ergebnis", async () => {
     const user = userEvent.setup();
     const { rounds } = await oneWordBox();
     await openBox(user, "Test");
@@ -528,27 +547,27 @@ describe("Runden", () => {
     expect(
       await screen.findByRole("heading", { name: "Geschafft!" }, SLOW),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Das ist dein erster Bestwert für diese Stufe."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("0 %")).toBeInTheDocument();
+    expect(screen.queryByText(/Bestwert/)).not.toBeInTheDocument();
+    expect(screen.getByText("Heute 1 Wort geübt")).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
 
     await user.click(screen.getByRole("button", { name: "Nochmal üben" }));
     await answer(user, "Ball");
-    expect(
-      await screen.findByText("Neuer Bestwert!", {}, SLOW),
-    ).toBeInTheDocument();
-    expect(screen.getByText("100 %")).toBeInTheDocument();
+    expect(await screen.findByText("100 %", {}, SLOW)).toBeInTheDocument();
+    expect(screen.queryByText(/Bestwert/)).not.toBeInTheDocument();
+    // Die Übungsmenge des Tages zählt beide Runden.
+    expect(screen.getByText("Heute 2 Wörter geübt")).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(2));
 
-    // Im Startblatt steht jetzt der Bestwert.
+    // Im Startblatt steht jetzt das letzte Ergebnis, nicht der Bestwert.
     await user.click(
       screen.getByRole("button", { name: "Andere Stufe wählen" }),
     );
     const sheet = await screen.findByRole("dialog");
     expect(
       await within(sheet).findByRole("button", {
-        name: /Stufe 1:.*Bestwert 100 %/,
+        name: /Stufe 1:.*Zuletzt 100 %/,
       }),
     ).toBeInTheDocument();
   });
@@ -594,6 +613,209 @@ describe("Runden", () => {
   });
 });
 
+describe("Freies Üben und fällige Wiederholung", () => {
+  const FUTURE = "2099-01-01T00:00:00.000Z";
+
+  it("ändert beim freien Üben die Box nicht, auch nicht auf Stufe 1", async () => {
+    const user = userEvent.setup();
+    const { progress } = await setup({
+      prepare: async ({ database, boxes }) => {
+        await boxes.create("Test", ["Ball"]);
+        await seedProgress(database, "Ball", { box: 3, stage: 3 });
+      },
+    });
+    await openBox(user, "Test");
+    await startRound(user, 1);
+    await answer(user, "Ball");
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+    await waitFor(async () =>
+      expect((await progress.list())[0]).toMatchObject({ attempts: 5 }),
+    );
+    expect((await progress.list())[0]).toMatchObject({
+      box: 3,
+      stage: 3,
+      dueAt: FUTURE,
+    });
+  });
+
+  it("macht beim freien Üben ein falsches Wort bis zum nächsten Tag fällig, ohne die Box zu ändern", async () => {
+    const user = userEvent.setup();
+    const { progress } = await setup({
+      prepare: async ({ database, boxes }) => {
+        await boxes.create("Test", ["Ball"]);
+        await seedProgress(database, "Ball", { box: 3, stage: 3 });
+      },
+    });
+    await openBox(user, "Test");
+    await startRound(user, 1);
+    await answer(user, "Bal");
+    await screen.findByText("Noch nicht sicher");
+    await user.click(
+      screen.getByRole("button", { name: "Noch einmal versuchen" }),
+    );
+    await answer(user, "Ball");
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+    await waitFor(async () =>
+      expect((await progress.list())[0]).toMatchObject({ attempts: 6 }),
+    );
+    const [ball] = await progress.list();
+    expect(ball).toMatchObject({ box: 3, stage: 1 });
+    const dueAt = new Date(ball!.dueAt).getTime();
+    expect(dueAt).toBeGreaterThan(Date.now());
+    expect(dueAt).toBeLessThanOrEqual(Date.now() + 86_400_000);
+  });
+
+  it("sperrt in „Trainingswörter heute“ die Stufen 1 bis 3 und wählt Stufe 4 vor", async () => {
+    const user = userEvent.setup();
+    await setup({
+      prepare: async ({ boxes }) => {
+        await boxes.importFromLesson({
+          words: ["Hund"],
+          errorWords: ["Hund"],
+          sourceId: "s",
+        });
+      },
+    });
+    const mixed = await screen.findByRole("button", {
+      name: "Gemischt trainieren",
+    });
+    await waitFor(() => expect(mixed).toBeEnabled());
+    await user.click(mixed);
+    const sheet = await screen.findByRole("dialog", {
+      name: "Trainingswörter heute",
+    });
+    for (const stage of [1, 2, 3]) {
+      const card = within(sheet).getByRole("button", {
+        name: new RegExp(`^Stufe ${stage}:`),
+      });
+      expect(card).toBeDisabled();
+      expect(card).toHaveTextContent(
+        "In der Wiederholung schreibst du die Wörter aus dem Kopf.",
+      );
+    }
+    expect(
+      within(sheet).getByRole("button", { name: /^Stufe 4:/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(sheet).getByRole("button", { name: /^Stufe 4:/ }),
+    ).toBeEnabled();
+    expect(
+      within(sheet).getByRole("button", { name: /^Stufe 5:/ }),
+    ).toBeEnabled();
+  });
+
+  it("lässt andere Wortboxen unverändert wählbar", async () => {
+    const user = userEvent.setup();
+    await setup({
+      prepare: async ({ boxes }) => {
+        await boxes.create("Test", ["Ball"]);
+      },
+    });
+    await openBox(user, "Test");
+    const sheet = await screen.findByRole("dialog");
+    for (const stage of [1, 2, 3, 4, 5]) {
+      expect(
+        within(sheet).getByRole("button", {
+          name: new RegExp(`^Stufe ${stage}:`),
+        }),
+      ).toBeEnabled();
+    }
+  });
+
+  it("hebt in „Trainingswörter heute“ die Box nur beim ersten Versuch eines fälligen Wortes", async () => {
+    const user = userEvent.setup();
+    const { progress } = await setup({
+      prepare: async ({ boxes }) => {
+        await boxes.importFromLesson({
+          words: ["Hund", "Katze"],
+          errorWords: ["Hund", "Katze"],
+          sourceId: "s",
+        });
+      },
+    });
+    const mixed = await screen.findByRole("button", {
+      name: "Gemischt trainieren",
+    });
+    await waitFor(() => expect(mixed).toBeEnabled());
+    await user.click(mixed);
+    const sheet = await screen.findByRole("dialog");
+    await user.selectOptions(
+      within(sheet).getByLabelText("Wörter in dieser Runde"),
+      "all",
+    );
+    await user.click(within(sheet).getByRole("button", { name: "Starten" }));
+
+    // Stufe 4: Merken, verdecken, schreiben. Die Reihenfolge der Wörter ist zufällig.
+    const first = await readMemorizedWord();
+    await user.click(screen.getByRole("button", { name: "Wörter verdecken" }));
+    await answer(user, first);
+    const second = await readMemorizedWord();
+    await user.click(screen.getByRole("button", { name: "Wörter verdecken" }));
+    // Erster Versuch falsch, dann richtig: Box 1, morgen fällig.
+    await answer(user, "Xx");
+    await user.click(
+      await screen.findByRole("button", { name: "Noch einmal versuchen" }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Wörter verdecken" }),
+    );
+    await answer(user, second);
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+
+    await waitFor(async () =>
+      expect((await progress.list()).every((entry) => entry.attempts > 0)).toBe(
+        true,
+      ),
+    );
+    const byWord = new Map((await progress.list()).map((e) => [e.word, e]));
+    expect(byWord.get(first)).toMatchObject({ box: 2, stage: 4 });
+    expect(new Date(byWord.get(first)!.dueAt).getTime()).toBeGreaterThan(
+      Date.now() + 2 * 86_400_000,
+    );
+    expect(byWord.get(second)).toMatchObject({ box: 1 });
+    expect(new Date(byWord.get(second)!.dueAt).getTime()).toBeLessThanOrEqual(
+      Date.now() + 86_400_000,
+    );
+  });
+
+  /** Das Wort, das in der Merkphase auf dem Bildschirm steht („Hund“ oder „Katze“). */
+  async function readMemorizedWord() {
+    const word = await screen.findByText(/^(Hund|Katze)$/);
+    return word.textContent!;
+  }
+
+  it("zeigt bei den Fehlerwörtern „n Wörter geübt“ statt eines Prozentwerts", async () => {
+    const user = userEvent.setup();
+    const { rounds } = await setup({ query: "?woerter=Ball&quelle=fehler" });
+    const sheet = await screen.findByRole("dialog", {
+      name: "Wörter mit den meisten Fehlern",
+    });
+    await user.click(within(sheet).getByRole("button", { name: "Jetzt üben" }));
+    const start = await screen.findByRole("dialog", { name: "Fehlerwörter" });
+    expect(start).not.toHaveTextContent("%");
+    await startRound(user, 1);
+    await answer(user, "Ball");
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+    expect(screen.getByText("1 Wort geübt")).toBeInTheDocument();
+    expect(screen.queryByText(/ %$/)).not.toBeInTheDocument();
+    await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
+    // Gespeichert wird unverändert, auch der Prozentwert.
+    expect((await rounds.list())[0]).toMatchObject({
+      boxId: "fehler",
+      percent: 100,
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Andere Stufe wählen" }),
+    );
+    const sheetAgain = await screen.findByRole("dialog");
+    expect(
+      await within(sheetAgain).findByRole("button", { name: /Stufe 1:/ }),
+    ).toHaveTextContent("1 Wort geübt");
+    expect(sheetAgain).not.toHaveTextContent("%");
+  });
+});
+
 describe("Tagesportion mit ?heute=1", () => {
   const germanItem = (word: LearningWordProgress): DailyPlanItem => ({
     key: `german:${word.id}`,
@@ -629,7 +851,7 @@ describe("Tagesportion mit ?heute=1", () => {
       within(sheet).getByText("2 Wörter in dieser Wortbox"),
     ).toBeInTheDocument();
 
-    await startRound(user, 1);
+    await startRound(user, 4);
     // Die Runde hat zwei Wörter (nicht drei): „Maus“ ist nicht Teil der Portion.
     expect(await screen.findByText("1 / 2")).toBeInTheDocument();
   });

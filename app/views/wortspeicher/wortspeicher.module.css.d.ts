@@ -30,8 +30,8 @@ declare const styles: {
   readonly memory: string;
   readonly missed: string;
   readonly percent: string;
+  readonly percentWords: string;
   readonly prompt: string;
-  readonly record: string;
   readonly screen: string;
   readonly sectionHead: string;
   readonly settings: string;

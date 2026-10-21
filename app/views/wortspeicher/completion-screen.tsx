@@ -2,18 +2,27 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import type { LearningWordStage } from "../../../src/domain/learning-word";
+import type { LearningWordMode } from "../../../src/domain/learning-word-progress";
 import type { WordRoundWordResult } from "../../../src/domain/word-round";
+import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
 import { Button, ButtonLink } from "../../ui/primitives";
 import { STAGE_COPY } from "./stage-copy";
 import styles from "./wortspeicher.module.css";
 
-/** Abschluss einer Runde: Prozentwert, Bestwert und die Wörter zum Weiterüben (Plan 2.5). */
+/**
+ * Abschluss einer Runde: Ergebnis dieser Runde, Übungsmenge des Tages und die
+ * Wörter zum Weiterüben (Plan 2.5, W-11 bis W-13). Es gibt keinen Rekord: Nur
+ * das Ergebnis der Runde und der Lernstand zählen.
+ */
 export function CompletionScreen({
   title,
   stage,
   percent,
   results,
-  record,
+  boxWordCount,
+  practicedToday,
+  mode,
+  percentless,
   notice,
   textSuggestion,
   textboxHref,
@@ -25,8 +34,14 @@ export function CompletionScreen({
   stage: LearningWordStage;
   percent: number;
   results: readonly WordRoundWordResult[];
-  /** „Neuer Bestwert!“, „erster Bestwert“ oder keine Zeile. */
-  record: "new" | "first" | undefined;
+  /** Wörter der ganzen Wortbox; kleiner als die Runde heißt Stichprobe (W-11). */
+  boxWordCount: number;
+  /** Übungsmenge des lokalen Tages inklusive dieser Runde (W-13). */
+  practicedToday: number;
+  /** „due“ nur in „Trainingswörter heute“; bestimmt den Hinweis zum Lernstand. */
+  mode: LearningWordMode;
+  /** Fehlerwörter: „n Wörter geübt“ statt Prozentwert (W-12). */
+  percentless: boolean;
   notice?: string | undefined;
   /** Karte mit dem besten passenden Text der Textbox (nur bei sichtbarer Textbox). */
   textSuggestion?: ReactNode;
@@ -64,19 +79,24 @@ export function CompletionScreen({
       </header>
 
       <div className={styles.final}>
-        <p className={styles.percent}>{percent} %</p>
+        <p
+          className={`${styles.percent} ${percentless ? styles.percentWords : ""}`}
+        >
+          {percentless ? practicedWordsLabel(results.length) : `${percent} %`}
+        </p>
         <p>
           {right} von {results.length}{" "}
-          {results.length === 1 ? "Wort" : "Wörtern"} auf Anhieb richtig
+          {results.length === 1 ? "Wort" : "Wörtern"} dieser Runde auf Anhieb
+          richtig
         </p>
-        {record === "new" ? (
-          <p className={styles.record} role="status">
-            Neuer Bestwert!
+        {results.length < boxWordCount ? (
+          <p className="ui-small ui-muted">
+            Runde aus {results.length} von {boxWordCount} Wörtern der Wortbox
           </p>
         ) : null}
-        {record === "first" ? (
-          <p role="status">Das ist dein erster Bestwert für diese Stufe.</p>
-        ) : null}
+        <p className="ui-small ui-muted">
+          Heute {practicedWordsLabel(practicedToday)}
+        </p>
       </div>
 
       {notice ? (
@@ -114,9 +134,9 @@ export function CompletionScreen({
       ) : null}
 
       <p className="ui-small ui-muted">
-        Merkstufe und Wiederholungsfälligkeit wurden lokal gespeichert. Fehler
-        machen die betroffenen Wörter sofort wieder fällig; sichere Lösungen
-        verlängern den Abstand bis zur nächsten Wiederholung.
+        {mode === "due"
+          ? "Merkstufe und Wiederholungsfälligkeit wurden lokal gespeichert. Wörter, die du auf Anhieb richtig geschrieben hast, kommen später wieder; bei Fehlern oder mit Hilfe sind sie morgen wieder dran."
+          : "Merkstufe und Fälligkeit wurden lokal gespeichert. Freies Üben verändert den Abstand der Wiederholung nicht; Wörter mit Fehler oder Hilfe sind spätestens morgen wieder dran."}
       </p>
 
       {textSuggestion}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LEARNING_WORDS_PATH } from "../../src/domain/practice-bridge";
 import {
+  showsPracticedWordsOnly,
   summarizeWordBox,
   summarizeWordStore,
 } from "../../src/domain/word-store-progress";
@@ -60,6 +61,14 @@ export function WordStoreWorksheet({
           summary[stage].bestPercent,
         ]),
       ) as WordWorksheetRow["bestByStage"],
+      practicedByStage: showsPracticedWordsOnly(boxId)
+        ? (Object.fromEntries(
+            LEARNING_WORD_STAGES.map((stage) => [
+              stage,
+              summary[stage].lastWords,
+            ]),
+          ) as WordWorksheetRow["bestByStage"])
+        : undefined,
       rounds: LEARNING_WORD_STAGES.reduce(
         (sum, stage) => sum + summary[stage].rounds,
         0,

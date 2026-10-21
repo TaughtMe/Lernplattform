@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { LearningWordProgress } from "./learning-word-progress";
 import {
   headlineForBox,
-  isNewBest,
+  practicedWordsLabel,
+  showsPracticedWordsOnly,
+  wordsPracticedOnDay,
   recommendedStage,
   summarizeWordBox,
   summarizeWordStore,
@@ -108,16 +110,72 @@ describe("summarizeWordBox", () => {
 });
 
 describe("headlineForBox", () => {
-  it("takes the highest stage with a round", () => {
+  it("shows the stage and the last result of the most recent round", () => {
     const summary = summarizeWordBox("box", [
-      round("a", 1, 100, 1),
-      round("b", 4, 50, 2),
+      round("a", 4, 100, 1),
+      round("b", 1, 50, 2),
+      round("c", 1, 80, 3),
     ]);
-    expect(headlineForBox(summary)).toEqual({ stage: 4, bestPercent: 50 });
+    expect(headlineForBox(summary)).toEqual({
+      stage: 1,
+      lastPercent: 80,
+      practicedWords: 1,
+    });
+  });
+
+  it("does not turn a best value into the headline", () => {
+    const summary = summarizeWordBox("box", [
+      round("a", 2, 100, 1),
+      round("b", 2, 40, 2),
+    ]);
+    expect(headlineForBox(summary)).toMatchObject({ lastPercent: 40 });
   });
 
   it("is empty without rounds", () => {
     expect(headlineForBox(summarizeWordBox("box", []))).toBeUndefined();
+  });
+});
+
+describe("Fehlerwörter ohne Prozentwert", () => {
+  it("erkennt nur die Fehlerwörter-Wortbox", () => {
+    expect(showsPracticedWordsOnly("fehler")).toBe(true);
+    expect(showsPracticedWordsOnly("textbox")).toBe(false);
+    expect(showsPracticedWordsOnly("faellig")).toBe(false);
+  });
+
+  it("nennt die Zahl der geübten Wörter", () => {
+    expect(practicedWordsLabel(1)).toBe("1 Wort geübt");
+    expect(practicedWordsLabel(8)).toBe("8 Wörter geübt");
+  });
+
+  it("leitet die Wörter der letzten Runde je Stufe ab", () => {
+    const summary = summarizeWordBox("fehler", [
+      { ...round("a", 3, 20, 1, "fehler"), words: round("x", 3, 0, 1).words },
+    ]);
+    expect(summary[3]).toMatchObject({ lastWords: 1 });
+  });
+});
+
+describe("wordsPracticedOnDay", () => {
+  it("summiert die Wörter der Runden des lokalen Tages", () => {
+    const at = (day: number, hour: number) =>
+      new Date(2026, 9, day, hour, 0).toISOString();
+    const withWords = (id: string, count: number, completedAt: string) => ({
+      ...round(id, 1, 100, 1),
+      completedAt,
+      words: Array.from({ length: count }, (_, index) => ({
+        ...round("w", 1, 100, 1).words[0]!,
+        word: `Wort${index}`,
+      })),
+    });
+    const rounds = [
+      withWords("gestern", 10, at(20, 23)),
+      withWords("morgens", 10, at(21, 8)),
+      withWords("abends", 20, at(21, 19)),
+    ];
+    expect(wordsPracticedOnDay(rounds, new Date(2026, 9, 21, 20, 0))).toBe(30);
+    expect(wordsPracticedOnDay(rounds, new Date(2026, 9, 22, 8, 0))).toBe(0);
+    expect(wordsPracticedOnDay([], new Date(2026, 9, 21, 20, 0))).toBe(0);
   });
 });
 
@@ -190,25 +248,5 @@ describe("summarizeWordStore", () => {
     const { mostErrors } = summarizeWordStore(many, []);
     expect(mostErrors).toHaveLength(5);
     expect(mostErrors[0]).toEqual({ word: "g", incorrectAttempts: 7 });
-  });
-});
-
-describe("isNewBest", () => {
-  const earlier = [
-    round("a", 1, 80, 1),
-    round("b", 2, 100, 2),
-    round("c", 1, 60, 3),
-  ];
-
-  it("needs a higher value than every earlier round of this box and stage", () => {
-    expect(isNewBest("box", 1, 90, earlier)).toBe(true);
-    expect(isNewBest("box", 1, 80, earlier)).toBe(false);
-    expect(isNewBest("box", 1, 50, earlier)).toBe(false);
-  });
-
-  it("is false without earlier rounds in this box and stage", () => {
-    expect(isNewBest("box", 3, 100, earlier)).toBe(false);
-    expect(isNewBest("other", 1, 100, earlier)).toBe(false);
-    expect(isNewBest("box", 1, 100, [])).toBe(false);
   });
 });

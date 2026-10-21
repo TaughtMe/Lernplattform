@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { analyzeAccessibility } from "./accessibility-helpers";
-import { createBox } from "./wortspeicher-helpers";
+import { createBox, seedDueWords } from "./wortspeicher-helpers";
 
 /** Axe ohne Verstöße und kein waagrechtes Scrollen (auch bei 320 px). */
 async function expectAccessible(page: Page) {
@@ -21,7 +21,7 @@ async function answer(page: Page, text: string) {
   await field.press("Enter");
 }
 
-test("Wortbox anlegen, mit Fehler üben, wiederholen und den Bestwert sehen", async ({
+test("Wortbox anlegen, mit Fehler üben, wiederholen und das letzte Ergebnis sehen", async ({
   page,
 }) => {
   await page.goto("/frei/german/lernwoerter");
@@ -35,11 +35,11 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Bestwert sehen", as
     page.getByRole("button", { name: /^Meine Wörter/ }),
   ).toContainText("Noch nicht geübt");
 
-  // Startblatt: sechs Stufen sind noch ohne Bestwert, hier fünf (Stufe 6 folgt mit Paket C).
+  // Startblatt: Alle Stufen sind noch ohne Ergebnis.
   await page.getByRole("button", { name: /^Meine Wörter/ }).click();
   const sheet = page.getByRole("dialog", { name: "Meine Wörter" });
   await expect(
-    sheet.getByRole("button", { name: /Bestwert –/ }).first(),
+    sheet.getByRole("button", { name: /Zuletzt –/ }).first(),
   ).toBeVisible();
   await expectAccessible(page);
   await sheet.getByRole("button", { name: /^Stufe 1:/ }).click();
@@ -70,12 +70,15 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Bestwert sehen", as
   });
   await expect(page.getByText("67 %")).toBeVisible();
   await expect(
-    page.getByText("2 von 3 Wörtern auf Anhieb richtig"),
+    page.getByText("2 von 3 Wörtern dieser Runde auf Anhieb richtig"),
   ).toBeVisible();
-  await expect(page.getByText("Das ist dein erster Bestwert")).toBeVisible();
+  // Alle Wörter der Wortbox waren in der Runde: keine Stichprobe, kein Rekord.
+  await expect(page.getByText(/Runde aus \d+ von \d+ Wörtern/)).toHaveCount(0);
+  await expect(page.getByText("Heute 3 Wörter geübt")).toBeVisible();
+  await expect(page.getByText(/Bestwert/)).toHaveCount(0);
   await expectAccessible(page);
 
-  // Zweite Runde ohne Fehler: 100 % und neuer Bestwert.
+  // Zweite Runde ohne Fehler: 100 %, die Übungsmenge des Tages wächst.
   await page.getByRole("button", { name: "Nochmal üben" }).click();
   for (const word of ["Schulweg", "Sonne", "Mutter"]) {
     await expect(page.getByLabel("Deine Lösung")).toBeVisible({
@@ -83,22 +86,50 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Bestwert sehen", as
     });
     await answer(page, word);
   }
-  await expect(page.getByText("Neuer Bestwert!")).toBeVisible({
-    timeout: 3_000,
-  });
-  await expect(page.getByText("100 %")).toBeVisible();
+  await expect(page.getByText("100 %")).toBeVisible({ timeout: 3_000 });
+  await expect(page.getByText("Heute 6 Wörter geübt")).toBeVisible();
+  await expect(page.getByText(/Bestwert/)).toHaveCount(0);
 
-  // Bestwert im Startblatt und auf der Kachel, auch nach dem Neuladen.
+  // Letztes Ergebnis im Startblatt und auf der Kachel, auch nach dem Neuladen.
   await page.getByRole("button", { name: "Andere Stufe wählen" }).click();
   await expect(
     page
       .getByRole("dialog", { name: "Meine Wörter" })
-      .getByRole("button", { name: /^Stufe 1:.*Bestwert 100 %/ }),
+      .getByRole("button", { name: /^Stufe 1:.*Zuletzt 100 %/ }),
   ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: /^Meine Wörter/ }),
-  ).toContainText("Stufe 1 · Bestwert 100 %");
+  ).toContainText("Stufe 1 · Zuletzt 100 %");
+});
+
+test("Trainingswörter heute: Stufen 1 bis 3 sind gesperrt, Stufe 4 ist vorgewählt", async ({
+  page,
+}) => {
+  await page.goto("/frei/german/lernwoerter");
+  await expect(
+    page.getByRole("button", { name: "Neue Wortbox" }),
+  ).toBeVisible();
+  await seedDueWords(page, ["Hund", "Katze"]);
+  await page.reload();
+  await expect(page.getByText("2 Trainingswörter heute")).toBeVisible();
+
+  await page.getByRole("button", { name: "Gemischt trainieren" }).click();
+  const sheet = page.getByRole("dialog", { name: "Trainingswörter heute" });
+  for (const stage of [1, 2, 3]) {
+    const card = sheet.getByRole("button", {
+      name: new RegExp(`^Stufe ${stage}:`),
+    });
+    await expect(card).toBeDisabled();
+    await expect(card).toContainText(
+      "In der Wiederholung schreibst du die Wörter aus dem Kopf.",
+    );
+  }
+  await expect(
+    sheet.getByRole("button", { name: /^Stufe 4:/ }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(sheet.getByRole("button", { name: /^Stufe 5:/ })).toBeEnabled();
+  await expectAccessible(page);
 });
 
 test("Wortliste: feste Wortbox kopieren, Wörter ändern und löschen", async ({

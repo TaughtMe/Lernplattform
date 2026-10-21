@@ -76,6 +76,8 @@ export type AttemptRecord = {
   selfCorrected: boolean;
   stage: LearningWordStage;
   attemptId: string;
+  /** Erster Versuch an diesem Wort in dieser Runde (nur er zählt in der Wiederholung). */
+  firstAttempt: boolean;
 };
 
 /**
@@ -240,6 +242,7 @@ export function submitWordAnswer(
       selfCorrected,
       stage: state.stage,
       attemptId: `${state.index}:${attemptNumber}`,
+      firstAttempt: attemptNumber === 1,
     });
     if (entry.correct) {
       settledWords.add(entry.word);
