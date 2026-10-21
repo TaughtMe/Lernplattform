@@ -256,10 +256,15 @@ test("the LernBox imports, filters and practises words", async ({ page }) => {
   await createLernBoxDeck(page, "Importprobe");
   await page.getByRole("button", { name: "Schließen" }).click();
   await chooseFromPlusMenu(page, /Viele einfügen/);
+  await page.getByRole("button", { name: "Einfügen oder Datei" }).click();
   await page
     .getByRole("textbox", { name: "Vokabeln zum Importieren" })
-    .fill("Haus\thome | house\tNomen\nlaufen;to run;Verben");
-  await page.getByRole("button", { name: "Importieren", exact: true }).click();
+    .fill(
+      "Vorderseite;Rückseite;Tag\nHaus\thome | house\tNomen\nlaufen;to run;Verben",
+    );
+  await page.getByRole("button", { name: "Vorschau ansehen" }).click();
+  await expect(page.getByText("2 Vokabeln erkannt")).toBeVisible();
+  await page.getByRole("button", { name: "Übernehmen" }).click();
   await expect(page.getByRole("status")).toHaveText("2 Vokabeln importiert.");
   await page.getByRole("button", { name: "Schließen" }).click();
 
@@ -291,6 +296,35 @@ test("the LernBox imports, filters and practises words", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "LernBox" })).toBeVisible();
 });
 
+test("typed words show a preview and are saved only after Übernehmen", async ({
+  page,
+}) => {
+  await page.goto("/lernbox");
+  await createLernBoxDeck(page, "Tipp-Import");
+  await page.getByRole("button", { name: "Schließen" }).click();
+  await chooseFromPlusMenu(page, /Viele einfügen/);
+  await page
+    .getByRole("textbox", { name: "Vorderseite, Zeile 1" })
+    .fill("Haus");
+  await page.getByRole("textbox", { name: "Rückseite, Zeile 1" }).fill("house");
+  await page
+    .getByRole("textbox", { name: "Rückseite, Zeile 1" })
+    .press("Enter");
+  await expect(
+    page.getByRole("textbox", { name: "Vorderseite, Zeile 2" }),
+  ).toBeFocused();
+  await page
+    .getByRole("textbox", { name: "Vorderseite, Zeile 2" })
+    .fill("Baum");
+  await page.getByRole("button", { name: "Vorschau ansehen" }).click();
+  await expect(page.getByText("1 Vokabel erkannt")).toBeVisible();
+  await expect(page.getByText("Zeile 2: Rückseite leer")).toBeVisible();
+  await page.getByRole("button", { name: "Übernehmen" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "1 Vokabel importiert · Zeile 2 übersprungen.",
+  );
+});
+
 test("many imported words give a portion of at most 20 and 'Weiterlernen' starts it in the module", async ({
   page,
 }) => {
@@ -304,6 +338,7 @@ test("many imported words give a portion of at most 20 and 'Weiterlernen' starts
   await createLernBoxDeck(page, "Mengenprobe");
   await page.getByRole("button", { name: "Schließen" }).click();
   await chooseFromPlusMenu(page, /Viele einfügen/);
+  await page.getByRole("button", { name: "Einfügen oder Datei" }).click();
   await page
     .getByRole("textbox", { name: "Vokabeln zum Importieren" })
     .fill(
@@ -312,7 +347,9 @@ test("many imported words give a portion of at most 20 and 'Weiterlernen' starts
         (_, index) => `Wort${index}\tword${index}`,
       ).join("\n"),
     );
-  await page.getByRole("button", { name: "Importieren", exact: true }).click();
+  await page.getByRole("button", { name: "Vorschau ansehen" }).click();
+  await expect(page.getByText("150 Vokabeln erkannt")).toBeVisible();
+  await page.getByRole("button", { name: "Übernehmen" }).click();
   await expect(page.getByRole("status")).toHaveText("150 Vokabeln importiert.");
 
   // Heute: Die Startseite zeigt die Portion, nicht die 150 Vokabeln.

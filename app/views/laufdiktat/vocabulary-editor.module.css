@@ -185,6 +185,35 @@
   outline-offset: 3px;
 }
 
+.guide {
+  padding: 2px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.guide summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.guide summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.guide p {
+  margin: 0 0 10px;
+}
+.template {
+  align-self: flex-start;
+}
+
 /* ---------- Abfrage ---------- */
 .group {
   display: flex;

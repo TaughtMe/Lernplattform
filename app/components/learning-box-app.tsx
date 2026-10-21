@@ -11,7 +11,6 @@ import {
   isLearningBoxCardScheduledDue,
   learningBoxAlternatives,
   learningBoxDirectionAt,
-  parseLearningBoxImport,
   processLearningBoxResult,
   type LearningBoxCard,
   type LearningBoxDeck,
@@ -720,18 +719,17 @@ export function LearningBoxApp({
             return "error";
           }
         }}
-        onImportCards={async (deckId, text) => {
-          const { rows, skipped } = parseLearningBoxImport(text);
+        onImportCards={async (deckId, { rows, skipped }) => {
           try {
             const result = await repository.importCards(deckId, rows);
             await refresh();
-            const parts = [`${result.added} Vokabeln importiert`];
+            const parts = [
+              `${result.added} ${result.added === 1 ? "Vokabel" : "Vokabeln"} importiert`,
+            ];
             if (result.duplicates)
               parts.push(`${result.duplicates} schon vorhanden`);
             if (skipped.length)
-              parts.push(
-                `Zeile ${skipped.join(", ")} ohne zwei Spalten übersprungen`,
-              );
+              parts.push(`Zeile ${skipped.join(", ")} übersprungen`);
             return `${parts.join(" · ")}.`;
           } catch {
             return "Das hat nicht geklappt. Bitte versuche es noch einmal.";

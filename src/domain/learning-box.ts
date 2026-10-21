@@ -1,6 +1,10 @@
 import { normalizeVocabularyText } from "./learning-bundle";
 import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
 import type { LiveVocabularyOutcome } from "./live-vocabulary-placement";
+import {
+  parseVocabularyImport,
+  type VocabularyImportEntry,
+} from "./vocabulary-import";
 
 export type LearningBoxDirection = "forward" | "reverse";
 /** Richtung einer Lernrunde: fest oder gemischt (abwechselnd je Karte). */
@@ -200,30 +204,29 @@ export type LearningBoxImportRow = {
   tag?: string;
 };
 
+/** Wandelt erkannte Zeilen des gemeinsamen Parsers in LernBox-Vokabeln. */
+export function toLearningBoxImportRows(
+  entries: readonly VocabularyImportEntry[],
+): LearningBoxImportRow[] {
+  return entries.map(({ front, back, tag }) => ({
+    question: front,
+    answer: back,
+    ...(tag ? { tag } : {}),
+  }));
+}
+
 /**
  * Massenimport: eine Vokabel pro Zeile, Spalten mit Tabulator (aus Excel oder
  * Sheets kopiert) oder Semikolon getrennt, optional dritte Spalte als Tag.
- * Weitere richtige Antworten mit „|“.
+ * Weitere richtige Antworten mit „|“. Die Kopfzeile der Vorlage entfällt;
+ * `skipped` nennt die Nummern übersprungener Zeilen.
  */
 export function parseLearningBoxImport(text: string) {
-  const rows: LearningBoxImportRow[] = [];
-  const skipped: number[] = [];
-  text
-    .replace(/\r\n?/g, "\n")
-    .split("\n")
-    .forEach((line, index) => {
-      if (!line.trim()) return;
-      const parts = (
-        line.includes("\t") ? line.split("\t") : line.split(";")
-      ).map((part) => part.trim());
-      const [question, answer, tag] = parts;
-      if (!question || !answer) {
-        skipped.push(index + 1);
-        return;
-      }
-      rows.push({ question, answer, ...(tag ? { tag } : {}) });
-    });
-  return { rows, skipped };
+  const { entries, skipped } = parseVocabularyImport(text);
+  return {
+    rows: toLearningBoxImportRows(entries),
+    skipped: skipped.map((line) => line.lineNumber),
+  };
 }
 
 export type LearningBoxSort = "alphabet" | "box" | "tag" | "date" | "deck";

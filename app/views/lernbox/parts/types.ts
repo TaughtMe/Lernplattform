@@ -94,6 +94,14 @@ export type LbTransfer = {
 
 export type LbCardInput = { question: string; answer: string; tag: string };
 
+/** Eine geprüfte Zeile des Massenimports; `tag` fehlt, wenn keiner da ist. */
+export type LbImportRow = { question: string; answer: string; tag?: string };
+/** Vorschau-Ergebnis: Zeilen zum Speichern und Nummern übersprungener Zeilen. */
+export type LbImportInput = {
+  rows: readonly LbImportRow[];
+  skipped: readonly number[];
+};
+
 export type LernBoxScreenProps = {
   theme: Theme;
   loading: boolean;
@@ -146,7 +154,8 @@ export type LernBoxScreenProps = {
     deckId: string,
     input: { question: string; answer: string },
   ) => Promise<"added" | "duplicate" | "error">;
-  onImportCards?: (deckId: string, text: string) => Promise<string>;
+  /** Speichert die in der Vorschau bestätigten Zeilen; liefert die Meldung. */
+  onImportCards?: (deckId: string, input: LbImportInput) => Promise<string>;
   /** `tag`: eigener Tag für alle Vokabeln des Pakets, leer = ohne Tag. */
   onTransferCode?: (code: string, tag: string) => void;
   onTransferQr?: (value: string, tag: string) => void;
