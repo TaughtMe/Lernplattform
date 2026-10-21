@@ -118,6 +118,10 @@ test("the preview before a round shows no solutions and no single tasks", async 
   page,
 }) => {
   await page.goto("/frei/mathematics");
+  // Erst nach dem Laden reagieren die Schaltflächen.
+  await expect(
+    page.getByText("Hier erscheinen deine Fehler und Wiederholungen."),
+  ).toBeVisible();
   await page.getByRole("combobox", { name: "Anzahl" }).selectOption("10");
   await page
     .getByRole("button", { name: "Aufgaben erzeugen", exact: true })

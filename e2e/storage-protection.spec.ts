@@ -39,7 +39,9 @@ test("iPad im Browser empfiehlt vor dem ersten Lernen den Home-Bildschirm", asyn
   });
   await page.goto("/lernen");
 
-  await expect(page.getByText("Zuerst zum Home-Bildschirm")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Zuerst zum Home-Bildschirm" }),
+  ).toBeVisible();
   await expect(
     page.getByText("Was du hier im Browser lernst, ist in der App nicht"),
   ).toBeVisible();

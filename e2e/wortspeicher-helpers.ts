@@ -40,13 +40,30 @@ export async function startRound(page: Page, title: string, stage: number) {
  */
 export async function seedDueWords(page: Page, words: string[]) {
   await page.evaluate(async (list) => {
-    const request = indexedDB.open("lernraum:personal:v1");
-    const database = await new Promise<IDBDatabase>((resolve, reject) => {
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+    const name = "lernraum:personal:v1";
+    // Erst öffnen, wenn die App die Datenbank angelegt hat; sonst entstünde
+    // hier eine leere Datenbank ohne Tabellen.
+    let database: IDBDatabase | undefined;
+    for (let attempt = 0; attempt < 50 && !database; attempt += 1) {
+      const known = await indexedDB.databases();
+      if (known.some((info) => info.name === name)) {
+        const request = indexedDB.open(name);
+        const opened = await new Promise<IDBDatabase>((resolve, reject) => {
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        if (opened.objectStoreNames.contains("learningWordProgress")) {
+          database = opened;
+          break;
+        }
+        opened.close();
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (!database) throw new Error("Die Lerndatenbank fehlt.");
+    const ready = database;
     await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction(
+      const transaction = ready.transaction(
         "learningWordProgress",
         "readwrite",
       );
@@ -66,6 +83,6 @@ export async function seedDueWords(page: Page, words: string[]) {
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
-    database.close();
+    ready.close();
   }, words);
 }
