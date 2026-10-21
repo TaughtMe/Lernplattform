@@ -3,7 +3,10 @@
 import { useState, type FormEvent } from "react";
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 import { WORD_BOX_LIMITS } from "../../../src/domain/word-box";
-import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
+import {
+  practicedWordsLabel,
+  type BoxCoverage,
+} from "../../../src/domain/word-store-progress";
 import { Icon } from "../../ui/icons";
 import {
   Button,
@@ -23,17 +26,27 @@ export type WordBoxTile = {
   total: number;
   secure: number;
   /**
-   * Stufe und Ergebnis der zuletzt abgeschlossenen Runde (W-10). Ohne
-   * `lastPercent` steht „n Wörter geübt“ (Fehlerwörter, W-12).
+   * Stufe der zuletzt abgeschlossenen Runde mit dem Box-Fortschritt (W-10).
+   * Ohne `coverage` steht „n Wörter geübt“ (Fehlerwörter, W-12).
    */
   headline?:
     | {
         stage: LearningWordStage;
-        lastPercent?: number | undefined;
+        coverage?: BoxCoverage | undefined;
         practicedWords: number;
       }
     | undefined;
 };
+
+/** „Stufe 3 · 25 % der Box (1 von 4 Wörtern)“ bzw. „Stufe 3 · 8 Wörter geübt“. */
+function headlineText(headline: NonNullable<WordBoxTile["headline"]>) {
+  const { coverage } = headline;
+  if (coverage === undefined) {
+    return `Stufe ${headline.stage} · ${practicedWordsLabel(headline.practicedWords)}`;
+  }
+  const words = coverage.total === 1 ? "Wort" : "Wörtern";
+  return `Stufe ${headline.stage} · ${coverage.percent} % der Box (${coverage.mastered} von ${coverage.total} ${words})`;
+}
 
 /** Übersicht der Wortboxen (Design 4d und 4f). */
 export function OverviewScreen({
@@ -153,11 +166,7 @@ export function OverviewScreen({
               </span>
               <span className={styles.tileBest}>
                 {tile.headline
-                  ? `Stufe ${tile.headline.stage} · ${
-                      tile.headline.lastPercent === undefined
-                        ? practicedWordsLabel(tile.headline.practicedWords)
-                        : `Zuletzt ${tile.headline.lastPercent} %`
-                    }`
+                  ? headlineText(tile.headline)
                   : "Noch nicht geübt"}
               </span>
             </button>

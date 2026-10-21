@@ -4,7 +4,10 @@ import { useEffect, useRef, type ReactNode } from "react";
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 import type { LearningWordMode } from "../../../src/domain/learning-word-progress";
 import type { WordRoundWordResult } from "../../../src/domain/word-round";
-import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
+import {
+  practicedWordsLabel,
+  type BoxCoverage,
+} from "../../../src/domain/word-store-progress";
 import { Button, ButtonLink } from "../../ui/primitives";
 import { STAGE_COPY } from "./stage-copy";
 import styles from "./wortspeicher.module.css";
@@ -23,6 +26,7 @@ export function CompletionScreen({
   practicedToday,
   mode,
   percentless,
+  coverage,
   notice,
   textSuggestion,
   textboxHref,
@@ -42,6 +46,11 @@ export function CompletionScreen({
   mode: LearningWordMode;
   /** Fehlerwörter: „n Wörter geübt“ statt Prozentwert (W-12). */
   percentless: boolean;
+  /**
+   * Box-Fortschritt inklusive dieser Runde (W-10). Nur bei echten Wortboxen;
+   * ohne Wert fehlt die Zeile („heute“, Textbox, Fehlerwörter).
+   */
+  coverage?: BoxCoverage | undefined;
   notice?: string | undefined;
   /** Karte mit dem besten passenden Text der Textbox (nur bei sichtbarer Textbox). */
   textSuggestion?: ReactNode;
@@ -92,6 +101,13 @@ export function CompletionScreen({
         {results.length < boxWordCount ? (
           <p className="ui-small ui-muted">
             Runde aus {results.length} von {boxWordCount} Wörtern der Wortbox
+          </p>
+        ) : null}
+        {coverage ? (
+          <p className="ui-small ui-muted">
+            Wortbox: {coverage.mastered} von {coverage.total}{" "}
+            {coverage.total === 1 ? "Wort" : "Wörtern"} auf Stufe {stage} auf
+            Anhieb richtig ({coverage.percent} %)
           </p>
         ) : null}
         <p className="ui-small ui-muted">

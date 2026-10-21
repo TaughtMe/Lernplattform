@@ -39,11 +39,13 @@ import {
 } from "../../src/domain/word-round";
 import {
   FEHLER_BOX_ID,
+  boxCoverage,
   headlineForBox,
   recommendedStage,
   showsPracticedWordsOnly,
   summarizeWordBox,
   wordsPracticedOnDay,
+  type BoxCoverage,
   type WordRoundRecord,
 } from "../../src/domain/word-store-progress";
 import {
@@ -108,8 +110,17 @@ type Completion = {
   boxWordCount: number;
   /** Übungsmenge des lokalen Tages inklusive dieser Runde. */
   practicedToday: number;
+  /** Box-Fortschritt inklusive dieser Runde; nur bei echten Wortboxen (W-10). */
+  coverage?: BoxCoverage;
   notice?: string;
 };
+
+/** Nur echte Wortboxen zeigen den Box-Fortschritt, nicht „heute“, Textbox oder Fehlerwörter. */
+function hasBoxCoverage(view: WordBoxView): boolean {
+  return (
+    view.kind === "fest" || view.kind === "eigen" || view.kind === "unterricht"
+  );
+}
 
 /** Nur „Trainingswörter heute“ ist fällige Wiederholung, alles andere freies Üben. */
 function modeOfBox(boxId: string): LearningWordMode {
@@ -390,6 +401,32 @@ export function LearningWordApp({
         roundsRef.current.filter((round) => round.id !== state.roundId),
         finishedAt,
       ) + state.results.length;
+    const record: WordRoundRecord = {
+      id: state.roundId,
+      boxId: view.id,
+      boxTitle: view.title.slice(0, 60),
+      stage: state.stage,
+      ...(state.stage === 5 ? { blockSize: state.blockSize } : {}),
+      startedAt: done.startedAt,
+      completedAt: finishedAt.toISOString(),
+      words: state.results.map((entry) => ({
+        ...entry,
+        word: entry.word.slice(0, 60),
+      })),
+      percent,
+    };
+    // Box-Fortschritt aus den gespeicherten Runden plus der gerade beendeten.
+    const coverage = hasBoxCoverage(view)
+      ? boxCoverage(
+          view.words,
+          [
+            ...roundsRef.current.filter((round) => round.id !== state.roundId),
+            record,
+          ],
+          view.id,
+          state.stage,
+        )
+      : undefined;
     const base: Completion = {
       view,
       config: chosen,
@@ -398,25 +435,13 @@ export function LearningWordApp({
       results: state.results,
       boxWordCount: view.words.length,
       practicedToday,
+      ...(coverage ? { coverage } : {}),
     };
     setCompletion(base);
 
     await pendingWrites.current;
     try {
-      await store.saveRound({
-        id: state.roundId,
-        boxId: view.id,
-        boxTitle: view.title.slice(0, 60),
-        stage: state.stage,
-        ...(state.stage === 5 ? { blockSize: state.blockSize } : {}),
-        startedAt: done.startedAt,
-        completedAt: finishedAt.toISOString(),
-        words: state.results.map((entry) => ({
-          ...entry,
-          word: entry.word.slice(0, 60),
-        })),
-        percent,
-      });
+      await store.saveRound(record);
     } catch {
       setCompletion({ ...base, notice: SAVE_ISSUE });
     }
@@ -611,12 +636,19 @@ export function LearningWordApp({
 
   // ---- Darstellung ----
   /** Letzte Runde der Wortbox; bei Fehlerwörtern ohne Prozentwert (W-10, W-12). */
-  function headlineOf(boxId: string): WordBoxTile["headline"] {
+  function headlineOf(view: WordBoxView): WordBoxTile["headline"] {
+    const boxId = view.id;
     const headline = headlineForBox(summarizeWordBox(boxId, store.rounds));
     if (!headline) return undefined;
-    return showsPracticedWordsOnly(boxId)
-      ? { stage: headline.stage, practicedWords: headline.practicedWords }
-      : headline;
+    const { stage, practicedWords } = headline;
+    if (showsPracticedWordsOnly(boxId) || !view || !hasBoxCoverage(view)) {
+      return { stage, practicedWords };
+    }
+    return {
+      stage,
+      practicedWords,
+      coverage: boxCoverage(view.words, store.rounds, boxId, stage),
+    };
   }
 
   const tiles: WordBoxTile[] = store.views.map((view) => {
@@ -633,7 +665,7 @@ export function LearningWordApp({
       examples: view.words.slice(0, 3),
       total: view.words.length,
       secure,
-      headline: headlineOf(view.id),
+      headline: headlineOf(view),
     };
   });
 
@@ -722,6 +754,7 @@ export function LearningWordApp({
         practicedToday={completion.practicedToday}
         mode={modeOfBox(completion.view.id)}
         percentless={showsPracticedWordsOnly(completion.view.id)}
+        coverage={completion.coverage}
         notice={completion.notice ?? notice}
         textSuggestion={
           best ? (
@@ -874,7 +907,16 @@ export function LearningWordApp({
                   ? undefined
                   : showsPracticedWordsOnly(sheetView.id)
                     ? { words: last.lastWords ?? 0 }
-                    : { percent: last.lastPercent },
+                    : hasBoxCoverage(sheetView)
+                      ? {
+                          coverage: boxCoverage(
+                            sheetView.words,
+                            store.rounds,
+                            sheetView.id,
+                            stage,
+                          ).percent,
+                        }
+                      : { percent: last.lastPercent },
               recommended: recommended === stage && !locked,
               disabledHint: locked
                 ? FALLIGE_STAGE_HINT
