@@ -44,10 +44,20 @@ describe("native Laufdiktat live sessions", () => {
     ).toBe(true);
     expect(
       checkLiveAnswer(
-        { id: "m", kind: "math", prompt: "1 : 3", targetWord: "0.333" },
+        { id: "m", kind: "math", prompt: "1 : 3", targetWord: String(1 / 3) },
         "0,33",
       ),
     ).toBe(true);
+    // G-008: Kommafehler und Tausenderpunkt werden exakt bewertet.
+    const math = (targetWord: string, input: string) =>
+      checkLiveAnswer(
+        { id: "m", kind: "math", prompt: "x", targetWord },
+        input,
+      );
+    expect(math("0.01", "0,001")).toBe(false);
+    expect(math("1000", "1.000")).toBe(true);
+    expect(math("1000", "1 000")).toBe(true);
+    expect(math("1", "1.000")).toBe(false);
   });
 
   describe("Schreiberleichterung: fast richtig", () => {

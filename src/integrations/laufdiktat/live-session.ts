@@ -1,5 +1,6 @@
 import type { LiveVocabularyTransferChoice } from "../../domain/live-vocabulary-placement";
 import { mathOptionsSchema } from "../../domain/math-practice";
+import { mathAnswerMatches } from "../../domain/mental-math";
 import { z } from "zod";
 import { classSealFingerprintSchema } from "../../domain/class-seal";
 import { deterministicOrder } from "../../domain/running-dictation";
@@ -77,8 +78,6 @@ export function parseLiveSession(
   return { ...parsed, words, sessionId };
 }
 
-const NUMERIC_TOLERANCE = 0.01;
-
 function normalizeAnswer(
   value: string,
   caseSensitive: boolean,
@@ -105,11 +104,9 @@ export function evaluateLiveAnswer(
   const value = input.trim();
   if (!value) return "wrong";
   if (kind === "math") {
-    const actual = Number(value.replace(",", "."));
+    // `targetWord` ist die Lösung in JavaScript-Schreibweise („0.5“).
     const expected = Number(word.targetWord);
-    return Number.isFinite(actual) &&
-      Number.isFinite(expected) &&
-      Math.abs(actual - expected) < NUMERIC_TOLERANCE
+    return Number.isFinite(expected) && mathAnswerMatches(expected, value)
       ? "correct"
       : "wrong";
   }

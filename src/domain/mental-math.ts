@@ -766,12 +766,22 @@ export function parseMathAnswer(input: string): number | null {
 export function mathAnswerMatches(solution: number, input: string) {
   const parsed = parseDecimalAnswer(input);
   const expected = canonicalSolution(solution);
-  return (
-    parsed !== null &&
-    expected !== null &&
-    canonicalDecimal(parsed.negative, parsed.integer, parsed.fraction) ===
-      expected
+  if (parsed === null || expected === null) return false;
+  const given = canonicalDecimal(
+    parsed.negative,
+    parsed.integer,
+    parsed.fraction,
   );
+  if (given === expected) return true;
+  // Nicht abbrechende Lösung (1 : 3): Jede richtig gerundete Eingabe mit
+  // mindestens zwei Nachkommastellen zählt („0,33“, „0,333“, nicht „0,34“).
+  const terminates = Math.abs(Number(expected) - solution) < 1e-12;
+  const places = parsed.fraction.length;
+  if (terminates || places < 2 || places > MATH_ANSWER_DECIMALS) return false;
+  const [integer = "0", fraction = ""] = Math.abs(solution)
+    .toFixed(places)
+    .split(".");
+  return given === canonicalDecimal(solution < 0, integer, fraction);
 }
 
 /** Gleichheit zweier Zahlen in der Genauigkeit der Antwortprüfung (6 Stellen). */
