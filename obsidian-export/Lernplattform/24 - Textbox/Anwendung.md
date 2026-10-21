@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Textbox
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Umgesetzt wie beschrieben (Bereich `frei`). Befunde: Der Hauptwert misst vor allem das Behalten des Textes, die Schwerpunktstatistik ordnet vergessene Wörter dem Phänomen zu (D-005); feste Merkzeit ohne Pause (C-002); einzelne Zielwörter sind keine Beispiele des Schwerpunkts (D-006); eine ganze Einheit am Stück dauert nach Schätzung deutlich länger als 10 Minuten; ein Durchgang „leicht“ passt eher in 10 Minuten (D-005, Zeitbedarf nicht gemessen). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

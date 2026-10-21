@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Geplant
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Duelle
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Geplant.** Im Code gibt es nur eine Platzhalterseite; der Bereich `duell` steht im Freigaberegister auf `aus`. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

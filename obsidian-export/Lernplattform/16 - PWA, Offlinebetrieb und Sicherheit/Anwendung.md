@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # PWA, Offlinebetrieb und Sicherheit
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Installierbarkeit und Service Worker sind umgesetzt. Offline funktioniert nur, was unter der aktuellen Version schon besucht wurde; nach einem Update kaum etwas (B-013). Lehrerfunktionen sind nicht rollenbasiert geschützt (Entscheidung 43; B-009). Sicherheitsheader und CSP fehlen (B-015). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## PWA
 

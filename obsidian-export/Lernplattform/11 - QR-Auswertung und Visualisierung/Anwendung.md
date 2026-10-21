@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # QR-Auswertung und Visualisierung
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Der signierte Aufgaben-Abgabenachweis mit Abgabeprotokoll ist umgesetzt (Aufgaben auf `vorschau`), ein Haus-Leistungsbrief existiert (ausgeschaltet). Der verschlüsselte Ranking-Leistungsbrief mit frei wählbaren Statistiken ist **geplant**. Befund: Nachweise sind mit einem Foto des Einschreibe-QR fälschbar (B-018). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

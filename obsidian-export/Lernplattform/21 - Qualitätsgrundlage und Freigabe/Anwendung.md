@@ -6,9 +6,14 @@ tags:
   - freigabe
 status: qualitätsgrundlage
 stand: 2026-08-30
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 ---
 
 # Qualitätsgrundlage und Freigabe
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Quality Gates laufen und sind grün. Abweichungen: Die Abdeckungsschwellen gelten nur für `src/`, nicht für `app/` (real 78,7 % Zeilen; A-005); die Browser-Suite prüft den Entwicklungsserver mit Vorschau statt des ausgelieferten Artefakts und blockiert den Service Worker (A-006, B-013); Tests auf echten Schulgeräten stehen aus. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

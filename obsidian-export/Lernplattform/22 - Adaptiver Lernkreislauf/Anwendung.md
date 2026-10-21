@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Adaptiver Lernkreislauf
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Umgesetzt sind Fehlerwiederholung (LernBox, Mathe-Familien), Übernahme aus dem Laufdiktat und die Tagesportion. **Nicht umgesetzt:** Kompetenzschätzung, Diagnostik, Rechtschreibstrategie-Aktivierung, Tippsequenzen aus unsicheren Tasten in der Tagesportion, Rückfluss aus Textbox und Laufdiktat allein (D-003, D-011). Die hier genannte Oberfläche (vier feste Einstiege) ist durch Entscheidung 48 **überholt**. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

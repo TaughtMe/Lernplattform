@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Laufdiktat und Unterrichtsraum
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Live-Raum (Laufdiktat, Freie Übung, Battle, Stationen) und Laufdiktat allein sind umgesetzt. Der Modus **Lernstandscheck existiert nicht mehr** (alte Einstellung „TEST“ wird als „LAUFDIKTAT“ behandelt). Befunde: Realtime-Kanäle ohne Autorisierung (B-003), Lösungen für jeden mit Raumcode lesbar (B-004), Satz nur zeichengenau richtig (D-008), Satzzerlegung an jedem Punkt (G-004), Unterrichtsfehler beschleunigen den LernBox-Aufstieg (G-011), Tempo-Punkte (D-012), Zwei-Finger-Geste ohne Alternative (E-007). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

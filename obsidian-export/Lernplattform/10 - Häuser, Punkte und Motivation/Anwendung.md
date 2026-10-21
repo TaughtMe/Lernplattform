@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Häuser, Punkte und Motivation
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Häuser, Hauspunkte, Serie und Abzeichen sind gebaut, aber im Schulbetrieb **ausgeschaltet** (Bereich `motivation` auf `aus`). Die 5.000-Punkte-Wertung mit Sternen für Lernwortrunden ist **geplant** (nicht im Code). Im Live-Raum gibt es dagegen Tempo-Punkte und einen Battle nach Tempo, die den Regeln dieser Notiz widersprechen (D-012). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 
