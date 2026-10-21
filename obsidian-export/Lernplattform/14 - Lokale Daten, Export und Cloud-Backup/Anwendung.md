@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Lokale Daten, Export und Cloud-Backup
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Datei-Sicherung, Verzeichnis-Sicherung, Handabgleich für Schüler und automatischer Geräte-Abgleich für Lehrkräfte (Entscheidung 53, `docs/cloud-sync.md`) sind umgesetzt. Befunde: Die persönliche Sicherung bricht mit einer Meldung ohne Ursache und Abhilfe ab, sobald ein LernBox-Ordner genutzt wird (B-001); keine Maßnahme gegen Speicherlöschung unter iPadOS/Safari (B-002); beim Einspielen werden Bestwerte und Freischaltungen zurückgesetzt (G-010); der Schüler-Abgleich ist unverschlüsselt. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Lokale Daten
 

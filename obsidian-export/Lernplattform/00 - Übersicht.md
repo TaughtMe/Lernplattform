@@ -4,9 +4,59 @@ tags:
   - projektübersicht
   - bildung
 status: prototyp
+stand: 2026-10-20
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 ---
 
 # Lernplattform – Gesamtübersicht
+
+## Projektstand auf einen Blick (Stand: 20.10.2026)
+
+> Ergänzt beim [[21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit vom 19./20.10.2026]]. Dieser Abschnitt fasst den im Code belegten Umsetzungsstand zusammen. Die übrigen Abschnitte dieser Seite beschreiben unverändert das Konzept. Empfehlungen des Audits sind **Vorschläge zur Prüfung**, keine Entscheidungen.
+
+**Statuslegende:** Implementiert · Teilweise implementiert · Geplant · Vorgeschlagen · Überholt · Ungeklärt. Jede Bereichsnotiz trägt die Eigenschaft `umsetzungsstand` und unter der Überschrift einen Hinweis mit Belegen.
+
+### Zentrale Einstiege
+
+| Thema | Wo |
+| --- | --- |
+| Vision und pädagogischer Kern | Abschnitt „Leitidee“ unten; [[22 - Adaptiver Lernkreislauf/Anwendung\|Adaptiver Lernkreislauf]] |
+| Architektur | Repository: `docs/architecture.md`, Übersicht aller Dokumente in `docs/README.md`; [[15 - Gemeinsames Datenmodell/Anwendung\|Gemeinsames Datenmodell]] |
+| Module | Tabelle „Umsetzungsstand der Bereiche“ unten |
+| Diagnostik und Kompetenzmodell | **Ungeklärt:** im Konzept ([[22 - Adaptiver Lernkreislauf/Anwendung\|22]], [[07 - Adaptive Merkstrecke/Anwendung\|07]]) beschrieben, im Code nicht vorhanden |
+| Roadmap | [[17 - Entwicklungsplan/Anwendung\|Entwicklungsplan]] (Stand 29.09.2026); priorisierte Roadmap des Audits als Vorschlag zur Prüfung im [[21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19\|Auditprotokoll]] |
+| Entscheidungen | [[19 - Entscheidungsprotokoll/Anwendung\|Entscheidungsprotokoll]] und [[19 - Entscheidungsprotokoll/Entscheidungsindex\|Entscheidungsindex]] (Gültigkeit, Umsetzung, Audit-Hinweise) |
+| Risiken | [[21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19\|Auditprotokoll]] (Abschnitt Risiken); Repository: `docs/security-risk-register.md` |
+| Qualität und Audits | [[21 - Qualitätsgrundlage und Freigabe/Anwendung\|Qualitätsgrundlage und Freigabe]]; [[21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19\|Gesamtaudit 2026-10-19]]; maßgeblicher Bericht im Repository: `docs/audits/2026-10-19-lernraum-gesamtaudit.md` |
+
+### Umsetzungsstand der Bereiche
+
+| Bereich | Stand | Wichtigste Einschränkung |
+| --- | --- | --- |
+| [[01 - Plattform und Navigation/Anwendung\|Plattform und Navigation]] | Teilweise implementiert | Oberfläche durch Entscheidung 48 teilweise überholt |
+| [[02 - Laufdiktat und Unterrichtsraum/Anwendung\|Laufdiktat und Unterrichtsraum]] | Implementiert | Lernstandscheck entfallen |
+| [[03 - Persönliche LernBox/Anwendung\|Persönliche LernBox]] | Teilweise implementiert | getrennte Stände je Richtung fehlen |
+| [[04 - Lehrer-Cockpit/Anwendung\|Lehrer-Cockpit]] | Teilweise implementiert | nur Vokabeln zuweisbar, kaum Rückmeldung |
+| [[05 - Vokabeln, Stapel und Tags/Anwendung\|Vokabeln, Stapel und Tags]] | Teilweise implementiert | Übernahme aus Duellen geplant |
+| [[06 - Lernlogik und Leitner-Boxen/Anwendung\|Lernlogik und Leitner-Boxen]] | Teilweise implementiert | Lernwörter weichen von den Regeln ab |
+| [[07 - Adaptive Merkstrecke/Anwendung\|Adaptive Merkstrecke]] | Teilweise implementiert | keine automatische Anpassung |
+| [[08 - Übungs- und Testmodi/Anwendung\|Übungs- und Testmodi]] | Teilweise implementiert | Kontext- und Lückensätze geplant |
+| [[09 - Duelle/Anwendung\|Duelle]] | Geplant | Platzhalter, Freigabe `aus` |
+| [[10 - Häuser, Punkte und Motivation/Anwendung\|Häuser, Punkte und Motivation]] | Teilweise implementiert | gebaut, aber ausgeschaltet |
+| [[11 - QR-Auswertung und Visualisierung/Anwendung\|QR-Auswertung und Visualisierung]] | Teilweise implementiert | Ranking-Leistungsbrief geplant |
+| [[12 - Inhaltsübertragung und Synchronisation/Anwendung\|Inhaltsübertragung und Synchronisation]] | Implementiert | nur Vokabelpakete |
+| [[13 - Datenschutz und Rollen/Anwendung\|Datenschutz und Rollen]] | Teilweise implementiert | Rechtsrahmen ungeklärt |
+| [[14 - Lokale Daten, Export und Cloud-Backup/Anwendung\|Lokale Daten, Export und Cloud-Backup]] | Teilweise implementiert | Sicherung mit Ordnern defekt |
+| [[15 - Gemeinsames Datenmodell/Anwendung\|Gemeinsames Datenmodell]] | Teilweise implementiert | Ereignisquelle nur bei Mathe |
+| [[16 - PWA, Offlinebetrieb und Sicherheit/Anwendung\|PWA, Offlinebetrieb und Sicherheit]] | Teilweise implementiert | Offline nur eingeschränkt |
+| [[17 - Entwicklungsplan/Anwendung\|Entwicklungsplan]] | Teilweise implementiert | Meilenstein vom 29.09.2026 nicht mehr aktuell |
+| [[18 - Aufgabenübersicht/Anwendung\|Aufgabenübersicht]] | Teilweise implementiert | Haken teilweise veraltet |
+| [[19 - Entscheidungsprotokoll/Anwendung\|Entscheidungsprotokoll]] | Implementiert | Index ergänzt |
+| [[20 - Designgrundlage/Anwendung\|Designgrundlage]] | Implementiert | Farbrollen durch Entscheidung 47 überholt |
+| [[21 - Qualitätsgrundlage und Freigabe/Anwendung\|Qualitätsgrundlage und Freigabe]] | Teilweise implementiert | Abdeckung ohne `app/` |
+| [[22 - Adaptiver Lernkreislauf/Anwendung\|Adaptiver Lernkreislauf]] | Teilweise implementiert | Diagnostik nicht umgesetzt |
+| [[23 - Ramagotchi und nachhaltige Gamification/Anwendung\|Ramagotchi und nachhaltige Gamification]] | Geplant | erst nach stabilem Lernkern |
+| [[24 - Textbox/Anwendung\|Textbox]] | Implementiert | Hauptwert misst Textbehalten |
 
 ## Leitidee
 
@@ -75,11 +125,15 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 
 ## Offene Entscheidungen
 
+> **Hinweis Gesamtaudit (20.10.2026):** Die Frage nach der Reihenfolge der Cloud-Anbieter ist durch die Umsetzung beantwortet (`src/integrations/cloud-sync/`, `docs/cloud-sync.md`). Die übrigen Fragen sind weiterhin offen. Das Audit schlägt zusätzlich fünf nächste Entscheidungen vor (Einsatzrahmen, Zielgruppe und Gerätemodell, Funktionsstopp für Randfunktionen, Wiederholungskern, Diagnostik und Rückkanal); siehe [[21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Auditprotokoll]].
+
 - Welche Daten darf das Lehrergerät dauerhaft speichern? Diese Entscheidung wird erst vor einer Nutzung durch weitere Lehrkräfte produktkritisch; der aktuelle Hauptnutzer arbeitet lokal auf dem eigenen Lehrergerät.
 - In welcher Reihenfolge sollen Google Drive, Microsoft OneDrive und ein frei konfigurierbares WebDAV-Ziel umgesetzt werden? Eine lokale Verzeichnissicherung bildet den ersten, anbieterunabhängigen Weg. Die Sicherung persönlicher Lernstände hat Vorrang vor einer Mehrbenutzer-Lehrerarchitektur.
 - Welche Lernstandsregeln werden in Version 1 verbindlich umgesetzt?
 - Welche Funktionen gehören ins erste produktive Minimum?
 
 ## Aktuelle Priorität
+
+> **Historischer Stand (vor dem Gesamtaudit vom 19./20.10.2026):** Erste Einsätze im Unterricht sind durch einen Codekommentar belegt (`app/components/live-room-join.tsx`). Datei- und Verzeichnissicherung sowie der Abgleich über Google Drive, OneDrive und WebDAV sind inzwischen umgesetzt. Prioritätsvorschläge des Audits stehen im [[21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Auditprotokoll]] und sind nicht beschlossen.
 
 Vor ersten Live-Tests werden Vault, Browser-Tests und aktuelle Oberflächenverträge synchronisiert. Danach folgt die freiwillige Sicherung persönlicher Schülerdaten in ein lokales Verzeichnis oder wahlweise zu Google Drive, Microsoft OneDrive beziehungsweise einem WebDAV-kompatiblen Speicher wie Nextcloud. Eine zusätzliche anwendungsseitige Verschlüsselung ist keine Voraussetzung; die Sicherheitsmechanismen des gewählten Geräts oder Anbieters gelten. Lehrer-Mehrbenutzerbetrieb und eine vollständige Lehrer-Authentifizierung bleiben wichtig, sind für die derzeitige Nutzung durch einen Hauptnutzer aber nachgeordnet.

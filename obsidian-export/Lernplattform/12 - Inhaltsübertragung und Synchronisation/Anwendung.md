@@ -7,9 +7,14 @@ tags:
   - datensparsamkeit
 status: konzept-beschlossen
 stand: 2026-08-25
+umsetzungsstand: Implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 ---
 
 # Inhaltsübertragung und temporäre Synchronisation
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Die verschlüsselte 24-Stunden-Übergabe ist für Vokabelpakete umgesetzt. Befunde: Die Geheimnisse entstehen auf dem Server, die Verschlüsselung ist daher keine Ende-zu-Ende-Verschlüsselung gegenüber Supabase (B-017); das Anlegen von Transfers ist nicht rate-limitiert (B-006); andere Inhaltsarten (Lernwörter, Texte, Rechenvorgaben) sind nicht übertragbar (E-002). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Aktueller Implementierungsstand
 

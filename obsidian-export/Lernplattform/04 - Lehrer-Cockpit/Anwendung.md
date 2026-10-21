@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Lehrer-Cockpit
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Klassen, Schülerliste, Einschreibe-QR, Inhaltsablage, Laufdiktat-Dashboard, Vokabelfreigabe und Aufgaben (Freigabe `vorschau`) mit Abgabeprotokoll sind umgesetzt. Gruppen und Häuser sind ausgeschaltet, der fortlaufende Scanmodus mit Ton/Vibration fehlt, ein **Lernstandscheck existiert nicht mehr**. Befunde: kein Zugriffsschutz auf geteilten Geräten (B-009), QR-Bogen druckt nur die erste Seite (C-006), Inhalte nur über den Laufdiktat-Assistenten (C-010), nur Vokabeln zuweisbar (E-002), kaum Rückmeldung über Lernstände (E-003), keine Übergabe an Vertretung (E-008). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 
