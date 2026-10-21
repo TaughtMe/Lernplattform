@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import {
   VocabularyEditor,
   type VocabularyEditorProps,
@@ -50,5 +51,23 @@ describe("VocabularyEditor, Tag-Feld", () => {
     expect(
       screen.getByRole("textbox", { name: "Tabelle einfügen" }),
     ).toHaveAttribute("placeholder", "Haus\thome | house\tUnit 3\nBaum\ttree");
+  });
+
+  it("bietet Anleitung und Vorlage zum Herunterladen", async () => {
+    const createObjectURL = vi.fn(() => "blob:vorlage");
+    Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    render(<VocabularyEditor {...base("none")} />);
+    expect(
+      screen.getByText("So ist die Tabelle aufgebaut").closest("details"),
+    ).not.toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Vorlage herunterladen" }),
+    );
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(click).toHaveBeenCalledTimes(1);
+    click.mockRestore();
   });
 });

@@ -19,6 +19,7 @@ declare const styles: {
   readonly fileInput: string;
   readonly group: string;
   readonly groupTitle: string;
+  readonly guide: string;
   readonly hint: string;
   readonly input: string;
   readonly languages: string;
@@ -35,6 +36,7 @@ declare const styles: {
   readonly tag: string;
   readonly tagField: string;
   readonly tagInput: string;
+  readonly template: string;
   readonly title: string;
 };
 export default styles;

@@ -1,3 +1,5 @@
+import { parseVocabularyImport } from "./vocabulary-import";
+
 export type RunningDictationKind = "text" | "vocabulary";
 export type RunningDictationMode = "running-dictation" | "practice";
 export type VocabularyDirection = "left-to-right" | "right-to-left" | "mixed";
@@ -142,35 +144,21 @@ export function parseRunningDictationText(input: string) {
 }
 
 export function parseVocabularyTable(input: string): VocabularyPair[] {
-  return input
-    .replace(/\r\n?/g, "\n")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .flatMap((line, index) => {
-      const cells = line.includes("\t") ? line.split("\t") : line.split(";");
-      if (cells.length < 2) return [];
-      const side = (value: string) => {
-        const [primary = "", ...alternatives] = value
-          .split("|")
-          .map((part) => part.trim())
-          .filter(Boolean);
-        return { primary, alternatives };
-      };
-      const left = side(cells[0] ?? "");
-      const right = side(cells[1] ?? "");
-      // Optionale dritte Spalte: Tag für die LernBox.
-      const tag = cells[2]?.trim();
-      if (!left.primary || !right.primary) return [];
-      return [
-        {
-          id: `vocabulary-${index}-${hashString(line)}`,
-          left,
-          right,
-          ...(tag ? { tag } : {}),
-        },
-      ];
-    });
+  const side = (value: string) => {
+    const [primary = "", ...alternatives] = value
+      .split("|")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    return { primary, alternatives };
+  };
+  // Zerlegung, BOM, Kopfzeile und Fehlerzeilen kommen aus dem gemeinsamen Parser.
+  return parseVocabularyImport(input).entries.map((entry) => ({
+    id: `vocabulary-${entry.ordinal}-${hashString(entry.source)}`,
+    left: side(entry.front),
+    right: side(entry.back),
+    // Optionale dritte Spalte: Tag für die LernBox.
+    ...(entry.tag ? { tag: entry.tag } : {}),
+  }));
 }
 
 /** Sprachen des Vokabelhefts; die Kennung steuert das Vorlesen. */

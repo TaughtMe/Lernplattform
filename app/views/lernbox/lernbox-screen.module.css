@@ -862,6 +862,178 @@
   overflow: hidden;
   opacity: 0;
 }
+/* Vokabelimport: Eintippen, Anleitung und Vorschau */
+.importRowsBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.importRows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.importRow {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 44px;
+  align-items: start;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface2);
+}
+.importNo {
+  padding-top: 13px;
+  color: var(--ink3);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+.importCells {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+.importInput {
+  height: 44px;
+  padding: 0 12px;
+  font-size: 16px;
+}
+.importDelete {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink3);
+  cursor: pointer;
+}
+.importDelete:hover {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.importDelete:focus-visible {
+  outline: 3px solid var(--ring);
+}
+@container lernbox (min-width: 760px) {
+  .importCells {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .importCells > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+.importFileRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.importGuide {
+  padding: 4px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.importGuide summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.importGuide summary:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+.importGuide p {
+  margin: 0 0 12px;
+}
+.importPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.importCount {
+  font-size: 18px;
+  font-weight: 700;
+}
+.importPairs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.importPair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 15px;
+  font-weight: 600;
+}
+.importPairText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.importTag {
+  flex: none;
+  max-width: 40%;
+  padding: 3px 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.importMore,
+.importNote {
+  color: var(--ink2);
+  font-size: 13px;
+}
+.importSkipped {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bad-bg);
+}
+.importSkippedTitle {
+  color: var(--bad);
+  font-size: 14px;
+  font-weight: 700;
+}
+.importSkippedList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--ink);
+  font-size: 13.5px;
+}
+.importSkippedLine {
+  color: var(--ink2);
+  overflow-wrap: anywhere;
+}
 .codeBox {
   position: relative;
 }
