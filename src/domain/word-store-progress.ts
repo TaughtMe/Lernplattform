@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { LEARNING_WORD_STAGES, type LearningWordStage } from "./learning-word";
 import type { LearningWordProgress } from "./learning-word-progress";
+import { localDayKey } from "./local-day";
 import { wordKey } from "./word-box";
 
 const instant = z.iso.datetime({ offset: true });
@@ -50,11 +51,21 @@ export const wordRoundSchema = z
 
 export type WordRoundRecord = z.infer<typeof wordRoundSchema>;
 
+/** Wortbox „Meine Fehlerwörter“ (`?quelle=fehler`): Runden zeigen keinen Prozentwert (W-12). */
+export const FEHLER_BOX_ID = "fehler";
+
+/** Für diese Wortboxen steht „n Wörter geübt“ statt eines Prozentwerts. */
+export function showsPracticedWordsOnly(boxId: string): boolean {
+  return boxId === FEHLER_BOX_ID;
+}
+
 export type WordBoxStageSummary = {
   stage: LearningWordStage;
   rounds: number;
   bestPercent?: number;
   lastPercent?: number;
+  /** Anzahl Wörter der letzten Runde dieser Stufe. */
+  lastWords?: number;
   lastPracticedAt?: string;
 };
 
@@ -80,22 +91,56 @@ export function summarizeWordBox(
     entry.rounds += 1;
     entry.bestPercent = Math.max(entry.bestPercent ?? 0, round.percent);
     entry.lastPercent = round.percent;
+    entry.lastWords = round.words.length;
     entry.lastPracticedAt = round.completedAt;
   }
   return summary;
 }
 
-/** Zeile der Kachel: höchste Stufe, in der es schon eine abgeschlossene Runde gibt. */
+/** Zeile der Kachel: Stufe und Ergebnis der zuletzt abgeschlossenen Runde (W-10). */
 export function headlineForBox(
   summary: Record<LearningWordStage, WordBoxStageSummary>,
-): { stage: LearningWordStage; bestPercent: number } | undefined {
-  for (const stage of [...LEARNING_WORD_STAGES].reverse()) {
+):
+  | { stage: LearningWordStage; lastPercent: number; practicedWords: number }
+  | undefined {
+  let latest: WordBoxStageSummary | undefined;
+  for (const stage of LEARNING_WORD_STAGES) {
     const entry = summary[stage];
-    if (entry.rounds > 0 && entry.bestPercent !== undefined) {
-      return { stage, bestPercent: entry.bestPercent };
+    if (
+      entry.rounds > 0 &&
+      (latest === undefined ||
+        (entry.lastPracticedAt ?? "") >= (latest.lastPracticedAt ?? ""))
+    ) {
+      latest = entry;
     }
   }
-  return undefined;
+  if (latest?.lastPercent === undefined || latest.lastWords === undefined) {
+    return undefined;
+  }
+  return {
+    stage: latest.stage,
+    lastPercent: latest.lastPercent,
+    practicedWords: latest.lastWords,
+  };
+}
+
+/** „n Wörter geübt“ bzw. „1 Wort geübt“ (W-12). */
+export function practicedWordsLabel(count: number): string {
+  return count === 1 ? "1 Wort geübt" : `${count} Wörter geübt`;
+}
+
+/**
+ * Übungsmenge eines lokalen Tages (W-13): Summe der Wörter aller Runden, die an
+ * diesem Tag abgeschlossen wurden. `now` ist injizierbar.
+ */
+export function wordsPracticedOnDay(
+  rounds: readonly WordRoundRecord[],
+  now: string | number | Date,
+): number {
+  const day = localDayKey(now);
+  return rounds
+    .filter((round) => localDayKey(round.completedAt) === day)
+    .reduce((sum, round) => sum + round.words.length, 0);
 }
 
 /**
@@ -161,22 +206,4 @@ export function summarizeWordStore(
       )
       .slice(0, MOST_ERRORS_LIMIT),
   };
-}
-
-/**
- * „Neuer Bestwert!“: Es gibt frühere Runden dieser Wortbox und Stufe, und das
- * neue Ergebnis ist höher als alle. `rounds` enthält nur die früheren Runden.
- */
-export function isNewBest(
-  boxId: string,
-  stage: LearningWordStage,
-  percent: number,
-  rounds: readonly WordRoundRecord[],
-): boolean {
-  const earlier = rounds.filter(
-    (round) => round.boxId === boxId && round.stage === stage,
-  );
-  return (
-    earlier.length > 0 && earlier.every((round) => percent > round.percent)
-  );
 }

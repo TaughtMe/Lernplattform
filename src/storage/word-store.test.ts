@@ -291,7 +291,7 @@ describe("Übernahme aus dem Unterricht", () => {
     expect(hund).toMatchObject({
       box: 1,
       dueAt: t1.toISOString(),
-      stage: 4,
+      stage: 3,
       attempts: 1,
     });
   });
@@ -338,6 +338,132 @@ describe("Übernahme aus dem Unterricht", () => {
     });
     expect((await repository.list())[0]!.words.map((w) => w.text)).toEqual([
       "Katze",
+    ]);
+  });
+});
+
+describe("Lernstand: Modus und erster Versuch", () => {
+  const now = "2026-10-21T12:00:00.000Z";
+  const attempt = {
+    correct: true,
+    usedHelp: false,
+    selfCorrected: false,
+    stage: 4 as const,
+    roundId: "r",
+  };
+
+  async function seeded(dueAt: string) {
+    const database = createDatabase();
+    const repository = createLearningWordProgressRepository(database);
+    await database.learningWordProgress.put({
+      id: "learning-word:hund",
+      word: "Hund",
+      stage: 4,
+      box: 2,
+      dueAt,
+      attempts: 3,
+      incorrectAttempts: 0,
+      helpUses: 0,
+      lastPracticedAt: "2026-10-01T08:00:00.000Z",
+    });
+    return { database, repository };
+  }
+
+  it("hebt die Box nur in der fälligen Wiederholung und nur beim ersten Versuch", async () => {
+    const { repository } = await seeded("2026-10-20T08:00:00.000Z");
+    await repository.recordAttempt({
+      ...attempt,
+      words: ["Hund"],
+      attemptId: "0:1",
+      mode: "due",
+      firstAttempt: true,
+      now,
+    });
+    const [after] = await repository.list();
+    expect(after).toMatchObject({ box: 3, stage: 4, attempts: 4 });
+    expect(after!.dueAt).toBe("2026-10-28T12:00:00.000Z");
+  });
+
+  it("behandelt ein nicht fälliges Wort in der Wiederholung wie freies Üben", async () => {
+    const { repository } = await seeded("2026-11-01T08:00:00.000Z");
+    await repository.recordAttempt({
+      ...attempt,
+      words: ["Hund"],
+      attemptId: "0:1",
+      mode: "due",
+      firstAttempt: true,
+      now,
+    });
+    expect((await repository.list())[0]).toMatchObject({
+      box: 2,
+      dueAt: "2026-11-01T08:00:00.000Z",
+    });
+  });
+
+  it("ändert beim freien Üben die Box nie, auch ohne Angabe von Modus und erstem Versuch", async () => {
+    const { repository } = await seeded("2026-10-20T08:00:00.000Z");
+    await repository.recordAttempt({
+      ...attempt,
+      words: ["Hund"],
+      attemptId: "0:1",
+      now,
+    });
+    expect((await repository.list())[0]).toMatchObject({
+      box: 2,
+      dueAt: "2026-10-20T08:00:00.000Z",
+    });
+  });
+
+  it("setzt in der Wiederholung bei „Wort zeigen“ die Box auf 1 und lässt spätere Versuche unverändert", async () => {
+    const { repository } = await seeded("2026-10-20T08:00:00.000Z");
+    await repository.recordAttempt({
+      ...attempt,
+      usedHelp: true,
+      words: ["Hund"],
+      attemptId: "0:1",
+      mode: "due",
+      firstAttempt: true,
+      now,
+    });
+    const [helped] = await repository.list();
+    expect(helped).toMatchObject({ box: 1, helpUses: 1 });
+    await repository.recordAttempt({
+      ...attempt,
+      selfCorrected: true,
+      words: ["Hund"],
+      attemptId: "0:2",
+      mode: "due",
+      firstAttempt: false,
+      now: "2026-10-21T12:01:00.000Z",
+    });
+    expect((await repository.list())[0]).toMatchObject({
+      box: 1,
+      dueAt: helped!.dueAt,
+    });
+  });
+
+  it("schreibt unverändert ein Lernereignis je Versuch und keine zusätzlichen Felder", async () => {
+    const { database, repository } = await seeded("2026-10-20T08:00:00.000Z");
+    await repository.recordAttempt({
+      ...attempt,
+      words: ["Hund"],
+      attemptId: "0:1",
+      mode: "due",
+      firstAttempt: true,
+      now,
+    });
+    const [event] = await database.learningEvents.toArray();
+    expect(Object.keys(event!).sort()).toEqual([
+      "answerMode",
+      "assessment",
+      "direction",
+      "help",
+      "id",
+      "learningArea",
+      "learningObjectId",
+      "occurredAt",
+      "roundId",
+      "source",
     ]);
   });
 });

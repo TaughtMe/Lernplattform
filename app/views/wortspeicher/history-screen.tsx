@@ -6,9 +6,10 @@ import {
   type LearningWordStage,
 } from "../../../src/domain/learning-word";
 import { reflectionQuestionsFor } from "../../../src/domain/progress-reflection";
-import type {
-  WordBoxStageSummary,
-  WordRoundRecord,
+import {
+  practicedWordsLabel,
+  type WordBoxStageSummary,
+  type WordRoundRecord,
 } from "../../../src/domain/word-store-progress";
 import { BarChart, LineChart, type ChartPoint } from "../../ui/charts";
 import { Icon } from "../../ui/icons";
@@ -48,6 +49,7 @@ export function HistoryScreen({
   summary,
   rounds,
   initialStage,
+  percentless = false,
   worksheetHref,
   onPractice,
   onBack,
@@ -57,6 +59,8 @@ export function HistoryScreen({
   /** Alle Runden dieser Wortbox. */
   rounds: readonly WordRoundRecord[];
   initialStage: LearningWordStage;
+  /** Fehlerwörter: keine Prozentwerte und Diagramme, nur „n Wörter geübt“ (W-12). */
+  percentless?: boolean;
   worksheetHref?: string | undefined;
   onPractice: (stage: LearningWordStage) => void;
   onBack: () => void;
@@ -137,45 +141,57 @@ export function HistoryScreen({
           ) : (
             <>
               <dl className={styles.counts}>
-                <div className={styles.count}>
-                  <dt className="ui-tiny ui-muted">Bestwert</dt>
-                  <dd className={styles.countValue}>{current.bestPercent} %</dd>
-                </div>
-                <div className={styles.count}>
-                  <dt className="ui-tiny ui-muted">Letztes Ergebnis</dt>
-                  <dd className={styles.countValue}>{current.lastPercent} %</dd>
-                </div>
+                {percentless ? null : (
+                  <>
+                    <div className={styles.count}>
+                      <dt className="ui-tiny ui-muted">Bestwert</dt>
+                      <dd className={styles.countValue}>
+                        {current.bestPercent} %
+                      </dd>
+                    </div>
+                    <div className={styles.count}>
+                      <dt className="ui-tiny ui-muted">Letztes Ergebnis</dt>
+                      <dd className={styles.countValue}>
+                        {current.lastPercent} %
+                      </dd>
+                    </div>
+                  </>
+                )}
                 <div className={styles.count}>
                   <dt className="ui-tiny ui-muted">Runden</dt>
                   <dd className={styles.countValue}>{current.rounds}</dd>
                 </div>
               </dl>
 
-              <Segmented<ChartKind>
-                label="Diagramm"
-                value={kind}
-                onChange={setKind}
-                options={[
-                  { value: "linie", label: "Linie" },
-                  { value: "saeule", label: "Säulen" },
-                ]}
-              />
-              {kind === "linie" ? (
-                <LineChart {...chartProps} />
-              ) : (
-                <BarChart {...chartProps} />
-              )}
+              {percentless ? null : (
+                <>
+                  <Segmented<ChartKind>
+                    label="Diagramm"
+                    value={kind}
+                    onChange={setKind}
+                    options={[
+                      { value: "linie", label: "Linie" },
+                      { value: "saeule", label: "Säulen" },
+                    ]}
+                  />
+                  {kind === "linie" ? (
+                    <LineChart {...chartProps} />
+                  ) : (
+                    <BarChart {...chartProps} />
+                  )}
 
-              {questions.length > 0 ? (
-                <details>
-                  <summary>Schau dir dein Diagramm an</summary>
-                  <ul>
-                    {questions.map((question) => (
-                      <li key={question}>{question}</li>
-                    ))}
-                  </ul>
-                </details>
-              ) : null}
+                  {questions.length > 0 ? (
+                    <details>
+                      <summary>Schau dir dein Diagramm an</summary>
+                      <ul>
+                        {questions.map((question) => (
+                          <li key={question}>{question}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
+                </>
+              )}
             </>
           )}
 
@@ -186,8 +202,12 @@ export function HistoryScreen({
                 <details className={styles.wordRow}>
                   <summary>
                     {dateTime.format(new Date(round.completedAt))} · Stufe{" "}
-                    {round.stage} · {round.percent} % · {round.words.length}{" "}
-                    {round.words.length === 1 ? "Wort" : "Wörter"}
+                    {round.stage} ·{" "}
+                    {percentless
+                      ? practicedWordsLabel(round.words.length)
+                      : `${round.percent} % · ${round.words.length} ${
+                          round.words.length === 1 ? "Wort" : "Wörter"
+                        }`}
                   </summary>
                   <ul className={styles.diffList}>
                     {round.words.map((word, index) => (

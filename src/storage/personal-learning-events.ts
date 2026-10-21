@@ -35,7 +35,10 @@ import { learningEventIdentity } from "./learning-event-identity";
 import Dexie, { type Table } from "dexie";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import type { LearningWordStage } from "../domain/learning-word";
-import type { LearningWordProgress } from "../domain/learning-word-progress";
+import type {
+  LearningWordMode,
+  LearningWordProgress,
+} from "../domain/learning-word-progress";
 import {
   learningWordId,
   updateLearningWordProgress,
@@ -798,6 +801,10 @@ export function createLearningWordProgressRepository(
       stage: LearningWordStage;
       roundId: string;
       attemptId: string;
+      /** „due“ nur in der fälligen Wiederholung („Trainingswörter heute“). */
+      mode?: LearningWordMode;
+      /** Erster Versuch an dem Wort in dieser Runde; ohne Angabe: ja. */
+      firstAttempt?: boolean;
       now?: string;
     }) => {
       const now = input.now ?? new Date().toISOString();
@@ -833,6 +840,8 @@ export function createLearningWordProgressRepository(
                 selfCorrected: input.selfCorrected,
                 stage: input.stage,
                 now,
+                mode: input.mode ?? "free",
+                firstAttempt: input.firstAttempt ?? true,
               }),
             );
             await database.learningEvents.add(

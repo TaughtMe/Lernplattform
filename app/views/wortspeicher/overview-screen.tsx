@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 import { WORD_BOX_LIMITS } from "../../../src/domain/word-box";
+import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
 import { Icon } from "../../ui/icons";
 import {
   Button,
@@ -21,8 +22,17 @@ export type WordBoxTile = {
   examples: string[];
   total: number;
   secure: number;
-  /** Höchste Stufe mit abgeschlossener Runde und deren Bestwert. */
-  headline?: { stage: LearningWordStage; bestPercent: number } | undefined;
+  /**
+   * Stufe und Ergebnis der zuletzt abgeschlossenen Runde (W-10). Ohne
+   * `lastPercent` steht „n Wörter geübt“ (Fehlerwörter, W-12).
+   */
+  headline?:
+    | {
+        stage: LearningWordStage;
+        lastPercent?: number | undefined;
+        practicedWords: number;
+      }
+    | undefined;
 };
 
 /** Übersicht der Wortboxen (Design 4d und 4f). */
@@ -143,7 +153,11 @@ export function OverviewScreen({
               </span>
               <span className={styles.tileBest}>
                 {tile.headline
-                  ? `Stufe ${tile.headline.stage} · Bestwert ${tile.headline.bestPercent} %`
+                  ? `Stufe ${tile.headline.stage} · ${
+                      tile.headline.lastPercent === undefined
+                        ? practicedWordsLabel(tile.headline.practicedWords)
+                        : `Zuletzt ${tile.headline.lastPercent} %`
+                    }`
                   : "Noch nicht geübt"}
               </span>
             </button>
