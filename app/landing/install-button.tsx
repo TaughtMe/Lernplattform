@@ -28,6 +28,23 @@ const STEPS: Record<InstallGuide, string[]> = {
   ],
 };
 
+/** Schritt-Anleitung zum Installieren; auch außerhalb des Blattes verwendbar. */
+export function InstallSteps({
+  guide,
+  className,
+}: {
+  guide: InstallGuide | null;
+  className?: string;
+}) {
+  return (
+    <ol className={className}>
+      {STEPS[guide ?? "generic"].map((step) => (
+        <li key={step}>{step}</li>
+      ))}
+    </ol>
+  );
+}
+
 /**
  * „Als App installieren“ unter dem Raumcode. Browser mit Installationsdialog
  * öffnen ihn; alle anderen bekommen eine zum Browser passende Anleitung.
@@ -54,11 +71,7 @@ export function InstallButton({ className }: { className: string }) {
         title="So installierst du Lernraum"
         onClose={() => setHelp(false)}
       >
-        <ol>
-          {STEPS[guide ?? "generic"].map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
+        <InstallSteps guide={guide} />
       </Sheet>
     </>
   );

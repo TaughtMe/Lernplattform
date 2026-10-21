@@ -33,3 +33,14 @@ Eine Funktion gilt erst dann als fertig, wenn Layout, Navigation, Fokusreihenfol
 ## Gerätelokale Einstellung: Spiegelschrift im Lesetext
 
 Das Kind schaltet in „Profil und Einstellungen“ → „Darstellung“ selbst, ob der Lesetext der Textbox (Ansicht „Einprägen“) gespiegelt erscheint. Die Einstellung liegt nur im `localStorage` dieses Geräts (`lernraum-spiegelschrift-bis`), gilt 7 Tage und schaltet sich danach selbst aus. Sie geht nicht in Cloud-Abgleich, Sicherungsdatei, Klassen- oder Lehrkraftansichten. Der Bereich `spiegelschrift` steht im Freigaberegister auf `vorschau`.
+
+## Speicherlebensdauer
+
+Der gesamte Lernstand liegt nur auf dem Gerät (IndexedDB). Was das für die Lebensdauer heißt, besonders auf iPad und iPhone:
+
+- **7-Tage-Regel von Safari:** WebKit löscht Daten einer Website, wenn sie sieben Tage mit Safari-Nutzung nicht besucht wurde. Gezählt werden Tage, an denen Safari benutzt wird, ohne dass die Seite geöffnet wird, keine Kalendertage. Ein iPad, das in den Ferien ungenutzt liegt, zählt nichts. Riskant sind vor allem Geräte, die andere in Safari nutzen, während Lernraum eine Woche ausgesetzt wird.
+- **Home-Bildschirm-App:** Eine zum Home-Bildschirm hinzugefügte Web-App hat einen eigenen Zähler und laut Apple keine Löschung von Erstanbieterdaten nach dieser Regel.
+- **Eigener Speicher je App:** Die App auf dem Home-Bildschirm und der Browser teilen sich keinen Speicher. Wer erst im Browser lernt und dann installiert, startet in der App leer. Darum empfiehlt die Lernen-Startseite auf iPad und iPhone im Browser, vor dem ersten Lernen zu installieren; „Trotzdem im Browser lernen“ merkt sich die Entscheidung in `localStorage` (nur diese, nie den Lernstand). Mit vorhandenem Lernstand steht in den Einstellungen nur ein dezenter Hinweis.
+- **`navigator.storage.persist()`:** Nach dem ersten Lernen bittet die Startseite still um dauerhaften Speicher. Das ist ein Zusatz ohne Erfolgsversprechen; wie es unter iOS mit der 7-Tage-Regel zusammenwirkt, ist nicht dokumentiert. Die Oberfläche meldet kein Ergebnis.
+- **Gelöscht oder neu?** Ein geleertes und ein neues Gerät sind lokal nicht zu unterscheiden. Darum bietet die Lernen-Startseite auf einem Gerät ohne Lernstand immer „Ich habe schon gelernt – Sicherung einspielen“ an. Der Knopf führt zum vorhandenen Einspielen in den Einstellungen (`restorePersonalLearningBackup`).
+- **Sicherung:** Die Sicherungsdatei ist die einzige Zweitkopie des Lernstands. Wer von Browser zur App wechselt, nimmt den Lernstand ebenfalls über eine Sicherung mit.

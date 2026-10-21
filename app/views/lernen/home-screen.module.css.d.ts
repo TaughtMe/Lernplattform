@@ -21,6 +21,7 @@ declare const styles: {
   readonly layout: string;
   readonly main: string;
   readonly name: string;
+  readonly notice: string;
   readonly panel: string;
   readonly panelCount: string;
   readonly panelHead: string;

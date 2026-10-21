@@ -1,5 +1,6 @@
 import "fake-indexeddb/auto";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import Dexie from "dexie";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -74,6 +75,10 @@ beforeEach(() => {
 afterEach(async () => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
+  window.localStorage.clear();
+  Reflect.deleteProperty(window, "matchMedia");
+  Reflect.deleteProperty(navigator, "storage");
   await Dexie.delete(new PersonalLearningDatabase().name);
 });
 
@@ -240,6 +245,114 @@ describe("LearnerHome", () => {
     ).toBeVisible();
     expect(
       screen.queryByText(/von \d+ Aufgaben heute/),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("LearnerHome: Schutz vor Speicherverlust", () => {
+  const IPAD = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)";
+  const RESTORE = "Ich habe schon gelernt – Sicherung einspielen";
+  const INSTALL_TEXT =
+    /Füge den Lernraum zuerst zum Home-Bildschirm hinzu\. Dann bleiben deine Daten sicherer\. Wichtig: Was du hier im Browser lernst, ist in der App nicht zu sehen\./;
+
+  function useIpadBrowser(standalone = false) {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(IPAD);
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: standalone,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+  }
+
+  async function seedCard() {
+    await seed(async (database) => {
+      await database.learningBoxCards.bulkPut([dueCard(1)]);
+    });
+  }
+
+  it("bietet auf einem leeren Gerät das Einspielen einer Sicherung an", async () => {
+    render(<LearnerHome />);
+    const link = await screen.findByRole("link", { name: RESTORE });
+    // Kein zweiter Einspielweg: der Knopf führt zum vorhandenen in den Einstellungen.
+    expect(link).toHaveAttribute("href", "/lernen/einstellungen#backup-title");
+    expect(screen.queryByText(INSTALL_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("zeigt iPad im Browser vor dem ersten Lernen die Installationsempfehlung", async () => {
+    useIpadBrowser();
+    render(<LearnerHome />);
+    expect(await screen.findByText(INSTALL_TEXT)).toBeVisible();
+    expect(screen.getByText(/„Zum Home-Bildschirm“/)).toBeVisible();
+    expect(screen.getByRole("link", { name: RESTORE })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Trotzdem im Browser lernen" }),
+    ).toBeVisible();
+  });
+
+  it("merkt sich „Trotzdem im Browser lernen“ und lässt das Einspielen stehen", async () => {
+    useIpadBrowser();
+    const first = render(<LearnerHome />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Trotzdem im Browser lernen" }),
+    );
+    expect(screen.queryByText(INSTALL_TEXT)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: RESTORE })).toBeVisible();
+    first.unmount();
+
+    render(<LearnerHome />);
+    expect(await screen.findByRole("link", { name: RESTORE })).toBeVisible();
+    expect(screen.queryByText(INSTALL_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("empfiehlt die Installation nicht in der installierten App", async () => {
+    useIpadBrowser(true);
+    render(<LearnerHome />);
+    expect(await screen.findByRole("link", { name: RESTORE })).toBeVisible();
+    expect(screen.queryByText(INSTALL_TEXT)).not.toBeInTheDocument();
+  });
+
+  it("zeigt mit vorhandenem Lernstand keinen der beiden Hinweise", async () => {
+    useIpadBrowser();
+    await seedCard();
+    render(<LearnerHome />);
+    expect(await screen.findByText(/von \d+ Aufgaben? heute/)).toBeVisible();
+    expect(screen.queryByText(INSTALL_TEXT)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: RESTORE }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("bittet nach dem ersten Lernen still um dauerhaften Speicher", async () => {
+    const persist = vi.fn().mockResolvedValue(true);
+    Object.defineProperty(navigator, "storage", {
+      configurable: true,
+      value: { persist, persisted: vi.fn().mockResolvedValue(false) },
+    });
+    await seedCard();
+    render(<LearnerHome />);
+    await screen.findByText(/von \d+ Aufgaben? heute/);
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledOnce());
+  });
+
+  it("bittet auf einem leeren Gerät noch nicht um dauerhaften Speicher", async () => {
+    const persist = vi.fn().mockResolvedValue(true);
+    Object.defineProperty(navigator, "storage", {
+      configurable: true,
+      value: { persist, persisted: vi.fn().mockResolvedValue(false) },
+    });
+    render(<LearnerHome />);
+    await screen.findByRole("link", { name: RESTORE });
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("zählt auch einen beschädigten Eintrag als Lernstand und zeigt keine Hinweise", async () => {
+    await seed(async (database) => {
+      await database.learningEvents.put({ id: "kaputt" } as never);
+    });
+    render(<LearnerHome />);
+    await screen.findByText("Heute ist nichts dran – frei üben");
+    expect(
+      screen.queryByRole("link", { name: RESTORE }),
     ).not.toBeInTheDocument();
   });
 });
