@@ -1,5 +1,10 @@
 import { mathFamilyKey, mathReviews } from "../domain/math-practice";
 import { learningEventV1Schema } from "../domain/learning-bundle";
+import { readTolerant } from "../domain/tolerant-read";
+import {
+  learningWordProgressSchema,
+  typingProgressSchema,
+} from "./progress-schema";
 import type { ClassModule } from "../domain/class-workspace";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import {
@@ -179,15 +184,28 @@ export function createLearningRecommendationRepository(
     }) => {
       const now = input.now ?? new Date().toISOString();
       const nowMs = new Date(now).getTime();
-      const [events, cards, learningWords, typingProgress] = await Promise.all([
+      const [events, cards, storedWords, storedTyping] = await Promise.all([
         database.learningEvents.toArray(),
         database.learningBoxCards.toArray(),
         database.learningWordProgress.toArray(),
         database.typingProgress.toArray(),
       ]);
-      const checkedEvents = events.map((event) =>
-        learningEventV1Schema.parse(event),
-      );
+      // Tolerant gelesen (Regel S-1): ein unlesbares Ereignis sperrt nicht alle.
+      const checkedEvents = readTolerant(
+        learningEventV1Schema,
+        events,
+        "learningEvents",
+      ).items;
+      const learningWords = readTolerant(
+        learningWordProgressSchema,
+        storedWords,
+        "learningWordProgress",
+      ).items;
+      const typingProgress = readTolerant(
+        typingProgressSchema,
+        storedTyping,
+        "typingProgress",
+      ).items;
       const candidates = eventCandidates(
         checkedEvents,
         now,

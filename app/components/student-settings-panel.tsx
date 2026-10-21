@@ -6,8 +6,9 @@ import {
   learnerDisplayName,
   profileAvatar,
 } from "../../src/domain/learner-profile";
+import { backupFailureMessage } from "../../src/integrations/backup/backup-failure";
 import {
-  readPersonalBackupFile,
+  restorePersonalBackupFromFile,
   savePersonalBackupToDirectory,
 } from "../../src/integrations/backup/personal-backup-storage";
 import {
@@ -16,10 +17,9 @@ import {
   writeLastBackup,
 } from "../../src/storage/backup-reminder";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
-import {
-  restorePersonalLearningBackup,
-  serializePersonalLearningBackupFromDatabase,
-} from "../../src/storage/personal-backup";
+import { serializePersonalLearningBackupFromDatabase } from "../../src/storage/personal-backup";
+import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
+import { countUnreadableRecords } from "../../src/storage/unreadable-records";
 import { AnimalImage } from "../ui/animal";
 import { CloudSyncPanel } from "./cloud-sync-panel";
 import { AnimalPicker } from "../ui/animal-picker";
@@ -184,6 +184,27 @@ export function StudentSettingsPanel() {
 
 type DirectoryPicker = () => Promise<FileSystemDirectoryHandle>;
 
+/** Zahl gespeicherter Einträge, die diese App-Version nicht lesen kann (Regel S-1). */
+function useUnreadableCount(hydrated: boolean) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!hydrated) return;
+    let active = true;
+    const database = new PersonalLearningDatabase();
+    countUnreadableRecords(database)
+      .then((value) => {
+        if (active) setCount(value);
+      })
+      // Ohne lesbaren Speicher gibt es hier nichts zu melden.
+      .catch(() => undefined)
+      .finally(() => database.close());
+    return () => {
+      active = false;
+    };
+  }, [hydrated]);
+  return count;
+}
+
 function BackupCard() {
   const hydrated = useHydrated();
   // Der Text dazu erscheint erst nach dem Laden (hydrated), daher kein Abgleichproblem.
@@ -201,6 +222,7 @@ function BackupCard() {
       .showDirectoryPicker === "function";
 
   const reminder = backupReminder(lastBackup, new Date());
+  const unreadable = useUnreadableCount(hydrated);
 
   function remember() {
     const now = new Date();
@@ -222,10 +244,13 @@ function BackupCard() {
       URL.revokeObjectURL(url);
       remember();
       setMessage({ tone: "good", text: "Sicherungsdatei wurde erstellt." });
-    } catch {
+    } catch (error) {
       setMessage({
         tone: "bad",
-        text: "Die Sicherung konnte nicht erstellt werden.",
+        text: backupFailureMessage(
+          "Die Sicherung konnte nicht erstellt werden.",
+          error,
+        ),
       });
     } finally {
       setBusy(false);
@@ -249,10 +274,10 @@ function BackupCard() {
       if (error instanceof DOMException && error.name === "AbortError") return;
       setMessage({
         tone: "bad",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Die Sicherung konnte nicht gespeichert werden.",
+        text: backupFailureMessage(
+          "Die Sicherung konnte nicht gespeichert werden.",
+          error,
+        ),
       });
     } finally {
       setBusy(false);
@@ -265,19 +290,19 @@ function BackupCard() {
     if (!file) return;
     setBusy(true);
     try {
-      const backup = await readPersonalBackupFile(file);
-      const result = await restorePersonalLearningBackup(backup);
+      const result = await restorePersonalBackupFromFile(file);
+      const skipped = result.skipped.length;
       setMessage({
-        tone: result.conflicts.length ? "bad" : "good",
-        text: `Wiederhergestellt: ${result.added} neu, ${result.updated} aktualisiert, ${result.unchanged} unverändert${result.conflicts.length ? `, ${result.conflicts.length} Konflikte blieben unverändert` : ""}.`,
+        tone: result.conflicts.length || skipped ? "bad" : "good",
+        text: `Wiederhergestellt: ${result.added} neu, ${result.updated} aktualisiert, ${result.unchanged} unverändert${result.conflicts.length ? `, ${result.conflicts.length} Konflikte blieben unverändert` : ""}.${skipped ? ` ${skipped} ${skipped === 1 ? "Eintrag" : "Einträge"} in der Datei konnten nicht gelesen werden und wurden übersprungen.` : ""}`,
       });
     } catch (error) {
       setMessage({
         tone: "bad",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Diese Datei ist keine gültige Lernraum-Sicherung.",
+        text: backupFailureMessage(
+          "Die Sicherung konnte nicht geladen werden.",
+          error,
+        ),
       });
     } finally {
       setBusy(false);
@@ -303,6 +328,16 @@ function BackupCard() {
               ? `Letzte Sicherung vor ${reminder.days} Tagen. Zeit für eine neue.`
               : `Letzte Sicherung: ${lastBackup?.toLocaleDateString("de-DE")}.`}
       </p>
+      {unreadable > 0 ? (
+        <p className="ui-notice" role="status">
+          {unreadable}{" "}
+          {unreadable === 1
+            ? "gespeicherter Eintrag konnte"
+            : "gespeicherte Einträge konnten"}{" "}
+          nicht gelesen werden. Deine übrigen Daten sind da. Eine Aktualisierung
+          der App behebt das meist.
+        </p>
+      ) : null}
       <div className="ui-grid2">
         <button
           type="button"

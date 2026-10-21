@@ -201,15 +201,16 @@ describe("Textbox-Repository", () => {
     expect(await repository.listCompleted()).toEqual([done]);
   });
 
-  it("prüft gespeicherte Daten beim Lesen", async () => {
+  it("überspringt unlesbare gespeicherte Daten beim Lesen, ohne sie zu löschen", async () => {
     const database = createDatabase();
     const repository = createTextboxRepository(database);
     await database.textboxSessions.put({
       ...makeSession("kaputt", 1),
       updatedAt: "kein-datum",
     });
-    await expect(repository.getOpen(text.id)).rejects.toThrow();
-    await expect(repository.listByText(text.id)).rejects.toThrow();
+    expect(await repository.getOpen(text.id)).toBeUndefined();
+    expect(await repository.listByText(text.id)).toEqual([]);
+    expect(await database.textboxSessions.count()).toBe(1);
   });
 });
 
