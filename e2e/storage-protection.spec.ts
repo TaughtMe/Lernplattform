@@ -10,14 +10,19 @@ const RESTORE = "Ich habe schon gelernt – Sicherung einspielen";
 
 test("leeres Gerät bietet das Einspielen einer Sicherung an", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto("/lernen");
   const link = page.getByRole("link", { name: RESTORE });
   await expect(link).toBeVisible();
   const box = await link.boundingBox();
   expect(box!.height).toBeGreaterThanOrEqual(44);
-  // Auf einem normalen Browser gibt es keine Installationsempfehlung.
-  await expect(page.getByText("Zuerst zum Home-Bildschirm")).toHaveCount(0);
+  // Die Installationsempfehlung gibt es nur auf iPhone und iPad im Browser.
+  const ios = ["mobile-safari", "tablet-safari"].includes(
+    testInfo.project.name,
+  );
+  await expect(
+    page.getByRole("heading", { name: "Zuerst zum Home-Bildschirm" }),
+  ).toHaveCount(ios ? 1 : 0);
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
 
   // Der Knopf führt in den vorhandenen Einspielweg der Einstellungen.

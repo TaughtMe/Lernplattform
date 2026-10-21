@@ -221,7 +221,7 @@ async function seedStoredText(page: Page) {
   });
 }
 
-test("Öffnen und „Jetzt starten“ erzeugt eine Lobby, Neuladen zeigt denselben Raumcode", async ({
+test("Starten von der Startseite erzeugt eine Lobby, Neuladen zeigt denselben Raumcode", async ({
   page,
 }) => {
   let opened = 0;
@@ -259,18 +259,17 @@ test("Öffnen und „Jetzt starten“ erzeugt eine Lobby, Neuladen zeigt denselb
   await seedStoredText(page);
   await page.reload();
 
+  // Seit der Startseite nach Lehrerbereich v2 (15a) öffnet „starten“ den Raum
+  // direkt, ohne Zwischendialog.
   await expect(async () => {
     await page
       .getByRole("button", { name: "Der Hund im Hof starten" })
       .first()
       .click();
-    await expect(page.getByRole("dialog", { name: "Raum öffnen" })).toBeVisible(
-      { timeout: 1500 },
-    );
+    await expect(page.getByRole("heading", { name: "Lobby" })).toBeVisible({
+      timeout: 1500,
+    });
   }).toPass();
-  await page.getByRole("button", { name: /^Jetzt starten/ }).click();
-
-  await expect(page.getByRole("heading", { name: "Lobby" })).toBeVisible();
   await expect(page.getByLabel("Raumcode 4829")).toBeVisible();
   await expect(page.getByText(/^Code gilt bis \d{2}:\d{2}$/)).toBeVisible();
   expect(opened).toBe(1);

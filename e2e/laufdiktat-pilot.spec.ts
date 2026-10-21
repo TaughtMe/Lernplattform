@@ -96,14 +96,19 @@ test("teacher pilot offers the complete Laufdiktat content and mode set", async 
       }),
     );
   const textFrame = await frame();
+  // Die Seite entfernt `?neu=` nach dem Lesen selbst (router.replace). Erst
+  // danach weiter navigieren, sonst bricht Firefox die nächste Navigation ab.
+  const settled = () => expect(page).toHaveURL(/\/lehrer\/live$/);
   await page.goto("/lehrer/live?neu=vocabulary");
   await hydrated();
+  await settled();
   await expect(
     page.getByRole("heading", { name: "Vokabelheft" }),
   ).toBeVisible();
   expect(await frame()).toEqual(textFrame);
   await page.goto("/lehrer/live?neu=math");
   await hydrated();
+  await settled();
   await expect(page.getByText("0 Aufgaben")).toBeVisible();
   expect(await frame()).toEqual(textFrame);
 
