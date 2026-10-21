@@ -1,10 +1,15 @@
 import * as z from "zod";
 import { learningEventV1Schema, type LearningEventV1 } from "./learning-bundle";
-import type { LearningBoxCard, LearningBoxDeck } from "./learning-box";
+import type {
+  LearningBoxCard,
+  LearningBoxDeck,
+  LearningBoxFolder,
+} from "./learning-box";
 import type { LearningWordProgress } from "./learning-word-progress";
 import { textboxSessionSchema, type TextboxSession } from "./textbox-session";
 import { wordBoxSchema, type WordBox } from "./word-box";
 import { wordRoundSchema, type WordRoundRecord } from "./word-store-progress";
+import { readTolerant, type QuarantinedRecord } from "./tolerant-read";
 import type { TypingLessonProgress } from "../tastschreiben/typing-progress";
 
 export const PERSONAL_BACKUP_SCHEMA_VERSION = 1 as const;
@@ -64,10 +69,22 @@ const typingProgressBackupSchema = z
   })
   .strict();
 
+/** Ordner für Stapel (Tabelle `learningBoxFolders`, Regel S-2). */
+export const personalBackupFolderSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    title: z.string().trim().min(1),
+    createdAt: z.number().int().nonnegative(),
+    updatedAt: z.number().int().nonnegative(),
+  })
+  .strict();
+
 export const personalBackupDeckSchema = z
   .object({
     id: z.string().trim().min(1),
     title: z.string().trim().min(1),
+    /** Ordner des Stapels; fehlt der Ordner beim Einspielen, wird das Feld entfernt. */
+    folderId: z.string().trim().min(1).optional(),
     frontLocale: z.string().trim().min(2).max(35),
     backLocale: z.string().trim().min(2).max(35),
     source: learningBoxSourceSchema,
@@ -105,6 +122,11 @@ const personalDataSchema = z
   .object({
     learningEvents: z.array(learningEventV1Schema).max(1_000_000),
     learningBoxDecks: z.array(personalBackupDeckSchema).max(100_000),
+    // Ältere Sicherungen kennen LernBox-Ordner nicht.
+    learningBoxFolders: z
+      .array(personalBackupFolderSchema)
+      .max(100_000)
+      .default([]),
     learningBoxCards: z.array(personalBackupCardSchema).max(1_000_000),
     learningWordProgress: z
       .array(learningWordProgressBackupSchema)
@@ -135,6 +157,7 @@ export type PersonalLearningBackup = z.infer<
 export type PersonalLearningBackupInput = {
   learningEvents: readonly LearningEventV1[];
   learningBoxDecks: readonly LearningBoxDeck[];
+  learningBoxFolders?: readonly LearningBoxFolder[];
   learningBoxCards: readonly LearningBoxCard[];
   learningWordProgress: readonly LearningWordProgress[];
   typingProgress: readonly TypingLessonProgress[];
@@ -162,6 +185,7 @@ export function createPersonalLearningBackup(
     data: {
       learningEvents: [...input.learningEvents],
       learningBoxDecks: [...input.learningBoxDecks],
+      learningBoxFolders: [...(input.learningBoxFolders ?? [])],
       learningBoxCards: [...input.learningBoxCards],
       learningWordProgress: [...input.learningWordProgress],
       typingProgress: [...input.typingProgress],
@@ -172,34 +196,145 @@ export function createPersonalLearningBackup(
   });
 }
 
-export function parsePersonalLearningBackup(value: unknown) {
+/**
+ * Elementschemata je Tabelle der Sicherung. Der Strukturtest stellt sicher, dass
+ * sie genau die Tabellen von `personalDataSchema` abdecken.
+ */
+export const personalBackupTableSchemas = {
+  learningEvents: learningEventV1Schema,
+  learningBoxDecks: personalBackupDeckSchema,
+  learningBoxFolders: personalBackupFolderSchema,
+  learningBoxCards: personalBackupCardSchema,
+  learningWordProgress: learningWordProgressBackupSchema,
+  typingProgress: typingProgressBackupSchema,
+  textboxSessions: textboxSessionSchema,
+  wordBoxes: wordBoxSchema,
+  wordRounds: wordRoundSchema,
+} as const;
+
+type PersonalBackupTable = keyof typeof personalBackupTableSchemas;
+
+/** Tabellen, die auch ältere Sicherungen immer enthalten (alle anderen fehlen dort). */
+const REQUIRED_TABLES: readonly PersonalBackupTable[] = [
+  "learningEvents",
+  "learningBoxDecks",
+  "learningBoxCards",
+  "learningWordProgress",
+  "typingProgress",
+];
+
+/** Die Sicherung stammt aus einer neueren App-Version und lässt sich hier nicht lesen. */
+export class PersonalBackupVersionError extends Error {
+  constructor() {
+    super(
+      "Diese Sicherung stammt aus einer neueren App-Version. Bitte zuerst die App aktualisieren.",
+    );
+    this.name = "PersonalBackupVersionError";
+  }
+}
+
+export type PersonalBackupReadResult = {
+  backup: PersonalLearningBackup;
+  /** Einzelne Datensätze, die nicht gelesen werden konnten (nicht eingespielt). */
+  skipped: QuarantinedRecord[];
+};
+
+const backupEnvelopeSchema = personalLearningBackupSchema.extend({
+  data: z.record(z.string(), z.unknown()),
+});
+
+/**
+ * Liest eine Sicherung tolerant (Regel S-1): Zusatzfelder in Datensätzen einer
+ * neueren App-Version werden entfernt, einzelne ungültige Datensätze werden
+ * übersprungen und gezählt. Hülle, Datenbereich und unbekannte Tabellen bleiben
+ * streng; eine höhere `schemaVersion` wird mit klarer Meldung abgelehnt.
+ */
+export function readPersonalLearningBackup(
+  value: unknown,
+): PersonalBackupReadResult {
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    (value as { kind?: unknown }).kind === PERSONAL_BACKUP_KIND &&
+    typeof (value as { schemaVersion?: unknown }).schemaVersion === "number" &&
+    (value as { schemaVersion: number }).schemaVersion >
+      PERSONAL_BACKUP_SCHEMA_VERSION
+  ) {
+    throw new PersonalBackupVersionError();
+  }
+
   const current = personalLearningBackupSchema.safeParse(value);
-  if (current.success) return current.data;
+  if (current.success) return { backup: current.data, skipped: [] };
 
   const legacy = legacyBackupSchema.safeParse(value);
   if (legacy.success) {
-    return createPersonalLearningBackup({
-      learningEvents: [],
-      learningBoxDecks: legacy.data.decks,
-      learningBoxCards: legacy.data.cards,
-      learningWordProgress: [],
-      typingProgress: [],
-      textboxSessions: [],
-      wordBoxes: [],
-      wordRounds: [],
-    });
+    return {
+      backup: createPersonalLearningBackup({
+        learningEvents: [],
+        learningBoxDecks: legacy.data.decks,
+        learningBoxCards: legacy.data.cards,
+        learningWordProgress: [],
+        typingProgress: [],
+        textboxSessions: [],
+        wordBoxes: [],
+        wordRounds: [],
+      }),
+      skipped: [],
+    };
   }
 
-  throw current.error;
+  const envelope = backupEnvelopeSchema.safeParse(value);
+  if (!envelope.success) throw current.error;
+  const { data } = envelope.data;
+  const tables = Object.keys(
+    personalBackupTableSchemas,
+  ) as PersonalBackupTable[];
+  // Unbekannte Tabellen bleiben abgelehnt (Datenbereichsgrenze).
+  if (Object.keys(data).some((key) => !(key in personalBackupTableSchemas))) {
+    throw current.error;
+  }
+
+  const skipped: QuarantinedRecord[] = [];
+  const cleaned: Record<string, unknown[]> = {};
+  for (const table of tables) {
+    const records = data[table];
+    if (records === undefined && !REQUIRED_TABLES.includes(table)) {
+      cleaned[table] = [];
+      continue;
+    }
+    if (!Array.isArray(records)) throw current.error;
+    const read = readTolerant(
+      personalBackupTableSchemas[table],
+      records,
+      table,
+    );
+    cleaned[table] = read.items;
+    skipped.push(...read.quarantined);
+  }
+
+  // Zahl der Datensätze und Gesamtform prüft das strenge Schema ein letztes Mal.
+  return {
+    backup: personalLearningBackupSchema.parse({
+      ...envelope.data,
+      data: cleaned,
+    }),
+    skipped,
+  };
+}
+
+export function parsePersonalLearningBackup(value: unknown) {
+  return readPersonalLearningBackup(value).backup;
 }
 
 export function serializePersonalLearningBackup(value: PersonalLearningBackup) {
   return JSON.stringify(personalLearningBackupSchema.parse(value), null, 2);
 }
 
-export function parsePersonalLearningBackupText(value: string) {
+export function readPersonalLearningBackupText(
+  value: string,
+): PersonalBackupReadResult {
   try {
-    return parsePersonalLearningBackup(JSON.parse(value));
+    return readPersonalLearningBackup(JSON.parse(value));
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new Error("Die Sicherungsdatei enthält kein gültiges JSON.", {
@@ -208,4 +343,8 @@ export function parsePersonalLearningBackupText(value: string) {
     }
     throw error;
   }
+}
+
+export function parsePersonalLearningBackupText(value: string) {
+  return readPersonalLearningBackupText(value).backup;
 }

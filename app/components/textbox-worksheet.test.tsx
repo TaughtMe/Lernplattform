@@ -128,14 +128,30 @@ describe("TextboxWorksheet", () => {
       `sheet-${crypto.randomUUID()}`,
     );
     databases.push(database);
+    const repository = {
+      ...createTextboxRepository(database),
+      listCompleted: () => Promise.reject(new Error("Speicher gesperrt")),
+    };
+    render(<TextboxWorksheet repository={repository} />);
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("nicht verfügbar"),
+    );
+  });
+
+  it("überspringt einen unlesbaren Datensatz, statt alles zu blockieren", async () => {
+    const database = new PersonalLearningDatabase(
+      `sheet-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
     const repository = createTextboxRepository(database);
     await database.textboxSessions.put({
       ...completedSession("x", 0, 50, 1),
       updatedAt: "kaputt",
     });
     render(<TextboxWorksheet repository={repository} />);
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("nicht verfügbar"),
-    );
+    expect(
+      await screen.findByText("Noch keine Textbox-Übung abgeschlossen"),
+    ).toBeInTheDocument();
+    expect(await database.textboxSessions.count()).toBe(1);
   });
 });

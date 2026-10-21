@@ -1,25 +1,33 @@
+import type * as z from "zod";
 import type {
   PersonalLearningBackup,
   PersonalLearningBackupInput,
 } from "../domain/personal-backup";
 import {
   createPersonalLearningBackup,
-  parsePersonalLearningBackup,
-  parsePersonalLearningBackupText,
+  personalBackupTableSchemas,
+  readPersonalLearningBackup,
+  readPersonalLearningBackupText,
   serializePersonalLearningBackup,
+  type PersonalBackupReadResult,
 } from "../domain/personal-backup";
 import type {
   LearningBoxCard,
+  LearningBoxDeck,
   LearningBoxSourceLink,
 } from "../domain/learning-box";
-import { learningEventV1Schema } from "../domain/learning-bundle";
+import { readOneTolerant, readTolerant } from "../domain/tolerant-read";
+import type { QuarantinedRecord } from "../domain/tolerant-read";
 import { WORD_BOX_LIMITS, wordKey, type WordBox } from "../domain/word-box";
 import { PersonalLearningDatabase } from "./personal-learning-events";
+
+type PersonalBackupTableName = keyof typeof personalBackupTableSchemas;
 
 export type PersonalBackupRestoreConflict = {
   collection:
     | "learningEvents"
     | "learningBoxDecks"
+    | "learningBoxFolders"
     | "learningBoxCards"
     | "learningWordProgress"
     | "typingProgress"
@@ -34,6 +42,8 @@ export type PersonalBackupRestoreResult = {
   updated: number;
   unchanged: number;
   conflicts: PersonalBackupRestoreConflict[];
+  /** Einzelne Datensätze der Sicherung, die nicht lesbar waren und nicht eingespielt wurden. */
+  skipped: QuarantinedRecord[];
 };
 
 function sourceLinkKey(link: LearningBoxSourceLink) {
@@ -100,19 +110,66 @@ function sameJson(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+/**
+ * Gespeicherten Datensatz so lesen wie die Sicherung: Zusatzfelder einer neueren
+ * App-Version zählen beim Vergleich nicht. Unlesbare bleiben, wie sie sind.
+ */
+function stored<T>(table: PersonalBackupTableName, value: T) {
+  return readOneTolerant(personalBackupTableSchemas[table], value) ?? value;
+}
+
+/** Tabelle für die Sicherung lesen; unlesbare Datensätze bleiben in der Datenbank. */
+function readTable<T extends PersonalBackupTableName>(
+  table: T,
+  rows: readonly unknown[],
+) {
+  return readTolerant(personalBackupTableSchemas[table], rows, table)
+    .items as z.output<(typeof personalBackupTableSchemas)[T]>[];
+}
+
+function withoutFolder(deck: LearningBoxDeck) {
+  const next = { ...deck };
+  delete next.folderId;
+  return next;
+}
+
 export async function exportPersonalLearningBackup(
   database = new PersonalLearningDatabase(),
   exportedAt = new Date().toISOString(),
 ): Promise<PersonalLearningBackup> {
+  // Unlesbare Datensätze (z. B. aus einer neueren App-Version) bleiben in der
+  // Datenbank und blockieren die Sicherung der übrigen Daten nicht.
   const input: PersonalLearningBackupInput = {
-    learningEvents: await database.learningEvents.toArray(),
-    learningBoxDecks: await database.learningBoxDecks.toArray(),
-    learningBoxCards: await database.learningBoxCards.toArray(),
-    learningWordProgress: await database.learningWordProgress.toArray(),
-    typingProgress: await database.typingProgress.toArray(),
-    textboxSessions: await database.textboxSessions.toArray(),
-    wordBoxes: await database.wordBoxes.toArray(),
-    wordRounds: await database.wordRounds.toArray(),
+    learningEvents: readTable(
+      "learningEvents",
+      await database.learningEvents.toArray(),
+    ),
+    learningBoxDecks: readTable(
+      "learningBoxDecks",
+      await database.learningBoxDecks.toArray(),
+    ),
+    learningBoxFolders: readTable(
+      "learningBoxFolders",
+      await database.learningBoxFolders.toArray(),
+    ),
+    learningBoxCards: readTable(
+      "learningBoxCards",
+      await database.learningBoxCards.toArray(),
+    ),
+    learningWordProgress: readTable(
+      "learningWordProgress",
+      await database.learningWordProgress.toArray(),
+    ),
+    typingProgress: readTable(
+      "typingProgress",
+      await database.typingProgress.toArray(),
+    ),
+    textboxSessions: readTable(
+      "textboxSessions",
+      await database.textboxSessions.toArray(),
+    ),
+    wordBoxes: readTable("wordBoxes", await database.wordBoxes.toArray()),
+    wordRounds: readTable("wordRounds", await database.wordRounds.toArray()),
   };
   return createPersonalLearningBackup(input, exportedAt);
 }
@@ -130,12 +187,23 @@ export async function restorePersonalLearningBackup(
   value: unknown,
   database = new PersonalLearningDatabase(),
 ): Promise<PersonalBackupRestoreResult> {
-  const backup = parsePersonalLearningBackup(value);
+  return restorePersonalLearningBackupRead(
+    readPersonalLearningBackup(value),
+    database,
+  );
+}
+
+/** Spielt eine bereits tolerant gelesene Sicherung ein (Regel S-1, S-2). */
+export async function restorePersonalLearningBackupRead(
+  { backup, skipped }: PersonalBackupReadResult,
+  database = new PersonalLearningDatabase(),
+): Promise<PersonalBackupRestoreResult> {
   const result: PersonalBackupRestoreResult = {
     added: 0,
     updated: 0,
     unchanged: 0,
     conflicts: [],
+    skipped: [...skipped],
   };
 
   await database.transaction(
@@ -143,6 +211,7 @@ export async function restorePersonalLearningBackup(
     [
       database.learningEvents,
       database.learningBoxDecks,
+      database.learningBoxFolders,
       database.learningBoxCards,
       database.learningWordProgress,
       database.typingProgress,
@@ -152,27 +221,53 @@ export async function restorePersonalLearningBackup(
     ],
     async () => {
       for (const event of backup.data.learningEvents) {
-        const parsed = learningEventV1Schema.parse(event);
-        const current = await database.learningEvents.get(parsed.id);
+        const current = await database.learningEvents.get(event.id);
         if (!current) {
-          await database.learningEvents.add(parsed);
+          await database.learningEvents.add(event);
           result.added += 1;
-        } else if (sameJson(current, parsed)) {
+        } else if (sameJson(stored("learningEvents", current), event)) {
           result.unchanged += 1;
         } else {
           result.conflicts.push({
             collection: "learningEvents",
-            id: parsed.id,
+            id: event.id,
           });
         }
       }
 
-      for (const deck of backup.data.learningBoxDecks) {
+      for (const folder of backup.data.learningBoxFolders) {
+        const current = await database.learningBoxFolders.get(folder.id);
+        if (!current) {
+          await database.learningBoxFolders.add(folder);
+          result.added += 1;
+        } else if (sameJson(stored("learningBoxFolders", current), folder)) {
+          result.unchanged += 1;
+        } else if (folder.updatedAt > current.updatedAt) {
+          await database.learningBoxFolders.put(folder);
+          result.updated += 1;
+        } else {
+          result.conflicts.push({
+            collection: "learningBoxFolders",
+            id: folder.id,
+          });
+        }
+      }
+
+      // Stapel in einem Ordner, den es nicht gibt, wären auf der Startseite
+      // unsichtbar: Die Zuordnung entfällt, der Stapel liegt dann lose.
+      const folderIds = new Set(
+        await database.learningBoxFolders.toCollection().primaryKeys(),
+      );
+      for (const incoming of backup.data.learningBoxDecks) {
+        const deck =
+          incoming.folderId && !folderIds.has(incoming.folderId)
+            ? withoutFolder(incoming)
+            : incoming;
         const current = await database.learningBoxDecks.get(deck.id);
         if (!current) {
           await database.learningBoxDecks.add(deck);
           result.added += 1;
-        } else if (sameJson(current, deck)) {
+        } else if (sameJson(stored("learningBoxDecks", current), deck)) {
           result.unchanged += 1;
         } else if (deck.updatedAt > current.updatedAt) {
           await database.learningBoxDecks.put(deck);
@@ -205,7 +300,7 @@ export async function restorePersonalLearningBackup(
           card.lastReviewed > current.lastReviewed &&
           card.updatedAt >= current.updatedAt;
 
-        if (sameJson(current, card)) {
+        if (sameJson(stored("learningBoxCards", current), card)) {
           result.unchanged += 1;
         } else if (incomingProgressIsNewer && !localProgressIsNewer) {
           const nextCard = { ...card };
@@ -239,7 +334,9 @@ export async function restorePersonalLearningBackup(
         if (!current) {
           await database.learningWordProgress.add(progress);
           result.added += 1;
-        } else if (sameJson(current, progress)) {
+        } else if (
+          sameJson(stored("learningWordProgress", current), progress)
+        ) {
           result.unchanged += 1;
         } else if (progress.lastPracticedAt > current.lastPracticedAt) {
           await database.learningWordProgress.put(progress);
@@ -257,7 +354,7 @@ export async function restorePersonalLearningBackup(
         if (!current) {
           await database.typingProgress.add(progress);
           result.added += 1;
-        } else if (sameJson(current, progress)) {
+        } else if (sameJson(stored("typingProgress", current), progress)) {
           result.unchanged += 1;
         } else if (progress.lastPracticedAt > current.lastPracticedAt) {
           await database.typingProgress.put(progress);
@@ -275,7 +372,7 @@ export async function restorePersonalLearningBackup(
         if (!current) {
           await database.textboxSessions.add(session);
           result.added += 1;
-        } else if (sameJson(current, session)) {
+        } else if (sameJson(stored("textboxSessions", current), session)) {
           result.unchanged += 1;
         } else if (
           current.status === "abgeschlossen" &&
@@ -304,7 +401,7 @@ export async function restorePersonalLearningBackup(
         if (!current) {
           await database.wordBoxes.add(box);
           result.added += 1;
-        } else if (sameJson(current, box)) {
+        } else if (sameJson(stored("wordBoxes", current), box)) {
           result.unchanged += 1;
         } else {
           const merged = mergeWordBoxes(current, box);
@@ -324,7 +421,7 @@ export async function restorePersonalLearningBackup(
         if (!current) {
           await database.wordRounds.add(round);
           result.added += 1;
-        } else if (sameJson(current, round)) {
+        } else if (sameJson(stored("wordRounds", current), round)) {
           result.unchanged += 1;
         } else {
           // Abgeschlossene Runden sind unveränderlich: Inhalt weicht ab.
@@ -341,8 +438,8 @@ export async function restorePersonalLearningBackupText(
   text: string,
   database = new PersonalLearningDatabase(),
 ) {
-  return restorePersonalLearningBackup(
-    parsePersonalLearningBackupText(text),
+  return restorePersonalLearningBackupRead(
+    readPersonalLearningBackupText(text),
     database,
   );
 }

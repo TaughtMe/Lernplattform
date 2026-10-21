@@ -189,10 +189,11 @@ describe("Wortbox-Repository", () => {
     await expect(repository.copyCollection("gibt-es-nicht")).rejects.toThrow();
   });
 
-  it("liest keine ungültigen gespeicherten Wortboxen", async () => {
+  it("überspringt ungültige gespeicherte Wortboxen, ohne sie zu löschen", async () => {
     const database = createDatabase();
     await database.wordBoxes.add({ id: "kaputt" } as unknown as WordBox);
-    await expect(createWordBoxRepository(database).list()).rejects.toThrow();
+    expect(await createWordBoxRepository(database).list()).toEqual([]);
+    expect(await database.wordBoxes.count()).toBe(1);
   });
 
   it("lässt den Lernstand eines Wortes beim Löschen aus der Wortbox bestehen", async () => {

@@ -1,16 +1,18 @@
 import {
   parsePersonalLearningBackupText,
+  PersonalBackupVersionError,
+  readPersonalLearningBackupText,
   type PersonalLearningBackup,
 } from "../../domain/personal-backup";
 import {
   exportPersonalLearningBackup,
-  restorePersonalLearningBackupText,
+  restorePersonalLearningBackupRead,
   serializePersonalLearningBackupFromDatabase,
 } from "../../storage/personal-backup";
 import { PersonalLearningDatabase } from "../../storage/personal-learning-events";
 
 export type PersonalBackupStorageErrorCode =
-  "unsupported" | "quota-exceeded" | "corrupt" | "io";
+  "unsupported" | "quota-exceeded" | "corrupt" | "newer-version" | "io";
 
 export class PersonalBackupStorageError extends Error {
   constructor(
@@ -21,6 +23,20 @@ export class PersonalBackupStorageError extends Error {
     super(message, options);
     this.name = "PersonalBackupStorageError";
   }
+}
+
+/** Fehler beim Lesen einer Sicherungsdatei; eine neuere App-Version bekommt ihre eigene Meldung. */
+function corruptBackupError(error: unknown) {
+  if (error instanceof PersonalBackupVersionError) {
+    return new PersonalBackupStorageError("newer-version", error.message, {
+      cause: error,
+    });
+  }
+  return new PersonalBackupStorageError(
+    "corrupt",
+    "Die Sicherungsdatei ist beschädigt oder hat ein unbekanntes Datenformat.",
+    { cause: error },
+  );
 }
 
 function isQuotaError(error: unknown) {
@@ -89,20 +105,13 @@ export async function restorePersonalBackupFromDirectory(
   try {
     const file = await directory.getFileHandle(filename);
     const text = await (await file.getFile()).text();
-    let backupText: ReturnType<typeof parsePersonalLearningBackupText>;
+    let backup: ReturnType<typeof readPersonalLearningBackupText>;
     try {
-      backupText = parsePersonalLearningBackupText(text);
+      backup = readPersonalLearningBackupText(text);
     } catch (error) {
-      throw new PersonalBackupStorageError(
-        "corrupt",
-        "Die Sicherungsdatei ist beschädigt oder hat ein unbekanntes Datenformat.",
-        { cause: error },
-      );
+      throw corruptBackupError(error);
     }
-    return await restorePersonalLearningBackupText(
-      JSON.stringify(backupText),
-      database,
-    );
+    return await restorePersonalLearningBackupRead(backup, database);
   } catch (error) {
     throw mapStorageError(error);
   }
@@ -112,12 +121,25 @@ export async function readPersonalBackupFile(file: File) {
   try {
     return parsePersonalLearningBackupText(await file.text());
   } catch (error) {
-    throw new PersonalBackupStorageError(
-      "corrupt",
-      "Die Sicherungsdatei ist beschädigt oder hat ein unbekanntes Datenformat.",
-      { cause: error },
-    );
+    throw corruptBackupError(error);
   }
+}
+
+/**
+ * Spielt eine Sicherungsdatei ein. Einzelne unlesbare Datensätze werden
+ * übersprungen und im Ergebnis (`skipped`) gezählt.
+ */
+export async function restorePersonalBackupFromFile(
+  file: File,
+  database = new PersonalLearningDatabase(),
+) {
+  let backup: ReturnType<typeof readPersonalLearningBackupText>;
+  try {
+    backup = readPersonalLearningBackupText(await file.text());
+  } catch (error) {
+    throw corruptBackupError(error);
+  }
+  return restorePersonalLearningBackupRead(backup, database);
 }
 
 export async function buildPersonalBackup(

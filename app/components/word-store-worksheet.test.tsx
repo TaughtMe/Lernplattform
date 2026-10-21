@@ -188,6 +188,27 @@ describe("WordStoreWorksheet", () => {
       `wsheet-${crypto.randomUUID()}`,
     );
     databases.push(database);
+    render(
+      <WordStoreWorksheet
+        repositories={{
+          rounds: {
+            ...createWordRoundRepository(database),
+            list: () => Promise.reject(new Error("Speicher gesperrt")),
+          },
+          progress: createLearningWordProgressRepository(database),
+        }}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("nicht verfügbar"),
+    );
+  });
+
+  it("überspringt einen unlesbaren Datensatz, statt alles zu blockieren", async () => {
+    const database = new PersonalLearningDatabase(
+      `wsheet-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
     await database.wordRounds.put({ id: "kaputt" } as never);
     render(
       <WordStoreWorksheet
@@ -197,8 +218,9 @@ describe("WordStoreWorksheet", () => {
         }}
       />,
     );
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("nicht verfügbar"),
-    );
+    expect(
+      await screen.findByText("Noch keine Wortspeicher-Runde abgeschlossen"),
+    ).toBeInTheDocument();
+    expect(await database.wordRounds.count()).toBe(1);
   });
 });

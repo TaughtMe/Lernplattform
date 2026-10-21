@@ -6,6 +6,7 @@ import {
   type DailyPlanCandidate,
 } from "../domain/daily-plan";
 import { learningEventV1Schema } from "../domain/learning-bundle";
+import { readTolerant } from "../domain/tolerant-read";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import {
   isLearningBoxCardDue,
@@ -20,6 +21,7 @@ import {
   unresolvedEventErrors,
 } from "./learning-recommendations";
 import { PersonalLearningDatabase } from "./personal-learning-events";
+import { learningWordProgressSchema } from "./progress-schema";
 
 /** Pläne, die älter als diese Zahl Tage sind, werden beim Erzeugen eines neuen Plans gelöscht. */
 export const DAILY_PLAN_KEEP_DAYS = 7;
@@ -169,7 +171,7 @@ export function dailyPlanCandidates(
   return candidates;
 }
 
-/** Lernstand, aus dem die Portion entsteht (Ereignisse werden geprüft). */
+/** Lernstand, aus dem die Portion entsteht (Ereignisse werden tolerant gelesen, Regel S-1). */
 async function readSources(database: PersonalLearningDatabase) {
   const [events, cards, words] = await Promise.all([
     database.learningEvents.toArray(),
@@ -177,9 +179,13 @@ async function readSources(database: PersonalLearningDatabase) {
     database.learningWordProgress.toArray(),
   ]);
   return {
-    events: events.map((event) => learningEventV1Schema.parse(event)),
+    events: readTolerant(learningEventV1Schema, events, "learningEvents").items,
     cards,
-    words,
+    words: readTolerant(
+      learningWordProgressSchema,
+      words,
+      "learningWordProgress",
+    ).items,
   };
 }
 
@@ -232,9 +238,11 @@ export function createDailyPlanRepository(
       plan,
       ...dailyPlanProgress(
         plan,
-        (await database.learningEvents.toArray()).map((event) =>
-          learningEventV1Schema.parse(event),
-        ),
+        readTolerant(
+          learningEventV1Schema,
+          await database.learningEvents.toArray(),
+          "learningEvents",
+        ).items,
       ),
     };
   };

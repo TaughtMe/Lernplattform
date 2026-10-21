@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { backupFailureMessage } from "../../src/integrations/backup/backup-failure";
 import {
   createGoogleDriveTarget,
   createOneDriveTarget,
@@ -144,7 +145,11 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
           setMessage(
             result === null
               ? "In der Cloud liegt noch keine Sicherung."
-              : `Zusammengeführt: ${result.added} neu, ${result.updated} aktualisiert.`,
+              : `Zusammengeführt: ${result.added} neu, ${result.updated} aktualisiert.${
+                  result.skipped.length
+                    ? ` ${result.skipped.length} ${result.skipped.length === 1 ? "Eintrag" : "Einträge"} konnten nicht gelesen werden und wurden übersprungen.`
+                    : ""
+                }`,
           );
         }
       } else {
@@ -173,7 +178,12 @@ export function CloudSyncPanel({ area }: { area: "student" | "teacher" }) {
       setMessage(
         error instanceof CloudSyncError
           ? error.message
-          : "Die Synchronisation ist fehlgeschlagen.",
+          : area === "student"
+            ? backupFailureMessage(
+                "Die Synchronisation ist fehlgeschlagen.",
+                error,
+              )
+            : "Die Synchronisation ist fehlgeschlagen.",
       );
     } finally {
       setBusy(false);
