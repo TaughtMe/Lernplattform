@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { Icon } from "../ui/icons";
 import {
   readBrowserLearningChoice,
   requestPersistentStorage,
@@ -38,9 +39,9 @@ function useIosBrowserGuide(): InstallGuide | null {
 }
 
 /**
- * Hinweise der Lernen-Startseite zum Schutz vor Speicherverlust (Audit B-002,
- * Regeln S-4 und S-5). Beide erscheinen nur auf einem Gerät ohne Lernstand und
- * blockieren nichts. `hasLearningState` ist `null`, solange unbekannt.
+ * Hinweis der Lernen-Startseite zum Home-Bildschirm (Audit B-002, Regel S-4):
+ * nur auf iPad und iPhone im Browser, auf einem Gerät ohne Lernstand, ohne
+ * Blockade. `hasLearningState` ist `null`, solange unbekannt.
  */
 export function StorageProtectionNotice({
   hasLearningState,
@@ -65,10 +66,11 @@ export function StorageProtectionNotice({
 
   if (hasLearningState !== false) return null;
   const showInstall = iosGuide !== null && !browserChosen;
+  if (!showInstall) return null;
 
   return (
     <div className={styles.notices} data-testid="storage-protection">
-      {showInstall ? (
+      {
         <section
           className="ui-notice ui-stack"
           aria-labelledby="install-first-title"
@@ -94,19 +96,51 @@ export function StorageProtectionNotice({
             Trotzdem im Browser lernen
           </button>
         </section>
-      ) : null}
-      <section className="ui-notice ui-stack" aria-label="Sicherung einspielen">
-        <p className={styles.text}>
-          Du hast schon gelernt und eine Sicherungsdatei? Hol sie hierher.
-        </p>
-        <Link
-          href={RESTORE_BACKUP_HREF}
-          className={`ui-btn ui-btn--ghost ui-btn--sm ${styles.action}`}
-        >
-          Ich habe schon gelernt – Sicherung einspielen
-        </Link>
-      </section>
+      }
     </div>
+  );
+}
+
+/** Wie lange die Sprechblase der Wolke nach dem Öffnen stehen bleibt. */
+const BUBBLE_MS = 6000;
+
+/**
+ * „Sicherung einspielen“ als kleine Wolke im Seitenkopf (Regel S-5): nur auf
+ * einem Gerät ohne Lernstand. Beim Öffnen gleitet kurz eine Sprechblase
+ * herein; danach zeigt sie sich wieder bei Zeiger oder Fokus auf der Wolke.
+ * Die Sprechblase gehört zum Link, sein Name steht im `aria-label`.
+ */
+export function RestoreBackupCloud({
+  hasLearningState,
+}: {
+  hasLearningState: boolean | null;
+}) {
+  const [intro, setIntro] = useState(true);
+  const [hover, setHover] = useState(false);
+  useEffect(() => {
+    if (hasLearningState !== false) return;
+    const timer = window.setTimeout(() => setIntro(false), BUBBLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [hasLearningState]);
+
+  if (hasLearningState !== false) return null;
+  return (
+    <Link
+      href={RESTORE_BACKUP_HREF}
+      aria-label="Ich habe schon gelernt – Sicherung einspielen"
+      className={styles.cloud}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+    >
+      <Icon name="cloud" size={19} />
+      {intro || hover ? (
+        <span className={styles.bubble} aria-hidden="true">
+          Schon mal gelernt? Hier holst du deine Sicherung zurück.
+        </span>
+      ) : null}
+    </Link>
   );
 }
 

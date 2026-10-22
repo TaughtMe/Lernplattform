@@ -26,6 +26,11 @@
   gap: 12px;
   padding: 20px 20px 0;
 }
+.headEnd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .headStart {
   display: flex;
   align-items: center;
