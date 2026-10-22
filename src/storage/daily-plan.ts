@@ -9,6 +9,7 @@ import { learningEventV1Schema } from "../domain/learning-bundle";
 import { readTolerant } from "../domain/tolerant-read";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import {
+  effectiveLearningBoxLevel,
   isLearningBoxCardDue,
   type LearningBoxCard,
   type LearningBoxDirection,
@@ -44,6 +45,7 @@ function cardCandidates(card: LearningBoxCard, nowMs: number) {
   const directions: Array<{
     direction: LearningBoxDirection;
     interval: number;
+    /** Gespeicherte Box: „Fehler“ ist ein Ereignis (falsch beantwortet), keine Zeitrückstufung. */
     box: number;
     nextReview: number;
   }> = [
@@ -68,8 +70,13 @@ function cardCandidates(card: LearningBoxCard, nowMs: number) {
       direction: entry.direction,
     };
     if (entry.interval === 0) {
-      // Die Rückrichtung wird erst angeboten, wenn vorwärts Box 2 erreicht ist.
-      if (entry.direction === "reverse" && card.box < 2) continue;
+      // Die Rückrichtung wird erst angeboten, wenn vorwärts Box 2 erreicht ist
+      // (wirksame Box: nach langer Pause zuerst wieder vorwärts üben).
+      if (
+        entry.direction === "reverse" &&
+        effectiveLearningBoxLevel(card, "forward", nowMs) < 2
+      )
+        continue;
       candidates.push({ ...base, kind: "new", dueAt: iso(card.createdAt) });
     } else if (isLearningBoxCardDue(card, entry.direction, nowMs)) {
       candidates.push({

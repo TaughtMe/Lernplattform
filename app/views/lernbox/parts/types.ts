@@ -10,8 +10,10 @@ export type LbDeck = {
   folderId: string | null;
   total: number;
   due: number;
-  /** Karten je Box 1–5. */
+  /** Karten je (wirksamer) Box 1–5. */
   boxes: readonly number[];
+  /** Karten, die in mindestens einer Richtung lange nicht geübt sind. */
+  longUnpracticed: number;
   /** z. B. „aus dem Laufdiktat“ oder „eigene“. */
   sourceLabel: string;
   /** Sprachen von Vorder- und Rückseite, z. B. „Deutsch“ und „Englisch“. */
@@ -24,7 +26,10 @@ export type LbCard = {
   question: string;
   answer: string;
   tag: string | null;
+  /** Wirksame Box (nach Schonfrist und Rückstufung), nicht die gespeicherte. */
   box: number;
+  /** In mindestens einer Richtung ab 14 Tagen überfällig. */
+  longUnpracticed: boolean;
   deckId: string;
   deckTitle: string;
 };

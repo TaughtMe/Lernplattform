@@ -111,6 +111,8 @@ export function useLearnerDashboard() {
               detail: `${word.incorrectAttempts}×falsch`,
               route: "/frei/german/lernwoerter",
             })),
+          // Gespeicherte Box 1 = zuletzt falsch; eine Rückstufung nach Zeit macht
+          // eine Karte nicht „schwierig“.
           ...cards
             .filter((card) => card.box === 1 && card.lastReviewed > 0)
             .sort((left, right) => right.lastReviewed - left.lastReviewed)

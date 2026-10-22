@@ -12,6 +12,10 @@ import styles from "../lernbox-screen.module.css";
 export function Home(props: LernBoxScreenProps) {
   const { decks } = props;
   const total = decks.reduce((sum, deck) => sum + deck.total, 0);
+  const longUnpracticed = decks.reduce(
+    (sum, deck) => sum + deck.longUnpracticed,
+    0,
+  );
   const dueDecks =
     props.todayDecks ?? decks.filter((deck) => deck.due > 0).length;
   const loose = decks.filter((deck) => !deck.folderId);
@@ -69,6 +73,12 @@ export function Home(props: LernBoxScreenProps) {
             <span className={styles.muted}>{total} insgesamt</span>
           </span>
           <BoxChart decks={decks} onPick={(box) => start(`box:${box}`)} />
+          {longUnpracticed > 0 ? (
+            <p className={styles.muted}>
+              {longUnpracticed} lange nicht geübt (seit mindestens 14 Tagen
+              überfällig)
+            </p>
+          ) : null}
           <p className={styles.muted}>
             Tippe auf eine Box, um nur ihre Vokabeln zu üben. Sie wandern dabei
             nicht weiter.

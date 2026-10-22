@@ -1235,6 +1235,13 @@
   gap: 6px;
   justify-content: flex-end;
 }
+.longNote {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink2);
+  font-size: 12px;
+  font-weight: 600;
+}
 .rowEditing .cellBox {
   justify-self: start;
 }

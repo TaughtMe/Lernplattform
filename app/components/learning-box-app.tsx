@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  effectiveLearningBoxLevel,
   evaluateLearningBoxAnswer,
   filterLearningBoxCards,
-  getLearningBoxLevel,
   getLearningBoxPrompt,
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
+  isLearningBoxCardLongUnpracticed,
   isLearningBoxCardScheduledDue,
   learningBoxAlternatives,
   learningBoxDirectionAt,
@@ -92,7 +93,11 @@ function showAlternatives(text: string) {
   return learningBoxAlternatives(text).join(" / ");
 }
 
-/** Karte gilt als Fehler, wenn sie schon geübt wurde und wieder in Box 1 liegt. */
+/**
+ * Karte gilt als Fehler, wenn sie schon geübt wurde und wieder in Box 1 liegt.
+ * Bewusst die gespeicherte Box: Ein Fehler ist eine falsche Antwort; eine
+ * Rückstufung nach Zeit („lange nicht geübt“) ist kein Fehler.
+ */
 function isMistake(card: LearningBoxCard) {
   const reviewed = card.lastReviewed > card.createdAt;
   return (
@@ -296,8 +301,10 @@ export function LearningBoxApp({
   const lbDecks: LbDeck[] = decks.map((deck) => {
     const inside = cards.filter((card) => card.deckId === deck.id);
     const boxes = [0, 0, 0, 0, 0];
-    for (const card of inside)
-      boxes[card.box - 1] = (boxes[card.box - 1] ?? 0) + 1;
+    for (const card of inside) {
+      const index = effectiveLearningBoxLevel(card, "forward", now) - 1;
+      boxes[index] = (boxes[index] ?? 0) + 1;
+    }
     return {
       id: deck.id,
       title: deck.title,
@@ -306,6 +313,9 @@ export function LearningBoxApp({
       due: inside.filter((card) => isLearningBoxCardScheduledDue(card, now))
         .length,
       boxes,
+      longUnpracticed: inside.filter((card) =>
+        isLearningBoxCardLongUnpracticed(card, now),
+      ).length,
       sourceLabel: sourceLabel(deck),
       frontLabel: languageName(deck.frontLocale),
       backLabel: languageName(deck.backLocale),
@@ -347,7 +357,11 @@ export function LearningBoxApp({
     const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
     if (box) {
       title = `Box ${box} (nur üben)`;
-      pool = cards.filter((card) => card.box === box);
+      // Wie das Diagramm: nach wirksamer Box.
+      const startedAt = Date.now();
+      pool = cards.filter(
+        (card) => effectiveLearningBoxLevel(card, "forward", startedAt) === box,
+      );
     } else if (scope === "heute") {
       planQueue = todayQueue;
     } else if (scope === "errors") {
@@ -392,12 +406,14 @@ export function LearningBoxApp({
     if (!session) return;
     const item = session.queue[session.index];
     if (!item) return;
+    const answeredAt = Date.now();
     const updated = session.practice
       ? item.card
       : processLearningBoxResult(item.card, {
           correct,
           direction: item.direction,
           mode: session.mode,
+          now: answeredAt,
         });
     if (!session.practice) {
       await repository.putCardAndEvent({
@@ -427,8 +443,12 @@ export function LearningBoxApp({
           correct,
           expected: showAlternatives(expected),
           given: session.answer.trim(),
-          boxFrom: getLearningBoxLevel(item.card, item.direction),
-          boxTo: getLearningBoxLevel(updated, item.direction),
+          boxFrom: effectiveLearningBoxLevel(
+            item.card,
+            item.direction,
+            answeredAt,
+          ),
+          boxTo: effectiveLearningBoxLevel(updated, item.direction, answeredAt),
           practice: session.practice,
           nextLabel: session.practice
             ? "nur geübt"
@@ -594,7 +614,7 @@ export function LearningBoxApp({
         item?.direction === "reverse" ? labels.reverse : labels.forward,
       progress: total ? answered / total : 1,
       eyebrow: LANGUAGES[answerLocale]?.into ?? "Antwort",
-      box: item ? getLearningBoxLevel(item.card, item.direction) : 1,
+      box: item ? effectiveLearningBoxLevel(item.card, item.direction, now) : 1,
       question: showAlternatives(prompt?.question ?? ""),
       mode: session.mode,
       answer: session.answer,
@@ -618,7 +638,8 @@ export function LearningBoxApp({
       question: card.question,
       answer: card.answer,
       tag: card.tag ?? null,
-      box: card.box,
+      box: effectiveLearningBoxLevel(card, "forward", now),
+      longUnpracticed: isLearningBoxCardLongUnpracticed(card, now),
       deckId: card.deckId,
       deckTitle: deckById.get(card.deckId)?.title ?? "",
     }));
