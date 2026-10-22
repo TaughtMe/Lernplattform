@@ -8,6 +8,13 @@ export type TextSplitConfig = {
   newlineEnabled: boolean;
   newlineMode: NewlineMode;
   groupConsecutiveSeparators: boolean;
+  /**
+   * Wahl für „Zeilen“ („Nur Leerzeilen“), solange „Sätzen“ gilt. Dort teilt
+   * jeder Zeilenumbruch (`newlineMode: "line"`); die Wahl bleibt hier stehen,
+   * damit ein Wechsel zu „Zeilen“ und zurück sie nicht vergisst. Ohne Wirkung
+   * auf die Teilung.
+   */
+  lineChoice?: NewlineMode;
 };
 export type ManualRange = {
   id: string;
@@ -158,6 +165,11 @@ export function buildRunningDictationSections(
     }
     boundaries = merged;
   }
+  // „Nur Leerzeilen“: einfache Zeilenumbrüche bleiben im Abschnitt. Die
+  // Schüleransicht setzt Abschnitte in einer Zeile (Umbrüche zählen dort als
+  // Leerraum) und prüft die Eingabe in einer Zeile, deshalb werden sie zu einem
+  // Leerzeichen.
+  const joinLines = config.newlineEnabled && config.newlineMode === "paragraph";
   const sections: TextSection[] = [];
   const add = (startIndex: number, endIndex: number) => {
     const raw = text.slice(startIndex, endIndex);
@@ -169,7 +181,7 @@ export function buildRunningDictationSections(
       id: `s-${start}-${end}`,
       start,
       end,
-      text: value,
+      text: joinLines ? value.replace(/[^\S\n]*\n\s*/g, " ") : value,
       source: manualSections.some(
         (range) => start >= range.start && end <= range.end,
       )

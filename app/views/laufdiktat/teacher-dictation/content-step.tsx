@@ -7,7 +7,7 @@ import styles from "../dictation-editor.module.css";
 import { MathEditor } from "../math-editor";
 import { VocabularyEditor } from "../vocabulary-editor";
 import { VocabularyPicker } from "../vocabulary-picker";
-import { SPLITS } from "./constants";
+import { LINE_MODES, MAX_CUSTOM_SPLIT, SPLIT_MARKS, SPLITS } from "./constants";
 import { KIND_LABELS } from "./editor-options";
 import type { ContentKind, TeacherDictationScreenProps } from "./types";
 
@@ -89,7 +89,10 @@ function TitleRow(props: TeacherDictationScreenProps) {
  * ganze Breite.
  */
 export function ContentStep(props: TeacherDictationScreenProps) {
-  const { content, onText, onSplit, onImportFile, onMoveSection } = props;
+  const { content, onText, onSplit, onSplitOptions, onImportFile } = props;
+  const { onMoveSection } = props;
+  const splitOptions =
+    content.kind === "text" ? content.splitOptions : undefined;
   const count = content.sections.length;
   const [dragged, setDragged] = useState<number | null>(null);
   const sortable = Boolean(onMoveSection) && content.kind === "text";
@@ -160,6 +163,81 @@ export function ContentStep(props: TeacherDictationScreenProps) {
             </label>
           ) : null}
         </div>
+        {splitOptions && content.split === "satz" ? (
+          <div className={styles.splitMore}>
+            <div className={styles.split} role="group" aria-label="Trennen bei">
+              <span className={styles.splitLabel} aria-hidden="true">
+                Trennen bei
+              </span>
+              {SPLIT_MARKS.map(([mark, name]) => {
+                const active = splitOptions.marks.includes(mark);
+                // Der letzte aktive Knopf bleibt an: Ohne Trenner gäbe es keine Abschnitte.
+                const last = active && splitOptions.marks.length === 1;
+                return (
+                  <button
+                    key={mark}
+                    type="button"
+                    className={cx(styles.splitChip, styles.markChip)}
+                    aria-pressed={active}
+                    aria-disabled={last || undefined}
+                    aria-label={name}
+                    title={name}
+                    onClick={() => {
+                      if (last) return;
+                      onSplitOptions?.({
+                        marks: active
+                          ? splitOptions.marks.filter((item) => item !== mark)
+                          : [...splitOptions.marks, mark],
+                      });
+                    }}
+                  >
+                    {mark}
+                  </button>
+                );
+              })}
+            </div>
+            <label className={styles.customField}>
+              <span className={styles.splitLabel}>Eigenes Zeichen</span>
+              <input
+                type="text"
+                className={styles.customInput}
+                value={splitOptions.custom}
+                maxLength={MAX_CUSTOM_SPLIT}
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                placeholder="z. B. ;"
+                onChange={(event) =>
+                  onSplitOptions?.({ custom: event.target.value })
+                }
+              />
+            </label>
+          </div>
+        ) : null}
+        {splitOptions && content.split === "zeile" ? (
+          <div className={styles.splitMore}>
+            <div
+              className={styles.split}
+              role="group"
+              aria-label="Zeilen teilen"
+            >
+              <span className={styles.splitLabel} aria-hidden="true">
+                Zeilen teilen
+              </span>
+              {LINE_MODES.map(([lineMode, label]) => (
+                <button
+                  key={lineMode}
+                  type="button"
+                  className={styles.splitChip}
+                  aria-pressed={splitOptions.lineMode === lineMode}
+                  onClick={() => onSplitOptions?.({ lineMode })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
       <section className={styles.sectionsColumn} aria-label="Abschnitte">
         <div className={styles.sectionsHead}>

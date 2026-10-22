@@ -7,6 +7,16 @@ import type { Theme } from "../../parts/parts";
 export type TeacherStep = "import" | "settings" | "lobby" | "live";
 export type ContentKind = "text" | "vocabulary" | "math";
 export type SplitMode = "satz" | "zeile" | "wort";
+/** „Zeilen“: an jeder Zeile teilen oder nur an Leerzeilen. */
+export type LineMode = "each" | "blank";
+/** Feineinstellung der Zerlegung: Satzzeichen, eigenes Zeichen, Zeilenmodus. */
+export type SplitOptions = {
+  /** Aktive Satzzeichen („.“, „!“, „?“, „,“); mindestens eins. */
+  marks: readonly string[];
+  /** Eigenes Trennzeichen, höchstens drei Zeichen; leer = keins. */
+  custom: string;
+  lineMode: LineMode;
+};
 export type DictationMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
 export type DictationOption =
   "tts" | "shuffle" | "strict" | "taskHelp" | "stars" | "ink" | "flicker";
@@ -62,6 +72,8 @@ export type TeacherDictationScreenProps = {
     kind: ContentKind;
     text: string;
     split: SplitMode;
+    /** Ohne Angabe fehlen die Zusatzzeilen unter „Teilen nach“. */
+    splitOptions?: SplitOptions;
     sections: readonly string[];
   };
   mode: DictationMode;
@@ -160,6 +172,7 @@ export type TeacherDictationScreenProps = {
   onMoveSection?: (from: number, to: number) => void;
   onText?: (text: string) => void;
   onSplit?: (split: SplitMode) => void;
+  onSplitOptions?: (patch: Partial<SplitOptions>) => void;
   onImportFile?: (file: File | undefined) => void;
   onMode?: (mode: DictationMode) => void;
   onToggleOption?: (option: DictationOption) => void;

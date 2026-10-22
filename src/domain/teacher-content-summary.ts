@@ -7,11 +7,15 @@ import {
   DEFAULT_TEXT_SPLIT_CONFIG,
   type TextSplitConfig,
 } from "./running-dictation-sections";
-import type {
-  TeacherContentKind,
-  TeacherContentPackage,
-  TeacherPreparedSettings,
-  TeacherTextSplit,
+import {
+  MAX_CUSTOM_SPLIT_LENGTH,
+  teacherSplitMarkSchema,
+  type TeacherContentKind,
+  type TeacherContentPackage,
+  type TeacherLineMode,
+  type TeacherPreparedSettings,
+  type TeacherSplitMark,
+  type TeacherTextSplit,
 } from "./teacher-content-library";
 
 /** Auswahl „Nicht zugeordnet“ in Adresse und Filtern. */
@@ -26,17 +30,140 @@ export function contentKindOf(
   return entry.kind ?? "vocabulary";
 }
 
-/** Trenn-Konfiguration für Satz (Satzzeichen), Zeile oder Wort. */
-export function textSplitConfigFor(mode: TeacherTextSplit): TextSplitConfig {
-  if (mode === "satz") return { ...DEFAULT_TEXT_SPLIT_CONFIG };
-  if (mode === "zeile") {
-    return { ...DEFAULT_TEXT_SPLIT_CONFIG, punctuationEnabled: false };
+/** Satzzeichen in der Reihenfolge der Knöpfe. */
+export const SPLIT_MARKS: readonly TeacherSplitMark[] =
+  teacherSplitMarkSchema.options;
+
+/** Standard bei „Sätzen“: wie vor der Option „Trennen bei“. */
+export const DEFAULT_SPLIT_MARKS: readonly TeacherSplitMark[] = [".", "!", "?"];
+
+/**
+ * Feineinstellungen der Zerlegung. Fehlende Angaben gelten als Standard
+ * („. ! ?“, kein eigenes Zeichen, jede Zeile): So lesen sich Inhalte, die vor
+ * dieser Option abgelegt wurden, genau wie früher.
+ */
+export type TextSplitOptions = {
+  marks?: readonly string[] | undefined;
+  custom?: string | undefined;
+  lineMode?: TeacherLineMode | undefined;
+};
+
+/** Nur bekannte Satzzeichen, ohne Doppelte, in Knopf-Reihenfolge; leer = Standard. */
+export function normalizeSplitMarks(
+  marks: readonly string[] | undefined,
+): TeacherSplitMark[] {
+  const known = SPLIT_MARKS.filter((mark) => marks?.includes(mark));
+  return known.length ? known : [...DEFAULT_SPLIT_MARKS];
+}
+
+/** Eigenes Trennzeichen: ohne Leerraum (das wäre „Wörter“), höchstens drei Zeichen. */
+export function normalizeSplitCustom(value: string | undefined): string {
+  return [...(value ?? "").replace(/\s/gu, "")]
+    .slice(0, MAX_CUSTOM_SPLIT_LENGTH)
+    .join("");
+}
+
+/**
+ * Trenn-Konfiguration für Satz (Satzzeichen), Zeile oder Wort. Die Angaben
+ * für Zeichen und Zeilen bleiben auch im jeweils anderen Modus in der
+ * Konfiguration stehen (dort ohne Wirkung), damit ein Wechsel sie nicht löscht.
+ */
+export function textSplitConfigFor(
+  mode: TeacherTextSplit,
+  options: TextSplitOptions = {},
+): TextSplitConfig {
+  if (mode === "wort") {
+    return {
+      ...DEFAULT_TEXT_SPLIT_CONFIG,
+      punctuation: [],
+      customDelimiters: [{ id: "wort", value: " " }],
+    };
+  }
+  const custom = normalizeSplitCustom(options.custom);
+  const base: TextSplitConfig = {
+    ...DEFAULT_TEXT_SPLIT_CONFIG,
+    punctuation: normalizeSplitMarks(options.marks),
+    customDelimiters: custom ? [{ id: "eigen", value: custom }] : [],
+  };
+  if (mode === "satz") {
+    return options.lineMode === "blank"
+      ? { ...base, lineChoice: "paragraph" }
+      : base;
   }
   return {
-    ...DEFAULT_TEXT_SPLIT_CONFIG,
-    punctuation: [],
-    customDelimiters: [{ id: "wort", value: " " }],
+    ...base,
+    punctuationEnabled: false,
+    newlineMode: options.lineMode === "blank" ? "paragraph" : "line",
   };
+}
+
+/** Umkehrung zu `textSplitConfigFor`; bei „Wörtern“ sind es die Standardwerte. */
+export function textSplitOptionsOf(config: TextSplitConfig): {
+  marks: TeacherSplitMark[];
+  custom: string;
+  lineMode: TeacherLineMode;
+} {
+  const custom = config.customDelimiters.find(
+    ({ value }) => value.trim() !== "",
+  );
+  return {
+    marks: normalizeSplitMarks(config.punctuation),
+    custom: normalizeSplitCustom(custom?.value),
+    // Bei „Sätzen“ ruht die Wahl in `lineChoice`, bei „Zeilen“ gilt `newlineMode`.
+    lineMode:
+      (config.punctuationEnabled ? config.lineChoice : config.newlineMode) ===
+      "paragraph"
+        ? "blank"
+        : "each",
+  };
+}
+
+/** Angaben eines abgelegten Inhalts; fehlende Felder bleiben fehlend (Standard). */
+export function splitOptionsOfPackage(
+  entry: Pick<TeacherContentPackage, "splitMarks" | "splitCustom" | "lineMode">,
+): TextSplitOptions {
+  return {
+    marks: entry.splitMarks,
+    custom: entry.splitCustom,
+    lineMode: entry.lineMode,
+  };
+}
+
+/**
+ * Felder für das Paket: nur Abweichungen vom Standard. Ein Inhalt mit
+ * Standardwerten bleibt damit für ältere App-Stände unverändert lesbar.
+ */
+export function splitFieldsOf(
+  options: TextSplitOptions,
+): Pick<TeacherContentPackage, "splitMarks" | "splitCustom" | "lineMode"> {
+  const marks = normalizeSplitMarks(options.marks);
+  const custom = normalizeSplitCustom(options.custom);
+  return {
+    ...(marks.join("") === DEFAULT_SPLIT_MARKS.join("")
+      ? {}
+      : { splitMarks: marks }),
+    ...(custom ? { splitCustom: custom } : {}),
+    ...(options.lineMode === "blank" ? { lineMode: "blank" as const } : {}),
+  };
+}
+
+/** Eine Änderung der Feineinstellungen auf eine Konfiguration anwenden. */
+export function applyTextSplitOptions(
+  config: TextSplitConfig,
+  patch: TextSplitOptions,
+  mode: TeacherTextSplit,
+): TextSplitConfig {
+  // „Wörter“ kennt keine Feineinstellung.
+  if (mode === "wort") return config;
+  const current = textSplitOptionsOf(config);
+  // Ohne ein gültiges Zeichen bleibt die bisherige Wahl (mindestens eins aktiv).
+  const chosen = SPLIT_MARKS.filter((mark) => patch.marks?.includes(mark));
+  const marks = chosen.length ? chosen : current.marks;
+  return textSplitConfigFor(mode, {
+    marks,
+    custom: patch.custom ?? current.custom,
+    lineMode: patch.lineMode ?? current.lineMode,
+  });
 }
 
 function languageName(locale: string) {
@@ -58,14 +185,23 @@ function plural(count: number, one: string, many: string) {
 export function describeContent(
   entry: Pick<
     TeacherContentPackage,
-    "kind" | "source" | "promptLocale" | "textSplit"
+    | "kind"
+    | "source"
+    | "promptLocale"
+    | "textSplit"
+    | "splitMarks"
+    | "splitCustom"
+    | "lineMode"
   >,
 ): string {
   const kind = contentKindOf(entry);
   if (kind === "text") {
     const sections = buildRunningDictationSections(
       entry.source,
-      textSplitConfigFor(entry.textSplit ?? "satz"),
+      textSplitConfigFor(
+        entry.textSplit ?? "satz",
+        splitOptionsOfPackage(entry),
+      ),
     );
     const words = entry.source.split(/\s+/).filter(Boolean).length;
     return `${plural(sections.length, "Abschnitt", "Abschnitte")} · ${plural(words, "Wort", "Wörter")}`;

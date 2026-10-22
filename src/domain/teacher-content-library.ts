@@ -12,6 +12,20 @@ export type TeacherContentKind = z.infer<typeof teacherContentKindSchema>;
 export const teacherTextSplitSchema = z.enum(["satz", "zeile", "wort"]);
 export type TeacherTextSplit = z.infer<typeof teacherTextSplitSchema>;
 
+/**
+ * Satzzeichen, an denen „Sätzen“ teilen kann (nur Art „Text“). Die Reihenfolge
+ * ist die der Knöpfe und zugleich die gespeicherte Reihenfolge.
+ */
+export const teacherSplitMarkSchema = z.enum([".", "!", "?", ","]);
+export type TeacherSplitMark = z.infer<typeof teacherSplitMarkSchema>;
+
+/** „Zeilen“: an jedem Zeilenumbruch teilen oder nur an Leerzeilen (Absätzen). */
+export const teacherLineModeSchema = z.enum(["each", "blank"]);
+export type TeacherLineMode = z.infer<typeof teacherLineModeSchema>;
+
+/** Längstes eigenes Trennzeichen („;“, „/“, „|“ oder eine kurze Folge). */
+export const MAX_CUSTOM_SPLIT_LENGTH = 3;
+
 /** Spielmodus eines Laufdiktat-Raums (wie `TeacherGameMode`). */
 export const teacherGameModeSchema = z.enum([
   "LAUFDIKTAT",
@@ -100,6 +114,15 @@ export const teacherContentPackageSchema = z
     prepared: teacherPreparedSettingsSchema.optional(),
     /** Nur Text: Zerlegung in Stationen. */
     textSplit: teacherTextSplitSchema.optional(),
+    /**
+     * Nur Text, Zerlegung „Sätzen“: Satzzeichen, an denen geteilt wird. Fehlt
+     * das Feld, gilt „. ! ?“ (Stand vor dieser Option).
+     */
+    splitMarks: z.array(teacherSplitMarkSchema).min(1).max(4).optional(),
+    /** Nur Text, „Sätzen“: eigenes Trennzeichen; fehlt es, gibt es keins. */
+    splitCustom: z.string().max(MAX_CUSTOM_SPLIT_LENGTH).optional(),
+    /** Nur Text, „Zeilen“: Fehlt das Feld, teilt jede Zeile. */
+    lineMode: teacherLineModeSchema.optional(),
   })
   .strict();
 

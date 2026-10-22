@@ -194,6 +194,9 @@ describe("Sicherung und Export mit neuen Feldern", () => {
         classIds: [CLASS_A],
         lastUsedAt: "2026-09-10T10:00:00.000Z",
         textSplit: "zeile",
+        lineMode: "blank",
+        splitMarks: [".", ","],
+        splitCustom: "|",
         preparedAt: "2026-09-11T10:00:00.000Z",
         prepared: { gameMode: "UEBUNG", tts: true, wordStoreTransfer: "all" },
       }),
@@ -208,9 +211,14 @@ describe("Sicherung und Export mit neuen Feldern", () => {
       kind: "text",
       classIds: [CLASS_A],
       textSplit: "zeile",
+      lineMode: "blank",
+      splitMarks: [".", ","],
+      splitCustom: "|",
       preparedAt: "2026-09-11T10:00:00.000Z",
       prepared: { gameMode: "UEBUNG", tts: true, wordStoreTransfer: "all" },
     });
+    // Ohne die neuen Felder bleiben sie ohne Wert (Standard).
+    expect(restored.find((e) => e.id === "alt")).not.toHaveProperty("lineMode");
   });
 
   it("übersteht die Bibliotheksdatei als Roundtrip", () => {
@@ -221,6 +229,13 @@ describe("Sicherung und Export mit neuen Feldern", () => {
         classIds: [CLASS_A, CLASS_B],
         preparedAt: "2026-09-11T10:00:00.000Z",
         prepared: { gameMode: "LAUFDIKTAT", mathGap: true, mathOps: ["*"] },
+      }),
+      entry("text", {
+        kind: "text",
+        textSplit: "satz",
+        splitMarks: [".", ","],
+        splitCustom: ";",
+        lineMode: "blank",
       }),
     ];
     const file = createTeacherContentLibraryFile(
