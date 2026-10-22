@@ -241,6 +241,11 @@ test("Text teilen: ein eigenes Zeichen trennt, „Nur Leerzeilen“ nur Absätze
     await page.getByRole("link", { name: /^Text/ }).click();
     await expect(page).toHaveURL(/\/lehrer\/live/, { timeout: 1500 });
   }).toPass();
+  // Erst nach der Hydration nimmt das Textfeld Eingaben an.
+  await expect(page.locator("[data-hydrated]")).toHaveAttribute(
+    "data-hydrated",
+    "true",
+  );
 
   await page.getByRole("textbox", { name: "Text" }).fill("Haus | Baum | Dach");
   await expect(
