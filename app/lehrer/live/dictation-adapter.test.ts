@@ -5,7 +5,9 @@ import {
   liveOverview,
   nextErrorBase,
   splitConfigFor,
+  splitConfigWith,
   splitModeOf,
+  splitOptionsOf,
   strugglingNames,
 } from "./dictation-adapter";
 
@@ -27,6 +29,31 @@ describe("dictation-adapter", () => {
         splitConfigFor("zeile"),
       ),
     ).toHaveLength(1);
+  });
+
+  it("behält Zeichen, eigenes Zeichen und Zeilenmodus beim Wechsel des Modus", () => {
+    let config = splitConfigFor("satz");
+    config = splitConfigWith(config, { marks: [".", ","], custom: "|" });
+    expect(splitOptionsOf(config)).toEqual({
+      marks: [".", ","],
+      custom: "|",
+      lineMode: "each",
+    });
+    config = splitConfigFor("zeile", config);
+    expect(splitModeOf(config)).toBe("zeile");
+    config = splitConfigWith(config, { lineMode: "blank" });
+    expect(splitModeOf(config)).toBe("zeile");
+    expect(splitOptionsOf(config).lineMode).toBe("blank");
+    config = splitConfigFor("satz", config);
+    expect(splitModeOf(config)).toBe("satz");
+    expect(splitOptionsOf(config)).toMatchObject({
+      marks: [".", ","],
+      custom: "|",
+    });
+    // „Wörter“ kennt keine Feineinstellung; ein Wechsel dorthin setzt zurück.
+    const words = splitConfigFor("wort", config);
+    expect(splitConfigWith(words, { custom: ";" })).toBe(words);
+    expect(splitModeOf(words)).toBe("wort");
   });
 
   it("fasst Fortschritt, Stationen und häufige Fehler zusammen", () => {

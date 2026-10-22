@@ -12,8 +12,11 @@ import type {
 } from "../../src/domain/teacher-content-library";
 import {
   contentKindOf,
+  splitFieldsOf,
+  splitOptionsOfPackage,
   suggestTitle,
   textSplitConfigFor,
+  type TextSplitOptions,
 } from "../../src/domain/teacher-content-summary";
 
 /** Was der Live-Raum zum Bearbeiten eines abgelegten Inhalts braucht. */
@@ -38,7 +41,10 @@ export function packageToLiveContent(
     source: entry.source,
     title: entry.title,
     textSplit,
-    textSplitConfig: textSplitConfigFor(textSplit),
+    textSplitConfig: textSplitConfigFor(
+      textSplit,
+      splitOptionsOfPackage(entry),
+    ),
     vocabularyLocales: {
       left: pickerLocale(entry.promptLocale, DEFAULT_VOCABULARY_LOCALES.left),
       right: pickerLocale(entry.answerLocale, DEFAULT_VOCABULARY_LOCALES.right),
@@ -51,6 +57,8 @@ export type LiveContentDraft = {
   source: string;
   title: string;
   textSplit: TeacherTextSplit;
+  /** Satzzeichen, eigenes Zeichen, Zeilenmodus; fehlt = Standard. */
+  splitOptions?: TextSplitOptions;
   vocabularyLocales: VocabularyLocales;
 };
 
@@ -122,6 +130,11 @@ export function liveContentToPackage(input: {
     ...(lastUsedAt ? { lastUsedAt } : {}),
     ...(existing?.preparedAt ? { preparedAt: existing.preparedAt } : {}),
     ...(prepared ? { prepared } : {}),
-    ...(draft.contentMode === "text" ? { textSplit: draft.textSplit } : {}),
+    ...(draft.contentMode === "text"
+      ? {
+          textSplit: draft.textSplit,
+          ...splitFieldsOf(draft.splitOptions ?? {}),
+        }
+      : {}),
   };
 }

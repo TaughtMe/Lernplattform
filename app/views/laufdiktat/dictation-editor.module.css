@@ -340,6 +340,47 @@
   background: var(--ink);
   color: var(--bg);
 }
+.splitMore {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+}
+.markChip {
+  justify-content: center;
+  min-width: 22px;
+  font-size: 16px;
+}
+.customField {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.customInput {
+  box-sizing: border-box;
+  width: 84px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-control);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+.customInput:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.customInput::placeholder {
+  color: var(--ink3);
+  font-weight: 600;
+}
 .fileButton {
   position: relative;
   display: inline-flex;
@@ -909,8 +950,12 @@
     min-height: 240px;
   }
   .splitChip,
+  .customInput,
   .fileButton {
     min-height: 44px;
+  }
+  .markChip {
+    min-width: 28px;
   }
   .splitChip:not([aria-pressed="true"]) {
     min-height: 42px;
@@ -1010,6 +1055,10 @@
   }
   .split {
     flex-wrap: nowrap;
+  }
+  /* Die Zusatzzeilen sind länger als „Teilen nach“ und brechen um. */
+  .splitMore .split {
+    flex-wrap: wrap;
   }
   .contentFooter .footerNote {
     flex-basis: 100%;

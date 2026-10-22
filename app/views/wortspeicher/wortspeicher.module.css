@@ -141,9 +141,11 @@
   top: 10px;
   right: 10px;
 }
+/* Ohne Menüknopf: gleicher Innenabstand links und rechts, damit „+“ mittig sitzt. */
 .tileNew .tileMain {
   align-items: center;
   justify-content: center;
+  padding-inline: 14px;
   border-style: dashed;
   text-align: center;
 }

@@ -1,5 +1,5 @@
 import type { IconName } from "../../../ui/icons";
-import type { DictationMode, SplitMode, TeacherStep } from "./types";
+import type { DictationMode, LineMode, SplitMode, TeacherStep } from "./types";
 
 export const STEPS: ReadonlyArray<{
   id: TeacherStep;
@@ -27,6 +27,22 @@ export const SPLITS: ReadonlyArray<[SplitMode, string]> = [
   ["satz", "Sätzen"],
   ["zeile", "Zeilen"],
   ["wort", "Wörtern"],
+];
+
+/** Satzzeichen, an denen „Sätzen“ teilt; Name für Screenreader, Zeichen sichtbar. */
+export const SPLIT_MARKS: ReadonlyArray<[string, string]> = [
+  [".", "Punkt"],
+  ["!", "Ausrufezeichen"],
+  ["?", "Fragezeichen"],
+  [",", "Komma"],
+];
+
+/** Längstes eigenes Trennzeichen. */
+export const MAX_CUSTOM_SPLIT = 3;
+
+export const LINE_MODES: ReadonlyArray<[LineMode, string]> = [
+  ["each", "Jede Zeile"],
+  ["blank", "Nur Leerzeilen"],
 ];
 
 export const MODES: ReadonlyArray<{

@@ -11,7 +11,7 @@ import {
   savePreparedSettings,
   TEACHER_DATA_EVENT,
 } from "../../prepared-settings";
-import { splitModeOf } from "../dictation-adapter";
+import { splitModeOf, splitOptionsOf } from "../dictation-adapter";
 
 type ContentLibraryInput = {
   clock: () => number;
@@ -66,6 +66,7 @@ export function useContentLibrary({
         source,
         title,
         textSplit: splitModeOf(splitConfig),
+        splitOptions: splitOptionsOf(splitConfig),
         vocabularyLocales,
       },
       existing,

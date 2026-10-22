@@ -4,7 +4,9 @@ import {
   packageToLiveContent,
   type LiveContentDraft,
 } from "./content-adapter";
+import { buildRunningDictationSections } from "../../src/domain/running-dictation-sections";
 import type { TeacherContentPackage } from "../../src/domain/teacher-content-library";
+import { textSplitConfigFor } from "../../src/domain/teacher-content-summary";
 
 const NOW = "2026-10-05T08:00:00.000Z";
 const CLASS_A = "123e4567-e89b-42d3-a456-426614174001";
@@ -60,6 +62,110 @@ describe("Roundtrip je Inhaltsart", () => {
     if (draft.contentMode === "vocabulary") {
       expect(loaded.vocabularyLocales).toEqual(draft.vocabularyLocales);
     }
+  });
+});
+
+describe("Feineinstellungen der Zerlegung", () => {
+  const draft: LiveContentDraft = {
+    contentMode: "text",
+    source: "Haus | Baum. Dach",
+    title: "Wörter",
+    textSplit: "satz",
+    vocabularyLocales: locales,
+  };
+
+  it("legt bei Standardwerten keine neuen Felder an", () => {
+    const stored = liveContentToPackage({ draft, newId: "p1", now: NOW });
+    expect(stored).not.toHaveProperty("splitMarks");
+    expect(stored).not.toHaveProperty("splitCustom");
+    expect(stored).not.toHaveProperty("lineMode");
+    const withDefaults = liveContentToPackage({
+      draft: {
+        ...draft,
+        splitOptions: { marks: [".", "!", "?"], custom: "", lineMode: "each" },
+      },
+      newId: "p1",
+      now: NOW,
+    });
+    expect(withDefaults).toEqual(stored);
+  });
+
+  it("übersteht Speichern und Laden mit Zeichen und eigenem Zeichen", () => {
+    const stored = liveContentToPackage({
+      draft: {
+        ...draft,
+        splitOptions: { marks: [".", ","], custom: "|", lineMode: "each" },
+      },
+      newId: "p1",
+      now: NOW,
+    });
+    expect(stored).toMatchObject({ splitMarks: [".", ","], splitCustom: "|" });
+    const config = packageToLiveContent(stored).textSplitConfig;
+    expect(config.punctuation).toEqual([".", ","]);
+    expect(config.customDelimiters).toEqual([{ id: "eigen", value: "|" }]);
+    expect(
+      buildRunningDictationSections(stored.source, config).map(
+        ({ text }) => text,
+      ),
+    ).toEqual(["Haus", "Baum.", "Dach"]);
+  });
+
+  it("übersteht Speichern und Laden mit „Nur Leerzeilen“", () => {
+    const stored = liveContentToPackage({
+      draft: {
+        ...draft,
+        source: "Eins\nzwei\n\nDrei",
+        textSplit: "zeile",
+        splitOptions: { lineMode: "blank" },
+      },
+      newId: "p1",
+      now: NOW,
+    });
+    expect(stored.lineMode).toBe("blank");
+    const loaded = packageToLiveContent(stored);
+    expect(loaded.textSplit).toBe("zeile");
+    expect(
+      buildRunningDictationSections(stored.source, loaded.textSplitConfig).map(
+        ({ text }) => text,
+      ),
+    ).toEqual(["Eins zwei", "Drei"]);
+  });
+
+  it("liest ein Paket ohne die neuen Felder wie früher", () => {
+    const old: TeacherContentPackage = {
+      id: "alt",
+      revision: 1,
+      title: "Alt",
+      source: "Eins. Zwei!\nDrei",
+      promptLocale: "en",
+      answerLocale: "de",
+      createdAt: "2026-09-01T10:00:00.000Z",
+      updatedAt: "2026-09-02T10:00:00.000Z",
+      kind: "text",
+      textSplit: "satz",
+    };
+    const config = packageToLiveContent(old).textSplitConfig;
+    expect(config).toEqual(textSplitConfigFor("satz"));
+    expect(config.punctuation).toEqual([".", "!", "?"]);
+    expect(
+      buildRunningDictationSections(old.source, config).map(({ text }) => text),
+    ).toEqual(["Eins.", "Zwei!", "Drei"]);
+  });
+
+  it("erhält die Felder, wenn ein bestehendes Paket ohne Angabe neu abgelegt wird", () => {
+    const first = liveContentToPackage({
+      draft: { ...draft, splitOptions: { custom: "|" } },
+      newId: "p1",
+      now: NOW,
+    });
+    const again = liveContentToPackage({
+      draft: { ...draft, splitOptions: { custom: "" } },
+      existing: first,
+      newId: "p2",
+      now: NOW,
+    });
+    // Die Wahl der Lehrkraft gilt: leeres Feld = kein eigenes Zeichen mehr.
+    expect(again).not.toHaveProperty("splitCustom");
   });
 });
 

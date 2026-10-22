@@ -151,12 +151,15 @@ Klassen gegliedert:
 **E5 – Ablage für alle Inhaltsarten.** Das bestehende Schema wird rückwärtskompatibel
 erweitert, statt eine zweite Ablage zu bauen. Alle neuen Felder sind optional:
 
-| Feld         | Typ                                | Bedeutung                                                  |
-| ------------ | ---------------------------------- | ---------------------------------------------------------- |
-| `kind`       | `"vocabulary" \| "text" \| "math"` | fehlt = `vocabulary` (alle Altbestände sind Vokabelpakete) |
-| `classIds`   | `string[]` (UUIDs, max. 50)        | zugeordnete Klassen; leer/fehlt = „Nicht zugeordnet“       |
-| `lastUsedAt` | ISO-Zeit                           | letzter Raumstart mit diesem Inhalt                        |
-| `textSplit`  | `"satz" \| "zeile" \| "wort"`      | nur Text: Zerlegung in Stationen                           |
+| Feld          | Typ                                | Bedeutung                                                  |
+| ------------- | ---------------------------------- | ---------------------------------------------------------- |
+| `kind`        | `"vocabulary" \| "text" \| "math"` | fehlt = `vocabulary` (alle Altbestände sind Vokabelpakete) |
+| `classIds`    | `string[]` (UUIDs, max. 50)        | zugeordnete Klassen; leer/fehlt = „Nicht zugeordnet“       |
+| `lastUsedAt`  | ISO-Zeit                           | letzter Raumstart mit diesem Inhalt                        |
+| `textSplit`   | `"satz" \| "zeile" \| "wort"`      | nur Text: Zerlegung in Stationen                           |
+| `splitMarks`  | `(".", "!", "?", ",")[]` (1–4)     | nur Text, „Sätzen“: Satzzeichen; fehlt = `. ! ?`           |
+| `splitCustom` | `string` (max. 3 Zeichen)          | nur Text, „Sätzen“: eigenes Trennzeichen; fehlt = keins    |
+| `lineMode`    | `"each" \| "blank"`                | nur Text, „Zeilen“: fehlt = jede Zeile                     |
 
 - `source` bleibt die einzige Inhaltsquelle: Vokabeln im bisherigen Tabellenformat, Text als
   Rohtext, Mathe als eine Aufgabe je Zeile (wie `mathLines` im Live-Raum).

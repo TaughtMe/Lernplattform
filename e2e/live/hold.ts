@@ -18,7 +18,16 @@ export async function release(page: Page) {
   await page.keyboard.up("a");
 }
 
+/**
+ * Aufdecken und loslassen, bis das Schreibfeld offen ist. Kommt der
+ * Tastendruck, bevor die Seite auf Tasten hört, passiert sonst nichts.
+ */
 export async function revealAndRelease(page: Page) {
-  await revealByHold(page);
-  await release(page);
+  await expect(async () => {
+    await revealByHold(page);
+    await release(page);
+    await expect(
+      page.getByRole("textbox", { name: "Deine Antwort" }),
+    ).toBeVisible({ timeout: 1500 });
+  }).toPass();
 }

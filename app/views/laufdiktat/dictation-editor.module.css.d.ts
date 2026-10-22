@@ -13,6 +13,8 @@ declare const styles: {
   readonly contentFooter: string;
   readonly contentGrid: string;
   readonly countRow: string;
+  readonly customField: string;
+  readonly customInput: string;
   readonly danger: string;
   readonly done: string;
   readonly dragging: string;
@@ -28,6 +30,7 @@ declare const styles: {
   readonly inlineNote: string;
   readonly inputColumn: string;
   readonly knob: string;
+  readonly markChip: string;
   readonly modeCard: string;
   readonly modeFooter: string;
   readonly modeGrid: string;
@@ -75,6 +78,7 @@ declare const styles: {
   readonly split: string;
   readonly splitChip: string;
   readonly splitLabel: string;
+  readonly splitMore: string;
   readonly splitRow: string;
   readonly step: string;
   readonly stepDot: string;

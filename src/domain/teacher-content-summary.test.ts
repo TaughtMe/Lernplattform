@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { buildRunningDictationSections } from "./running-dictation-sections";
 import {
   teacherContentPackageSchema,
   type TeacherContentPackage,
 } from "./teacher-content-library";
 import {
   activeClassIdsOf,
+  applyTextSplitOptions,
   contentKindOf,
   describeContent,
   describePrepared,
@@ -20,7 +22,11 @@ import {
   sortLibrary,
   sortForLibrary,
   sortPrepared,
+  splitFieldsOf,
   suggestTitle,
+  textSplitConfigFor,
+  textSplitOptionsOf,
+  type TextSplitOptions,
   UNASSIGNED,
 } from "./teacher-content-summary";
 
@@ -411,5 +417,250 @@ describe("Vorbereitung und Archiv", () => {
     expect(
       describeState({ ...ran, preparedAt: "2026-10-15T10:00:00.000Z" }),
     ).toBe("vorbereitet");
+  });
+});
+
+describe("Teilen nach Sätzen: Trennen bei", () => {
+  const parts = (
+    text: string,
+    mode: "satz" | "zeile" | "wort",
+    options?: TextSplitOptions,
+  ) =>
+    buildRunningDictationSections(text, textSplitConfigFor(mode, options)).map(
+      ({ text: part }) => part,
+    );
+
+  it("teilt ohne Angaben wie bisher an . ! ?", () => {
+    const text = "Wo bist du? Hier, im Hof! Komm mit.";
+    expect(parts(text, "satz")).toEqual([
+      "Wo bist du?",
+      "Hier, im Hof!",
+      "Komm mit.",
+    ]);
+    expect(parts(text, "satz", {})).toEqual(parts(text, "satz"));
+    expect(textSplitConfigFor("satz")).toEqual(
+      textSplitConfigFor("satz", {
+        marks: undefined,
+        custom: undefined,
+        lineMode: undefined,
+      }),
+    );
+  });
+
+  it("teilt mit Komma zusätzlich an Kommas, aber nicht in Zahlen", () => {
+    expect(
+      parts("Hier, im Hof, 3,5 Meter.", "satz", {
+        marks: [".", "!", "?", ","],
+      }),
+    ).toEqual(["Hier,", "im Hof,", "3,5 Meter."]);
+  });
+
+  it("teilt ohne Ausrufezeichen nicht mehr an !", () => {
+    expect(parts("Halt! Stopp. Los!", "satz", { marks: [".", "?"] })).toEqual([
+      "Halt! Stopp.",
+      "Los!",
+    ]);
+  });
+
+  it("teilt nur an dem gewählten Zeichen", () => {
+    expect(parts("Eins. Zwei? Drei.", "satz", { marks: ["?"] })).toEqual([
+      "Eins. Zwei?",
+      "Drei.",
+    ]);
+  });
+
+  it("teilt an einem eigenen Zeichen und entfernt es", () => {
+    expect(parts("Haus | Baum | Dach", "satz", { custom: "|" })).toEqual([
+      "Haus",
+      "Baum",
+      "Dach",
+    ]);
+    expect(parts("Haus; Baum. Dach", "satz", { custom: ";" })).toEqual([
+      "Haus",
+      "Baum.",
+      "Dach",
+    ]);
+    expect(parts("a//b", "satz", { custom: "//" })).toEqual(["a", "b"]);
+  });
+
+  it("begrenzt das eigene Zeichen auf drei Zeichen ohne Leerraum", () => {
+    expect(
+      textSplitConfigFor("satz", { custom: "abcd" }).customDelimiters,
+    ).toEqual([{ id: "eigen", value: "abc" }]);
+    expect(
+      textSplitConfigFor("satz", { custom: " | " }).customDelimiters,
+    ).toEqual([{ id: "eigen", value: "|" }]);
+    expect(
+      textSplitConfigFor("satz", { custom: "  " }).customDelimiters,
+    ).toEqual([]);
+  });
+
+  it("lässt Zahlen und Anführungszeichen nach dem Satzzeichen heil", () => {
+    expect(
+      parts("Es kostet 3.50 Euro. Er sagte: „Komm!“ Dann ging er.", "satz"),
+    ).toEqual(["Es kostet 3.50 Euro.", "Er sagte: „Komm!“", "Dann ging er."]);
+  });
+
+  it("behält Zeichen und eigenes Zeichen beim Wechsel zu Zeilen und zurück", () => {
+    const options = { marks: ["."], custom: "|", lineMode: "blank" } as const;
+    const zeile = textSplitConfigFor("zeile", options);
+    // In „Zeilen“ wirken Satzzeichen und eigenes Zeichen nicht.
+    expect(
+      buildRunningDictationSections("Eins. Zwei | drei", zeile),
+    ).toHaveLength(1);
+    expect(textSplitOptionsOf(zeile)).toEqual(options);
+    // Bei „Sätzen“ ruht die Zeilenwahl, die Teilung selbst bleibt an jeder Zeile.
+    const satz = textSplitConfigFor("satz", options);
+    expect(textSplitOptionsOf(satz)).toEqual(options);
+    expect(satz.newlineMode).toBe("line");
+  });
+});
+
+describe("Teilen nach Zeilen: jede Zeile oder nur Leerzeilen", () => {
+  const text = "Der Hund bellt\nund rennt.\n\nDie Katze schläft.\nSie träumt.";
+  const parts = (lineMode?: "each" | "blank") =>
+    buildRunningDictationSections(
+      text,
+      textSplitConfigFor("zeile", { lineMode }),
+    ).map(({ text: part }) => part);
+
+  it("teilt standardmäßig an jeder Zeile", () => {
+    expect(parts()).toEqual([
+      "Der Hund bellt",
+      "und rennt.",
+      "Die Katze schläft.",
+      "Sie träumt.",
+    ]);
+    expect(parts("each")).toEqual(parts());
+  });
+
+  it("teilt mit „Nur Leerzeilen“ nur an Absätzen und setzt Umbrüche als Leerzeichen", () => {
+    expect(parts("blank")).toEqual([
+      "Der Hund bellt und rennt.",
+      "Die Katze schläft. Sie träumt.",
+    ]);
+  });
+
+  it("erkennt Leerzeilen auch mit Leerzeichen und Windows-Umbrüchen", () => {
+    expect(
+      buildRunningDictationSections(
+        "Eins\r\nzwei\r\n  \r\nDrei",
+        textSplitConfigFor("zeile", { lineMode: "blank" }),
+      ).map(({ text: part }) => part),
+    ).toEqual(["Eins zwei", "Drei"]);
+  });
+
+  it("lässt „Sätzen“ an Zeilenumbrüchen teilen, auch wenn „Nur Leerzeilen“ gemerkt ist", () => {
+    expect(
+      buildRunningDictationSections(
+        "Eins\nzwei",
+        textSplitConfigFor("satz", { lineMode: "blank" }),
+      ),
+    ).toHaveLength(2);
+  });
+});
+
+describe("Feineinstellungen im Paket", () => {
+  it("schreibt nur Abweichungen vom Standard", () => {
+    expect(splitFieldsOf({})).toEqual({});
+    expect(
+      splitFieldsOf({ marks: [".", "!", "?"], custom: "", lineMode: "each" }),
+    ).toEqual({});
+    expect(
+      splitFieldsOf({ marks: ["?", "."], custom: "|", lineMode: "blank" }),
+    ).toEqual({ splitMarks: [".", "?"], splitCustom: "|", lineMode: "blank" });
+  });
+
+  it("lässt ein fehlendes oder leeres Zeichen beim Standard", () => {
+    expect(textSplitOptionsOf(textSplitConfigFor("wort"))).toEqual({
+      marks: [".", "!", "?"],
+      custom: "",
+      lineMode: "each",
+    });
+    expect(textSplitConfigFor("satz", { marks: [] }).punctuation).toEqual([
+      ".",
+      "!",
+      "?",
+    ]);
+  });
+
+  it("wendet eine Änderung an und behält mindestens ein Zeichen", () => {
+    const config = textSplitConfigFor("satz");
+    expect(
+      applyTextSplitOptions(config, { marks: [".", ","] }, "satz").punctuation,
+    ).toEqual([".", ","]);
+    expect(
+      applyTextSplitOptions(config, { marks: [] }, "satz").punctuation,
+    ).toEqual([".", "!", "?"]);
+    expect(
+      applyTextSplitOptions(config, { custom: ";" }, "satz"),
+    ).toMatchObject({
+      customDelimiters: [{ value: ";" }],
+    });
+    // „Wörter“ kennt keine Feineinstellung.
+    const words = textSplitConfigFor("wort");
+    expect(applyTextSplitOptions(words, { custom: ";" }, "wort")).toBe(words);
+  });
+
+  it("zählt die Abschnitte der Metazeile mit den Feineinstellungen", () => {
+    const text = {
+      ...base,
+      kind: "text" as const,
+      source: "Haus | Baum. Dach",
+    };
+    expect(describeContent(text)).toBe("2 Abschnitte · 4 Wörter");
+    expect(describeContent({ ...text, splitCustom: "|" })).toBe(
+      "3 Abschnitte · 4 Wörter",
+    );
+  });
+});
+
+describe("Schema: Feineinstellungen der Zerlegung", () => {
+  const record = {
+    id: "p1",
+    revision: 0,
+    title: "Text",
+    source: "Eins. Zwei.",
+    promptLocale: "en",
+    answerLocale: "de",
+    createdAt: "2026-09-01T10:00:00.000Z",
+    updatedAt: "2026-09-02T10:00:00.000Z",
+    kind: "text" as const,
+    textSplit: "satz" as const,
+  };
+
+  it("liest einen Datensatz ohne die neuen Felder", () => {
+    const parsed = teacherContentPackageSchema.parse(record);
+    expect(parsed.splitMarks).toBeUndefined();
+    expect(parsed.splitCustom).toBeUndefined();
+    expect(parsed.lineMode).toBeUndefined();
+  });
+
+  it("liest einen Datensatz mit den neuen Feldern", () => {
+    expect(
+      teacherContentPackageSchema.parse({
+        ...record,
+        splitMarks: [".", ","],
+        splitCustom: "|",
+        lineMode: "blank",
+      }),
+    ).toMatchObject({
+      splitMarks: [".", ","],
+      splitCustom: "|",
+      lineMode: "blank",
+    });
+  });
+
+  it("lehnt ungültige Werte ab", () => {
+    for (const patch of [
+      { splitMarks: [] },
+      { splitMarks: [";"] },
+      { splitCustom: "abcd" },
+      { lineMode: "absatz" },
+    ]) {
+      expect(() =>
+        teacherContentPackageSchema.parse({ ...record, ...patch }),
+      ).toThrow();
+    }
   });
 });

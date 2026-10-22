@@ -6,7 +6,11 @@ import {
   type LearningBoxMode,
 } from "./learning-box";
 
-/** Felder des Kartenstands, die nur Abfragen verändern. */
+/**
+ * Felder des Kartenstands, die nur Abfragen verändern. Bewusst die gespeicherte
+ * Box: Das Nachspielen und der Abgleich vergleichen gespeicherte Stände; die
+ * wirksame Box (Rückstufung nach Zeit) entsteht nur beim Lesen.
+ */
 export type LearningBoxProgressFields = Pick<
   LearningBoxCard,
   | "box"

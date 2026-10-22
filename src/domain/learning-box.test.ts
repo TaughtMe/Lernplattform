@@ -4,11 +4,14 @@ import {
   createLearningBoxDeck,
   createLearningBoxFolder,
   editLearningBoxCard,
+  effectiveLearningBoxLevel,
   evaluateLearningBoxAnswer,
   filterLearningBoxCards,
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
+  isLearningBoxCardLongUnpracticed,
   isLearningBoxCardScheduledDue,
+  isLearningBoxLongUnpracticed,
   LEARNING_BOX_RECOVERY_GAP_HOURS,
   learningBoxDirectionAt,
   parseLearningBoxImport,
@@ -671,5 +674,185 @@ describe("replaying LernBox events", () => {
     expect(later.box).toBe(2);
     expect(later.interval).toBe(3);
     expect(later.nextReview).toBe(start + 5 * day);
+  });
+});
+
+describe("Schonfrist und Rückstufung nach Zeit", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const NOW = Date.UTC(2026, 9, 22, 12);
+
+  /** Karte, deren Richtung `overdueDays` Tage überfällig ist. */
+  function overdueCard(
+    direction: "forward" | "reverse",
+    box: 1 | 2 | 3 | 4 | 5,
+    overdueDays: number,
+  ) {
+    const card = createLearningBoxCard({
+      deckId: "deck",
+      question: "house",
+      answer: "Haus",
+      now: NOW - 200 * DAY,
+    });
+    const due = NOW - overdueDays * DAY;
+    return direction === "forward"
+      ? { ...card, box, level: box, interval: 7, nextReview: due }
+      : {
+          ...card,
+          reverseBox: box,
+          reverseInterval: 7,
+          reverseNextReview: due,
+        };
+  }
+
+  const days = [0, 13, 14, 27, 28, 42, 100];
+
+  it("rechnet die wirksame Box je Box, Überfälligkeit und Richtung", () => {
+    const boxes = [1, 2, 3, 4, 5] as const;
+    for (const direction of ["forward", "reverse"] as const) {
+      for (const box of boxes) {
+        for (const overdue of days) {
+          const card = overdueCard(direction, box, overdue);
+          const demotions = Math.floor(overdue / 14);
+          expect(
+            effectiveLearningBoxLevel(card, direction, NOW),
+            `${direction} Box ${box}, ${overdue} Tage`,
+          ).toBe(Math.max(1, box - demotions));
+          expect(
+            isLearningBoxLongUnpracticed(card, direction, NOW),
+            `${direction} Box ${box}, ${overdue} Tage`,
+          ).toBe(overdue >= 14);
+        }
+      }
+    }
+  });
+
+  it("folgt dem Beispiel Box 4: 13 Tage 4, 14 Tage 3, 28 Tage 2, 42 Tage 1", () => {
+    const level = (overdue: number) =>
+      effectiveLearningBoxLevel(
+        overdueCard("forward", 4, overdue),
+        "forward",
+        NOW,
+      );
+    expect([level(13), level(14), level(28), level(42)]).toEqual([4, 3, 2, 1]);
+  });
+
+  it("stuft vor der Fälligkeit nicht zurück", () => {
+    const card = overdueCard("forward", 3, -10);
+    expect(effectiveLearningBoxLevel(card, "forward", NOW)).toBe(3);
+    expect(isLearningBoxLongUnpracticed(card, "forward", NOW)).toBe(false);
+  });
+
+  it("kennzeichnet Box 1 ab 14 Tagen, ohne weiter zu fallen", () => {
+    const card = overdueCard("forward", 1, 60);
+    expect(effectiveLearningBoxLevel(card, "forward", NOW)).toBe(1);
+    expect(isLearningBoxLongUnpracticed(card, "forward", NOW)).toBe(true);
+  });
+
+  it("lässt nie geübte Richtungen und neue Karten in Ruhe", () => {
+    const fresh = createLearningBoxCard({
+      deckId: "deck",
+      question: "house",
+      answer: "Haus",
+      now: NOW - 300 * DAY,
+    });
+    expect(effectiveLearningBoxLevel(fresh, "forward", NOW)).toBe(1);
+    expect(isLearningBoxLongUnpracticed(fresh, "forward", NOW)).toBe(false);
+    expect(isLearningBoxLongUnpracticed(fresh, "reverse", NOW)).toBe(false);
+    // Vorwärts geübt und lange überfällig, Rückrichtung nie geübt: bleibt Box 1.
+    const half = overdueCard("forward", 4, 100);
+    expect(effectiveLearningBoxLevel(half, "reverse", NOW)).toBe(1);
+    expect(isLearningBoxLongUnpracticed(half, "reverse", NOW)).toBe(false);
+  });
+
+  it("wertet die Richtungen getrennt und zählt die Karte einmal", () => {
+    const forwardOnly = overdueCard("forward", 4, 30);
+    expect(isLearningBoxCardLongUnpracticed(forwardOnly, NOW)).toBe(true);
+    expect(effectiveLearningBoxLevel(forwardOnly, "forward", NOW)).toBe(2);
+    expect(forwardOnly.box).toBe(4);
+    const both = {
+      ...forwardOnly,
+      reverseBox: 5 as const,
+      reverseInterval: 14,
+      reverseNextReview: NOW - 15 * DAY,
+    };
+    expect(effectiveLearningBoxLevel(both, "reverse", NOW)).toBe(4);
+    expect(isLearningBoxCardLongUnpracticed(both, NOW)).toBe(true);
+    const fine = overdueCard("forward", 4, 2);
+    expect(isLearningBoxCardLongUnpracticed(fine, NOW)).toBe(false);
+  });
+
+  it("steigt nach Rückstufung von der wirksamen Box um eins auf", () => {
+    // Box 4, 28 Tage überfällig: wirksam Box 2, richtig → Box 3.
+    const card = overdueCard("forward", 4, 28);
+    const updated = processLearningBoxResult(card, {
+      correct: true,
+      direction: "forward",
+      mode: "writing",
+      now: NOW,
+    });
+    expect(updated.box).toBe(3);
+    expect(updated.interval).toBe(LEITNER_INTERVAL_DAYS[3]);
+    expect(updated.nextReview).toBe(NOW + LEITNER_INTERVAL_DAYS[3] * DAY);
+    // Rückrichtung bleibt unberührt.
+    expect(updated.reverseBox).toBe(card.reverseBox);
+  });
+
+  it("steigt in der Rückrichtung genauso von der wirksamen Box auf", () => {
+    // Box 5, 14 Tage überfällig: wirksam Box 4, richtig → Box 5.
+    const card = overdueCard("reverse", 5, 14);
+    const updated = processLearningBoxResult(card, {
+      correct: true,
+      direction: "reverse",
+      mode: "oral",
+      now: NOW,
+    });
+    expect(updated.reverseBox).toBe(5);
+    expect(updated.box).toBe(card.box);
+    const lower = processLearningBoxResult(overdueCard("reverse", 4, 42), {
+      correct: true,
+      direction: "reverse",
+      mode: "oral",
+      now: NOW,
+    });
+    expect(lower.reverseBox).toBe(2);
+  });
+
+  it("setzt falsch nach Rückstufung auf Box 1", () => {
+    const updated = processLearningBoxResult(overdueCard("forward", 4, 28), {
+      correct: false,
+      direction: "forward",
+      mode: "writing",
+      now: NOW,
+    });
+    expect(updated.box).toBe(1);
+    expect(updated.interval).toBe(1);
+    expect(updated.nextReview).toBe(NOW);
+  });
+
+  it("lässt innerhalb der Schonfrist alles beim Alten", () => {
+    const updated = processLearningBoxResult(overdueCard("forward", 4, 13), {
+      correct: true,
+      direction: "forward",
+      mode: "writing",
+      now: NOW,
+    });
+    expect(updated.box).toBe(5);
+  });
+
+  it("hält die Erholungsregel an der gespeicherten Box fest", () => {
+    // Gespeichert Box 2, 14 Tage überfällig (wirksam 1), eben erst in der
+    // Gegenrichtung geübt: kein Fehler, also normaler Aufstieg in Box 2.
+    const card = {
+      ...overdueCard("forward", 2, 14),
+      lastReviewed: NOW - 60_000,
+    };
+    const updated = processLearningBoxResult(card, {
+      correct: true,
+      direction: "forward",
+      mode: "oral",
+      now: NOW,
+    });
+    expect(updated.box).toBe(2);
+    expect(updated.interval).toBe(LEITNER_INTERVAL_DAYS[2]);
   });
 });

@@ -291,11 +291,74 @@ export function editLearningBoxCard(
   return next;
 }
 
+/**
+ * Gespeicherte Box einer Richtung. Anzeigen und Zählungen nach Box nehmen die
+ * wirksame Box (`effectiveLearningBoxLevel`); die gespeicherte Box gehört in
+ * Sicherung, Abgleich und Replay.
+ */
 export function getLearningBoxLevel(
   card: LearningBoxCard,
   direction: LearningBoxDirection,
 ) {
   return direction === "forward" ? card.box : card.reverseBox;
+}
+
+/** Schonfrist nach der Fälligkeit; danach je volle Frist eine Box zurück. */
+export const LEARNING_BOX_GRACE_DAYS = 14;
+
+/**
+ * Volle Schonfristen, die eine schon geübte Richtung überfällig ist (rein, Zeit
+ * kommt von außen). Neue Karten und die nie geübte Rückrichtung (Abstand 0)
+ * fallen nicht zurück; vor der Fälligkeit sind es 0.
+ */
+export function learningBoxGracePeriodsOverdue(
+  card: LearningBoxCard,
+  direction: LearningBoxDirection,
+  now: number,
+) {
+  const interval =
+    direction === "forward" ? card.interval : card.reverseInterval;
+  if (interval <= 0) return 0;
+  const overdue = now - getLearningBoxNextReview(card, direction);
+  if (overdue < 0) return 0;
+  return Math.floor(overdue / (LEARNING_BOX_GRACE_DAYS * DAY_MS));
+}
+
+/**
+ * Wirksame Box: gespeicherte Box minus die vollen Schonfristen Überfälligkeit,
+ * höchstens bis Box 1. Wird beim Lesen berechnet; gespeichert wird sie erst mit
+ * der nächsten Abfrage (`processLearningBoxResult`).
+ */
+export function effectiveLearningBoxLevel(
+  card: LearningBoxCard,
+  direction: LearningBoxDirection,
+  now: number,
+): LearningBoxLevel {
+  const demotions = learningBoxGracePeriodsOverdue(card, direction, now);
+  return Math.max(
+    1,
+    getLearningBoxLevel(card, direction) - demotions,
+  ) as LearningBoxLevel;
+}
+
+/** „Lange nicht geübt“: ab 14 Tagen Überfälligkeit, in jeder Box (auch Box 1). */
+export function isLearningBoxLongUnpracticed(
+  card: LearningBoxCard,
+  direction: LearningBoxDirection,
+  now: number,
+) {
+  return learningBoxGracePeriodsOverdue(card, direction, now) > 0;
+}
+
+/** „Lange nicht geübt“ in mindestens einer Richtung; die Karte zählt einmal. */
+export function isLearningBoxCardLongUnpracticed(
+  card: LearningBoxCard,
+  now: number,
+) {
+  return (
+    isLearningBoxLongUnpracticed(card, "forward", now) ||
+    isLearningBoxLongUnpracticed(card, "reverse", now)
+  );
 }
 
 export function getLearningBoxNextReview(
@@ -351,6 +414,10 @@ export const LEARNING_BOX_RECOVERY_GAP_HOURS = 8;
  *   Fehler“: Der Fehler gilt als geschlossen, aber ohne Aufstieg; die Karte
  *   kommt morgen wieder. Sofortige Verbesserung ist kein selbstständiger Abruf.
  * - richtig und fällig oder neu (Abstand 0): eine Box höher, höchstens 5.
+ *
+ * Gerechnet wird von der wirksamen Box aus (Rückstufung nach Zeit): richtig
+ * heißt wirksame Box + 1, falsch Box 1. Der Erholungsfall prüft dagegen die
+ * gespeicherte Box, weil er einen echten Fehler schließt, keine Zeitrückstufung.
  */
 export function processLearningBoxResult(
   card: LearningBoxCard,
@@ -363,7 +430,7 @@ export function processLearningBoxResult(
   },
 ): LearningBoxCard {
   const now = input.now ?? Date.now();
-  const currentBox = getLearningBoxLevel(card, input.direction);
+  const currentBox = effectiveLearningBoxLevel(card, input.direction, now);
   const currentInterval =
     input.direction === "forward" ? card.interval : card.reverseInterval;
   const currentNextReview = getLearningBoxNextReview(card, input.direction);
@@ -378,7 +445,7 @@ export function processLearningBoxResult(
     !failed &&
     !early &&
     input.secondChance !== "recovered" &&
-    currentBox === 1 &&
+    getLearningBoxLevel(card, input.direction) === 1 &&
     currentInterval > 0 &&
     now - card.lastReviewed < LEARNING_BOX_RECOVERY_GAP_HOURS * 60 * 60 * 1000;
 

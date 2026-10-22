@@ -1,6 +1,9 @@
 "use client";
 
-import { StorageProtectionNotice } from "../components/storage-protection";
+import {
+  RestoreBackupCloud,
+  StorageProtectionNotice,
+} from "../components/storage-protection";
 import { profileAvatar } from "../../src/domain/learner-profile";
 import { useAreaVisible } from "../release/release-context";
 import { useThemeToggle } from "../ui/theme";
@@ -53,6 +56,9 @@ export function LearnerHome() {
       duelHref={duel ? "/duell" : undefined}
       notice={
         <StorageProtectionNotice hasLearningState={snapshot.hasLearningState} />
+      }
+      headAction={
+        <RestoreBackupCloud hasLearningState={snapshot.hasLearningState} />
       }
     />
   );

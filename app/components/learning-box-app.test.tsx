@@ -27,6 +27,11 @@ async function setup(options: {
   items?: (card: (question: string) => LearningBoxCard) => DailyPlanItem[];
   /** Alle Plan-Elemente sind heute schon beantwortet. */
   doneToday?: boolean;
+  /** Ändert den Lernstand der Karten, bevor die Seite rendert. */
+  prepare?: (
+    database: PersonalLearningDatabase,
+    cards: LearningBoxCard[],
+  ) => Promise<void>;
 }) {
   const database = new PersonalLearningDatabase();
   databases.push(database);
@@ -48,6 +53,7 @@ async function setup(options: {
     if (!found) throw new Error(`Karte fehlt: ${question}`);
     return found;
   };
+  await options.prepare?.(database, cards);
   const now = new Date();
   const items = options.items?.(card) ?? [];
   await database.dailyPlans.put({
@@ -244,5 +250,63 @@ describe("LernBox: Heute dran aus der Tagesportion", () => {
     ).toHaveTextContent(DONE_NOTICE);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Jetzt üben" })).toBeDisabled();
+  });
+});
+
+describe("LernBox: Schonfrist und Rückstufung nach Zeit", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  /** „Haus“: Box 4, 30 Tage überfällig; „Hund“: Box 4, 5 Tage überfällig. */
+  async function agedSetup(query = "") {
+    return setup({
+      query,
+      prepare: async (database, cards) => {
+        const aged = (question: string, overdueDays: number) => {
+          const found = cards.find((entry) => entry.question === question)!;
+          return {
+            ...found,
+            box: 4 as const,
+            level: 4 as const,
+            interval: 14,
+            nextReview: Date.now() - overdueDays * DAY,
+            lastReviewed: Date.now() - (overdueDays + 14) * DAY,
+          };
+        };
+        await database.learningBoxCards.bulkPut([
+          aged("Haus", 30),
+          aged("Hund", 5),
+        ]);
+      },
+    });
+  }
+
+  it("zählt nach wirksamer Box und nennt die lange nicht geübten Karten", async () => {
+    await agedSetup();
+    const chart = await screen.findByRole("region", {
+      name: "Verteilung auf die Boxen",
+    });
+    // Haus fällt von Box 4 auf Box 2; Hund bleibt in Box 4; zwei neue in Box 1.
+    await waitFor(() =>
+      expect(
+        within(chart).getByRole("button", { name: /^Box 2: 1 Vokabel/ }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      within(chart).getByRole("button", { name: /^Box 4: 1 Vokabel/ }),
+    ).toBeInTheDocument();
+    expect(within(chart).getByText(/^1 lange nicht geübt/)).toBeVisible();
+  });
+
+  it("zeigt in der Kartenliste die wirksame Box und die Kennzeichnung einmal", async () => {
+    const user = userEvent.setup();
+    await agedSetup();
+    await user.click(await screen.findByRole("button", { name: "Bearbeiten" }));
+    const row = (await screen.findByText("Haus")).closest("tr")!;
+    expect(within(row).getByText(/Box 2/)).toBeInTheDocument();
+    expect(within(row).getByText("lange nicht geübt")).toBeVisible();
+    const other = screen.getByText("Hund").closest("tr")!;
+    expect(within(other).getByText(/Box 4/)).toBeInTheDocument();
+    expect(within(other).queryByText("lange nicht geübt")).toBeNull();
+    expect(screen.getAllByText("lange nicht geübt")).toHaveLength(1);
   });
 });

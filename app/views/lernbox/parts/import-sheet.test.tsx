@@ -12,6 +12,7 @@ const DECK = {
   total: 0,
   due: 0,
   boxes: [0, 0, 0, 0, 0],
+  longUnpracticed: 0,
   sourceLabel: "eigene",
   frontLabel: "Deutsch",
   backLabel: "Englisch",

@@ -32,6 +32,8 @@ export type HomeScreenProps = {
   onToggleTheme?: () => void;
   /** Hinweise zwischen Kopf und Tier (z. B. Speicherschutz); blockiert nichts. */
   notice?: ReactNode;
+  /** Kleine Aktion im Seitenkopf neben dem Hell/Dunkel-Knopf (z. B. Sicherung). */
+  headAction?: ReactNode;
 };
 
 const RING = { size: 290, radius: 132, stroke: 11 };
@@ -55,7 +57,10 @@ export function HomeScreen(props: HomeScreenProps) {
                 {props.title}
               </h1>
             </div>
-            <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+            <div className={styles.headEnd}>
+              {props.headAction}
+              <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+            </div>
           </header>
           {props.notice ? (
             <div className={styles.notice}>{props.notice}</div>

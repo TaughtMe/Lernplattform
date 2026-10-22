@@ -232,6 +232,50 @@ test("Text anlegen, speichern, wiederfinden und per Bearbeiten umbenennen", asyn
   ).toHaveCount(0);
 });
 
+test("Text teilen: ein eigenes Zeichen trennt, „Nur Leerzeilen“ nur Absätze", async ({
+  page,
+}) => {
+  await seed(page);
+  await page.goto(`/lehrer?klasse=${CLASS_A}`);
+  await expect(async () => {
+    await page.getByRole("link", { name: /^Text/ }).click();
+    await expect(page).toHaveURL(/\/lehrer\/live/, { timeout: 1500 });
+  }).toPass();
+  // Erst nach der Hydration nimmt das Textfeld Eingaben an.
+  await expect(page.locator("[data-hydrated]")).toHaveAttribute(
+    "data-hydrated",
+    "true",
+  );
+
+  await page.getByRole("textbox", { name: "Text" }).fill("Haus | Baum | Dach");
+  await expect(
+    page.getByText("1 Abschnitte · so sehen es die Schüler"),
+  ).toBeVisible();
+  // Bei „Sätzen“ (Standard) gibt es „Trennen bei“ mit Satzzeichen und ein eigenes Zeichen.
+  await expect(page.getByRole("button", { name: "Punkt" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("textbox", { name: "Eigenes Zeichen" }).fill("|");
+  await expect(
+    page.getByText("3 Abschnitte · so sehen es die Schüler"),
+  ).toBeVisible();
+
+  // Die Zeilen-Wahl erscheint erst bei „Zeilen“.
+  await expect(
+    page.getByRole("button", { name: "Nur Leerzeilen" }),
+  ).toHaveCount(0);
+  await page.getByRole("textbox", { name: "Text" }).fill("Eins\nzwei\n\nDrei");
+  await page.getByRole("button", { name: "Zeilen", exact: true }).click();
+  await expect(
+    page.getByText("3 Abschnitte · so sehen es die Schüler"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Nur Leerzeilen" }).click();
+  await expect(
+    page.getByText("2 Abschnitte · so sehen es die Schüler"),
+  ).toBeVisible();
+});
+
 /**
  * Bedienelemente unter 44 × 44 px. Der Seitenfuß (Impressum, Datenschutz,
  * Version) gehört zur gemeinsamen Hülle und ist hier ausgenommen; Häkchen

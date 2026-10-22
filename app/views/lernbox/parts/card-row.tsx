@@ -7,6 +7,21 @@ import { BOX_COLORS } from "./box-chart";
 import type { LbCard, LbCardInput, LernBoxScreenProps } from "./types";
 import styles from "../lernbox-screen.module.css";
 
+/** Box der Karte; „lange nicht geübt“ ruhig als Text darunter (nicht nur Farbe). */
+function BoxCell({ card, dot }: { card: LbCard; dot: CSSProperties }) {
+  return (
+    <td className={styles.cellBox}>
+      <span className={styles.boxLabel} style={dot}>
+        <span className={styles.boxDot} aria-hidden="true" />
+        Box {card.box}
+      </span>
+      {card.longUnpracticed ? (
+        <span className={styles.longNote}>lange nicht geübt</span>
+      ) : null}
+    </td>
+  );
+}
+
 export function CardRow({
   card,
   ...props
@@ -51,12 +66,7 @@ export function CardRow({
             </span>
           ) : null}
         </td>
-        <td className={styles.cellBox}>
-          <span className={styles.boxLabel} style={dot}>
-            <span className={styles.boxDot} aria-hidden="true" />
-            Box {card.box}
-          </span>
-        </td>
+        <BoxCell card={card} dot={dot} />
         <td className={styles.cellAction}>
           <button
             type="button"
@@ -116,12 +126,7 @@ export function CardRow({
           onChange={(event) => setDraft({ ...draft, tag: event.target.value })}
         />
       </td>
-      <td className={styles.cellBox}>
-        <span className={styles.boxLabel} style={dot}>
-          <span className={styles.boxDot} aria-hidden="true" />
-          Box {card.box}
-        </span>
-      </td>
+      <BoxCell card={card} dot={dot} />
       <td className={styles.cellAction}>
         <button
           type="button"

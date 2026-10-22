@@ -154,6 +154,21 @@ describe("Kandidaten der Tagesportion", () => {
     ]);
   });
 
+  it("bietet die Rückrichtung nicht an, wenn vorwärts nach 14 Tagen Pause auf Box 1 zurückfällt", () => {
+    const base = card("deck", 1, { box: 2, interval: 3 });
+    const keys = (nextReview: number) =>
+      dailyPlanCandidates(
+        { events: [], cards: [{ ...base, nextReview }], words: [] },
+        NOW,
+      ).map((item) => item.key);
+    // 13 Tage überfällig: wirksam noch Box 2, Rückrichtung wird angeboten.
+    expect(keys(NOW_MS - 13 * DAY)).toContain(`vocabulary:${base.id}:reverse`);
+    // 14 Tage überfällig: wirksam Box 1; vorwärts bleibt, wie bisher, ein Wiederholungsfall.
+    const aged = keys(NOW_MS - 14 * DAY);
+    expect(aged).not.toContain(`vocabulary:${base.id}:reverse`);
+    expect(aged).toContain(`vocabulary:${base.id}:forward`);
+  });
+
   it("zählt geübte, fällige Richtungen: Box 1 als Fehler, sonst als Wiederholung", () => {
     const error = card("deck", 1, {
       interval: 1,

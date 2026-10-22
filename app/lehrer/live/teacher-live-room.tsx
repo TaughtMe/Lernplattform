@@ -22,7 +22,9 @@ import {
   roomTimesView,
   nextErrorBase,
   splitConfigFor,
+  splitConfigWith,
   splitModeOf,
+  splitOptionsOf,
   strugglingNames,
   type ErrorBase,
   STAGE_OF_STEP,
@@ -112,6 +114,7 @@ export function TeacherLiveRoom({
           kind: t.contentMode,
           text: t.sources[t.contentMode],
           split: splitModeOf(t.splitConfig),
+          splitOptions: splitOptionsOf(t.splitConfig),
           sections: sectionsOf(t),
         }}
         mode={t.gameMode}
@@ -204,7 +207,12 @@ export function TeacherLiveRoom({
         onText={(text) =>
           t.setSources((current) => ({ ...current, [t.contentMode]: text }))
         }
-        onSplit={(split) => t.setSplitConfig(splitConfigFor(split))}
+        onSplit={(split) =>
+          t.setSplitConfig((current) => splitConfigFor(split, current))
+        }
+        onSplitOptions={(patch) =>
+          t.setSplitConfig((current) => splitConfigWith(current, patch))
+        }
         onMoveSection={t.moveSection}
         onImportFile={t.importFile}
         onMode={t.setGameMode}

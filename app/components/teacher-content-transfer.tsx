@@ -196,6 +196,9 @@ export function TeacherContentTransfer({
         ...(existing?.classIds ? { classIds: existing.classIds } : {}),
         ...(existing?.lastUsedAt ? { lastUsedAt: existing.lastUsedAt } : {}),
         ...(existing?.textSplit ? { textSplit: existing.textSplit } : {}),
+        ...(existing?.splitMarks ? { splitMarks: existing.splitMarks } : {}),
+        ...(existing?.splitCustom ? { splitCustom: existing.splitCustom } : {}),
+        ...(existing?.lineMode ? { lineMode: existing.lineMode } : {}),
         ...(existing?.prepared ? { prepared: existing.prepared } : {}),
         ...(existing?.preparedAt ? { preparedAt: existing.preparedAt } : {}),
       };

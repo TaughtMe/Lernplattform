@@ -101,6 +101,7 @@ declare const styles: {
   readonly importTag: string;
   readonly inlineForm: string;
   readonly input: string;
+  readonly longNote: string;
   readonly manage: string;
   readonly manageBody: string;
   readonly manageItem: string;

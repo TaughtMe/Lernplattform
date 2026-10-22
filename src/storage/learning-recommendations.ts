@@ -247,6 +247,8 @@ export function createLearningRecommendationRepository(
         });
       }
       if (dueCards.length > 0) {
+        // Gespeicherte Box 1: ein falsch beantworteter Abruf, keine Zeitrückstufung
+        // („lange nicht geübt“ belegt kein Vergessen).
         const errorCards = dueCards.filter(
           (card) =>
             card.lastReviewed > card.createdAt &&

@@ -14,7 +14,12 @@ import {
   isLatexMathSyntax,
   tokenizeMathChain,
 } from "../../../src/domain/mental-math";
-import { textSplitConfigFor } from "../../../src/domain/teacher-content-summary";
+import {
+  applyTextSplitOptions,
+  textSplitConfigFor,
+  textSplitOptionsOf,
+  type TextSplitOptions,
+} from "../../../src/domain/teacher-content-summary";
 import type { MathPreviewPart } from "../../views/laufdiktat/math-editor";
 import type {
   LiveStudent,
@@ -46,9 +51,29 @@ export function splitModeOf(config: TextSplitConfig): SplitMode {
   return config.punctuationEnabled ? "satz" : "zeile";
 }
 
-/** Trenn-Konfiguration für Satz (Satzzeichen), Zeile oder Wort. */
-export function splitConfigFor(mode: SplitMode): TextSplitConfig {
-  return textSplitConfigFor(mode);
+/**
+ * Trenn-Konfiguration für Satz (Satzzeichen), Zeile oder Wort. Mit `current`
+ * bleiben die Feineinstellungen (Zeichen, eigenes Zeichen, Zeilenmodus) beim
+ * Wechsel zwischen Satz und Zeile erhalten.
+ */
+export function splitConfigFor(
+  mode: SplitMode,
+  current?: TextSplitConfig,
+): TextSplitConfig {
+  return textSplitConfigFor(mode, current ? textSplitOptionsOf(current) : {});
+}
+
+/** Feineinstellungen der aktuellen Konfiguration für die Ansicht. */
+export function splitOptionsOf(config: TextSplitConfig) {
+  return textSplitOptionsOf(config);
+}
+
+/** Eine Änderung der Feineinstellungen (Zeichen, eigenes Zeichen, Zeilen) anwenden. */
+export function splitConfigWith(
+  config: TextSplitConfig,
+  patch: TextSplitOptions,
+): TextSplitConfig {
+  return applyTextSplitOptions(config, patch, splitModeOf(config));
 }
 
 function progressOf(student: LiveRoomStudent | undefined, total: number) {

@@ -28,3 +28,67 @@ button.action {
   white-space: normal;
   line-height: 1.25;
 }
+
+/* Wolke im Seitenkopf: so groß wie der Hell/Dunkel-Knopf, Trefferfläche 44 px. */
+.cloud {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line2);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink2);
+  text-decoration: none;
+}
+.cloud:hover,
+.cloud:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+/* Sprechblase links neben der Wolke, gleitet von der Seite herein. */
+.bubble {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px);
+  z-index: 5;
+  width: max-content;
+  max-width: min(230px, 62vw);
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  transform: translateY(-50%);
+  animation: bubble-in 0.35s ease-out;
+  pointer-events: none;
+}
+.bubble::after {
+  position: absolute;
+  top: 50%;
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  background: var(--ink);
+  transform: translateY(-50%) rotate(45deg);
+  content: "";
+}
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translate(12px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubble {
+    animation: none;
+  }
+}
