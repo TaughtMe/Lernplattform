@@ -42,7 +42,7 @@ jobs:
     env:
       BRANCH: ${{ inputs.branch || github.head_ref }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.branch || github.head_ref }}
           # Mit dem Geheimnis DESIGN_REFERENCES_TOKEN (Token mit Schreibrecht auf
