@@ -1,6 +1,8 @@
 "use client";
 
 import { Icon } from "../../ui/icons";
+import { VOCABULARY_IMPORT_GUIDE } from "../../ui/vocabulary-import-guide";
+import { downloadVocabularyTemplate } from "../../ui/vocabulary-template-download";
 import { cx } from "../parts/parts";
 import styles from "./vocabulary-editor.module.css";
 
@@ -313,6 +315,18 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
             Eine dritte Spalte ist der Tag (optional). Alternativen mit |
             trennen.
           </p>
+          <details className={styles.guide}>
+            <summary>{VOCABULARY_IMPORT_GUIDE.teacher.summary}</summary>
+            <p>{VOCABULARY_IMPORT_GUIDE.teacher.sentences.join(" ")}</p>
+          </details>
+          <button
+            type="button"
+            className={cx(styles.file, styles.template)}
+            onClick={downloadVocabularyTemplate}
+          >
+            <Icon name="download" size={16} />
+            Vorlage herunterladen
+          </button>
           <textarea
             className={styles.table}
             aria-label="Tabelle einfügen"

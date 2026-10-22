@@ -1,5 +1,7 @@
 # Produktvertrag Laufdiktat-Pilot
 
+> **Status laut Gesamtaudit vom 19./20.10.2026: Überholt** als Beschreibung der Standardfreigaben. Laut `src/domain/release.ts` (Commit `c30b916`) stehen inzwischen unter anderem Mein Lernraum, LernBox, Wortspeicher, Textbox, Laufdiktat allein, Tastenwelt, der Lehrerbereich und der Geräte-Abgleich der Lehrkraft auf `frei`; Aufgaben, Spiegelschrift und die Demo-Klasse auf `vorschau`; Häuser und Duelle auf `aus`. Maßgeblich ist das Freigaberegister (siehe [architecture.md](architecture.md), Abschnitt „Aktueller fachlicher Stand“). Die Abnahmekriterien und Sicherheitsgrenzen unten bleiben als Prüfliste für den Live-Raum nützlich. Der Text ist unverändert erhalten.
+
 ## Ziel
 
 Der Pilot macht Laufdiktat in seinem vollständigen, im Quellrepository erprobten Umfang zum einzigen sichtbaren Kern des Lernraums. Die vorhandene Plattform bleibt über den Git-Tag `pre-laufdiktat-pilot` vollständig wiederherstellbar; ihre Komponenten, Fachlogik, Tests und Datenmodelle bleiben im Repository.

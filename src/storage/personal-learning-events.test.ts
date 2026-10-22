@@ -44,7 +44,7 @@ afterEach(async () => {
 });
 
 describe("personal learning event repository", () => {
-  it("retries an identical event but rejects changes and corrupt stored data", async () => {
+  it("retries an identical event but rejects changes and skips corrupt stored data", async () => {
     const db = createDatabase();
     const repository = createPersonalLearningEventRepository(db);
     const original = event("immutable", "2026-08-12T09:00:00.000Z");
@@ -55,8 +55,11 @@ describe("personal learning event repository", () => {
     ).rejects.toThrow("nicht verändert");
     expect(await repository.get(original.id)).toEqual(original);
     await db.learningEvents.put({ ...original, occurredAt: "invalid" });
-    await expect(repository.get(original.id)).rejects.toThrow();
-    await expect(repository.list()).rejects.toThrow();
+    // Unlesbare Datensätze werden übersprungen, nicht gelöscht (Regel S-1).
+    expect(await repository.get(original.id)).toBeUndefined();
+    expect(await repository.list()).toEqual([]);
+    expect(await db.learningEvents.count()).toBe(1);
+    await expect(repository.put(original)).rejects.toThrow("nicht verändert");
   });
 
   it("counts different word attempts but processes a retry only once", async () => {

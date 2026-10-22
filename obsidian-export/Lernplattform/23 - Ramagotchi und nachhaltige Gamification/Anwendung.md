@@ -7,9 +7,14 @@ tags:
   - lernbegleiter
 status: konzept-beschlossen
 stand: 2026-08-25
+umsetzungsstand: Geplant
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 ---
 
 # Ramagotchi und nachhaltige Gamification
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Geplant.** Im Code nicht vorhanden; Umsetzung laut Entscheidung 39 erst nach stabilem Lernkern. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Leitidee
 

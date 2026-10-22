@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Aufgabenübersicht
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Die Haken spiegeln den Stand vor der Tagesportion (Entscheidung 57) und vor Textbox/Wortspeicher-Umbau nur teilweise wider; offene Punkte wie die 5.000-Punkte-Wertung sind im Code tatsächlich nicht vorhanden. Neue Maßnahmen aus dem Audit stehen dort als **Vorschlag zur Prüfung**, nicht in dieser Liste. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 Diese Liste ist der kompakte Arbeitsüberblick. Details und fachliche Entscheidungen stehen in den verlinkten Kapiteln.
 

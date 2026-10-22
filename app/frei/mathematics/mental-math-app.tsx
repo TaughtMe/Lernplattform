@@ -13,6 +13,7 @@ import {
   displayMathNumber,
   generateMentalMathTasks,
   parseMentalMathTask,
+  shuffleMathTasks,
   type MathGapSlot,
   type MentalMathOperation,
   type MentalMathTask,
@@ -63,6 +64,39 @@ const symbols: Record<MentalMathOperation, string> = {
 type Screen = "setup" | "round" | "complete";
 
 /**
+ * Art und Anzahl der erzeugten Runde in einem Satz, z. B. „12 Aufgaben · Plus
+ * und Minus bis 100 · Lücken“. Die Vorschau verrät keine Lösung (Audit C-013).
+ */
+function describeRound(settings: {
+  count: number;
+  operations: readonly MentalMathOperation[];
+  minValue: number;
+  maxValue: number;
+  tables: readonly number[];
+  gapMode: boolean;
+}) {
+  const names = (Object.keys(operationLabels) as MentalMathOperation[])
+    .filter((operation) => settings.operations.includes(operation))
+    .map((operation) => operationLabels[operation]);
+  const kinds =
+    names.length > 1
+      ? `${names.slice(0, -1).join(", ")} und ${names.at(-1)}`
+      : (names[0] ?? "");
+  const usesTables = settings.operations.some(
+    (operation) => operation === "multiply" || operation === "divide",
+  );
+  const tables = settings.tables.join(", ");
+  return [
+    `${settings.count} ${settings.count === 1 ? "Aufgabe" : "Aufgaben"}`,
+    `${kinds} ${settings.minValue > 0 ? `von ${settings.minValue} ` : ""}bis ${settings.maxValue}`,
+    ...(usesTables && settings.tables.length
+      ? [`${settings.tables.length === 1 ? "Reihe" : "Reihen"} ${tables}`]
+      : []),
+    ...(settings.gapMode ? ["Lücken"] : []),
+  ].join(" · ");
+}
+
+/**
  * Posten der Tagesportion: je offenem Mathe-Element der am längsten fällige
  * Posten seiner Familie. Was inzwischen nicht mehr fällig ist, zählt nicht.
  * `buildMathReviewRound` nimmt höchstens fünf Posten; der Rest folgt in der
@@ -82,7 +116,13 @@ function todaysReviews(
   });
 }
 
-export function MentalMathApp() {
+/**
+ * `random` ist der Zufall für neue Aufgaben und die Reihenfolge der Runde;
+ * Tests geben einen festen Zufall vor.
+ */
+export function MentalMathApp({
+  random = Math.random,
+}: { random?: () => number } = {}) {
   const database = useMemo(() => new PersonalLearningDatabase(), []);
   const repository = useMemo(
     () => createMathPracticeRepository(database),
@@ -277,37 +317,54 @@ export function MentalMathApp() {
     );
   }
 
-  function createTasks(single = false) {
-    return generateMentalMathTasks({
-      operations,
-      minValue,
-      maxValue,
-      count: single ? 1 : count,
-      allowNegativeResults: allowNegative,
-      excludeZeroOperand,
-      excludeZeroResult,
-      multiplicationTables: tables,
-      gapMode,
-      ...(gapMode && gapPosition !== "mixed"
-        ? {
-            gapSlots: Array.from(
-              { length: single ? 1 : count },
-              () => gapPosition,
-            ),
-          }
-        : {}),
-    });
+  function createTasks() {
+    return generateMentalMathTasks(
+      {
+        operations,
+        minValue,
+        maxValue,
+        count,
+        allowNegativeResults: allowNegative,
+        excludeZeroOperand,
+        excludeZeroResult,
+        multiplicationTables: tables,
+        gapMode,
+        ...(gapMode && gapPosition !== "mixed"
+          ? {
+              gapSlots: Array.from({ length: count }, () => gapPosition),
+            }
+          : {}),
+      },
+      random,
+    );
+  }
+
+  /** Erzeugt die Aufgaben der Vorschau neu (nur Anzahl und Art sind sichtbar). */
+  function prepareTasks() {
+    try {
+      mathOptionsSchema.parse({ operations, minValue, maxValue, count });
+      setPreparedTasks(createTasks());
+      setPreparedSettings(settingsKey);
+      setNotice("");
+    } catch {
+      setNotice("Bitte wähle einen gültigen Zahlenraum.");
+    }
   }
 
   function startRound() {
     try {
       mathOptionsSchema.parse({ operations, minValue, maxValue, count });
+      // Die Runde mischt die Reihenfolge der erzeugten Aufgaben neu; eigene
+      // Aufgaben bleiben in der Reihenfolge, in der sie eingegeben wurden.
       beginRound(
         manualMode
           ? manualTasks.slice(0, 50)
-          : matchingPreparedTasks.length
-            ? matchingPreparedTasks
-            : createTasks(),
+          : shuffleMathTasks(
+              matchingPreparedTasks.length
+                ? matchingPreparedTasks
+                : createTasks(),
+              random,
+            ),
       );
     } catch {
       setNotice(
@@ -625,24 +682,7 @@ export function MentalMathApp() {
                     </div>
                   </fieldset>
                 ) : null}
-                <Button
-                  variant="soft"
-                  onClick={() => {
-                    try {
-                      mathOptionsSchema.parse({
-                        operations,
-                        minValue,
-                        maxValue,
-                        count,
-                      });
-                      setPreparedTasks(createTasks());
-                      setPreparedSettings(settingsKey);
-                      setNotice("");
-                    } catch {
-                      setNotice("Bitte wähle einen gültigen Zahlenraum.");
-                    }
-                  }}
-                >
+                <Button variant="soft" onClick={prepareTasks}>
                   <Icon name="sparkles" size={18} />
                   Aufgaben erzeugen
                 </Button>
@@ -700,54 +740,44 @@ export function MentalMathApp() {
               </label>
             ) : null}
             <span className="ui-label">Vorschau</span>
-            {preview.length ? (
-              <ol className="ui-list ui-math__preview">
-                {preview.map((task) => (
-                  <li key={task.id}>
-                    <strong className="ui-grow">{task.prompt}</strong>
-                    <span className="ui-small ui-muted">
-                      = {displayMathNumber(task.answer)}
-                    </span>
-                    {!manualMode ? (
-                      <>
-                        <button
-                          type="button"
-                          className="ui-icon-btn"
-                          aria-label={`${task.prompt} neu würfeln`}
-                          onClick={() =>
-                            setPreparedTasks((current) =>
-                              current.map((entry) =>
-                                entry.id === task.id
-                                  ? (createTasks(true)[0] ?? entry)
-                                  : entry,
-                              ),
-                            )
-                          }
-                        >
-                          <Icon name="refresh" size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="ui-icon-btn"
-                          aria-label={`${task.prompt} löschen`}
-                          onClick={() =>
-                            setPreparedTasks((current) =>
-                              current.filter((entry) => entry.id !== task.id),
-                            )
-                          }
-                        >
-                          <Icon name="trash" size={16} />
-                        </button>
-                      </>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-            ) : !manualMode ? (
+            {manualMode ? (
+              preview.length ? (
+                // Eigene Aufgaben hat die Person selbst geschrieben; Ergebnisse
+                // zeigt die Vorschau trotzdem nicht.
+                <ol className="ui-list ui-math__preview">
+                  {preview.map((task) => (
+                    <li key={task.id}>
+                      <strong className="ui-grow">{task.prompt}</strong>
+                    </li>
+                  ))}
+                </ol>
+              ) : null
+            ) : matchingPreparedTasks.length ? (
+              <div className="ui-stack" style={{ ["--gap" as string]: "8px" }}>
+                <p className="ui-small" role="status">
+                  {describeRound({
+                    count: matchingPreparedTasks.length,
+                    operations,
+                    minValue,
+                    maxValue,
+                    tables,
+                    gapMode,
+                  })}
+                </p>
+                <p className="ui-tiny ui-muted">
+                  Die Aufgaben siehst du erst in der Runde, in gemischter
+                  Reihenfolge.
+                </p>
+                <Button variant="ghost" size="sm" onClick={prepareTasks}>
+                  <Icon name="refresh" size={16} />
+                  Andere Aufgaben
+                </Button>
+              </div>
+            ) : (
               <p className="ui-small ui-muted">
                 Erzeuge zuerst eine Aufgabenliste oder starte direkt.
               </p>
-            ) : null}
+            )}
             <Button
               size="lg"
               variant="green"

@@ -31,11 +31,15 @@ import {
   normalizeVocabularyText,
 } from "../domain/learning-bundle";
 import { learningBoxEventFields } from "../domain/learning-box-replay";
+import { readOneTolerant, readTolerant } from "../domain/tolerant-read";
 import { learningEventIdentity } from "./learning-event-identity";
 import Dexie, { type Table } from "dexie";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import type { LearningWordStage } from "../domain/learning-word";
-import type { LearningWordProgress } from "../domain/learning-word-progress";
+import type {
+  LearningWordMode,
+  LearningWordProgress,
+} from "../domain/learning-word-progress";
 import {
   learningWordId,
   updateLearningWordProgress,
@@ -744,23 +748,26 @@ export function createPersonalLearningEventRepository(
   database = new PersonalLearningDatabase(),
 ): Omit<LocalRepository<LearningEventV1>, "remove"> {
   return {
-    get: async (id) => {
-      const event = await database.learningEvents.get(id);
-      return event === undefined
-        ? undefined
-        : learningEventV1Schema.parse(event);
-    },
+    // Gelesen wird tolerant (Regel S-1): Zusatzfelder einer neueren App-Version
+    // entfallen, unlesbare Ereignisse bleiben gespeichert und fehlen in der Liste.
+    get: async (id) =>
+      readOneTolerant(
+        learningEventV1Schema,
+        await database.learningEvents.get(id),
+      ),
     list: async () =>
-      (
-        await database.learningEvents.orderBy("occurredAt").reverse().toArray()
-      ).map((event) => learningEventV1Schema.parse(event)),
+      readTolerant(
+        learningEventV1Schema,
+        await database.learningEvents.orderBy("occurredAt").reverse().toArray(),
+        "learningEvents",
+      ).items,
     put: async (value) => {
       const event = learningEventV1Schema.parse(value);
       await database.transaction("rw", database.learningEvents, async () => {
         const current = await database.learningEvents.get(event.id);
         if (current) {
           if (
-            JSON.stringify(learningEventV1Schema.parse(current)) !==
+            JSON.stringify(readOneTolerant(learningEventV1Schema, current)) !==
             JSON.stringify(event)
           ) {
             throw new Error(
@@ -780,16 +787,20 @@ export function createLearningWordProgressRepository(
 ) {
   return {
     list: async () =>
-      (await database.learningWordProgress.toArray()).map((value) =>
-        learningWordProgressSchema.parse(value),
-      ),
+      readTolerant(
+        learningWordProgressSchema,
+        await database.learningWordProgress.toArray(),
+        "learningWordProgress",
+      ).items,
     listDue: async (now = new Date().toISOString()) =>
-      (
+      readTolerant(
+        learningWordProgressSchema,
         await database.learningWordProgress
           .where("dueAt")
           .belowOrEqual(now)
-          .toArray()
-      ).map((value) => learningWordProgressSchema.parse(value)),
+          .toArray(),
+        "learningWordProgress",
+      ).items,
     recordAttempt: async (input: {
       words: readonly string[];
       correct: boolean;
@@ -798,6 +809,10 @@ export function createLearningWordProgressRepository(
       stage: LearningWordStage;
       roundId: string;
       attemptId: string;
+      /** „due“ nur in der fälligen Wiederholung („Trainingswörter heute“). */
+      mode?: LearningWordMode;
+      /** Erster Versuch an dem Wort in dieser Runde; ohne Angabe: ja. */
+      firstAttempt?: boolean;
       now?: string;
     }) => {
       const now = input.now ?? new Date().toISOString();
@@ -833,6 +848,8 @@ export function createLearningWordProgressRepository(
                 selfCorrected: input.selfCorrected,
                 stage: input.stage,
                 now,
+                mode: input.mode ?? "free",
+                firstAttempt: input.firstAttempt ?? true,
               }),
             );
             await database.learningEvents.add(
@@ -865,9 +882,11 @@ export function createTypingProgressRepository(
 ) {
   return {
     list: async () =>
-      (await database.typingProgress.toArray()).map((value) =>
-        typingProgressSchema.parse(value),
-      ),
+      readTolerant(
+        typingProgressSchema,
+        await database.typingProgress.toArray(),
+        "typingProgress",
+      ).items,
     recordAttempt: async (
       lessonId: string,
       stats: TypingStats,
@@ -928,28 +947,32 @@ export const TEXTBOX_WRITING_THRESHOLD = 90;
 export function createTextboxRepository(
   database = new PersonalLearningDatabase(),
 ) {
+  // `parse` prüft streng (Schreiben), `read` liest tolerant (Regel S-1).
   const parse = (value: unknown) => textboxSessionSchema.parse(value);
+  const read = (value: unknown) => readOneTolerant(textboxSessionSchema, value);
+  const readAll = (values: readonly unknown[]) =>
+    readTolerant(textboxSessionSchema, values, "textboxSessions").items;
   return {
     listCompleted: async () =>
-      (
+      readAll(
         await database.textboxSessions
           .where("status")
           .equals("abgeschlossen")
-          .toArray()
-      ).map(parse),
+          .toArray(),
+      ),
     listByText: async (textId: string) =>
-      (
-        await database.textboxSessions.where("textId").equals(textId).toArray()
-      ).map(parse),
+      readAll(
+        await database.textboxSessions.where("textId").equals(textId).toArray(),
+      ),
     getOpen: async (textId: string) => {
       const open = await database.textboxSessions
         .where("textId")
         .equals(textId)
         .filter((session) => session.status === "laufend")
         .toArray();
-      const latest = open
-        .map(parse)
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+      const latest = readAll(open).sort((a, b) =>
+        b.updatedAt.localeCompare(a.updatedAt),
+      )[0];
       return latest;
     },
     /** Speichert eine laufende Einheit; eine neue ersetzt die alte zum selben Text. */
@@ -962,7 +985,7 @@ export function createTextboxRepository(
       }
       await database.transaction("rw", database.textboxSessions, async () => {
         const stored = await database.textboxSessions.get(checked.id);
-        if (stored && parse(stored).status === "abgeschlossen") {
+        if (stored?.status === "abgeschlossen") {
           throw new Error("Abgeschlossene Einheiten sind unveränderlich.");
         }
         const others = await database.textboxSessions
@@ -980,7 +1003,7 @@ export function createTextboxRepository(
       await database.transaction("rw", database.textboxSessions, async () => {
         const stored = await database.textboxSessions.get(trainingId);
         if (!stored) return;
-        if (parse(stored).status === "abgeschlossen") {
+        if (stored.status === "abgeschlossen") {
           throw new Error(
             "Abgeschlossene Einheiten lassen sich nicht verwerfen.",
           );
@@ -1004,8 +1027,8 @@ export function createTextboxRepository(
         database.learningEvents,
         async () => {
           const stored = await database.textboxSessions.get(checked.id);
-          if (stored && parse(stored).status === "abgeschlossen") {
-            if (JSON.stringify(parse(stored)) !== JSON.stringify(checked)) {
+          if (stored?.status === "abgeschlossen") {
+            if (JSON.stringify(read(stored)) !== JSON.stringify(checked)) {
               throw new Error("Abgeschlossene Einheiten sind unveränderlich.");
             }
           } else {
@@ -1057,13 +1080,19 @@ export type WordBoxLessonImport = {
 export function createWordBoxRepository(
   database = new PersonalLearningDatabase(),
 ) {
+  // `parse` prüft streng (Schreiben), `read` liest tolerant (Regel S-1).
   const parse = (value: unknown) => wordBoxSchema.parse(value);
+  const read = (value: unknown) => {
+    const box = readOneTolerant(wordBoxSchema, value);
+    if (!box) throw new Error("Diese Wortbox konnte nicht gelesen werden.");
+    return box;
+  };
   const ownCount = () =>
     database.wordBoxes.where("kind").equals("eigen").count();
   const load = async (id: string) => {
     const stored = await database.wordBoxes.get(id);
     if (!stored) throw new Error("Diese Wortbox gibt es nicht mehr.");
-    return parse(stored);
+    return read(stored);
   };
   const assertTitle = (title: string) => {
     if (!isValidWordBoxTitle(title)) {
@@ -1081,7 +1110,12 @@ export function createWordBoxRepository(
   };
 
   return {
-    list: async () => (await database.wordBoxes.toArray()).map(parse),
+    list: async () =>
+      readTolerant(
+        wordBoxSchema,
+        await database.wordBoxes.toArray(),
+        "wordBoxes",
+      ).items,
     create: async (
       title: string,
       words: readonly string[] = [],
@@ -1182,7 +1216,7 @@ export function createWordBoxRepository(
         async () => {
           const stored = await database.wordBoxes.get(UNTERRICHT_BOX_ID);
           const box: WordBox = stored
-            ? parse(stored)
+            ? read(stored)
             : {
                 id: UNTERRICHT_BOX_ID,
                 kind: "unterricht",
@@ -1238,20 +1272,24 @@ export function createWordBoxRepository(
 export function createWordRoundRepository(
   database = new PersonalLearningDatabase(),
 ) {
+  // `parse` prüft streng (Schreiben), `readAll` liest tolerant (Regel S-1).
   const parse = (value: unknown) => wordRoundSchema.parse(value);
+  const readAll = (values: readonly unknown[]) =>
+    readTolerant(wordRoundSchema, values, "wordRounds").items;
   return {
-    list: async () => (await database.wordRounds.toArray()).map(parse),
+    list: async () => readAll(await database.wordRounds.toArray()),
     listByBox: async (boxId: string) =>
-      (await database.wordRounds.where("boxId").equals(boxId).toArray()).map(
-        parse,
-      ),
+      readAll(await database.wordRounds.where("boxId").equals(boxId).toArray()),
     /** Idempotent über die Id; gleiche Id mit anderem Inhalt wirft. */
     save: async (round: WordRoundRecord) => {
       const checked = parse(round);
       await database.transaction("rw", database.wordRounds, async () => {
         const stored = await database.wordRounds.get(checked.id);
         if (stored) {
-          if (JSON.stringify(parse(stored)) !== JSON.stringify(checked)) {
+          if (
+            JSON.stringify(readOneTolerant(wordRoundSchema, stored)) !==
+            JSON.stringify(checked)
+          ) {
             throw new Error("Abgeschlossene Runden sind unveränderlich.");
           }
           return;

@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Entwicklungsplan
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Viele Schritte der Reihenfolge sind umgesetzt; der Abschnitt „Aktueller nächster Meilenstein“ (Stand 29.09.2026) ist **nicht mehr aktuell**. Das Audit enthält eine priorisierte Roadmap als **Vorschlag zur Prüfung**; sie ist nicht beschlossen. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Aktueller nächster Meilenstein
 

@@ -7,9 +7,14 @@ tags:
   - gamification
 status: beschlossen
 stand: 2026-09-29
+umsetzungsstand: Implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 ---
 
 # Entscheidungsprotokoll
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Gültigkeit und Umsetzungsstand jeder Entscheidung stehen im neuen [[Entscheidungsindex]]. **Entscheidung 53** (Geräte-Abgleich der Lehrkraft) steht nicht in diesem Protokoll, sondern nur in `docs/cloud-sync.md`. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Klassenmodus, Ranking und QR-Synchronisation – 12. August 2026
 

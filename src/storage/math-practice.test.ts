@@ -24,7 +24,7 @@ const attempt = () =>
     now: "2026-09-18T10:00:00.000Z",
   });
 
-it("stores attempts once, survives reopening and rejects changed or corrupt data", async () => {
+it("stores attempts once, survives reopening and rejects changed data and skips corrupt data", async () => {
   const name = `math-${crypto.randomUUID()}`;
   const db = new PersonalLearningDatabase(name);
   databases.push(db);
@@ -48,7 +48,9 @@ it("stores attempts once, survives reopening and rejects changed or corrupt data
     ...event,
     math: { ...event.math!, answer: 42 },
   } as never);
-  await expect(next.list()).rejects.toThrow();
+  // Unlesbare Datensätze werden übersprungen, nicht gelöscht (Regel S-1).
+  expect(await next.list()).toEqual([]);
+  expect(await reopened.learningEvents.count()).toBe(1);
   reopened.close();
 });
 

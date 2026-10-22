@@ -7,9 +7,14 @@ tags:
   - startseite
 status: designgrundlage
 stand: 2026-09-11
+umsetzungsstand: Implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 ---
 
 # Designgrundlage
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Die Gestaltungsschicht „Lernraum UI“ ist umgesetzt; die Farbrollen dieser Notiz sind durch Entscheidung 47 **überholt** (bereits im Text vermerkt). Automatisch prüfbare Barrierefreiheit ist sehr gut (0 axe-Verstöße in 26 Seiten, C). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Status und Zweck
 

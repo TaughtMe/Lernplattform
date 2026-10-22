@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Lernlogik und Leitner-Boxen
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Die LernBox-Regeln (kein Aufstieg vor Fälligkeit, 8-Stunden-Fenster, ein Aufstieg je Fälligkeit) sind umgesetzt. **Abweichend** von dieser Notiz: Lernwörter steigen ohne Fälligkeitsprüfung und auch beim Abschreiben auf (A-004, D-001); Karteikarten-Selbsteinschätzung hebt bis Box 5 (D-010); „Bedeutung“ und „Schreiben“ werden je Richtung nicht getrennt gespeichert; Boxstände werden nur bei Mathe aus Ereignissen abgeleitet (A-003). Weitere Befunde: G-005, G-006, G-011. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

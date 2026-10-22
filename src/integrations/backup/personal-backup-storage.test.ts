@@ -7,6 +7,7 @@ import {
   PersonalBackupStorageError,
   readPersonalBackupFile,
   restorePersonalBackupFromDirectory,
+  restorePersonalBackupFromFile,
   savePersonalBackupToDirectory,
 } from "./personal-backup-storage";
 
@@ -175,6 +176,46 @@ describe("personal backup directory storage", () => {
     await expect(readPersonalBackupFile(file)).resolves.toEqual(saved.backup);
     await expect(
       readPersonalBackupFile(new File(["{kaputt"], "x.json")),
+    ).rejects.toMatchObject({ code: "corrupt" });
+  });
+
+  it("restores a file and reports skipped records or a newer app version", async () => {
+    const source = new PersonalLearningDatabase(
+      `personal-backup-directory-${crypto.randomUUID()}`,
+    );
+    const target = new PersonalLearningDatabase(
+      `personal-backup-directory-${crypto.randomUUID()}`,
+    );
+    databases.push(source, target);
+    const backup = await buildPersonalBackup(source);
+    const file = (value: unknown) =>
+      new File([JSON.stringify(value)], "sicherung.json");
+
+    const withUnreadable = {
+      ...backup,
+      data: {
+        ...backup.data,
+        wordBoxes: [{ id: "kaputt" }],
+      },
+    };
+    await expect(
+      restorePersonalBackupFromFile(file(withUnreadable), target),
+    ).resolves.toMatchObject({
+      skipped: [{ table: "wordBoxes", id: "kaputt" }],
+    });
+
+    await expect(
+      restorePersonalBackupFromFile(
+        file({ ...backup, schemaVersion: 2 }),
+        target,
+      ),
+    ).rejects.toMatchObject({
+      code: "newer-version",
+      message:
+        "Diese Sicherung stammt aus einer neueren App-Version. Bitte zuerst die App aktualisieren.",
+    });
+    await expect(
+      restorePersonalBackupFromFile(new File(["{kaputt"], "x.json"), target),
     ).rejects.toMatchObject({ code: "corrupt" });
   });
 

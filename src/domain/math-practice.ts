@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   buildMentalMathTask,
   generateMentalMathTasks,
+  mathNumbersEqual,
+  parseMathAnswer,
   parseMentalMathExpression,
   parseMentalMathTask,
   type MentalMathTask,
@@ -85,8 +87,9 @@ export function mathTaskFromPrompt(
   answer: string,
   index = 0,
 ): MentalMathTask | null {
-  const value = Number(answer.replace(",", "."));
-  if (!answer.trim() || !Number.isFinite(value)) return null;
+  // Die Lösung der Lehrkraft wird wie eine Schülerantwort streng gelesen.
+  const value = parseMathAnswer(answer);
+  if (value === null) return null;
   const plain = prompt.replace(/\((-?\d+(?:[.,]\d+)?)\)/g, "$1");
   const gap = plain.includes("_")
     ? plain.split("=")[0]!.includes("_")
@@ -100,16 +103,17 @@ export function mathTaskFromPrompt(
   if (expression) {
     const task = buildMentalMathTask(expression, index, gap);
     const equationResult = restored.includes("=")
-      ? Number(restored.split("=")[1]!.trim().replace(",", "."))
+      ? parseMathAnswer(restored.split("=")[1]!)
       : expression.result;
     if (
-      Math.abs(task.answer - value) < 0.01 &&
-      Math.abs(equationResult - expression.result) < 0.01
+      equationResult !== null &&
+      mathNumbersEqual(task.answer, value) &&
+      mathNumbersEqual(equationResult, expression.result)
     )
       return task;
   }
   const parsed = parseMentalMathTask(plain, index);
-  return parsed && Math.abs(parsed.answer - value) < 0.01
+  return parsed && mathNumbersEqual(parsed.answer, value)
     ? parsed
     : {
         id: `math-expression-${index}`,

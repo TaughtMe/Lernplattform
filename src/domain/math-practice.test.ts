@@ -49,6 +49,33 @@ describe("personal math practice", () => {
     },
   );
 
+  it("liest die Lösung der Lehrkraft streng und vergleicht ohne Toleranz (M-2)", () => {
+    // Tausenderpunkt und -leerzeichen in der Lösung gelten wie bei Kindern.
+    for (const answer of ["1.000", "1 000", "1000"]) {
+      expect(mathTaskFromPrompt("500 + 500", answer)).toMatchObject({
+        answer: 1000,
+        operation: "add",
+      });
+    }
+    expect(mathTaskFromPrompt("_ + 500 = 1500", "1.000")).toMatchObject({
+      answer: 1000,
+      operation: "add",
+      gap: "left",
+    });
+    // Kommafehler: 0,001 ist nicht 0,1 · 0,1; die Lösung der Lehrkraft bleibt erhalten.
+    expect(mathTaskFromPrompt("0,1 * 0,1", "0,01")).toMatchObject({
+      answer: 0.01,
+      operation: "multiply",
+    });
+    expect(mathTaskFromPrompt("0,1 * 0,1", "0,001")).toMatchObject({
+      answer: 0.001,
+      operation: "mixed-expression",
+    });
+    expect(mathTaskFromPrompt("1 + 2", "−3")).toMatchObject({ answer: -3 });
+    for (const answer of ["1e1", "0x10", "1.00.0", "5,", "1/3"])
+      expect(mathTaskFromPrompt("1 + 2", answer)).toBeNull();
+  });
+
   it("rejects nonnumeric answers and invalid settings", () => {
     expect(mathTaskFromPrompt("1+2", "bad")).toBeNull();
     expect(mathTaskFromPrompt("1+2", " ")).toBeNull();

@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Plattform und Navigation
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Gemeinsame App, getrennte Schüler- und Lehrerbereiche, Code- und QR-Einstiege sind umgesetzt. Die hier beschriebene Oberfläche (Heute üben, Fächer, Meine Inhalte, Mein Fortschritt, Meine Klasse) und der Monatskalender sind durch Entscheidung 48 **überholt**: Der Code zeigt die Leiste Lernen, Üben, Raum, Profil und eine Wochenleiste. Der Lehrerbereich ist auf der Startseite als „Lehrer-Login“ verlinkt, obwohl es keinen Login gibt (B-009). Weitere Befunde: C-003 (Erstkontakt), C-009 (Fortschritt schwer auffindbar). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DailyPlanModule } from "../../src/domain/daily-plan";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createDailyPlanRepository } from "../../src/storage/daily-plan";
+import { hasPersonalLearningState } from "../../src/storage/learning-state";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
@@ -27,6 +28,8 @@ export type DashboardSnapshot = {
   plan: DashboardPlan;
   activeDays: string[];
   streak: number;
+  /** Ob das Gerät Lernstand hat; `null`, solange unbekannt oder nicht lesbar. */
+  hasLearningState: boolean | null;
   difficult: Array<{ label: string; detail: string; route: string }>;
 };
 
@@ -43,6 +46,7 @@ const EMPTY: DashboardSnapshot = {
   },
   activeDays: [],
   streak: 0,
+  hasLearningState: null,
   difficult: [],
 };
 
@@ -64,7 +68,7 @@ export function useLearnerDashboard() {
     let active = true;
     const load = async () => {
       const now = new Date();
-      const [items, progress, events, cards, words, memberships] =
+      const [items, progress, events, cards, words, memberships, hasState] =
         await Promise.all([
           recommendations.list({
             enabledModules: ["vocabulary", "german", "mathematics", "typing"],
@@ -74,6 +78,8 @@ export function useLearnerDashboard() {
           database.learningBoxCards.toArray(),
           database.learningWordProgress.toArray(),
           classes.list().catch(() => []),
+          // Unlesbar heißt „unbekannt“: dann keine Hinweise zum Speicherschutz.
+          hasPersonalLearningState(database).catch(() => null),
         ]);
       if (!active) return;
       const activeDays = [
@@ -92,6 +98,7 @@ export function useLearnerDashboard() {
         },
         activeDays,
         streak: countStreak(activeDays, now),
+        hasLearningState: hasState,
         // Schwierig: Lernwörter mit Fehlern und zuletzt geübte Karten in Box 1.
         difficult: [
           ...words

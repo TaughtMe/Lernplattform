@@ -32,3 +32,57 @@ export async function startRound(page: Page, title: string, stage: number) {
   await sheet.getByLabel("Wörter in dieser Runde").selectOption("all");
   await sheet.getByRole("button", { name: "Starten" }).click();
 }
+
+/**
+ * Legt fällige Lernstände direkt im lokalen Speicher an („Trainingswörter heute“
+ * hat dann Wörter). Die Seite muss einmal geladen sein, damit die Datenbank
+ * existiert; danach neu laden.
+ */
+export async function seedDueWords(page: Page, words: string[]) {
+  await page.evaluate(async (list) => {
+    const name = "lernraum:personal:v1";
+    // Erst öffnen, wenn die App die Datenbank angelegt hat; sonst entstünde
+    // hier eine leere Datenbank ohne Tabellen.
+    let database: IDBDatabase | undefined;
+    for (let attempt = 0; attempt < 50 && !database; attempt += 1) {
+      const known = await indexedDB.databases();
+      if (known.some((info) => info.name === name)) {
+        const request = indexedDB.open(name);
+        const opened = await new Promise<IDBDatabase>((resolve, reject) => {
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        if (opened.objectStoreNames.contains("learningWordProgress")) {
+          database = opened;
+          break;
+        }
+        opened.close();
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    if (!database) throw new Error("Die Lerndatenbank fehlt.");
+    const ready = database;
+    await new Promise<void>((resolve, reject) => {
+      const transaction = ready.transaction(
+        "learningWordProgress",
+        "readwrite",
+      );
+      for (const word of list) {
+        transaction.objectStore("learningWordProgress").put({
+          id: `learning-word:${word.toLowerCase()}`,
+          word,
+          stage: 1,
+          box: 1,
+          dueAt: "2026-01-01T00:00:00.000Z",
+          attempts: 1,
+          incorrectAttempts: 1,
+          helpUses: 0,
+          lastPracticedAt: "2026-01-01T00:00:00.000Z",
+        });
+      }
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    ready.close();
+  }, words);
+}

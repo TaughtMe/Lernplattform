@@ -7,7 +7,10 @@ import { HistoryScreen } from "./history-screen";
 
 function setup(
   rounds: ReturnType<typeof roundRecord>[],
-  options: { onPractice?: (stage: number) => void } = {},
+  options: {
+    onPractice?: (stage: number) => void;
+    percentless?: boolean;
+  } = {},
 ) {
   const onPractice = options.onPractice ?? vi.fn();
   render(
@@ -16,6 +19,7 @@ function setup(
       summary={summarizeWordBox("double-consonants", rounds)}
       rounds={rounds}
       initialStage={rounds[0]?.stage ?? 1}
+      percentless={options.percentless ?? false}
       worksheetHref="/frei/german/lernwoerter/laufzettel"
       onPractice={onPractice}
       onBack={() => undefined}
@@ -161,5 +165,24 @@ describe("HistoryScreen", () => {
       "href",
       "/frei/german/lernwoerter/laufzettel",
     );
+  });
+
+  it("zeigt bei den Fehlerwörtern keinen Prozentwert und kein Diagramm", () => {
+    setup(
+      [
+        roundRecord("a", { percent: 20, day: 1 }),
+        roundRecord("b", { percent: 40, day: 2 }),
+      ],
+      { percentless: true },
+    );
+    expect(document.body).not.toHaveTextContent("%");
+    expect(document.body).not.toHaveTextContent("Bestwert");
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Diagramm" }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector("dl")).toHaveTextContent("Runden2");
+    const list = screen.getByRole("list", { name: "Alle Runden" });
+    expect(list).toHaveTextContent("1 Wort geübt");
   });
 });

@@ -19,15 +19,32 @@ declare global {
   }
 }
 
-function isStandalone() {
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
+/** Werte des Browsers, die für die Geräteerkennung nötig sind (testbar einspeisbar). */
+export type DeviceEnvironment = Pick<
+  Navigator,
+  "userAgent" | "platform" | "maxTouchPoints"
+>;
+
+/** Läuft die Seite als installierte App (Home-Bildschirm, Dock, Fenster)? */
+export function isStandaloneDisplay(env: {
+  displayModeStandalone: boolean;
+  navigatorStandalone?: boolean | undefined;
+}) {
+  return env.displayModeStandalone || env.navigatorStandalone === true;
 }
 
-function isIos() {
-  const { userAgent, platform, maxTouchPoints } = navigator;
+function isStandalone() {
+  return isStandaloneDisplay({
+    displayModeStandalone:
+      window.matchMedia?.("(display-mode: standalone)").matches ?? false,
+    navigatorStandalone: (navigator as Navigator & { standalone?: boolean })
+      .standalone,
+  });
+}
+
+/** iPhone, iPod und iPad – auch iPadOS, das sich als Mac mit Touch ausgibt. */
+export function isIosDevice(env: DeviceEnvironment = navigator) {
+  const { userAgent, platform, maxTouchPoints } = env;
   // iPadOS meldet sich als „MacIntel“, hat aber Touch.
   return (
     /iPhone|iPad|iPod/.test(userAgent) ||
@@ -39,9 +56,11 @@ function isIos() {
  * Wählt die Anleitung für Browser ohne `beforeinstallprompt`. `null` heißt:
  * Der Browser kann keine Web-Apps installieren (Firefox am Desktop).
  */
-export function detectGuide(): InstallGuide | null {
-  const { userAgent } = navigator;
-  if (isIos()) {
+export function detectGuide(
+  env: DeviceEnvironment = navigator,
+): InstallGuide | null {
+  const { userAgent } = env;
+  if (isIosDevice(env)) {
     // Chrome, Firefox, Edge und Opera auf iOS nutzen WebKit, haben aber
     // eigene Menüs; nur Safari selbst hat die Leiste mit „Teilen“ fest.
     return /CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo/.test(userAgent)

@@ -15,6 +15,7 @@ import { rankTextsForWords } from "../../src/domain/textbox-progress";
 import { TEXTBOX_DIFFICULTY_LABELS } from "../../src/domain/textbox-text";
 import {
   learningWordId,
+  type LearningWordMode,
   type LearningWordProgress,
 } from "../../src/domain/learning-word-progress";
 import {
@@ -37,10 +38,14 @@ import {
   type WordRoundState,
 } from "../../src/domain/word-round";
 import {
+  FEHLER_BOX_ID,
+  boxCoverage,
   headlineForBox,
-  isNewBest,
   recommendedStage,
+  showsPracticedWordsOnly,
   summarizeWordBox,
+  wordsPracticedOnDay,
+  type BoxCoverage,
   type WordRoundRecord,
 } from "../../src/domain/word-store-progress";
 import {
@@ -75,6 +80,10 @@ const SAVE_ISSUE =
   "Dein Lernstand konnte gerade nicht vollständig gespeichert werden. Du kannst trotzdem weiterüben.";
 const FALLIGE_ID = "faellig";
 const TEXTBOX_ID = "textbox";
+/** In der fälligen Wiederholung gibt es nur freien Abruf: Stufe 4 bis 6 (W-5). */
+const FALLIGE_MIN_STAGE: LearningWordStage = 4;
+const FALLIGE_STAGE_HINT =
+  "In der Wiederholung schreibst du die Wörter aus dem Kopf.";
 /** Wie lange „Richtig“ steht, bevor es automatisch weitergeht (Plan 3.3). */
 const SUCCESS_MS = 650;
 
@@ -97,9 +106,31 @@ type Completion = {
   stage: LearningWordStage;
   percent: number;
   results: WordRoundState["results"];
-  record: "new" | "first" | undefined;
+  /** Wörter der ganzen Wortbox; kleiner als die Runde heißt Stichprobe. */
+  boxWordCount: number;
+  /** Übungsmenge des lokalen Tages inklusive dieser Runde. */
+  practicedToday: number;
+  /** Box-Fortschritt inklusive dieser Runde; nur bei echten Wortboxen (W-10). */
+  coverage?: BoxCoverage;
   notice?: string;
 };
+
+/** Nur echte Wortboxen zeigen den Box-Fortschritt, nicht „heute“, Textbox oder Fehlerwörter. */
+function hasBoxCoverage(view: WordBoxView): boolean {
+  return (
+    view.kind === "fest" || view.kind === "eigen" || view.kind === "unterricht"
+  );
+}
+
+/** Nur „Trainingswörter heute“ ist fällige Wiederholung, alles andere freies Üben. */
+function modeOfBox(boxId: string): LearningWordMode {
+  return boxId === FALLIGE_ID ? "due" : "free";
+}
+
+/** In „Trainingswörter heute“ sind die Stufen 1 bis 3 gesperrt. */
+function lockedStage(boxId: string, stage: LearningWordStage) {
+  return boxId === FALLIGE_ID && stage < FALLIGE_MIN_STAGE;
+}
 
 /** Nutzertaugliche Meldung; englische Validierungsfehler werden nicht gezeigt. */
 function messageOf(error: unknown, fallback: string) {
@@ -190,7 +221,7 @@ export function LearningWordApp({
     setRunState(next);
   }
 
-  const tempId = bridgeSource === "fehler" ? "fehler" : TEXTBOX_ID;
+  const tempId = bridgeSource === "fehler" ? FEHLER_BOX_ID : TEXTBOX_ID;
 
   /** Einheitliche Sicht auf alle Wortboxen, auch die vorübergehenden. */
   function findView(
@@ -236,16 +267,14 @@ export function LearningWordApp({
     const id = requested === TEXTBOX_ID ? tempId : requested;
     const view = findView(id, dueEntries);
     if (!view) return;
-    // Vorauswahl: Stufe der letzten Runde, bei „Gemischt“ die leichteste fällige.
-    const dueStage =
-      id === FALLIGE_ID && dueEntries.length > 0
-        ? (Math.min(
-            ...dueEntries.map((entry) => entry.stage),
-          ) as LearningWordStage)
-        : undefined;
-    let stage = lastStageOf(id) ?? dueStage ?? 1;
+    // Vorauswahl: Stufe der letzten Runde. „Trainingswörter heute“ beginnt bei
+    // Stufe 4, denn die Stufen 1 bis 3 sind dort gesperrt.
+    let stage = lastStageOf(id) ?? 1;
+    if (lockedStage(id, stage)) stage = FALLIGE_MIN_STAGE;
     // Ohne deutsche Stimme ist Stufe 6 nicht wählbar.
-    if (stage === 6 && speech.hasVoice !== true) stage = 5;
+    if (stage === 6 && speech.hasVoice !== true) {
+      stage = id === FALLIGE_ID ? FALLIGE_MIN_STAGE : 5;
+    }
     setConfig((current) => ({ ...current, stage }));
     setStartError(undefined);
     setNotice(undefined);
@@ -277,8 +306,12 @@ export function LearningWordApp({
     setHistoryId(id);
   }
 
-  function begin(view: WordBoxView, chosen: Config) {
+  function begin(view: WordBoxView, requested: Config) {
     if (view.words.length === 0) return;
+    // Auch bei veralteter Auswahl nie eine gesperrte Stufe starten.
+    const chosen = lockedStage(view.id, requested.stage)
+      ? { ...requested, stage: FALLIGE_MIN_STAGE }
+      : requested;
     finished.current = new Set();
     setCompletion(undefined);
     setNotice(undefined);
@@ -335,9 +368,13 @@ export function LearningWordApp({
       return;
     }
     setRun({ ...current, state: result.state });
+    // Nur die Runde aus „Trainingswörter heute“ ist fällige Wiederholung (W-5).
+    const mode = modeOfBox(current.view.id);
     for (const attempt of result.attempts) {
       enqueue(() =>
         store.recordAttempt({
+          mode,
+          firstAttempt: attempt.firstAttempt,
           words: attempt.words,
           correct: attempt.correct,
           usedHelp: attempt.usedHelp,
@@ -357,41 +394,54 @@ export function LearningWordApp({
     finished.current.add(state.roundId);
 
     const percent = wordRoundPercent(state.results);
-    const earlier = roundsRef.current;
-    const hadBefore = earlier.some(
-      (round) => round.boxId === view.id && round.stage === state.stage,
-    );
-    const record = !hadBefore
-      ? "first"
-      : isNewBest(view.id, state.stage, percent, earlier)
-        ? "new"
-        : undefined;
+    const finishedAt = new Date();
+    // Übungsmenge des lokalen Tages: frühere Runden von heute plus diese Runde.
+    const practicedToday =
+      wordsPracticedOnDay(
+        roundsRef.current.filter((round) => round.id !== state.roundId),
+        finishedAt,
+      ) + state.results.length;
+    const record: WordRoundRecord = {
+      id: state.roundId,
+      boxId: view.id,
+      boxTitle: view.title.slice(0, 60),
+      stage: state.stage,
+      ...(state.stage === 5 ? { blockSize: state.blockSize } : {}),
+      startedAt: done.startedAt,
+      completedAt: finishedAt.toISOString(),
+      words: state.results.map((entry) => ({
+        ...entry,
+        word: entry.word.slice(0, 60),
+      })),
+      percent,
+    };
+    // Box-Fortschritt aus den gespeicherten Runden plus der gerade beendeten.
+    const coverage = hasBoxCoverage(view)
+      ? boxCoverage(
+          view.words,
+          [
+            ...roundsRef.current.filter((round) => round.id !== state.roundId),
+            record,
+          ],
+          view.id,
+          state.stage,
+        )
+      : undefined;
     const base: Completion = {
       view,
       config: chosen,
       stage: state.stage,
       percent,
       results: state.results,
-      record,
+      boxWordCount: view.words.length,
+      practicedToday,
+      ...(coverage ? { coverage } : {}),
     };
     setCompletion(base);
 
     await pendingWrites.current;
     try {
-      await store.saveRound({
-        id: state.roundId,
-        boxId: view.id,
-        boxTitle: view.title.slice(0, 60),
-        stage: state.stage,
-        ...(state.stage === 5 ? { blockSize: state.blockSize } : {}),
-        startedAt: done.startedAt,
-        completedAt: new Date().toISOString(),
-        words: state.results.map((entry) => ({
-          ...entry,
-          word: entry.word.slice(0, 60),
-        })),
-        percent,
-      });
+      await store.saveRound(record);
     } catch {
       setCompletion({ ...base, notice: SAVE_ISSUE });
     }
@@ -585,6 +635,22 @@ export function LearningWordApp({
   }, [screenKey, store.status]);
 
   // ---- Darstellung ----
+  /** Letzte Runde der Wortbox; bei Fehlerwörtern ohne Prozentwert (W-10, W-12). */
+  function headlineOf(view: WordBoxView): WordBoxTile["headline"] {
+    const boxId = view.id;
+    const headline = headlineForBox(summarizeWordBox(boxId, store.rounds));
+    if (!headline) return undefined;
+    const { stage, practicedWords } = headline;
+    if (showsPracticedWordsOnly(boxId) || !view || !hasBoxCoverage(view)) {
+      return { stage, practicedWords };
+    }
+    return {
+      stage,
+      practicedWords,
+      coverage: boxCoverage(view.words, store.rounds, boxId, stage),
+    };
+  }
+
   const tiles: WordBoxTile[] = store.views.map((view) => {
     const secure = view.words.filter(
       (word) => (progressByWord.get(learningWordId(word))?.box ?? 0) >= 3,
@@ -599,7 +665,7 @@ export function LearningWordApp({
       examples: view.words.slice(0, 3),
       total: view.words.length,
       secure,
-      headline: headlineForBox(summarizeWordBox(view.id, store.rounds)),
+      headline: headlineOf(view),
     };
   });
 
@@ -684,7 +750,11 @@ export function LearningWordApp({
         stage={completion.stage}
         percent={completion.percent}
         results={completion.results}
-        record={completion.record}
+        boxWordCount={completion.boxWordCount}
+        practicedToday={completion.practicedToday}
+        mode={modeOfBox(completion.view.id)}
+        percentless={showsPracticedWordsOnly(completion.view.id)}
+        coverage={completion.coverage}
         notice={completion.notice ?? notice}
         textSuggestion={
           best ? (
@@ -745,11 +815,15 @@ export function LearningWordApp({
         summary={summarizeWordBox(view.id, store.rounds)}
         rounds={boxRounds}
         initialStage={lastStageOf(view.id) ?? 1}
+        percentless={showsPracticedWordsOnly(view.id)}
         worksheetHref={WORD_STORE_WORKSHEET_PATH}
         onPractice={(stage) => {
           setHistoryId(undefined);
           openStart(view.id);
-          setConfig((current) => ({ ...current, stage }));
+          setConfig((current) => ({
+            ...current,
+            stage: lockedStage(view.id, stage) ? FALLIGE_MIN_STAGE : stage,
+          }));
         }}
         onBack={() => setHistoryId(undefined)}
       />
@@ -823,17 +897,36 @@ export function LearningWordApp({
           strategy={sheetView.strategy ?? collection?.strategy}
           detail={collection?.detail}
           wordCount={sheetView.words.length}
-          stages={LEARNING_WORD_STAGES.map((stage) => ({
-            stage,
-            bestPercent: sheetSummary?.[stage].bestPercent,
-            recommended: recommended === stage,
-            disabledHint:
-              stage === 6 && speech.hasVoice !== true
-                ? speech.hasVoice === undefined
-                  ? "Stimmen werden geladen …"
-                  : NO_VOICE
-                : undefined,
-          }))}
+          stages={LEARNING_WORD_STAGES.map((stage) => {
+            const locked = lockedStage(sheetView.id, stage);
+            const last = sheetSummary?.[stage];
+            return {
+              stage,
+              last:
+                last?.lastPercent === undefined
+                  ? undefined
+                  : showsPracticedWordsOnly(sheetView.id)
+                    ? { words: last.lastWords ?? 0 }
+                    : hasBoxCoverage(sheetView)
+                      ? {
+                          coverage: boxCoverage(
+                            sheetView.words,
+                            store.rounds,
+                            sheetView.id,
+                            stage,
+                          ).percent,
+                        }
+                      : { percent: last.lastPercent },
+              recommended: recommended === stage && !locked,
+              disabledHint: locked
+                ? FALLIGE_STAGE_HINT
+                : stage === 6 && speech.hasVoice !== true
+                  ? speech.hasVoice === undefined
+                    ? "Stimmen werden geladen …"
+                    : NO_VOICE
+                  : undefined,
+            };
+          })}
           starting={starting}
           error={startError}
           onHistory={() => openHistory(sheetView.id)}

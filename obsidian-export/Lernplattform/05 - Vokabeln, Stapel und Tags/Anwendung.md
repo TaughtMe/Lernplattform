@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Vokabeln, Stapel und Tags
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Vokabeln mit Alternativen (nur „|“), Stapel, Herkunft und Laufdiktat-Tags sind umgesetzt. Die Übernahme aus Duellen ist **geplant** (Duell ausgeschaltet). Befunde: übliche Schreibweisen wie „(to) go“ oder „home / house“ werden nicht als Alternativen erkannt (G-003), typografische Apostrophe machen richtige Antworten falsch (G-002). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

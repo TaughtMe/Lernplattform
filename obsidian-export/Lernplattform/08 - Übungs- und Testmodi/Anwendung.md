@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Übungs- und Testmodi
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Beide Richtungen, schriftliche Eingabe, Aufdecken mit Selbsteinschätzung und ein Hörmodus (Wortspeicher Stufe 6, Vorlesen in der LernBox) sind umgesetzt. Kontext- und Lückensätze sind **geplant** (Lückensatz-Design 4e bewusst nicht umgesetzt, Entscheidung 55). Der **Lernstandscheck existiert nicht mehr**. Ein Prüfungsmodus ist nicht vorgesehen. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Modi
 

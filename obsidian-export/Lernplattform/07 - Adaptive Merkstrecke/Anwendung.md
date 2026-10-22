@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Adaptive Merkstrecke
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Die sechs Merkstufen, Wortboxen, Prozentwert, Bestwert und Laufzettel sind umgesetzt; Runden werden dauerhaft gespeichert (Dexie-Version 6). Die beschriebene **automatische Anpassung von Hilfen und Verzögerungen ist nicht umgesetzt**; die Stufe wählt das Kind (D-003). Befunde: Abschreiben hebt Box und Merkstufe, „Wort zeigen“ schützt besser als ein Fehlversuch (D-001, F-001), Längenstriche verraten die Entscheidung (D-002), Stufe 5 wertet Leerzeichen-Eingaben als Fehler (G-001), Inhaltsfehler in Wortboxen (D-006), belastende Wörter (E-005). Tastschreiben: implementiert (D-014). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

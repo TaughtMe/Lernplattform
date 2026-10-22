@@ -2,7 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DailyPlanItem } from "../../../src/domain/daily-plan";
-import { parseMentalMathTask } from "../../../src/domain/mental-math";
+import {
+  generateMentalMathTasks,
+  parseMentalMathTask,
+  shuffleMathTasks,
+} from "../../../src/domain/mental-math";
 import { createMathAttempt } from "../../../src/storage/math-practice";
 import { MentalMathApp } from "./mental-math-app";
 
@@ -50,6 +54,18 @@ vi.mock("../../../src/storage/math-practice", async (importOriginal) => ({
   }),
 }));
 
+/** Fester Zufall (mulberry32): dieselbe Folge in der App und im Test. */
+function seededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 describe("MentalMathApp", () => {
   it("exposes the complete Laufdiktat math configuration", async () => {
     const user = userEvent.setup();
@@ -88,6 +104,108 @@ describe("MentalMathApp", () => {
     await waitFor(() =>
       expect(screen.getByText("Gut gerechnet")).toBeVisible(),
     );
+  });
+});
+
+describe("Vorschau vor der Runde (C-013, M-1)", () => {
+  const defaults = {
+    operations: ["add", "subtract"] as const,
+    minValue: 0,
+    maxValue: 20,
+    count: 10,
+    allowNegativeResults: false,
+    excludeZeroOperand: false,
+    excludeZeroResult: false,
+    multiplicationTables: [] as number[],
+    gapMode: false,
+  };
+
+  it("zeigt nur Anzahl und Art, keine Aufgabe und keine Lösung", async () => {
+    const user = userEvent.setup();
+    render(<MentalMathApp random={seededRandom(42)} />);
+    await user.click(screen.getByRole("button", { name: "Aufgaben erzeugen" }));
+    expect(
+      screen.getByText("10 Aufgaben · Plus und Minus bis 20"),
+    ).toBeVisible();
+    // Kein „= <Ergebnis>“, keine einzelnen Aufgaben, kein „neu würfeln“.
+    expect(document.body.textContent).not.toMatch(/=\s*\d/);
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /neu würfeln|löschen/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Andere Aufgaben" }),
+    ).toBeVisible();
+  });
+
+  it("nennt Lücken, Reihen und den Zahlenraum", async () => {
+    const user = userEvent.setup();
+    render(<MentalMathApp random={seededRandom(1)} />);
+    await user.click(screen.getByRole("button", { name: /Mal/ }));
+    await user.click(screen.getByRole("button", { name: /Plus/ }));
+    await user.click(screen.getByRole("button", { name: /Minus/ }));
+    await user.click(screen.getByRole("button", { name: "7" }));
+    await user.click(screen.getByRole("checkbox", { name: "Lückenaufgaben" }));
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Anzahl" }),
+      "5",
+    );
+    await user.click(screen.getByRole("button", { name: "Aufgaben erzeugen" }));
+    expect(
+      screen.getByText("5 Aufgaben · Mal bis 20 · Reihe 7 · Lücken"),
+    ).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/=\s*\d/);
+  });
+
+  it("verrät die erste Rundenaufgabe nicht und mischt die Reihenfolge", async () => {
+    const user = userEvent.setup();
+    // Dieselbe Folge wie in der App: erst erzeugen, dann mischen.
+    const rng = seededRandom(7);
+    const generated = generateMentalMathTasks(defaults, rng);
+    const expected = shuffleMathTasks(generated, rng);
+    expect(expected[0]!.id).not.toBe(generated[0]!.id);
+
+    render(<MentalMathApp random={seededRandom(7)} />);
+    await user.click(screen.getByRole("button", { name: "Aufgaben erzeugen" }));
+    const setupText = document.body.textContent ?? "";
+    for (const task of generated) {
+      expect(setupText).not.toContain(task.prompt);
+      expect(setupText).not.toContain(`= ${task.answer}`);
+    }
+    await user.click(screen.getByRole("button", { name: "Runde starten" }));
+    const first = await screen.findByRole("heading", { level: 1 });
+    expect(first).toHaveTextContent(expected[0]!.prompt);
+    expect(first.textContent).not.toBe(generated[0]!.prompt);
+    expect(screen.getByText("Aufgabe 1 von 10")).toBeVisible();
+  });
+
+  it('"Andere Aufgaben" zieht eine neue Auswahl', async () => {
+    const user = userEvent.setup();
+    const rng = seededRandom(3);
+    const first = generateMentalMathTasks(defaults, rng);
+    const second = generateMentalMathTasks(defaults, rng);
+    expect(second.map((task) => task.id)).not.toEqual(
+      first.map((task) => task.id),
+    );
+    // Dritter Zug für die Reihenfolge der Runde.
+    const expected = shuffleMathTasks(second, rng);
+
+    render(<MentalMathApp random={seededRandom(3)} />);
+    await user.click(screen.getByRole("button", { name: "Aufgaben erzeugen" }));
+    await user.click(screen.getByRole("button", { name: "Andere Aufgaben" }));
+    await user.click(screen.getByRole("button", { name: "Runde starten" }));
+    expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent(
+      expected[0]!.prompt,
+    );
+  });
+
+  it("zeigt eigene Aufgaben ohne Ergebnis", async () => {
+    const user = userEvent.setup();
+    render(<MentalMathApp />);
+    await user.click(screen.getByRole("button", { name: "Eigene Aufgaben" }));
+    expect(screen.getByText("7 + 8")).toBeVisible();
+    expect(screen.getByRole("list").textContent ?? "").not.toMatch(/=\s*\d/);
+    expect(screen.queryByText("= 15")).not.toBeInTheDocument();
   });
 });
 

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { LearningWordProgress } from "./learning-word-progress";
 import {
+  boxCoverage,
   headlineForBox,
-  isNewBest,
+  practicedWordsLabel,
+  showsPracticedWordsOnly,
+  wordsPracticedOnDay,
   recommendedStage,
   summarizeWordBox,
   summarizeWordStore,
@@ -108,16 +111,72 @@ describe("summarizeWordBox", () => {
 });
 
 describe("headlineForBox", () => {
-  it("takes the highest stage with a round", () => {
+  it("shows the stage and the last result of the most recent round", () => {
     const summary = summarizeWordBox("box", [
-      round("a", 1, 100, 1),
-      round("b", 4, 50, 2),
+      round("a", 4, 100, 1),
+      round("b", 1, 50, 2),
+      round("c", 1, 80, 3),
     ]);
-    expect(headlineForBox(summary)).toEqual({ stage: 4, bestPercent: 50 });
+    expect(headlineForBox(summary)).toEqual({
+      stage: 1,
+      lastPercent: 80,
+      practicedWords: 1,
+    });
+  });
+
+  it("does not turn a best value into the headline", () => {
+    const summary = summarizeWordBox("box", [
+      round("a", 2, 100, 1),
+      round("b", 2, 40, 2),
+    ]);
+    expect(headlineForBox(summary)).toMatchObject({ lastPercent: 40 });
   });
 
   it("is empty without rounds", () => {
     expect(headlineForBox(summarizeWordBox("box", []))).toBeUndefined();
+  });
+});
+
+describe("Fehlerwörter ohne Prozentwert", () => {
+  it("erkennt nur die Fehlerwörter-Wortbox", () => {
+    expect(showsPracticedWordsOnly("fehler")).toBe(true);
+    expect(showsPracticedWordsOnly("textbox")).toBe(false);
+    expect(showsPracticedWordsOnly("faellig")).toBe(false);
+  });
+
+  it("nennt die Zahl der geübten Wörter", () => {
+    expect(practicedWordsLabel(1)).toBe("1 Wort geübt");
+    expect(practicedWordsLabel(8)).toBe("8 Wörter geübt");
+  });
+
+  it("leitet die Wörter der letzten Runde je Stufe ab", () => {
+    const summary = summarizeWordBox("fehler", [
+      { ...round("a", 3, 20, 1, "fehler"), words: round("x", 3, 0, 1).words },
+    ]);
+    expect(summary[3]).toMatchObject({ lastWords: 1 });
+  });
+});
+
+describe("wordsPracticedOnDay", () => {
+  it("summiert die Wörter der Runden des lokalen Tages", () => {
+    const at = (day: number, hour: number) =>
+      new Date(2026, 9, day, hour, 0).toISOString();
+    const withWords = (id: string, count: number, completedAt: string) => ({
+      ...round(id, 1, 100, 1),
+      completedAt,
+      words: Array.from({ length: count }, (_, index) => ({
+        ...round("w", 1, 100, 1).words[0]!,
+        word: `Wort${index}`,
+      })),
+    });
+    const rounds = [
+      withWords("gestern", 10, at(20, 23)),
+      withWords("morgens", 10, at(21, 8)),
+      withWords("abends", 20, at(21, 19)),
+    ];
+    expect(wordsPracticedOnDay(rounds, new Date(2026, 9, 21, 20, 0))).toBe(30);
+    expect(wordsPracticedOnDay(rounds, new Date(2026, 9, 22, 8, 0))).toBe(0);
+    expect(wordsPracticedOnDay([], new Date(2026, 9, 21, 20, 0))).toBe(0);
   });
 });
 
@@ -193,22 +252,138 @@ describe("summarizeWordStore", () => {
   });
 });
 
-describe("isNewBest", () => {
-  const earlier = [
-    round("a", 1, 80, 1),
-    round("b", 2, 100, 2),
-    round("c", 1, 60, 3),
-  ];
+describe("boxCoverage", () => {
+  const WORDS = Array.from({ length: 100 }, (_, index) => `Wort${index}`);
 
-  it("needs a higher value than every earlier round of this box and stage", () => {
-    expect(isNewBest("box", 1, 90, earlier)).toBe(true);
-    expect(isNewBest("box", 1, 80, earlier)).toBe(false);
-    expect(isNewBest("box", 1, 50, earlier)).toBe(false);
+  /** Runde mit den Wörtern `from` bis `to` (ohne `to`); `wrong` auf Anhieb falsch. */
+  function coverageRound(
+    id: string,
+    day: number,
+    from: number,
+    to: number,
+    options: {
+      wrong?: readonly string[];
+      stage?: WordRoundRecord["stage"];
+      boxId?: string;
+    } = {},
+  ): WordRoundRecord {
+    const base = round(
+      id,
+      options.stage ?? 1,
+      100,
+      day,
+      options.boxId ?? "box",
+    );
+    return {
+      ...base,
+      words: WORDS.slice(from, to).map((word) => ({
+        ...base.words[0]!,
+        word,
+        firstTry: !options.wrong?.includes(word),
+      })),
+    };
+  }
+
+  it("zählt den Anteil der ganzen Wortbox, nicht der Runde", () => {
+    const first = coverageRound("a", 1, 0, 10);
+    expect(boxCoverage(WORDS, [first], "box", 1)).toEqual({
+      mastered: 10,
+      total: 100,
+      percent: 10,
+    });
+    const second = coverageRound("b", 2, 10, 20);
+    expect(boxCoverage(WORDS, [first, second], "box", 1)).toEqual({
+      mastered: 20,
+      total: 100,
+      percent: 20,
+    });
+    // Ein Wort der ersten Runde ist später falsch: 19 statt 20.
+    const third = coverageRound("c", 3, 0, 1, { wrong: ["Wort0"] });
+    expect(boxCoverage(WORDS, [first, second, third], "box", 1)).toEqual({
+      mastered: 19,
+      total: 100,
+      percent: 19,
+    });
   });
 
-  it("is false without earlier rounds in this box and stage", () => {
-    expect(isNewBest("box", 3, 100, earlier)).toBe(false);
-    expect(isNewBest("other", 1, 100, earlier)).toBe(false);
-    expect(isNewBest("box", 1, 100, [])).toBe(false);
+  it("nimmt die jüngste Abfrage, unabhängig von der Reihenfolge der Liste", () => {
+    const wrong = coverageRound("a", 1, 0, 1, { wrong: ["Wort0"] });
+    const right = coverageRound("b", 2, 0, 1);
+    expect(boxCoverage(["Wort0"], [right, wrong], "box", 1).mastered).toBe(1);
+    expect(boxCoverage(["Wort0"], [wrong, right], "box", 1).mastered).toBe(1);
+  });
+
+  it("ignoriert Wörter, die nicht mehr in der Wortbox stehen", () => {
+    const first = coverageRound("a", 1, 0, 10);
+    const remaining = WORDS.slice(1, 100);
+    expect(boxCoverage(remaining, [first], "box", 1)).toEqual({
+      mastered: 9,
+      total: 99,
+      percent: 9,
+    });
+  });
+
+  it("senkt den Anteil durch neue Wörter ohne Abfrage", () => {
+    const first = coverageRound("a", 1, 0, 10);
+    expect(
+      boxCoverage([...WORDS.slice(0, 10), "Neu"], [first], "box", 1),
+    ).toEqual({ mastered: 10, total: 11, percent: 91 });
+  });
+
+  it("zählt nur die gewählte Stufe", () => {
+    const stage1 = coverageRound("a", 1, 0, 10);
+    const stage3 = coverageRound("b", 2, 10, 15, { stage: 3 });
+    expect(boxCoverage(WORDS, [stage1, stage3], "box", 3)).toMatchObject({
+      mastered: 5,
+    });
+    expect(boxCoverage(WORDS, [stage1, stage3], "box", 2)).toMatchObject({
+      mastered: 0,
+      percent: 0,
+    });
+  });
+
+  it("zählt nur die gewählte Wortbox", () => {
+    const other = coverageRound("a", 1, 0, 10, { boxId: "andere" });
+    expect(boxCoverage(WORDS, [other], "box", 1).mastered).toBe(0);
+    expect(boxCoverage(WORDS, [other], "andere", 1).mastered).toBe(10);
+  });
+
+  it("vergleicht Wörter über wordKey und zählt Doppelte einmal", () => {
+    const first = coverageRound("a", 1, 0, 1);
+    expect(boxCoverage([" WORT0 ", "wort0"], [first], "box", 1)).toEqual({
+      mastered: 1,
+      total: 1,
+      percent: 100,
+    });
+  });
+
+  it("rundet wie das Rundenergebnis und zeigt 100 % nur bei allen Wörtern", () => {
+    const words = Array.from({ length: 500 }, (_, index) => `W${index}`);
+    const base = round("a", 1, 100, 1, "box");
+    const almost: WordRoundRecord = {
+      ...base,
+      words: words.map((word, index) => ({
+        ...base.words[0]!,
+        word,
+        firstTry: index !== 0,
+      })),
+    };
+    // 499 von 500 sind 99,8 %: gerundet 100, angezeigt höchstens 99.
+    expect(boxCoverage(words, [almost], "box", 1)).toEqual({
+      mastered: 499,
+      total: 500,
+      percent: 99,
+    });
+    const two = coverageRound("b", 1, 0, 3, { wrong: ["Wort2"] });
+    expect(boxCoverage(WORDS.slice(0, 3), [two], "box", 1).percent).toBe(67);
+    expect(boxCoverage(["a", "b", "c"], [], "box", 1).percent).toBe(0);
+  });
+
+  it("liefert bei leerer Wortbox 0 statt einer Division durch null", () => {
+    expect(boxCoverage([], [coverageRound("a", 1, 0, 5)], "box", 1)).toEqual({
+      mastered: 0,
+      total: 0,
+      percent: 0,
+    });
   });
 });

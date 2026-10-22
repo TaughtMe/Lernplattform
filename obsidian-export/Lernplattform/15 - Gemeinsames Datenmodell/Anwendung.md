@@ -1,4 +1,12 @@
+---
+umsetzungsstand: Teilweise implementiert
+audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
+---
+
 # Gemeinsames Datenmodell
+
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** `LearningBundleV1` und versionierte Lernereignisse sind umgesetzt. Der Satz „Version 1 bleibt bewusst auf Vokabeln begrenzt“ ist für Lernereignisse **überholt** (Mathe-, Textbox- und Lernwort-Ereignisse); übertragbar bleiben nur Vokabeln. Projektionen werden nur für Mathe aus Ereignissen abgeleitet (A-003). Strikte Schemata lassen ein einziges unbekanntes Feld alle Projektionen scheitern (A-001). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+
 
 ## Zweck
 

@@ -101,6 +101,36 @@ describe("WordStoreWorksheet", () => {
     expect(stats).toHaveTextContent("Abgeschlossene Runden4");
   });
 
+  it("zeigt bei den Fehlerwörtern „n Wörter geübt“ statt eines Prozentwerts", async () => {
+    await setup([
+      roundRecord("a", { stage: 1, percent: 60, day: 1 }),
+      roundRecord("f", {
+        boxId: "fehler",
+        boxTitle: "Fehlerwörter",
+        stage: 3,
+        percent: 20,
+        day: 2,
+        words: ["Sonne", "Mond", "Stern"].map((word) => ({
+          word,
+          firstTry: false,
+          attempts: 2,
+          usedHelp: false,
+          firstResult: "falsch" as const,
+        })),
+      }),
+    ]);
+    const table = screen.getByRole("table");
+    const errors = within(table).getByRole("row", { name: /^Fehlerwörter/ });
+    expect(errors).toHaveTextContent("3 Wörter geübt");
+    expect(errors).not.toHaveTextContent("%");
+    expect(
+      within(table).getByRole("row", { name: /^Doppelkonsonanten/ }),
+    ).toHaveTextContent("60 %");
+    expect(
+      screen.getByText(/Bei den Fehlerwörtern steht die Zahl der Wörter/),
+    ).toBeInTheDocument();
+  });
+
   it("zeigt den Hinweis „kein Prüfungsnachweis“ im Druckbereich", async () => {
     await setup([roundRecord("a")]);
     const notice = screen.getByRole("note");
@@ -158,6 +188,27 @@ describe("WordStoreWorksheet", () => {
       `wsheet-${crypto.randomUUID()}`,
     );
     databases.push(database);
+    render(
+      <WordStoreWorksheet
+        repositories={{
+          rounds: {
+            ...createWordRoundRepository(database),
+            list: () => Promise.reject(new Error("Speicher gesperrt")),
+          },
+          progress: createLearningWordProgressRepository(database),
+        }}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("nicht verfügbar"),
+    );
+  });
+
+  it("überspringt einen unlesbaren Datensatz, statt alles zu blockieren", async () => {
+    const database = new PersonalLearningDatabase(
+      `wsheet-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
     await database.wordRounds.put({ id: "kaputt" } as never);
     render(
       <WordStoreWorksheet
@@ -167,8 +218,9 @@ describe("WordStoreWorksheet", () => {
         }}
       />,
     );
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("nicht verfügbar"),
-    );
+    expect(
+      await screen.findByText("Noch keine Wortspeicher-Runde abgeschlossen"),
+    ).toBeInTheDocument();
+    expect(await database.wordRounds.count()).toBe(1);
   });
 });
