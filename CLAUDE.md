@@ -13,3 +13,7 @@ gelten hier unverändert:
   Ergebnis und Prüfkommando.
 - Nach der Rückmeldung von `haiku-helfer` liest das Hauptmodell den Diff,
   führt die Prüfung selbst aus und übernimmt Commit und Push.
+- Nach einem Pull Request, einem roten CI-Lauf oder einer längeren Sitzung
+  bietet das Hauptmodell die Rückschau `/rueckschau` an
+  (`.claude/skills/rueckschau/SKILL.md`). Sie verwandelt wiederkehrende
+  Stolperstellen bevorzugt in automatische Prüfungen statt in neue Regeln.
