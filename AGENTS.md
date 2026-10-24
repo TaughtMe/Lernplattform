@@ -14,7 +14,7 @@ Die ausführliche Begründung steht im Vault unter `obsidian-export/Lernplattfor
 
 ## Modellwahl und Delegation an Haiku
 
-Leichte, klar abgegrenzte Aufgaben gehen an ein kleines Modell (Claude Haiku), damit das Hauptmodell (Sonnet bzw. Opus) für Fachlogik, Architektur und Sicherheit frei bleibt. In Claude Code geschieht das über einen Subagenten mit `model: haiku`.
+Leichte, klar abgegrenzte Aufgaben gehen an ein kleines Modell (Claude Haiku), damit das Hauptmodell (Sonnet bzw. Opus) für Fachlogik, Architektur und Sicherheit frei bleibt. In Claude Code geschieht das über den Subagenten `haiku-helfer` (`.claude/agents/haiku-helfer.md`, `model: haiku`); `CLAUDE.md` bindet diese Datei ein.
 
 ### Regeln
 
