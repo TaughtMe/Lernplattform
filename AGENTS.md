@@ -37,24 +37,23 @@ Leichte, klar abgegrenzte Aufgaben gehen an ein kleines Modell (Claude Haiku), d
 
 5. Formatierung und Lint-Autofix: `npm run format`, `npx eslint --fix` für rein mechanische Befunde; danach `npm run format:check` und `npm run lint`.
 6. CSS-Modul-Typen neu erzeugen: `npm run css-types`, Prüfung mit `npm run typecheck`.
-7. Service-Worker-Build-Kennung neu erzeugen: `node scripts/generate-service-worker.mjs` (ändert `public/sw.js` und `public/version.json`).
-8. Freigabe-Tabelle im `README.md` aus `releaseStagesMarkdown()` (`src/domain/release.ts`) zwischen die Marker setzen, `npx prettier --write README.md`, Prüfung mit `npx vitest run src/domain/release-docs.test.ts`.
-9. Versionsanhebung nach Vorgabe des Hauptmodells: `npm version <x.y.z> --no-git-tag-version`, danach Service Worker neu erzeugen (Punkt 7).
-10. App-Icons mit unverändertem Prefix neu erzeugen: `node scripts/generate-app-icons.mjs`, wenn sich die Quellgrafik geändert hat. Einen neuen Prefix samt Anpassung von Manifest, `app/layout.tsx` und Service-Worker-Vorlage legt das Hauptmodell fest.
+7. Freigabe-Tabelle im `README.md` aus `releaseStagesMarkdown()` (`src/domain/release.ts`) zwischen die Marker setzen, `npx prettier --write README.md`, Prüfung mit `npx vitest run src/domain/release-docs.test.ts`.
+8. Versionsanhebung nach Vorgabe des Hauptmodells: `npm version <x.y.z> --no-git-tag-version`.
+9. App-Icons mit unverändertem Prefix neu erzeugen: `node scripts/generate-app-icons.mjs`, wenn sich die Quellgrafik geändert hat. Einen neuen Prefix samt Anpassung von Manifest, `app/layout.tsx` und Service-Worker-Vorlage legt das Hauptmodell fest.
 
 **Dokumentation**
 
-11. Links prüfen und reparieren: relative Markdown-Links in `docs/` und Wikilinks in `obsidian-export/` auf existierende Ziele prüfen; defekte Links melden oder bei eindeutigem Ziel korrigieren.
-12. Verzeichnisse und Übersichten nachziehen, z. B. neue Dateien in `docs/README.md` oder `docs/inhalte/README.md` eintragen.
-13. Rechtschreibung und Tippfehler in Dokumentation und Code-Kommentaren korrigieren, ohne Formulierungen inhaltlich umzuschreiben.
-14. Frontmatter im Vault (`stand`, `umsetzungsstand`, Tags) nach einer vom Hauptmodell genannten Änderung aktualisieren.
+10. Links prüfen und reparieren: relative Markdown-Links in `docs/` und Wikilinks in `obsidian-export/` auf existierende Ziele prüfen; defekte Links melden oder bei eindeutigem Ziel korrigieren.
+11. Verzeichnisse und Übersichten nachziehen, z. B. neue Dateien in `docs/README.md` oder `docs/inhalte/README.md` eintragen.
+12. Rechtschreibung und Tippfehler in Dokumentation und Code-Kommentaren korrigieren, ohne Formulierungen inhaltlich umzuschreiben.
+13. Frontmatter im Vault (`stand`, `umsetzungsstand`, Tags) nach einer vom Hauptmodell genannten Änderung aktualisieren.
 
 **Code mit vorgegebenem Muster**
 
-15. Umbenennungen und Importpfad-Änderungen über mehrere Dateien, wenn altes und neues Muster exakt vorgegeben sind; Prüfung mit `npm run typecheck` und `npm run lint`.
-16. Zusätzliche Testfälle nach bestehendem Muster, wenn die Erwartungswerte vorgegeben sind oder eindeutig aus der Dokumentation folgen (z. B. weitere Tabellenfälle in einer vorhandenen `src/domain/*.test.ts`); Prüfung mit `npx vitest run <datei>`.
-17. Test-Fixtures und Beispieldaten nach einem vorhandenen Zod-Schema anlegen, wenn Umfang und Inhalt vorgegeben sind.
-18. Veraltete Testselektoren in E2E-Specs an umbenannte Beschriftungen anpassen, wenn alte und neue Beschriftung genannt sind.
+14. Umbenennungen und Importpfad-Änderungen über mehrere Dateien, wenn altes und neues Muster exakt vorgegeben sind; Prüfung mit `npm run typecheck` und `npm run lint`.
+15. Zusätzliche Testfälle nach bestehendem Muster, wenn die Erwartungswerte vorgegeben sind oder eindeutig aus der Dokumentation folgen (z. B. weitere Tabellenfälle in einer vorhandenen `src/domain/*.test.ts`); Prüfung mit `npx vitest run <datei>`.
+16. Test-Fixtures und Beispieldaten nach einem vorhandenen Zod-Schema anlegen, wenn Umfang und Inhalt vorgegeben sind.
+17. Veraltete Testselektoren in E2E-Specs an umbenannte Beschriftungen anpassen, wenn alte und neue Beschriftung genannt sind.
 
 ### Aufgaben, die beim Hauptmodell bleiben
 
@@ -64,5 +63,5 @@ Leichte, klar abgegrenzte Aufgaben gehen an ein kleines Modell (Claude Haiku), d
 - Service-Worker-Logik (`scripts/service-worker.template.js`), Caching und Offlineverhalten.
 - Oberfläche und Barrierefreiheit: Layout, Design-Referenzen beurteilen, Fokus- und Screenreader-Verhalten.
 - Texte, die Schüler oder Lehrkräfte in der App lesen.
-- Ursachenanalyse fehlgeschlagener Tests, Abhängigkeits-Updates, Architekturentscheidungen und Umsetzungspläne.
+- Ursachenanalyse fehlgeschlagener Tests, Rückschau-Maßnahmen (`/rueckschau`), Abhängigkeits-Updates, Architekturentscheidungen und Umsetzungspläne.
 - Alles, was im Auftrag nicht eindeutig beschrieben werden kann.

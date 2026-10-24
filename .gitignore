@@ -45,3 +45,7 @@ yarn-error.log*
 
 # Codex task-local attachments are workspace inputs, not product source.
 /.codex-remote-attachments/
+
+# Von scripts/generate-service-worker.mjs bei dev und build erzeugt (Audit A-014)
+/public/sw.js
+/public/version.json
