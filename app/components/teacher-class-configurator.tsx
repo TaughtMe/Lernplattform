@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
+import { EnrollmentQr } from "./enrollment-qr";
 import { useEffect, useMemo, useState } from "react";
 import { notifyTeacherClassesChanged } from "../ui/shell/teacher-classes";
 import { Button } from "../ui/primitives";
@@ -397,14 +398,13 @@ export function TeacherClassConfigurator() {
           <div className="ui-qr-sheet__grid">
             {members.map((member) => (
               <figure key={member.id} className="ui-qr-sheet__card">
-                <QRCodeSVG
+                <EnrollmentQr
+                  variant="sheet"
                   value={createEnrollmentLink(
                     appOrigin,
                     createEnrollmentCode(selected, member),
                   )}
-                  size={180}
-                  role="img"
-                  aria-label={`Einschreibungs-QR-Code für ${member.displayName}`}
+                  label={`Einschreibungs-QR-Code für ${member.displayName}`}
                 />
                 <figcaption>{member.displayName}</figcaption>
               </figure>
@@ -619,12 +619,11 @@ export function TeacherClassConfigurator() {
               readOnly={archived}
               qr={
                 qrValue ? (
-                  <QRCodeSVG
+                  // Gleiche Größe mit und ohne Freigabe (B-008).
+                  <EnrollmentQr
+                    variant="single"
                     value={qrValue}
-                    // Mit Freigabe ist der Code dichter: größer zeigen.
-                    size={shown?.writingRelief ? 280 : 220}
-                    role="img"
-                    aria-label={`Einschreibungs-QR-Code für ${shown?.displayName ?? ""}`}
+                    label={`Einschreibungs-QR-Code für ${shown?.displayName ?? ""}`}
                   />
                 ) : null
               }
