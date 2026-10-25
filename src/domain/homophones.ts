@@ -26,25 +26,43 @@ const RAW_GROUPS: HomophoneGroup[] = [
   { words: { Rad: "zum Fahren", Rat: "ein guter Tipp" } },
   { words: { Meer: "das große Wasser", mehr: "eine größere Menge" } },
   { words: { Weg: "eine Straße oder ein Pfad", weg: "nicht mehr da" } },
-  { words: { Feld: "ein Acker", fällt: "von fallen" } },
+  { words: { Feld: "ein Acker", fällt: "es stürzt gerade zu Boden" } },
   { words: { Lied: "zum Singen", Lid: "am Auge" } },
   { words: { Stadt: "ein großer Ort", statt: "anstelle von" } },
-  { words: { Wahl: "man wählt jemanden", Wal: "ein Tier im Meer" } },
-  { words: { Mahl: "ein Essen", Mal: "das erste Mal" } },
+  {
+    words: {
+      Wahl: "Abstimmung, zum Beispiel für den Klassensprecher",
+      Wal: "ein Tier im Meer",
+    },
+  },
+  { words: { Mahl: "ein Essen", Mal: "wie oft etwas geschieht" } },
   { words: { wieder: "noch einmal", wider: "gegen" } },
-  { words: { lehren: "unterrichten", leeren: "leer machen" } },
+  { words: { lehren: "unterrichten", leeren: "ausräumen oder ausschütten" } },
   { words: { Sohle: "unter dem Schuh", Sole: "Salzwasser" } },
-  { words: { Leib: "der Körper", Laib: "ein Laib Brot" } },
+  { words: { Leib: "der Körper", Laib: "ein ganzes rundes Brot" } },
   { words: { malen: "mit Farbe", mahlen: "Korn zu Mehl machen" } },
   { words: { Seite: "im Buch", Saite: "an der Gitarre" } },
-  { words: { Stiel: "an der Blume", Stil: "Art und Weise" } },
   {
-    words: { Waise: "ein Kind ohne Eltern", Weise: "klug oder Art und Weise" },
+    words: {
+      Stiel: "an der Blume",
+      Stil: "die Art, wie jemand malt oder schreibt",
+    },
+  },
+  {
+    words: {
+      Waise: "ein Kind ohne Eltern",
+      Weise: "klug oder eine Art, etwas zu tun",
+    },
   },
   { words: { Bären: "große Tiere im Wald", Beeren: "Früchte am Strauch" } },
-  { words: { viel: "eine große Menge", fiel: "von fallen" } },
+  { words: { viel: "eine große Menge", fiel: "es stürzte gestern zu Boden" } },
   { words: { wahr: "richtig, nicht gelogen", war: "von sein" } },
-  { words: { das: "das Haus", dass: "leitet einen Nebensatz ein" } },
+  {
+    words: {
+      das: "kann man durch „dieses“ ersetzen",
+      dass: "leitet einen Nebensatz ein",
+    },
+  },
 ];
 
 export const HOMOPHONE_GROUPS: readonly HomophoneGroup[] = RAW_GROUPS.map(
