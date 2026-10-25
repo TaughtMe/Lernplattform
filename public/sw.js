@@ -1,5 +1,5 @@
 const APP_VERSION = "0.9.1";
-const BUILD_FINGERPRINT = "46aff9f96a90";
+const BUILD_FINGERPRINT = "81e14efae470";
 const CACHE_NAME = `lernraum-${APP_VERSION}-${BUILD_FINGERPRINT}`;
 const APP_SHELL = [
   "/",
