@@ -65,7 +65,7 @@ export function LandingScreen({
           <BrandLogo height={28} onDark label="Lernraum" />
         </span>
         <Link href={teacherHref} className={styles.teacher}>
-          Lehrer-Login
+          Lehrerbereich
         </Link>
       </header>
 

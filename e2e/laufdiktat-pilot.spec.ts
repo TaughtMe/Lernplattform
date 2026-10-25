@@ -14,7 +14,7 @@ test("local preview exposes the clear learner entries", async ({ page }) => {
   await expect(cameraButton).toBeVisible();
   await expect(cameraButton.locator("svg")).toHaveCount(1);
   await expect(
-    page.getByRole("link", { name: "Lehrer-Login" }),
+    page.getByRole("link", { name: "Lehrerbereich" }),
   ).toHaveAttribute("href", "/lehrer");
   await expect(page.getByRole("button", { name: "Tier ändern" })).toHaveCount(
     0,
