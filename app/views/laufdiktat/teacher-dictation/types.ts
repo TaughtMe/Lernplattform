@@ -38,6 +38,13 @@ export type LiveStudent = {
   mistakes: number;
   /** Liegt bei der aktuellen Aufgabe mehrfach falsch: in der Liste hervorheben. */
   struggling?: boolean;
+  /** Fehlerwörter dieses Tiers, häufigste zuerst. `display` ersetzt den Text, z. B. für Formeln. */
+  wordErrors?: ReadonlyArray<LiveWordError>;
+};
+export type LiveWordError = {
+  word: string;
+  count: number;
+  display?: ReactNode;
 };
 export type StationState = {
   number: number;

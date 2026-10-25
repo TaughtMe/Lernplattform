@@ -129,6 +129,17 @@ export function strugglingNames(
   );
 }
 
+/** Fehlerwörter eines Schülers: häufigste zuerst, bei Gleichstand alphabetisch. */
+export function studentWordErrors(student: LiveRoomStudent | undefined) {
+  return Object.entries(student?.wordErrors ?? {})
+    .filter(([, count]) => count > 0)
+    .sort(
+      (left, right) =>
+        right[1] - left[1] || left[0].localeCompare(right[0], "de"),
+    )
+    .map(([word, count]) => ({ word, count }));
+}
+
 export type LiveOverview = {
   active: number;
   finished: number;
@@ -186,6 +197,7 @@ export function liveOverview({
     overall,
     students: names.map((name) => {
       const student = students.find((item) => item.studentName === name);
+      const wordErrors = studentWordErrors(student);
       return {
         name: labelFor(name),
         animal: animalFor(name),
@@ -194,6 +206,7 @@ export function liveOverview({
         total: words,
         mistakes: student?.errors ?? 0,
         ...(struggling?.has(name) ? { struggling: true } : {}),
+        ...(wordErrors.length ? { wordErrors } : {}),
       };
     }),
     stations: Array.from({ length: stationCount }, (_, index) => {

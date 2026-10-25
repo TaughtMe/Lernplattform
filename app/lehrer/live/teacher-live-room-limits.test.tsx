@@ -196,7 +196,9 @@ describe("Raumfristen der Lehrkraft (Entscheidung 52)", () => {
     ).toHaveLength(1);
 
     // Ergebnisse und Export bleiben, bis ein neuer Raum geöffnet wird.
-    const csv = screen.getAllByRole("button", { name: "Ergebnisse als CSV" });
+    const csv = screen.getAllByRole("button", {
+      name: "Ergebnisse als CSV herunterladen",
+    });
     await user.click(csv[0]!);
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(
@@ -225,7 +227,9 @@ describe("Raumfristen der Lehrkraft (Entscheidung 52)", () => {
     // Das Gerät beendet nichts selbst, wenn der Server es schon getan hat.
     expect(mocks.endLiveRoom).not.toHaveBeenCalled();
     expect(
-      screen.getAllByRole("button", { name: "Ergebnisse als CSV" })[0],
+      screen.getAllByRole("button", {
+        name: "Ergebnisse als CSV herunterladen",
+      })[0],
     ).toBeEnabled();
   });
 });
