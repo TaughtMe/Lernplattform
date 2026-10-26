@@ -213,6 +213,7 @@ describe("summarizeWordStore", () => {
     expect(summarizeWordStore([], [])).toEqual({
       trainedWords: 0,
       secureWords: 0,
+      archivedWords: 0,
       repetitions: 0,
       rounds: 0,
       byStage: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
@@ -226,15 +227,18 @@ describe("summarizeWordStore", () => {
         progress("a", 1, 1, 3, 4),
         progress("b", 6, 3, 0, 5),
         progress("c", 6, 5, 1, 6),
+        progress("d", 6, 6, 0, 2),
       ],
       [round("r", 1, 50, 1)],
     );
+    // Das Archivwort „d“ (Box 6) zählt als sicher und zusätzlich als archiviert (A-6).
     expect(summary).toMatchObject({
-      trainedWords: 3,
-      secureWords: 2,
-      repetitions: 15,
+      trainedWords: 4,
+      secureWords: 3,
+      archivedWords: 1,
+      repetitions: 17,
       rounds: 1,
-      byStage: { 1: 1, 6: 2 },
+      byStage: { 1: 1, 6: 3 },
     });
     expect(summary.mostErrors).toEqual([
       { word: "a", incorrectAttempts: 3 },

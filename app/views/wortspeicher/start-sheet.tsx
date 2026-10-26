@@ -32,6 +32,7 @@ export function StartSheet({
   strategy,
   detail,
   wordCount,
+  archiveWords,
   stages,
   stage,
   roundSize,
@@ -49,6 +50,8 @@ export function StartSheet({
   strategy?: string | undefined;
   detail?: string | undefined;
   wordCount: number;
+  /** Wörter aus dem Lernarchiv (Box 6), die als Bonus in der Portion sind (A-3). */
+  archiveWords?: readonly string[] | undefined;
   stages: readonly StartSheetStage[];
   stage: LearningWordStage;
   roundSize: RoundSize;
@@ -74,6 +77,11 @@ export function StartSheet({
         <p className="ui-small ui-muted">
           {wordCount === 1 ? "1 Wort" : `${wordCount} Wörter`} in dieser Wortbox
         </p>
+        {archiveWords && archiveWords.length > 0 ? (
+          <p className="ui-small">
+            Aus dem Lernarchiv: <strong>{archiveWords.join(", ")}</strong>
+          </p>
+        ) : null}
 
         <h3 className="ui-label" id="stufen-title">
           Merkstufe wählen

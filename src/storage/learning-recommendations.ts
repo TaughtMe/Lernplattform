@@ -11,6 +11,7 @@ import {
   prioritizeLearningRecommendations,
   type LearningRecommendationCandidate,
 } from "../domain/learning-recommendation";
+import { isLearningWordDue } from "../domain/learning-word-progress";
 import { deriveLeitnerProgress } from "../domain/leitner-schedule";
 import { isLearningBoxCardScheduledDue } from "../domain/learning-box";
 import {
@@ -279,7 +280,10 @@ export function createLearningRecommendationRepository(
         });
       }
 
-      const dueWords = learningWords.filter((word) => word.dueAt <= now);
+      // Archivwörter (Box 6) sind nie regulär fällig (Regel A-2).
+      const dueWords = learningWords.filter((word) =>
+        isLearningWordDue(word, now),
+      );
       if (dueWords.length > 0) {
         const errorWords = dueWords.filter(
           (word) => word.box === 1 && word.incorrectAttempts > 0,

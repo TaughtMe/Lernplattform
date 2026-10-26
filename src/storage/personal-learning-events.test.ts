@@ -1,6 +1,7 @@
 import "fake-indexeddb/auto";
 import { afterEach, describe, expect, it } from "vitest";
 import type { LearningEventV1 } from "../domain/learning-bundle";
+import { learningWordId } from "../domain/learning-word-progress";
 import {
   createPersonalLearningEventRepository,
   createLearningWordProgressRepository,
@@ -90,6 +91,60 @@ describe("personal learning event repository", () => {
       { attempts: 3, incorrectAttempts: 2, box: 1 },
     ]);
     expect(await db.learningEvents.count()).toBe(3);
+  });
+
+  it("A-1/A-2: Box 5 → Lernarchiv nur auf Stufe 6; Archivwörter sind nicht fällig", async () => {
+    const db = createDatabase();
+    const repository = createLearningWordProgressRepository(db);
+    const base = {
+      correct: true,
+      usedHelp: false,
+      selfCorrected: false,
+      mode: "due" as const,
+      now: "2026-09-08T09:00:00.000Z",
+    };
+    const stored = (word: string) => ({
+      id: learningWordId(word),
+      word,
+      stage: 6 as const,
+      box: 5 as const,
+      dueAt: "2026-09-07T09:00:00.000Z",
+      attempts: 4,
+      incorrectAttempts: 0,
+      helpUses: 0,
+      lastPracticedAt: "2026-08-08T09:00:00.000Z",
+    });
+    await db.learningWordProgress.bulkPut([stored("Haus"), stored("Baum")]);
+
+    await repository.recordAttempt({
+      ...base,
+      words: ["Haus"],
+      stage: 6,
+      roundId: "r1",
+      attemptId: "1",
+    });
+    await repository.recordAttempt({
+      ...base,
+      words: ["Baum"],
+      stage: 5,
+      roundId: "r2",
+      attemptId: "1",
+    });
+
+    const byWord = Object.fromEntries(
+      (await repository.list()).map((entry) => [entry.word, entry]),
+    );
+    expect(byWord["Haus"]).toMatchObject({
+      box: 6,
+      dueAt: "2026-10-08T09:00:00.000Z",
+    });
+    expect(byWord["Baum"]).toMatchObject({ box: 5 });
+
+    // Auch nach Ablauf der 30 Tage ist das Archivwort nie regulär fällig.
+    const later = "2026-11-01T09:00:00.000Z";
+    expect((await repository.listDue(later)).map((e) => e.word)).toEqual([
+      "Baum",
+    ]);
   });
 
   it("keeps concurrent typing rounds and deduplicates a repeated completion", async () => {

@@ -14,7 +14,11 @@ import {
   type LearningBoxCard,
   type LearningBoxDirection,
 } from "../domain/learning-box";
-import type { LearningWordProgress } from "../domain/learning-word-progress";
+import {
+  isLearningArchiveBonusDue,
+  isLearningWordDue,
+  type LearningWordProgress,
+} from "../domain/learning-word-progress";
 import { localDayKey } from "../domain/local-day";
 import { mathFamilyKey, mathReviews } from "../domain/math-practice";
 import {
@@ -140,7 +144,8 @@ export function dailyPlanCandidates(
   }
 
   for (const word of sources.words) {
-    if (word.dueAt > now) continue;
+    // Archivwörter (Box 6) sind nie regulär fällig (A-2); nur der Bonus unten.
+    if (!isLearningWordDue(word, now)) continue;
     const error = word.box === 1 && word.incorrectAttempts > 0;
     candidates.push({
       key: `german:${word.id}`,
@@ -149,6 +154,26 @@ export function dailyPlanCandidates(
       objectIds: [word.id],
       dueAt: word.dueAt,
       ...(error ? { occurredAt: word.lastPracticedAt } : {}),
+    });
+  }
+
+  // Bonus aus dem Lernarchiv (A-3): höchstens ein Wort je Portion, das am
+  // längsten nicht geübte (bei Gleichstand die Id). Jedes Archivwort kommt
+  // höchstens alle 30 Tage, denn sein `dueAt` liegt bis dahin in der Zukunft.
+  const archive = sources.words
+    .filter((word) => isLearningArchiveBonusDue(word, now))
+    .sort(
+      (left, right) =>
+        left.lastPracticedAt.localeCompare(right.lastPracticedAt) ||
+        left.id.localeCompare(right.id),
+    )[0];
+  if (archive) {
+    candidates.push({
+      key: `german:${archive.id}`,
+      module: "german",
+      kind: "archive",
+      objectIds: [archive.id],
+      dueAt: archive.dueAt,
     });
   }
 
