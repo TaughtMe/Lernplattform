@@ -51,7 +51,8 @@ const learningWordProgressBackupSchema = z
     id: z.string().min(1),
     word: z.string().min(1),
     stage: z.union([learningBoxLevelSchema, z.literal(6)]),
-    box: learningBoxLevelSchema,
+    // Box 6 = Lernarchiv (Regel A-5); ältere Sicherungen enthalten nur 1 bis 5.
+    box: z.union([learningBoxLevelSchema, z.literal(6)]),
     dueAt: z.iso.datetime({ offset: true }),
     attempts: countSchema,
     incorrectAttempts: countSchema,
@@ -116,6 +117,9 @@ export const personalBackupCardSchema = z
     reverseNextReview: z.number().int().nonnegative(),
     reverseWritingStreak: z.number().int().nonnegative(),
     lastReviewed: z.number().int().nonnegative(),
+    // Abrufzeitpunkt je Richtung; ältere Sicherungen kennen die Felder nicht.
+    forwardLastReviewed: z.number().int().nonnegative().optional(),
+    reverseLastReviewed: z.number().int().nonnegative().optional(),
     createdAt: z.number().int().nonnegative(),
     updatedAt: z.number().int().nonnegative(),
     sourceLinks: z.array(learningBoxSourceLinkSchema).max(100).optional(),

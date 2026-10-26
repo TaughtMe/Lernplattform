@@ -254,26 +254,19 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
     }
   }
 
-  /** „Durchgang wiederholen“: zurück zur Merkphase, das letzte Ergebnis entfällt. */
-  async function onRepeat() {
+  /**
+   * „Durchgang wiederholen“: zurück zur Merkphase als Übungsversuch. Das
+   * Ergebnis des ersten Versuchs bleibt gespeichert und zählt allein; erst
+   * der neue Versuch wird beim Abgeben an ihn gehängt.
+   */
+  function onRepeat() {
     const current = runRef.current;
     if (!current || current.state.phase !== "review") return;
-    const next = repeatRound(current.state);
-    setRun({ ...current, state: next, memorizeStartedAt: Date.now() });
-    try {
-      if (next.rounds.length === 0) {
-        await discard(next.trainingId);
-      } else {
-        await saveRound(
-          sessionFromRun(next, current.text, {
-            startedAt: current.startedAt,
-            now: new Date().toISOString(),
-          }),
-        );
-      }
-    } catch {
-      setNotice(SAVE_ISSUE);
-    }
+    setRun({
+      ...current,
+      state: repeatRound(current.state),
+      memorizeStartedAt: Date.now(),
+    });
   }
 
   function showDetails(id: string) {
@@ -413,8 +406,9 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
           {...frame}
           tokens={tokens}
           result={state.rounds[state.rounds.length - 1]!}
+          retry={state.retry === true}
           onNext={() => void onNext()}
-          onRepeat={() => void onRepeat()}
+          onRepeat={onRepeat}
         />
       </>
     );

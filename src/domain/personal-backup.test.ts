@@ -36,6 +36,34 @@ describe("personal backup contract", () => {
     ).toEqual(backup);
   });
 
+  it("A-5: liest eine Sicherung ohne Lernarchiv und führt Box 6 unverändert hin und zurück", () => {
+    const word = (box: 5 | 6) => ({
+      id: "learning-word:haus",
+      word: "Haus",
+      stage: 6 as const,
+      box,
+      dueAt: "2026-10-08T09:00:00.000Z",
+      attempts: 4,
+      incorrectAttempts: 0,
+      helpUses: 0,
+      lastPracticedAt: "2026-09-08T09:00:00.000Z",
+    });
+    for (const box of [5, 6] as const) {
+      const backup = createPersonalLearningBackup({
+        learningEvents: [],
+        learningBoxDecks: [],
+        learningBoxCards: [],
+        learningWordProgress: [word(box)],
+        typingProgress: [],
+      });
+      const parsed = parsePersonalLearningBackupText(
+        serializePersonalLearningBackup(backup),
+      );
+      expect(parsed).toEqual(backup);
+      expect(parsed.data.learningWordProgress).toEqual([word(box)]);
+    }
+  });
+
   it("migrates the former decks/cards backup shape", () => {
     const { deck, card } = sample();
     const migrated = parsePersonalLearningBackup({

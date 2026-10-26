@@ -1,9 +1,19 @@
-import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
+import {
+  LEARNING_ARCHIVE_BONUS_DAYS,
+  LEITNER_INTERVAL_DAYS,
+} from "./leitner-schedule";
 import type { LearningWordStage } from "./learning-word";
 import { nextLocalDayStart } from "./local-day";
 import { wordKey } from "./word-box";
 
-export type LearningWordBox = 1 | 2 | 3 | 4 | 5;
+/**
+ * Box 6 ist das Lernarchiv (Regeln A-1 bis A-5). Format: Eine ältere App-Version
+ * kennt nur 1 bis 5 und legt Box 6 beim tolerant lesenden Laden (Regel S-1) in
+ * die Quarantäne.
+ */
+export type LearningWordBox = 1 | 2 | 3 | 4 | 5 | 6;
+
+export const LEARNING_ARCHIVE_BOX = 6 as const;
 
 export interface LearningWordProgress {
   id: string;
@@ -27,6 +37,27 @@ export function learningWordId(word: string) {
  */
 export type LearningWordMode = "free" | "due";
 
+type ArchiveFields = Pick<LearningWordProgress, "box" | "dueAt">;
+
+/** Archivwort (A-2): nie regulär fällig, zählt nicht in „Trainingswörter heute“. */
+export function isLearningArchiveWord(word: Pick<ArchiveFields, "box">) {
+  return word.box === LEARNING_ARCHIVE_BOX;
+}
+
+/** Regulär fällig: Wort nicht im Archiv und `dueAt <= now`. */
+export function isLearningWordDue(word: ArchiveFields, now: string) {
+  return !isLearningArchiveWord(word) && word.dueAt <= now;
+}
+
+/** Archivwort, das als Bonus kommen darf (A-2, A-3): `dueAt <= now`. */
+export function isLearningArchiveBonusDue(word: ArchiveFields, now: string) {
+  return isLearningArchiveWord(word) && word.dueAt <= now;
+}
+
+function afterDays(now: string, days: number) {
+  return new Date(new Date(now).getTime() + days * 86_400_000).toISOString();
+}
+
 function earlier(left: string, right: string) {
   return new Date(left).getTime() <= new Date(right).getTime() ? left : right;
 }
@@ -41,6 +72,17 @@ function earlier(left: string, right: string) {
  * - Fällige Wiederholung: Nur der erste Versuch an einem fälligen Wort zählt.
  *   Richtig ohne Hilfe hebt die Box, Fehler oder Hilfe setzen sie auf 1. Ein
  *   Wort, das nicht fällig ist, wird wie freies Üben behandelt.
+ * - Lernarchiv (Box 6, A-1 bis A-4): In der fälligen Wiederholung wechselt ein
+ *   Wort von Box 5 nach Box 6, wenn der erste Versuch auf Stufe 6 (freier
+ *   Abruf) richtig ohne Hilfe und ohne Selbstkorrektur war; Stufe 4 und 5
+ *   bleiben bei Box 5. Ein Archivwort ist nie regulär fällig; `dueAt` ist der
+ *   früheste Zeitpunkt für den nächsten Bonus (+ 30 Tage). Bonusabfrage (erster
+ *   Versuch, fällig) richtig: Box 6, wieder + 30 Tage. Falsch oder mit Hilfe:
+ *   zurück in Box 4, morgen fällig. Das ist eine bewusste Ausnahme von W-7
+ *   (sonst Box 1): Das Wort war lange sicher, ein einzelner Ausrutscher nach
+ *   Monaten soll es nicht ganz zurückwerfen. Freies Üben ändert die Box nie
+ *   (W-1); ein Fehler dort lässt Box 6 stehen, der Bonus darf aber morgen
+ *   kommen (wie W-3).
  * - Merkstufe (beide Modi, nur der erste Versuch): richtig ohne Hilfe →
  *   `max(bisher, Stufe)`, sonst `max(1, min(bisher, Stufe) − 1)`.
  */
@@ -68,12 +110,26 @@ export function updateLearningWordProgress(
   let dueAt = current?.dueAt ?? nextDay;
   if (current !== undefined && input.mode === "due" && isDue) {
     if (input.firstAttempt) {
-      if (clean) {
-        box = Math.min(5, box + 1) as LearningWordBox;
-        dueAt = new Date(
-          new Date(input.now).getTime() +
-            LEITNER_INTERVAL_DAYS[box] * 86_400_000,
-        ).toISOString();
+      if (isLearningArchiveWord(current)) {
+        // Bonusabfrage (A-4).
+        if (clean) {
+          dueAt = afterDays(input.now, LEARNING_ARCHIVE_BONUS_DAYS);
+        } else {
+          box = 4;
+          dueAt = nextDay;
+        }
+      } else if (clean) {
+        // Box 5 → Archiv nur mit freiem Abruf (Stufe 6) auf Anhieb (A-1).
+        box =
+          current.box === 5 && input.stage === 6
+            ? LEARNING_ARCHIVE_BOX
+            : (Math.min(5, current.box + 1) as LearningWordBox);
+        dueAt = afterDays(
+          input.now,
+          box === LEARNING_ARCHIVE_BOX
+            ? LEARNING_ARCHIVE_BONUS_DAYS
+            : LEITNER_INTERVAL_DAYS[box],
+        );
       } else {
         box = 1;
         dueAt = nextDay;

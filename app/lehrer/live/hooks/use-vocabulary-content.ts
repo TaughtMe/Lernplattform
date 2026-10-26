@@ -33,6 +33,9 @@ export function useVocabularyContent({ setSources }: VocabularyContentInput) {
     DEFAULT_VOCABULARY_LOCALES,
   );
   const [vocabularyTableInput, setVocabularyTableInput] = useState("");
+  // G-003: Das Komma trennt Alternativen nur auf Wunsch (Standard aus).
+  const [vocabularyCommaSeparates, setVocabularyCommaSeparates] =
+    useState(false);
   const [direction, setDirection] =
     useState<VocabularyDirection>("left-to-right");
   const [vocabularyTransfer, setVocabularyTransfer] =
@@ -106,13 +109,16 @@ export function useVocabularyContent({ setSources }: VocabularyContentInput) {
   }
 
   function importVocabularyTable() {
-    const imported = parseVocabularyTable(vocabularyTableInput).map((pair) => ({
+    const imported = parseVocabularyTable(vocabularyTableInput, {
+      commaSeparates: vocabularyCommaSeparates,
+    }).map((pair) => ({
       ...pair,
       id: crypto.randomUUID(),
     }));
     if (!imported.length) return;
     applyVocabularyPairs(imported);
     setVocabularyTableInput("");
+    setVocabularyCommaSeparates(false);
   }
 
   return {
@@ -133,6 +139,8 @@ export function useVocabularyContent({ setSources }: VocabularyContentInput) {
       setVocabularyLocales,
       vocabularyTableInput,
       setVocabularyTableInput,
+      vocabularyCommaSeparates,
+      setVocabularyCommaSeparates,
       direction,
       setDirection,
       vocabularyTransfer,

@@ -1,3 +1,4 @@
+import fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
 import {
   createLearningBoxCard,
@@ -7,12 +8,16 @@ import {
   effectiveLearningBoxLevel,
   evaluateLearningBoxAnswer,
   filterLearningBoxCards,
+  getLearningBoxLastReviewed,
+  isFirstLearningBoxAttempt,
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
   isLearningBoxCardLongUnpracticed,
   isLearningBoxCardScheduledDue,
   isLearningBoxLongUnpracticed,
   LEARNING_BOX_RECOVERY_GAP_HOURS,
+  LEARNING_BOX_SELF_CHECK_MAX_BOX,
+  learningBoxAttemptKey,
   learningBoxDirectionAt,
   parseLearningBoxImport,
   placeLiveVocabularyCard,
@@ -265,6 +270,9 @@ describe("placeLiveVocabularyCard", () => {
       level: 2,
       interval: 1,
       nextReview: now + 86_400_000,
+      // G-011: Die Platzierung zählt als Abruf der Vorwärtsrichtung.
+      forwardLastReviewed: now,
+      lastReviewed: now,
     });
   });
 
@@ -276,6 +284,8 @@ describe("placeLiveVocabularyCard", () => {
         level: 1,
         interval: 1,
         nextReview: now,
+        forwardLastReviewed: now,
+        lastReviewed: now,
       });
     },
   );
@@ -286,6 +296,10 @@ describe("placeLiveVocabularyCard", () => {
       level: 1,
       interval: 1,
       nextReview: now,
+      forwardLastReviewed: now,
+      lastReviewed: now,
+      // Die Rückrichtung behält ihre bisherige Lesart (alter `lastReviewed`).
+      reverseLastReviewed: advanced.lastReviewed,
     });
   });
 
@@ -295,6 +309,9 @@ describe("placeLiveVocabularyCard", () => {
       level: 4,
       interval: 1,
       nextReview: now,
+      forwardLastReviewed: now,
+      lastReviewed: now,
+      reverseLastReviewed: advanced.lastReviewed,
     });
   });
 
@@ -375,7 +392,12 @@ describe("processLearningBoxResult: Abstände und Fälligkeit", () => {
     const expected = { 1: 3, 2: 7, 3: 14, 4: 30, 5: 30 } as const;
     for (const box of [1, 2, 3, 4, 5] as const) {
       const card = practiced(box, T0);
-      const updated = processLearningBoxResult(card, { ...right, now: T0 });
+      // Schriftlich: Selbsteinschätzung (oral) hebt nur bis Box 3 (D-010).
+      const updated = processLearningBoxResult(card, {
+        ...right,
+        mode: "writing",
+        now: T0,
+      });
       expect(updated.interval).toBe(expected[box]);
       expect(updated.nextReview).toBe(T0 + expected[box] * DAY);
       expect(updated.box).toBe(Math.min(box + 1, 5));
@@ -507,6 +529,295 @@ describe("processLearningBoxResult: Abstände und Fälligkeit", () => {
     });
     expect(beforeBuffer.box).toBe(box);
     expect(beforeBuffer.nextReview).toBe(due);
+  });
+});
+
+describe("Abrufzeitpunkt je Richtung (G-005, G-011)", () => {
+  const MINUTE = 60 * 1000;
+  const HOUR = 60 * MINUTE;
+  const DAY = 24 * HOUR;
+  const T0 = Date.UTC(2026, 9, 18, 9);
+  const fresh = createLearningBoxCard({
+    deckId: "deck",
+    question: "library",
+    answer: "Bibliothek",
+    now: T0 - 30 * DAY,
+  });
+  const write = (
+    direction: "forward" | "reverse",
+    correct: boolean,
+    now: number,
+  ) => ({ correct, direction, mode: "writing" as const, now });
+
+  it("liest ohne Richtungsfeld den letzten Abruf irgendeiner Richtung", () => {
+    const card = { ...fresh, lastReviewed: 5_000 };
+    expect(getLearningBoxLastReviewed(card, "forward")).toBe(5_000);
+    expect(getLearningBoxLastReviewed(card, "reverse")).toBe(5_000);
+    const withForward = { ...card, forwardLastReviewed: 7_000 };
+    expect(getLearningBoxLastReviewed(withForward, "forward")).toBe(7_000);
+    expect(getLearningBoxLastReviewed(withForward, "reverse")).toBe(5_000);
+  });
+
+  it("setzt Richtungsfeld und lastReviewed; die andere Richtung behält ihre Lesart", () => {
+    const card = { ...fresh, lastReviewed: T0 - 2 * DAY };
+    const forward = processLearningBoxResult(card, write("forward", true, T0));
+    expect(forward.forwardLastReviewed).toBe(T0);
+    expect(forward.lastReviewed).toBe(T0);
+    expect(getLearningBoxLastReviewed(forward, "reverse")).toBe(T0 - 2 * DAY);
+    const reverse = processLearningBoxResult(
+      forward,
+      write("reverse", true, T0 + HOUR),
+    );
+    expect(reverse.reverseLastReviewed).toBe(T0 + HOUR);
+    expect(reverse.forwardLastReviewed).toBe(T0);
+    expect(reverse.lastReviewed).toBe(T0 + HOUR);
+  });
+
+  it("G-005: Beide Richtungen am 18.10. falsch, am 20.10. vorwärts, eine Minute später rückwärts richtig → beide Box 2", () => {
+    let card = processLearningBoxResult(fresh, write("forward", false, T0));
+    card = processLearningBoxResult(card, write("reverse", false, T0 + MINUTE));
+    const day20 = T0 + 2 * DAY;
+    card = processLearningBoxResult(card, write("forward", true, day20));
+    expect(card.box).toBe(2);
+    card = processLearningBoxResult(
+      card,
+      write("reverse", true, day20 + MINUTE),
+    );
+    expect(card.reverseBox).toBe(2);
+    expect(card.reverseInterval).toBe(LEITNER_INTERVAL_DAYS[2]);
+  });
+
+  it("Eigenschaft: Abfragen der einen Richtung ändern das Ergebnis der anderen nicht", () => {
+    const query = fc.record({
+      direction: fc.constantFrom("forward" as const, "reverse" as const),
+      correct: fc.boolean(),
+      mode: fc.constantFrom("oral" as const, "writing" as const),
+      gap: fc.integer({ min: 1, max: 20 * DAY }),
+    });
+    for (const other of ["forward", "reverse"] as const) {
+      const project = (card: typeof fresh) =>
+        other === "forward"
+          ? [card.box, card.interval, card.nextReview]
+          : [card.reverseBox, card.reverseInterval, card.reverseNextReview];
+      fc.assert(
+        fc.property(
+          fc.array(query, { minLength: 1, maxLength: 12 }),
+          (queries) => {
+            let mixed = fresh;
+            let only = fresh;
+            let at = T0;
+            for (const entry of queries) {
+              at += entry.gap;
+              const input = { ...entry, now: at };
+              mixed = processLearningBoxResult(mixed, input);
+              // Gegenprobe: nur die Abfragen der betrachteten Richtung abspielen.
+              if (entry.direction === other) {
+                only = processLearningBoxResult(only, input);
+              }
+            }
+            expect(project(mixed)).toEqual(project(only));
+          },
+        ),
+      );
+    }
+  });
+
+  it("G-011: Karte Box 3, „practice“ im Unterricht, 10 Minuten später richtig → Box 3, morgen fällig", () => {
+    const card = {
+      ...fresh,
+      box: 3 as const,
+      level: 3 as const,
+      interval: 7,
+      nextReview: T0 + 3 * DAY,
+      lastReviewed: T0 - 7 * DAY,
+    };
+    const placed = {
+      ...card,
+      ...placeLiveVocabularyCard(card, "practice", T0),
+    };
+    const soon = processLearningBoxResult(
+      placed,
+      write("forward", true, T0 + 10 * MINUTE),
+    );
+    expect(soon.box).toBe(3);
+    expect(soon.interval).toBe(LEITNER_INTERVAL_DAYS[1]);
+    expect(soon.nextReview).toBe(T0 + 10 * MINUTE + DAY);
+    // Nach mindestens 8 Stunden: normaler Aufstieg.
+    const later = processLearningBoxResult(
+      placed,
+      write("forward", true, T0 + LEARNING_BOX_RECOVERY_GAP_HOURS * HOUR),
+    );
+    expect(later.box).toBe(4);
+  });
+
+  it("G-011: „reset“, 10 Minuten später richtig → Box 1, morgen fällig", () => {
+    const card = {
+      ...fresh,
+      box: 4 as const,
+      level: 4 as const,
+      interval: 14,
+      nextReview: T0 + 3 * DAY,
+      lastReviewed: T0 - 7 * DAY,
+    };
+    const placed = { ...card, ...placeLiveVocabularyCard(card, "reset", T0) };
+    const soon = processLearningBoxResult(
+      placed,
+      write("forward", true, T0 + 10 * MINUTE),
+    );
+    expect(soon.box).toBe(1);
+    expect(soon.interval).toBe(1);
+    expect(soon.nextReview).toBe(T0 + 10 * MINUTE + DAY);
+  });
+
+  it("G-011: Die Platzierung berührt die Rückrichtung nicht", () => {
+    const card = {
+      ...fresh,
+      reverseBox: 3 as const,
+      reverseInterval: 7,
+      reverseNextReview: T0 - HOUR,
+      lastReviewed: T0 - 5 * DAY,
+    };
+    const placed = {
+      ...card,
+      ...placeLiveVocabularyCard(card, "practice", T0),
+    };
+    // Rückwärts richtig kurz nach dem Unterricht: der eigene Abruf liegt 5 Tage
+    // zurück, also normaler Aufstieg.
+    const reverse = processLearningBoxResult(
+      placed,
+      write("reverse", true, T0 + 10 * MINUTE),
+    );
+    expect(reverse.reverseBox).toBe(4);
+  });
+
+  it("liest ältere Karten ohne Richtungsfelder weiter (Rückfall auf lastReviewed)", () => {
+    expect(fresh.forwardLastReviewed).toBeUndefined();
+    const wrong = processLearningBoxResult(fresh, write("forward", false, T0));
+    // Gleich nach dem Fehler ist es ein Erholungsfall, wie bisher.
+    const soon = processLearningBoxResult(
+      wrong,
+      write("forward", true, T0 + HOUR),
+    );
+    expect(soon.box).toBe(1);
+  });
+});
+
+describe("Selbsteinschätzung hebt höchstens bis Box 3 (D-010)", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const T0 = Date.UTC(2026, 9, 18, 9);
+  const fresh = createLearningBoxCard({
+    deckId: "deck",
+    question: "library",
+    answer: "Bibliothek",
+    now: T0,
+  });
+
+  it("endet nach fünfmal „Gewusst“ an fälligen Tagen in Box 3", () => {
+    let card = fresh;
+    let at = T0;
+    for (let round = 0; round < 5; round += 1) {
+      card = processLearningBoxResult(card, {
+        correct: true,
+        direction: "forward",
+        mode: "oral",
+        now: at,
+      });
+      at = card.nextReview;
+    }
+    expect(LEARNING_BOX_SELF_CHECK_MAX_BOX).toBe(3);
+    expect(card.box).toBe(3);
+    expect(card.interval).toBe(LEITNER_INTERVAL_DAYS[3]);
+  });
+
+  it("lässt Box 4 und 5 bei „Gewusst“ stehen und setzt Abstand und Termin neu", () => {
+    for (const box of [4, 5] as const) {
+      const card = {
+        ...fresh,
+        box,
+        level: box,
+        interval: 1,
+        nextReview: T0,
+        lastReviewed: T0 - 30 * DAY,
+      };
+      const updated = processLearningBoxResult(card, {
+        correct: true,
+        direction: "forward",
+        mode: "oral",
+        now: T0,
+      });
+      expect(updated.box).toBe(box);
+      expect(updated.interval).toBe(LEITNER_INTERVAL_DAYS[box]);
+      expect(updated.nextReview).toBe(T0 + LEITNER_INTERVAL_DAYS[box] * DAY);
+    }
+  });
+
+  it("gilt in der Rückrichtung genauso; „Nicht gewusst“ bleibt Box 1", () => {
+    const card = {
+      ...fresh,
+      reverseBox: 3 as const,
+      reverseInterval: 7,
+      reverseNextReview: T0,
+      lastReviewed: T0 - 30 * DAY,
+    };
+    const known = processLearningBoxResult(card, {
+      correct: true,
+      direction: "reverse",
+      mode: "oral",
+      now: T0,
+    });
+    expect(known.reverseBox).toBe(3);
+    expect(known.reverseNextReview).toBe(T0 + 7 * DAY);
+    const unknown = processLearningBoxResult(
+      { ...card, reverseBox: 5 },
+      { correct: false, direction: "reverse", mode: "oral", now: T0 },
+    );
+    expect(unknown.reverseBox).toBe(1);
+  });
+
+  it("schriftlich geht es weiter bis Box 5", () => {
+    const card = {
+      ...fresh,
+      box: 3 as const,
+      level: 3 as const,
+      interval: 7,
+      nextReview: T0,
+      lastReviewed: T0 - 30 * DAY,
+    };
+    const updated = processLearningBoxResult(card, {
+      correct: true,
+      direction: "forward",
+      mode: "writing",
+      now: T0,
+    });
+    expect(updated.box).toBe(4);
+  });
+
+  it("das Nachspielen von Selbsteinschätzungen liefert dieselbe Regel", () => {
+    const events = [0, 1, 2, 3, 4].map((index): LearningEventV1 => ({
+      id: `e${index}`,
+      learningObjectId: fresh.id,
+      occurredAt: new Date(T0 + index * 10 * DAY).toISOString(),
+      source: "learning-box",
+      learningArea: "vocabulary",
+      roundId: `r${index}`,
+      ...learningBoxEventFields({
+        correct: true,
+        direction: "forward",
+        mode: "oral",
+      }),
+    }));
+    expect(replayLearningBoxCard(fresh, events).box).toBe(3);
+  });
+});
+
+describe("Erster Versuch zählt (C3-1)", () => {
+  it("wertet je Karte und Richtung nur den ersten Versuch einer Runde", () => {
+    const attempted = [learningBoxAttemptKey("card", "forward")];
+    expect(isFirstLearningBoxAttempt([], "card", "forward")).toBe(true);
+    expect(isFirstLearningBoxAttempt(attempted, "card", "forward")).toBe(false);
+    // Die andere Richtung und andere Karten zählen für sich.
+    expect(isFirstLearningBoxAttempt(attempted, "card", "reverse")).toBe(true);
+    expect(isFirstLearningBoxAttempt(attempted, "other", "forward")).toBe(true);
   });
 });
 
@@ -799,11 +1110,12 @@ describe("Schonfrist und Rückstufung nach Zeit", () => {
 
   it("steigt in der Rückrichtung genauso von der wirksamen Box auf", () => {
     // Box 5, 14 Tage überfällig: wirksam Box 4, richtig → Box 5.
+    // Schriftlich: Selbsteinschätzung käme höchstens bis Box 3 (D-010).
     const card = overdueCard("reverse", 5, 14);
     const updated = processLearningBoxResult(card, {
       correct: true,
       direction: "reverse",
-      mode: "oral",
+      mode: "writing",
       now: NOW,
     });
     expect(updated.reverseBox).toBe(5);
@@ -811,7 +1123,7 @@ describe("Schonfrist und Rückstufung nach Zeit", () => {
     const lower = processLearningBoxResult(overdueCard("reverse", 4, 42), {
       correct: true,
       direction: "reverse",
-      mode: "oral",
+      mode: "writing",
       now: NOW,
     });
     expect(lower.reverseBox).toBe(2);
@@ -840,10 +1152,12 @@ describe("Schonfrist und Rückstufung nach Zeit", () => {
   });
 
   it("hält die Erholungsregel an der gespeicherten Box fest", () => {
-    // Gespeichert Box 2, 14 Tage überfällig (wirksam 1), eben erst in der
-    // Gegenrichtung geübt: kein Fehler, also normaler Aufstieg in Box 2.
+    // Gespeichert Box 2, 14 Tage überfällig (wirksam 1). Die Gegenrichtung
+    // wurde eben erst geübt (G-005), die eigene Richtung lange nicht: kein
+    // Erholungsfall, also normaler Aufstieg von der wirksamen Box in Box 2.
     const card = {
       ...overdueCard("forward", 2, 14),
+      forwardLastReviewed: NOW - 30 * DAY,
       lastReviewed: NOW - 60_000,
     };
     const updated = processLearningBoxResult(card, {
@@ -854,5 +1168,23 @@ describe("Schonfrist und Rückstufung nach Zeit", () => {
     });
     expect(updated.box).toBe(2);
     expect(updated.interval).toBe(LEITNER_INTERVAL_DAYS[2]);
+  });
+
+  it("behält im Erholungsfall die gespeicherte Box, nicht die wirksame", () => {
+    // Eigene Richtung eben erst geübt (Unterricht „practice“), Box 2 gespeichert,
+    // 14 Tage überfällig: Box bleibt 2, morgen wieder.
+    const card = {
+      ...overdueCard("forward", 2, 14),
+      forwardLastReviewed: NOW - 60_000,
+    };
+    const updated = processLearningBoxResult(card, {
+      correct: true,
+      direction: "forward",
+      mode: "oral",
+      now: NOW,
+    });
+    expect(updated.box).toBe(2);
+    expect(updated.interval).toBe(LEITNER_INTERVAL_DAYS[1]);
+    expect(updated.nextReview).toBe(NOW + DAY);
   });
 });

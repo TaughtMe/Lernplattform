@@ -1,4 +1,8 @@
-import { parseVocabularyImport } from "./vocabulary-import";
+import { answerKey, answerMatches } from "./answer-normalization";
+import {
+  parseVocabularyImport,
+  type VocabularyImportOptions,
+} from "./vocabulary-import";
 
 export type RunningDictationKind = "text" | "vocabulary";
 export type RunningDictationMode = "running-dictation" | "practice";
@@ -101,26 +105,26 @@ export function normalizeVocabularyAnswer(
     : normalized.toLocaleLowerCase(locale ?? "de");
 }
 
-/** Port of Laufdiktat's type-aware answer check. */
+/**
+ * Port of Laufdiktat's type-aware answer check. Zeichen werden angeglichen
+ * (G-002: Apostrophe, Anführungszeichen, Bindestriche, Leerraum, NFC) und bei
+ * Vokabeln gelten Alternativen („|“, „/“, Klammerteile; G-003). Groß- und
+ * Kleinschreibung entscheidet nur `caseSensitive`.
+ */
 export function checkRunningDictationAnswer(
   item: RunningDictationItem,
   input: string,
   caseSensitive = false,
 ) {
   if (item.kind === "vocabulary") {
-    if (!input.trim()) return false;
-    const actual = normalizeVocabularyAnswer(
+    return answerMatches(
+      [item.target, ...(item.acceptedAnswers ?? [])],
       input,
-      caseSensitive,
-      item.answerLocale,
-    );
-    return [item.target, ...(item.acceptedAnswers ?? [])].some(
-      (answer) =>
-        normalizeVocabularyAnswer(answer, caseSensitive, item.answerLocale) ===
-        actual,
+      { caseSensitive, locale: item.answerLocale ?? "de" },
     );
   }
-  return input.trim() === item.target;
+  const exact = { caseSensitive: true };
+  return answerKey(input, exact) === answerKey(item.target, exact);
 }
 
 export function parseRunningDictationText(input: string) {
@@ -143,7 +147,10 @@ export function parseRunningDictationText(input: string) {
     }));
 }
 
-export function parseVocabularyTable(input: string): VocabularyPair[] {
+export function parseVocabularyTable(
+  input: string,
+  options: VocabularyImportOptions = {},
+): VocabularyPair[] {
   const side = (value: string) => {
     const [primary = "", ...alternatives] = value
       .split("|")
@@ -152,7 +159,7 @@ export function parseVocabularyTable(input: string): VocabularyPair[] {
     return { primary, alternatives };
   };
   // Zerlegung, BOM, Kopfzeile und Fehlerzeilen kommen aus dem gemeinsamen Parser.
-  return parseVocabularyImport(input).entries.map((entry) => ({
+  return parseVocabularyImport(input, options).entries.map((entry) => ({
     id: `vocabulary-${entry.ordinal}-${hashString(entry.source)}`,
     left: side(entry.front),
     right: side(entry.back),

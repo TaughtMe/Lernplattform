@@ -84,7 +84,8 @@ Lesepfade, Paket 2 nur `createLearningWordProgressRepository().recordAttempt`.
 
 - **Schonfristen und Rückstufung nach Zeit**, Kennzeichnung „gefährdet“ bzw. „lange
   nicht geübt“. Offen: Gilt die Schonfrist in Box 1? Ferien aussetzen oder auf eine
-  Rückstufung begrenzen?
+  Rückstufung begrenzen? Geklärt: siehe `docs/umsetzungsplan-lernbox-schonfrist.md`,
+  Abschnitt „Klärung Box 1 (C7)“.
 - **Lernarchiv (Box 6):** Bedingung „fällige Wiederholung in Box 5 auf Anhieb richtig,
   freier Abruf, ohne Hilfe“; gelegentlich ein Archivwort in der Tagesportion; Bonus
   höchstens alle 30 Tage (Entscheidung 39). Formatänderung der Boxliste.
@@ -97,3 +98,5 @@ Lesepfade, Paket 2 nur `createLearningWordProgressRepository().recordAttempt`.
 - **Diagnostik:** Eingangstest als Startpunkt ohne Etikett, Kompetenzprofil auf einem
   gemeinsamen Wiederholungskern (Audit M1), Tagestrainings 10/20 Minuten,
   Zeitmessung pausiert bei Inaktivität und im Hintergrund, ohne Arbeit zu verwerfen.
+
+Umsetzung: `docs/umsetzungsplan-audit-welle-2.md`.

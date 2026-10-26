@@ -3,11 +3,15 @@ import { describe, expect, it } from "vitest";
 import { LEARNING_WORD_STAGES } from "../../../src/domain/learning-word";
 import { StartSheet, type StartSheetStage } from "./start-sheet";
 
-function setup(last: Partial<Record<number, StartSheetStage["last"]>>) {
+function setup(
+  last: Partial<Record<number, StartSheetStage["last"]>>,
+  archiveWords?: readonly string[],
+) {
   render(
     <StartSheet
       title="Meine Tiere"
       wordCount={100}
+      archiveWords={archiveWords}
       stages={LEARNING_WORD_STAGES.map((stage) => ({
         stage,
         last: last[stage],
@@ -49,5 +53,14 @@ describe("StartSheet", () => {
     expect(
       within(sheet).getByRole("button", { name: /^Stufe 4:/ }),
     ).toHaveTextContent("5 Wörter geübt");
+  });
+
+  it("kennzeichnet den Bonus aus dem Lernarchiv (A-3)", () => {
+    const sheet = setup({}, ["Schlüssel"]);
+    expect(sheet).toHaveTextContent("Aus dem Lernarchiv: Schlüssel");
+  });
+
+  it("zeigt ohne Archivwort keine Kennzeichnung", () => {
+    expect(setup({}, [])).not.toHaveTextContent("Lernarchiv");
   });
 });

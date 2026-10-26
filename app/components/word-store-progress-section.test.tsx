@@ -120,6 +120,23 @@ describe("WordStoreProgressSection", () => {
     ).toHaveAttribute("href", "/frei/german/lernwoerter/laufzettel");
   });
 
+  it("zeigt Wörter im Lernarchiv (Box 6) als eigene Zahl, nur wenn es welche gibt", async () => {
+    await setup(
+      [roundRecord("a")],
+      [
+        progressRecord("Sonne", { stage: 6, box: 6 }),
+        progressRecord("Mond", { stage: 6, box: 4 }),
+      ],
+    );
+    const section = await screen.findByRole("region", { name: "Wortspeicher" });
+    await waitFor(() =>
+      expect(section.querySelector(".ui-stats")).not.toBeNull(),
+    );
+    const stats = section.querySelector(".ui-stats")!;
+    expect(stats).toHaveTextContent("1Im Lernarchiv");
+    expect(stats).toHaveTextContent("2Sichere Wörter");
+  });
+
   it("begrenzt die Fehlerliste auf fünf Wörter", async () => {
     await setup(
       [roundRecord("a")],

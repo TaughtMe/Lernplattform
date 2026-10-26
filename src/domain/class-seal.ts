@@ -96,9 +96,10 @@ export async function classSealFingerprint(publicKeyB64u: string) {
   );
 }
 
-export async function signWritingReliefGrant(
+/** Signiert einen kanonisch serialisierten Text mit dem privaten Klassenschlüssel. */
+export async function signWithClassSeal(
   privateJwk: ClassSeal["privateJwk"],
-  grant: WritingReliefGrant,
+  text: string,
 ) {
   const key = await crypto.subtle.importKey(
     "jwk",
@@ -110,16 +111,15 @@ export async function signWritingReliefGrant(
   const signature = await crypto.subtle.sign(
     SIGN,
     key,
-    new TextEncoder().encode(
-      canonicalWritingReliefGrant(writingReliefGrantSchema.parse(grant)),
-    ),
+    new TextEncoder().encode(text),
   );
   return toBase64Url(signature);
 }
 
-export async function verifyWritingReliefGrant(
+/** Prüft die Signatur eines Textes; kaputte Schlüssel oder Signaturen ergeben `false`. */
+export async function verifyWithClassSeal(
   publicKeyB64u: string,
-  grant: WritingReliefGrant,
+  text: string,
   signatureB64u: string,
 ) {
   try {
@@ -134,12 +134,34 @@ export async function verifyWritingReliefGrant(
       SIGN,
       key,
       fromBase64Url(signatureB64u),
-      new TextEncoder().encode(canonicalWritingReliefGrant(grant)),
+      new TextEncoder().encode(text),
     );
   } catch {
     // Kaputte Schlüssel oder Signaturen sind schlicht keine gültige Freigabe.
     return false;
   }
+}
+
+export async function signWritingReliefGrant(
+  privateJwk: ClassSeal["privateJwk"],
+  grant: WritingReliefGrant,
+) {
+  return signWithClassSeal(
+    privateJwk,
+    canonicalWritingReliefGrant(writingReliefGrantSchema.parse(grant)),
+  );
+}
+
+export async function verifyWritingReliefGrant(
+  publicKeyB64u: string,
+  grant: WritingReliefGrant,
+  signatureB64u: string,
+) {
+  return verifyWithClassSeal(
+    publicKeyB64u,
+    canonicalWritingReliefGrant(grant),
+    signatureB64u,
+  );
 }
 
 /**

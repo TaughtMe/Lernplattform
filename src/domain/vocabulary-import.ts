@@ -1,3 +1,8 @@
+import {
+  commaToAlternatives,
+  hasAlternativeComma,
+} from "./answer-normalization";
+
 /**
  * Gemeinsamer Vokabelimport für LernBox (Schüler) und Laufdiktat (Lehrkraft).
  *
@@ -5,6 +10,13 @@
  * kopiert) oder Semikolon getrennt, das Komma ist bewusst kein Trenner, weil
  * es in Vokabeln vorkommt. Die dritte Spalte ist der Tag; weitere richtige
  * Antworten stehen mit „|“ in derselben Zelle.
+ *
+ * Ein Semikolon in einer Antwort („home; house“) ist deshalb ein
+ * Spaltentrenner: „house“ wird zum Tag, und ab der vierten Spalte wird alles
+ * verworfen. Die Vorschau zeigt den Tag, so fällt das vor dem Übernehmen auf.
+ * Das Komma trennt Alternativen nur auf ausdrückliche Bestätigung
+ * (`commaSeparates`, G-003); `commaCandidates` zählt, wie viele Zeilen davon
+ * betroffen wären, damit die Oberfläche den Schalter anbieten kann.
  */
 
 export type VocabularyImportEntry = {
@@ -29,11 +41,18 @@ export type VocabularyImportSkip = {
   reason: string;
 };
 
+export type VocabularyImportOptions = {
+  /** Komma außerhalb von Klammern trennt Alternativen („groß, riesig“). */
+  commaSeparates?: boolean;
+};
+
 export type VocabularyImportResult = {
   entries: VocabularyImportEntry[];
   skipped: VocabularyImportSkip[];
   /** Die Kopfzeile der Vorlage wurde erkannt und übersprungen. */
   headerSkipped: boolean;
+  /** Zeilen mit einem Komma außerhalb von Klammern in Vorder- oder Rückseite. */
+  commaCandidates: number;
 };
 
 export const VOCABULARY_SKIP_REASONS = {
@@ -84,8 +103,12 @@ export function vocabularyPairProblem(front: string, back: string) {
  * und überspringt die Kopfzeile der Vorlage. Übersprungene Zeilen kommen mit
  * Zeilennummer und Grund zurück.
  */
-export function parseVocabularyImport(text: string): VocabularyImportResult {
+export function parseVocabularyImport(
+  text: string,
+  options: VocabularyImportOptions = {},
+): VocabularyImportResult {
   const entries: VocabularyImportEntry[] = [];
+  let commaCandidates = 0;
   const skipped: VocabularyImportSkip[] = [];
   let headerSkipped = false;
   let ordinal = -1;
@@ -111,16 +134,19 @@ export function parseVocabularyImport(text: string): VocabularyImportResult {
       const [front = "", back = "", tag = ""] = cells;
       const problem = vocabularyPairProblem(front, back);
       if (problem) return skip(problem);
+      if (hasAlternativeComma(front) || hasAlternativeComma(back)) {
+        commaCandidates += 1;
+      }
       entries.push({
         lineNumber,
         ordinal,
         source: line,
-        front,
-        back,
+        front: options.commaSeparates ? commaToAlternatives(front) : front,
+        back: options.commaSeparates ? commaToAlternatives(back) : back,
         ...(tag ? { tag } : {}),
       });
     });
-  return { entries, skipped, headerSkipped };
+  return { entries, skipped, headerSkipped, commaCandidates };
 }
 
 /** Dateiname der herunterladbaren Vorlage. */

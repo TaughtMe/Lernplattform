@@ -20,7 +20,12 @@ export const DAILY_PLAN_MODULES = [
 ] as const;
 
 export type DailyPlanModule = (typeof DAILY_PLAN_MODULES)[number];
-export type DailyPlanKind = "error" | "review" | "new";
+/**
+ * „archive“ ist der Bonus aus dem Lernarchiv (Box 6 der Lernwörter, Regel A-3).
+ * Format: Eine ältere App-Version kennt die Art nicht, verwirft einen solchen
+ * Plan und erzeugt ihn neu.
+ */
+export type DailyPlanKind = "error" | "review" | "new" | "archive";
 
 export type DailyPlanCandidate = {
   /** Eindeutig, z. B. `vocabulary:<cardId>:forward` oder `mathematics:<familyKey>`. */
@@ -56,7 +61,7 @@ const dailyPlanItemSchema = z
   .object({
     key: z.string().min(1).max(500),
     module: z.enum(DAILY_PLAN_MODULES),
-    kind: z.enum(["error", "review", "new"]),
+    kind: z.enum(["error", "review", "new", "archive"]),
     objectIds: z.array(z.string().min(1).max(200)).min(1).max(10_000),
     direction: z.enum(["forward", "reverse"]).optional(),
     // Nur interne Pfade; „//“ würde als fremde Adresse gelesen.
@@ -139,6 +144,13 @@ function takeAlternating(
  * 4. Bleibt Platz: übrige Fehler, dann übrige Wiederholungen, dann weitere
  *    neue Aufgaben bis insgesamt `DAILY_PLAN_QUOTAS.newWhenFree`.
  *
+ * 5. Bonus aus dem Lernarchiv (A-3): höchstens ein Kandidat der Art „archive“,
+ *    der am längsten Fällige (`dueAt`). Er kommt nur zusätzlich zu einer
+ *    Portion, die sonst nicht leer ist: Ein Archivwort ist sicher gewusst, eine
+ *    Portion nur für dieses eine Wort wäre kein Tagesziel, sondern Pflicht ohne
+ *    Anlass. Er belegt einen eigenen Platz und verdrängt keine Aufgabe, solange
+ *    `size` mindestens 2 ist.
+ *
  * Innerhalb jeder Stufe wechseln die Module ab, damit nicht eines die Portion
  * füllt. Gleichstand entscheidet der Schlüssel. Doppelte Schlüssel zählen einmal.
  */
@@ -148,7 +160,7 @@ export function selectDailyPlan(input: {
   now: string;
   size?: number;
 }): DailyPlan {
-  const size = Math.max(1, Math.floor(input.size ?? DAILY_PLAN_SIZE));
+  const totalSize = Math.max(1, Math.floor(input.size ?? DAILY_PLAN_SIZE));
   const unique = [
     ...new Map(
       input.candidates.map((candidate) => [candidate.key, candidate]),
@@ -159,6 +171,9 @@ export function selectDailyPlan(input: {
   const errors = ofKind("error").sort(newestErrorFirst);
   const reviews = ofKind("review").sort(oldestDueFirst);
   const fresh = ofKind("new").sort(oldestDueFirst);
+  const bonus = ofKind("archive").sort(oldestDueFirst)[0];
+  // Platz für den Bonus freihalten, damit er keine fällige Aufgabe verdrängt.
+  const size = bonus && totalSize > 1 ? totalSize - 1 : totalSize;
 
   const firstErrors = takeAlternating(
     errors,
@@ -196,11 +211,14 @@ export function selectDailyPlan(input: {
     ),
   );
   chosen.push(...moreNew.picked);
+  if (bonus && chosen.length > 0 && chosen.length < totalSize) {
+    chosen.push(bonus);
+  }
 
   return {
     day: input.day,
     createdAt: input.now,
-    size,
+    size: totalSize,
     items: chosen.map((candidate) => ({
       key: candidate.key,
       module: candidate.module,

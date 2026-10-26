@@ -115,7 +115,7 @@ test("Weitermachen setzt eine angefangene Übung am Desktop fort", async ({
   ).toBeVisible();
 });
 
-test("Durchgang wiederholen führt zurück zum Merken und bleibt gespeichert", async ({
+test("Durchgang wiederholen führt zurück zum Merken, der erste Versuch bleibt gespeichert", async ({
   page,
 }) => {
   await openLibrary(page);
@@ -131,7 +131,7 @@ test("Durchgang wiederholen führt zurück zum Merken und bleibt gespeichert", a
   await expect(
     page.getByRole("button", { name: `${text.title} weiterüben` }),
   ).toBeVisible();
-  await expect(page.getByText("Durchgang 2 offen").first()).toBeVisible();
+  await expect(page.getByText("Durchgang 3 offen").first()).toBeVisible();
 });
 
 test("mobil: Tab-Leiste weg, Aktionsleiste sichtbar, Lücke nicht verdeckt", async ({

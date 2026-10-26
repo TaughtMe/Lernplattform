@@ -1,3 +1,4 @@
+import { normalizeWordCharacters } from "./answer-normalization";
 import { isWithinOneEdit } from "./spelling-tolerance";
 
 /**
@@ -36,9 +37,10 @@ export const WORD_RESULT_KINDS: readonly WordResultKind[] = [
 ];
 
 // Wort = Buchstaben/Ziffern; Bindestrich und Apostroph zählen nur zwischen
-// zwei Wortzeichen dazu („E-Mail“, „geht’s“).
+// zwei Wortzeichen dazu („E-Mail“, „geht’s“), auch in ihren typografischen
+// Varianten (U+2010/2011, ‘ ʼ ´ ` ′; G-002).
 const TOKEN_PATTERN =
-  /[\p{L}\p{N}\p{M}]+(?:[-'’][\p{L}\p{N}\p{M}]+)*|[^\s\p{L}\p{N}\p{M}]/gu;
+  /[\p{L}\p{N}\p{M}]+(?:[-'’‘ʼ´`′\u2010\u2011][\p{L}\p{N}\p{M}]+)*|[^\s\p{L}\p{N}\p{M}]/gu;
 const WORD_START = /^[\p{L}\p{N}\p{M}]/u;
 
 /** Token mit der Angabe, ob im Original ein Leerraum davor stand (für die Anzeige). */
@@ -95,12 +97,20 @@ function lower(value: string) {
   return value.toLocaleLowerCase("de");
 }
 
+/** Gleiches Wort, auch wenn nur Apostroph oder Bindestrich anders getippt ist. */
+function sameWord(actual: string, expected: string) {
+  return normalizeWordCharacters(actual) === normalizeWordCharacters(expected);
+}
+
 function differentWord(
   actual: string,
   expected: string,
   expectedIndex: number,
 ): WordResult {
-  if (lower(actual) === lower(expected)) {
+  if (
+    lower(normalizeWordCharacters(actual)) ===
+    lower(normalizeWordCharacters(expected))
+  ) {
     return {
       kind: "gross-klein",
       expected,
@@ -120,8 +130,13 @@ function differentWord(
 
 /** Kosten einer Ersetzung: ähnliche Wörter werden bevorzugt zugeordnet. */
 function substitutionCost(actual: string, expected: string) {
-  if (actual === expected) return 0;
-  if (lower(actual) === lower(expected)) return 0.5;
+  if (sameWord(actual, expected)) return 0;
+  if (
+    lower(normalizeWordCharacters(actual)) ===
+    lower(normalizeWordCharacters(expected))
+  ) {
+    return 0.5;
+  }
   return isWithinOneEdit(actual, expected) ? 0.75 : 1;
 }
 
@@ -164,7 +179,7 @@ export function alignWords(expected: string[], actual: string[]): WordResult[] {
       const want = expected[i - 1]!;
       const got = actual[j - 1]!;
       results.push(
-        got === want
+        sameWord(got, want)
           ? {
               kind: "richtig",
               expected: want,
@@ -211,7 +226,7 @@ export function compareGaps(
         nearMiss: false,
       };
     }
-    if (got === want) {
+    if (sameWord(got, want)) {
       return {
         kind: "richtig",
         expected: want,

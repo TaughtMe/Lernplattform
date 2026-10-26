@@ -27,9 +27,8 @@ test("math errors survive reload and practice works offline with keyboard and he
   await expect(answer).toBeFocused();
   await answer.fill("54");
   await answer.press("Enter");
-  await expect(
-    page.getByText("Noch nicht – probiere es erneut."),
-  ).toBeVisible();
+  await expect(page.getByText("Noch nicht.", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Nutze die Nachbaraufgabe/)).toBeVisible();
   await expect(answer).toBeFocused();
   await answer.fill("56");
   await answer.press("Enter");
@@ -56,7 +55,7 @@ test("math errors survive reload and practice works offline with keyboard and he
     .getByRole("button", { name: "Meine Fehler und Wiederholungen üben" })
     .click();
   await expect(answer).toBeFocused();
-  await page.getByRole("button", { name: "Lösung ansehen" }).click();
+  await page.getByRole("button", { name: "Lösungsweg zeigen" }).click();
   await expect(page.getByText(/Die Lösung ist 56/)).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await answer.fill("56");

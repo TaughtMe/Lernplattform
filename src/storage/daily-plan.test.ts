@@ -200,6 +200,26 @@ describe("Kandidaten der Tagesportion", () => {
     expect(candidates[1]).not.toHaveProperty("occurredAt");
   });
 
+  it("nimmt für occurredAt des Fehlers den Abrufzeitpunkt der eigenen Richtung (G-005)", () => {
+    const error = card("deck", 1, {
+      interval: 1,
+      box: 1,
+      nextReview: NOW_MS - 2 * HOUR,
+      // Rückwärts wurde später geübt, vorwärts zuletzt vor drei Tagen.
+      lastReviewed: NOW_MS - HOUR,
+      forwardLastReviewed: NOW_MS - 3 * DAY,
+      reverseLastReviewed: NOW_MS - HOUR,
+    });
+    const [forward] = dailyPlanCandidates(
+      { events: [], cards: [error], words: [] },
+      NOW,
+    );
+    expect(forward).toMatchObject({
+      direction: "forward",
+      occurredAt: new Date(NOW_MS - 3 * DAY).toISOString(),
+    });
+  });
+
   it("lässt noch nicht fällige Karten aus", () => {
     const later = card("deck", 1, {
       interval: 7,
@@ -290,6 +310,49 @@ describe("Kandidaten der Tagesportion", () => {
       [`german:${learningWordId("Fahrrad")}`, "review", false],
       [`german:${learningWordId("Morgen")}`, "review", false],
     ]);
+  });
+
+  it("A-2/A-3: Archivwörter sind nie regulär fällig; als Bonus kommt höchstens eines, das am längsten nicht geübte", () => {
+    const old = new Date(NOW_MS - 40 * DAY).toISOString();
+    const words = [
+      wordProgress("Fahrrad"),
+      wordProgress("Archivneu", {
+        box: 6,
+        stage: 6,
+        lastPracticedAt: new Date(NOW_MS - 31 * DAY).toISOString(),
+      }),
+      wordProgress("Archivalt", { box: 6, stage: 6, lastPracticedAt: old }),
+      wordProgress("Archivspaeter", {
+        box: 6,
+        stage: 6,
+        dueAt: new Date(NOW_MS + DAY).toISOString(),
+        lastPracticedAt: old,
+      }),
+    ];
+    expect(
+      dailyPlanCandidates({ events: [], cards: [], words }, NOW).map((item) => [
+        item.key,
+        item.kind,
+      ]),
+    ).toEqual([
+      [`german:${learningWordId("Fahrrad")}`, "review"],
+      [`german:${learningWordId("Archivalt")}`, "archive"],
+    ]);
+  });
+
+  it("A-3: Ein Archivwort kommt erst 30 Tage nach der Abfrage wieder", () => {
+    const asked = wordProgress("Archiv", {
+      box: 6,
+      stage: 6,
+      dueAt: new Date(NOW_MS + 30 * DAY).toISOString(),
+    });
+    const sources = { events: [], cards: [], words: [asked] };
+    const keys = (now: number) =>
+      dailyPlanCandidates(sources, new Date(now).toISOString()).map(
+        (item) => item.kind,
+      );
+    expect(keys(NOW_MS + 29 * DAY)).toEqual([]);
+    expect(keys(NOW_MS + 30 * DAY)).toEqual(["archive"]);
   });
 
   it("fasst Mathe-Posten zu Familien zusammen und trennt Fehler von Wiederholungen", async () => {

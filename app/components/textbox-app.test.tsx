@@ -208,7 +208,7 @@ describe("TextboxApp", () => {
     expect(await repository.getOpen(text.id)).toBeUndefined();
   });
 
-  it("verwirft beim Wiederholen von Durchgang 1 die gespeicherte Einheit", async () => {
+  it("behält beim Wiederholen von Durchgang 1 den ersten Versuch gespeichert", async () => {
     const user = userEvent.setup();
     const { repository } = await setup();
     await startText(user);
@@ -222,12 +222,10 @@ describe("TextboxApp", () => {
     expect(
       await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" }),
     ).toBeInTheDocument();
-    await waitFor(async () =>
-      expect(await repository.getOpen(text.id)).toBeUndefined(),
-    );
+    expect((await repository.getOpen(text.id))?.rounds).toHaveLength(1);
   });
 
-  it("speichert beim Wiederholen von Durchgang 2 die Einheit mit einem Ergebnis", async () => {
+  it("speichert beim Wiederholen von Durchgang 2 weiter beide ersten Versuche", async () => {
     const user = userEvent.setup();
     const { repository } = await setup();
     await startText(user);
@@ -245,10 +243,66 @@ describe("TextboxApp", () => {
     expect(
       await screen.findByRole("heading", { name: "Durchgang 2 von 4: Merken" }),
     ).toBeInTheDocument();
-    await waitFor(async () =>
-      expect((await repository.getOpen(text.id))?.rounds).toHaveLength(1),
-    );
+    expect((await repository.getOpen(text.id))?.rounds).toHaveLength(2);
   });
+
+  it(
+    "zählt in Durchgang 4 nur den ersten Versuch; die Korrektur bleibt Übung",
+    async () => {
+      const user = userEvent.setup();
+      const { repository, database } = await setup();
+      await startText(user);
+      for (const round of [1, 2, 3] as const) {
+        await playRound(user, round);
+        await user.click(
+          screen.getByRole("button", {
+            name: `Weiter zu Durchgang ${round + 1}`,
+          }),
+        );
+      }
+      // Erster Versuch: nur ein Teil des Textes.
+      await playRound(user, 4, "Im Garten wohnt ein Hund");
+      expect(screen.getByText(/Wörtern auf Anhieb richtig/)).toBeVisible();
+      const first = screen.getByText(/ %$/).textContent;
+      await user.click(
+        screen.getByRole("button", { name: "Durchgang wiederholen" }),
+      );
+      // Korrektur: der ganze Text, fehlerfrei.
+      await playRound(user, 4);
+      expect(screen.getByText("100 %")).toBeInTheDocument();
+      expect(screen.getByText(/im Übungsversuch richtig/)).toBeVisible();
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Das war ein Übungsversuch. Dein Ergebnis bleibt der erste Versuch",
+      );
+      await waitFor(async () => {
+        const open = await repository.getOpen(text.id);
+        expect(open?.rounds[3]?.retries).toHaveLength(1);
+      });
+      const stored = (await repository.getOpen(text.id))!.rounds[3]!;
+      expect(stored.score.percent).toBeLessThan(30);
+      expect(stored.retries![0]!.score.percent).toBe(100);
+
+      await user.click(
+        screen.getByRole("button", { name: "Ergebnis ansehen" }),
+      );
+      expect(
+        await screen.findByRole("heading", { name: "Geschafft!" }),
+      ).toBeInTheDocument();
+      const [done] = await repository.listCompleted();
+      expect(done!.finalPercent).toBe(stored.score.percent);
+      expect(`${done!.finalPercent} %`).toBe(first);
+      expect(screen.getAllByText(`${done!.finalPercent} %`)).not.toHaveLength(
+        0,
+      );
+      expect(screen.getByText(/Wörtern auf Anhieb richtig/)).toBeVisible();
+      expect(screen.getByText("danach 1× geübt, zählt nicht")).toBeVisible();
+      // Lernstand: das Ereignis folgt dem ersten Versuch, nicht der Korrektur.
+      const events = await database.learningEvents.toArray();
+      expect(events).toHaveLength(1);
+      expect(events[0]!.assessment.writing).toBe("incorrect");
+    },
+    VIER_DURCHGAENGE,
+  );
 
   it(
     "speichert den Abschluss bei doppeltem Klick nur einmal",

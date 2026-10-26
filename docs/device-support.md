@@ -34,6 +34,18 @@ Eine Funktion gilt erst dann als fertig, wenn Layout, Navigation, Fokusreihenfol
 
 Das Kind schaltet in „Profil und Einstellungen“ → „Darstellung“ selbst, ob der Lesetext der Textbox (Ansicht „Einprägen“) gespiegelt erscheint. Die Einstellung liegt nur im `localStorage` dieses Geräts (`lernraum-spiegelschrift-bis`), gilt 7 Tage und schaltet sich danach selbst aus. Sie geht nicht in Cloud-Abgleich, Sicherungsdatei, Klassen- oder Lehrkraftansichten. Der Bereich `spiegelschrift` steht im Freigaberegister auf `vorschau`.
 
+## Gastmodus für geteilte Geräte
+
+Modell des Lernraums: ein Browserprofil ist ein Kind. Auf einem geteilten iPad übernähme das nächste Kind sonst den Lernraum des vorigen (Befunde B-009, B-010). Der Gastmodus macht ein Gerät für eine Unterrichtsnutzung zum Gastgerät.
+
+- **Einstieg:** Die Lehrkraft zeigt in „Klassen und Schüler“ den Gast-QR (90 Minuten gültig); das Kind scannt ihn mit der Kamera. Abgelaufene oder ungültige Codes zeigen eine Meldung und ändern nichts. Der Bereich `gastmodus` steht im Freigaberegister auf `vorschau`.
+- **Vorhandener Lernstand:** Hat das Gerät schon einen Lernstand (Lernereignisse, LernBox, Wortspeicher, Klassen, gewähltes Profil), erscheint vor dem Start eine Bestätigung mit „Erst Sicherung erstellen“, „Gastmodus starten“ und „Abbrechen“. Das zufällige Tier, das jedes Gerät beim ersten Besuch erhält, löst die Frage nicht aus.
+- **Im Gastmodus:** Oben steht ein kleines Etikett „Gastmodus“ mit „Gastmodus beenden“. Der Link „Lehrerbereich“ fehlt auf der Startseite; ein direkter Aufruf von `/lehrer…` zeigt „Im Gastmodus nicht verfügbar“.
+- **Was gelöscht wird:** alle persönlichen Datenbanken (Lernstand, LernBox, Wortspeicher, Rettungstabelle, frühere LernBox-Datenbank), Klassenmitgliedschaften und Aufgaben, das Profil mit Tier und Haus, die Einstellungen des Kindes im `localStorage` (Darstellung, Textbox-Ansicht, Tastatur, Spiegelschrift, letzte Sicherung) und die laufende Raumsitzung im `sessionStorage`. Die Liste steht in `src/storage/clear-student-data.ts`.
+- **Was bleibt:** die Lehrerdatenbank und die Schlüssel des Geräte-Abgleichs der Lehrkraft sowie der Hinweis „Trotzdem im Browser lernen“. Eine Sicherungsdatei, die ein Kind selbst gespeichert hat, liegt außerhalb des Browsers und bleibt ebenfalls.
+- **Ende:** „Gastmodus beenden“ fragt nach und löscht dann alles. Wurde es vergessen, beendet und löscht der Lernraum einen Gastmodus, der länger als 12 Stunden läuft, beim nächsten App-Start von selbst. Schlägt das Löschen fehl, bleibt der Gastzustand stehen und der nächste Start versucht es erneut.
+- **Grenze:** Ohne bekannte Klasse belegt die Signatur des Passes nur Unverfälschtheit und Ablauf, nicht die Identität der Lehrkraft (siehe `docs/security-risk-register.md`, SR-004).
+
 ## Speicherlebensdauer
 
 Der gesamte Lernstand liegt nur auf dem Gerät (IndexedDB). Was das für die Lebensdauer heißt, besonders auf iPad und iPhone:

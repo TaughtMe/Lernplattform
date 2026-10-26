@@ -89,6 +89,12 @@ export function WordStoreProgressSection({
             <strong>{summary.secureWords}</strong>
             Sichere Wörter
           </div>
+          {summary.archivedWords > 0 ? (
+            <div>
+              <strong>{summary.archivedWords}</strong>
+              Im Lernarchiv
+            </div>
+          ) : null}
           <div>
             <strong>{summary.repetitions}</strong>
             Wiederholungen

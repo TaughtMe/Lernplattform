@@ -66,6 +66,11 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
             </button>
           ))}
         </div>
+        {mode === "oral" && !box ? (
+          <p className={styles.hint}>
+            Bis Box 3 per Selbsteinschätzung, danach schriftlich.
+          </p>
+        ) : null}
       </div>
       {directionFromPlan ? null : (
         <div className={styles.field}>

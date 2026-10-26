@@ -68,10 +68,13 @@ Layout nach Design 9b–9f, Plan: `docs/umsetzungsplan-textbox-layout.md`.
   oben. **Gemeistert** heißt Bestwert ab **90 %** (`TEXTBOX_MASTERED_PERCENT`),
   **Begonnen** mindestens eine abgeschlossene Übung oder eine angefangene Einheit.
 - **Durchgang:** Merken, Schreiben, Kontrolle. In der Kontrolle gibt es
-  **„Durchgang wiederholen“**: zurück zur Merkphase desselben Durchgangs, das
-  letzte Ergebnis wird verworfen und durch den neuen Versuch ersetzt, die Lücken
-  bleiben gleich. In Durchgang 1 löscht das auch die gespeicherte Einheit. Der
-  Bestwert zählt weiter nur Durchgang 4.
+  **„Durchgang wiederholen“**: zurück zur Merkphase desselben Durchgangs, die
+  Lücken bleiben gleich. **Der erste Versuch zählt** (wie W-6 bis W-9 im
+  Wortspeicher): Prozentwert, „n von m Wörtern auf Anhieb richtig“, Fehlerwörter
+  und Lernstand folgen allein dem ersten Versuch. Wiederholungen werden als
+  Übungsversuche (`retries`, höchstens 5 je Durchgang) gespeichert und als
+  Selbstkorrektur angezeigt, ändern aber kein Ergebnis. Der Bestwert zählt
+  weiter nur Durchgang 4.
 - **Darstellung:** Am Desktop startet die Eingabe als Heft mit Linien (Navigation
   bleibt); „Vollbild“ schaltet auf die ruhige Ansicht um, die Wahl gilt pro
   Gerät. Mobil gilt immer das Heft ohne Navigation, mit Aktionsleiste unten.

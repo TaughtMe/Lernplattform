@@ -520,3 +520,56 @@ describe("dailyPlanSchema", () => {
     expect(dailyPlanSchema.safeParse(value).success).toBe(false);
   });
 });
+
+describe("selectDailyPlan: Bonus aus dem Lernarchiv (A-3)", () => {
+  const archive = (key: string, dueAt: string) =>
+    candidate(key, "german", "archive", dueAt);
+
+  it("fügt höchstens ein Archivwort hinzu, das am längsten Fällige", () => {
+    const plan = select([
+      candidate("vocabulary-1", "vocabulary", "review"),
+      archive("german:b", at(6)),
+      archive("german:a", at(5)),
+      archive("german:c", at(5)),
+    ]);
+    expect(count(plan, "archive")).toBe(1);
+    expect(plan.items.map((item) => item.key)).toEqual([
+      "vocabulary-1",
+      "german:a",
+    ]);
+    expect(plan.items.at(-1)).toMatchObject({ kind: "archive" });
+  });
+
+  it("kommt nie allein: ohne andere Aufgaben bleibt die Portion leer", () => {
+    expect(select([archive("german:a", at(5))]).items).toEqual([]);
+  });
+
+  it("verdrängt keine Aufgabe und hält die Portionsgröße ein", () => {
+    const plan = select([
+      ...many(30, "vocabulary", "review"),
+      archive("german:a", at(5)),
+    ]);
+    expect(plan.items).toHaveLength(DAILY_PLAN_SIZE);
+    expect(count(plan, "review")).toBe(DAILY_PLAN_SIZE - 1);
+    expect(count(plan, "archive")).toBe(1);
+  });
+
+  it("nimmt den Bonus bei wenigen Aufgaben vollständig dazu", () => {
+    const plan = select([
+      ...many(DAILY_PLAN_SIZE - 1, "vocabulary", "review"),
+      archive("german:a", at(5)),
+    ]);
+    expect(plan.items).toHaveLength(DAILY_PLAN_SIZE);
+    expect(count(plan, "archive")).toBe(1);
+  });
+
+  it("ist deterministisch und der Plan besteht die Schemaprüfung", () => {
+    const candidates = [
+      candidate("vocabulary-1", "vocabulary", "review"),
+      archive("german:a", at(5)),
+    ];
+    const first = select(candidates);
+    expect(select(candidates)).toEqual(first);
+    expect(dailyPlanSchema.safeParse(first).success).toBe(true);
+  });
+});

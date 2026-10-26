@@ -74,6 +74,7 @@ Funktionen wurden im Audit nicht vollständig nachgeprüft.
 | [umsetzungsplan-vokabelauswahl-laufdiktat.md](umsetzungsplan-vokabelauswahl-laufdiktat.md) | Vokabelauswahl im Live-Raum            | Schritte 1–4 umgesetzt (Plankopf, Merge #27)                     |
 | [umsetzungsplan-spiegelschrift.md](umsetzungsplan-spiegelschrift.md)                       | Spiegelschrift (Textbox)               | umgesetzt, Freigabe `vorschau` (Merge #28, `release.ts`)         |
 | [umsetzungsplan-tagesportion.md](umsetzungsplan-tagesportion.md)                           | Tagesportion 20 (E 57)                 | umgesetzt (Commits 19.10.2026)                                   |
+| [umsetzungsplan-audit-welle-2.md](umsetzungsplan-audit-welle-2.md)                         | Audit Welle 2 (C1–C7)                  | Plan, Stand 26.10.2026, noch nicht umgesetzt                     |
 
 ## Hinweise zur Pflege
 

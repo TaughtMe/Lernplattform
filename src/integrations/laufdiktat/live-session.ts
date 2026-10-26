@@ -1,5 +1,6 @@
 import type { LiveVocabularyTransferChoice } from "../../domain/live-vocabulary-placement";
 import { mathOptionsSchema } from "../../domain/math-practice";
+import { answerKey, answerKeys } from "../../domain/answer-normalization";
 import { mathAnswerMatches } from "../../domain/mental-math";
 import { z } from "zod";
 import { classSealFingerprintSchema } from "../../domain/class-seal";
@@ -78,17 +79,6 @@ export function parseLiveSession(
   return { ...parsed, words, sessionId };
 }
 
-function normalizeAnswer(
-  value: string,
-  caseSensitive: boolean,
-  locale?: string,
-) {
-  const normalized = value.trim().replace(/\s+/g, " ").normalize("NFC");
-  return caseSensitive
-    ? normalized
-    : normalized.toLocaleLowerCase(locale ?? "de-DE");
-}
-
 export type LiveAnswerResult = "correct" | "tolerated" | "wrong";
 
 /**
@@ -112,9 +102,12 @@ export function evaluateLiveAnswer(
   }
   if (kind === "vocabulary") {
     const caseSensitive = word.caseSensitive ?? false;
-    const actual = normalizeAnswer(value, caseSensitive, word.answerLang);
-    const accepted = [word.targetWord, ...(word.acceptedAnswers ?? [])].map(
-      (answer) => normalizeAnswer(answer, caseSensitive, word.answerLang),
+    // G-002/G-003: Zeichen angeglichen, Alternativen („|“, „/“, Klammerteile).
+    const keyOptions = { caseSensitive, locale: word.answerLang ?? "de-DE" };
+    const actual = answerKey(value, keyOptions);
+    const accepted = answerKeys(
+      [word.targetWord, ...(word.acceptedAnswers ?? [])],
+      keyOptions,
     );
     if (accepted.includes(actual)) return "correct";
     return options.tolerance &&
@@ -122,7 +115,11 @@ export function evaluateLiveAnswer(
       ? "tolerated"
       : "wrong";
   }
-  return value === word.targetWord ? "correct" : "wrong";
+  // Text: Groß-/Kleinschreibung zählt, typografische Zeichen nicht (G-002).
+  const exact = { caseSensitive: true };
+  return answerKey(value, exact) === answerKey(word.targetWord, exact)
+    ? "correct"
+    : "wrong";
 }
 
 export function checkLiveAnswer(word: LiveWord, input: string) {

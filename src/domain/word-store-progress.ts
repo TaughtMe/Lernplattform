@@ -1,6 +1,9 @@
 import * as z from "zod";
 import { LEARNING_WORD_STAGES, type LearningWordStage } from "./learning-word";
-import type { LearningWordProgress } from "./learning-word-progress";
+import {
+  isLearningArchiveWord,
+  type LearningWordProgress,
+} from "./learning-word-progress";
 import { localDayKey } from "./local-day";
 import { wordKey } from "./word-box";
 
@@ -218,6 +221,8 @@ export const MOST_ERRORS_LIMIT = 5;
 export type WordStoreSummary = {
   trainedWords: number;
   secureWords: number;
+  /** Wörter im Lernarchiv (Box 6, A-6); sie zählen auch als sicher. */
+  archivedWords: number;
   repetitions: number;
   rounds: number;
   byStage: Record<LearningWordStage, number>;
@@ -236,6 +241,7 @@ export function summarizeWordStore(
     trainedWords: progress.length,
     // „Sicher“ heißt: mindestens Box 3, also mehrfach verdeckt richtig.
     secureWords: progress.filter((entry) => entry.box >= 3).length,
+    archivedWords: progress.filter(isLearningArchiveWord).length,
     repetitions: progress.reduce((sum, entry) => sum + entry.attempts, 0),
     rounds: rounds.length,
     byStage,

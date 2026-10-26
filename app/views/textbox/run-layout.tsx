@@ -277,6 +277,7 @@ export function ScoreStatus({
   percent,
   unit,
   extra,
+  retry = false,
 }: {
   correct: number;
   total: number;
@@ -284,6 +285,8 @@ export function ScoreStatus({
   /** „Lücken“ oder „Wörtern“. */
   unit: string;
   extra: number;
+  /** Übungsversuch: zählt nicht und wird so benannt. */
+  retry?: boolean;
 }) {
   return (
     <div className={styles.score}>
@@ -292,7 +295,7 @@ export function ScoreStatus({
           {correct} von {total}
         </span>{" "}
         <span>
-          {unit} richtig geschrieben
+          {unit} {retry ? "im Übungsversuch richtig" : "auf Anhieb richtig"}
           {extra > 0 ? `, ${extra} zusätzlich geschrieben` : ""}
         </span>
       </p>

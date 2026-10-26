@@ -19,6 +19,14 @@ export const LEITNER_INTERVAL_DAYS: Record<LeitnerBox, number> = {
   5: 30,
 };
 
+/**
+ * Lernarchiv (Box 6) der Lernwörter: frühestens alle 30 Tage darf ein
+ * Archivwort als Bonus wiederkommen (Regel A-3). Eigene Konstante statt eines
+ * sechsten Eintrags in `LEITNER_INTERVAL_DAYS`, denn die Tabelle gilt auch für
+ * die LernBox und die Ereignisableitung (Boxen 1 bis 5).
+ */
+export const LEARNING_ARCHIVE_BONUS_DAYS = 30;
+
 function addDays(value: string, days: number): string {
   const date = new Date(value);
   date.setUTCDate(date.getUTCDate() + days);

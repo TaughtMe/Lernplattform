@@ -173,8 +173,8 @@ describe("ReviewScreen", () => {
     );
     expect(screen.getByText("50 %")).toBeInTheDocument();
     expect(
-      screen.getByText(/Lücken richtig geschrieben/).closest("p"),
-    ).toHaveTextContent("1 von 2 Lücken richtig geschrieben");
+      screen.getByText(/Lücken auf Anhieb richtig/).closest("p"),
+    ).toHaveTextContent("1 von 2 Lücken auf Anhieb richtig");
     expect(screen.getByText("fast richtig:")).toBeInTheDocument();
     expect(screen.getByText("Groß-/Kleinschreibung:")).toBeInTheDocument();
     const wrong = screen.getByText("Hunt");

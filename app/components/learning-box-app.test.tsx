@@ -186,7 +186,11 @@ describe("LernBox: Heute dran aus der Tagesportion", () => {
       within(sheet).queryByRole("button", { name: "Gemischt" }),
     ).not.toBeInTheDocument();
 
+    // Die Selbsteinschätzung nennt ihre Grenze (D-010), das Schreiben nicht.
+    const limit = "Bis Box 3 per Selbsteinschätzung, danach schriftlich.";
+    expect(within(sheet).queryByText(limit)).not.toBeInTheDocument();
     await user.click(within(sheet).getByRole("button", { name: "Mündlich" }));
+    expect(within(sheet).getByText(limit)).toBeVisible();
     await user.click(within(sheet).getByRole("button", { name: "Los geht's" }));
     // Vorwärts fragt die Vorderseite, rückwärts die Rückseite; „Katze“ fehlt.
     expect(await playOralRound(user)).toEqual(["Haus", "dog", "Baum", "tree"]);

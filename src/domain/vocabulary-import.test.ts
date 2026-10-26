@@ -99,7 +99,62 @@ describe("parseVocabularyImport", () => {
       entries: [],
       skipped: [],
       headerSkipped: false,
+      commaCandidates: 0,
     });
+  });
+
+  it("macht ein Semikolon in der Antwort zum Spaltentrenner und zeigt es als Tag", () => {
+    // Bestehendes Verhalten: „home; house“ sind zwei Zellen. Die Vorschau
+    // zeigt „house“ als Tag, so fällt es vor dem Übernehmen auf.
+    const { entries } = parseVocabularyImport("Haus;home; house");
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      front: "Haus",
+      back: "home",
+      tag: "house",
+    });
+    // Ab der vierten Spalte wird alles verworfen.
+    expect(pairs("Haus;home;Unit 1;house")).toEqual([
+      ["Haus", "home", "Unit 1"],
+    ]);
+  });
+
+  it("trennt am Komma nur nach Bestätigung (G-003)", () => {
+    const text = "groß;groß, riesig\nklein;small\nHaus (das, die);house";
+    const plain = parseVocabularyImport(text);
+    expect(plain.entries.map((entry) => entry.back)).toEqual([
+      "groß, riesig",
+      "small",
+      "house",
+    ]);
+    // Nur eine Zeile hat ein Komma außerhalb von Klammern.
+    expect(plain.commaCandidates).toBe(1);
+
+    const confirmed = parseVocabularyImport(text, { commaSeparates: true });
+    expect(confirmed.entries.map((entry) => entry.back)).toEqual([
+      "groß | riesig",
+      "small",
+      "house",
+    ]);
+    expect(confirmed.entries[2]?.front).toBe("Haus (das, die)");
+    expect(confirmed.commaCandidates).toBe(1);
+    // Die Originalzeile (Grundlage der Kennung) bleibt unverändert.
+    expect(confirmed.entries[0]?.source).toBe("groß;groß, riesig");
+  });
+
+  it("lässt ein Dezimalkomma stehen", () => {
+    const result = parseVocabularyImport("halb;0,5", { commaSeparates: true });
+    expect(result.entries[0]?.back).toBe("0,5");
+    expect(result.commaCandidates).toBe(0);
+  });
+
+  it("gibt die Bestätigung an das Laufdiktat weiter", () => {
+    const [pair] = parseVocabularyTable("groß;groß, riesig", {
+      commaSeparates: true,
+    });
+    expect(pair?.right).toEqual({ primary: "groß", alternatives: ["riesig"] });
+    const [plain] = parseVocabularyTable("groß;groß, riesig");
+    expect(plain?.right).toEqual({ primary: "groß, riesig", alternatives: [] });
   });
 });
 

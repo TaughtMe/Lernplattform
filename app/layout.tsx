@@ -6,6 +6,7 @@ import { CloudClientIdsProvider } from "./components/cloud-client-ids";
 import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
 import { AreaFrame } from "./ui/shell/area-frame";
+import { GuestModeHost } from "./ui/guest-mode-host";
 import { ServiceWorkerRegistration } from "./ui/service-worker-registration";
 import { UpdateToast } from "./ui/update-toast";
 import { SiteFooter } from "./ui/site-footer";
@@ -120,6 +121,7 @@ export default async function RootLayout({
           <SiteFooter />
           <ServiceWorkerRegistration />
           <UpdateToast />
+          <GuestModeHost />
         </ReleaseProvider>
       </body>
     </html>

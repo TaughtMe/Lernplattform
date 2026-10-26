@@ -115,6 +115,13 @@ export const RELEASE_AREAS = {
     routes: [],
     stage: "vorschau",
   },
+  gastmodus: {
+    label: "Gastmodus (geteilte Geräte)",
+    // Schaltet die Einstiegsseite /gast und den Knopf „Gast-QR“ der Lehrkraft.
+    // Das Band „Gastmodus“ erscheint, solange ein Gastmodus auf dem Gerät läuft.
+    routes: ["/gast"],
+    stage: "vorschau",
+  },
   motivation: {
     label: "Häuser, Serie und Abzeichen",
     routes: ["/haus", "/lehrer/haeuser"],
