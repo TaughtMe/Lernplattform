@@ -30,90 +30,90 @@ const doubleConsonants = wordList(`
 const ckAndTz = wordList(`
   Jacke Ecke Decke Schnecke Strecke Brücke Rücken Zucker Wecker Becker
   Acker packen backen hacken knacken stecken wecken decken lecken schmecken
-  drücken pflücken schicken blicken klicken stricken erschrecken entdecken verstecken
-  Glück Stück Blick Trick Fleck Stock Block Rock Sack Rucksack Frühstück
-  zurück verrückt trocken locker Glocke Flocke Locke Mücke Lücke Krücke
-  Hecke Becken Nacken Picknick Schmuck Druck Fleckchen Päckchen Rückblick Eindruck
-  Katze Tatze Glatze Mütze Pfütze Spitze Hitze Witze Sitze Plätze
-  Schatz Satz Platz Netz Gesetz Verletzung Übersetzung plötzlich nützlich
-  schmutzig witzig kratzig sitzen setzen putzen nutzen schützen stützen
-  schwitzen spritzen blitzen ritzen kratzen platzen schätzen ersetzen
-  letzter jetzt trotzdem Besitz Schnitzel Blitzlicht Putzlappen Matratze Sitzplatz
+  drücken pflücken schicken blicken klicken stricken erschrecken entdecken
+  verstecken Glück Stück Blick Trick Fleck Stock Block Rock Sack Rucksack
+  Frühstück zurück verrückt trocken locker Glocke Flocke Locke Mücke Lücke
+  Krücke Hecke Becken Nacken Picknick Schmuck Druck Fleckchen Päckchen
+  Rückblick Eindruck Katze Tatze Glatze Mütze Pfütze Spitze Hitze Witze
+  Sitze Plätze Schatz Satz Platz Netz Gesetz Kätzchen Übersetzung plötzlich
+  nützlich schmutzig witzig kratzig sitzen setzen putzen nutzen schützen
+  stützen schwitzen spritzen blitzen ritzen kratzen platzen schätzen
+  ersetzen letzter jetzt trotzdem Besitz Schnitzel Blitzlicht Putzlappen
+  Matratze Sitzplatz
 `);
 
 const finalDevoicing = wordList(`
-  Hund Wald Bild Kind Wind Mund Rand Sand Band Land Hand Wand Freund
-  Feind Abend Jugend Tugend Gegend Zustand Abstand Grund Herd Pferd
-  Bad Rad Lied Kleid Geld Feld Schild Held wild mild rund gesund
-  Weg Tag Zug Berg Teig Zweig Steg Krieg Sieg Flug Schlag Vertrag
-  Betrag Auftrag Vorschlag Ausflug Eintrag Anfang Ausgang Eingang Umgang
-  Klang Gesang Fang Ring Ding Sprung Schwung lang eng jung Zwerg König
-  Korb Dieb Staub Urlaub Laub Kalb halb gelb grob lieb Betrieb
-  Trieb Sieb Grab Stab Club Job Raub Laubwald Brotkorb Staubfang
-  Wegesrand Waldrand Sandstrand Handstand Burg Hundekorb Kinderlied
-  Geldbetrag Bergpfad Flugzeug Lieblingslied Tagesausflug Waldweg Feldweg Zugweg
-  Magd Leib Trug Ausweg Heimweg Gehweg Rückweg
+  Hund Wald Bild Kind Wind Mund Rand Sand Band Land Hand Wand Freund Pfad
+  Abend Jugend Tugend Gegend Zustand Abstand Grund Herd Pferd Bad Rad Lied
+  Kleid Geld Feld Schild Held wild mild rund gesund Weg Tag Zug Berg Teig
+  Zweig Steg Bund Sieg Flug Schlag Vertrag Betrag Auftrag Vorschlag Ausflug
+  Eintrag Hemd Mond Brand Gold Rind Strand Schuld Lob Trab Zeug Krug Pflug
+  Montag Sonntag Zwerg König Korb Anzug Staub Urlaub Laub Kalb halb gelb
+  grob lieb Betrieb Trieb Sieb Umzug Stab Club Job Mondlicht Laubwald
+  Brotkorb Sandburg Wegesrand Waldrand Sandstrand Handstand Burg Hundekorb
+  Kinderlied Geldbetrag Bergpfad Flugzeug Lieblingslied Tagesausflug
+  Waldweg Feldweg Zugweg Magd Leib Trug Ausweg Heimweg Gehweg Rückweg
 `);
 
 const umlautDerivation = wordList(`
   Häuser Bäume Räume Zäune Mäuse Läuse Bäuche Sträucher Kräuter Häute
-  Bräute Träume Schäume Säume Käufer Läufer Räuber häufig gläubig äußerlich
-  räumlich säubern träumen läuten häuslich bäuerlich käuflich räuberisch
-  älter kälter wärmer stärker länger härter näher später schärfer
-  kräftig mächtig ängstlich ärgerlich täglich jährlich gefährlich
-  wählen zählen erzählen quälen schälen nähren lähmen gähnen spät zäh
-  Hände Bänder Wände Länder Ränder Kämme Lämmer Männer Blätter Räder
-  Gläser Gräser Täler Dächer Fächer Nägel Zähne Gänse Kälber
-  fällt hält trägt schläft fährt lädt gräbt bläst rät wäscht wächst
-  läuft bäckt fängt hängt lässt hätte wäre käme gäbe nähme
-  Äpfel Ärzte Bäcker Jäger Käfer Mädchen Märchen Käfig Säge Träger
+  Bräute Träume Schäume Säume Käufer Läufer Bälle häufig gläubig äußerlich
+  räumlich säubern träumen läuten häuslich bäuerlich käuflich Gärten älter
+  kälter wärmer stärker länger härter näher später schärfer kräftig mächtig
+  ängstlich ärgerlich täglich jährlich gefährlich wählen zählen erzählen
+  Wälder schälen nähren Säcke gähnen spät zäh Hände Bänder Wände Länder
+  Ränder Kämme Lämmer Männer Blätter Räder Gläser Gräser Täler Dächer
+  Fächer Nägel Zähne Gänse Kälber fällt hält trägt schläft fährt lädt gräbt
+  bläst rät wäscht wächst läuft bäckt fängt hängt lässt hätte wäre käme
+  gäbe nähme Äpfel Ärzte Bäcker Jäger Käfer Mädchen Märchen Käfig Säge
+  Träger
 `);
 
 const longI = wordList(`
-  Biene Brief Dieb Diele Dienstag Fieber Fliege Frieden Gier Gießkanne
-  Knie Lied Liebe Miete Riese Schiene Spiegel Spiel Stiefel Tier
-  Wiese Ziel Zwiebel sieben vier hier nie wieder diese Spielwiese
-  dienen liegen siegen fliegen fließen frieren genießen gießen kriechen
-  lieben liefern mieten riechen schieben schießen schließen spielen verlieren wiegen
-  ziehen ziemlich schwierig friedlich riesig niedrig Briefpapier Friedenslied
-  Briefkasten Briefmarke Liebesbrief Tiergarten Spielplatz Spielzeug Spiegelbild
-  Wiesenblume Zieltür Schiebetür Fliegengitter Bienenstock Bienenwabe Tierliebe
-  Diebstahl Lieblingsfach Lieblingsessen Lieblingsbuch Lieblingsfarbe
-  Kniekehle Mietwohnung Schiedsrichter Friedhof Tierheim Tierarzt Tierfutter
-  Zwiebelkuchen Riesenrad Ferien Melodie Industrie Energie Kies Kiefer
-  Kiemen Krieg Krieger Stier Trieb Betrieb Antrieb Vertrieb schmierig
-  neugierig begierig rieseln sprießen schief tief friedvoll Spieltrieb
+  Biene Brief Ziege Diele Dienstag Fieber Fliege Frieden Gier Gießkanne
+  Knie Lied Liebe Miete Riese Schiene Spiegel Spiel Stiefel Tier Wiese Ziel
+  Zwiebel sieben vier hier nie wieder diese Spielwiese dienen liegen siegen
+  fliegen fließen frieren genießen gießen kriechen lieben liefern mieten
+  riechen schieben schießen schließen spielen verlieren wiegen ziehen
+  ziemlich schwierig friedlich riesig niedrig Briefpapier Friedenslied
+  Briefkasten Briefmarke Liebesbrief Tiergarten Spielplatz Spielzeug
+  Spiegelbild Wiesenblume Zieltür Schiebetür Fliegengitter Bienenstock
+  Bienenwabe Tierliebe Wiege Lieblingsfach Lieblingsessen Lieblingsbuch
+  Lieblingsfarbe Kniekehle Mietwohnung Schiedsrichter Fliese Tierheim
+  Tierarzt Tierfutter Zwiebelkuchen Riesenrad Ferien Melodie Industrie
+  Energie Kies Kiefer Kiemen Ziegel Riegel Stier Trieb Betrieb Antrieb
+  Vertrieb schmierig neugierig begierig rieseln sprießen schief tief
+  friedvoll Spieltrieb
 `);
 
 const silentH = wordList(`
-  Bahn Zahn Hahn Kahn Wahn Zahl Wahl Stahl Strahl Mahl Jahr Gefahr
-  fahren erfahren bewahren bezahlen wählen zählen erzählen fehlen empfehlen
-  nehmen dehnen lehnen sehnen stehlen befehlen kehren lehren wehren
-  Mehl Reh Zeh Fehler Lehrer Verkehr Gewehr Ehre Kehle
-  Bohne Sohn Lohn Mohn Rohr Ohr Kohl wohl wohnen bohren drohen froh
-  Ohren Wohnung Belohnung Gewohnheit ohne hohl Höhlung Drohung
-  Uhr Kuh Schuh Ruhe Truhe Huhn Ruhm Stuhl kühl fühlen führen
-  rühren berühren Bühne Mühle Höhle Föhn Sohle Kohle
-  Rahmen Sahne Fahne Ahorn Nahrung Wahrheit Zahnrad Zahnarzt Zahncreme Zahnweh
-  Wahlfach Fahrbahn Fahrrad Fahrkarte Fahrzeug Jahrgang Jahreszeit
-  Mehrzahl Lehrerin Lehrbuch Fehlwort Fehlersuche Wohnhaus Wohnzimmer
-  Ohrwurm Bohrmaschine Ruhestand Stuhllehne Fahrstuhl Wohnraum
+  Bahn Zahn Hahn Kahn Lehm Zahl Wahl Stahl Strahl Mahl Jahr Gefahr fahren
+  erfahren bewahren bezahlen wählen zählen erzählen fehlen empfehlen nehmen
+  dehnen lehnen sehnen Rahm befehlen kehren lehren wehren Mehl lahm Pfahl
+  Fehler Lehrer Verkehr Sehne Ehre Kehle Bohne Sohn Lohn Mohn Rohr Ohr Kohl
+  wohl wohnen bohren Mähne Hühner Ohren Wohnung Belohnung Gewohnheit ohne
+  hohl Höhlung Bahnhof Uhr Bohrer Fahrer Uhrzeit Ohrring Huhn Ruhm Stuhl
+  kühl fühlen führen rühren berühren Bühne Mühle Höhle Föhn Sohle Kohle
+  Rahmen Sahne Fahne zehn Nahrung Wahrheit Zahnrad Zahnarzt Zahncreme
+  Zahnbürste Wahlfach Fahrbahn Fahrrad Fahrkarte Fahrzeug Jahrgang
+  Jahreszeit Mehrzahl Lehrerin Lehrbuch Fehlwort Fehlersuche Wohnhaus
+  Wohnzimmer Ohrwurm Bohrmaschine ehrlich Stuhllehne Fahrstuhl Wohnraum
 `);
 
 const sSsSz = wordList(`
   Straße Fuß Gruß Spaß Maß Maße groß heiß weiß draußen außen außer außerdem
-  beißen reißen schmeißen schließen genießen gießen fließen schießen sprießen
-  Soße Größe Füße Grüße Fleiß Strauß Kloß Floß Gefäß Fußball Fußboden
-  Fußgänger Straßenbahn Süßigkeit süß bloß Spieß heißen Spaßvogel Großmutter
-  Großvater Weißbrot Fußweg Grußkarte Schließfach Fußabdruck Straßenschild
-  Wasser Fluss Nuss Kuss Schloss Schluss muss Biss Riss Pass Fass Kasse Klasse
-  Tasse Messer essen lassen passen nass blass fassen Schüssel Schlüssel küssen
-  müssen wissen Genuss Gewissen Abschluss Entschluss Kissen fressen Rasse Masse
-  Gasse hässlich Gewässer Fässer Nüsse Küsse Flüsse Schlösser Pässe Klassenzimmer
-  Passwort Flussufer
-  Hase Nase Rose Hose Vase Käse Gänse Mäuse Häuser Haus Maus Laus Eis Eisen
-  Reis Reise reisen lesen Besen Fliese Brause Pause Ferse Gans Gras Glas Preis
-  Kreis Hals Sonne Sand Salz Suppe Sofa Insel Esel das dass
+  beißen reißen schmeißen schließen genießen gießen fließen schießen
+  sprießen Soße Größe Füße Grüße Fleiß Strauß Kloß Floß Gefäß Fußball
+  Fußboden Fußgänger Straßenbahn Süßigkeit süß bloß Spieß heißen Spaßvogel
+  Großmutter Großvater Weißbrot Fußweg Grußkarte Schließfach Fußabdruck
+  Straßenschild Wasser Fluss Nuss Kuss Schloss Schluss muss Biss Riss Pass
+  Fass Kasse Klasse Tasse Messer essen lassen passen nass blass fassen
+  Schüssel Schlüssel küssen müssen wissen Genuss Gewissen Abschluss
+  Entschluss Kissen fressen Rasse Masse Gasse hässlich Gewässer Fässer
+  Nüsse Küsse Flüsse Schlösser Pässe Klassenzimmer Passwort Flussufer Hase
+  Nase Rose Hose Vase Käse Gänse Mäuse Häuser Haus Maus Laus Eis Eisen Reis
+  Reise reisen lesen Besen Fliese Brause Pause Ferse Gans Gras Glas Preis
+  Kreis Hals Wiese Riese Dose Blase Gemüse Insel Esel Düse Lose
 `);
 
 const memoryAndLoanWords = wordList(`
@@ -170,7 +170,8 @@ export const LEARNING_WORD_COLLECTIONS: readonly LearningWordCollection[] = [
   {
     id: "silent-h",
     title: "Dehnungs-h",
-    detail: "Das h ist nicht zuverlässig hörbar und wird mitgelernt.",
+    detail:
+      "Nach langem Vokal steht oft ein h vor l, m, n oder r, das man nicht hört (Zahn, Uhr). Das h zwischen zwei Vokalen (se-hen, Schu-he) ist ein anderes h und gehört nicht hierher.",
     strategy: "Merken",
     words: silentH,
   },
@@ -178,8 +179,8 @@ export const LEARNING_WORD_COLLECTIONS: readonly LearningWordCollection[] = [
     id: "s-ss-sz",
     title: "s, ss und ß",
     detail:
-      "Nach langem Vokal steht ß, nach kurzem Vokal ss. Sprich das Wort deutlich in Silben.",
-    strategy: "Ableiten",
+      "Verlängere das Wort und hör genau: Summt das s (Haus, Häuser; Hase), schreibst du s. Zischt es nach langem Vokal oder Zwielaut (Fuß, Füße; Soße), schreibst du ß. Zischt es nach kurzem Vokal (Tasse, Nuss, Nüsse), schreibst du ss.",
+    strategy: "Verlängern",
     words: sSsSz,
   },
   {

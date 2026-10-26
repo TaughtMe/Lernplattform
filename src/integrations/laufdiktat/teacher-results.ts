@@ -11,9 +11,22 @@ export function aggregateWordErrors(students: LiveRoomStudent[]) {
   return [...totals.entries()].sort((left, right) => right[1] - left[1]);
 }
 
-function escapeCsv(value: unknown) {
-  const text = String(value ?? "");
-  return /[;"\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+/**
+ * Zellen, die ein Tabellenprogramm als Formel liest (OWASP „CSV Injection“):
+ * führendes `=`, `+`, `-`, `@`, Tab oder Wagenrücklauf.
+ */
+const CSV_FORMULA_PREFIX = /^[=+\-@\t\r]/;
+
+/**
+ * Eine CSV-Zelle (Trenner `;`): entschärft Formelpräfixe mit einem
+ * vorangestellten `'` und setzt Zellen mit `;`, `"` oder Zeilenumbruch in
+ * Anführungszeichen. Fremd steuerbare Namen und Fehlerwörter landen sonst
+ * als Formel in der Tabelle der Lehrkraft.
+ */
+export function escapeCsv(value: unknown) {
+  const raw = String(value ?? "");
+  const text = CSV_FORMULA_PREFIX.test(raw) ? `'${raw}` : raw;
+  return /[;"\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 /**

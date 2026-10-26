@@ -397,9 +397,14 @@ export function useLiveRoomSession({
     if (!liveRoomConfig || !room) return;
     dispatchFlow({ type: "busy", busy: true });
     try {
-      if (students.length > 0) exportCsv();
       await endLiveRoom(liveRoomConfig, room);
-      resetRoomState();
+      // Die Ergebnisse bleiben im geschlossenen Raum stehen; die CSV gibt es
+      // nur auf ausdrücklichen Klick („Ergebnisse als CSV herunterladen“),
+      // nie ungefragt auf einem geteilten Gerät.
+      if (students.length > 0) {
+        closingRef.current = true;
+        await finishClosedRoom();
+      } else resetRoomState();
     } catch {
       setError("Der Raum konnte nicht beendet werden.");
     } finally {

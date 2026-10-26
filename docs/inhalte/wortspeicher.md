@@ -100,9 +100,12 @@ Oberfläche möglich: Wortbox in `german-learning-content.ts`, Gruppen in
 
 ### Wortbox „s, ss und ß“ (`s-ss-sz`)
 
-Strategie „Ableiten“, 133 Wörter, zugeordnet dem Textbox-Schwerpunkt
-`s-ss-sz`. Gliederung: zuerst Wörter mit ß (langer Vokal oder Doppellaut),
-dann Wörter mit ss (kurzer Vokal), zuletzt Wörter mit einfachem s.
+Strategie „Verlängern“, 133 Wörter, zugeordnet dem Textbox-Schwerpunkt
+`s-ss-sz`. Regeltext: „Verlängere das Wort und hör genau: Summt das s (Haus,
+Häuser; Hase), schreibst du s. Zischt es nach langem Vokal oder Zwielaut (Fuß,
+Füße; Soße), schreibst du ß. Zischt es nach kurzem Vokal (Tasse, Nuss, Nüsse),
+schreibst du ss.“ Gliederung: zuerst Wörter mit ß (langer Vokal oder Doppellaut),
+dann Wörter mit ss (kurzer Vokal), zuletzt Wörter mit summendem s.
 
 - **ß:** Straße, Fuß, Gruß, Spaß, Maß, Maße, groß, heiß, weiß, draußen, außen,
   außer, außerdem, beißen, reißen, schmeißen, schließen, genießen, gießen,
@@ -117,11 +120,12 @@ dann Wörter mit ss (kurzer Vokal), zuletzt Wörter mit einfachem s.
   Nüsse, Küsse, Flüsse, Schlösser, Pässe, Klassenzimmer, Passwort, Flussufer
 - **s:** Hase, Nase, Rose, Hose, Vase, Käse, Gänse, Mäuse, Häuser, Haus, Maus,
   Laus, Eis, Eisen, Reis, Reise, reisen, lesen, Besen, Fliese, Brause, Pause,
-  Ferse, Gans, Gras, Glas, Preis, Kreis, Hals, Sonne, Sand, Salz, Suppe, Sofa,
-  Insel, Esel, das, dass
+  Ferse, Gans, Gras, Glas, Preis, Kreis, Hals, Insel, Esel, Wiese, Riese, Dose,
+  Blase, Gemüse, Düse, Lose
 
-Zu klären: Ob „das“ und „dass“ in dieselbe Wortbox gehören (sie sind zugleich
-gleich klingende Wörter, siehe unten) und ob Wörter wie „Masse“ und „Maße“, die
+„das“ und „dass“ stehen nicht mehr in dieser Wortbox: Als Einzelwort ist die
+Entscheidung grammatisch und nicht lösbar. Sie bleiben als gleich klingende
+Wörter erhalten (siehe unten). Zu klären: Ob Wörter wie „Masse“ und „Maße“, die
 sich im Vokal unterscheiden, bewusst nebeneinander stehen sollen.
 
 ### Gleich klingende Wörter (Stufe 6)
@@ -132,28 +136,28 @@ Gruppe, zählt das als Fehler, die Rückmeldung lautet aber: „Das klingt genau
 Gemeint war ‚Rad‘ (zum Fahren).“ Die Hilfe zählt nicht als Hilfe im Sinn der
 Bewertung.
 
-| Wort   | Hilfe                     | Wort   | Hilfe                      |
-| ------ | ------------------------- | ------ | -------------------------- |
-| Rad    | zum Fahren                | Rat    | ein guter Tipp             |
-| Meer   | das große Wasser          | mehr   | eine größere Menge         |
-| Weg    | eine Straße oder ein Pfad | weg    | nicht mehr da              |
-| Feld   | ein Acker                 | fällt  | von fallen                 |
-| Lied   | zum Singen                | Lid    | am Auge                    |
-| Stadt  | ein großer Ort            | statt  | anstelle von               |
-| Wahl   | man wählt jemanden        | Wal    | ein Tier im Meer           |
-| Mahl   | ein Essen                 | Mal    | das erste Mal              |
-| wieder | noch einmal               | wider  | gegen                      |
-| lehren | unterrichten              | leeren | leer machen                |
-| Sohle  | unter dem Schuh           | Sole   | Salzwasser                 |
-| Leib   | der Körper                | Laib   | ein Laib Brot              |
-| malen  | mit Farbe                 | mahlen | Korn zu Mehl machen        |
-| Seite  | im Buch                   | Saite  | an der Gitarre             |
-| Stiel  | an der Blume              | Stil   | Art und Weise              |
-| Waise  | ein Kind ohne Eltern      | Weise  | klug oder Art und Weise    |
-| Bären  | große Tiere im Wald       | Beeren | Früchte am Strauch         |
-| viel   | eine große Menge          | fiel   | von fallen                 |
-| wahr   | richtig, nicht gelogen    | war    | von sein                   |
-| das    | das Haus                  | dass   | leitet einen Nebensatz ein |
+| Wort   | Hilfe                                            | Wort   | Hilfe                                  |
+| ------ | ------------------------------------------------ | ------ | -------------------------------------- |
+| Rad    | zum Fahren                                       | Rat    | ein guter Tipp                         |
+| Meer   | das große Wasser                                 | mehr   | eine größere Menge                     |
+| Weg    | eine Straße oder ein Pfad                        | weg    | nicht mehr da                          |
+| Feld   | ein Acker                                        | fällt  | es stürzt gerade zu Boden              |
+| Lied   | zum Singen                                       | Lid    | am Auge                                |
+| Stadt  | ein großer Ort                                   | statt  | anstelle von                           |
+| Wahl   | Abstimmung, zum Beispiel für den Klassensprecher | Wal    | ein Tier im Meer                       |
+| Mahl   | ein Essen                                        | Mal    | wie oft etwas geschieht                |
+| wieder | noch einmal                                      | wider  | gegen                                  |
+| lehren | unterrichten                                     | leeren | ausräumen oder ausschütten             |
+| Sohle  | unter dem Schuh                                  | Sole   | Salzwasser                             |
+| Leib   | der Körper                                       | Laib   | ein ganzes rundes Brot                 |
+| malen  | mit Farbe                                        | mahlen | Korn zu Mehl machen                    |
+| Seite  | im Buch                                          | Saite  | an der Gitarre                         |
+| Stiel  | an der Blume                                     | Stil   | die Art, wie jemand malt oder schreibt |
+| Waise  | ein Kind ohne Eltern                             | Weise  | klug oder eine Art, etwas zu tun       |
+| Bären  | große Tiere im Wald                              | Beeren | Früchte am Strauch                     |
+| viel   | eine große Menge                                 | fiel   | es stürzte gestern zu Boden            |
+| wahr   | richtig, nicht gelogen                           | war    | von sein                               |
+| das    | kann man durch „dieses“ ersetzen                 | dass   | leitet einen Nebensatz ein             |
 
 Zu klären: „Weg“ und „weg“ unterscheiden sich nur in der Großschreibung. Ein
 Kind, das „weg“ statt „Weg“ schreibt, bekommt die Rückmeldung zur Groß- und

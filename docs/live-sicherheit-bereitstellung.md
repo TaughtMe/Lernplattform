@@ -112,3 +112,30 @@ und [Supabase-Changelog](https://supabase.com/changelog). Der Markdown-Abruf des
 Changelogs war im Recherchewerkzeug nicht lesbar; die HTML-Fassung wurde geprüft.
 Die Migration wurde mit der Supabase-CLI angelegt. Eine relevante Änderung für
 das verwendete tokengebundene HTTP-Verfahren ergab sich daraus nicht.
+
+## Bereitstellungsprotokoll
+
+**26.10.2026, Supabase-Projekt „Lernraum“ (`bidzvtwadsmifkmpoxpq`, eu-west-1):**
+
+- Vorher entsprach die Datenbank exakt dem Stand nach `20261003120000`
+  (Funktionskörper mit den Migrationsdateien verglichen). Im Migrationsverlauf
+  standen nur die ersten drei Migrationen; die übrigen waren per SQL-Editor
+  eingespielt worden. Zum Zeitpunkt der Umstellung gab es keinen Raum.
+- `20261022045055_secure_room_activity.sql` wurde per SQL-Editor eingespielt.
+  Alle fünf geänderten oder neuen Funktionen stimmen mit der Datei überein;
+  nur `anon` darf sie ausführen, `private.room_attacks` hat RLS und keine
+  Rechte für öffentliche Rollen.
+- Proben unter der Rolle `anon` in einer verworfenen Transaktion: Aktivität
+  melden, Peers ohne Token- oder Fehlerdaten, zulässige Battle-Aktion,
+  15-Sekunden-Sperre, deaktivierte Aktion, Selbstangriff, fremdes Ziel, alte
+  Sitzung, einmalige Zustellung nur an den Empfänger; Abweisung ohne Token, mit
+  falschem Token, mit Token eines anderen Raums, mit Lehrkrafttoken und für
+  einen über 120 Minuten alten Raum. Alle 22 Proben wie erwartet.
+- Die sieben fehlenden Einträge (`20260831120000` bis `20261022045055`) wurden
+  im Migrationsverlauf nachgetragen, ohne Schemaänderung.
+- Supabase-Advisors: erwartete Hinweise zu `SECURITY DEFINER`-Funktionen für
+  `anon` und zu Tabellen mit RLS ohne Policies (beides gewollt, Zugriff nur über
+  tokenprüfende RPCs). Hinweis ohne Handlungsbedarf: Fremdschlüssel
+  `room_attacks.target_id` ohne führenden Index (Tabelle kurzlebig und klein).
+- Offen: Realtime „Allow public access“ deaktivieren (Schritt 4), Client
+  bereitstellen (Schritt 5) und alte Verbindungen prüfen (Schritt 6).

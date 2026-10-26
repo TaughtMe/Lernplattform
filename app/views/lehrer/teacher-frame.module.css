@@ -549,3 +549,39 @@ a.profileSub:hover {
     padding: 0;
   }
 }
+
+/* ---------- Druck (Befund C-006) ---------- */
+/*
+ * Am Bildschirm ist der Rahmen so hoch wie das Fenster und scrollt in sich.
+ * Im Druck würde diese Höhe alles unterhalb der ersten Seite abschneiden
+ * (QR-Bogen: 12 von 24 Codes). Darum läuft der Inhalt im Druck in natürlicher
+ * Höhe über beliebig viele Seiten; Leiste, Kopfzeile und Schublade entfallen.
+ * Der Umschlag mit `height: 100dvh` sitzt in `TeacherShell` und trägt sie
+ * inline; deshalb `!important`.
+ */
+@media print {
+  :has(> .frame) {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .frame,
+  .layout,
+  .column,
+  .main,
+  .fill .column {
+    display: block;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .sidebar,
+  .bar,
+  .drawer,
+  .head {
+    display: none !important;
+  }
+  .plain .main,
+  .page .main {
+    padding: 0;
+  }
+}

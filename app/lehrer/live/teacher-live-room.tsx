@@ -228,14 +228,19 @@ export function TeacherLiveRoom({
   );
 }
 
-/** Formeln (Brüche, Wurzeln, Potenzen) in „Häufigste Fehler“ setzen. */
+/** Formeln (Brüche, Wurzeln, Potenzen) in den Fehlerlisten setzen. */
 function withMathMistakes(live: LiveOverview) {
+  const withDisplay = <Entry extends { word: string }>(entry: Entry) =>
+    /[\\^]/.test(entry.word)
+      ? { ...entry, display: <MathDisplay text={entry.word} isLatex /> }
+      : entry;
   return {
     ...live,
-    mistakes: live.mistakes.map((entry) =>
-      /[\\^]/.test(entry.word)
-        ? { ...entry, display: <MathDisplay text={entry.word} isLatex /> }
-        : entry,
+    mistakes: live.mistakes.map(withDisplay),
+    students: live.students.map((student) =>
+      student.wordErrors
+        ? { ...student, wordErrors: student.wordErrors.map(withDisplay) }
+        : student,
     ),
   };
 }

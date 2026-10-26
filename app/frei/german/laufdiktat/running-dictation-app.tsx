@@ -13,6 +13,7 @@ import {
   type RunningDictationMode,
   type VocabularyDirection,
 } from "../../../../src/domain/running-dictation";
+import { STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES } from "../../../../src/domain/running-dictation-input";
 import {
   LEARNING_BUNDLE_VERSION,
   parseLearningBundleV1,
@@ -416,8 +417,7 @@ export function RunningDictationApp() {
                 className="ui-field"
                 value={answer}
                 onChange={(event) => setAnswer(event.target.value)}
-                autoComplete="off"
-                spellCheck={false}
+                {...STRICT_RUNNING_DICTATION_INPUT_ATTRIBUTES}
               />
             </label>
             <div className="ui-row ui-wrap">

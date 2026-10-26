@@ -31,4 +31,69 @@ describe("German learning content", () => {
     });
     expect(getLearningWordCollection("unknown")).toBeUndefined();
   });
+
+  it("keeps war, violence and death words out of the primary-school word boxes", () => {
+    // Bewusst kleine Ausschlussliste (Befund E-005); Wortanfänge, klein geschrieben.
+    const blocked = [
+      "krieg",
+      "kriegs",
+      "waffe",
+      "bombe",
+      "töte",
+      "tötet",
+      "panzer",
+      "gewehr",
+      "pistole",
+      "soldat",
+      "schwert",
+      "mord",
+      "mörder",
+      "leiche",
+      "friedhof",
+      "sterb",
+      "stirb",
+      "feind",
+      "gespenst",
+      "quäl",
+      "lähm",
+      "droh",
+      "räuber",
+      "räuberisch",
+      "raub",
+      "dieb",
+      "grab",
+    ];
+    const exact = new Set(["tod", "tot", "tote", "toter", "blut", "grab"]);
+    for (const collection of LEARNING_WORD_COLLECTIONS) {
+      const hits = collection.words.filter((word) => {
+        const lower = word.toLocaleLowerCase("de-DE");
+        return (
+          exact.has(lower) || blocked.some((part) => lower.startsWith(part))
+        );
+      });
+      expect(hits, collection.id).toEqual([]);
+    }
+  });
+
+  it("keeps -ng words out of the final-devoicing box", () => {
+    const words = getLearningWordCollection("final-devoicing")?.words ?? [];
+    expect(words.filter((word) => /ng$/iu.test(word))).toEqual([]);
+  });
+
+  it("keeps the s, ss and ß rule consistent with its box", () => {
+    const box = getLearningWordCollection("s-ss-sz");
+    expect(box?.detail).toContain("Summt das s");
+    expect(box?.strategy).toBe("Verlängern");
+    expect(box?.words).not.toContain("das");
+    expect(box?.words).not.toContain("dass");
+  });
+
+  it("keeps silent-h words (se-hen, Schu-he) out of the Dehnungs-h box", () => {
+    const words = getLearningWordCollection("silent-h")?.words ?? [];
+    // Silbentrennendes h: zwischen zwei Vokalen oder nach Vokal am Wortende.
+    const separating = words.filter((word) =>
+      /[aeiouäöüy]h(?:[aeiouäöüy]|$)/iu.test(word),
+    );
+    expect(separating).toEqual([]);
+  });
 });

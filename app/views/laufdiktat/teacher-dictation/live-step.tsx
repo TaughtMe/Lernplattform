@@ -3,7 +3,11 @@
 import type { CSSProperties } from "react";
 import { Animal, cx, Eyebrow } from "../../parts/parts";
 import styles from "../teacher-dictation-screen.module.css";
-import type { ParticipantStatus, TeacherDictationScreenProps } from "./types";
+import type {
+  LiveWordError,
+  ParticipantStatus,
+  TeacherDictationScreenProps,
+} from "./types";
 
 export function LiveStep({
   roomCode,
@@ -22,7 +26,9 @@ export function LiveStep({
       {roomTimes?.closed ? (
         <p className={styles.roomNote} role="status">
           <strong>Raum geschlossen.</strong> Die letzten Ergebnisse bleiben
-          hier, bis du einen neuen Raum öffnest.
+          hier, bis du einen neuen Raum öffnest. Die CSV-Datei entsteht erst,
+          wenn du „Ergebnisse als CSV herunterladen“ wählst, und liegt danach im
+          Download-Ordner dieses Geräts.
         </p>
       ) : roomTimes?.closingSoon ? (
         <p className={styles.roomNote} role="status">
@@ -44,7 +50,7 @@ export function LiveStep({
           <div className={cx(styles.between, styles.studentsHead)}>
             <span className={styles.label}>Schüler</span>
             <button type="button" className={styles.csv} onClick={onExportCsv}>
-              Ergebnisse als CSV
+              Ergebnisse als CSV herunterladen
             </button>
           </div>
           {mode === "STATION" ? (
@@ -105,6 +111,12 @@ export function LiveStep({
                       {`${student.progress}/${student.total}`}
                     </span>
                   </span>
+                  {student.wordErrors?.length ? (
+                    <WordErrors
+                      name={student.name}
+                      entries={student.wordErrors}
+                    />
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -114,7 +126,7 @@ export function LiveStep({
             className={cx(styles.csv, styles.csvNarrow)}
             onClick={onExportCsv}
           >
-            Ergebnisse als CSV
+            Ergebnisse als CSV herunterladen
           </button>
         </div>
         <section className={styles.mistakes} aria-label="Häufigste Fehler">
@@ -137,6 +149,59 @@ export function LiveStep({
         </section>
       </div>
     </div>
+  );
+}
+
+/** Wie viele Fehlerwörter je Tier ausgeschrieben werden; der Rest bleibt in der Zahl. */
+const WORD_ERRORS_SHOWN = 10;
+
+/**
+ * Fehlerwörter eines Tiers als aufklappbare Liste. Anzahl und Wort stehen als
+ * Text da (kein Farbsignal); `details` bringt Tastatur und Screenreader mit.
+ */
+function WordErrors({
+  name,
+  entries,
+}: {
+  name: string;
+  entries: ReadonlyArray<LiveWordError>;
+}) {
+  const shown = entries.slice(0, WORD_ERRORS_SHOWN);
+  const hidden = entries.length - shown.length;
+  return (
+    <details className={styles.wordErrors}>
+      <summary
+        className={styles.wordErrorsSummary}
+        aria-label={`Fehlerwörter von ${name} (${entries.length})`}
+      >
+        {`Fehlerwörter (${entries.length})`}
+      </summary>
+      <ul
+        className={styles.wordErrorsList}
+        aria-label={`Fehlerwörter von ${name}`}
+      >
+        {shown.map((entry) => (
+          <li key={entry.word} className={styles.wordError}>
+            <span className={styles.wordErrorWord}>
+              {entry.display ?? entry.word}
+            </span>
+            <span className={styles.wordErrorCount}>
+              <span aria-hidden="true">{`${entry.count}×`}</span>
+              <span className={styles.srOnly}>
+                {entry.count === 1 ? "1 Fehler" : `${entry.count} Fehler`}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {hidden > 0 ? (
+        <p className={styles.wordErrorsMore}>
+          {hidden === 1
+            ? "und 1 weiteres Wort"
+            : `und ${hidden} weitere Wörter`}
+        </p>
+      ) : null}
+    </details>
   );
 }
 
