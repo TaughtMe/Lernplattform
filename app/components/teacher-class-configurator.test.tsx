@@ -4,6 +4,12 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LOCAL_DATA_AREAS } from "../../src/storage/local-data-boundaries";
 import { parseEnrollmentLink } from "../../src/domain/class-enrollment";
+import {
+  parseGuestPassLink,
+  verifyGuestPass,
+} from "../../src/domain/guest-pass";
+import { resolveStages, resolveVisibility } from "../../src/domain/release";
+import { ReleaseProvider } from "../release/release-context";
 import { TeacherClassConfigurator } from "./teacher-class-configurator";
 
 vi.mock("qrcode.react", () => ({
@@ -294,5 +300,56 @@ describe("TeacherClassConfigurator", () => {
       "aria-pressed",
       "true",
     );
+  });
+
+  async function createClass(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(
+      await screen.findByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8a",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
+    await screen.findByText("Klasse wurde lokal angelegt.");
+  }
+
+  it("zeigt den Gast-QR nur, wenn der Bereich Gastmodus sichtbar ist", async () => {
+    const user = userEvent.setup();
+    render(<TeacherClassConfigurator />);
+    await createClass(user);
+    expect(
+      screen.queryByRole("button", { name: /Gast-QR/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("erstellt einen Gast-QR mit 90 Minuten Laufzeit", async () => {
+    const user = userEvent.setup();
+    render(
+      <ReleaseProvider
+        value={resolveVisibility(resolveStages(undefined), true)}
+      >
+        <TeacherClassConfigurator />
+      </ReleaseProvider>,
+    );
+    await createClass(user);
+    await user.click(
+      await screen.findByRole("button", { name: "Gast-QR (90 Minuten)" }),
+    );
+    const qr = await screen.findByRole("img", {
+      name: "Gast-QR-Code für Klasse 8a",
+    });
+    const link = qr.getAttribute("data-qr-value") ?? "";
+    expect(new URL(link).pathname).toBe("/gast");
+    const pass = parseGuestPassLink(link);
+    expect(
+      Date.parse(pass.payload.expiresAt) - Date.parse(pass.payload.issuedAt),
+    ).toBe(90 * 60_000);
+    expect(await verifyGuestPass(pass, new Date())).toMatchObject({ ok: true });
+    await user.click(screen.getByRole("button", { name: "Ausblenden" }));
+    expect(
+      screen.queryByRole("img", { name: /Gast-QR-Code/ }),
+    ).not.toBeInTheDocument();
   });
 });

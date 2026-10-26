@@ -13,7 +13,8 @@ export type LandingScreenProps = {
   animal: string | null;
   /** Raumcode aus bis zu vier Zeichen. */
   code: string;
-  teacherHref: string;
+  /** Ziel des Links „Lehrerbereich“; ohne Angabe (null) fehlt der Link, z. B. im Gastmodus. */
+  teacherHref: string | null;
   /** Ziel beim Tippen auf das Tier (eigener Lernraum). */
   enterHref: string;
   onCodeChange?: (code: string) => void;
@@ -64,9 +65,11 @@ export function LandingScreen({
         <span className={styles.brand}>
           <BrandLogo height={28} onDark label="Lernraum" />
         </span>
-        <Link href={teacherHref} className={styles.teacher}>
-          Lehrerbereich
-        </Link>
+        {teacherHref ? (
+          <Link href={teacherHref} className={styles.teacher}>
+            Lehrerbereich
+          </Link>
+        ) : null}
       </header>
 
       <section className={styles.stage} aria-labelledby="landing-greeting">

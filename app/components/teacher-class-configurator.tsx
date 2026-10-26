@@ -6,6 +6,7 @@ import { EnrollmentQr } from "./enrollment-qr";
 import { useEffect, useMemo, useState } from "react";
 import { notifyTeacherClassesChanged } from "../ui/shell/teacher-classes";
 import { Button } from "../ui/primitives";
+import { useAreaVisible } from "../release/release-context";
 import {
   createClassRemovalLink,
   createEnrollmentCode,
@@ -13,6 +14,10 @@ import {
   type ClassMember,
   type TeacherClass,
 } from "../../src/domain/class-enrollment";
+import {
+  createGuestPass,
+  createGuestPassLink,
+} from "../../src/domain/guest-pass";
 import {
   CLASS_MODULE_LABELS,
   type ClassModule,
@@ -82,6 +87,13 @@ export function TeacherClassConfigurator() {
   const [shown, setShown] = useState<ClassMember>();
   const [showQrSheet, setShowQrSheet] = useState(false);
   const [removalShown, setRemovalShown] = useState(false);
+  // Gast-QR (90 Minuten) für geteilte Geräte; nur mit freigegebenem Bereich.
+  const guestEnabled = useAreaVisible("gastmodus");
+  const [guestQr, setGuestQr] = useState<{
+    classId: string;
+    link: string;
+    expiresAt: Date;
+  }>();
   // Löschen mit zwei Bestätigungen: erst fragen, dann endgültig bestätigen.
   const [pendingDelete, setPendingDelete] = useState<{
     course: TeacherClass;
@@ -234,6 +246,22 @@ export function TeacherClassConfigurator() {
     setCreating(false);
     setMessage("Klasse wurde lokal angelegt.");
     changed();
+  }
+
+  async function showGuestQr(course: TeacherClass) {
+    try {
+      const seal = await repository.ensureSeal(course.id);
+      if (!seal) throw new Error("Klasse fehlt");
+      const pass = await createGuestPass(seal, course.id, new Date());
+      setGuestQr({
+        classId: course.id,
+        link: createGuestPassLink(window.location.origin, pass),
+        expiresAt: new Date(pass.payload.expiresAt),
+      });
+      setMessage("");
+    } catch {
+      setMessage("Der Gast-QR konnte nicht erstellt werden.");
+    }
   }
 
   async function addStudent(name: string) {
@@ -549,6 +577,9 @@ export function TeacherClassConfigurator() {
                 archived={archived}
                 canPrint={members.length > 0}
                 onPrint={() => setShowQrSheet(true)}
+                {...(guestEnabled
+                  ? { onGuestQr: () => void showGuestQr(selected) }
+                  : {})}
                 onArchive={() =>
                   void (archived
                     ? restoreClass(selected)
@@ -596,6 +627,44 @@ export function TeacherClassConfigurator() {
                     scannen diesen QR-Code oder fügen den Code unter „Klasse“
                     ein. Der persönliche Lernstand bleibt erhalten.
                   </span>
+                </div>
+              </ClassSection>
+            ) : null}
+            {guestEnabled && !archived && guestQr?.classId === selected.id ? (
+              <ClassSection>
+                <div className={m.actions}>
+                  <span
+                    style={{
+                      padding: 10,
+                      borderRadius: 12,
+                      background: "#fff",
+                      lineHeight: 0,
+                    }}
+                  >
+                    <QRCodeSVG
+                      value={guestQr.link}
+                      size={200}
+                      role="img"
+                      aria-label={`Gast-QR-Code für ${selected.name}`}
+                    />
+                  </span>
+                  <span className={m.hint} style={{ flex: "1 1 14em" }}>
+                    <strong>Gast-QR für geteilte Geräte.</strong> Gilt bis{" "}
+                    {guestQr.expiresAt.toLocaleTimeString("de-DE", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    Uhr (90 Minuten). Wer ihn scannt, macht das Gerät zum
+                    Gastgerät: Die Schülerdaten darauf werden am Ende gelöscht.
+                    Dein Lehrerbereich bleibt unberührt.
+                  </span>
+                  <button
+                    type="button"
+                    className={m.soft}
+                    onClick={() => setGuestQr(undefined)}
+                  >
+                    Ausblenden
+                  </button>
                 </div>
               </ClassSection>
             ) : null}

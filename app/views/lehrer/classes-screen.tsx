@@ -217,6 +217,7 @@ export function ClassActions({
   archived,
   canPrint,
   onPrint,
+  onGuestQr,
   onArchive,
   onDelete,
   extra,
@@ -225,6 +226,8 @@ export function ClassActions({
   archived: boolean;
   canPrint: boolean;
   onPrint?: () => void;
+  /** Gast-QR für geteilte Geräte; ohne Angabe (Bereich nicht freigegeben) fehlt der Knopf. */
+  onGuestQr?: () => void;
   onArchive?: () => void;
   onDelete?: () => void;
   /** Weitere Knöpfe, z. B. „Entfernungscode“ im Archiv. */
@@ -241,6 +244,11 @@ export function ClassActions({
         >
           <ManageIcon name="print" />
           QR-Bogen drucken
+        </button>
+      )}
+      {archived || !onGuestQr ? null : (
+        <button type="button" className={m.soft} onClick={onGuestQr}>
+          Gast-QR (90 Minuten)
         </button>
       )}
       {extra}

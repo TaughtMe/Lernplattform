@@ -4,11 +4,33 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
 import { BackgroundRoomPresence } from "../../components/background-room-presence";
+import { ButtonLink } from "../primitives";
 import { SiteFooter } from "../site-footer";
+import { useGuestMode } from "../use-guest-mode";
 import { areaOf } from "./areas";
 import { FullscreenContext, type FullscreenMode } from "./fullscreen";
 import { StudentShell } from "./student-shell";
 import { TeacherShell } from "./teacher-shell";
+
+/** Auf einem Gastgerät bleiben die Lehrerseiten zu (Gastmodus, G-6). */
+function GuestTeacherBlock() {
+  return (
+    <main className="ui ui-page ui-guest-page">
+      <section
+        className="ui-card ui-card--pop ui-card--pad ui-stack"
+        aria-labelledby="guest-teacher-title"
+      >
+        <h1 id="guest-teacher-title" className="ui-h-page">
+          Im Gastmodus nicht verfügbar
+        </h1>
+        <p className="ui-small">
+          Der Lehrerbereich ist auf einem Gastgerät gesperrt.
+        </p>
+        <ButtonLink href="/lernen">Zum Lernraum</ButtonLink>
+      </section>
+    </main>
+  );
+}
 
 /**
  * Rahmen für Schüler- und Lehrerbereich. Er sitzt im Root-Layout und bleibt
@@ -25,6 +47,7 @@ export function AreaFrame({
   const pathname = usePathname();
   const [fullscreen, setFullscreen] = useState<FullscreenMode>(false);
   const area = areaOf(pathname);
+  const guest = useGuestMode();
   return (
     <FullscreenContext.Provider value={setFullscreen}>
       {area === "student" ? (
@@ -42,7 +65,11 @@ export function AreaFrame({
           {children}
         </StudentShell>
       ) : area === "teacher" ? (
-        <TeacherShell pathname={pathname}>{children}</TeacherShell>
+        guest ? (
+          <GuestTeacherBlock />
+        ) : (
+          <TeacherShell pathname={pathname}>{children}</TeacherShell>
+        )
       ) : (
         children
       )}
