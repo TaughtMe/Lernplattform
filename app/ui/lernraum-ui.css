@@ -3969,3 +3969,44 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
   color: var(--ink);
   font-weight: 800;
 }
+
+/* ============ Gastmodus ============ */
+.ui-guest-page {
+  max-width: 560px;
+  min-height: 70dvh;
+  justify-content: center;
+}
+/* Dezentes Etikett oben in der Mitte; fest, damit es nie im Layout mitrechnet. */
+.ui-guest-band {
+  position: fixed;
+  top: max(6px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 32px);
+  padding: 2px 4px 2px 12px;
+  transform: translateX(-50%);
+  border: 1.5px solid var(--line2);
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px var(--shadow);
+}
+.ui-guest-band__end {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink2);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ui-guest-band__end:hover {
+  color: var(--ink);
+}

@@ -1,4 +1,6 @@
+import type { LearnerProfile } from "../domain/learner-profile";
 import type { PersonalLearningDatabase } from "./personal-learning-events";
+import type { StudentClassesDatabase } from "./student-classes";
 
 /**
  * Hat dieses Gerät irgendeinen Lernstand? Gezählt wird über alle Tabellen, die
@@ -24,4 +26,25 @@ export async function hasPersonalLearningState(
     database.wordRounds.count(),
   ]);
   return counts.some((count) => count > 0);
+}
+
+/**
+ * Lernstand des ganzen Geräts für den Gastmodus: persönlicher Lernstand
+ * (siehe oben), Klassenmitgliedschaften und Aufgaben sowie ein Profil mit
+ * eigener Wahl. Das zufällige Tier, das jedes Gerät beim ersten Besuch erhält,
+ * zählt nicht; sonst fragte der Gastmodus fast jedes Gerät, obwohl nichts zu
+ * verlieren ist. Gelöscht wird es trotzdem.
+ */
+export async function hasDeviceLearningState(parts: {
+  personal: PersonalLearningDatabase;
+  classes: StudentClassesDatabase;
+  profile: Pick<LearnerProfile, "figure" | "figuresUnlocked"> | null;
+}): Promise<boolean> {
+  if (parts.profile?.figure || parts.profile?.figuresUnlocked) return true;
+  const [personal, memberships, assignments] = await Promise.all([
+    hasPersonalLearningState(parts.personal),
+    parts.classes.memberships.count(),
+    parts.classes.assignments.count(),
+  ]);
+  return personal || memberships > 0 || assignments > 0;
 }

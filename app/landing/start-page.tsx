@@ -7,6 +7,7 @@ import { learnerProfileRepository } from "../../src/storage/learner-profile";
 import { useHydrated } from "../ui/use-hydrated";
 import { InstallButton } from "./install-button";
 import { QrCodeScanner } from "../ui/qr-scanner";
+import { useGuestMode } from "../ui/use-guest-mode";
 import { useLearnerProfile } from "../ui/use-learner-profile";
 import { LandingScreen } from "../views/start/landing-screen";
 
@@ -21,6 +22,8 @@ function openRoom(code: string) {
 export function StartPage() {
   const hydrated = useHydrated();
   const profile = useLearnerProfile();
+  // Auf einem Gastgerät führt kein Weg in den Lehrerbereich.
+  const guest = useGuestMode();
   const [code, setCode] = useState("");
 
   // Beim ersten Besuch wird ein zufälliges Tier gespeichert (Entscheidung 47).
@@ -32,7 +35,7 @@ export function StartPage() {
     <LandingScreen
       animal={profileAvatar(profile)}
       code={code}
-      teacherHref="/lehrer"
+      teacherHref={guest ? null : "/lehrer"}
       enterHref="/lernen"
       showLegal
       onCodeChange={(value) => {
