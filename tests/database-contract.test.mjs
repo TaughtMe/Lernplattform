@@ -98,6 +98,300 @@ async function readyTransfer({
 async function room(ip = "192.0.2.20") {
   return (await rpc("select * from public.open_room_secure('{}')", [], ip))[0];
 }
+
+async function battleRoom(ip) {
+  const opened = await room(ip);
+  const members = [];
+  for (const animal of ["Fuchs", "Hase", "Igel"]) {
+    members.push(
+      (
+        await rpc(
+          "select * from public.join_room_secure($1,$2)",
+          [opened.code, animal],
+          ip,
+        )
+      )[0],
+    );
+  }
+  await rpc("select public.update_session_secure($1,$2,$3,$4)", [
+    opened.room_id,
+    opened.access_token,
+    "22222222-2222-4222-8222-222222222222",
+    JSON.stringify({
+      words: [{ id: "word", targetWord: "Haus" }],
+      gameMode: "BATTLE",
+      battleOptions: { ink: true, flicker: false },
+    }),
+  ]);
+  return { ...opened, members };
+}
+
+const activityQuery =
+  "select public.get_room_activity_secure($1,$2,$3,$4) as activity";
+const attackQuery =
+  "select public.send_room_attack_secure($1,$2,$3,$4,$5) as accepted";
+
+test("authorizes peer reads by room and current session, without leaking result details", async () => {
+  const first = await battleRoom("192.0.2.110");
+  const other = await battleRoom("192.0.2.111");
+  const member = first.members[0];
+  const args = [
+    first.room_id,
+    member.participant_token,
+    "22222222-2222-4222-8222-222222222222",
+    0,
+  ];
+  const [{ activity }] = await rpc(activityQuery, args);
+  assert.equal(activity.peers.length, 3);
+  assert.deepEqual(Object.keys(activity.peers[0]).sort(), [
+    "animal",
+    "index",
+    "key",
+    "number",
+  ]);
+  assert.deepEqual(activity.attacks, []);
+  for (const token of [
+    null,
+    "wrong",
+    "f".repeat(48),
+    first.access_token,
+    other.members[0].participant_token,
+  ]) {
+    await assert.rejects(
+      rpc(activityQuery, [
+        first.room_id,
+        token,
+        "22222222-2222-4222-8222-222222222222",
+        0,
+      ]),
+      /Ungueltige Raumteilnahme/,
+    );
+  }
+  await assert.rejects(
+    rpc(activityQuery, [
+      first.room_id,
+      member.participant_token,
+      "old-session",
+      0,
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+  // A participant capability cannot become the teacher's access capability.
+  assert.deepEqual(
+    await rpc("select * from public.get_room_participants_secure($1,$2)", [
+      first.room_id,
+      member.participant_token,
+    ]),
+    [],
+  );
+  assert.deepEqual(
+    await rpc("select * from public.get_room_students_secure($1,$2)", [
+      first.room_id,
+      member.participant_token,
+    ]),
+    [],
+  );
+  await assert.rejects(
+    rpc("select public.end_room_secure($1,$2)", [
+      first.room_id,
+      member.participant_token,
+    ]),
+  );
+  await assert.rejects(
+    rpc("select * from private.room_attacks"),
+    /permission denied/,
+  );
+  await assert.rejects(
+    rpcAs("authenticated", activityQuery, args),
+    /permission denied/,
+  );
+});
+
+test("binds attacks to the token owner and recipient, rejects spoofing and limits repeated sends", async () => {
+  const opened = await battleRoom("192.0.2.112");
+  const [sender, target, observer] = opened.members;
+  const attack = [
+    opened.room_id,
+    sender.participant_token,
+    "22222222-2222-4222-8222-222222222222",
+    target.assigned_student_key,
+    "ink",
+  ];
+  for (const token of [null, "wrong", opened.access_token]) {
+    await assert.rejects(
+      rpc(attackQuery, [opened.room_id, token, ...attack.slice(2)]),
+      /Ungueltige Raumteilnahme/,
+    );
+  }
+  for (const [session, recipient, type] of [
+    ["old-session", target.assigned_student_key, "ink"],
+    ["22222222-2222-4222-8222-222222222222", "foreign-participant", "ink"],
+    [
+      "22222222-2222-4222-8222-222222222222",
+      sender.assigned_student_key,
+      "ink",
+    ],
+    [
+      "22222222-2222-4222-8222-222222222222",
+      target.assigned_student_key,
+      "flicker",
+    ],
+    [
+      "22222222-2222-4222-8222-222222222222",
+      target.assigned_student_key,
+      "unknown",
+    ],
+  ]) {
+    assert.equal(
+      (
+        await rpc(attackQuery, [
+          opened.room_id,
+          sender.participant_token,
+          session,
+          recipient,
+          type,
+        ])
+      )[0].accepted,
+      false,
+    );
+  }
+  assert.equal((await rpc(attackQuery, attack))[0].accepted, true);
+  assert.equal((await rpc(attackQuery, attack))[0].accepted, false);
+  const [{ activity }] = await rpc(activityQuery, [
+    opened.room_id,
+    target.participant_token,
+    "22222222-2222-4222-8222-222222222222",
+    0,
+  ]);
+  assert.equal(activity.attacks.length, 1);
+  assert.equal(activity.attacks[0].from, "Fuchs");
+  assert.equal(activity.attacks[0].type, "ink");
+  assert.deepEqual(
+    (
+      await rpc(activityQuery, [
+        opened.room_id,
+        observer.participant_token,
+        "22222222-2222-4222-8222-222222222222",
+        0,
+      ])
+    )[0].activity.attacks,
+    [],
+  );
+  assert.deepEqual(
+    (
+      await rpc(activityQuery, [
+        opened.room_id,
+        target.participant_token,
+        "22222222-2222-4222-8222-222222222222",
+        activity.attacks[0].id,
+      ])
+    )[0].activity.attacks,
+    [],
+  );
+  // There is no RPC argument for a caller-supplied sender or label.
+  await assert.rejects(
+    rpc(
+      "select public.send_room_attack_secure(p_room_id => $1, p_participant_token => $2, p_session_id => $3, p_target => $4, p_type => $5, p_from => 'Hase')",
+      attack,
+    ),
+    /does not exist/,
+  );
+});
+
+test("derives room/practice presence from the capability and stops access at removal, end and expiry", async () => {
+  const opened = await battleRoom("192.0.2.113");
+  const [first, second, third] = opened.members;
+  await rpc(
+    "select public.touch_participant_activity_secure($1,$2,'practice')",
+    [opened.room_id, first.participant_token],
+  );
+  const participants = await rpc(
+    "select * from public.get_room_participants_secure($1,$2)",
+    [opened.room_id, opened.access_token],
+  );
+  assert.equal(
+    participants.find((p) => p.student_key === first.assigned_student_key)
+      .activity,
+    "practice",
+  );
+  assert.equal(
+    participants.find((p) => p.student_key === second.assigned_student_key)
+      .activity,
+    "room",
+  );
+  await assert.rejects(
+    rpc("select public.touch_participant_activity_secure($1,$2,'teacher')", [
+      opened.room_id,
+      first.participant_token,
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+  await rpc("select public.remove_room_participant_secure($1,$2,$3)", [
+    opened.room_id,
+    opened.access_token,
+    first.assigned_student_key,
+  ]);
+  await assert.rejects(
+    rpc(activityQuery, [
+      opened.room_id,
+      first.participant_token,
+      "22222222-2222-4222-8222-222222222222",
+      0,
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+  await backdateRoom(opened.room_id, 121);
+  await assert.rejects(
+    rpc(activityQuery, [
+      opened.room_id,
+      second.participant_token,
+      "22222222-2222-4222-8222-222222222222",
+      0,
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+  await assert.rejects(
+    rpc(attackQuery, [
+      opened.room_id,
+      second.participant_token,
+      "22222222-2222-4222-8222-222222222222",
+      third.assigned_student_key,
+      "ink",
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+  await assert.rejects(
+    rpc("select public.touch_participant_activity_secure($1,$2,'room')", [
+      opened.room_id,
+      second.participant_token,
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+  await backdateRoom(opened.room_id, 1);
+  await rpc("select public.end_room_secure($1,$2)", [
+    opened.room_id,
+    opened.access_token,
+  ]);
+  await assert.rejects(
+    rpc(activityQuery, [
+      opened.room_id,
+      second.participant_token,
+      "22222222-2222-4222-8222-222222222222",
+      0,
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+  await assert.rejects(
+    rpc(attackQuery, [
+      opened.room_id,
+      second.participant_token,
+      "22222222-2222-4222-8222-222222222222",
+      third.assigned_student_key,
+      "ink",
+    ]),
+    /Ungueltige Raumteilnahme/,
+  );
+});
 const sessionId = "11111111-1111-4111-8111-111111111111";
 
 test("rejects direct table access and private helpers after all migrations", async () => {

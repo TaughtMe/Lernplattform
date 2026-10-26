@@ -75,6 +75,7 @@ export type OpenedLiveRoom = {
 };
 
 export type LiveRoomParticipant = {
+  activity?: "room" | "practice";
   studentName: string;
   animalToken: AnimalToken | null;
   animalNumber: number;
@@ -151,6 +152,7 @@ export async function getLiveRoomParticipants(
   );
   if (error) throw new Error(error.message);
   return parseRpcRows(participantRowSchema, data).map((row) => ({
+    ...(row.activity ? { activity: row.activity } : {}),
     studentName: row.student_key,
     animalToken: row.animal_token ?? null,
     animalNumber: row.animal_number ?? 0,
@@ -366,12 +368,14 @@ export async function touchLiveParticipant(
   config: LiveRoomConfig,
   roomId: string,
   participantToken: string,
+  activity: "room" | "practice" = "room",
 ) {
   const { error } = await getLiveRoomClient(config).rpc(
-    "touch_participant_secure",
+    "touch_participant_activity_secure",
     {
       p_room_id: roomId,
       p_participant_token: participantToken,
+      p_activity: activity,
     },
   );
   if (error) throw new Error(error.message);

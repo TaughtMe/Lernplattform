@@ -206,7 +206,7 @@ describe("personal backup directory storage", () => {
 
     await expect(
       restorePersonalBackupFromFile(
-        file({ ...backup, schemaVersion: 2 }),
+        file({ ...backup, schemaVersion: PERSONAL_BACKUP_SCHEMA_VERSION + 1 }),
         target,
       ),
     ).rejects.toMatchObject({

@@ -529,10 +529,10 @@ describe("Tagesportion im Speicher", () => {
     );
   });
 
-  it("legt die Tabelle mit Version 7 an und nimmt sie nicht in die Sicherung auf", async () => {
+  it("erhält die Tabelle mit Version 8 und nimmt sie nicht in die Sicherung auf", async () => {
     const database = createDatabase();
     await database.open();
-    expect(database.verno).toBe(7);
+    expect(database.verno).toBe(8);
     expect(database.tables.map((table) => table.name)).toContain("dailyPlans");
     await createDailyPlanRepository(database).today(NOW);
     const backup = await exportPersonalLearningBackup(database, NOW);

@@ -1,11 +1,14 @@
-import type * as z from "zod";
 import type {
   PersonalLearningBackup,
-  PersonalLearningBackupInput,
+  PersonalBackupRecoveryRecord,
 } from "../domain/personal-backup";
 import {
   createPersonalLearningBackup,
   personalBackupTableSchemas,
+  personalLearningBackupSchema,
+  personalBackupRecoveryKey,
+  personalBackupRecoveryRecordSchema,
+  readPersonalBackupRows,
   readPersonalLearningBackup,
   readPersonalLearningBackupText,
   serializePersonalLearningBackup,
@@ -16,7 +19,7 @@ import type {
   LearningBoxDeck,
   LearningBoxSourceLink,
 } from "../domain/learning-box";
-import { readOneTolerant, readTolerant } from "../domain/tolerant-read";
+import { readOneTolerant } from "../domain/tolerant-read";
 import type { QuarantinedRecord } from "../domain/tolerant-read";
 import { WORD_BOX_LIMITS, wordKey, type WordBox } from "../domain/word-box";
 import { PersonalLearningDatabase } from "./personal-learning-events";
@@ -44,6 +47,8 @@ export type PersonalBackupRestoreResult = {
   conflicts: PersonalBackupRestoreConflict[];
   /** Einzelne Datensätze der Sicherung, die nicht lesbar waren und nicht eingespielt wurden. */
   skipped: QuarantinedRecord[];
+  /** Originale bleiben separat gespeichert und werden erneut mitgesichert. */
+  recoveryRetained: number;
 };
 
 function sourceLinkKey(link: LearningBoxSourceLink) {
@@ -118,60 +123,53 @@ function stored<T>(table: PersonalBackupTableName, value: T) {
   return readOneTolerant(personalBackupTableSchemas[table], value) ?? value;
 }
 
-/** Tabelle für die Sicherung lesen; unlesbare Datensätze bleiben in der Datenbank. */
-function readTable<T extends PersonalBackupTableName>(
-  table: T,
-  rows: readonly unknown[],
-) {
-  return readTolerant(personalBackupTableSchemas[table], rows, table)
-    .items as z.output<(typeof personalBackupTableSchemas)[T]>[];
-}
-
 function withoutFolder(deck: LearningBoxDeck) {
   const next = { ...deck };
   delete next.folderId;
   return next;
 }
 
+function recoveryPayload(
+  stored: PersonalBackupRecoveryRecord & { id: string },
+) {
+  const record: Record<string, unknown> = { ...stored };
+  delete record["id"];
+  return personalBackupRecoveryRecordSchema.parse(record);
+}
+
 export async function exportPersonalLearningBackup(
   database = new PersonalLearningDatabase(),
   exportedAt = new Date().toISOString(),
 ): Promise<PersonalLearningBackup> {
-  // Unlesbare Datensätze (z. B. aus einer neueren App-Version) bleiben in der
-  // Datenbank und blockieren die Sicherung der übrigen Daten nicht.
-  const input: PersonalLearningBackupInput = {
-    learningEvents: readTable(
-      "learningEvents",
-      await database.learningEvents.toArray(),
-    ),
-    learningBoxDecks: readTable(
-      "learningBoxDecks",
-      await database.learningBoxDecks.toArray(),
-    ),
-    learningBoxFolders: readTable(
-      "learningBoxFolders",
-      await database.learningBoxFolders.toArray(),
-    ),
-    learningBoxCards: readTable(
-      "learningBoxCards",
-      await database.learningBoxCards.toArray(),
-    ),
-    learningWordProgress: readTable(
-      "learningWordProgress",
-      await database.learningWordProgress.toArray(),
-    ),
-    typingProgress: readTable(
-      "typingProgress",
-      await database.typingProgress.toArray(),
-    ),
-    textboxSessions: readTable(
-      "textboxSessions",
-      await database.textboxSessions.toArray(),
-    ),
-    wordBoxes: readTable("wordBoxes", await database.wordBoxes.toArray()),
-    wordRounds: readTable("wordRounds", await database.wordRounds.toArray()),
-  };
-  return createPersonalLearningBackup(input, exportedAt);
+  const tables = Object.keys(
+    personalBackupTableSchemas,
+  ) as PersonalBackupTableName[];
+  // Ein gemeinsamer Lesestand verhindert Sicherungen aus halb geschriebenen
+  // Ordner-/Stapeländerungen. Originale werden nur in der Sicherung ergänzt.
+  return database.transaction(
+    "r",
+    [...tables.map((table) => database.table(table)), database.backupRecovery],
+    async () => {
+      const data: Record<string, unknown[]> = {};
+      const recovery: PersonalBackupRecoveryRecord[] = [];
+      for (const table of tables) {
+        const read = readPersonalBackupRows(
+          table,
+          await database.table(table).toArray(),
+        );
+        data[table] = read.items;
+        recovery.push(...read.recovery);
+      }
+      for (const stored of await database.backupRecovery.toArray()) {
+        recovery.push(recoveryPayload(stored));
+      }
+      return createPersonalLearningBackup(
+        personalLearningBackupSchema.shape.data.parse(data),
+        exportedAt,
+        recovery,
+      );
+    },
+  );
 }
 
 export async function serializePersonalLearningBackupFromDatabase(
@@ -204,6 +202,7 @@ export async function restorePersonalLearningBackupRead(
     unchanged: 0,
     conflicts: [],
     skipped: [...skipped],
+    recoveryRetained: backup.recovery.length,
   };
 
   await database.transaction(
@@ -218,8 +217,38 @@ export async function restorePersonalLearningBackupRead(
       database.textboxSessions,
       database.wordBoxes,
       database.wordRounds,
+      database.backupRecovery,
     ],
     async () => {
+      const existingRecovery = new Set(
+        (await database.backupRecovery.toArray()).map((record) =>
+          personalBackupRecoveryKey(recoveryPayload(record)),
+        ),
+      );
+      // Ein neuerer eingehender Lernstand darf unbekannte lokale Zusatzdaten
+      // nicht beim folgenden put() überschreiben. Auch diese Originale sichern.
+      const recovery = [...backup.recovery];
+      for (const table of Object.keys(
+        personalBackupTableSchemas,
+      ) as PersonalBackupTableName[]) {
+        recovery.push(
+          ...readPersonalBackupRows(
+            table,
+            await database.table(table).toArray(),
+          ).recovery,
+        );
+      }
+      for (const record of recovery) {
+        const key = personalBackupRecoveryKey(record);
+        if (!existingRecovery.has(key)) {
+          await database.backupRecovery.add({
+            ...record,
+            id: crypto.randomUUID(),
+          });
+          existingRecovery.add(key);
+        }
+      }
+      result.recoveryRetained = existingRecovery.size;
       for (const event of backup.data.learningEvents) {
         const current = await database.learningEvents.get(event.id);
         if (!current) {

@@ -90,6 +90,31 @@ describe("full rounds", () => {
 });
 
 describe("answers", () => {
+  it("records space-separated stage 5 answers as clean first attempts", () => {
+    const result = submitWordAnswer(toRecall(start(5)), "Stern Sonne Mond");
+    expect(result.correct).toBe(true);
+    expect(result.attempts).toHaveLength(3);
+    expect(
+      result.attempts.every(
+        (attempt) => attempt.correct && attempt.firstAttempt,
+      ),
+    ).toBe(true);
+    expect(wordRoundPercent(result.state.results)).toBe(100);
+  });
+
+  it("does not consume a first attempt for unclear phrase boundaries", () => {
+    const state = toRecall(start(5, ["New York", "Hund"], 2));
+    expect(() => submitWordAnswer(state, "New York Hund")).toThrow(
+      /noch nicht bewertet/,
+    );
+    expect(state.blockAttempts).toBe(0);
+    expect(state.firstKinds).toEqual({});
+    expect(state.failedWords).toEqual([]);
+    const result = submitWordAnswer(state, "New York, Hund");
+    expect(result.attempts.every((attempt) => attempt.firstAttempt)).toBe(true);
+    expect(wordRoundPercent(result.state.results)).toBe(100);
+  });
+
   it("records a wrong first answer and keeps the word out of first try", () => {
     let state = start(1);
     const wrong = submitWordAnswer(state, "Sone");

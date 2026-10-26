@@ -71,7 +71,7 @@ type LiveRunningDictationGameProps = {
   /** Anzeigename und Tier der Mitspieler, nach Raumschlüssel. */
   peers?: Record<string, { label: string; animal: string | null }>;
   incomingAttack?: { id: number; type: AttackType; from: string } | null;
-  onSendAttack?: (to: string, type: AttackType) => boolean;
+  onSendAttack?: (to: string, type: AttackType) => boolean | Promise<boolean>;
   /** Angezeigter Tiername (z. B. „Fuchs 2“); studentName ist ein anonymer Schlüssel. */
   displayName?: string | null;
   animal?: string | null;
@@ -906,11 +906,11 @@ export function LiveRunningDictationGame({
                   animal: peers[name]?.animal ?? null,
                 })),
                 message: battleMessage,
-                onPickTarget: (name: string) => {
+                onPickTarget: async (name: string) => {
                   const label =
                     peers[name]?.label ??
                     (name.startsWith("participant-") ? "Mitspieler" : name);
-                  if (picker && onSendAttack?.(name, picker)) {
+                  if (picker && (await onSendAttack?.(name, picker))) {
                     setCharge(0);
                     setPicker(null);
                     setBattleMessage(`Angriff auf ${label} gestartet.`);

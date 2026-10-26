@@ -5,6 +5,7 @@ import {
   typingStatsSchema,
 } from "./progress-schema";
 import type { DailyPlan } from "../domain/daily-plan";
+import type { PersonalBackupRecoveryRecord } from "../domain/personal-backup";
 import type { TextboxSession } from "../domain/textbox-session";
 import { getLearningWordCollection } from "../domain/german-learning-content";
 import {
@@ -84,6 +85,8 @@ export class PersonalLearningDatabase extends Dexie {
   wordRounds!: Table<WordRoundRecord, string>;
   /** Tagesportion je lokalem Tag; kurzlebig und nicht Teil der Sicherung. */
   dailyPlans!: Table<DailyPlan, string>;
+  /** Unverstandene Sicherungs-Originale; niemals im Lernbetrieb auswerten. */
+  backupRecovery!: Table<PersonalBackupRecoveryRecord & { id: string }, string>;
 
   constructor(name: string = LOCAL_DATA_AREAS.personal) {
     super(name);
@@ -156,6 +159,7 @@ export class PersonalLearningDatabase extends Dexie {
       wordRounds: "id, boxId, stage, completedAt",
       dailyPlans: "day",
     });
+    this.version(8).stores({ backupRecovery: "id, table, recordId" });
   }
 }
 

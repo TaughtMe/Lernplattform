@@ -13,6 +13,7 @@ import {
   personalBackupTableSchemas,
   personalLearningBackupSchema,
   PERSONAL_BACKUP_KIND,
+  PERSONAL_BACKUP_SCHEMA_VERSION,
   parsePersonalLearningBackup,
 } from "../domain/personal-backup";
 import type { WordRoundRecord } from "../domain/word-store-progress";
@@ -56,6 +57,8 @@ afterEach(async () => {
  * Begründung ausnehmen (Regel S-3).
  */
 const NOT_IN_BACKUP: Readonly<Record<string, string>> = {
+  backupRecovery:
+    "Originale stehen getrennt vom nutzbaren Lernstand im recovery-Bereich der v2-Sicherung; Export/Restore/Reexport werden separat geprüft.",
   dailyPlans:
     "Tagesportion je lokalem Tag: kurzlebig und wird jederzeit aus dem Lernstand neu berechnet.",
 };
@@ -334,7 +337,7 @@ describe("Sicherung aus einer neueren App-Version", () => {
 
   it("lehnt eine höhere schemaVersion mit klarer Meldung ab", async () => {
     const backup = (await newerBackup()) as unknown as Record<string, unknown>;
-    backup["schemaVersion"] = 2;
+    backup["schemaVersion"] = PERSONAL_BACKUP_SCHEMA_VERSION + 1;
     backup["kind"] = PERSONAL_BACKUP_KIND;
     const target = createDatabase();
     await expect(restorePersonalLearningBackup(backup, target)).rejects.toThrow(

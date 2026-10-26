@@ -4,6 +4,7 @@ import {
   buildLearningWordPattern,
   chunkLearningWords,
   evaluateLearningWordBlock,
+  LearningWordInputFormatError,
   parseLearningWords,
   selectLearningWordRound,
   updateLearningWordStage,
@@ -104,6 +105,75 @@ describe("learning-word domain", () => {
 
 describe("evaluateLearningWordBlock", () => {
   const block = ["Schule", "Freude", "Sonne"];
+
+  it.each([
+    "Sonne Schule Freude",
+    "Sonne\tSchule\u00a0Freude",
+    "Sonne, Schule; Freude",
+    "Sonne\r\nSchule\nFreude",
+  ])("accepts unambiguous single-word separators: %j", (input) => {
+    const result = evaluateLearningWordBlock(block, input);
+    expect(result.allCorrect).toBe(true);
+    expect(result.extra).toEqual([]);
+  });
+
+  it("keeps case and spelling errors with whitespace-separated answers", () => {
+    const result = evaluateLearningWordBlock(block, "schule Freude Sone");
+    expect(result.words.map((entry) => entry.result.kind)).toEqual([
+      "gross-klein",
+      "richtig",
+      "falsch",
+    ]);
+    expect(result.allCorrect).toBe(false);
+  });
+
+  it("does not remove a correct answer after a differently capitalised input", () => {
+    const result = evaluateLearningWordBlock(["Schule"], "schule Schule");
+    expect(result.allCorrect).toBe(true);
+    expect(result.extra).toEqual(["schule"]);
+  });
+
+  it("keeps duplicates from filling a missing answer", () => {
+    const result = evaluateLearningWordBlock(block, "Schule Schule Freude");
+    expect(result.words.map((entry) => entry.result.kind)).toEqual([
+      "richtig",
+      "richtig",
+      "fehlt",
+    ]);
+  });
+
+  it("preserves multiword phrases and their real spelling errors", () => {
+    expect(evaluateLearningWordBlock(["New York"], "New York").allCorrect).toBe(
+      true,
+    );
+    expect(
+      evaluateLearningWordBlock(["New York", "Hund"], "Hund; New York")
+        .allCorrect,
+    ).toBe(true);
+    expect(
+      evaluateLearningWordBlock(["New York", "Hund"], "New Yrok\nHund")
+        .allCorrect,
+    ).toBe(false);
+    expect(
+      evaluateLearningWordBlock(["New York", "Hund"], "New, York, Hund")
+        .allCorrect,
+    ).toBe(false);
+  });
+
+  it("requests boundaries before grading an ambiguous phrase block", () => {
+    expect(() =>
+      evaluateLearningWordBlock(["New York", "Hund"], "New York Hund"),
+    ).toThrow(LearningWordInputFormatError);
+  });
+
+  it("normalises Unicode and keeps extra words visible", () => {
+    const result = evaluateLearningWordBlock(
+      ["Bär", "Schule"],
+      "Ba\u0308r Schule Haus",
+    );
+    expect(result.allCorrect).toBe(true);
+    expect(result.extra).toEqual(["Haus"]);
+  });
 
   it("marks every word right regardless of order", () => {
     const result = evaluateLearningWordBlock(block, "Sonne\nSchule\nFreude");

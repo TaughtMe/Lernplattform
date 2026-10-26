@@ -41,6 +41,7 @@ export const studentRowSchema = progressRowSchema.extend({
   app_version: z.string().max(32).nullable(),
 });
 export const participantRowSchema = z.object({
+  activity: z.enum(["room", "practice"]).optional(),
   student_key: name,
   animal_token: animalToken.nullish(),
   animal_number: z.number().int().min(0).max(100_000).nullish(),

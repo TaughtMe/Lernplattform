@@ -10,15 +10,31 @@ export const ROOM_ACTIVITY_TIMEOUT_MS = 45 * 60 * 1000;
 export type ActiveRoom = {
   code: string;
   studentName: string;
+  roomId?: string;
+  participantToken?: string;
   /** Zeitpunkt, zu dem der Schüler zuletzt auf der Raumseite war. */
   lastRoomAt: number;
 };
 
 export type RoomActivity = "room" | "practice";
 
-export function rememberActiveRoom(code: string, studentName: string) {
+export function rememberActiveRoom(
+  code: string,
+  studentName: string,
+  credentials?: { roomId: string; participantToken: string },
+) {
   try {
-    const value: ActiveRoom = { code, studentName, lastRoomAt: Date.now() };
+    const value: ActiveRoom = {
+      code,
+      studentName,
+      ...(credentials
+        ? {
+            roomId: credentials.roomId,
+            participantToken: credentials.participantToken,
+          }
+        : {}),
+      lastRoomAt: Date.now(),
+    };
     sessionStorage.setItem(KEY, JSON.stringify(value));
   } catch {
     // Ohne Speicher bleibt nur die Anwesenheit auf der Raumseite.
@@ -35,6 +51,9 @@ export function readActiveRoom(now = Date.now()): ActiveRoom | null {
       typeof value.code !== "string" ||
       !/^\d{4}$/.test(value.code) ||
       typeof value.studentName !== "string" ||
+      (value.roomId !== undefined && typeof value.roomId !== "string") ||
+      (value.participantToken !== undefined &&
+        typeof value.participantToken !== "string") ||
       typeof value.lastRoomAt !== "number"
     )
       return null;
