@@ -225,7 +225,7 @@ it("keeps a failed save retryable and does not count it twice", async () => {
   await screen.findByRole("alert");
   expect(answer).toHaveValue("54");
   await user.click(screen.getByRole("button", { name: "Prüfen" }));
-  await screen.findByText("Noch nicht – probiere es erneut.");
+  await screen.findByText("Noch nicht.");
   expect(put.mock.calls[0]![0]).toEqual(put.mock.calls[1]![0]);
   await user.clear(answer);
   await user.type(answer, "56{Enter}");
@@ -260,7 +260,7 @@ it("marks solutions as help and allows a short round to end", async () => {
   await user.clear(source);
   await user.type(source, "2 + 3");
   await user.click(screen.getByRole("button", { name: "Runde starten" }));
-  await user.click(screen.getByRole("button", { name: "Lösung ansehen" }));
+  await user.click(screen.getByRole("button", { name: "Lösungsweg zeigen" }));
   await user.type(
     screen.getByRole("textbox", { name: "Dein Ergebnis" }),
     "5{Enter}",
@@ -270,6 +270,79 @@ it("marks solutions as help and allows a short round to end", async () => {
   expect(
     screen.getByRole("link", { name: "Für heute fertig" }),
   ).toHaveAttribute("href", "/");
+});
+
+describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
+  async function start(source: string) {
+    const user = userEvent.setup();
+    render(<MentalMathApp />);
+    await user.click(screen.getByRole("button", { name: "Eigene Aufgaben" }));
+    const input = screen.getByRole("textbox", {
+      name: "Eine Aufgabe pro Zeile",
+    });
+    await user.clear(input);
+    await user.type(input, source);
+    await user.click(screen.getByRole("button", { name: "Runde starten" }));
+    return {
+      user,
+      answer: screen.getByRole("textbox", { name: "Dein Ergebnis" }),
+    };
+  }
+
+  it("zeigt nach dem ersten Fehlversuch einen Hinweis, nach dem zweiten den Lösungsweg", async () => {
+    const { user, answer } = await start("47 + 8");
+    // Vor dem ersten Versuch weder Hinweis noch Lösung (Regel M-1).
+    expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Die Lösung ist/)).not.toBeInTheDocument();
+
+    await user.type(answer, "45{Enter}");
+    expect(await screen.findByText("Noch nicht.")).toBeVisible();
+    expect(
+      screen.getByText("Zerlege am Zehner: 47 + 8 = 47 + 3 + 5."),
+    ).toBeVisible();
+    expect(screen.queryByText(/Die Lösung ist/)).not.toBeInTheDocument();
+    // Keine Fehlerdiagnose für das Kind.
+    expect(screen.queryByText(/vermutlich|Zehnerübergang/i)).toBeNull();
+
+    await user.clear(answer);
+    await user.type(answer, "65{Enter}");
+    expect(await screen.findByText("Die Lösung ist 55.")).toBeVisible();
+    expect(
+      screen.getByText("Von der 8 bleiben 5 übrig: 50 + 5 = 55."),
+    ).toBeVisible();
+    expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
+  });
+
+  it("wertet den ersten Versuch: die spätere richtige Antwort bleibt Selbstkorrektur mit Hilfe", async () => {
+    const { user, answer } = await start("7 * 8");
+    await user.type(answer, "54{Enter}");
+    await screen.findByText("Noch nicht.");
+    await user.clear(answer);
+    await user.type(answer, "55{Enter}");
+    await screen.findByText("Die Lösung ist 56.");
+    await user.clear(answer);
+    await user.type(answer, "56{Enter}");
+    await screen.findByText("Gut gerechnet");
+    const events = put.mock.calls.map((call) => call[0]);
+    expect(events.map((event) => event.assessment.knowledge)).toEqual([
+      "incorrect",
+      "incorrect",
+      "correct",
+    ]);
+    expect(events[0].assessment.selfCorrected).toBe(false);
+    expect(events[0].help).toBe("none");
+    expect(events[2].assessment.selfCorrected).toBe(true);
+    expect(events[2].help).toBe("solution");
+  });
+
+  it("zeigt den Lösungsweg auch auf Knopfdruck und zählt ihn als Hilfe", async () => {
+    const { user } = await start("56 : 8");
+    await user.click(screen.getByRole("button", { name: "Lösungsweg zeigen" }));
+    expect(
+      screen.getByText("Umkehraufgabe: 56 : 8 = ?, weil ? · 8 = 56."),
+    ).toBeVisible();
+    expect(screen.getByText("Die Lösung ist 7.")).toBeVisible();
+  });
 });
 
 describe("Tagesportion mit ?heute=1", () => {

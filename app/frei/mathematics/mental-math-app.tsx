@@ -10,7 +10,6 @@ import {
 } from "react";
 import {
   MULTIPLICATION_TABLES,
-  displayMathNumber,
   generateMentalMathTasks,
   parseMentalMathTask,
   shuffleMathTasks,
@@ -18,6 +17,11 @@ import {
   type MentalMathOperation,
   type MentalMathTask,
 } from "../../../src/domain/mental-math";
+import {
+  classifyMentalMathError,
+  mentalMathHint,
+  mentalMathSolutionSteps,
+} from "../../../src/domain/mental-math-feedback";
 import { createDailyPlanRepository } from "../../../src/storage/daily-plan";
 import {
   createMathAttempt,
@@ -193,6 +197,10 @@ export function MentalMathApp({
   const corrected = useRef(false);
   const [helpCount, setHelpCount] = useState(0);
   const [help, setHelp] = useState(false);
+  // Hinweis nach dem ersten Fehlversuch an dieser Aufgabe (D-008); der zweite
+  // Fehlversuch zeigt den Lösungsweg. Gewertet wird weiter der erste Versuch.
+  const [hint, setHint] = useState("");
+  const wrongTries = useRef(0);
   const nextTimer = useRef(0);
   const interactionReady = useSyncExternalStore(
     () => () => undefined,
@@ -291,6 +299,8 @@ export function MentalMathApp({
     attempt.current = 0;
     corrected.current = false;
     pending.current = null;
+    wrongTries.current = 0;
+    setHint("");
     setHelp(false);
     setTasks(next);
     setIndex(0);
@@ -377,6 +387,13 @@ export function MentalMathApp({
     beginRound(buildMathReviewRound(due));
   }
 
+  /** Lösungsweg zeigen: zählt wie bisher als Hilfe, die Aufgabe bleibt zur Wiederholung. */
+  function showSolution() {
+    pending.current = null;
+    if (!help) setHelpCount((value) => value + 1);
+    setHelp(true);
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!current || !answer.trim() || feedback === "correct" || busy.current)
@@ -421,8 +438,14 @@ export function MentalMathApp({
       attempt.current += 1;
       if (!correct) {
         corrected.current = true;
+        wrongTries.current += 1;
         setMistakes((value) => value + 1);
         setFeedback("incorrect");
+        if (wrongTries.current === 1)
+          setHint(
+            mentalMathHint(current, classifyMentalMathError(current, answer)),
+          );
+        else if (!help) showSolution();
         inputRef.current?.select();
       } else {
         setFeedback("correct");
@@ -432,6 +455,8 @@ export function MentalMathApp({
           setAnswer("");
           setFeedback("");
           setHelp(false);
+          setHint("");
+          wrongTries.current = 0;
           corrected.current = false;
         }, 450);
       }
@@ -838,6 +863,7 @@ export function MentalMathApp({
   }
 
   if (!current) return null;
+  const solutionSteps = help ? mentalMathSolutionSteps(current) : [];
   return (
     <section className="ui-page ui-stack" aria-labelledby="math-task-title">
       <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
@@ -889,31 +915,41 @@ export function MentalMathApp({
               <Icon name="check" size={20} /> Richtig
             </>
           ) : null}
-          {feedback === "incorrect" ? "Noch nicht – probiere es erneut." : null}
+          {feedback === "incorrect" ? "Noch nicht." : null}
         </p>
         {notice ? (
           <p className="ui-notice ui-notice--bad" role="alert">
             {notice}
           </p>
         ) : null}
-        {help ? (
-          <Notice role="status">
-            Die Lösung ist {displayMathNumber(current.answer)}. Rechne die
-            nächste Aufgabe wieder ohne Hilfe.
-          </Notice>
-        ) : null}
+        <div className="ui-math__help" role="status" aria-live="polite">
+          {hint && !help ? (
+            <p className="ui-small">
+              <strong>Tipp:</strong> {hint}
+            </p>
+          ) : null}
+          {help ? (
+            <Notice>
+              <p>
+                <strong>So geht es:</strong>
+              </p>
+              <ol className="ui-math__steps">
+                {solutionSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+              <p>Rechne die nächste Aufgabe wieder ohne Hilfe.</p>
+            </Notice>
+          ) : null}
+        </div>
         <div className="ui-row ui-wrap">
           <Button
             variant="ghost"
             size="sm"
             disabled={saving || feedback === "correct"}
-            onClick={() => {
-              pending.current = null;
-              if (!help) setHelpCount((value) => value + 1);
-              setHelp(true);
-            }}
+            onClick={showSolution}
           >
-            Lösung ansehen
+            Lösungsweg zeigen
           </Button>
           <Button
             variant="link"
