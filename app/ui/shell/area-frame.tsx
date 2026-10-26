@@ -16,18 +16,13 @@ import { TeacherShell } from "./teacher-shell";
 function GuestTeacherBlock() {
   return (
     <main className="ui ui-page ui-guest-page">
-      <section
-        className="ui-card ui-card--pop ui-card--pad ui-stack"
-        aria-labelledby="guest-teacher-title"
-      >
-        <h1 id="guest-teacher-title" className="ui-h-page">
-          Im Gastmodus nicht verfügbar
-        </h1>
+      <div className="ui-card ui-card--pop ui-card--pad ui-stack">
+        <h1 className="ui-h-page">Im Gastmodus nicht verfügbar</h1>
         <p className="ui-small">
           Der Lehrerbereich ist auf einem Gastgerät gesperrt.
         </p>
         <ButtonLink href="/lernen">Zum Lernraum</ButtonLink>
-      </section>
+      </div>
     </main>
   );
 }

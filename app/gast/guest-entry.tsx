@@ -82,12 +82,9 @@ export function GuestEntryView({
 
   return (
     <main className="ui ui-page ui-guest-page">
-      <section
-        className="ui-card ui-card--pop ui-card--pad ui-stack"
-        aria-labelledby="guest-title"
-      >
+      <div className="ui-card ui-card--pop ui-card--pad ui-stack">
         <p className="ui-eyebrow">Geteiltes Gerät</p>
-        <h1 id="guest-title" className="ui-h-page" tabIndex={-1} ref={heading}>
+        <h1 className="ui-h-page" tabIndex={-1} ref={heading}>
           Gastmodus
         </h1>
         {view.kind === "pruefen" ? (
@@ -144,7 +141,7 @@ export function GuestEntryView({
             </div>
           </>
         ) : null}
-      </section>
+      </div>
     </main>
   );
 }
