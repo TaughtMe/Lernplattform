@@ -2867,6 +2867,14 @@ body:has(.ui-dictation.is-active-round) .ui-footer {
 .ui-math__feedback.is-incorrect {
   color: var(--bad);
 }
+.ui-math__help {
+  width: min(100%, 420px);
+  text-align: left;
+}
+.ui-math__steps {
+  margin: 6px 0;
+  padding-left: 1.4em;
+}
 @media (min-width: 900px) {
   .ui-math__layout {
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);

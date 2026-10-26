@@ -89,9 +89,7 @@ for (const withError of [true, false])
     await expect(practice).toBeFocused();
     await practice.fill("999");
     await practice.press("Enter");
-    await expect(
-      page.getByText("Noch nicht – probiere es erneut."),
-    ).toBeVisible();
+    await expect(page.getByText("Noch nicht.", { exact: true })).toBeVisible();
     expect(writes).toHaveLength(count);
     await page.goto("/frei/mathematics");
     await expect(

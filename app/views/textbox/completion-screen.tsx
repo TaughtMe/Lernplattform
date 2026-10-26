@@ -24,6 +24,7 @@ export function CompletionScreen({
   /** Link zum Wortspeicher mit den Fehlerwörtern; leer, wenn es keine gibt. */
   errorWordsHref?: string | undefined;
 }) {
+  const final = rounds.find((round) => round.round === 4)?.score;
   const record =
     previousBest === undefined
       ? "Das ist dein erster Bestwert für diesen Text."
@@ -43,6 +44,11 @@ export function CompletionScreen({
       <div className={styles.final}>
         <p className={styles.scoreDetail}>Ergebnis aus Durchgang 4</p>
         <p className={styles.percent}>{finalPercent} %</p>
+        {final ? (
+          <p className={styles.scoreDetail}>
+            {final.correct} von {final.total} Wörtern auf Anhieb richtig
+          </p>
+        ) : null}
         {record ? <p role="status">{record}</p> : null}
       </div>
       <ul className={styles.rounds} aria-label="Die vier Durchgänge">
@@ -50,6 +56,9 @@ export function CompletionScreen({
           <li key={round.round} className={styles.roundCard}>
             <span>Durchgang {round.round}</span>
             <span className={styles.roundValue}>{round.score.percent} %</span>
+            {round.retries?.length ? (
+              <span>danach {round.retries.length}× geübt, zählt nicht</span>
+            ) : null}
             <ProgressBar
               value={round.score.percent}
               max={100}
