@@ -7,7 +7,11 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import type { LearningWordStage } from "../../../src/domain/learning-word";
+import {
+  LearningWordInputFormatError,
+  parseLearningWordAnswer,
+  type LearningWordStage,
+} from "../../../src/domain/learning-word";
 import type { WordRoundFeedback } from "../../../src/domain/word-round";
 import { Icon } from "../../ui/icons";
 import { Button, IconButton, ProgressBar } from "../../ui/primitives";
@@ -57,6 +61,7 @@ export function RoundScreen({
   onRetry: () => void;
 }) {
   const [answer, setAnswer] = useState("");
+  const [inputNotice, setInputNotice] = useState<string>();
   const memorizeAction = useRef<HTMLButtonElement>(null);
   const word = block[0] ?? "";
   const isBlock = stage === 5;
@@ -68,6 +73,16 @@ export function RoundScreen({
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!answer.trim()) return;
+    if (isBlock) {
+      try {
+        parseLearningWordAnswer(answer, block);
+      } catch (error) {
+        if (!(error instanceof LearningWordInputFormatError)) throw error;
+        setInputNotice(error.message);
+        return;
+      }
+    }
+    setInputNotice(undefined);
     onSubmit(answer);
   }
 
@@ -160,6 +175,11 @@ export function RoundScreen({
                 <WordInput value={answer} onChange={setAnswer} />
               </div>
             )}
+            {inputNotice ? (
+              <p className="ui-notice" role="alert">
+                {inputNotice}
+              </p>
+            ) : null}
             <div className="ui-grid2">
               {stage === 1 ? (
                 <span />

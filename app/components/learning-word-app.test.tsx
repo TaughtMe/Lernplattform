@@ -462,10 +462,7 @@ describe("Runden", () => {
       await screen.findByRole("button", { name: "Wörter verdecken" }),
     );
     const field = await screen.findByLabelText("Deine Lösung");
-    await user.type(
-      field,
-      "Ball{Shift>}{Enter}{/Shift}Haus{Shift>}{Enter}{/Shift}Baun{Enter}",
-    );
+    await user.type(field, "Ball Haus Baun{Enter}");
     // Ein Wort falsch: Rückmeldung je Wort, dann erneut versuchen.
     expect(await screen.findByText("Noch nicht sicher")).toBeInTheDocument();
     expect(screen.getByText(/Noch nicht: Baum/)).toBeInTheDocument();
@@ -477,7 +474,7 @@ describe("Runden", () => {
     );
     await user.type(
       await screen.findByLabelText("Deine Lösung"),
-      "Baum{Shift>}{Enter}{/Shift}Ball{Shift>}{Enter}{/Shift}Haus{Enter}",
+      "Baum Ball Haus{Enter}",
     );
     expect(
       await screen.findByRole("heading", { name: "Geschafft!" }, SLOW),
@@ -487,6 +484,55 @@ describe("Runden", () => {
       screen.getByText("2 von 3 Wörtern dieser Runde auf Anhieb richtig"),
     ).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
+  });
+
+  it("klärt mehrdeutige Begriffsgrenzen ohne Fehlversuch oder Speicheränderung", async () => {
+    const user = userEvent.setup();
+    const { progress, rounds } = await setup({
+      prepare: async ({ boxes }) => {
+        await boxes.create("Begriffe", ["New York", "Hund"]);
+      },
+    });
+    await openBox(user, "Begriffe");
+    const sheet = await screen.findByRole("dialog");
+    await user.click(within(sheet).getByRole("button", { name: /Stufe 5:/ }));
+    await user.selectOptions(
+      within(sheet).getByLabelText("Wörter in dieser Runde"),
+      "all",
+    );
+    await user.selectOptions(
+      within(sheet).getByLabelText("Wörter pro Merkblock"),
+      "2",
+    );
+    await user.click(within(sheet).getByRole("button", { name: "Starten" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Wörter verdecken" }),
+    );
+    const field = await screen.findByLabelText("Deine Lösung");
+    await user.type(field, "New York Hund{Enter}");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Deine Antwort wurde noch nicht bewertet",
+    );
+    expect(field).toHaveValue("New York Hund");
+    expect(screen.queryByText("Noch nicht sicher")).not.toBeInTheDocument();
+    expect(await progress.list()).toEqual([]);
+    expect(await rounds.list()).toEqual([]);
+
+    await user.clear(field);
+    await user.type(field, "New York, Hund{Enter}");
+    expect(
+      await screen.findByRole("heading", { name: "Geschafft!" }, SLOW),
+    ).toBeInTheDocument();
+    expect(screen.getByText("100 %")).toBeInTheDocument();
+    await waitFor(async () => {
+      const saved = await progress.list();
+      expect(saved).toHaveLength(2);
+      expect(
+        saved.every(
+          (word) => word.attempts === 1 && word.incorrectAttempts === 0,
+        ),
+      ).toBe(true);
+    });
   });
 
   it("zeigt nach einem Fehler den Buchstabenvergleich", async () => {

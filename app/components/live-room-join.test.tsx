@@ -11,7 +11,8 @@ import { createStudentClassesRepository } from "../../src/storage/student-classe
 import { LiveRoomJoin } from "./live-room-join";
 
 const mocks = vi.hoisted(() => ({
-  handlers: {} as Record<string, () => void>,
+  channel: vi.fn(),
+  getLiveRoomActivity: vi.fn(),
   ingestBundle: vi.fn(),
   getLiveRoomState: vi.fn(),
   joinLiveRoom: vi.fn(),
@@ -27,25 +28,13 @@ const joinedRoom = {
   animalNumber: 1,
 };
 
-vi.mock("../../src/integrations/laufdiktat/live-room-client", () => {
-  const channel = {
-    on(_type: string, filter: { event: string }, handler: () => void) {
-      mocks.handlers[filter.event] = handler;
-      return channel;
-    },
-    subscribe: () => channel,
-    track: async () => "ok",
-    send: async () => "ok",
-    state: "joined",
-  };
-  return {
-    getLiveRoomClient: () => ({
-      channel: () => channel,
-      removeChannel: async () => "ok",
-      realtime: { connect: () => undefined },
-    }),
-  };
-});
+vi.mock("../../src/integrations/laufdiktat/live-room-client", () => ({
+  getLiveRoomClient: () => ({ channel: mocks.channel }),
+}));
+vi.mock("../../src/integrations/laufdiktat/room-activity-api", () => ({
+  getLiveRoomActivity: mocks.getLiveRoomActivity,
+  sendLiveRoomAttack: vi.fn(),
+}));
 
 vi.mock("../../src/integrations/laufdiktat/room-api", async (original) => ({
   ...(await original<object>()),
@@ -79,6 +68,12 @@ const liveState = {
 describe("LiveRoomJoin", () => {
   beforeEach(() => {
     mocks.joinLiveRoom.mockReset().mockResolvedValue(joinedRoom);
+    mocks.channel.mockReset().mockImplementation(() => {
+      throw new Error("public channel forbidden");
+    });
+    mocks.getLiveRoomActivity
+      .mockReset()
+      .mockResolvedValue({ peers: [], attacks: [] });
   });
 
   it("sagt bei einem abgelaufenen oder falschen Code dasselbe", async () => {
@@ -120,7 +115,7 @@ describe("LiveRoomJoin", () => {
   });
 
   describe("vorzeitiges Ende der Runde", () => {
-    // Die 30-Sekunden-Prüfung auf ein Raumende wird von Hand ausgelöst, damit
+    // Die autorisierte Zwei-Sekunden-Prüfung auf ein Raumende wird von Hand ausgelöst, damit
     // die Abfragen der Testbibliothek ihre eigene Uhr behalten.
     const endWatchers: Array<() => void> = [];
     let intervalSpy: { mockRestore: () => void } | undefined;
@@ -132,7 +127,7 @@ describe("LiveRoomJoin", () => {
         handler: TimerHandler,
         timeout?: number,
       ) => {
-        if (timeout === 30_000) {
+        if (timeout === 2_000) {
           endWatchers.push(handler as () => void);
           return 0;
         }
@@ -170,9 +165,8 @@ describe("LiveRoomJoin", () => {
         />,
       );
       expect(await screen.findByText(/1 \/ 3/)).toBeVisible();
-      await waitFor(() =>
-        expect(mocks.handlers["session-ended"]).toBeDefined(),
-      );
+      await waitFor(() => expect(mocks.getLiveRoomActivity).toHaveBeenCalled());
+      expect(mocks.channel).not.toHaveBeenCalled();
       // Das Kind hat Wort 1 geschafft und ist bei Wort 2.
       window.sessionStorage.setItem(
         "lernraum:live-trace:session-early",
@@ -194,7 +188,9 @@ describe("LiveRoomJoin", () => {
           for (const watch of endWatchers) watch();
         });
       } else {
-        mocks.handlers["session-ended"]!();
+        await act(async () => {
+          document.dispatchEvent(new Event("visibilitychange"));
+        });
       }
     }
 

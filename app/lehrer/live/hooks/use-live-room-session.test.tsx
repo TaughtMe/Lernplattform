@@ -196,7 +196,7 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
     return harness;
   }
 
-  it("startet die Sitzung, sagt es dem Kanal und markiert die Durchführung", async () => {
+  it("startet die Sitzung über den autorisierten Server und markiert die Durchführung", async () => {
     const { result, storeContent } = await openRoom();
     await act(() => result.current.startSession());
     expect(storeContent).toHaveBeenLastCalledWith(true);
@@ -206,9 +206,7 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
       expect.any(String),
       roomConfig,
     );
-    expect(mocks.send).toHaveBeenCalledWith(
-      expect.objectContaining({ event: "session-start" }),
-    );
+    expect(mocks.send).not.toHaveBeenCalled();
     expect(result.current.flow).toMatchObject({ stage: "live", busy: false });
   });
 
@@ -228,9 +226,9 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
     expect(result.current.flow.stage).toBe("live");
   });
 
-  it("startet nicht, wenn der Kanal die Nachricht nicht annimmt", async () => {
+  it("startet nicht, wenn der Server die Änderung ablehnt", async () => {
     const { result, setError } = await openRoom();
-    mocks.send.mockResolvedValue("error");
+    mocks.updateLiveSession.mockRejectedValue(new Error("Token abgelehnt"));
     await act(() => result.current.startSession());
     expect(setError).toHaveBeenLastCalledWith(
       "Die Sitzung konnte nicht sicher gestartet werden.",
@@ -252,9 +250,7 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
     await act(() => result.current.startSession());
     await act(() => result.current.endRoom());
     expect(mocks.endLiveRoom).toHaveBeenCalledTimes(1);
-    expect(mocks.send).toHaveBeenLastCalledWith(
-      expect.objectContaining({ event: "session-ended" }),
-    );
+    expect(mocks.send).not.toHaveBeenCalled();
     expect(mocks.clearTeacherLiveRoom).toHaveBeenCalled();
     expect(result.current.room).toBeNull();
     expect(result.current.participants).toEqual([]);

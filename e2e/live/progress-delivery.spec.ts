@@ -35,7 +35,12 @@ test("completion survives failed delivery, retry and reload", async ({
         },
       ];
     else if (name === "get_my_progress_secure") body = saved ? [saved] : [];
-    else if (name === "upsert_progress_secure") {
+    else if (name === "get_room_activity_secure") {
+      expect(input["p_room_id"]).toBe(roomId);
+      expect(input["p_participant_token"]).toBe("a".repeat(48));
+      expect(input["p_session_id"]).toBe(sessionId);
+      body = { peers: [], attacks: [] };
+    } else if (name === "upsert_progress_secure") {
       writes++;
       if (writes === 1) {
         await route.fulfill({

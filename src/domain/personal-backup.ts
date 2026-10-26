@@ -9,10 +9,14 @@ import type { LearningWordProgress } from "./learning-word-progress";
 import { textboxSessionSchema, type TextboxSession } from "./textbox-session";
 import { wordBoxSchema, type WordBox } from "./word-box";
 import { wordRoundSchema, type WordRoundRecord } from "./word-store-progress";
-import { readTolerant, type QuarantinedRecord } from "./tolerant-read";
+import {
+  readOneTolerant,
+  readTolerant,
+  type QuarantinedRecord,
+} from "./tolerant-read";
 import type { TypingLessonProgress } from "../tastschreiben/typing-progress";
 
-export const PERSONAL_BACKUP_SCHEMA_VERSION = 1 as const;
+export const PERSONAL_BACKUP_SCHEMA_VERSION = 2 as const;
 export const PERSONAL_BACKUP_KIND = "lernraum-personal-backup" as const;
 
 const learningBoxSourceSchema = z
@@ -140,6 +144,38 @@ const personalDataSchema = z
   })
   .strict();
 
+/** Opaque Originale: werden aufbewahrt, niemals ungeprüft als Lernstand verwendet. */
+export const personalBackupRecoveryRecordSchema = z
+  .object({
+    table: z.enum([
+      "learningEvents",
+      "learningBoxDecks",
+      "learningBoxFolders",
+      "learningBoxCards",
+      "learningWordProgress",
+      "typingProgress",
+      "textboxSessions",
+      "wordBoxes",
+      "wordRounds",
+    ]),
+    recordId: z.string().min(1),
+    raw: z.json(),
+  })
+  .strict();
+
+export type PersonalBackupRecoveryRecord = z.infer<
+  typeof personalBackupRecoveryRecordSchema
+>;
+
+export class PersonalBackupRecoveryError extends Error {
+  constructor() {
+    super(
+      "Ein Originaleintrag lässt sich nicht verlustfrei sichern. Die Daten auf diesem Gerät bleiben erhalten.",
+    );
+    this.name = "PersonalBackupRecoveryError";
+  }
+}
+
 export const personalLearningBackupSchema = z
   .object({
     kind: z.literal(PERSONAL_BACKUP_KIND),
@@ -147,6 +183,10 @@ export const personalLearningBackupSchema = z
     exportedAt: z.iso.datetime({ offset: true }),
     dataArea: z.literal("personal"),
     data: personalDataSchema,
+    recovery: z
+      .array(personalBackupRecoveryRecordSchema)
+      .max(3_000_000)
+      .default([]),
   })
   .strict();
 
@@ -176,12 +216,14 @@ const legacyBackupSchema = z
 export function createPersonalLearningBackup(
   input: PersonalLearningBackupInput,
   exportedAt = new Date().toISOString(),
+  recovery: readonly PersonalBackupRecoveryRecord[] = [],
 ): PersonalLearningBackup {
   return personalLearningBackupSchema.parse({
     kind: PERSONAL_BACKUP_KIND,
     schemaVersion: PERSONAL_BACKUP_SCHEMA_VERSION,
     exportedAt,
     dataArea: "personal",
+    recovery: mergePersonalBackupRecovery(recovery),
     data: {
       learningEvents: [...input.learningEvents],
       learningBoxDecks: [...input.learningBoxDecks],
@@ -213,6 +255,65 @@ export const personalBackupTableSchemas = {
 } as const;
 
 type PersonalBackupTable = keyof typeof personalBackupTableSchemas;
+
+function canonicalJson(value: unknown) {
+  return JSON.stringify(value, (_key, item: unknown) =>
+    item && typeof item === "object" && !Array.isArray(item)
+      ? Object.fromEntries(
+          Object.entries(item).sort(([a], [b]) => a.localeCompare(b)),
+        )
+      : item,
+  );
+}
+
+export function personalBackupRecoveryKey(
+  record: PersonalBackupRecoveryRecord,
+) {
+  return canonicalJson(record);
+}
+
+/** Originale erhalten, wenn tolerantes Lesen etwas entfernt oder verändert. */
+export function readPersonalBackupRows<T extends PersonalBackupTable>(
+  table: T,
+  records: readonly unknown[],
+) {
+  const read = readTolerant(personalBackupTableSchemas[table], records, table);
+  const recovery: PersonalBackupRecoveryRecord[] = [];
+  records.forEach((record, index) => {
+    const parsed = readOneTolerant(personalBackupTableSchemas[table], record);
+    const key =
+      record && typeof record === "object"
+        ? (record as { id?: unknown }).id
+        : undefined;
+    const raw = z.json().safeParse(record);
+    if (!raw.success) {
+      throw new PersonalBackupRecoveryError();
+    }
+    if (
+      parsed !== undefined &&
+      canonicalJson(parsed) === canonicalJson(raw.data)
+    )
+      return;
+    recovery.push({
+      table,
+      recordId: typeof key === "string" && key ? key : `#${index}`,
+      raw: raw.data,
+    });
+  });
+  return { ...read, recovery };
+}
+
+export function mergePersonalBackupRecovery(
+  records: readonly PersonalBackupRecoveryRecord[],
+) {
+  return [
+    ...new Map(
+      records.map((record) => [personalBackupRecoveryKey(record), record]),
+    ).entries(),
+  ]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, record]) => record);
+}
 
 /** Tabellen, die auch ältere Sicherungen immer enthalten (alle anderen fehlen dort). */
 const REQUIRED_TABLES: readonly PersonalBackupTable[] = [
@@ -263,8 +364,18 @@ export function readPersonalLearningBackup(
     throw new PersonalBackupVersionError();
   }
 
-  const current = personalLearningBackupSchema.safeParse(value);
-  if (current.success) return { backup: current.data, skipped: [] };
+  // v1 hatte keinen Rettungsbereich. Neue Dateien tragen bewusst v2, damit alte
+  // Apps sie ablehnen statt Originaldaten beim erneuten Sichern zu verlieren.
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    (value as { kind?: unknown }).kind === PERSONAL_BACKUP_KIND &&
+    (value as { schemaVersion?: unknown }).schemaVersion === 1
+  ) {
+    if ("recovery" in value)
+      throw new Error("Ungültiger Rettungsbereich in einer v1-Sicherung.");
+    value = { ...value, schemaVersion: PERSONAL_BACKUP_SCHEMA_VERSION };
+  }
 
   const legacy = legacyBackupSchema.safeParse(value);
   if (legacy.success) {
@@ -284,17 +395,18 @@ export function readPersonalLearningBackup(
   }
 
   const envelope = backupEnvelopeSchema.safeParse(value);
-  if (!envelope.success) throw current.error;
+  if (!envelope.success) throw envelope.error;
   const { data } = envelope.data;
   const tables = Object.keys(
     personalBackupTableSchemas,
   ) as PersonalBackupTable[];
   // Unbekannte Tabellen bleiben abgelehnt (Datenbereichsgrenze).
   if (Object.keys(data).some((key) => !(key in personalBackupTableSchemas))) {
-    throw current.error;
+    throw new Error("Die Sicherung enthält unbekannte Tabellen.");
   }
 
   const skipped: QuarantinedRecord[] = [];
+  const recovery = [...envelope.data.recovery];
   const cleaned: Record<string, unknown[]> = {};
   for (const table of tables) {
     const records = data[table];
@@ -302,14 +414,12 @@ export function readPersonalLearningBackup(
       cleaned[table] = [];
       continue;
     }
-    if (!Array.isArray(records)) throw current.error;
-    const read = readTolerant(
-      personalBackupTableSchemas[table],
-      records,
-      table,
-    );
+    if (!Array.isArray(records))
+      throw new Error("Eine Tabelle der Sicherung ist keine Liste.");
+    const read = readPersonalBackupRows(table, records);
     cleaned[table] = read.items;
     skipped.push(...read.quarantined);
+    recovery.push(...read.recovery);
   }
 
   // Zahl der Datensätze und Gesamtform prüft das strenge Schema ein letztes Mal.
@@ -317,6 +427,7 @@ export function readPersonalLearningBackup(
     backup: personalLearningBackupSchema.parse({
       ...envelope.data,
       data: cleaned,
+      recovery: mergePersonalBackupRecovery(recovery),
     }),
     skipped,
   };

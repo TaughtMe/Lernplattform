@@ -1,6 +1,5 @@
 "use client";
 
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
   useCallback,
   useEffect,
@@ -10,12 +9,7 @@ import {
   useState,
   type Dispatch,
 } from "react";
-import { LIVE_APP_VERSION } from "../../../../src/app-version";
-import { createLiveRoomDebounce } from "../../../../src/integrations/laufdiktat/debounce";
-import {
-  getLiveRoomClient,
-  type LiveRoomConfig,
-} from "../../../../src/integrations/laufdiktat/live-room-client";
+import { type LiveRoomConfig } from "../../../../src/integrations/laufdiktat/live-room-client";
 import {
   roomTimeline,
   roomTimeState,
@@ -117,12 +111,8 @@ export function useLiveRoomSession({
   const roomRef = useRef<OpenedLiveRoom | null>(null);
   const closingRef = useRef(false);
   const [participants, setParticipants] = useState<LiveRoomParticipant[]>([]);
-  const [presenceNames, setPresenceNames] = useState<string[]>([]);
-  // Wer die Raumseite verlassen hat und allein weiterübt (Anwesenheit „practice“).
-  const [practicingNames, setPracticingNames] = useState<string[]>([]);
   const [students, setStudents] = useState<LiveRoomStudent[]>([]);
   const [connectionWarning, setConnectionWarning] = useState("");
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   // Wird bei jedem Rendern aktualisiert, damit `refresh` stabil bleibt.
   const serverEndedRef = useRef<() => void>(() => undefined);
@@ -188,8 +178,6 @@ export function useLiveRoomSession({
     setRoom(null);
     setParticipants([]);
     setStudents([]);
-    setPresenceNames([]);
-    setPracticingNames([]);
     dispatchFlow({ type: "roomEnded" });
   }
 
@@ -236,11 +224,6 @@ export function useLiveRoomSession({
     void (async () => {
       try {
         await endLiveRoom(liveRoomConfig, room);
-        await channelRef.current?.send({
-          type: "broadcast",
-          event: "session-ended",
-          payload: {},
-        });
       } catch {
         // Der Server schließt den Raum spätestens beim nächsten Aufräumen.
       }
@@ -297,81 +280,52 @@ export function useLiveRoomSession({
 
   useEffect(() => {
     if (!liveRoomConfig || !room || roomClosed) return;
-    const client = getLiveRoomClient(liveRoomConfig);
-    const channel = client.channel(`room-${room.code}`);
-    const refreshSoon = createLiveRoomDebounce(() => void refresh(), {
-      delayMs: 200,
-      maxWaitMs: 1_000,
-    });
-    channelRef.current = channel;
-    const syncPresence = () => {
-      const state = channel.presenceState<{ activity?: string }>();
-      setPresenceNames(Object.keys(state));
-      setPracticingNames(
-        Object.entries(state)
-          .filter(
-            ([, metas]) =>
-              metas.length > 0 &&
-              metas.every((meta) => meta.activity === "practice"),
-          )
-          .map(([name]) => name),
-      );
-    };
-    channel
-      .on("presence", { event: "sync" }, syncPresence)
-      .on("presence", { event: "join" }, syncPresence)
-      .on("presence", { event: "leave" }, syncPresence)
-      .on("broadcast", { event: "student-progress" }, refreshSoon.schedule)
-      .on("broadcast", { event: "student-finished" }, refreshSoon.schedule)
-      .on("broadcast", { event: "update-station-state" }, refreshSoon.schedule)
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          setConnectionWarning("");
-        }
-        if (
-          status === "CHANNEL_ERROR" ||
-          status === "TIMED_OUT" ||
-          status === "CLOSED"
-        ) {
+    let cancelled = false;
+    let loading = false;
+    const poll = async () => {
+      if (cancelled || loading || document.visibilityState !== "visible")
+        return;
+      loading = true;
+      try {
+        await refresh();
+        if (!cancelled) setConnectionWarning("");
+      } catch {
+        if (!cancelled)
           setConnectionWarning(
             "Die Verbindung zum Klassenraum wurde unterbrochen.",
           );
-        }
-      });
-    const first = window.setTimeout(() => void refresh(), 0);
+      } finally {
+        loading = false;
+      }
+    };
+    const first = window.setTimeout(() => void poll(), 0);
     const interval = window.setInterval(
-      () => void refresh(),
+      () => void poll(),
       stage === "live" ? 3_000 : 8_000,
     );
-    // Teacher device wakes from standby / tab returns to the foreground
-    // (e.g. an iPad at the projector): kick the connection immediately
-    // instead of waiting for the automatic reconnect backoff, and pull the
-    // authoritative state (results + roster) right away — broadcasts missed
-    // during standby never arrive after the fact.
-    const onVisibilityChange = () => {
-      if (document.visibilityState !== "visible") return;
-      if (channel.state !== "joined") client.realtime.connect();
-      refreshSoon.schedule();
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
+    const onVisible = () => void poll();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onVisible);
     return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      cancelled = true;
       window.clearTimeout(first);
       window.clearInterval(interval);
-      refreshSoon.cancel();
-      if (channelRef.current === channel) channelRef.current = null;
-      void client.removeChannel(channel);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onVisible);
     };
   }, [liveRoomConfig, refresh, room, roomClosed, stage]);
 
   const registeredNames = participants.map(({ studentName }) => studentName);
   const connectedNames = Array.from(
     new Set([
-      ...presenceNames,
       ...participants.filter(isOnline).map(({ studentName }) => studentName),
     ]),
   ).sort((a, b) => a.localeCompare(b, "de"));
   const allNames = Array.from(new Set([...registeredNames, ...connectedNames]));
+
+  const practicingNames = participants
+    .filter((p) => p.activity === "practice" && isOnline(p))
+    .map((p) => p.studentName);
 
   function statusFor(name: string): ParticipantStatus {
     return participantStatus(practicingNames, connectedNames, name);
@@ -424,14 +378,6 @@ export function useLiveRoomSession({
         crypto.randomUUID(),
         roomConfig,
       );
-      if (
-        (await channelRef.current?.send({
-          type: "broadcast",
-          event: "session-start",
-          payload: { appVersion: LIVE_APP_VERSION },
-        })) !== "ok"
-      )
-        throw new Error();
       setStudents([]);
       dispatchFlow({ type: "sessionStarted", hasRoom: true });
       // Die Runde läuft: Der Inhalt gilt als durchgeführt (Archiv).
@@ -453,11 +399,6 @@ export function useLiveRoomSession({
     try {
       if (students.length > 0) exportCsv();
       await endLiveRoom(liveRoomConfig, room);
-      await channelRef.current?.send({
-        type: "broadcast",
-        event: "session-ended",
-        payload: {},
-      });
       resetRoomState();
     } catch {
       setError("Der Raum konnte nicht beendet werden.");

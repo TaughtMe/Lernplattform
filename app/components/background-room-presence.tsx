@@ -2,14 +2,14 @@
 
 import { useEffect } from "react";
 import {
-  getLiveRoomClient,
-  type LiveRoomConfig,
-} from "../../src/integrations/laufdiktat/live-room-client";
+  getLiveRoomState,
+  touchLiveParticipant,
+} from "../../src/integrations/laufdiktat/room-api";
+import { type LiveRoomConfig } from "../../src/integrations/laufdiktat/live-room-client";
 import {
   forgetActiveRoom,
   readActiveRoom,
   ROOM_ACTIVITY_TIMEOUT_MS,
-  type RoomActivity,
 } from "./room-activity";
 
 /**
@@ -27,28 +27,39 @@ export function BackgroundRoomPresence({
   useEffect(() => {
     if (!liveRoomConfig || !enabled) return;
     const room = readActiveRoom();
-    if (!room) return;
-    const client = getLiveRoomClient(liveRoomConfig);
-    const channel = client.channel(`room-${room.code}`, {
-      config: { presence: { key: room.studentName } },
-    });
+    if (!room?.roomId || !room.participantToken) return;
+    const roomId = room.roomId;
+    const participantToken = room.participantToken;
     let stopped = false;
-    const stop = () => {
-      if (stopped) return;
-      stopped = true;
-      window.clearTimeout(timer);
-      void client.removeChannel(channel);
+    let loading = false;
+    const beat = async () => {
+      if (stopped || loading || document.visibilityState !== "visible") return;
+      loading = true;
+      try {
+        const state = await getLiveRoomState(liveRoomConfig, roomId, {
+          participantToken,
+        });
+        if (stopped) return;
+        if (!state || state.status === "ended") {
+          forgetActiveRoom();
+          stop();
+          return;
+        }
+        await touchLiveParticipant(
+          liveRoomConfig,
+          roomId,
+          participantToken,
+          "practice",
+        );
+      } catch {
+        // Retry on the next heartbeat; never publish identity on an open channel.
+      } finally {
+        loading = false;
+      }
     };
-    const activity: RoomActivity = "practice";
-    channel
-      .on("broadcast", { event: "session-ended" }, () => {
-        forgetActiveRoom();
-        stop();
-      })
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED")
-          void channel.track({ name: room.studentName, activity });
-      });
+    const interval = window.setInterval(() => void beat(), 15_000);
+    const onVisible = () => void beat();
+    document.addEventListener("visibilitychange", onVisible);
     const remaining = Math.max(
       0,
       room.lastRoomAt + ROOM_ACTIVITY_TIMEOUT_MS - Date.now(),
@@ -57,6 +68,13 @@ export function BackgroundRoomPresence({
       forgetActiveRoom();
       stop();
     }, remaining);
+    function stop() {
+      stopped = true;
+      window.clearTimeout(timer);
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    }
+    void beat();
     return stop;
   }, [enabled, liveRoomConfig]);
   return null;

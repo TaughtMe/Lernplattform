@@ -435,7 +435,8 @@ describe("Raum-Aufrufe der Schüler", () => {
   it("sendet ein Lebenszeichen mit Raum-ID und Teilnehmer-Token", async () => {
     rpc.mockResolvedValue({ data: null, error: null });
     await touchLiveParticipant(config, roomId, identity.participantToken);
-    expect(rpc).toHaveBeenCalledWith("touch_participant_secure", {
+    expect(rpc).toHaveBeenCalledWith("touch_participant_activity_secure", {
+      p_activity: "room",
       p_room_id: roomId,
       p_participant_token: identity.participantToken,
     });

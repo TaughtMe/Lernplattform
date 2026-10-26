@@ -21,6 +21,47 @@ export function parseLearningWords(source: string): string[] {
     });
 }
 
+/** Eine unklare Wortgrenze ist noch kein fachlicher Fehlversuch. */
+export class LearningWordInputFormatError extends Error {
+  constructor() {
+    super(
+      "Hier gehören auch mehrere Wörter zu einem Begriff. Trenne die Begriffe bitte mit Komma oder Zeilenumbruch (Umschalt + Enter). Deine Antwort wurde noch nicht bewertet.",
+    );
+    this.name = "LearningWordInputFormatError";
+  }
+}
+
+/**
+ * Antworten brauchen andere Grenzen als der Import: Einzelwörter dürfen auch
+ * durch Leerraum getrennt sein. Bei mehrwortigen Begriffen gelten ausdrücklich
+ * gesetzte Kommas/Zeilenumbrüche; sonst wäre die Zuordnung mehrdeutig.
+ * Groß-/Kleinschreibung bleibt erhalten, damit der Import keine Antwort entfernt.
+ */
+export function parseLearningWordAnswer(
+  input: string,
+  expected: readonly string[],
+): string[] {
+  const normalized = input.normalize("NFC").trim();
+  const containsPhrases = expected.some((word) => /\s/u.test(word.trim()));
+  if (
+    containsPhrases &&
+    expected.length > 1 &&
+    /\s/u.test(normalized) &&
+    !/[\r\n,;]/u.test(normalized)
+  ) {
+    throw new LearningWordInputFormatError();
+  }
+  const separator = containsPhrases ? /[\r\n,;]+/u : /[\s,;]+/u;
+  return [
+    ...new Set(
+      normalized
+        .split(separator)
+        .map((word) => word.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export function buildLearningWordPattern(word: string, stage: 2 | 3): string {
   const letters = Array.from(word);
   const visibleEvery = stage === 2 ? 3 : 4;
@@ -64,7 +105,7 @@ export function evaluateLearningWordBlock(
 ): LearningWordBlockEvaluation {
   const norm = (word: string) => word.normalize("NFC").trim();
   const want = expected.map(norm);
-  const got = parseLearningWords(input).map(norm);
+  const got = parseLearningWordAnswer(input, want);
   const used = new Set<number>();
   const matched = new Map<number, number>();
 

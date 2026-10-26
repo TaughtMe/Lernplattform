@@ -5,14 +5,10 @@ import {
 } from "../../src/integrations/laufdiktat/word-store-transfer";
 import { useLiveProgressDelivery } from "../raum/use-live-progress-delivery";
 
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { extractJoinCode, normalizeJoinCode } from "../../src/domain/join-code";
-import {
-  getLiveRoomClient,
-  type LiveRoomConfig,
-} from "../../src/integrations/laufdiktat/live-room-client";
+import { type LiveRoomConfig } from "../../src/integrations/laufdiktat/live-room-client";
 import {
   getLiveProgress,
   getLiveRoomState,
@@ -39,14 +35,14 @@ import { LiveRunningDictationGame } from "../raum/spiel/live-game";
 import { QrCodeScanner } from "../ui/qr-scanner";
 import { SegmentedRoomCode } from "./segmented-room-code";
 import { useHydrated } from "../ui/use-hydrated";
-import {
-  forgetActiveRoom,
-  rememberActiveRoom,
-  type RoomActivity,
-} from "./room-activity";
+import { forgetActiveRoom, rememberActiveRoom } from "./room-activity";
 import { useLiveSessionGuards } from "../raum/use-live-session-guards";
 import { useLiveWordStoreTransfer } from "../raum/use-live-word-store-transfer";
 import { useLiveVocabularyTransfer } from "../raum/use-live-vocabulary-transfer";
+import {
+  getLiveRoomActivity,
+  sendLiveRoomAttack,
+} from "../../src/integrations/laufdiktat/room-activity-api";
 import { useWritingRelief } from "../raum/use-writing-relief";
 
 import { LIVE_APP_VERSION } from "../../src/app-version";
@@ -54,7 +50,7 @@ import { LiveVersionNotice } from "./live-version-notice";
 import { Icon } from "../ui/icons";
 
 /** So oft prüft ein Schülergerät, ob der Raum vom Server geschlossen wurde. */
-const ROOM_END_WATCH_MS = 30_000;
+const ROOM_POLL_MS = 2_000;
 
 type View = "join" | "connecting" | "lobby" | "starting" | "game" | "ended";
 type AttackType = "ink" | "flicker";
@@ -63,28 +59,6 @@ type LiveRoomJoinProps = {
   initialCode?: string;
   liveRoomConfig: LiveRoomConfig | null;
 };
-
-function peerIdentity(room: Parameters<typeof roomPeerLabel>[0]) {
-  const { label, animal } = roomPeerLabel(room);
-  return label ? { label, animal } : {};
-}
-
-function roomPeerLabel(room: {
-  studentName: string;
-  animalToken?: string | null;
-  animalNumber: number;
-}): { label: string | null; animal: string | null } {
-  const animal =
-    room.animalToken ?? animalTokenFromDisplayName(room.studentName);
-  const label = room.animalToken
-    ? room.animalNumber > 1
-      ? `${room.animalToken} ${room.animalNumber}`
-      : room.animalToken
-    : animal
-      ? room.studentName
-      : null;
-  return { label, animal };
-}
 
 function savedWordsSentence(words: readonly string[]) {
   const { shown, more } = summarizeSavedWords(words);
@@ -160,276 +134,130 @@ export function LiveRoomJoin({
     type: AttackType;
     from: string;
   } | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  // Last progress payload sent for this student, kept so a "request-progress"
-  // broadcast from a (re)joining classmate can be answered immediately
-  // instead of waiting for the next natural progress update.
-  const lastProgressBroadcastRef = useRef<{
-    event: "student-progress" | "student-finished";
-    payload: Record<string, unknown>;
-  } | null>(null);
-  useEffect(() => {
-    if (!room || !liveRoomConfig) return;
-    const activeRoom = room;
-    const activeConfig = liveRoomConfig;
-
-    const client = getLiveRoomClient(activeConfig);
-    const channel = client.channel(`room-${code}`, {
-      config: { presence: { key: activeRoom.studentName } },
-    });
-    channelRef.current = channel;
-
-    function rememberPeer(name: string, label: unknown, animal: unknown) {
-      if (typeof label !== "string" || !label) return;
-      const nextAnimal = typeof animal === "string" ? animal : null;
-      setPeers((current) =>
-        current[name]?.label === label && current[name]?.animal === nextAnimal
-          ? current
-          : { ...current, [name]: { label, animal: nextAnimal } },
-      );
-    }
-
-    function markRoomEnded() {
-      setEndedSession(lastSessionRef.current);
-      lastSessionRef.current = null;
-      setSession(null);
-      setView("ended");
-    }
-
-    async function syncAuthorizedRoomState() {
-      try {
-        const state = await getLiveRoomState(activeConfig, activeRoom.roomId, {
-          participantToken: activeRoom.participantToken,
-        });
-        if (!state || state.status === "ended") {
-          markRoomEnded();
-          return;
-        }
-        if (state.status === "live" && state.sessionId) {
-          const nextSession = parseLiveSession(
-            state.config,
-            state.sessionId,
-            `${code}:${activeRoom.studentName}:${state.sessionId}`,
-          );
-          const progress = await getLiveProgress(activeConfig, {
-            roomId: activeRoom.roomId,
-            sessionId: state.sessionId,
-            participantToken: activeRoom.participantToken,
-            studentName: activeRoom.studentName,
-          });
-          const required = nextSession["appVersion"];
-          if (typeof required === "string" && required !== LIVE_APP_VERSION) {
-            setRequiredVersion(required);
-            return;
-          }
-          setRequiredVersion(null);
-          setInitialProgress(progress);
-          lastSessionRef.current = nextSession;
-          setSession(nextSession);
-          setView("game");
-        }
-      } catch {
-        setConnectionWarning(
-          "Die Sitzungsdaten konnten gerade nicht sicher geladen werden.",
-        );
-      }
-    }
-
-    // Presence sign-in with acknowledgement check and retry: track() can
-    // come back "timed out" or "rate limited". Without a retry the student
-    // stays invisible in the teacher's lobby forever (channel connected, but
-    // never present) while their own device shows the completely normal
-    // waiting screen — the "18 angemeldet, 17 sichtbar" case from real
-    // classroom use.
-    async function trackPresence() {
-      for (let attempt = 1; attempt <= 5; attempt += 1) {
-        // Channel was torn down and rebuilt in the meantime (unmount/re-run)
-        // — the new channel's own SUBSCRIBED pass will take over instead.
-        if (channelRef.current !== channel) return;
-        const result = await channel.track({
-          name: activeRoom.studentName,
-          activity: "room" satisfies RoomActivity,
-        });
-        if (result === "ok") {
-          setConnectionWarning("");
-          return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
-      }
-      setConnectionWarning(
-        "Du bist verbunden, aber noch nicht in der Teilnehmerliste sichtbar.",
-      );
-    }
-
-    // Device wakes from standby / tab returns to the foreground: don't
-    // passively wait for the automatic reconnect backoff, kick it directly.
-    // If the channel is still joined, a fresh presence sign-in is enough; if
-    // the socket dropped (screen lock), connect() speeds up the rebuild —
-    // the following SUBSCRIBED event then re-tracks/resyncs as on first join.
-    function onVisibilityChange() {
-      if (document.visibilityState !== "visible") return;
-      if (channel.state === "joined") {
-        void trackPresence();
-      } else {
-        client.realtime.connect();
-      }
-    }
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    channel
-      // Drop disconnected classmates from the battle roster: it used to only
-      // grow (broadcast-based), so a student who lost their connection stayed
-      // selectable as an attack target forever, with the attack then landing
-      // on nobody. Presence reflects the real connection state; if they come
-      // back, their next student-progress broadcast re-adds them.
-      .on("presence", { event: "sync" }, () => {
-        const present = new Set(Object.keys(channel.presenceState()));
-        setRoster((current) => {
-          const entries = Object.entries(current).filter(([name]) =>
-            present.has(name),
-          );
-          return entries.length === Object.keys(current).length
-            ? current
-            : Object.fromEntries(entries);
-        });
-      })
-      .on("broadcast", { event: "session-start" }, () => {
-        setView("starting");
-        void syncAuthorizedRoomState();
-      })
-      .on("broadcast", { event: "session-ended" }, () => {
-        void syncAuthorizedRoomState();
-      })
-      .on("broadcast", { event: "student-progress" }, ({ payload }) => {
-        const update = payload as {
-          name?: unknown;
-          index?: unknown;
-          label?: unknown;
-          animal?: unknown;
-        };
-        if (typeof update.name !== "string" || typeof update.index !== "number")
-          return;
-        const name = update.name;
-        const index = update.index;
-        rememberPeer(name, update.label, update.animal);
-        setRoster((current) => ({ ...current, [name]: index }));
-      })
-      .on("broadcast", { event: "student-finished" }, ({ payload }) => {
-        const update = payload as {
-          name?: unknown;
-          currentIndex?: unknown;
-          label?: unknown;
-          animal?: unknown;
-        };
-        if (
-          typeof update.name !== "string" ||
-          typeof update.currentIndex !== "number"
-        )
-          return;
-        const name = update.name;
-        const index = update.currentIndex;
-        rememberPeer(name, update.label, update.animal);
-        setRoster((current) => ({
-          ...current,
-          [name]: index,
-        }));
-      })
-      .on("broadcast", { event: "request-progress" }, () => {
-        // A (re)joining classmate is asking for everyone's current state —
-        // resend ours so their roster/battle view fills back in immediately
-        // instead of waiting for our next natural progress update.
-        if (lastProgressBroadcastRef.current) {
-          void channel.send({
-            type: "broadcast",
-            ...lastProgressBroadcastRef.current,
-          });
-        }
-      })
-      .on("broadcast", { event: "attack" }, ({ payload }) => {
-        const attack = payload as {
-          to?: unknown;
-          from?: unknown;
-          fromLabel?: unknown;
-          type?: unknown;
-        };
-        if (
-          attack.to !== activeRoom.studentName ||
-          typeof attack.from !== "string" ||
-          (attack.type !== "ink" && attack.type !== "flicker")
-        )
-          return;
-        setIncomingAttack({
-          id: Date.now(),
-          from:
-            typeof attack.fromLabel === "string" && attack.fromLabel
-              ? attack.fromLabel
-              : "einem Mitspieler",
-          type: attack.type,
-        });
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await trackPresence();
-          // Ask everyone else to resend their progress — harmless to send
-          // again after a mere reconnect too, and it's how we fill in the
-          // roster after losing and regaining the connection ourselves.
-          await channel.send({
-            type: "broadcast",
-            event: "request-progress",
-            payload: {},
-          });
-          await syncAuthorizedRoomState();
-        }
-        if (
-          status === "CHANNEL_ERROR" ||
-          status === "TIMED_OUT" ||
-          status === "CLOSED"
-        ) {
-          setConnectionWarning(
-            "Die Verbindung zur Unterrichtsrunde wurde unterbrochen.",
-          );
-        }
-      });
-
-    // The authorized HTTP state must also load when school networks block WebSockets.
-    void syncAuthorizedRoomState();
-
-    // Schließt der Server den Raum nach 120 Minuten, gibt es kein Signal der
-    // Lehrkraft. Dann erfährt das Gerät es hier und zeigt dieselbe
-    // Ergebnisseite samt LernBox-Übernahme wie beim Beenden durch die Lehrkraft.
-    let endWatchDone = false;
-    const endWatch = window.setInterval(async () => {
-      if (endWatchDone) return;
-      try {
-        const state = await getLiveRoomState(activeConfig, activeRoom.roomId, {
-          participantToken: activeRoom.participantToken,
-        });
-        if (endWatchDone || (state && state.status !== "ended")) return;
-        endWatchDone = true;
-        markRoomEnded();
-      } catch {
-        // Offline: der nächste Durchlauf versucht es erneut.
-      }
-    }, ROOM_END_WATCH_MS);
-
-    return () => {
-      endWatchDone = true;
-      window.clearInterval(endWatch);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      channelRef.current = null;
-      void client.removeChannel(channel);
-    };
-  }, [code, liveRoomConfig, room]);
 
   useEffect(() => {
     if (!room || !liveRoomConfig) return;
     const activeRoom = room;
     const activeConfig = liveRoomConfig;
     let cancelled = false;
+    let loading = false;
+    let ended = false;
+    let loadedSession: string | null = null;
+    let lastAttackId = 0;
+
+    async function poll() {
+      if (
+        cancelled ||
+        ended ||
+        loading ||
+        document.visibilityState !== "visible"
+      )
+        return;
+      loading = true;
+      try {
+        const state = await getLiveRoomState(activeConfig, activeRoom.roomId, {
+          participantToken: activeRoom.participantToken,
+        });
+        if (cancelled) return;
+        if (!state || state.status === "ended") {
+          ended = true;
+          setEndedSession(lastSessionRef.current);
+          lastSessionRef.current = null;
+          setSession(null);
+          setView("ended");
+          return;
+        }
+        if (state.status === "live" && state.sessionId) {
+          if (loadedSession !== state.sessionId) {
+            const nextSession = parseLiveSession(
+              state.config,
+              state.sessionId,
+              code + ":" + activeRoom.studentName + ":" + state.sessionId,
+            );
+            const required = nextSession["appVersion"];
+            if (typeof required === "string" && required !== LIVE_APP_VERSION) {
+              setRequiredVersion(required);
+              return;
+            }
+            const progress = await getLiveProgress(activeConfig, {
+              roomId: activeRoom.roomId,
+              sessionId: state.sessionId,
+              participantToken: activeRoom.participantToken,
+              studentName: activeRoom.studentName,
+            });
+            if (cancelled) return;
+            setRequiredVersion(null);
+            setInitialProgress(progress);
+            lastSessionRef.current = nextSession;
+            setSession(nextSession);
+            setView("game");
+            loadedSession = state.sessionId;
+            lastAttackId = 0;
+            setIncomingAttack(null);
+          }
+          const activity = await getLiveRoomActivity(
+            activeConfig,
+            activeRoom,
+            state.sessionId,
+            lastAttackId,
+          );
+          if (cancelled) return;
+          setRoster(
+            Object.fromEntries(
+              activity.peers.map((peer) => [peer.key, peer.index]),
+            ),
+          );
+          setPeers(
+            Object.fromEntries(
+              activity.peers.map((peer) => [
+                peer.key,
+                {
+                  label: peer.animal
+                    ? peer.animal + (peer.number > 1 ? " " + peer.number : "")
+                    : "Mitspieler",
+                  animal: peer.animal,
+                },
+              ]),
+            ),
+          );
+          const attack = activity.attacks.at(-1);
+          if (attack) {
+            lastAttackId = attack.id;
+            setIncomingAttack(attack);
+          }
+        }
+        setConnectionWarning("");
+      } catch {
+        if (!cancelled)
+          setConnectionWarning(
+            "Die Sitzungsdaten konnten gerade nicht sicher geladen werden.",
+          );
+      } finally {
+        loading = false;
+      }
+    }
+    void poll();
+    const interval = window.setInterval(() => void poll(), ROOM_POLL_MS);
+    const onVisible = () => void poll();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onVisible);
+    };
+  }, [code, liveRoomConfig, room]);
+
+  useEffect(() => {
+    if (!room || !liveRoomConfig || view === "ended") return;
+    const activeRoom = room;
+    const activeConfig = liveRoomConfig;
+    let cancelled = false;
     const beat = () => {
       if (cancelled || document.visibilityState !== "visible") return;
       // Solange die Raumseite offen ist, läuft die 45-Minuten-Frist neu.
-      rememberActiveRoom(code, activeRoom.studentName);
+      rememberActiveRoom(code, activeRoom.studentName, activeRoom);
       void touchLiveParticipant(
         activeConfig,
         activeRoom.roomId,
@@ -444,7 +272,7 @@ export function LiveRoomJoin({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", beat);
     };
-  }, [code, liveRoomConfig, room]);
+  }, [code, liveRoomConfig, room, view]);
 
   // Runde beendet: nicht mehr als „übt weiter“ melden.
   useEffect(() => {
@@ -497,19 +325,6 @@ export function LiveRoomJoin({
     (progress: LiveProgress) => {
       if (!liveRoomConfig || !room || !session) return;
       sendProgress(progress);
-      const event = progress.finished
-        ? ("student-finished" as const)
-        : ("student-progress" as const);
-      const payload = {
-        name: progress.stationNumber
-          ? `Station ${progress.stationNumber}`
-          : room.studentName,
-        index: progress.currentIndex,
-        ...(progress.stationNumber ? {} : peerIdentity(room)),
-        ...progress,
-      };
-      lastProgressBroadcastRef.current = { event, payload };
-      void channelRef.current?.send({ type: "broadcast", event, payload });
     },
     [liveRoomConfig, room, session, sendProgress],
   );
@@ -528,21 +343,24 @@ export function LiveRoomJoin({
   );
 
   const sendAttack = useCallback(
-    (to: string, type: AttackType) => {
-      if (!room || !channelRef.current) return false;
-      void channelRef.current.send({
-        type: "broadcast",
-        event: "attack",
-        payload: {
-          from: room.studentName,
-          fromLabel: roomPeerLabel(room).label,
+    async (to: string, type: AttackType) => {
+      if (!room || !liveRoomConfig || !session) return false;
+      try {
+        return await sendLiveRoomAttack(
+          liveRoomConfig,
+          room,
+          session.sessionId,
           to,
           type,
-        },
-      });
-      return true;
+        );
+      } catch {
+        setConnectionWarning(
+          "Der Angriff konnte nicht gesendet werden. Bitte versuche es erneut.",
+        );
+        return false;
+      }
     },
-    [room],
+    [room, liveRoomConfig, session],
   );
 
   function handleScan(value: string) {

@@ -191,9 +191,8 @@ describe("Raumfristen der Lehrkraft (Entscheidung 52)", () => {
     await advance(121);
     await advance(125);
     expect(mocks.endLiveRoom).toHaveBeenCalledTimes(1);
-    expect(
-      mocks.sent.filter((event) => event === "session-ended"),
-    ).toHaveLength(1);
+    // Andere Geräte lesen das Ende vom Server; öffentliche Nachrichten entfallen.
+    expect(mocks.sent).toEqual([]);
 
     // Ergebnisse und Export bleiben, bis ein neuer Raum geöffnet wird.
     const csv = screen.getAllByRole("button", { name: "Ergebnisse als CSV" });

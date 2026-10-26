@@ -17,7 +17,8 @@ import {
   writeLastBackup,
 } from "../../src/storage/backup-reminder";
 import { learnerProfileRepository } from "../../src/storage/learner-profile";
-import { serializePersonalLearningBackupFromDatabase } from "../../src/storage/personal-backup";
+import { exportPersonalLearningBackup } from "../../src/storage/personal-backup";
+import { serializePersonalLearningBackup } from "../../src/domain/personal-backup";
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
 import { countUnreadableRecords } from "../../src/storage/unreadable-records";
 import { AnimalImage } from "../ui/animal";
@@ -231,10 +232,17 @@ function BackupCard() {
     setLastBackup(now);
   }
 
+  function recoveryNotice(count: number) {
+    return count
+      ? ` ${count} Originaleinträge sind separat aufbewahrt und werden weiter mitgesichert. Diese App kann ihre Daten noch nicht vollständig nutzen.`
+      : "";
+  }
+
   async function download() {
     setBusy(true);
     try {
-      const text = await serializePersonalLearningBackupFromDatabase();
+      const backup = await exportPersonalLearningBackup();
+      const text = serializePersonalLearningBackup(backup);
       const url = URL.createObjectURL(
         new Blob([text], { type: "application/json" }),
       );
@@ -244,7 +252,10 @@ function BackupCard() {
       anchor.click();
       URL.revokeObjectURL(url);
       remember();
-      setMessage({ tone: "good", text: "Sicherungsdatei wurde erstellt." });
+      setMessage({
+        tone: backup.recovery.length ? "bad" : "good",
+        text: `Sicherungsdatei wurde erstellt.${recoveryNotice(backup.recovery.length)}`,
+      });
     } catch (error) {
       setMessage({
         tone: "bad",
@@ -268,8 +279,8 @@ function BackupCard() {
       const result = await savePersonalBackupToDirectory(await picker());
       remember();
       setMessage({
-        tone: "good",
-        text: `Gesichert als ${result.filename}.`,
+        tone: result.backup.recovery.length ? "bad" : "good",
+        text: `Gesichert als ${result.filename}.${recoveryNotice(result.backup.recovery.length)}`,
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -294,8 +305,11 @@ function BackupCard() {
       const result = await restorePersonalBackupFromFile(file);
       const skipped = result.skipped.length;
       setMessage({
-        tone: result.conflicts.length || skipped ? "bad" : "good",
-        text: `Wiederhergestellt: ${result.added} neu, ${result.updated} aktualisiert, ${result.unchanged} unverändert${result.conflicts.length ? `, ${result.conflicts.length} Konflikte blieben unverändert` : ""}.${skipped ? ` ${skipped} ${skipped === 1 ? "Eintrag" : "Einträge"} in der Datei konnten nicht gelesen werden und wurden übersprungen.` : ""}`,
+        tone:
+          result.conflicts.length || skipped || result.recoveryRetained
+            ? "bad"
+            : "good",
+        text: `Wiederhergestellt: ${result.added} neu, ${result.updated} aktualisiert, ${result.unchanged} unverändert${result.conflicts.length ? `, ${result.conflicts.length} Konflikte blieben unverändert` : ""}.${skipped ? ` ${skipped} ${skipped === 1 ? "Eintrag" : "Einträge"} in der Datei konnten nicht gelesen werden und wurden übersprungen.` : ""}${recoveryNotice(result.recoveryRetained)}`,
       });
     } catch (error) {
       setMessage({

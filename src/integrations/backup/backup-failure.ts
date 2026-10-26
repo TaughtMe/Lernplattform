@@ -1,4 +1,7 @@
-import { PersonalBackupVersionError } from "../../domain/personal-backup";
+import {
+  PersonalBackupRecoveryError,
+  PersonalBackupVersionError,
+} from "../../domain/personal-backup";
 import { PersonalBackupStorageError } from "./personal-backup-storage";
 
 const NEXT_STEP = "Bitte sag deiner Lehrkraft Bescheid.";
@@ -27,6 +30,7 @@ const REASON_BY_CODE = {
 
 /** Grund in Kindersprache oder `undefined`, wenn er nicht bekannt ist. */
 export function backupFailureReason(error: unknown): string | undefined {
+  if (error instanceof PersonalBackupRecoveryError) return error.message;
   if (error instanceof PersonalBackupVersionError) return error.message;
   if (error instanceof PersonalBackupStorageError) {
     return error.code === "newer-version"
