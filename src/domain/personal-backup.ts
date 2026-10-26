@@ -116,6 +116,9 @@ export const personalBackupCardSchema = z
     reverseNextReview: z.number().int().nonnegative(),
     reverseWritingStreak: z.number().int().nonnegative(),
     lastReviewed: z.number().int().nonnegative(),
+    // Abrufzeitpunkt je Richtung; ältere Sicherungen kennen die Felder nicht.
+    forwardLastReviewed: z.number().int().nonnegative().optional(),
+    reverseLastReviewed: z.number().int().nonnegative().optional(),
     createdAt: z.number().int().nonnegative(),
     updatedAt: z.number().int().nonnegative(),
     sourceLinks: z.array(learningBoxSourceLinkSchema).max(100).optional(),

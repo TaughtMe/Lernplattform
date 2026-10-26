@@ -63,7 +63,14 @@ export type LearningBoxCard = {
   reverseInterval: number;
   reverseNextReview: number;
   reverseWritingStreak: number;
+  /** Letzter Abruf irgendeiner Richtung (Abgleich, Merge, Empfehlungen). */
   lastReviewed: number;
+  /**
+   * Zeitpunkt des letzten Abrufs je Richtung (G-005/G-011). Fehlt das Feld
+   * (ältere Daten), gilt `lastReviewed` (`getLearningBoxLastReviewed`).
+   */
+  forwardLastReviewed?: number | undefined;
+  reverseLastReviewed?: number | undefined;
   createdAt: number;
   updatedAt: number;
   sourceLinks?: LearningBoxSourceLink[] | undefined;
@@ -303,6 +310,21 @@ export function getLearningBoxLevel(
   return direction === "forward" ? card.box : card.reverseBox;
 }
 
+/**
+ * Zeitpunkt des letzten Abrufs einer Richtung (C1-2). Fehlt das Richtungsfeld,
+ * gilt `lastReviewed` (Migration beim Lesen, gespeichert wird nichts neu).
+ */
+export function getLearningBoxLastReviewed(
+  card: LearningBoxCard,
+  direction: LearningBoxDirection,
+) {
+  return (
+    (direction === "forward"
+      ? card.forwardLastReviewed
+      : card.reverseLastReviewed) ?? card.lastReviewed
+  );
+}
+
 /** Schonfrist nach der Fälligkeit; danach je volle Frist eine Box zurück. */
 export const LEARNING_BOX_GRACE_DAYS = 14;
 
@@ -398,8 +420,35 @@ export function isLearningBoxCardScheduledDue(
   );
 }
 
-/** Mindestabstand zum letzten Abruf, ab dem eine richtige Antwort in Box 1 aufsteigt. */
+/** Schlüssel „Karte + Richtung“ für die Bewertung innerhalb einer Runde. */
+export function learningBoxAttemptKey(
+  cardId: string,
+  direction: LearningBoxDirection,
+) {
+  return `${cardId}:${direction}`;
+}
+
+/**
+ * Erster Versuch zählt (C3-1): Je Karte und Richtung wirkt in einer Runde nur
+ * der erste Versuch auf Box und Fälligkeit. `attempted` nennt die schon
+ * bewerteten Schlüssel (`learningBoxAttemptKey`) dieser Runde.
+ */
+export function isFirstLearningBoxAttempt(
+  attempted: readonly string[],
+  cardId: string,
+  direction: LearningBoxDirection,
+) {
+  return !attempted.includes(learningBoxAttemptKey(cardId, direction));
+}
+
+/** Mindestabstand zum letzten Abruf derselben Richtung, ab dem eine richtige Antwort aufsteigt. */
 export const LEARNING_BOX_RECOVERY_GAP_HOURS = 8;
+
+/**
+ * Selbsteinschätzung („Gewusst“ nach Aufdecken, Modus `oral`) hebt höchstens bis
+ * Box 3 (D-010). Box 4 und 5 erreicht man nur schriftlich.
+ */
+export const LEARNING_BOX_SELF_CHECK_MAX_BOX = 3;
 
 /**
  * Ergebnis einer Abfrage. Abstände je Box wie im Leitner-Zeitplan
@@ -409,15 +458,27 @@ export const LEARNING_BOX_RECOVERY_GAP_HOURS = 8;
  * - zweite Chance geschafft: Box bleibt, Abstand der Box.
  * - richtig, aber vor der Fälligkeit (Richtung schon geübt): kein Aufstieg,
  *   Box, Abstand und Termin bleiben; zu frühes Üben ist nur Üben.
- * - richtig in Box 1 kurz nach dem letzten Abruf (weniger als
- *   `LEARNING_BOX_RECOVERY_GAP_HOURS`), etwa nach einem Fehler über „Meine
- *   Fehler“: Der Fehler gilt als geschlossen, aber ohne Aufstieg; die Karte
- *   kommt morgen wieder. Sofortige Verbesserung ist kein selbstständiger Abruf.
- * - richtig und fällig oder neu (Abstand 0): eine Box höher, höchstens 5.
+ * - richtig in einer schon geübten Richtung, fällig, aber weniger als
+ *   `LEARNING_BOX_RECOVERY_GAP_HOURS` nach dem letzten Abruf DIESER Richtung
+ *   (G-005: die andere Richtung zählt nicht), in jeder Box (G-011): etwa nach
+ *   einem Fehler über „Meine Fehler“ oder nach der Platzierung aus dem
+ *   Unterricht („practice“/„reset“). Der Fehler gilt als geschlossen, aber ohne
+ *   Aufstieg: Box bleibt, Abstand 1 Tag, die Karte kommt morgen wieder.
+ *   Sofortige Verbesserung ist kein selbstständiger Abruf.
+ * - richtig und fällig oder neu (Abstand 0): eine Box höher, höchstens 5. Als
+ *   Selbsteinschätzung (`mode: "oral"`) höchstens bis
+ *   `LEARNING_BOX_SELF_CHECK_MAX_BOX`: Steht die Box schon darauf oder höher,
+ *   bleibt sie; Abstand und Termin richten sich nach dieser Box (Wiederholung,
+ *   kein Aufstieg). „Nicht gewusst“ bleibt Box 1.
  *
  * Gerechnet wird von der wirksamen Box aus (Rückstufung nach Zeit): richtig
- * heißt wirksame Box + 1, falsch Box 1. Der Erholungsfall prüft dagegen die
- * gespeicherte Box, weil er einen echten Fehler schließt, keine Zeitrückstufung.
+ * heißt wirksame Box + 1, falsch Box 1. Der Erholungsfall behält dagegen die
+ * gespeicherte Box, weil er einen echten Fehler oder eine Unterrichtsplatzierung
+ * schließt, keine Zeitrückstufung.
+ *
+ * Gesetzt werden `lastReviewed` und der Abrufzeitpunkt der abgefragten
+ * Richtung; der Zeitpunkt der anderen Richtung bleibt (beim ersten Schreiben
+ * aus `lastReviewed` übernommen, damit sie ihre bisherige Lesart behält).
  */
 export function processLearningBoxResult(
   card: LearningBoxCard,
@@ -445,9 +506,9 @@ export function processLearningBoxResult(
     !failed &&
     !early &&
     input.secondChance !== "recovered" &&
-    getLearningBoxLevel(card, input.direction) === 1 &&
     currentInterval > 0 &&
-    now - card.lastReviewed < LEARNING_BOX_RECOVERY_GAP_HOURS * 60 * 60 * 1000;
+    now - getLearningBoxLastReviewed(card, input.direction) <
+      LEARNING_BOX_RECOVERY_GAP_HOURS * 60 * 60 * 1000;
 
   let nextBox: LearningBoxLevel = currentBox;
   let nextInterval = currentInterval;
@@ -457,11 +518,17 @@ export function processLearningBoxResult(
     nextInterval = 1;
     nextReview = now;
   } else if (recovering) {
+    nextBox = getLearningBoxLevel(card, input.direction);
     nextInterval = LEITNER_INTERVAL_DAYS[1];
     nextReview = now + nextInterval * DAY_MS;
   } else if (!early) {
     if (input.secondChance !== "recovered") {
-      nextBox = Math.min(currentBox + 1, 5) as LearningBoxLevel;
+      // Selbsteinschätzung hebt höchstens bis Box 3 (D-010); höhere Boxen bleiben.
+      const ceiling =
+        input.mode === "oral"
+          ? Math.max(currentBox, LEARNING_BOX_SELF_CHECK_MAX_BOX)
+          : 5;
+      nextBox = Math.min(currentBox + 1, ceiling) as LearningBoxLevel;
     }
     nextInterval = LEITNER_INTERVAL_DAYS[nextBox];
     nextReview = now + nextInterval * DAY_MS;
@@ -479,6 +546,8 @@ export function processLearningBoxResult(
             ? card.reverseWritingStreak + 1
             : 0
           : card.reverseWritingStreak,
+      reverseLastReviewed: now,
+      forwardLastReviewed: getLearningBoxLastReviewed(card, "forward"),
       lastReviewed: now,
       updatedAt: now,
     };
@@ -496,6 +565,8 @@ export function processLearningBoxResult(
           ? card.writingStreak + 1
           : 0
         : card.writingStreak,
+    forwardLastReviewed: now,
+    reverseLastReviewed: getLearningBoxLastReviewed(card, "reverse"),
     lastReviewed: now,
     updatedAt: now,
   };
@@ -503,12 +574,20 @@ export function processLearningBoxResult(
 
 export type LiveVocabularyPlacement = Pick<
   LearningBoxCard,
-  "box" | "level" | "interval" | "nextReview"
->;
+  "box" | "level" | "interval" | "nextReview" | "lastReviewed"
+> & {
+  forwardLastReviewed: number;
+  /** Nur bei bestehender Karte: bisherige Lesart der Rückrichtung bleibt. */
+  reverseLastReviewed?: number;
+};
 
 /**
  * Platzierung einer Vokabel aus einer Unterrichtsrunde. Gilt nur für die
- * abgefragte Richtung (`forward`); `reverse` bleibt unberührt.
+ * abgefragte Richtung (`forward`); `reverse` bleibt unberührt, auch ihr
+ * Abrufzeitpunkt (bei einer bestehenden Karte aus `lastReviewed` festgehalten,
+ * G-011). Jede Platzierung zählt als Abruf der Vorwärtsrichtung:
+ * `forwardLastReviewed` und `lastReviewed` sind `now`, damit ein Erfolg kurz
+ * danach nicht aufsteigt (siehe `processLearningBoxResult`).
  * Ohne `card` ist die Vokabel neu. Rückgabe `undefined`: Karte bleibt unverändert.
  */
 export function placeLiveVocabularyCard(
@@ -516,15 +595,29 @@ export function placeLiveVocabularyCard(
   outcome: LiveVocabularyOutcome,
   now = Date.now(),
 ): LiveVocabularyPlacement | undefined {
+  const reviewed = {
+    forwardLastReviewed: now,
+    lastReviewed: now,
+    ...(card
+      ? { reverseLastReviewed: getLearningBoxLastReviewed(card, "reverse") }
+      : {}),
+  };
   const restart: LiveVocabularyPlacement = {
     box: 1,
     level: 1,
     interval: 1,
     nextReview: now,
+    ...reviewed,
   };
   if (!card) {
     return outcome === "known"
-      ? { box: 2, level: 2, interval: 1, nextReview: now + DAY_MS }
+      ? {
+          box: 2,
+          level: 2,
+          interval: 1,
+          nextReview: now + DAY_MS,
+          ...reviewed,
+        }
       : restart;
   }
   if (outcome === "reset") return restart;
@@ -534,6 +627,7 @@ export function placeLiveVocabularyCard(
       level: card.level,
       interval: card.interval,
       nextReview: now,
+      ...reviewed,
     };
   }
   return undefined;

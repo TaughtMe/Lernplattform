@@ -10,6 +10,7 @@ import { readTolerant } from "../domain/tolerant-read";
 import type { LearningEventV1 } from "../domain/learning-bundle";
 import {
   effectiveLearningBoxLevel,
+  getLearningBoxLastReviewed,
   isLearningBoxCardDue,
   type LearningBoxCard,
   type LearningBoxDirection,
@@ -83,7 +84,13 @@ function cardCandidates(card: LearningBoxCard, nowMs: number) {
         ...base,
         kind: entry.box === 1 ? "error" : "review",
         dueAt: iso(entry.nextReview),
-        ...(entry.box === 1 ? { occurredAt: iso(card.lastReviewed) } : {}),
+        ...(entry.box === 1
+          ? {
+              occurredAt: iso(
+                getLearningBoxLastReviewed(card, entry.direction),
+              ),
+            }
+          : {}),
       });
     }
   }

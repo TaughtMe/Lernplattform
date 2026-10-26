@@ -967,6 +967,32 @@ describe("Vokabelübernahme aus Unterrichtsrunden", () => {
     expect(await repository.listDecks()).toHaveLength(1);
   });
 
+  it("setzt bei Platzierung den Abruf der Vorwärtsrichtung, die Rückrichtung behält ihre Lesart (G-011)", async () => {
+    const { repository, advanced } = await existingAdvanced();
+    const before = Date.now();
+    await repository.ingestBundle({
+      bundle: roundBundle("r8", [words[0]!]),
+      title: "Runde",
+      source: source("r8"),
+      placements: { "live-r8-a": "practice" },
+    });
+    const stored = (await repository.listCards(advanced.deckId))[0]!;
+    expect(stored.forwardLastReviewed).toBeGreaterThanOrEqual(before);
+    expect(stored.lastReviewed).toBe(stored.forwardLastReviewed);
+    expect(stored.reverseLastReviewed).toBe(advanced.lastReviewed);
+
+    // Neue Karten: ebenfalls Abruf vorwärts zum Platzierungszeitpunkt.
+    const fresh = await repository.ingestBundle({
+      bundle: roundBundle("r9", [words[1]!]),
+      title: "Neue Runde",
+      source: source("r9"),
+      placements: { "live-r9-b": "reset" },
+    });
+    const [created] = await repository.listCards(fresh.deckId);
+    expect(created!.forwardLastReviewed).toBeGreaterThanOrEqual(before);
+    expect(created!.lastReviewed).toBe(created!.forwardLastReviewed);
+  });
+
   it("macht ohne Platzierung weiterhin beide Richtungen fällig", async () => {
     const { repository, advanced } = await existingAdvanced();
     await repository.ingestBundle({
