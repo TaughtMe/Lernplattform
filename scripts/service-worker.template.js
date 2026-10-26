@@ -53,8 +53,6 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/sw.js" ||
     url.pathname === "/version.json" ||
     url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/signin-with-chatgpt") ||
-    url.pathname.startsWith("/signout-with-chatgpt") ||
     url.pathname.startsWith("/callback")
   ) {
     return;

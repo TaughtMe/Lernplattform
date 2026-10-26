@@ -59,6 +59,7 @@ declare const styles: {
   readonly roomHint: string;
   readonly roomNote: string;
   readonly screen: string;
+  readonly srOnly: string;
   readonly stage: string;
   readonly stat: string;
   readonly statLabel: string;
@@ -88,6 +89,13 @@ declare const styles: {
   readonly track: string;
   readonly waiting: string;
   readonly wideOnly: string;
+  readonly wordError: string;
+  readonly wordErrorCount: string;
+  readonly wordErrorWord: string;
+  readonly wordErrors: string;
+  readonly wordErrorsList: string;
+  readonly wordErrorsMore: string;
+  readonly wordErrorsSummary: string;
   readonly zoomHint: string;
 };
 export default styles;

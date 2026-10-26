@@ -9,6 +9,7 @@ import {
   splitModeOf,
   splitOptionsOf,
   strugglingNames,
+  studentWordErrors,
 } from "./dictation-adapter";
 
 const text = "Der Hund bellt.\nDie Katze schläft.";
@@ -96,11 +97,31 @@ describe("dictation-adapter", () => {
       mistakes: 1,
     });
     expect(overview.mistakes).toEqual([{ word: "Hund", count: 1 }]);
+    // Fehlerwörter je Tier: nur wer welche hat, häufigste zuerst.
+    expect(overview.students[0]?.wordErrors).toEqual([
+      { word: "Hund", count: 1 },
+    ]);
+    expect(overview.students[1]).not.toHaveProperty("wordErrors");
     expect(overview.stations.map((s) => s.state)).toEqual([
       "idle",
       "idle",
       "idle",
     ]);
+  });
+});
+
+describe("studentWordErrors", () => {
+  it("sortiert nach Häufigkeit, dann alphabetisch, und lässt Nullen weg", () => {
+    expect(
+      studentWordErrors({
+        wordErrors: { Hof: 1, Zaun: 3, Apfel: 1, Leer: 0 },
+      } as unknown as LiveRoomStudent),
+    ).toEqual([
+      { word: "Zaun", count: 3 },
+      { word: "Apfel", count: 1 },
+      { word: "Hof", count: 1 },
+    ]);
+    expect(studentWordErrors(undefined)).toEqual([]);
   });
 });
 

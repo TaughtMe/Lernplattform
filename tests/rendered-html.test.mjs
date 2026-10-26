@@ -55,7 +55,7 @@ test("server-renders the Lernraum start page", async () => {
   assert.match(html, /Raumcode/);
   assert.match(html, /Raumcode Zeichen 4/);
   // Design 2a: ein Tier, ein Code, sonst nichts.
-  assert.match(html, /Lehrer-Login/);
+  assert.match(html, /Lehrerbereich/);
   assert.match(html, /Tippen öffnet deinen Lernraum/);
   assert.match(html, /href="\/lernen"/);
   assert.doesNotMatch(html, /Frei üben/);

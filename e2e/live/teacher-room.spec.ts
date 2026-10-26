@@ -141,6 +141,16 @@ test("the live view shows progress per animal and the most frequent errors", asy
   ).toBeVisible();
   const fox = page.getByRole("listitem").filter({ hasText: "Fuchs" });
   await expect(fox.getByText("Fertig")).toBeVisible();
+  // Fehlerwörter je Tier: nur Kinder mit Fehlern, aufklappbar, Anzahl als Text.
+  await expect(fox.getByText(/^Fehlerwörter \(/)).toHaveCount(0);
+  const koala = page.getByRole("listitem").filter({ hasText: "Koala 2" });
+  await koala.getByText("Fehlerwörter (2)").click();
+  const koalaErrors = koala.getByRole("list", {
+    name: "Fehlerwörter von Koala 2",
+  });
+  await expect(koalaErrors.getByRole("listitem")).toHaveCount(2);
+  await expect(koalaErrors.getByText("Hof")).toBeVisible();
+  await expect(koalaErrors.getByText("1 Fehler").first()).toBeAttached();
   await expect(
     page.getByRole("region", { name: "Häufigste Fehler" }).getByText("Hof"),
   ).toBeVisible();
@@ -151,7 +161,9 @@ test("the live view shows progress per animal and the most frequent errors", asy
   await expect(
     page.locator('img[src="/animals/fuchs.svg"]').first(),
   ).toBeVisible();
-  const csv = page.getByRole("button", { name: "Ergebnisse als CSV" });
+  const csv = page.getByRole("button", {
+    name: "Ergebnisse als CSV herunterladen",
+  });
   await expect(csv).toHaveCount(1);
   await expect(csv).toBeEnabled();
   const [download] = await Promise.all([

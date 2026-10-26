@@ -41,25 +41,53 @@ export default function DatenschutzPage() {
         <p>
           Beim Beitritt zu einem Live-Raum verarbeitet der Lernraum einen
           Raumcode, einen Anzeigenamen beziehungsweise eine Stationskennung,
-          einen zufälligen Teilnehmertoken sowie pseudonyme Fortschrittsdaten.
-          Raumzustand und Nachrichten werden über Supabase übertragen. Die
-          Zugangsdaten für die laufende Sitzung werden zusätzlich im
-          Sitzungsspeicher des Browsers gehalten.
+          einen zufälligen Teilnehmertoken sowie pseudonyme Fortschrittsdaten
+          einschließlich falsch geschriebener Wörter. Raumzustand und
+          Nachrichten werden über Supabase übertragen. Die Zugangsdaten für die
+          laufende Sitzung werden zusätzlich im Sitzungsspeicher des Browsers
+          gehalten.
         </p>
       </section>
 
       <section>
-        <h2>4. Anmeldung für geschützte Bereiche</h2>
+        <h2>4. Übergabe von Vokabelpaketen über Supabase</h2>
         <p>
-          Soweit ein Bereich eine Anmeldung mit ChatGPT verlangt, werden die von
-          der Anmeldefunktion bereitgestellte Nutzerkennung, E-Mail-Adresse und
-          gegebenenfalls der Anzeigename zur Anmeldung und Zugriffssteuerung
-          verarbeitet.
+          Lehrkräfte können Vokabelpakete per QR-Code oder Übergabecode auf die
+          Geräte von Schülerinnen und Schülern geben. Dazu wird das Paket
+          (Vokabelkarten mit Begriffen, Übersetzungen und Sprachangaben) im
+          Browser der Lehrkraft verschlüsselt und als verschlüsselter Datensatz
+          bei Supabase abgelegt. Der Server speichert das verschlüsselte Paket
+          und die Zugangsschlüssel nur als Prüfwerte (Hashes). Der Schlüssel zum
+          Entschlüsseln steckt im QR-Code beziehungsweise im Übergabecode, den
+          die Lehrkraft weitergibt. Das Paket wird für höchstens 24 Stunden
+          vorgehalten und danach gelöscht. Wer den QR-Code oder den Code kennt,
+          kann das Paket in dieser Zeit abrufen; deshalb sollten sie nur an die
+          vorgesehene Gruppe weitergegeben werden. Angaben zum Serverstandort
+          von Supabase und zum Auftragsverarbeitungsvertrag werden ergänzt,
+          bevor der Lernraum mit echten Schülerdaten eingesetzt wird.
         </p>
       </section>
 
       <section>
-        <h2>5. Hosting und technisch notwendige Verbindungsdaten</h2>
+        <h2>5. Sprachausgabe</h2>
+        <p>
+          Das Vorlesen von Wörtern und Texten nutzt die Sprachausgabe des
+          Browsers (Web Speech API). Der Lernraum sendet dafür keine Texte an
+          einen eigenen Sprachdienst. Welche Stimme gesprochen wird, hängt vom
+          Gerät ab: Sind nur lokal installierte Systemstimmen vorhanden, bleibt
+          der Text auf dem Gerät. Bietet der Browser oder das Betriebssystem
+          Online-Stimmen an (zum Beispiel in Chrome, Edge oder auf manchen
+          Android-Geräten und Chromebooks), kann der vorzulesende Text zur
+          Erzeugung der Sprache an den Anbieter dieser Stimme übermittelt
+          werden. Darauf hat der Lernraum keinen Einfluss; es gelten die
+          Datenschutzhinweise des jeweiligen Browser- oder Geräteherstellers.
+          Vorgelesen werden Texte aus dem Lernraum, gegebenenfalls auch von
+          Lehrkräften oder Kindern selbst angelegte Inhalte.
+        </p>
+      </section>
+
+      <section>
+        <h2>6. Hosting und technisch notwendige Verbindungsdaten</h2>
         <p>
           Die Anwendung wird über Cloudflare bereitgestellt; Live-Funktionen
           nutzen Supabase. Beim Aufruf verarbeiten diese Anbieter technisch
@@ -70,7 +98,7 @@ export default function DatenschutzPage() {
       </section>
 
       <section>
-        <h2>6. Kamera</h2>
+        <h2>7. Kamera</h2>
         <p>
           Der QR-Scanner greift erst nach ausdrücklicher Freigabe auf die
           Gerätekamera zu. Die Bilder werden lokal im Browser ausgewertet und
@@ -79,17 +107,17 @@ export default function DatenschutzPage() {
       </section>
 
       <section>
-        <h2>7. Cookies und Reichweitenmessung</h2>
+        <h2>8. Cookies und Reichweitenmessung</h2>
         <p>
           Der Lernraum setzt keine Werbe- oder Tracking-Cookies ein und nutzt
           kein eigenes Analysewerkzeug. Technisch notwendige Speicherungen für
-          Anmeldung, Darstellung, Offline-Funktion und Lernfortschritt bleiben
-          davon unberührt.
+          Darstellung, Offline-Funktion, Geräte-Abgleich und Lernfortschritt
+          bleiben davon unberührt.
         </p>
       </section>
 
       <section>
-        <h2>8. Optionaler Geräte-Abgleich für Lehrkräfte</h2>
+        <h2>9. Optionaler Geräte-Abgleich für Lehrkräfte</h2>
         <p>
           Lehrkräfte können ihre Daten (Material, Aufgaben, Klassen und
           wahlweise Schülerliste, Ergebnisse und Schlüssel) zwischen ihren
@@ -104,7 +132,7 @@ export default function DatenschutzPage() {
       </section>
 
       <section>
-        <h2>9. Rechte betroffener Personen</h2>
+        <h2>10. Rechte betroffener Personen</h2>
         <p>
           Betroffene Personen können im Rahmen der gesetzlichen Voraussetzungen
           Auskunft, Berichtigung, Löschung, Einschränkung oder Widerspruch

@@ -43,8 +43,6 @@ describe("homophone groups", () => {
       "Sohle",
       "Leib",
       "lehren",
-      "das",
-      "dass",
     ];
     for (const word of mustBeCovered) {
       expect(fixed.has(wordKey(word))).toBe(true);
@@ -112,5 +110,57 @@ describe("Prüfliste für die Lehrkraft", () => {
         expect(doc, word).toContain(`| ${word} | ${hint} |`);
       }
     }
+  });
+});
+
+/** Buchstabenform ohne Umlaute, damit „wählt“ und „Wahl“ vergleichbar sind. */
+function fold(text: string): string {
+  return text
+    .toLocaleLowerCase("de-DE")
+    .replaceAll("ä", "a")
+    .replaceAll("ö", "o")
+    .replaceAll("ü", "u")
+    .replaceAll("ß", "ss");
+}
+
+/** Wort und einfacher Wortstamm (ohne -en, -n, -e, -t, -s am Ende). */
+function stemsOf(word: string): string[] {
+  const full = fold(word);
+  const stems = [full];
+  const cut = full.replace(/(en|n|e|t|s)$/u, "");
+  if (cut.length >= 3 && cut !== full) stems.push(cut);
+  return stems;
+}
+
+/** Das Wort der Hilfe, das Zielwort oder dessen Wortstamm ist (sonst `undefined`). */
+function revealingToken(word: string, hint: string): string | undefined {
+  const stems = stemsOf(word);
+  return (hint.match(/\p{L}+/gu) ?? []).find((token) => {
+    const folded = fold(token);
+    return stems.some(
+      (stem) =>
+        folded === stem || (stem.length >= 3 && folded.startsWith(stem)),
+    );
+  });
+}
+
+describe("Bedeutungshilfen verraten das Zielwort nicht", () => {
+  it("nennt in keiner Hilfe das Zielwort oder seinen Wortstamm", () => {
+    const verstoesse: string[] = [];
+    for (const group of HOMOPHONE_GROUPS) {
+      for (const [word, hint] of Object.entries(group.words)) {
+        const token = revealingToken(word, hint);
+        if (token) verstoesse.push(`${word}: „${hint}“ enthält „${token}“`);
+      }
+    }
+    expect(verstoesse).toEqual([]);
+  });
+
+  it("erkennt Zielwort, Wortstamm und Umlautformen in einer Hilfe", () => {
+    expect(revealingToken("Mal", "das erste Mal")).toBe("Mal");
+    expect(revealingToken("Laib", "ein Laib Brot")).toBe("Laib");
+    expect(revealingToken("Wahl", "man wählt jemanden")).toBe("wählt");
+    expect(revealingToken("fällt", "von fallen")).toBe("fallen");
+    expect(revealingToken("Rad", "zum Fahren")).toBeUndefined();
   });
 });

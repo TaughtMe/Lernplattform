@@ -1,5 +1,5 @@
-const APP_VERSION = "0.9.2";
-const BUILD_FINGERPRINT = "a81a683bca75";
+const APP_VERSION = "0.9.3";
+const BUILD_FINGERPRINT = "ec6ab11951c3";
 const CACHE_NAME = `lernraum-${APP_VERSION}-${BUILD_FINGERPRINT}`;
 const APP_SHELL = [
   "/",
@@ -53,8 +53,6 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/sw.js" ||
     url.pathname === "/version.json" ||
     url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/signin-with-chatgpt") ||
-    url.pathname.startsWith("/signout-with-chatgpt") ||
     url.pathname.startsWith("/callback")
   ) {
     return;

@@ -261,6 +261,53 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
     });
   });
 
+  it("lädt beim Beenden keine CSV herunter und behält die Ergebnisse bis zum Klick", async () => {
+    const createObjectURL = vi.fn(() => "blob:csv");
+    const originalCreate = URL.createObjectURL;
+    URL.createObjectURL = createObjectURL;
+    try {
+      mocks.getLiveRoomStudents.mockResolvedValue([
+        {
+          studentName: "participant-1",
+          stationNumber: null,
+          appVersion: null,
+          currentIndex: 1,
+          peeks: 0,
+          attempts: 2,
+          errors: 1,
+          finished: false,
+          wordErrors: { Hund: 1 },
+        },
+      ]);
+      const { result } = await openRoom();
+      await act(() => result.current.startSession());
+      await waitFor(() => expect(result.current.students).toHaveLength(1));
+      await act(() => result.current.endRoom());
+      expect(mocks.endLiveRoom).toHaveBeenCalledTimes(1);
+      expect(createObjectURL).not.toHaveBeenCalled();
+      // Der Raum ist zu, die Ergebnisse stehen im Live-Schritt bereit.
+      expect(result.current.flow).toMatchObject({
+        stage: "live",
+        roomClosed: true,
+        busy: false,
+      });
+      expect(result.current.room).not.toBeNull();
+      expect(result.current.students).toHaveLength(1);
+      expect(mocks.clearTeacherLiveRoom).toHaveBeenCalled();
+      // Erst der ausdrückliche Klick erzeugt die Datei.
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => undefined);
+      URL.revokeObjectURL = vi.fn();
+      act(() => result.current.exportCsv());
+      expect(createObjectURL).toHaveBeenCalledTimes(1);
+      expect(click).toHaveBeenCalledTimes(1);
+      click.mockRestore();
+    } finally {
+      URL.createObjectURL = originalCreate;
+    }
+  });
+
   it("lässt den Raum offen, wenn das Beenden scheitert", async () => {
     const { result, setError } = await openRoom();
     mocks.endLiveRoom.mockRejectedValue(new Error("offline"));

@@ -55,7 +55,7 @@ export function StudentFrame({
           aria-label="Hauptnavigation"
           hidden={hideNav === true}
         >
-          {/* Das Logo führt zur Startseite (Raumcode, Lehrer-Login). */}
+          {/* Das Logo führt zur Startseite (Raumcode, Lehrerbereich). */}
           <Link href="/" className={styles.brand} aria-label="Zur Startseite">
             <BrandSymbol height={40} onDark />
           </Link>
