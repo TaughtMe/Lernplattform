@@ -1,3 +1,4 @@
+import { answerMatches } from "./answer-normalization";
 import { normalizeVocabularyText } from "./learning-bundle";
 import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
 import type { LiveVocabularyOutcome } from "./live-vocabulary-placement";
@@ -158,7 +159,11 @@ export function getLearningBoxPrompt(
     : { question: card.answer, answer: card.question };
 }
 
-/** Mehrere richtige Antworten stehen mit „|“ getrennt: „home | house“. */
+/**
+ * Mehrere richtige Antworten stehen mit „|“ getrennt: „home | house“. Das ist
+ * die Anzeige-Liste; was als richtig gilt (auch „/“ und Klammerteile), regelt
+ * `answerAlternatives` in der Antwortprüfung.
+ */
 export function learningBoxAlternatives(text: string) {
   return text
     .split("|")
@@ -166,19 +171,19 @@ export function learningBoxAlternatives(text: string) {
     .filter(Boolean);
 }
 
+/**
+ * Prüft die Eingabe gegen die Lösung (G-002, G-003): typografische Zeichen
+ * werden angeglichen und Alternativen („|“, „/“, Klammerteile) gelten, siehe
+ * `answerMatches`. Der Fingerabdruck der Karte bleibt davon unberührt.
+ */
 export function evaluateLearningBoxAnswer(
   card: LearningBoxCard,
   input: string,
   direction: LearningBoxDirection,
 ) {
   const prompt = getLearningBoxPrompt(card, direction);
-  const given = normalizeVocabularyText(input);
   return {
-    accepted:
-      given !== "" &&
-      learningBoxAlternatives(prompt.answer).some(
-        (answer) => normalizeVocabularyText(answer) === given,
-      ),
+    accepted: answerMatches(prompt.answer, input, { compatibility: true }),
     expectedAnswer: prompt.answer,
   };
 }

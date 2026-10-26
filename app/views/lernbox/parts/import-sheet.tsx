@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import {
+  commaToAlternatives,
+  hasAlternativeComma,
+} from "../../../../src/domain/answer-normalization";
+import {
   parseVocabularyImport,
   vocabularyPairProblem,
 } from "../../../../src/domain/vocabulary-import";
@@ -32,9 +36,13 @@ const emptyRow = (): ImportTypedRow => ({
 });
 
 /** Vorschau aus den getippten Zeilen; leere Zeilen zählen nicht. */
-function previewTyped(rows: readonly ImportTypedRow[]): ImportPreviewData {
+function previewTyped(
+  rows: readonly ImportTypedRow[],
+  commaSeparates: boolean,
+): ImportPreviewData {
   const recognised: LbImportRow[] = [];
   const skipped: ImportSkippedLine[] = [];
+  let commaCandidates = 0;
   rows.forEach((row, index) => {
     const question = row.question.trim();
     const answer = row.answer.trim();
@@ -49,15 +57,28 @@ function previewTyped(rows: readonly ImportTypedRow[]): ImportPreviewData {
       });
       return;
     }
-    recognised.push({ question, answer, ...(tag ? { tag } : {}) });
+    if (hasAlternativeComma(question) || hasAlternativeComma(answer)) {
+      commaCandidates += 1;
+    }
+    recognised.push({
+      question: commaSeparates ? commaToAlternatives(question) : question,
+      answer: commaSeparates ? commaToAlternatives(answer) : answer,
+      ...(tag ? { tag } : {}),
+    });
   });
-  return { rows: recognised, skipped, headerSkipped: false };
+  return { rows: recognised, skipped, headerSkipped: false, commaCandidates };
 }
 
 /** Vorschau aus eingefügtem Text oder einer Datei. */
-function previewText(text: string): ImportPreviewData {
-  const { entries, skipped, headerSkipped } = parseVocabularyImport(text);
-  return { rows: toLearningBoxImportRows(entries), skipped, headerSkipped };
+function previewText(text: string, commaSeparates: boolean): ImportPreviewData {
+  const { entries, skipped, headerSkipped, commaCandidates } =
+    parseVocabularyImport(text, { commaSeparates });
+  return {
+    rows: toLearningBoxImportRows(entries),
+    skipped,
+    headerSkipped,
+    commaCandidates,
+  };
 }
 
 export function ImportSheet(props: LernBoxScreenProps) {
@@ -71,6 +92,8 @@ export function ImportSheet(props: LernBoxScreenProps) {
   const [focusId, setFocusId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [preview, setPreview] = useState<ImportPreviewData | null>(null);
+  // G-003: Das Komma trennt Alternativen nur nach Bestätigung in der Vorschau.
+  const [commaSeparates, setCommaSeparates] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState("");
 
@@ -80,6 +103,11 @@ export function ImportSheet(props: LernBoxScreenProps) {
       : Boolean(text.trim());
   const deckTitle = decks.find((deck) => deck.id === deckId)?.title ?? "";
 
+  function buildPreview(comma: boolean) {
+    return way === "type"
+      ? previewTyped(rows, comma)
+      : previewText(text, comma);
+  }
   function addRow() {
     const row = emptyRow();
     setRows((current) => [...current, row]);
@@ -114,6 +142,7 @@ export function ImportSheet(props: LernBoxScreenProps) {
       setRows(Array.from({ length: START_ROWS }, emptyRow));
       setFocusId(null);
       setPreview(null);
+      setCommaSeparates(false);
     } finally {
       setBusy(false);
     }
@@ -133,7 +162,14 @@ export function ImportSheet(props: LernBoxScreenProps) {
         />
       ) : preview ? (
         <div className={styles.sheetForm}>
-          <ImportPreview preview={preview} />
+          <ImportPreview
+            preview={preview}
+            commaSeparates={commaSeparates}
+            onCommaSeparates={(value) => {
+              setCommaSeparates(value);
+              setPreview(buildPreview(value));
+            }}
+          />
           <p className={styles.hint}>
             Sie kommen in den Stapel „{deckTitle}“. Erst mit „Übernehmen“ werden
             sie gespeichert.
@@ -163,7 +199,8 @@ export function ImportSheet(props: LernBoxScreenProps) {
             event.preventDefault();
             if (!deckId || !hasInput) return;
             setResult("");
-            setPreview(way === "type" ? previewTyped(rows) : previewText(text));
+            setCommaSeparates(false);
+            setPreview(buildPreview(false));
           }}
         >
           <div

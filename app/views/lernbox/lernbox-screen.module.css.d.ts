@@ -78,7 +78,9 @@ declare const styles: {
   readonly homeHead: string;
   readonly homeTitle: string;
   readonly iconButton: string;
+  readonly importAlso: string;
   readonly importCells: string;
+  readonly importComma: string;
   readonly importCount: string;
   readonly importDelete: string;
   readonly importFileRow: string;

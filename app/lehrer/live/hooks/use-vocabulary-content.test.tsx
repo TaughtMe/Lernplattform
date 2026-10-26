@@ -79,6 +79,26 @@ describe("useVocabularyContent", () => {
     expect(result.current.vocabularyTableInput).toBe("");
   });
 
+  it("trennt das Komma beim Übernehmen nur nach Bestätigung (G-003)", () => {
+    const { result } = setup();
+    act(() => result.current.setVocabularyTableInput("groß;big, huge"));
+    act(() => result.current.importVocabularyTable());
+    expect(result.current.vocabularyPairs[0]?.right).toEqual({
+      primary: "big, huge",
+      alternatives: [],
+    });
+
+    act(() => result.current.setVocabularyTableInput("groß;big, huge"));
+    act(() => result.current.setVocabularyCommaSeparates(true));
+    act(() => result.current.importVocabularyTable());
+    expect(result.current.vocabularyPairs[0]?.right).toEqual({
+      primary: "big",
+      alternatives: ["huge"],
+    });
+    // Die Bestätigung gilt nur für diesen Import.
+    expect(result.current.vocabularyCommaSeparates).toBe(false);
+  });
+
   it("lässt bei einer leeren Tabelle alles stehen", () => {
     const { result } = setup();
     act(() => result.current.setVocabularyTableInput("   "));

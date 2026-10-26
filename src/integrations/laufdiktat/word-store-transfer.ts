@@ -1,4 +1,10 @@
-import { alignWords, tokenizeText, wordsOf } from "../../domain/text-compare";
+import { LEARNING_WORD_COLLECTIONS } from "../../domain/german-learning-content";
+import {
+  alignWords,
+  tokenizeText,
+  wordsOf,
+  type TextToken,
+} from "../../domain/text-compare";
 import { wordKey } from "../../domain/word-box";
 import { liveWordKind, type LiveSession } from "./live-session";
 import {
@@ -39,25 +45,136 @@ function distinct(words: readonly string[]) {
   });
 }
 
+// --- Satzanfänge (G-012) -----------------------------------------------------
+//
+// Am Satzanfang ist jedes Wort großgeschrieben. Im Wortspeicher soll es so
+// stehen, wie man es mitten im Satz schreibt: „Plötzlich“ wird „plötzlich“,
+// „Hund“ bleibt „Hund“.
+
+const SENTENCE_END = new Set([".", "!", "?", ":"]);
+
+/** Kürzel, nach deren Punkt kein neuer Satz beginnt („z. B. Tom“, „Dr. Roth“). */
+const ABBREVIATIONS = new Set([
+  "dr",
+  "hr",
+  "fr",
+  "nr",
+  "prof",
+  "bzw",
+  "usw",
+  "ca",
+  "vgl",
+  "ggf",
+  "evtl",
+  "str",
+  "mio",
+  "mrd",
+  "sog",
+  "bspw",
+]);
+
+let knownCapitalised: ReadonlySet<string> | undefined;
+
+/** Großgeschrieben bekannte Wörter (Nomen) der eingebauten Wortboxen, einmal gebaut. */
+function capitalisedWordIndex(): ReadonlySet<string> {
+  knownCapitalised ??= new Set(
+    LEARNING_WORD_COLLECTIONS.flatMap((collection) => collection.words)
+      .map((word) => word.normalize("NFC"))
+      .filter((word) => /^\p{Lu}/u.test(word)),
+  );
+  return knownCapitalised;
+}
+
+/**
+ * Indizes (unter den Wörtern) der Wörter am Satzanfang: das erste Wort des
+ * Textes und jedes großgeschriebene Wort nach „.“, „!“, „?“ oder „:“, auch nach
+ * öffnenden Anführungszeichen. Ein Punkt nach Kürzel, Zahl oder Einzelbuchstaben
+ * beendet keinen Satz.
+ */
+function sentenceStartIndexes(tokens: readonly TextToken[]): Set<number> {
+  const starts = new Set<number>();
+  let pending = true;
+  let previousWord: string | undefined;
+  for (const token of tokens) {
+    if (token.kind === "word") {
+      if (pending && /^\p{Lu}/u.test(token.text)) starts.add(token.index);
+      pending = false;
+      previousWord = token.text;
+      continue;
+    }
+    if (SENTENCE_END.has(token.text)) {
+      const lower = previousWord?.toLocaleLowerCase("de");
+      const abbreviation =
+        token.text === "." &&
+        lower !== undefined &&
+        (ABBREVIATIONS.has(lower) ||
+          /^\p{N}+$/u.test(lower) ||
+          [...lower].length === 1);
+      if (!abbreviation) pending = true;
+    }
+    previousWord = undefined;
+  }
+  return starts;
+}
+
+function isAcronym(word: string) {
+  return (word.slice(1).match(/\p{Lu}/gu)?.length ?? 0) > 0;
+}
+
+/**
+ * Wörter eines Textes in der Form für den Wortspeicher: Wörter am Satzanfang
+ * klein, außer sie sind als Nomen bekannt, stehen im selben Text auch mitten im
+ * Satz großgeschrieben oder sind Kürzel („USA“, „E-Mail“).
+ */
+function storeForms(text: string) {
+  const tokens = tokenizeText(text);
+  const words = wordsOf(tokens);
+  const starts = sentenceStartIndexes(tokens);
+  const capitalInside = new Set(
+    words
+      .filter((word, index) => !starts.has(index) && /^\p{Lu}/u.test(word))
+      .map((word) => word.toLocaleLowerCase("de")),
+  );
+  const known = capitalisedWordIndex();
+  const keepsCapital = (word: string) =>
+    isAcronym(word) ||
+    known.has(word.normalize("NFC")) ||
+    capitalInside.has(word.toLocaleLowerCase("de"));
+  const form = (word: string, index: number) =>
+    starts.has(index) && !keepsCapital(word)
+      ? word.toLocaleLowerCase("de")
+      : word;
+  return { tokens, words, starts, form, keepsCapital };
+}
+
 /**
  * Falsch geschriebene Wörter eines Textteils: Wort für Wort ausgerichtet, nur
  * „falsch“ und „nur Groß-/Kleinschreibung“. Ausgelassene und zusätzliche Wörter
- * zählen nicht, reine Zahlen nie. Zurück kommen die Wörter des Zieltextes.
+ * zählen nicht, reine Zahlen nie. Zurück kommen die Wörter des Zieltextes, am
+ * Satzanfang klein geschrieben (G-012), außer es sind Nomen. Ein reiner
+ * Großschreibfehler am Satzanfang („heute“ für „Heute“) zählt nicht.
  */
 export function misspelledWords(target: string, input: string): string[] {
-  const results = alignWords(
-    wordsOf(tokenizeText(target)),
-    wordsOf(tokenizeText(input)),
-  );
+  const { words, starts, form, keepsCapital } = storeForms(target);
+  const results = alignWords(words, wordsOf(tokenizeText(input)));
   return distinct(
-    results
-      .filter(
-        (result) =>
-          (result.kind === "falsch" || result.kind === "gross-klein") &&
-          result.expected !== undefined &&
-          !isNumberOnly(result.expected),
-      )
-      .map((result) => result.expected!),
+    results.flatMap((result) => {
+      const { expected, expectedIndex } = result;
+      if (
+        (result.kind !== "falsch" && result.kind !== "gross-klein") ||
+        expected === undefined ||
+        isNumberOnly(expected)
+      ) {
+        return [];
+      }
+      const atStart = expectedIndex !== undefined && starts.has(expectedIndex);
+      if (atStart && result.kind === "gross-klein" && !keepsCapital(expected)) {
+        return [];
+      }
+      return [
+        expectedIndex === undefined ? expected : form(expected, expectedIndex),
+      ];
+    }),
   );
 }
 
@@ -80,12 +197,15 @@ export function buildWordStoreTransfer(
       ...(trace.wordMisspellings?.[liveWordErrorKey(word)] ?? []),
     );
     if (trace.finished || index <= trace.currentIndex) {
+      const { words, form } = storeForms(word.targetWord);
       reached.push(
-        ...wordsOf(tokenizeText(word.targetWord)).filter(
-          (token) =>
-            !isNumberOnly(token) &&
-            letterCount(token) >= WORD_STORE_MIN_LETTERS,
-        ),
+        ...words
+          .map(form)
+          .filter(
+            (token) =>
+              !isNumberOnly(token) &&
+              letterCount(token) >= WORD_STORE_MIN_LETTERS,
+          ),
       );
     }
   });
