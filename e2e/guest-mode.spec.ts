@@ -14,6 +14,7 @@ import { analyzeAccessibility } from "./accessibility-helpers";
 
 const ORIGIN = "http://localhost:3000";
 const GUEST_KEY = "lernraum.gastmodus";
+const LAST_BACKUP_KEY = "lernraum:personal:v1:last-backup";
 const MINUTE = 60_000;
 const classId = "123e4567-e89b-42d3-a456-426614174001";
 
@@ -230,20 +231,29 @@ test("ein Gastmodus nach mehr als 12 Stunden wird beim nächsten Start beendet u
   await page.goto("/lernen/einstellungen");
   await expect(band(page)).toBeVisible();
 
-  await page.evaluate((key) => {
-    const state = JSON.parse(localStorage.getItem(key) ?? "{}");
-    state.startedAt = new Date(Date.now() - 13 * 3_600_000).toISOString();
-    localStorage.setItem(key, JSON.stringify(state));
-  }, GUEST_KEY);
+  await page.evaluate(
+    ({ key, backupKey }) => {
+      const state = JSON.parse(localStorage.getItem(key) ?? "{}");
+      state.startedAt = new Date(Date.now() - 13 * 3_600_000).toISOString();
+      localStorage.setItem(key, JSON.stringify(state));
+      // Schülereintrag, den die App nach dem Neuladen nicht von selbst anlegt
+      // (anders als das zufällige Profil eines ersten Besuchs).
+      localStorage.setItem(backupKey, new Date().toISOString());
+    },
+    { key: GUEST_KEY, backupKey: LAST_BACKUP_KEY },
+  );
   await page.reload();
 
+  // Nach dem Löschen lädt die App neu; ein Lesen mitten im Neuladen zählt als
+  // „noch nicht“ und wird wiederholt.
+  const stored = (key: string) =>
+    page
+      .evaluate((name) => localStorage.getItem(name), key)
+      .catch(() => "neu laden");
+  await expect.poll(() => stored(GUEST_KEY)).toBeNull();
+  await expect.poll(() => stored(LAST_BACKUP_KEY)).toBeNull();
+  await page.waitForLoadState();
   await expect(band(page)).toHaveCount(0);
-  await expect
-    .poll(() => page.evaluate((key) => localStorage.getItem(key), GUEST_KEY))
-    .toBeNull();
-  await expect(
-    page.evaluate(() => localStorage.getItem("lernraum:personal:profile:v1")),
-  ).resolves.toBeNull();
 });
 
 test("die Lehrkraft zeigt in der Klassenansicht den Gast-QR für 90 Minuten", async ({
