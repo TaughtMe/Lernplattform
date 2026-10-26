@@ -12,6 +12,8 @@ const level = z.union([
   z.literal(5),
 ]);
 const stageLevel = z.union([level, z.literal(6)]);
+/** Box eines Lernworts: 1 bis 5 und das Lernarchiv (Box 6, Regel A-5). */
+const wordBoxLevel = stageLevel;
 const instant = z.iso.datetime({ offset: true });
 const problemChars = z.array(
   z.object({ char: z.string().min(1), errors: count }),
@@ -23,7 +25,7 @@ export const learningWordProgressSchema: z.ZodType<LearningWordProgress> =
     id: z.string().min(1),
     word: z.string().min(1),
     stage: stageLevel,
-    box: level,
+    box: wordBoxLevel,
     dueAt: instant,
     attempts: count,
     incorrectAttempts: count,

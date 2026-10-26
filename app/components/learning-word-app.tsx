@@ -14,6 +14,7 @@ import { homophoneHint } from "../../src/domain/homophones";
 import { rankTextsForWords } from "../../src/domain/textbox-progress";
 import { TEXTBOX_DIFFICULTY_LABELS } from "../../src/domain/textbox-text";
 import {
+  isLearningArchiveWord,
   learningWordId,
   type LearningWordMode,
   type LearningWordProgress,
@@ -897,6 +898,13 @@ export function LearningWordApp({
           strategy={sheetView.strategy ?? collection?.strategy}
           detail={collection?.detail}
           wordCount={sheetView.words.length}
+          archiveWords={
+            sheetView.id === FALLIGE_ID
+              ? (todayEntries ?? store.due)
+                  .filter(isLearningArchiveWord)
+                  .map((entry) => entry.word)
+              : undefined
+          }
           stages={LEARNING_WORD_STAGES.map((stage) => {
             const locked = lockedStage(sheetView.id, stage);
             const last = sheetSummary?.[stage];

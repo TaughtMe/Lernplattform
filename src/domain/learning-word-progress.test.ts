@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { LearningWordStage } from "./learning-word";
 import {
+  isLearningArchiveBonusDue,
+  isLearningArchiveWord,
+  isLearningWordDue,
   learningWordId,
   updateLearningWordProgress,
   type LearningWordBox,
   type LearningWordMode,
   type LearningWordProgress,
 } from "./learning-word-progress";
-import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
+import {
+  LEARNING_ARCHIVE_BONUS_DAYS,
+  LEITNER_INTERVAL_DAYS,
+} from "./leitner-schedule";
 
 // Lokale Zeiten: „Beginn des nächsten Tages“ hängt an der Zeitzone des Geräts.
 const NOW = new Date(2026, 9, 21, 15, 0).toISOString();
@@ -226,13 +232,151 @@ const RULES: Row[] = [
     expect: { box: 4, dueAt: "+14", stage: 5 },
   },
   {
-    regel: "W-6 Wiederholung, höchstens Box 5",
+    regel: "W-6/A-1 Wiederholung, Stufe 4 in Box 5 bleibt Box 5",
+    mode: "due",
+    from: { box: 5, due: true, stage: 4 },
+    first: true,
+    outcome: "richtig",
+    stage: 4,
+    expect: { box: 5, dueAt: "+30", stage: 4 },
+  },
+  {
+    regel: "W-6/A-1 Wiederholung, Stufe 5 in Box 5 bleibt Box 5",
+    mode: "due",
+    from: { box: 5, due: true, stage: 5 },
+    first: true,
+    outcome: "richtig",
+    stage: 5,
+    expect: { box: 5, dueAt: "+30", stage: 5 },
+  },
+  // A-1: Lernarchiv (Box 6).
+  {
+    regel: "A-1 Wiederholung, Box 5 richtig auf Stufe 6: Lernarchiv, Bonus +30",
     mode: "due",
     from: { box: 5, due: true, stage: 6 },
     first: true,
     outcome: "richtig",
     stage: 6,
+    expect: { box: 6, dueAt: "+30", stage: 6 },
+  },
+  {
+    regel: "A-1 Box 4 richtig auf Stufe 6 kommt nur in Box 5, nicht ins Archiv",
+    mode: "due",
+    from: { box: 4, due: true, stage: 6 },
+    first: true,
+    outcome: "richtig",
+    stage: 6,
     expect: { box: 5, dueAt: "+30", stage: 6 },
+  },
+  {
+    regel: "A-1 Box 5 auf Stufe 6 mit Hilfe: nicht ins Archiv, Box 1",
+    mode: "due",
+    from: { box: 5, due: true, stage: 6 },
+    first: true,
+    outcome: "hilfe",
+    stage: 6,
+    expect: { box: 1, dueAt: "next", stage: 5 },
+  },
+  {
+    regel: "A-1 Box 5 auf Stufe 6 mit Selbstkorrektur: nicht ins Archiv, Box 1",
+    mode: "due",
+    from: { box: 5, due: true, stage: 6 },
+    first: true,
+    outcome: "korrigiert",
+    stage: 6,
+    expect: { box: 1, dueAt: "next", stage: 5 },
+  },
+  {
+    regel: "A-1 Box 5 auf Stufe 6, nur späterer Versuch: kein Archiv",
+    mode: "due",
+    from: { box: 5, due: true, stage: 6 },
+    first: false,
+    outcome: "richtig",
+    stage: 6,
+    expect: { box: 5, dueAt: "same", stage: 6 },
+  },
+  {
+    regel: "A-1 Box 5 auf Stufe 6 im freien Üben: Box bleibt 5 (W-1)",
+    mode: "free",
+    from: { box: 5, due: true, stage: 6 },
+    first: true,
+    outcome: "richtig",
+    stage: 6,
+    expect: { box: 5, dueAt: "same", stage: 6 },
+  },
+  // A-4: Bonusabfrage eines Archivworts.
+  {
+    regel: "A-4 Bonus richtig: bleibt Box 6, wieder +30 Tage",
+    mode: "due",
+    from: { box: 6, due: true, stage: 6 },
+    first: true,
+    outcome: "richtig",
+    stage: 4,
+    expect: { box: 6, dueAt: "+30", stage: 6 },
+  },
+  {
+    regel: "A-4 Bonus falsch: zurück in Box 4, morgen fällig",
+    mode: "due",
+    from: { box: 6, due: true, stage: 6 },
+    first: true,
+    outcome: "falsch",
+    stage: 5,
+    expect: { box: 4, dueAt: "next", stage: 4 },
+  },
+  {
+    regel: "A-4 Bonus mit Hilfe: zurück in Box 4, morgen fällig",
+    mode: "due",
+    from: { box: 6, due: true, stage: 6 },
+    first: true,
+    outcome: "hilfe",
+    stage: 6,
+    expect: { box: 4, dueAt: "next", stage: 5 },
+  },
+  {
+    regel: "A-4 Bonus mit Selbstkorrektur: zurück in Box 4, morgen fällig",
+    mode: "due",
+    from: { box: 6, due: true, stage: 6 },
+    first: true,
+    outcome: "korrigiert",
+    stage: 6,
+    expect: { box: 4, dueAt: "next", stage: 5 },
+  },
+  {
+    regel: "A-4 Archivwort, noch nicht für den Bonus fällig: wie freies Üben",
+    mode: "due",
+    from: { box: 6, due: false, stage: 6 },
+    first: true,
+    outcome: "richtig",
+    stage: 6,
+    expect: { box: 6, dueAt: "same", stage: 6 },
+  },
+  {
+    regel: "A-4 freies Üben, richtig: Box 6 und Bonus-Termin bleiben (W-1)",
+    mode: "free",
+    from: { box: 6, due: false, stage: 6 },
+    first: true,
+    outcome: "richtig",
+    stage: 4,
+    expect: { box: 6, dueAt: "same", stage: 6 },
+  },
+  {
+    regel: "A-4 freies Üben, Fehler: Box 6 bleibt, Bonus darf morgen kommen",
+    mode: "free",
+    from: { box: 6, due: false, stage: 6 },
+    first: true,
+    outcome: "falsch",
+    stage: 4,
+    expect: { box: 6, dueAt: "next", stage: 3 },
+  },
+  {
+    regel:
+      "A-4 freies Üben, Wort zeigen: Box 6 bleibt, Bonus darf morgen kommen",
+    mode: "free",
+    from: { box: 6, due: false, stage: 6 },
+    first: true,
+    outcome: "hilfe",
+    stage: 6,
+    expect: { box: 6, dueAt: "next", stage: 5 },
   },
   {
     regel: "W-6 Wiederholung, Box 4 → 5",
@@ -357,7 +501,7 @@ function expectedDueAt(row: Row, fromDueAt: string | undefined) {
   }
 }
 
-describe("learning word progress: Regeltabelle W-1 bis W-8", () => {
+describe("learning word progress: Regeltabelle W-1 bis W-8 und A-1 bis A-4", () => {
   it.each(RULES)("$regel", (row) => {
     const dueAt = row.from?.due ? DUE : LATER;
     const current = row.from
@@ -443,7 +587,7 @@ describe("learning word progress: Pflichtfälle des Audits", () => {
     expect(progress.box).toBe(2);
   });
 
-  it("W-6: Jede Wiederholung zur Fälligkeit hebt die Box um eine Stufe, bis 5", () => {
+  it("W-6: Jede Wiederholung zur Fälligkeit hebt die Box um eine Stufe, bis 5 und mit Stufe 6 ins Archiv", () => {
     // Erste Runde frei: Box 1, morgen fällig.
     let progress = update(undefined, {
       mode: "free",
@@ -462,7 +606,9 @@ describe("learning word progress: Pflichtfälle des Audits", () => {
       });
       boxes.push(progress.box);
     }
-    expect(boxes).toEqual([2, 3, 4, 5, 5, 5, 5]);
+    // Stufe 6 ohne Hilfe in Box 5 führt ins Lernarchiv (A-1); weitere
+    // fällige Abfragen sind Bonusabfragen und lassen Box 6 stehen (A-4).
+    expect(boxes).toEqual([2, 3, 4, 5, 6, 6, 6]);
     expect(progress.stage).toBe(6);
   });
 
@@ -533,5 +679,54 @@ describe("learning word progress: Pflichtfälle des Audits", () => {
     });
     expect(first).toMatchObject({ stage: 2, box: 1 });
     expect(afterError).toMatchObject({ stage: 1, box: 1 });
+  });
+});
+
+describe("Lernarchiv (Box 6): Fälligkeit", () => {
+  it("A-7: Der Bonus-Abstand ist 30 Tage und steht nicht in der Leitner-Tabelle", () => {
+    expect(LEARNING_ARCHIVE_BONUS_DAYS).toBe(30);
+    expect(Object.keys(LEITNER_INTERVAL_DAYS)).toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+    ]);
+  });
+
+  it("A-2: Ein Archivwort ist nie regulär fällig, aber bonusfähig ab dueAt", () => {
+    const archived = stored(6, DUE, 6);
+    expect(isLearningArchiveWord(archived)).toBe(true);
+    expect(isLearningWordDue(archived, NOW)).toBe(false);
+    expect(isLearningArchiveBonusDue(archived, NOW)).toBe(true);
+    expect(isLearningArchiveBonusDue(stored(6, LATER, 6), NOW)).toBe(false);
+    expect(isLearningWordDue(stored(5, DUE, 6), NOW)).toBe(true);
+    expect(isLearningArchiveBonusDue(stored(5, DUE, 6), NOW)).toBe(false);
+  });
+
+  it("A-4: Nach einem Fehler im Bonus kommt das Wort über Box 4 und 5 zurück ins Archiv", () => {
+    let progress = update(stored(6, DUE, 6), {
+      mode: "due",
+      first: true,
+      outcome: "falsch",
+      stage: 6,
+    });
+    expect(progress.box).toBe(4);
+    progress = update(progress, {
+      mode: "due",
+      first: true,
+      outcome: "richtig",
+      stage: 6,
+      now: progress.dueAt,
+    });
+    expect(progress.box).toBe(5);
+    progress = update(progress, {
+      mode: "due",
+      first: true,
+      outcome: "richtig",
+      stage: 6,
+      now: progress.dueAt,
+    });
+    expect(progress.box).toBe(6);
   });
 });

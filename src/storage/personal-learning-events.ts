@@ -42,6 +42,7 @@ import type {
   LearningWordProgress,
 } from "../domain/learning-word-progress";
 import {
+  isLearningWordDue,
   learningWordId,
   updateLearningWordProgress,
 } from "../domain/learning-word-progress";
@@ -796,6 +797,7 @@ export function createLearningWordProgressRepository(
         await database.learningWordProgress.toArray(),
         "learningWordProgress",
       ).items,
+    // Archivwörter (Box 6) sind nie regulär fällig (Regel A-2).
     listDue: async (now = new Date().toISOString()) =>
       readTolerant(
         learningWordProgressSchema,
@@ -804,7 +806,7 @@ export function createLearningWordProgressRepository(
           .belowOrEqual(now)
           .toArray(),
         "learningWordProgress",
-      ).items,
+      ).items.filter((word) => isLearningWordDue(word, now)),
     recordAttempt: async (input: {
       words: readonly string[];
       correct: boolean;

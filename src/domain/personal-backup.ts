@@ -51,7 +51,8 @@ const learningWordProgressBackupSchema = z
     id: z.string().min(1),
     word: z.string().min(1),
     stage: z.union([learningBoxLevelSchema, z.literal(6)]),
-    box: learningBoxLevelSchema,
+    // Box 6 = Lernarchiv (Regel A-5); ältere Sicherungen enthalten nur 1 bis 5.
+    box: z.union([learningBoxLevelSchema, z.literal(6)]),
     dueAt: z.iso.datetime({ offset: true }),
     attempts: countSchema,
     incorrectAttempts: countSchema,
