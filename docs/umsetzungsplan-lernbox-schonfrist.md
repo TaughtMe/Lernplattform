@@ -22,3 +22,24 @@ des Entwicklers vom 21./22.10.2026.
 Tabellentest für L-2 bis L-5 mit injizierter Zeit; Test, dass eine richtige
 Antwort nach Rückstufung von der wirksamen Box aufsteigt und eine falsche auf
 Box 1 setzt; Sicherung und Abgleich bleiben unverändert (keine neuen Felder).
+
+## Klärung Box 1 (C7)
+
+Die Frage aus Welle 1 ist mit L-5 entschieden: In Box 1 gibt es keine Rückstufung,
+weil es keine tiefere Box gibt. Die Schonfrist von 14 Tagen gilt aber auch in Box 1
+für die Kennzeichnung „lange nicht geübt“, wie in jeder Box. Umgesetzt in
+`isLearningBoxLongUnpracticed` (`src/domain/learning-box.ts`) und getestet in
+`src/domain/learning-box.test.ts`. Ferien werden weiterhin nicht berücksichtigt (L-6).
+
+## Beobachtung in der Beta
+
+- **Wiederaufnahme nach den Ferien:** Anteil der Kinder, die in der ersten Schulwoche
+  nach den Ferien die LernBox wieder öffnen; Anteil der Karten „lange nicht geübt“
+  und wie schnell er sinkt.
+- **Motivation:** Rückmeldungen der Lehrkräfte und Kinder zu Rückstufungen; Abbrüche
+  der ersten Portion nach den Ferien.
+- **Entscheidungsfrage danach:** Ferien aussetzen oder die Rückstufung auf eine Box
+  begrenzen.
+
+Hinweis: Die Erhebung erfolgt nur über Gespräche und Lehrkraftbeobachtung, ohne
+zusätzliche Datenerhebung (Datenschutz, Entscheidung 43).
