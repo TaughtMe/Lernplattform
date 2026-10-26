@@ -7,6 +7,7 @@ import {
   buildBlankingPlan,
   finishMemorize,
   nextRound,
+  repeatRound,
   sessionFromRun,
   startRun,
   submitRound,
@@ -242,6 +243,51 @@ describe("Backup mit Textbox-Einheiten", () => {
     expect(
       (await restorePersonalLearningBackup(exported, target)).unchanged,
     ).toBe(3);
+  });
+
+  it("sichert Übungsversuche mit; sie ändern das gewertete Ergebnis nicht", async () => {
+    const source = createDatabase();
+    const target = createDatabase();
+    // Erster Versuch in Durchgang 4: nur ein Wort, danach Übungsversuch mit dem ganzen Text.
+    let state = startRun(text, "geuebt");
+    for (let round = 1; round <= 4; round += 1) {
+      state = finishMemorize(state, 100);
+      const gaps = buildBlankingPlan(text, state.seed)[round - 1]!.size;
+      state = submitRound(
+        state,
+        text,
+        round === 4 ? "Hund" : Array.from({ length: gaps }, () => ""),
+        100,
+      );
+      if (round < 4) state = nextRound(state);
+    }
+    const firstPercent = state.rounds[3]!.score.percent;
+    state = submitRound(
+      finishMemorize(repeatRound(state), 100),
+      text,
+      text.text,
+      100,
+    );
+    expect(state.rounds[3]!.retries![0]!.score.percent).toBe(100);
+    const done = sessionFromRun(nextRound(state), text, {
+      startedAt: t0,
+      now: t1,
+    });
+    expect(done.finalPercent).toBe(firstPercent);
+    await createTextboxRepository(source).complete(done);
+    // Das Lernereignis folgt dem ersten Versuch (unter 90 %: nicht richtig).
+    expect((await source.learningEvents.toArray())[0]?.assessment.writing).toBe(
+      "incorrect",
+    );
+
+    const serialized = await serializePersonalLearningBackupFromDatabase(
+      source,
+      t1,
+    );
+    await restorePersonalLearningBackupText(serialized, target);
+    const [restored] = await createTextboxRepository(target).listCompleted();
+    expect(restored).toEqual(done);
+    expect(restored!.rounds[3]!.retries).toHaveLength(1);
   });
 
   it("lädt ältere Sicherungen ohne Textbox-Feld", async () => {

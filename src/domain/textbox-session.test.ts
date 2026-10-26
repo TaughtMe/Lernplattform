@@ -183,7 +183,7 @@ describe("Zustandsautomat", () => {
   });
 });
 
-describe("repeatRound", () => {
+describe("repeatRound (Übungsversuch, erster Versuch zählt)", () => {
   function reviewed(round: 1 | 2 | 3 | 4, id = "run-repeat") {
     let state = startRun(text, id);
     for (let r = 1; r <= round; r += 1) {
@@ -194,23 +194,40 @@ describe("repeatRound", () => {
     return state;
   }
 
-  it("leert in Durchgang 1 die Ergebnisse", () => {
+  /** Eingabe, in der jede Lücke bzw. jedes Wort falsch ist. */
+  function wrongInput(state: TextboxRunState): string[] | string {
+    const input = perfectInput(state);
+    return typeof input === "string" ? "xx yy zz" : input.map(() => "daneben");
+  }
+
+  function reviewedWrong(round: 1 | 2 | 3 | 4, id = "run-wrong") {
+    let state = startRun(text, id);
+    for (let r = 1; r <= round; r += 1) {
+      state = finishMemorize(state, 5000);
+      state = submitRound(state, text, wrongInput(state), 8000);
+      if (r < round) state = nextRound(state);
+    }
+    return state;
+  }
+
+  it("behält in Durchgang 1 das Ergebnis des ersten Versuchs", () => {
     const state = repeatRound(reviewed(1));
-    expect(state).toMatchObject({ round: 1, phase: "memorize", rounds: [] });
+    expect(state).toMatchObject({ round: 1, phase: "memorize", retry: true });
+    expect(state.rounds.map((r) => r.round)).toEqual([1]);
     expect(state).not.toHaveProperty("memorizeMs");
   });
 
-  it("behält in Durchgang 3 die zwei früheren Ergebnisse", () => {
+  it("behält in Durchgang 3 alle drei Ergebnisse", () => {
     const state = repeatRound(reviewed(3));
     expect(state.round).toBe(3);
     expect(state.phase).toBe("memorize");
-    expect(state.rounds.map((r) => r.round)).toEqual([1, 2]);
+    expect(state.rounds.map((r) => r.round)).toEqual([1, 2, 3]);
   });
 
   it("führt in Durchgang 4 vor „Ergebnis ansehen“ zurück zum Merken", () => {
     const state = repeatRound(reviewed(4));
-    expect(state).toMatchObject({ round: 4, phase: "memorize" });
-    expect(state.rounds.map((r) => r.round)).toEqual([1, 2, 3]);
+    expect(state).toMatchObject({ round: 4, phase: "memorize", retry: true });
+    expect(state.rounds.map((r) => r.round)).toEqual([1, 2, 3, 4]);
   });
 
   it("wirft außerhalb der Kontrolle", () => {
@@ -225,6 +242,88 @@ describe("repeatRound", () => {
     expect(() => repeatRound({ ...state, rounds: [] })).toThrow();
   });
 
+  it("erste Antwort falsch, Korrektur richtig: zählt als falsch", () => {
+    const first = reviewedWrong(2);
+    const firstRound = first.rounds[1]!;
+    expect(firstRound.score.percent).toBe(0);
+    const again = submitRound(
+      finishMemorize(repeatRound(first), 1000),
+      text,
+      perfectInput(first),
+      2000,
+    );
+    expect(again.phase).toBe("review");
+    // Kein neuer Durchgang, der erste Versuch ist unverändert.
+    expect(again.rounds).toHaveLength(2);
+    expect(again.rounds[1]).toMatchObject({
+      words: firstRound.words,
+      score: firstRound.score,
+      blanked: firstRound.blanked,
+      memorizeMs: 5000,
+      writingMs: 8000,
+    });
+    expect(again.rounds[1]!.score.percent).toBe(0);
+    // Der Übungsversuch wird gespeichert, aber nicht gewertet.
+    expect(again.rounds[1]!.retries).toHaveLength(1);
+    expect(again.rounds[1]!.retries![0]).toMatchObject({
+      memorizeMs: 1000,
+      writingMs: 2000,
+      score: { percent: 100 },
+    });
+  });
+
+  it("erste Antwort richtig, schlechtere Wiederholung: zählt als richtig", () => {
+    const first = reviewed(2);
+    const again = submitRound(
+      finishMemorize(repeatRound(first), 1000),
+      text,
+      wrongInput(first),
+      2000,
+    );
+    expect(again.rounds[1]!.score.percent).toBe(100);
+    expect(again.rounds[1]!.retries![0]!.score.percent).toBe(0);
+  });
+
+  it("Durchgang 4: Endergebnis und Fehlerwörter bleiben beim ersten Versuch", () => {
+    const first = reviewedWrong(4);
+    const percent = finalPercent(first);
+    let state = submitRound(
+      finishMemorize(repeatRound(first), 1),
+      text,
+      perfectInput(first),
+      1,
+    );
+    expect(state.rounds[3]!.retries![0]!.score.percent).toBe(100);
+    expect(finalPercent(state)).toBe(percent);
+    expect(state.rounds[3]!.words).toEqual(first.rounds[3]!.words);
+    state = nextRound(state);
+    expect(state.phase).toBe("complete");
+    expect(state).not.toHaveProperty("retry");
+    expect(finalPercent(state)).toBe(percent);
+    const session = sessionFromRun(state, text, {
+      startedAt: "2026-10-08T08:00:00.000Z",
+      now: "2026-10-08T08:10:00.000Z",
+    });
+    expect(session.finalPercent).toBe(percent);
+    expect(textboxSessionSchema.parse(session)).toEqual(session);
+  });
+
+  it("hängt mehrere Übungsversuche an und behält die jüngsten fünf", () => {
+    let state = reviewedWrong(1);
+    for (let index = 0; index < 7; index += 1) {
+      state = submitRound(
+        finishMemorize(repeatRound(state), 1),
+        text,
+        perfectInput(state),
+        index,
+      );
+    }
+    const retries = state.rounds[0]!.retries!;
+    expect(retries).toHaveLength(5);
+    expect(retries.map((retry) => retry.writingMs)).toEqual([2, 3, 4, 5, 6]);
+    expect(state.rounds[0]!.score.percent).toBe(0);
+  });
+
   it("liefert nach erneutem Durchlauf dieselben Lücken", () => {
     const first = reviewed(2);
     const again = submitRound(
@@ -235,7 +334,41 @@ describe("repeatRound", () => {
     );
     expect(again.rounds).toHaveLength(2);
     expect(again.rounds[1]!.blanked).toEqual(first.rounds[1]!.blanked);
-    expect(again.rounds[1]!.memorizeMs).toBe(1000);
+    expect(again.rounds[1]!.retries![0]!.memorizeMs).toBe(1000);
+  });
+
+  it("speichert Übungsversuche in der Einheit und liest ältere Einheiten ohne sie", () => {
+    const first = reviewedWrong(1, "run-store");
+    const again = submitRound(
+      finishMemorize(repeatRound(first), 1),
+      text,
+      perfectInput(first),
+      1,
+    );
+    const session = sessionFromRun(again, text, {
+      startedAt: "2026-10-08T08:00:00.000Z",
+      now: "2026-10-08T08:10:00.000Z",
+    });
+    expect(textboxSessionSchema.parse(session)).toEqual(session);
+    // Nach dem Fortsetzen beginnt der nächste Durchgang; die Versuche bleiben.
+    const resumed = runFromSession(session);
+    expect(resumed).toMatchObject({ round: 2, phase: "memorize" });
+    expect(resumed).not.toHaveProperty("retry");
+    expect(resumed.rounds[0]!.retries).toHaveLength(1);
+    // Ältere Daten ohne `retries` bleiben lesbar.
+    const legacy = sessionFromRun(first, text, {
+      startedAt: "2026-10-08T08:00:00.000Z",
+      now: "2026-10-08T08:10:00.000Z",
+    });
+    expect(legacy.rounds[0]).not.toHaveProperty("retries");
+    expect(textboxSessionSchema.safeParse(legacy).success).toBe(true);
+    // Mehr als fünf gespeicherte Versuche sind ungültig.
+    const retry = session.rounds[0]!.retries![0]!;
+    const tooMany = {
+      ...session,
+      rounds: [{ ...session.rounds[0]!, retries: Array(6).fill(retry) }],
+    };
+    expect(textboxSessionSchema.safeParse(tooMany).success).toBe(false);
   });
 });
 

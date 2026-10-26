@@ -72,16 +72,24 @@ function ResultWord({
 /** Kontrolle nach einem Durchgang: Original und Eingabe Wort für Wort im Heft. */
 export function ReviewScreen({
   tokens,
-  result,
+  result: firstAttempt,
+  retry = false,
   onNext,
   onRepeat,
   ...frame
 }: RunFrameProps & {
   tokens: readonly LayoutToken[];
+  /** Durchgang mit erstem Versuch und gegebenenfalls Übungsversuchen. */
   result: TextboxRoundResult;
+  /** Gezeigt wird der jüngste Übungsversuch; er zählt nicht (erster Versuch zählt). */
+  retry?: boolean;
   onNext: () => void;
   onRepeat: () => void;
 }) {
+  const latest = retry ? firstAttempt.retries?.at(-1) : undefined;
+  const result: TextboxRoundResult = latest
+    ? { ...firstAttempt, words: latest.words, score: latest.score }
+    : firstAttempt;
   const { score, round } = result;
   const byWord = new Map<number, WordResult>(
     result.words.flatMap((word) =>
@@ -102,6 +110,7 @@ export function ReviewScreen({
           percent={score.percent}
           unit={round === 4 ? "Wörtern" : "Lücken"}
           extra={score.extra}
+          retry={latest !== undefined}
         />
       }
       hint="Grün ist richtig. Durchgestrichen ist deine Schreibweise, daneben steht das richtige Wort."
@@ -148,6 +157,14 @@ export function ReviewScreen({
           />
         )}
       </div>
+      {latest ? (
+        <p className={styles.note} role="status">
+          Das war ein Übungsversuch. Dein Ergebnis bleibt der erste Versuch:{" "}
+          {firstAttempt.score.correct} von {firstAttempt.score.total}{" "}
+          {round === 4 ? "Wörtern" : "Lücken"} auf Anhieb richtig (
+          {firstAttempt.score.percent} %).
+        </p>
+      ) : null}
       {score.punctuationHints > 0 ? (
         <p className={styles.note}>
           Hinweis: Bei den Satzzeichen gibt es {score.punctuationHints}{" "}

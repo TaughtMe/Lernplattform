@@ -35,14 +35,33 @@ const MAX_FREE_WORDS = 1000;
 export type TextboxRound = 1 | 2 | 3 | 4;
 export type TextboxPhase = "memorize" | "write" | "review" | "complete";
 
-export type TextboxRoundResult = {
-  round: TextboxRound;
-  /** Wortindizes, die in diesem Durchgang ausgeblendet waren (aufsteigend). */
-  blanked: number[];
+/**
+ * Ein späterer Versuch am selben Durchgang („Durchgang wiederholen“). Er ist
+ * Übung und Selbstkorrektur: Er wird gespeichert und angezeigt, ändert aber
+ * weder Prozentwert noch Fehlerwörter noch Lernstand. Es zählt nur der erste
+ * Versuch (Regel „Erster Versuch zählt“, vgl. W-6 bis W-9 im Wortspeicher).
+ */
+export type TextboxRetry = {
   words: WordResult[];
   score: RoundScore;
   memorizeMs: number;
   writingMs: number;
+};
+
+/** Höchstzahl gespeicherter Übungsversuche je Durchgang (die jüngsten bleiben). */
+export const MAX_TEXTBOX_RETRIES = 5;
+
+export type TextboxRoundResult = {
+  round: TextboxRound;
+  /** Wortindizes, die in diesem Durchgang ausgeblendet waren (aufsteigend). */
+  blanked: number[];
+  /** Erster Versuch: nur er zählt für Ergebnis, Fehlerwörter und Lernstand. */
+  words: WordResult[];
+  score: RoundScore;
+  memorizeMs: number;
+  writingMs: number;
+  /** Spätere Versuche desselben Durchgangs (Selbstkorrektur), ohne Wertung. */
+  retries?: TextboxRetry[] | undefined;
 };
 
 export type TextboxRunState = {
@@ -55,6 +74,11 @@ export type TextboxRunState = {
   phase: TextboxPhase;
   /** Merkzeit des laufenden Durchgangs, solange noch nicht abgegeben. */
   memorizeMs?: number;
+  /**
+   * Der laufende Durchgang ist ein Übungsversuch („Durchgang wiederholen“):
+   * Sein Ergebnis wird an den ersten Versuch gehängt und zählt nicht.
+   */
+  retry?: boolean;
   rounds: TextboxRoundResult[];
 };
 
@@ -110,6 +134,15 @@ export const roundScoreSchema: z.ZodType<RoundScore> = z
   })
   .strict();
 
+export const textboxRetrySchema: z.ZodType<TextboxRetry> = z
+  .object({
+    words: z.array(wordResultSchema).max(3000),
+    score: roundScoreSchema,
+    memorizeMs: z.number().nonnegative(),
+    writingMs: z.number().nonnegative(),
+  })
+  .strict();
+
 export const textboxRoundResultSchema: z.ZodType<TextboxRoundResult> = z
   .object({
     round: roundSchema,
@@ -118,6 +151,8 @@ export const textboxRoundResultSchema: z.ZodType<TextboxRoundResult> = z
     score: roundScoreSchema,
     memorizeMs: z.number().nonnegative(),
     writingMs: z.number().nonnegative(),
+    // Ältere Einheiten kennen keine Übungsversuche (tolerant gelesen).
+    retries: z.array(textboxRetrySchema).max(MAX_TEXTBOX_RETRIES).optional(),
   })
   .strict();
 
@@ -321,45 +356,62 @@ export function submitRound(
     score = scoreWords(results, blanked.length);
   }
 
-  const round: TextboxRoundResult = {
-    round: state.round,
-    blanked,
+  const attempt = {
     words: results,
     score,
     memorizeMs: state.memorizeMs ?? 0,
     writingMs: Math.max(0, writingMs),
   };
-  const next: TextboxRunState = {
-    ...state,
-    phase: "review",
-    rounds: [...state.rounds, round],
-  };
+  let rounds: TextboxRoundResult[];
+  if (state.retry) {
+    // Übungsversuch: der erste Versuch bleibt unverändert, der neue kommt dazu.
+    const first = state.rounds[state.rounds.length - 1];
+    if (first === undefined || first.round !== state.round) {
+      throw new Error("Der erste Versuch dieses Durchgangs fehlt.");
+    }
+    rounds = [
+      ...state.rounds.slice(0, -1),
+      {
+        ...first,
+        retries: [...(first.retries ?? []), attempt].slice(
+          -MAX_TEXTBOX_RETRIES,
+        ),
+      },
+    ];
+  } else {
+    rounds = [...state.rounds, { round: state.round, blanked, ...attempt }];
+  }
+  const next: TextboxRunState = { ...state, phase: "review", rounds };
   delete next.memorizeMs;
   return next;
 }
 
 export function nextRound(state: TextboxRunState): TextboxRunState {
   requirePhase(state, "review");
-  if (state.round === 4) return { ...state, phase: "complete" };
-  return {
-    ...state,
-    round: (state.round + 1) as TextboxRound,
-    phase: "memorize",
-  };
+  const next: TextboxRunState =
+    state.round === 4
+      ? { ...state, phase: "complete" }
+      : {
+          ...state,
+          round: (state.round + 1) as TextboxRound,
+          phase: "memorize",
+        };
+  delete next.retry;
+  return next;
 }
 
-/** Verwirft das Ergebnis des laufenden Durchgangs und beginnt ihn neu (gleiche Lücken). */
+/**
+ * Beginnt den Durchgang noch einmal (gleiche Lücken) als Übungsversuch. Das
+ * Ergebnis des ersten Versuchs bleibt unverändert erhalten und zählt allein;
+ * der neue Versuch wird an ihn gehängt (`retries`), siehe `TextboxRetry`.
+ */
 export function repeatRound(state: TextboxRunState): TextboxRunState {
   requirePhase(state, "review");
   const last = state.rounds[state.rounds.length - 1];
   if (last === undefined || last.round !== state.round) {
     throw new Error("Das Ergebnis des laufenden Durchgangs fehlt.");
   }
-  const next: TextboxRunState = {
-    ...state,
-    phase: "memorize",
-    rounds: state.rounds.slice(0, -1),
-  };
+  const next: TextboxRunState = { ...state, phase: "memorize", retry: true };
   delete next.memorizeMs;
   return next;
 }
