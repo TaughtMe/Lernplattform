@@ -23,7 +23,8 @@ export type LearningBoxProgressFields = Pick<
   | "reverseNextReview"
   | "reverseWritingStreak"
   | "lastReviewed"
->;
+> &
+  Partial<Pick<LearningBoxCard, "forwardLastReviewed" | "reverseLastReviewed">>;
 
 export function learningBoxProgress(
   card: LearningBoxCard,
@@ -39,6 +40,12 @@ export function learningBoxProgress(
     reverseNextReview: card.reverseNextReview,
     reverseWritingStreak: card.reverseWritingStreak,
     lastReviewed: card.lastReviewed,
+    ...(card.forwardLastReviewed !== undefined
+      ? { forwardLastReviewed: card.forwardLastReviewed }
+      : {}),
+    ...(card.reverseLastReviewed !== undefined
+      ? { reverseLastReviewed: card.reverseLastReviewed }
+      : {}),
   };
 }
 

@@ -6,11 +6,13 @@ import {
   evaluateLearningBoxAnswer,
   filterLearningBoxCards,
   getLearningBoxPrompt,
+  isFirstLearningBoxAttempt,
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
   isLearningBoxCardLongUnpracticed,
   isLearningBoxCardScheduledDue,
   learningBoxAlternatives,
+  learningBoxAttemptKey,
   learningBoxDirectionAt,
   processLearningBoxResult,
   type LearningBoxCard,
@@ -128,6 +130,8 @@ type Session = {
   /** Übungsrunde einer Box: nichts wird verschoben oder gespeichert. */
   practice: boolean;
   roundId: string;
+  /** Schon bewertete Karte+Richtung dieser Runde: nur der erste Versuch zählt (C3-1). */
+  attempted: string[];
   finished: boolean;
 };
 
@@ -398,6 +402,7 @@ export function LearningBoxApp({
       stats: { correct: 0, wrong: 0 },
       practice: box > 0,
       roundId: crypto.randomUUID(),
+      attempted: [],
       finished: false,
     });
   }
@@ -406,6 +411,22 @@ export function LearningBoxApp({
     if (!session) return;
     const item = session.queue[session.index];
     if (!item) return;
+    // Erster Versuch zählt: Ein weiterer Versuch derselben Karte+Richtung in
+    // dieser Runde ändert weder Stand noch Ereignis noch Rundenstatistik.
+    if (
+      !isFirstLearningBoxAttempt(
+        session.attempted,
+        item.card.id,
+        item.direction,
+      )
+    ) {
+      advance(session);
+      return;
+    }
+    const attempted = [
+      ...session.attempted,
+      learningBoxAttemptKey(item.card.id, item.direction),
+    ];
     const answeredAt = Date.now();
     const updated = session.practice
       ? item.card
@@ -439,6 +460,7 @@ export function LearningBoxApp({
         ...session,
         queue,
         stats,
+        attempted,
         feedback: {
           correct,
           expected: showAlternatives(expected),
@@ -456,7 +478,7 @@ export function LearningBoxApp({
         },
       });
     } else {
-      advance({ ...session, queue, stats });
+      advance({ ...session, queue, stats, attempted });
     }
   }
 

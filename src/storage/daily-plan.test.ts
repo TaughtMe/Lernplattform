@@ -200,6 +200,26 @@ describe("Kandidaten der Tagesportion", () => {
     expect(candidates[1]).not.toHaveProperty("occurredAt");
   });
 
+  it("nimmt für occurredAt des Fehlers den Abrufzeitpunkt der eigenen Richtung (G-005)", () => {
+    const error = card("deck", 1, {
+      interval: 1,
+      box: 1,
+      nextReview: NOW_MS - 2 * HOUR,
+      // Rückwärts wurde später geübt, vorwärts zuletzt vor drei Tagen.
+      lastReviewed: NOW_MS - HOUR,
+      forwardLastReviewed: NOW_MS - 3 * DAY,
+      reverseLastReviewed: NOW_MS - HOUR,
+    });
+    const [forward] = dailyPlanCandidates(
+      { events: [], cards: [error], words: [] },
+      NOW,
+    );
+    expect(forward).toMatchObject({
+      direction: "forward",
+      occurredAt: new Date(NOW_MS - 3 * DAY).toISOString(),
+    });
+  });
+
   it("lässt noch nicht fällige Karten aus", () => {
     const later = card("deck", 1, {
       interval: 7,

@@ -110,4 +110,59 @@ describe("personal backup storage", () => {
       "Bibliothek",
     );
   });
+  it("sichert und liest den Abrufzeitpunkt je Richtung; ältere Sicherungen ohne die Felder bleiben lesbar", async () => {
+    const source = new PersonalLearningDatabase(
+      `backup-${crypto.randomUUID()}`,
+    );
+    const target = new PersonalLearningDatabase(
+      `backup-${crypto.randomUUID()}`,
+    );
+    databases.push(source, target);
+    const deck = createLearningBoxDeck({ title: "Englisch", now: 1_000 });
+    const card = createLearningBoxCard({
+      deckId: deck.id,
+      question: "library",
+      answer: "Bibliothek",
+      now: 1_000,
+    });
+    await source.learningBoxDecks.add(deck);
+    await source.learningBoxCards.add({
+      ...card,
+      lastReviewed: 4_000,
+      forwardLastReviewed: 4_000,
+      reverseLastReviewed: 3_000,
+      updatedAt: 4_000,
+    });
+    const backup = await exportPersonalLearningBackup(
+      source,
+      "2026-09-20T10:00:00.000Z",
+    );
+    expect(backup.data.learningBoxCards[0]).toMatchObject({
+      forwardLastReviewed: 4_000,
+      reverseLastReviewed: 3_000,
+    });
+    await restorePersonalLearningBackup(backup, target);
+    expect(await target.learningBoxCards.get(card.id)).toMatchObject({
+      forwardLastReviewed: 4_000,
+      reverseLastReviewed: 3_000,
+    });
+
+    // Ältere Sicherung: Karte ohne Richtungsfelder.
+    const older = createPersonalLearningBackup({
+      learningEvents: [],
+      learningBoxDecks: [deck],
+      learningBoxCards: [card],
+      learningWordProgress: [],
+      typingProgress: [],
+    });
+    expect(older.data.learningBoxCards[0]).not.toHaveProperty(
+      "forwardLastReviewed",
+    );
+    const fresh = new PersonalLearningDatabase(`backup-${crypto.randomUUID()}`);
+    databases.push(fresh);
+    await restorePersonalLearningBackup(older, fresh);
+    expect(await fresh.learningBoxCards.get(card.id)).toMatchObject({
+      id: card.id,
+    });
+  });
 });
