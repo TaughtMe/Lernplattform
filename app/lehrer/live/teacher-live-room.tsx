@@ -273,6 +273,8 @@ function vocabularyProps(t: TeacherLiveModel): VocabularyEditorProps {
     pickFromLibraryDisabled: t.pickFromLibraryDisabled,
     onTableInput: t.setVocabularyTableInput,
     onImportTable: t.importVocabularyTable,
+    commaSeparates: t.vocabularyCommaSeparates,
+    onCommaSeparates: t.setVocabularyCommaSeparates,
     onImportFile: t.importFile,
   };
 }

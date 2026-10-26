@@ -212,4 +212,77 @@ describe("ImportSheet", () => {
     expect(blob.size).toBe(new Blob([buildVocabularyTemplate()]).size);
     click.mockRestore();
   });
+
+  it("zeigt in der Vorschau, was zusätzlich als richtig gilt", async () => {
+    const user = userEvent.setup();
+    renderSheet(vi.fn());
+    await typeRow(user, 1, "gehen", "(to) go");
+    await typeRow(user, 2, "Haus", "home / house");
+    await typeRow(user, 3, "Baum", "tree");
+    await user.click(screen.getByRole("button", { name: "Vorschau ansehen" }));
+    expect(screen.getByText("Gilt auch: to go · go")).toBeTruthy();
+    expect(screen.getByText("Gilt auch: home · house")).toBeTruthy();
+    // „tree“ hat keine Alternative.
+    expect(screen.getAllByText(/Gilt auch:/)).toHaveLength(2);
+    // Ohne Komma gibt es keinen Schalter.
+    expect(screen.queryByLabelText(/Komma trennt Alternativen/)).toBeNull();
+  });
+
+  it("trennt das Komma nur nach Bestätigung (eingetippte Zeilen)", async () => {
+    const user = userEvent.setup();
+    const onImportCards = vi.fn(async () => "ok");
+    renderSheet(onImportCards);
+    await typeRow(user, 1, "groß", "groß, riesig");
+    await user.click(screen.getByRole("button", { name: "Vorschau ansehen" }));
+
+    const toggle = screen.getByLabelText(
+      "Komma trennt Alternativen (groß, riesig → groß | riesig)",
+    ) as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    expect(screen.queryByText(/Gilt auch:/)).toBeNull();
+
+    await user.click(toggle);
+    expect(screen.getByText("Gilt auch: groß · riesig")).toBeTruthy();
+    expect(screen.getByText(/groß → groß \| riesig/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Übernehmen" }));
+    expect(onImportCards).toHaveBeenCalledWith("deck-1", {
+      rows: [{ question: "groß", answer: "groß | riesig" }],
+      skipped: [],
+    });
+  });
+
+  it("übernimmt das Komma ohne Bestätigung unverändert (eingefügter Text)", async () => {
+    const user = userEvent.setup();
+    const onImportCards = vi.fn(async () => "ok");
+    renderSheet(onImportCards);
+    await user.click(
+      screen.getByRole("button", { name: "Einfügen oder Datei" }),
+    );
+    await user.click(
+      screen.getByRole("textbox", { name: "Vokabeln zum Importieren" }),
+    );
+    await user.paste("groß;groß, riesig");
+    await user.click(screen.getByRole("button", { name: "Vorschau ansehen" }));
+    expect(screen.getByLabelText(/Komma trennt Alternativen/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Übernehmen" }));
+    expect(onImportCards).toHaveBeenCalledWith("deck-1", {
+      rows: [{ question: "groß", answer: "groß, riesig" }],
+      skipped: [],
+    });
+  });
+
+  it("macht ein Semikolon in der Antwort in der Vorschau als Tag sichtbar", async () => {
+    const user = userEvent.setup();
+    renderSheet(vi.fn());
+    await user.click(
+      screen.getByRole("button", { name: "Einfügen oder Datei" }),
+    );
+    await user.click(
+      screen.getByRole("textbox", { name: "Vokabeln zum Importieren" }),
+    );
+    await user.paste("Haus;home; house");
+    await user.click(screen.getByRole("button", { name: "Vorschau ansehen" }));
+    expect(screen.getByText("Haus → home")).toBeTruthy();
+    expect(screen.getByText("house")).toBeTruthy();
+  });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { answerAlternatives } from "../../../../src/domain/answer-normalization";
 import styles from "../lernbox-screen.module.css";
 import type { LbImportRow } from "./types";
 
@@ -13,14 +14,33 @@ export type ImportPreviewData = {
   skipped: readonly ImportSkippedLine[];
   /** Die Kopfzeile der Vorlage wurde erkannt und nicht übernommen. */
   headerSkipped: boolean;
+  /** Zeilen mit einem Komma außerhalb von Klammern (G-003); 0 oder fehlend: kein Schalter. */
+  commaCandidates?: number;
 };
 
 const SHOWN_PAIRS = 5;
 const SHOWN_SKIPPED = 8;
 
-/** Vorschau vor dem Übernehmen: erkannte Paare und übersprungene Zeilen. */
-export function ImportPreview({ preview }: { preview: ImportPreviewData }) {
-  const { rows, skipped, headerSkipped } = preview;
+/** Weitere gültige Antworten einer Rückseite (ohne den Text selbst). */
+function alsoAccepted(answer: string) {
+  return answerAlternatives(answer).filter((entry) => entry !== answer.trim());
+}
+
+/**
+ * Vorschau vor dem Übernehmen: erkannte Paare, was zusätzlich als richtig gilt
+ * (G-003), und übersprungene Zeilen. Enthalten Zeilen ein Komma, bietet sie den
+ * Schalter „Komma trennt Alternativen“ an (Standard: aus).
+ */
+export function ImportPreview({
+  preview,
+  commaSeparates = false,
+  onCommaSeparates,
+}: {
+  preview: ImportPreviewData;
+  commaSeparates?: boolean;
+  onCommaSeparates?: (value: boolean) => void;
+}) {
+  const { rows, skipped, headerSkipped, commaCandidates = 0 } = preview;
   const more = rows.length - SHOWN_PAIRS;
   return (
     <div className={styles.importPreview}>
@@ -33,20 +53,38 @@ export function ImportPreview({ preview }: { preview: ImportPreviewData }) {
       </h3>
       {rows.length ? (
         <ul className={styles.importPairs} aria-label="Erste erkannte Vokabeln">
-          {rows.slice(0, SHOWN_PAIRS).map((row, index) => (
-            <li key={index} className={styles.importPair}>
-              <span className={styles.importPairText}>
-                {row.question} → {row.answer}
-              </span>
-              {row.tag ? (
-                <span className={styles.importTag}>{row.tag}</span>
-              ) : null}
-            </li>
-          ))}
+          {rows.slice(0, SHOWN_PAIRS).map((row, index) => {
+            const also = alsoAccepted(row.answer);
+            return (
+              <li key={index} className={styles.importPair}>
+                <span className={styles.importPairText}>
+                  {row.question} → {row.answer}
+                  {also.length ? (
+                    <span className={styles.importAlso}>
+                      Gilt auch: {also.join(" · ")}
+                    </span>
+                  ) : null}
+                </span>
+                {row.tag ? (
+                  <span className={styles.importTag}>{row.tag}</span>
+                ) : null}
+              </li>
+            );
+          })}
           {more > 0 ? (
             <li className={styles.importMore}>… und {more} weitere</li>
           ) : null}
         </ul>
+      ) : null}
+      {commaCandidates > 0 && onCommaSeparates ? (
+        <label className={styles.importComma}>
+          <input
+            type="checkbox"
+            checked={commaSeparates}
+            onChange={(event) => onCommaSeparates(event.target.checked)}
+          />
+          <span>Komma trennt Alternativen (groß, riesig → groß | riesig)</span>
+        </label>
       ) : null}
       {headerSkipped ? (
         <p className={styles.importNote}>

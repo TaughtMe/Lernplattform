@@ -1,5 +1,6 @@
 "use client";
 
+import { parseVocabularyImport } from "../../../src/domain/vocabulary-import";
 import { Icon } from "../../ui/icons";
 import { VOCABULARY_IMPORT_GUIDE } from "../../ui/vocabulary-import-guide";
 import { downloadVocabularyTemplate } from "../../ui/vocabulary-template-download";
@@ -46,6 +47,9 @@ export type VocabularyEditorProps = {
   onRoundTag?: (value: string) => void;
   onTableInput?: (value: string) => void;
   onImportTable?: () => void;
+  /** Komma trennt Alternativen beim Übernehmen der Tabelle (G-003); Standard aus. */
+  commaSeparates?: boolean;
+  onCommaSeparates?: (value: boolean) => void;
   onImportFile?: (file: File | undefined) => void;
   /** Öffnet den Auswahldialog „Aus meinen Vokabeln wählen“. */
   onPickFromLibrary?: () => void;
@@ -67,6 +71,10 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
   ];
   // Der Runden-Tag; ohne Eingabe gilt der Vorschlag aus den Einstellungen.
   const roundTag = props.roundTag?.trim() || props.defaultTag?.trim() || "";
+  // Der Schalter erscheint nur, wenn die eingefügte Tabelle Kommas enthält.
+  const commaCandidates = props.onCommaSeparates
+    ? parseVocabularyImport(props.tableInput).commaCandidates
+    : 0;
   const filled = props.pairs.filter(
     (pair) => pair.left.primary.trim() && pair.right.primary.trim(),
   ).length;
@@ -80,7 +88,8 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
               Vokabelheft
             </h2>
             <p className={styles.hint}>
-              Weitere richtige Antworten mit | trennen.
+              Weitere richtige Antworten mit | trennen. Auch „home / house“ und
+              freiwillige Klammerteile wie „(to) go“ werden erkannt.
             </p>
           </div>
           <span className={styles.count}>
@@ -334,6 +343,24 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
             value={props.tableInput}
             onChange={(event) => props.onTableInput?.(event.target.value)}
           />
+          {commaCandidates > 0 ? (
+            <label className={cx(styles.choice, styles.check)}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={props.commaSeparates ?? false}
+                onChange={(event) =>
+                  props.onCommaSeparates?.(event.target.checked)
+                }
+              />
+              <span className={styles.choiceText}>
+                Komma trennt Alternativen
+                <span className={styles.choiceHint}>
+                  groß, riesig → groß | riesig
+                </span>
+              </span>
+            </label>
+          ) : null}
           <button
             type="button"
             className={styles.apply}

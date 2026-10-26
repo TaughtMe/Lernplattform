@@ -70,4 +70,29 @@ describe("VocabularyEditor, Tag-Feld", () => {
     expect(click).toHaveBeenCalledTimes(1);
     click.mockRestore();
   });
+
+  it("bietet „Komma trennt Alternativen“ nur bei Kommas in der Tabelle an", async () => {
+    const onCommaSeparates = vi.fn();
+    const { rerender } = render(
+      <VocabularyEditor
+        {...base("none")}
+        tableInput="Haus;home"
+        onCommaSeparates={onCommaSeparates}
+      />,
+    );
+    expect(screen.queryByLabelText(/Komma trennt Alternativen/)).toBeNull();
+
+    rerender(
+      <VocabularyEditor
+        {...base("none")}
+        tableInput="groß;groß, riesig"
+        commaSeparates={false}
+        onCommaSeparates={onCommaSeparates}
+      />,
+    );
+    const toggle = screen.getByLabelText(/Komma trennt Alternativen/);
+    expect(toggle).not.toBeChecked();
+    await userEvent.click(toggle);
+    expect(onCommaSeparates).toHaveBeenCalledWith(true);
+  });
 });

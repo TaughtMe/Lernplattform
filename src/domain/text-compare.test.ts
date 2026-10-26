@@ -300,3 +300,26 @@ describe("reviewSequence", () => {
     ]);
   });
 });
+
+describe("typografische Varianten im Wortvergleich (G-002)", () => {
+  it("behandelt Apostroph- und Bindestrich-Varianten als ein Wort", () => {
+    expect(wordsOf(tokenizeText("E\u2011Mail geht’s"))).toEqual([
+      "E\u2011Mail",
+      "geht’s",
+    ]);
+    const results = alignWords(["don't", "E-Mail"], ["don’t", "E\u2011Mail"]);
+    expect(results.map((result) => result.kind)).toEqual([
+      "richtig",
+      "richtig",
+    ]);
+    expect(compareGaps(["geht's"], ["geht’s"])[0]?.kind).toBe("richtig");
+  });
+
+  it("hält NFD und NFC für gleich, Groß-/Kleinschreibung nicht", () => {
+    expect(compareGaps(["Bär"], ["Bär".normalize("NFD")])[0]?.kind).toBe(
+      "richtig",
+    );
+    expect(compareGaps(["Bär"], ["bär"])[0]?.kind).toBe("gross-klein");
+    expect(compareGaps(["don't"], ["Don’t"])[0]?.kind).toBe("gross-klein");
+  });
+});

@@ -82,6 +82,99 @@ describe("misspelledWords", () => {
   });
 });
 
+describe("Satzanfänge (G-012)", () => {
+  const TARGET = "Heute gehen wir in den Zoo. Plötzlich regnet es.";
+
+  it("schreibt ein falsches Wort am Satzanfang klein und überspringt reine Großschreibfehler", () => {
+    expect(
+      misspelledWords(
+        TARGET,
+        "heute gehen wir in den Zoo. plözlich regnet es.",
+      ),
+    ).toEqual(["plötzlich"]);
+  });
+
+  it("nennt „Heute“ nicht, wenn nur die Großschreibung am Satzanfang fehlt", () => {
+    expect(
+      misspelledWords(
+        TARGET,
+        "heute gehen wir in den Zoo. Plötzlich regnet es.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("lässt Nomen am Satzanfang groß, wenn sie bekannt sind", () => {
+    // „Zoo“ steht in den eingebauten Wortboxen.
+    expect(misspelledWords("Zoo ist schön.", "Zo ist schön.")).toEqual(["Zoo"]);
+    // Ein Großschreibfehler bei einem bekannten Nomen bleibt ein Fehler.
+    expect(misspelledWords("Zoo ist schön.", "zoo ist schön.")).toEqual([
+      "Zoo",
+    ]);
+  });
+
+  it("lässt Wörter groß, die im selben Text auch mitten im Satz großstehen", () => {
+    expect(
+      misspelledWords(
+        "Hund und Hund. Der Hund bellt.",
+        "Hunt und Hunt. Der Hunt bellt.",
+      ),
+    ).toEqual(["Hund"]);
+    expect(
+      misspelledWords(
+        "Tiere sind toll. Der Tiere Zahl wächst.",
+        "Tire sind toll. Der Tiere Zahl wächst.",
+      ),
+    ).toEqual(["Tiere"]);
+  });
+
+  it("erkennt Satzanfänge nach ! ? : und öffnenden Anführungszeichen", () => {
+    expect(
+      misspelledWords(
+        "Ach! Wirklich? Ja: Genau. „Plötzlich“ kam er.",
+        "ach! Wirklich? Ja: genau. „plözlich“ kam er.",
+      ),
+    ).toEqual(["plötzlich"]);
+    expect(
+      misspelledWords(
+        "Er sagte: „Komm her!“ Dann ging er.",
+        "Er sagte: „Kom her!“ Dann ging er.",
+      ),
+    ).toEqual(["komm"]);
+  });
+
+  it("hält Kürzel, Zahlen und Kurzformen nicht für Satzenden", () => {
+    // Nach „z. B.“ und „Dr.“ beginnt kein neuer Satz: „Müller“ bleibt groß.
+    expect(
+      misspelledWords(
+        "Das sagt z. B. Dr. Müller.",
+        "Das sagt z. B. Dr. Müler.",
+      ),
+    ).toEqual(["Müller"]);
+    expect(
+      misspelledWords("Am 3. Mai regnet es.", "Am 3. Mai regnet es."),
+    ).toEqual([]);
+  });
+
+  it("lässt Kürzel wie „E-Mail“ unverändert", () => {
+    expect(misspelledWords("E-Mail kommt an.", "E-Mal kommt an.")).toEqual([
+      "E-Mail",
+    ]);
+  });
+
+  it("schreibt bei „Alle Wörter“ Wörter am Satzanfang klein", () => {
+    const live = parseLiveSession(
+      {
+        words: [{ id: "t1", kind: "text", targetWord: TARGET }],
+        wordStoreTransfer: "all",
+      },
+      "s-2",
+      "seed",
+    );
+    const result = buildWordStoreTransfer(live, finished)!;
+    expect(result.words).toEqual(["heute", "gehen", "plötzlich", "regnet"]);
+  });
+});
+
 describe("buildWordStoreTransfer", () => {
   it("takes nothing for none and for older sessions without the field", () => {
     expect(buildWordStoreTransfer(session("none"), finished)).toBeUndefined();
@@ -127,7 +220,7 @@ describe("buildWordStoreTransfer", () => {
       "Katze",
       "schläft",
       "Haus",
-      "Abends",
+      "abends",
       "essen",
       "Suppe",
     ]);
