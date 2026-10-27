@@ -501,7 +501,8 @@ export function MentalMathApp({
         setFeedback("incorrect");
         if (wrongTries.current === 1)
           setHint(
-            mentalMathHint(current, classifyMentalMathError(current, answer)),
+            mentalMathHint(current, classifyMentalMathError(current, answer)) ??
+              "",
           );
         else if (!help) showSolution();
         persistRound({
