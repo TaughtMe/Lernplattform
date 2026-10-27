@@ -33,8 +33,10 @@ export function DeckGrid({
                   <span className={styles.wideOnly}> · {deck.sourceLabel}</span>
                 </span>
               </span>
-              {deck.total === 0 ? null : deck.due > 0 ? (
+              {deck.total === 0 ? null : deck.state === "due" ? (
                 <span className={styles.duePill}>{deck.due} heute</span>
+              ) : deck.state === "new" ? (
+                <span className={styles.duePill}>{deck.fresh} neu</span>
               ) : (
                 <span className={styles.donePill}>erledigt</span>
               )}

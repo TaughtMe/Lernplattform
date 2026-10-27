@@ -49,6 +49,8 @@ describe("Zahl „lange nicht geübt“ in der Boxübersicht", () => {
     folderId: null,
     total: 5,
     due: 0,
+    fresh: 0,
+    state: "done",
     boxes: [1, 1, 1, 1, 1],
     longUnpracticed,
     sourceLabel: "eigene",

@@ -1,3 +1,4 @@
+import type { LearningBoxDeckState } from "../../../../src/domain/learning-box";
 import { type Theme } from "../../parts/parts";
 
 export type LbMode = "writing" | "oral";
@@ -9,7 +10,12 @@ export type LbDeck = {
   title: string;
   folderId: string | null;
   total: number;
+  /** Fällige Karten (schon einmal geübt). */
   due: number;
+  /** Karten mit neuer, noch nie geübter Richtung. */
+  fresh: number;
+  /** Stand heute: fällig, neu oder erledigt (`learningBoxDeckStatus`). */
+  state: LearningBoxDeckState;
   /** Karten je (wirksamer) Box 1–5. */
   boxes: readonly number[];
   /** Karten, die in mindestens einer Richtung lange nicht geübt sind. */

@@ -17,7 +17,7 @@ export function Home(props: LernBoxScreenProps) {
     0,
   );
   const dueDecks =
-    props.todayDecks ?? decks.filter((deck) => deck.due > 0).length;
+    props.todayDecks ?? decks.filter((deck) => deck.state !== "done").length;
   const loose = decks.filter((deck) => !deck.folderId);
   const start = (scope: string) =>
     props.onOpenSheet?.({ kind: "start", scope });

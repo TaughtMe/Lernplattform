@@ -10,9 +10,9 @@ import {
   isLearningBoxCardDue,
   isLearningBoxCardDueFor,
   isLearningBoxCardLongUnpracticed,
-  isLearningBoxCardScheduledDue,
   learningBoxAlternatives,
   learningBoxAttemptKey,
+  learningBoxDeckStatus,
   learningBoxDirectionAt,
   processLearningBoxResult,
   type LearningBoxCard,
@@ -314,8 +314,7 @@ export function LearningBoxApp({
       title: deck.title,
       folderId: deck.folderId ?? null,
       total: inside.length,
-      due: inside.filter((card) => isLearningBoxCardScheduledDue(card, now))
-        .length,
+      ...learningBoxDeckStatus(inside, now),
       boxes,
       longUnpracticed: inside.filter((card) =>
         isLearningBoxCardLongUnpracticed(card, now),
