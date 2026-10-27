@@ -47,6 +47,17 @@ export default function DatenschutzPage() {
           laufende Sitzung werden zusätzlich im Sitzungsspeicher des Browsers
           gehalten.
         </p>
+        <p>
+          Bei Mathe-Aufgaben überträgt das Gerät zusätzlich die erste falsche
+          Antwort je Aufgabe (höchstens 32 Zeichen) an die Lehrkraft. Sie leitet
+          daraus für den CSV-Export auf ihrem Gerät eine Vermutung zur Fehlerart
+          ab; die Oberfläche zeigt sie nicht an. Wie die Fehlerzahlen ist die
+          Antwort pseudonym und gehört nur zum Raum: Ein Raum schließt
+          spätestens 120 Minuten nach dem Öffnen, bei Inaktivität nach drei
+          Stunden. Der Server löscht ihn mit allen Fortschrittsdaten, wenn sein
+          Ende 24 Stunden zurückliegt. Bei Text und Vokabeln werden keine
+          Antworten übertragen.
+        </p>
       </section>
 
       <section>

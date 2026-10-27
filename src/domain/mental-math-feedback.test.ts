@@ -3,6 +3,7 @@ import {
   classifyMentalMathError,
   mentalMathHint,
   mentalMathSolutionSteps,
+  MENTAL_MATH_ERROR_LABELS,
   type MentalMathErrorKind,
 } from "./mental-math-feedback";
 import {
@@ -328,5 +329,20 @@ describe("mentalMathSolutionSteps", () => {
         `Die Lösung ist ${displayMathNumber(t.answer)}.`,
       );
     }
+  });
+});
+
+describe("Bezeichnungen für Lehrkräfte", () => {
+  it("benennt jede Fehlerart außer unbekannt, ohne Ergebnis", () => {
+    expect(MENTAL_MATH_ERROR_LABELS).toEqual({
+      sign: "Vorzeichen",
+      "digit-swap": "Zahlendreher",
+      "place-value": "Stellenwert",
+      "decimal-point": "Komma",
+      "operation-mix": "Rechenart verwechselt",
+      "tens-bridge": "Zehnerübergang",
+      "off-by-one": "um eins daneben",
+      "neighbor-fact": "Nachbaraufgabe",
+    });
   });
 });

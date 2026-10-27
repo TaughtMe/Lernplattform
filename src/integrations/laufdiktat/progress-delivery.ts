@@ -33,6 +33,9 @@ export function createProgressDelivery(
         ...(progress.wordErrors
           ? { wordErrors: { ...progress.wordErrors } }
           : {}),
+        ...(progress.firstWrongAnswers
+          ? { firstWrongAnswers: { ...progress.firstWrongAnswers } }
+          : {}),
       });
       void flush();
     },

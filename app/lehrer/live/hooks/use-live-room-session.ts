@@ -416,8 +416,12 @@ export function useLiveRoomSession({
     const resultNames = resultNamesFor(gameMode, students, allNames);
     const blob = new Blob(
       [
-        buildTeacherResultCsv(resultNames, students, wordCount, (name) =>
-          csvParticipantLabel(name, participants),
+        buildTeacherResultCsv(
+          resultNames,
+          students,
+          wordCount,
+          (name) => csvParticipantLabel(name, participants),
+          roomConfig.words,
         ),
       ],
       { type: "text/csv;charset=utf-8" },

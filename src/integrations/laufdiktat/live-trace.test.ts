@@ -28,7 +28,20 @@ describe("live trace storage", () => {
       ...trace,
       wordTolerated: { "a → b": true },
       wordMisspellings: {},
+      firstWrongAnswers: {},
     });
+  });
+
+  it("merkt die ersten falschen Antworten; ältere Schnappschüsse haben keine", () => {
+    writeLiveTrace({ ...trace, firstWrongAnswers: { "7 · 8 = _": "54" } });
+    expect(readLiveTrace("s1")?.firstWrongAnswers).toEqual({
+      "7 · 8 = _": "54",
+    });
+    window.sessionStorage.setItem(
+      "lernraum:live-trace:s2",
+      JSON.stringify({ ...trace, sessionId: "s2" }),
+    );
+    expect(readLiveTrace("s2")?.firstWrongAnswers).toEqual({});
   });
 
   it("schreibt und liest falsch geschriebene Wörter für den Wortspeicher", () => {
@@ -47,6 +60,7 @@ describe("live trace storage", () => {
       ...trace,
       wordTolerated: {},
       wordMisspellings: {},
+      firstWrongAnswers: {},
     });
   });
 

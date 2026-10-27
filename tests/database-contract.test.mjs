@@ -698,6 +698,115 @@ test("retains the shared station workflow", async () => {
   );
 });
 
+test("stores the first wrong math answers for the teacher and keeps old calls working", async () => {
+  const opened = await room("192.0.2.61");
+  const [joined] = await rpc(
+    "select * from public.join_room_secure($1,'Mia')",
+    [opened.code],
+    "192.0.2.61",
+  );
+  await rpc("select public.update_session_secure($1,$2,$3,$4)", [
+    opened.room_id,
+    opened.access_token,
+    sessionId,
+    JSON.stringify({
+      words: [
+        { id: "m1", kind: "math", prompt: "7 · 8 = _", targetWord: "56" },
+        { id: "m2", prompt: "12 + 9 = _", targetWord: "21" },
+        { id: "v1", kind: "vocabulary", prompt: "Haus", targetWord: "house" },
+        { id: "t1", targetWord: "Schule" },
+      ],
+    }),
+  ]);
+  const base = [opened.room_id, sessionId, joined.participant_token];
+  const teacherRows = () =>
+    rpc("select * from public.get_room_students_secure($1,$2)", [
+      opened.room_id,
+      opened.access_token,
+    ]);
+
+  // Neuer Client: 14. Argument, erste falsche Antwort je Aufgabe.
+  const write =
+    "select public.upsert_progress_secure($1,$2,$3,'Mia',$4,0,1,1,false,null,$5,null,null,$6)";
+  await rpc(write, [
+    ...base,
+    0,
+    JSON.stringify({ "7 · 8 = _": 1 }),
+    JSON.stringify({ "7 · 8 = _": "48" }),
+  ]);
+  assert.deepEqual((await teacherRows())[0].first_wrong_answers, {
+    "7 · 8 = _": "48",
+  });
+
+  // Die erste Antwort bleibt, auch wenn ein anderes Gerät eine spätere sendet.
+  await rpc(write, [
+    ...base,
+    1,
+    JSON.stringify({ "7 · 8 = _": 2, "12 + 9 = _": 1 }),
+    JSON.stringify({ "7 · 8 = _": "54", "12 + 9 = _": "3" }),
+  ]);
+  assert.deepEqual((await teacherRows())[0].first_wrong_answers, {
+    "7 · 8 = _": "48",
+    "12 + 9 = _": "3",
+  });
+
+  // Alter Client (0.9.4): 13 Argumente positional und benannt, ohne das Feld.
+  await rpc(
+    "select public.upsert_progress_secure($1,$2,$3,'Mia',$4,1,3,2,true,9000,'{\"7 · 8 = _\":3}')",
+    [...base, 1],
+  );
+  await rpc(
+    `select public.upsert_progress_secure(p_room_id => $1, p_session_id => $2,
+       p_participant_token => $3, p_student_key => 'Mia', p_current_index => 1,
+       p_peeks => 1, p_attempts => 4, p_errors => 3, p_finished => true,
+       p_duration_ms => 9500, p_word_errors => '{"7 · 8 = _":3}',
+       p_app_version => 'lernraum-0.9.4', p_station_number => null)`,
+    base,
+  );
+  const [row] = await teacherRows();
+  assert.equal(row.attempts, 4);
+  assert.equal(row.finished, true);
+  assert.deepEqual(row.first_wrong_answers, {
+    "7 · 8 = _": "48",
+    "12 + 9 = _": "3",
+  });
+
+  // Der neue Zeilentyp hat nur eine Signatur (keine mehrdeutige Überladung).
+  const [{ count }] = (
+    await db.query(
+      "select count(*)::int as count from pg_proc where proname='upsert_progress_secure'",
+    )
+  ).rows;
+  assert.equal(count, 1);
+
+  // Grenzen: Länge, Typ, Anzahl, nur Mathe-Aufgaben des Raums.
+  const rejected = (answers, index = 1) =>
+    assert.rejects(
+      rpc(write, [...base, index, "{}", JSON.stringify(answers)]),
+      /Antwortstatistik/,
+    );
+  await rejected({ "7 · 8 = _": "x".repeat(33) });
+  await rejected({ "7 · 8 = _": 48 });
+  await rejected(["48"]);
+  await rejected({ Haus: "house" });
+  await rejected({ Schule: "Schule" });
+  await rejected({ "99 + 1 = _": "2" });
+  await rejected({
+    "7 · 8 = _": "1",
+    "12 + 9 = _": "2",
+    "1 + 1 = _": "3",
+    "2 + 2 = _": "4",
+    "3 + 3 = _": "5",
+  });
+  await rpc(write, [
+    ...base,
+    1,
+    "{}",
+    JSON.stringify({ "7 · 8 = _": "ä".repeat(32) }),
+  ]);
+  assert.equal((await teacherRows())[0].first_wrong_answers["7 · 8 = _"], "48");
+});
+
 test("restores only the intended transfer capabilities", async () => {
   const [transfer] = await rpc(
     "select * from public.reserve_content_transfer('bundle','1.0.0',1,15)",

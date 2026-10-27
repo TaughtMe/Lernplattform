@@ -33,6 +33,7 @@ import {
 } from "../../../src/integrations/laufdiktat/live-trace";
 import { liveWordErrorKey } from "../../../src/integrations/laufdiktat/vocabulary-transfer";
 import { LAUFDIKTAT_PILOT } from "../../../src/pilot-mode";
+import { rememberFirstWrongAnswer } from "../../../src/integrations/laufdiktat/first-wrong-answers";
 import { createMathAttempt } from "../../../src/storage/math-practice";
 import { createPersonalLearningEventRepository } from "../../../src/storage/personal-learning-events";
 import { MathDisplay } from "../../components/math-display";
@@ -129,6 +130,13 @@ export function LiveRunningDictationGame({
   const [wordErrors, setWordErrors] = useState<Record<string, number>>(() =>
     mergeWordErrors(initialProgress?.wordErrors, restoredTrace?.wordErrors),
   );
+  // Mathe: erste falsche Antwort je Aufgabe; geht mit dem Fortschritt an die
+  // Lehrkraft (Fehlerart nur im CSV, nie in dieser Oberfläche).
+  // Das Neuladen überlebt sie im lokalen Schnappschuss; auf dem Server gewinnt
+  // beim Speichern ohnehin die zuerst gemeldete Antwort.
+  const [firstWrongAnswers, setFirstWrongAnswers] = useState<
+    Record<string, string>
+  >(() => ({ ...restoredTrace?.firstWrongAnswers }));
   // Hilfen pro Wort bleiben auf dem Gerät und gehen nie an den Server.
   const [wordHelps, setWordHelps] = useState<Record<string, true>>(
     restoredTrace?.wordHelps ?? {},
@@ -225,6 +233,7 @@ export function LiveRunningDictationGame({
       currentIndex: phase === "correct" ? index + 1 : index,
       finished: phase === "complete",
       wordErrors,
+      firstWrongAnswers,
       wordHelps,
       wordTolerated,
       wordMisspellings,
@@ -234,6 +243,7 @@ export function LiveRunningDictationGame({
     phase,
     session.sessionId,
     wordErrors,
+    firstWrongAnswers,
     wordHelps,
     wordTolerated,
     wordMisspellings,
@@ -266,6 +276,7 @@ export function LiveRunningDictationGame({
               (startedAt.current ? Date.now() - startedAt.current : 0),
           ),
           wordErrors,
+          ...firstWrongAnswersField(firstWrongAnswers),
         });
         return;
       }
@@ -282,6 +293,7 @@ export function LiveRunningDictationGame({
         errors,
         finished: false,
         wordErrors,
+        ...firstWrongAnswersField(firstWrongAnswers),
       });
     }, correctDelay);
     return () => window.clearTimeout(timer);
@@ -289,6 +301,7 @@ export function LiveRunningDictationGame({
     attempts,
     correctDelay,
     errors,
+    firstWrongAnswers,
     index,
     initialProgress?.durationMs,
     onProgress,
@@ -724,8 +737,14 @@ export function LiveRunningDictationGame({
       ...wordErrors,
       [key]: (wordErrors[key] ?? 0) + 1,
     };
+    // Nur Mathe: Text und Vokabeln übertragen nie eine Antwort.
+    const nextFirstWrongAnswers =
+      kind === "math"
+        ? rememberFirstWrongAnswer(firstWrongAnswers, key, answer)
+        : firstWrongAnswers;
     setErrors(nextErrors);
     setWordErrors(nextWordErrors);
+    setFirstWrongAnswers(nextFirstWrongAnswers);
     onProgress({
       currentIndex: index,
       peeks,
@@ -733,6 +752,7 @@ export function LiveRunningDictationGame({
       errors: nextErrors,
       finished: false,
       wordErrors: nextWordErrors,
+      ...firstWrongAnswersField(nextFirstWrongAnswers),
     });
 
     setAnswerFeedback("Noch nicht richtig. Versuche es erneut.");
@@ -955,6 +975,11 @@ function unitOf(word: LiveSession["words"][number] | undefined) {
   if (kind === "vocabulary" || !/\s/.test(word.targetWord.trim()))
     return "Wort" as const;
   return "Satz" as const;
+}
+
+/** Das Feld nur setzen, wenn es Einträge gibt: Räume ohne Mathe bleiben unverändert. */
+function firstWrongAnswersField(answers: Record<string, string>) {
+  return Object.keys(answers).length > 0 ? { firstWrongAnswers: answers } : {};
 }
 
 /** Serverstand und lokaler Schnappschuss: pro Wort gilt der höhere Wert. */

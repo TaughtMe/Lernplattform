@@ -308,6 +308,60 @@ describe("useLiveRoomSession: Sitzung und Ende", () => {
     }
   });
 
+  it("schreibt die vermutete Fehlerart der Mathe-Aufgaben in die CSV", async () => {
+    const createObjectURL = vi.fn<(blob: Blob) => string>(() => "blob:csv");
+    const originalCreate = URL.createObjectURL;
+    URL.createObjectURL = createObjectURL;
+    try {
+      mocks.getLiveRoomStudents.mockResolvedValue([
+        {
+          studentName: "participant-1",
+          stationNumber: null,
+          appVersion: null,
+          currentIndex: 1,
+          peeks: 0,
+          attempts: 2,
+          errors: 1,
+          finished: false,
+          wordErrors: { "7 · 8 = _": 1 },
+          firstWrongAnswers: { "7 · 8 = _": "65" },
+        },
+      ]);
+      mocks.getLiveRoomParticipants.mockResolvedValue([
+        {
+          studentName: "participant-1",
+          animalToken: "Fuchs",
+          animalNumber: 1,
+          lastSeenAt: null,
+        },
+      ]);
+      const harness = setup({
+        roomConfig: {
+          ...roomConfig,
+          words: [
+            { id: "m", kind: "math", prompt: "7 · 8 = _", targetWord: "56" },
+          ],
+        },
+      });
+      await act(() => harness.result.current.openLobby());
+      await act(() => harness.result.current.startSession());
+      await waitFor(() =>
+        expect(harness.result.current.students).toHaveLength(1),
+      );
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => undefined);
+      URL.revokeObjectURL = vi.fn();
+      act(() => harness.result.current.exportCsv());
+      click.mockRestore();
+      const csv = await createObjectURL.mock.calls[0]![0].text();
+      expect(csv).toContain("Name;Aufgabe;Fehlversuche;Fehlerart (Vermutung)");
+      expect(csv).toContain("Fuchs;7 · 8 = _;1;Zahlendreher");
+    } finally {
+      URL.createObjectURL = originalCreate;
+    }
+  });
+
   it("lässt den Raum offen, wenn das Beenden scheitert", async () => {
     const { result, setError } = await openRoom();
     mocks.endLiveRoom.mockRejectedValue(new Error("offline"));

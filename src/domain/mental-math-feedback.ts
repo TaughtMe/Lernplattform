@@ -30,6 +30,24 @@ export type MentalMathErrorKind =
   | "neighbor-fact"
   | "unknown";
 
+/**
+ * Bezeichnung der vermuteten Fehlerart für Lehrkräfte (CSV-Export, Spalte
+ * „Fehlerart (Vermutung)“). Bei `unknown` gibt es keine Bezeichnung: Eine
+ * leere Zelle ist ehrlicher als ein geratener Name. Kindern nie anzeigen.
+ */
+export const MENTAL_MATH_ERROR_LABELS: Readonly<
+  Record<Exclude<MentalMathErrorKind, "unknown">, string>
+> = {
+  sign: "Vorzeichen",
+  "digit-swap": "Zahlendreher",
+  "place-value": "Stellenwert",
+  "decimal-point": "Komma",
+  "operation-mix": "Rechenart verwechselt",
+  "tens-bridge": "Zehnerübergang",
+  "off-by-one": "um eins daneben",
+  "neighbor-fact": "Nachbaraufgabe",
+};
+
 /** Toleranz für Vergleiche von Dezimalzahlen (Aufgaben rechnen mit 1e-9). */
 const EPSILON = 1e-9;
 

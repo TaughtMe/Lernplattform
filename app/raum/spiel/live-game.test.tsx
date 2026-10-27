@@ -695,6 +695,98 @@ it("preserves a math answer after local storage failure", async () => {
   );
 });
 
+describe("erste falsche Antwort bei Mathe (für die Fehlerart der Lehrkraft)", () => {
+  afterEach(() => window.sessionStorage.clear());
+
+  it("überträgt je Aufgabe nur die erste falsche Antwort, auf 32 Zeichen gekürzt", async () => {
+    putLearningEvent.mockClear();
+    const user = userEvent.setup();
+    const onProgress = vi.fn();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-first-wrong",
+          uebungMaxAttempts: 9,
+          words: [
+            { id: "m", kind: "math", prompt: "7 · 8 = _", targetWord: "56" },
+          ],
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={onProgress}
+      />,
+    );
+    revealWithTwoFingers(container);
+    const answer = screen.getByRole("textbox", { name: "Deine Antwort" });
+    await user.type(answer, `${"9".repeat(40)}{Enter}`);
+    await waitFor(() => expect(answer).toBeEnabled());
+    expect(onProgress).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        errors: 1,
+        firstWrongAnswers: { "7 · 8 = _": "9".repeat(32) },
+      }),
+    );
+    await user.clear(answer);
+    await user.type(answer, "54{Enter}");
+    await waitFor(() => expect(onProgress).toHaveBeenCalledTimes(2));
+    expect(onProgress).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        errors: 2,
+        wordErrors: { "7 · 8 = _": 2 },
+        firstWrongAnswers: { "7 · 8 = _": "9".repeat(32) },
+      }),
+    );
+    // Der lokale Schnappschuss überlebt ein Neuladen, damit „erste“ erste bleibt.
+    expect(
+      JSON.parse(
+        window.sessionStorage.getItem(
+          "lernraum:live-trace:session-first-wrong",
+        )!,
+      ).firstWrongAnswers,
+    ).toEqual({ "7 · 8 = _": "9".repeat(32) });
+  });
+
+  it("überträgt bei Text und Vokabeln nie eine Antwort", async () => {
+    const user = userEvent.setup();
+    const onProgress = vi.fn();
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="4829"
+        studentName="Mia"
+        session={{
+          ...session,
+          sessionId: "session-no-answers",
+          words: [
+            { id: "t", kind: "text", targetWord: "Schulweg" },
+            {
+              id: "v",
+              kind: "vocabulary",
+              prompt: "Haus",
+              targetWord: "house",
+            },
+          ],
+        }}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={onProgress}
+      />,
+    );
+    revealWithTwoFingers(container);
+    const answer = screen.getByRole("textbox", { name: "Deine Antwort" });
+    await user.type(answer, "Schulwek{Enter}");
+    await waitFor(() => expect(onProgress).toHaveBeenCalledTimes(1));
+    await user.type(answer, "Schulweg{Enter}");
+    await waitFor(() => expect(onProgress).toHaveBeenCalledTimes(2));
+    expect(JSON.stringify(onProgress.mock.calls)).not.toContain(
+      "firstWrongAnswers",
+    );
+    expect(JSON.stringify(onProgress.mock.calls)).not.toContain("Schulwek");
+  });
+});
+
 describe("Wörter in den Wortspeicher", () => {
   const textSession = (
     wordStoreTransfer: LiveSession["wordStoreTransfer"],
