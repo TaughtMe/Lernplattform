@@ -24,6 +24,7 @@ import {
   parseCollectionParam,
   parseHistoryParams,
   parseSourceParam,
+  parseOrderTitleParam,
   parseWordsParam,
 } from "../../src/domain/practice-bridge";
 import type { WordBoxView } from "../../src/domain/word-box";
@@ -173,6 +174,10 @@ export function LearningWordApp({
   const [bridgeSource] = useState(() =>
     parseSourceParam(searchParams.get("quelle")),
   );
+  // Wortauftrag der Lehrkraft: `?auftrag=` ist nur ein Name für die Wortbox.
+  const [bridgeOrderTitle] = useState(() =>
+    parseOrderTitleParam(searchParams.get("auftrag")),
+  );
   const [historyId, setHistoryId] = useState<string | undefined>(() =>
     parseHistoryParams(searchParams),
   );
@@ -242,7 +247,9 @@ export function LearningWordApp({
       return {
         id,
         kind: "textbox",
-        title: bridgeSource === "fehler" ? "Fehlerwörter" : TEXTBOX_BOX_TITLE,
+        title:
+          bridgeOrderTitle ??
+          (bridgeSource === "fehler" ? "Fehlerwörter" : TEXTBOX_BOX_TITLE),
         words: bridgeWords,
         editable: false,
       };
@@ -956,6 +963,7 @@ export function LearningWordApp({
         <TextboxWordsSheet
           words={bridgeWords}
           source={bridgeSource}
+          orderTitle={bridgeOrderTitle}
           ownBoxes={store.ownBoxes
             .filter((box) => box.kind === "eigen")
             .map((box) => ({ id: box.id, title: box.title }))}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -445,6 +446,11 @@ export function TeacherContentTransfer({
     <ManagePage
       title="Freigabe an Schüler"
       lead="Vokabelpakete per QR-Code auf die Geräte der Schüler geben. Verschlüsselt und nach 24 Stunden gelöscht."
+      action={
+        <Link href="/lehrer/material/wortauftrag" className={m.soft}>
+          Wortauftrag für Lernwörter
+        </Link>
+      }
     >
       <TransferLayout
         side={
