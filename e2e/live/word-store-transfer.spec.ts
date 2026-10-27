@@ -49,7 +49,9 @@ test("falsch geschriebene Wörter kommen in „Aus dem Unterricht“ und werden 
     page.getByRole("heading", { name: "Geschafft, Mia!" }),
   ).toBeVisible();
   await expect(
-    page.getByText(/„Hund" und „schnell" liegen jetzt in deinem Wortspeicher/),
+    page.getByText(
+      /„der Hund" und „schnell" liegen jetzt in deinem Wortspeicher/,
+    ),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Im Wortspeicher üben" }),
@@ -89,10 +91,10 @@ test("falsch geschriebene Wörter kommen in „Aus dem Unterricht“ und werden 
     };
   });
   expect(stored.box).toEqual([
-    { id: "unterricht", words: ["Hund", "schnell"] },
+    { id: "unterricht", words: ["der Hund", "schnell"] },
   ]);
   expect(stored.due.sort((a, b) => a.word.localeCompare(b.word))).toEqual([
-    { word: "Hund", box: 1, attempts: 0 },
+    { word: "der Hund", box: 1, attempts: 0 },
     { word: "schnell", box: 1, attempts: 0 },
   ]);
 
