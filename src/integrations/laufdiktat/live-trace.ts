@@ -9,6 +9,12 @@ const liveTraceSchema = z.object({
   currentIndex: z.number().int().min(0),
   finished: z.boolean(),
   wordErrors: z.record(z.string(), z.number().int().min(0)),
+  /**
+   * Mathe: erste falsche Antwort je Aufgabe (höchstens 32 Zeichen). Sie geht
+   * mit dem Fortschritt an die Lehrkraft; hier nur, damit sie ein Neuladen
+   * der Seite überlebt. Ältere Schnappschüsse haben das Feld nicht.
+   */
+  firstWrongAnswers: z.record(z.string(), z.string().max(32)).default({}),
   wordHelps: z.record(z.string(), z.literal(true)),
   /** Mit Schreiberleichterung tolerant angenommene Wörter; nur lokal. */
   wordTolerated: z.record(z.string(), z.literal(true)).default({}),

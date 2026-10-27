@@ -113,6 +113,61 @@ Changelogs war im Recherchewerkzeug nicht lesbar; die HTML-Fassung wurde geprüf
 Die Migration wurde mit der Supabase-CLI angelegt. Eine relevante Änderung für
 das verwendete tokengebundene HTTP-Verfahren ergab sich daraus nicht.
 
+## Migration `20261027120000_math_first_wrong_answers`: vor dem Client einspielen
+
+Stand: 27.10.2026. Nicht produktiv eingespielt; die Prüfung und das Einspielen
+folgen getrennt (Testumgebung zuerst, wie oben).
+
+**Zweck.** Im Live-Raum überträgt das Kindgerät bei Mathe-Aufgaben die erste
+falsche Antwort je Aufgabe (höchstens 32 Zeichen) an die Lehrkraft. Das
+Lehrergerät leitet daraus beim CSV-Export die Spalte „Fehlerart (Vermutung)“
+ab. Text und Vokabeln übertragen keine Antworten, die Oberfläche zeigt keine
+Fehlerart.
+
+**Datenschutz.** Die Antworten liegen in `room_students.first_wrong_answers`,
+pseudonym wie `word_errors` (Schlüssel ist der Teilnehmerschlüssel, kein Name).
+Ein Raum schließt spätestens 120 Minuten nach dem Öffnen (oder nach drei
+Stunden ohne Aktivität); `cleanup_abandoned_rooms` löscht ihn samt
+Fortschrittszeilen (Fremdschlüssel mit `on delete cascade`), sobald sein Ende
+24 Stunden zurückliegt (Job alle fünf Minuten). Die Datenschutzerklärung nennt
+die Übertragung im Abschnitt „Live-Räume“.
+
+**Änderung.**
+
+- Neue Spalte `first_wrong_answers jsonb not null default '{}'` mit Prüfung
+  (Objekt, höchstens 65 536 Byte wie `word_errors`).
+- `upsert_progress_secure` bekommt als 14. und letztes Argument
+  `p_first_wrong_answers jsonb default null`. Die alte Signatur mit 13
+  Argumenten wird gelöscht und ersetzt (zwei Überladungen mit Standardwerten
+  wären mehrdeutig); `revoke all` und `grant execute ... to anon` stehen für die
+  neue Signatur wie bisher, ebenso `security definer` und `search_path`.
+- Prüfungen: nur Objekte; Schlüssel müssen der Aufgabentext eines Mathe-Worts
+  der Raumkonfiguration sein; höchstens so viele Einträge wie der Raum Wörter
+  hat; je Antwort eine Zeichenkette mit höchstens 32 Zeichen; sonst
+  Ausnahme „Ungueltige Antwortstatistik“.
+- Bereits gespeicherte Aufgaben bleiben beim Zusammenführen erhalten („erste“
+  Antwort); ein Aufruf ohne das Argument ändert die Spalte nicht.
+- `get_room_students_secure` (liefert `setof room_students`) gibt die Spalte
+  ohne Änderung mit zurück; `get_my_progress_secure` bleibt unverändert.
+
+**Abwärtskompatibilität.** Der Client 0.9.4 ruft `upsert_progress_secure` mit
+den 13 bisherigen Argumenten auf (benannt über PostgREST); das neue Argument
+hat einen Standard, der Aufruf funktioniert weiter. Ältere Lehreransichten
+ignorieren die zusätzliche Spalte im Abruf.
+
+**Reihenfolge.** Zuerst die Migration, dann der neue Client. Der neue Client
+sendet `p_first_wrong_answers` nur nach einer falschen Mathe-Antwort. Gegen
+einen Server ohne Migration scheitert genau dieser Aufruf (unbekanntes
+Argument), alle anderen Räume laufen unverändert. Rückfall: den Client
+zurücknehmen; die Migration kann bestehen bleiben.
+
+**Proben (Testumgebung, Rolle `anon`).** Neuer Aufruf schreibt, Lehrkraft-Abruf
+liefert das Feld; zweiter Aufruf mit anderer Antwort ändert die erste nicht;
+Aufruf mit 13 Argumenten positional und benannt funktioniert und lässt das Feld
+unverändert; abgelehnt werden: Antwort mit 33 Zeichen, Zahl statt Text,
+Array, Schlüssel eines Vokabel- oder Textworts, unbekannter Schlüssel, mehr
+Einträge als Wörter. Diese Fälle deckt `npm run test:database` ab.
+
 ## Bereitstellungsprotokoll
 
 **26.10.2026, Supabase-Projekt „Lernraum“ (`bidzvtwadsmifkmpoxpq`, eu-west-1):**

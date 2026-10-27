@@ -4,6 +4,7 @@ import {
   classifyMentalMathError,
   mentalMathHint,
   mentalMathSolutionSteps,
+  MENTAL_MATH_ERROR_LABELS,
   type MentalMathErrorKind,
 } from "./mental-math-feedback";
 import { parseMentalMathTask, type MathGapSlot } from "./mental-math";
@@ -465,5 +466,20 @@ describe("Eigenschaft: Der Lösungsweg verrät das Ergebnis nie", () => {
       ),
       { numRuns: 600 },
     );
+  });
+});
+
+describe("Bezeichnungen für Lehrkräfte", () => {
+  it("benennt jede Fehlerart außer unbekannt, ohne Ergebnis", () => {
+    expect(MENTAL_MATH_ERROR_LABELS).toEqual({
+      sign: "Vorzeichen",
+      "digit-swap": "Zahlendreher",
+      "place-value": "Stellenwert",
+      "decimal-point": "Komma",
+      "operation-mix": "Rechenart verwechselt",
+      "tens-bridge": "Zehnerübergang",
+      "off-by-one": "um eins daneben",
+      "neighbor-fact": "Nachbaraufgabe",
+    });
   });
 });

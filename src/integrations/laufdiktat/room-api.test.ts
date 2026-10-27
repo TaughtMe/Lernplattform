@@ -257,8 +257,79 @@ describe("Raum-Aufrufe der Lehrkraft", () => {
       stationNumber: null,
       durationMs: undefined,
       wordErrors: {},
+      firstWrongAnswers: {},
       appVersion: null,
     });
+  });
+
+  it("liest die ersten falschen Antworten tolerant", async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          ...row,
+          student_key: "Mia",
+          app_version: null,
+          first_wrong_answers: { "7 · 8 = _": "54" },
+        },
+        // Unlesbares Feld (falscher Typ, zu lang): leer, der Rest bleibt gültig.
+        {
+          ...row,
+          student_key: "Leo",
+          app_version: null,
+          first_wrong_answers: { "7 · 8 = _": 54 },
+        },
+        {
+          ...row,
+          student_key: "Zoe",
+          app_version: null,
+          first_wrong_answers: { "7 · 8 = _": "x".repeat(33) },
+        },
+        {
+          ...row,
+          student_key: "Ben",
+          app_version: null,
+          first_wrong_answers: null,
+        },
+      ],
+      error: null,
+    });
+    const students = await getLiveRoomStudents(config, room);
+    expect(students.map((student) => student.firstWrongAnswers)).toEqual([
+      { "7 · 8 = _": "54" },
+      {},
+      {},
+      {},
+    ]);
+    expect(students[1]).toMatchObject({ studentName: "Leo", errors: 1 });
+  });
+
+  it("sendet erste falsche Antworten nur, wenn es welche gibt", async () => {
+    rpc.mockResolvedValue({ data: null, error: null });
+    const progress = {
+      currentIndex: 0,
+      peeks: 0,
+      attempts: 1,
+      errors: 1,
+      finished: false,
+    };
+    await saveLiveProgress(config, identity, progress);
+    await saveLiveProgress(config, identity, {
+      ...progress,
+      firstWrongAnswers: {},
+    });
+    // Ältere Server kennen das Argument nicht: ohne Mathe wird es nicht gesendet.
+    for (const call of rpc.mock.calls)
+      expect(call[1]).not.toHaveProperty("p_first_wrong_answers");
+    await saveLiveProgress(config, identity, {
+      ...progress,
+      firstWrongAnswers: { "7 · 8 = _": "54" },
+    });
+    expect(rpc).toHaveBeenLastCalledWith(
+      "upsert_progress_secure",
+      expect.objectContaining({
+        p_first_wrong_answers: { "7 · 8 = _": "54" },
+      }),
+    );
   });
 
   it("wiederholt das Aktualisieren der Sitzung einmal und gibt dann auf", async () => {

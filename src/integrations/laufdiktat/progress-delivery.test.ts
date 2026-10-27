@@ -31,6 +31,17 @@ describe("ordered progress delivery", () => {
     await vi.waitFor(() => expect(changed).toHaveBeenLastCalledWith("saved"));
     expect(save).toHaveBeenLastCalledWith({ ...progress, finished: true });
   });
+  it("kopiert die ersten falschen Antworten, damit spätere Änderungen nicht durchschlagen", async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const delivery = createProgressDelivery(save, vi.fn());
+    const answers = { "7 · 8 = _": "54" };
+    delivery.send({ ...progress, firstWrongAnswers: answers });
+    answers["7 · 8 = _"] = "geändert";
+    await vi.waitFor(() => expect(save).toHaveBeenCalled());
+    expect(save.mock.calls[0]![0].firstWrongAnswers).toEqual({
+      "7 · 8 = _": "54",
+    });
+  });
   it("retains a failed write for retry without claiming success", async () => {
     const save = vi
       .fn()

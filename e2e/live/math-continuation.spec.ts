@@ -52,7 +52,10 @@ for (const withError of [true, false])
           word_errors: input["p_word_errors"],
           station_number: null,
         };
-        expect(JSON.stringify(input)).not.toContain('"answer"');
+        // Außer der ersten falschen Antwort je Aufgabe geht keine Antwort raus.
+        const rest = { ...input };
+        delete rest["p_first_wrong_answers"];
+        expect(JSON.stringify(rest)).not.toContain('"answer"');
       }
       await route.fulfill({ json: body });
     });
@@ -80,6 +83,11 @@ for (const withError of [true, false])
       p_finished: true,
       p_errors: withError ? 1 : 0,
     });
+    if (withError)
+      expect(writes.at(-1)).toMatchObject({
+        p_first_wrong_answers: { "7 · 8": "54" },
+      });
+    else expect(writes.at(-1)).not.toHaveProperty("p_first_wrong_answers");
     await page
       .getByRole("link", {
         name: withError ? "Meine Fehler üben" : "Weitere Aufgaben üben",

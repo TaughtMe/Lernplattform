@@ -63,6 +63,12 @@ export type LiveProgress = {
   finished: boolean;
   durationMs?: number | undefined;
   wordErrors?: Record<string, number> | undefined;
+  /**
+   * Nur Mathe: erste falsche Antwort je Aufgabe (Schlüssel wie `wordErrors`),
+   * höchstens 32 Zeichen (`first-wrong-answers.ts`). Geht an die Lehrkraft,
+   * die daraus eine vermutete Fehlerart für den CSV-Export ableitet.
+   */
+  firstWrongAnswers?: Record<string, string> | undefined;
   stationNumber?: number | null | undefined;
 };
 
@@ -179,6 +185,7 @@ export async function getLiveRoomStudents(
     finished: row.finished,
     durationMs: row.duration_ms ?? undefined,
     wordErrors: row.word_errors ?? {},
+    firstWrongAnswers: row.first_wrong_answers ?? {},
     appVersion: row.app_version,
   }));
 }
@@ -326,6 +333,11 @@ export async function saveLiveProgress(
       p_word_errors: progress.wordErrors ?? null,
       p_app_version: LIVE_APP_VERSION,
       p_station_number: progress.stationNumber ?? null,
+      // Nur wenn vorhanden: Räume ohne Mathe rufen die Funktion unverändert auf.
+      ...(progress.firstWrongAnswers &&
+      Object.keys(progress.firstWrongAnswers).length > 0
+        ? { p_first_wrong_answers: progress.firstWrongAnswers }
+        : {}),
     },
   );
   if (error) throw new Error(error.message);
