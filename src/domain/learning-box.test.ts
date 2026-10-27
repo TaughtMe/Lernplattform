@@ -32,6 +32,11 @@ import {
 } from "./learning-box-replay";
 import type { LearningEventV1 } from "./learning-bundle";
 import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
+import { REPETITION_RULES } from "./spaced-repetition";
+import {
+  REPETITION_RULE_TABLE,
+  type RuleTableModule,
+} from "./testing/repetition-rule-table";
 
 vi.stubGlobal("crypto", { randomUUID: () => "fixed-id" });
 
@@ -1186,5 +1191,63 @@ describe("Schonfrist und Rückstufung nach Zeit", () => {
     expect(updated.box).toBe(2);
     expect(updated.interval).toBe(LEITNER_INTERVAL_DAYS[1]);
     expect(updated.nextReview).toBe(NOW + DAY);
+  });
+});
+
+/** Treiber der Regeltabelle: Antworten laufen durch `processLearningBoxResult`. */
+const learningBoxModule: RuleTableModule = {
+  name: "LernBox (processLearningBoxResult)",
+  maxBox: 5,
+  selfCheck: true,
+  create(start) {
+    let card = createLearningBoxCard({
+      deckId: "deck",
+      question: "library",
+      answer: "Bibliothek",
+      now: start,
+    });
+    const attempted = new Map<string, string[]>();
+    return {
+      answer(input) {
+        // Je Runde zählt nur der erste Versuch (C3-1), wie in der Lernrunde.
+        const inRound = attempted.get(input.roundId) ?? [];
+        if (
+          input.firstAttempt === false ||
+          !isFirstLearningBoxAttempt(inRound, card.id, "forward")
+        )
+          return;
+        attempted.set(input.roundId, [
+          ...inRound,
+          learningBoxAttemptKey(card.id, "forward"),
+        ]);
+        card = processLearningBoxResult(card, {
+          correct: input.correct,
+          direction: "forward",
+          mode: input.selfCheck ? "oral" : "writing",
+          ...(input.correct && input.usedHelp
+            ? { secondChance: "recovered" as const }
+            : {}),
+          now: input.at,
+        });
+      },
+      box: () => card.box,
+      dueAt: () => card.nextReview,
+    };
+  },
+};
+
+describe("Regeltabelle Vault 06 an der LernBox", () => {
+  for (const row of REPETITION_RULE_TABLE) {
+    if (row.applies && !row.applies(learningBoxModule)) continue;
+    it(row.rule, () => row.run(learningBoxModule));
+  }
+
+  it("teilt die Konstanten mit der Regelkonfiguration des Kerns", () => {
+    expect(REPETITION_RULES.lernbox.selfCheckMaxBox).toBe(
+      LEARNING_BOX_SELF_CHECK_MAX_BOX,
+    );
+    expect(REPETITION_RULES.lernbox.recovery.gapMs).toBe(
+      LEARNING_BOX_RECOVERY_GAP_HOURS * 60 * 60 * 1000,
+    );
   });
 });

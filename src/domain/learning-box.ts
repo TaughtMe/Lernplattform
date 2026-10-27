@@ -1,7 +1,7 @@
 import { answerMatches } from "./answer-normalization";
 import { normalizeVocabularyText } from "./learning-bundle";
-import { LEITNER_INTERVAL_DAYS } from "./leitner-schedule";
 import type { LiveVocabularyOutcome } from "./live-vocabulary-placement";
+import { REPETITION_RULES, reviewRepetition } from "./spaced-repetition";
 import {
   parseVocabularyImport,
   type VocabularyImportEntry,
@@ -456,8 +456,9 @@ export const LEARNING_BOX_RECOVERY_GAP_HOURS = 8;
 export const LEARNING_BOX_SELF_CHECK_MAX_BOX = 3;
 
 /**
- * Ergebnis einer Abfrage. Abstände je Box wie im Leitner-Zeitplan
- * (`LEITNER_INTERVAL_DAYS`: 1/3/7/14/30 Tage).
+ * Ergebnis einer Abfrage. Box und Fälligkeit entscheidet der gemeinsame Kern
+ * (`reviewRepetition` mit `REPETITION_RULES.lernbox`); Abstände je Box wie im
+ * Leitner-Zeitplan (1/3/7/14/30 Tage).
  *
  * - falsch oder zweite Chance verfehlt: Box 1, morgen wieder (jetzt fällig).
  * - zweite Chance geschafft: Box bleibt, Abstand der Box.
@@ -496,48 +497,38 @@ export function processLearningBoxResult(
   },
 ): LearningBoxCard {
   const now = input.now ?? Date.now();
-  const currentBox = effectiveLearningBoxLevel(card, input.direction, now);
   const currentInterval =
     input.direction === "forward" ? card.interval : card.reverseInterval;
-  const currentNextReview = getLearningBoxNextReview(card, input.direction);
-  const failed = input.secondChance === "failed" || !input.correct;
-  const early =
-    !failed &&
-    input.secondChance !== "recovered" &&
-    currentInterval > 0 &&
-    !isLearningBoxCardDue(card, input.direction, now);
-
-  const recovering =
-    !failed &&
-    !early &&
-    input.secondChance !== "recovered" &&
-    currentInterval > 0 &&
-    now - getLearningBoxLastReviewed(card, input.direction) <
-      LEARNING_BOX_RECOVERY_GAP_HOURS * 60 * 60 * 1000;
-
-  let nextBox: LearningBoxLevel = currentBox;
-  let nextInterval = currentInterval;
-  let nextReview = currentNextReview;
-  if (failed) {
-    nextBox = 1;
-    nextInterval = 1;
-    nextReview = now;
-  } else if (recovering) {
-    nextBox = getLearningBoxLevel(card, input.direction);
-    nextInterval = LEITNER_INTERVAL_DAYS[1];
-    nextReview = now + nextInterval * DAY_MS;
-  } else if (!early) {
-    if (input.secondChance !== "recovered") {
-      // Selbsteinschätzung hebt höchstens bis Box 3 (D-010); höhere Boxen bleiben.
-      const ceiling =
-        input.mode === "oral"
-          ? Math.max(currentBox, LEARNING_BOX_SELF_CHECK_MAX_BOX)
-          : 5;
-      nextBox = Math.min(currentBox + 1, ceiling) as LearningBoxLevel;
-    }
-    nextInterval = LEITNER_INTERVAL_DAYS[nextBox];
-    nextReview = now + nextInterval * DAY_MS;
-  }
+  // Die Entscheidung über Box und Fälligkeit trifft der gemeinsame Kern
+  // (`REPETITION_RULES.lernbox`); hier bleiben nur Zuordnung und Besonderheiten.
+  const { state, decision } = reviewRepetition(
+    {
+      box: effectiveLearningBoxLevel(card, input.direction, now),
+      dueAt: getLearningBoxNextReview(card, input.direction),
+      introduced: currentInterval > 0,
+      intervalDays: currentInterval,
+      lastReviewedAt: getLearningBoxLastReviewed(card, input.direction),
+    },
+    {
+      now,
+      correct: input.correct && input.secondChance !== "failed",
+      usedHelp: input.secondChance === "recovered",
+      selfCorrected: false,
+      firstAttempt: true,
+      evidence: input.mode === "oral" ? "self-check" : "written",
+      scheduled: true,
+    },
+    REPETITION_RULES.lernbox,
+  );
+  // Der Erholungsfall schließt einen echten Fehler oder eine Unterrichts-
+  // platzierung und behält deshalb die gespeicherte Box, nicht die wirksame.
+  const nextBox = (
+    decision === "recovered"
+      ? getLearningBoxLevel(card, input.direction)
+      : state.box
+  ) as LearningBoxLevel;
+  const nextInterval = state.intervalDays ?? currentInterval;
+  const nextReview = state.dueAt;
 
   if (input.direction === "reverse") {
     return {

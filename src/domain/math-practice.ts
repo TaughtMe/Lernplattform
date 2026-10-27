@@ -9,6 +9,7 @@ import {
   type MentalMathTask,
 } from "./mental-math";
 import type { LearningEventV1 } from "./learning-bundle";
+import { REPETITION_RULES, reviewRepetition } from "./spaced-repetition";
 
 export const mathOptionsSchema = z
   .object({
@@ -168,6 +169,9 @@ export function optionsForMathTask(task: MentalMathTask): MathOptions {
  * - Zu frühe saubere Antworten und weitere in derselben Runde sind Übung, aber
  *   kein Aufstieg.
  *
+ * Box und Fälligkeit entscheidet der gemeinsame Kern (`REPETITION_RULES.mathe`):
+ * Stufe 0 ist Box 1 mit offenem Fehler, Stufe k (1 bis 4) ist Box k.
+ *
  * Gefestigte Posten filtert diese Funktion selbst heraus; Aufrufer sehen nur,
  * was noch gewiesen oder wiederholt werden muss. Ein neuer Fehler macht einen
  * gefestigten Posten wieder fällig. Die Rückgabe ist nach `dueAt` sortiert.
@@ -180,8 +184,8 @@ export function mathReviews(events: readonly LearningEventV1[]): MathReview[] {
   )) {
     if (!event.math) continue;
     const previous = reviews.get(event.learningObjectId);
-    const occurred = Date.parse(event.occurredAt);
     const clean = isCleanMathAnswer(event);
+    // Ein Posten entsteht erst durch einen Fehler.
     if (clean && !previous) continue;
     const base = {
       id: event.learningObjectId,
@@ -189,7 +193,35 @@ export function mathReviews(events: readonly LearningEventV1[]): MathReview[] {
       options: previous?.options ?? event.math.options,
       lastRound: event.roundId,
     };
-    if (!clean) {
+    // Ein gefestigter Posten bleibt es, bis ein neuer Fehler kommt.
+    if (clean && previous?.mastered) {
+      reviews.set(event.learningObjectId, { ...previous, ...base });
+      continue;
+    }
+    // Box und Fälligkeit entscheidet der gemeinsame Kern
+    // (`REPETITION_RULES.mathe`). Stufe 0 ist Box 1 mit offenem Fehler,
+    // Stufe k (1 bis 4) ist Box k.
+    const { state, decision } = reviewRepetition(
+      previous && {
+        box: Math.max(previous.step, 1),
+        dueAt: Date.parse(previous.dueAt),
+        introduced: true,
+        awaitingRecovery: previous.step === 0,
+        lastRoundId: previous.lastRound,
+      },
+      {
+        now: Date.parse(event.occurredAt),
+        correct: event.assessment.knowledge === "correct",
+        usedHelp: event.help !== "none",
+        selfCorrected: event.assessment.selfCorrected,
+        firstAttempt: true,
+        roundId: event.roundId,
+        evidence: "written",
+        scheduled: true,
+      },
+      REPETITION_RULES.mathe,
+    );
+    if (decision === "reset") {
       reviews.set(event.learningObjectId, {
         ...base,
         dueAt: event.occurredAt,
@@ -200,28 +232,16 @@ export function mathReviews(events: readonly LearningEventV1[]): MathReview[] {
       continue;
     }
     const prior = previous!;
-    const rises =
-      !prior.mastered &&
-      occurred >= Date.parse(prior.dueAt) &&
-      prior.lastRound !== event.roundId;
-    if (!rises) {
-      reviews.set(event.learningObjectId, {
-        ...prior,
-        lastRound: base.lastRound,
-      });
-      continue;
-    }
-    const finished = prior.step >= MATH_REVIEW_DAYS.length;
-    const step = finished ? prior.step : prior.step + 1;
+    // Saubere fällige Antwort an der höchsten Stufe: gefestigt, Termin bleibt.
+    const mastered = decision === "repeated";
     reviews.set(event.learningObjectId, {
       ...base,
-      dueAt: finished
-        ? prior.dueAt
-        : new Date(
-            occurred + MATH_REVIEW_DAYS[step - 1]! * 86400000,
-          ).toISOString(),
-      step,
-      mastered: finished,
+      dueAt:
+        mastered || Object.is(state.dueAt, Date.parse(prior.dueAt))
+          ? prior.dueAt
+          : new Date(state.dueAt).toISOString(),
+      step: mastered ? prior.step : state.awaitingRecovery ? 0 : state.box,
+      mastered,
       errors: prior.errors,
     });
   }

@@ -1,9 +1,7 @@
-import {
-  LEARNING_ARCHIVE_BONUS_DAYS,
-  LEITNER_INTERVAL_DAYS,
-} from "./leitner-schedule";
+import { LEARNING_ARCHIVE_BONUS_DAYS } from "./leitner-schedule";
 import type { LearningWordStage } from "./learning-word";
 import { nextLocalDayStart } from "./local-day";
+import { REPETITION_RULES, reviewRepetition } from "./spaced-repetition";
 import { wordKey } from "./word-box";
 
 /**
@@ -100,17 +98,17 @@ export function updateLearningWordProgress(
     firstAttempt: boolean;
   },
 ): LearningWordProgress {
+  const now = Date.parse(input.now);
   const nextDay = nextLocalDayStart(input.now);
   const clean = input.correct && !input.usedHelp && !input.selfCorrected;
-  const isDue =
-    current !== undefined &&
-    new Date(current.dueAt).getTime() <= new Date(input.now).getTime();
+  const isDue = current !== undefined && Date.parse(current.dueAt) <= now;
 
   let box: LearningWordBox = current?.box ?? 1;
   let dueAt = current?.dueAt ?? nextDay;
-  if (current !== undefined && input.mode === "due" && isDue) {
-    if (input.firstAttempt) {
-      if (isLearningArchiveWord(current)) {
+  if (current !== undefined && isLearningArchiveWord(current)) {
+    // Das Lernarchiv (Box 6) bleibt im Modul; der Kern kennt nur Box 1 bis 5.
+    if (input.mode === "due" && isDue) {
+      if (input.firstAttempt) {
         // Bonusabfrage (A-4).
         if (clean) {
           dueAt = afterDays(input.now, LEARNING_ARCHIVE_BONUS_DAYS);
@@ -118,25 +116,43 @@ export function updateLearningWordProgress(
           box = 4;
           dueAt = nextDay;
         }
-      } else if (clean) {
-        // Box 5 → Archiv nur mit freiem Abruf (Stufe 6) auf Anhieb (A-1).
-        box =
-          current.box === 5 && input.stage === 6
-            ? LEARNING_ARCHIVE_BOX
-            : (Math.min(5, current.box + 1) as LearningWordBox);
-        dueAt = afterDays(
-          input.now,
-          box === LEARNING_ARCHIVE_BOX
-            ? LEARNING_ARCHIVE_BONUS_DAYS
-            : LEITNER_INTERVAL_DAYS[box],
-        );
-      } else {
-        box = 1;
-        dueAt = nextDay;
       }
+    } else if (!input.correct || input.usedHelp) {
+      dueAt = earlier(dueAt, nextDay);
     }
-  } else if (current !== undefined && (!input.correct || input.usedHelp)) {
-    dueAt = earlier(dueAt, nextDay);
+  } else {
+    // Box und Fälligkeit entscheidet der gemeinsame Kern
+    // (`REPETITION_RULES.lernwort`); „due“ ist die geplante Wiederholung.
+    const { state, decision } = reviewRepetition(
+      current && {
+        box: current.box,
+        dueAt: Date.parse(current.dueAt),
+        introduced: true,
+      },
+      {
+        now,
+        correct: input.correct,
+        usedHelp: input.usedHelp,
+        selfCorrected: input.selfCorrected,
+        firstAttempt: input.firstAttempt,
+        evidence: "written",
+        scheduled: input.mode === "due",
+      },
+      REPETITION_RULES.lernwort,
+    );
+    box = state.box as LearningWordBox;
+    // Unveränderte Fälligkeit bleibt Zeichen für Zeichen erhalten.
+    if (
+      current === undefined ||
+      !Object.is(state.dueAt, Date.parse(current.dueAt))
+    ) {
+      dueAt = new Date(state.dueAt).toISOString();
+    }
+    if (decision === "repeated" && current?.box === 5 && input.stage === 6) {
+      // Box 5 → Archiv nur mit freiem Abruf (Stufe 6) auf Anhieb (A-1).
+      box = LEARNING_ARCHIVE_BOX;
+      dueAt = afterDays(input.now, LEARNING_ARCHIVE_BONUS_DAYS);
+    }
   }
 
   const known = current?.stage ?? input.stage;

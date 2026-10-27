@@ -11,6 +11,10 @@ import {
   type LearningWordProgress,
 } from "./learning-word-progress";
 import {
+  REPETITION_RULE_TABLE,
+  type RuleTableModule,
+} from "./testing/repetition-rule-table";
+import {
   LEARNING_ARCHIVE_BONUS_DAYS,
   LEITNER_INTERVAL_DAYS,
 } from "./leitner-schedule";
@@ -729,4 +733,37 @@ describe("Lernarchiv (Box 6): Fälligkeit", () => {
     });
     expect(progress.box).toBe(6);
   });
+});
+
+/** Treiber der Regeltabelle: fällige Wiederholung („due“) auf Merkstufe 4. */
+const learningWordModule: RuleTableModule = {
+  name: "Lernwörter (updateLearningWordProgress)",
+  maxBox: 5,
+  selfCheck: false,
+  create(start) {
+    let progress: LearningWordProgress | undefined;
+    return {
+      answer(input) {
+        progress = updateLearningWordProgress(progress, {
+          word: "Schlüssel",
+          correct: input.correct,
+          usedHelp: input.usedHelp ?? false,
+          selfCorrected: false,
+          stage: 4,
+          now: new Date(input.at).toISOString(),
+          mode: "due",
+          firstAttempt: input.firstAttempt ?? true,
+        });
+      },
+      box: () => progress?.box ?? 1,
+      dueAt: () => (progress ? Date.parse(progress.dueAt) : start),
+    };
+  },
+};
+
+describe("Regeltabelle Vault 06 an den Lernwörtern", () => {
+  for (const row of REPETITION_RULE_TABLE) {
+    if (row.applies && !row.applies(learningWordModule)) continue;
+    it(row.rule, () => row.run(learningWordModule));
+  }
 });
