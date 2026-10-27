@@ -240,6 +240,12 @@
   border-radius: 10px;
   cursor: pointer;
 }
+.pairAlso {
+  padding: 0 11px 4px 41px;
+}
+.pairAlso:empty {
+  display: none;
+}
 .pair:hover {
   background: var(--bg);
 }

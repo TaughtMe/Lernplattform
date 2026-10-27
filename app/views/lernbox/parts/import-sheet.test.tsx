@@ -228,6 +228,16 @@ describe("ImportSheet", () => {
     expect(screen.queryByLabelText(/Komma trennt Alternativen/)).toBeNull();
   });
 
+  it("zeigt in der Vorschau auch die Alternativen der Vorderseite", async () => {
+    const user = userEvent.setup();
+    renderSheet(vi.fn());
+    await typeRow(user, 1, "(to) go", "gehen");
+    await typeRow(user, 2, "Baum", "tree");
+    await user.click(screen.getByRole("button", { name: "Vorschau ansehen" }));
+    expect(screen.getByText("Gilt auch: to go · go")).toBeTruthy();
+    expect(screen.getAllByText(/Gilt auch:/)).toHaveLength(1);
+  });
+
   it("trennt das Komma nur nach Bestätigung (eingetippte Zeilen)", async () => {
     const user = userEvent.setup();
     const onImportCards = vi.fn(async () => "ok");

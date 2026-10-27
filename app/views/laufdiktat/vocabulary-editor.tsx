@@ -1,6 +1,7 @@
 "use client";
 
 import { parseVocabularyImport } from "../../../src/domain/vocabulary-import";
+import { AcceptedAnswers } from "../../ui/accepted-answers";
 import { Icon } from "../../ui/icons";
 import { VOCABULARY_IMPORT_GUIDE } from "../../ui/vocabulary-import-guide";
 import { downloadVocabularyTemplate } from "../../ui/vocabulary-template-download";
@@ -153,6 +154,13 @@ export function VocabularyEditor(props: VocabularyEditorProps) {
                           .filter(Boolean),
                       )
                     }
+                  />
+                  {/* Beide Richtungen werden geprüft: jede Seite zeigt, was zusätzlich gilt. */}
+                  <AcceptedAnswers
+                    text={[pair[side].primary, ...pair[side].alternatives]
+                      .filter(Boolean)
+                      .join(" | ")}
+                    omit={pair[side].primary}
                   />
                 </span>
               ))}

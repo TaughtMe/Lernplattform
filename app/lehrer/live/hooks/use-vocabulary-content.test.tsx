@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TeacherContentMode } from "../../../../src/integrations/laufdiktat/teacher-session";
+import { acceptedAlsoOf } from "../../../ui/accepted-answers";
 import { useVocabularyContent } from "./use-vocabulary-content";
 
 const profile = vi.hoisted(() => ({
@@ -95,6 +96,14 @@ describe("useVocabularyContent", () => {
       primary: "big",
       alternatives: ["huge"],
     });
+    // Das Vokabelheft zeigt daraus „Gilt auch: huge“.
+    const right = result.current.vocabularyPairs[0]!.right;
+    expect(
+      acceptedAlsoOf(
+        [right.primary, ...right.alternatives].join(" | "),
+        right.primary,
+      ),
+    ).toEqual(["huge"]);
     // Die Bestätigung gilt nur für diesen Import.
     expect(result.current.vocabularyCommaSeparates).toBe(false);
   });
