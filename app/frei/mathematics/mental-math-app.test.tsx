@@ -313,6 +313,19 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
     expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
   });
 
+  it("zeigt bei unbekannter Fehlerart nur „Noch nicht.“ ohne Tipp, der Lösungsweg bleibt", async () => {
+    const { user, answer } = await start("47 + 8");
+    await user.type(answer, "7{Enter}");
+    expect(await screen.findByText("Noch nicht.")).toBeVisible();
+    expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Die Lösung ist/)).not.toBeInTheDocument();
+
+    await user.clear(answer);
+    await user.type(answer, "8{Enter}");
+    expect(await screen.findByText("Die Lösung ist 55.")).toBeVisible();
+    expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
+  });
+
   it("wertet den ersten Versuch: die spätere richtige Antwort bleibt Selbstkorrektur mit Hilfe", async () => {
     const { user, answer } = await start("7 * 8");
     await user.type(answer, "54{Enter}");

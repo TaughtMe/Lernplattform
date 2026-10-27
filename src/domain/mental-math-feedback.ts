@@ -184,11 +184,15 @@ function bridgeHint(parts: MentalMathExpression): string | null {
 /**
  * Kurzer Strategiehinweis für das Kind. Er nennt die Strategie, nie die
  * Fehlerart und nie das Ergebnis; Zahlen aus der Aufgabe dürfen vorkommen.
+ * Bei unbekannter Fehlerart gibt es keinen Hinweis (`null`, Entscheidung
+ * 27.10.2026): Ein geratener Tipp ohne Bezug zum Fehler würde mehr verwirren
+ * als helfen. Der Lösungsweg bleibt davon unberührt.
  */
 export function mentalMathHint(
   task: MentalMathTask,
   errorKind: MentalMathErrorKind,
-): string {
+): string | null {
+  if (errorKind === "unknown") return null;
   const parts = partsOf(task);
   if (!parts)
     return "Rechne Schritt für Schritt: Klammern zuerst, Punkt vor Strich.";
@@ -213,8 +217,6 @@ export function mentalMathHint(
       return "Mach die Probe mit der Umkehraufgabe: Rechne rückwärts und schau, ob du wieder bei der ersten Zahl landest.";
     case "neighbor-fact":
       return neighborHint(parts);
-    case "unknown":
-      return strategyHint(parts);
   }
 }
 
@@ -223,23 +225,6 @@ function neighborHint(parts: MentalMathExpression) {
   if (!isInteger(left) || !isInteger(right) || left < 2 || right < 2)
     return "Nutze eine Aufgabe, die du sicher kannst, und rechne von dort weiter.";
   return `Nutze die Nachbaraufgabe: ${show(left)} · ${show(right)} = ${show(left)} · ${right - 1} + ${show(left)}.`;
-}
-
-function strategyHint(parts: MentalMathExpression) {
-  const { left, operator, right } = parts;
-  if (operator === "+" || operator === "-")
-    return (
-      bridgeHint(parts) ??
-      "Rechne in kleinen Schritten: Zerlege die zweite Zahl in Zehner und Einer."
-    );
-  if (operator === "*") {
-    return isInteger(left) && isInteger(right) && Math.min(left, right) >= 2
-      ? neighborHint(parts)
-      : "Rechne zuerst ohne Komma oder Null und setze sie danach wieder ein.";
-  }
-  return right !== 0 && isInteger(left) && isInteger(right)
-    ? `Umkehraufgabe: ${show(left)} : ${show(right)} = ?, weil ? · ${show(right)} = ${show(left)}.`
-    : "Nutze die Umkehraufgabe: Mal und Geteilt gehören zusammen.";
 }
 
 function digitParts(value: number) {

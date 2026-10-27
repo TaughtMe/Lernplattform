@@ -96,11 +96,13 @@ describe("mentalMathHint", () => {
   it("nennt dem Kind nur Strategien, nie die Fehlerart", () => {
     for (const [kind, examples] of Object.entries(catalogue))
       for (const [source, , gap] of examples) {
+        if (kind === "unknown") continue;
         const hint = mentalMathHint(
           task(source, gap),
           kind as MentalMathErrorKind,
         );
-        expect(hint.length).toBeGreaterThan(10);
+        expect(hint).not.toBeNull();
+        expect(hint!.length).toBeGreaterThan(10);
         for (const word of forbidden) expect(hint).not.toContain(word);
       }
   });
@@ -110,6 +112,7 @@ describe("mentalMathHint", () => {
       for (const [source, , gap] of examples) {
         const t = task(source, gap);
         const hint = mentalMathHint(t, kind as MentalMathErrorKind);
+        if (hint === null) continue;
         const numbers = hint.replace(/,/g, ".").match(/\d+(?:\.\d+)?/g) ?? [];
         // Die Lösung darf nur vorkommen, wenn sie auch in der Aufgabe steht.
         const shown = source.replace(/,/g, ".").match(/\d+(?:\.\d+)?/g) ?? [];
@@ -131,16 +134,26 @@ describe("mentalMathHint", () => {
     expect(mentalMathHint(task("7 * 8"), "neighbor-fact")).toBe(
       "Nutze die Nachbaraufgabe: 7 · 8 = 7 · 7 + 7.",
     );
-    expect(mentalMathHint(task("56 : 8"), "unknown")).toBe(
-      "Umkehraufgabe: 56 : 8 = ?, weil ? · 8 = 56.",
-    );
     expect(mentalMathHint(task("6 * 7", "result"), "operation-mix")).toContain(
       "Probe",
     );
   });
 
-  it("fällt bei Plus und Minus ohne Übergang auf kleine Schritte zurück", () => {
-    expect(mentalMathHint(task("12 + 5"), "unknown")).toContain("Zehner");
+  it("gibt bei unbekannter Fehlerart keinen Hinweis, auch keinen allgemeinen", () => {
+    expect(mentalMathHint(task("56 : 8"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("12 + 5"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("7 * 8"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("7 + 5", "left"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("(2 + 3) * 4"), "unknown")).toBeNull();
+  });
+
+  it("liefert für jede erkannte Fehlerart einen Hinweis", () => {
+    for (const [kind, examples] of Object.entries(catalogue))
+      if (kind !== "unknown")
+        for (const [source, , gap] of examples)
+          expect(
+            mentalMathHint(task(source, gap), kind as MentalMathErrorKind),
+          ).not.toBeNull();
   });
 });
 
