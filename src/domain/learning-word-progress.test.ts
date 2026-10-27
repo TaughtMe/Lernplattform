@@ -315,31 +315,31 @@ const RULES: Row[] = [
     expect: { box: 6, dueAt: "+30", stage: 6 },
   },
   {
-    regel: "A-4 Bonus falsch: zurück in Box 4, morgen fällig",
+    regel: "A-4 Bonus falsch: wie W-7, Box 1, morgen fällig",
     mode: "due",
     from: { box: 6, due: true, stage: 6 },
     first: true,
     outcome: "falsch",
     stage: 5,
-    expect: { box: 4, dueAt: "next", stage: 4 },
+    expect: { box: 1, dueAt: "next", stage: 4 },
   },
   {
-    regel: "A-4 Bonus mit Hilfe: zurück in Box 4, morgen fällig",
+    regel: "A-4 Bonus mit Hilfe: wie W-7, Box 1, morgen fällig",
     mode: "due",
     from: { box: 6, due: true, stage: 6 },
     first: true,
     outcome: "hilfe",
     stage: 6,
-    expect: { box: 4, dueAt: "next", stage: 5 },
+    expect: { box: 1, dueAt: "next", stage: 5 },
   },
   {
-    regel: "A-4 Bonus mit Selbstkorrektur: zurück in Box 4, morgen fällig",
+    regel: "A-4 Bonus mit Selbstkorrektur: wie W-7, Box 1, morgen fällig",
     mode: "due",
     from: { box: 6, due: true, stage: 6 },
     first: true,
     outcome: "korrigiert",
     stage: 6,
-    expect: { box: 4, dueAt: "next", stage: 5 },
+    expect: { box: 1, dueAt: "next", stage: 5 },
   },
   {
     regel: "A-4 Archivwort, noch nicht für den Bonus fällig: wie freies Üben",
@@ -704,29 +704,39 @@ describe("Lernarchiv (Box 6): Fälligkeit", () => {
     expect(isLearningArchiveBonusDue(stored(5, DUE, 6), NOW)).toBe(false);
   });
 
-  it("A-4: Nach einem Fehler im Bonus kommt das Wort über Box 4 und 5 zurück ins Archiv", () => {
+  it("A-4: Falsch im Bonus geht auf Box 1, morgen fällig; mit Hilfe ebenso", () => {
+    for (const outcome of ["falsch", "hilfe"] as const) {
+      const progress = update(stored(6, DUE, 6), {
+        mode: "due",
+        first: true,
+        outcome,
+        stage: 6,
+      });
+      expect(progress.box).toBe(1);
+      expect(progress.dueAt).toBe(NEXT_DAY);
+      expect(isLearningArchiveWord(progress)).toBe(false);
+    }
+  });
+
+  it("A-4: Nach einem Fehler im Bonus kommt das Wort über Box 1 bis 5 zurück ins Archiv", () => {
     let progress = update(stored(6, DUE, 6), {
       mode: "due",
       first: true,
       outcome: "falsch",
       stage: 6,
     });
-    expect(progress.box).toBe(4);
-    progress = update(progress, {
-      mode: "due",
-      first: true,
-      outcome: "richtig",
-      stage: 6,
-      now: progress.dueAt,
-    });
-    expect(progress.box).toBe(5);
-    progress = update(progress, {
-      mode: "due",
-      first: true,
-      outcome: "richtig",
-      stage: 6,
-      now: progress.dueAt,
-    });
-    expect(progress.box).toBe(6);
+    expect(progress.box).toBe(1);
+    const boxes: LearningWordBox[] = [];
+    for (let step = 0; step < 5; step += 1) {
+      progress = update(progress, {
+        mode: "due",
+        first: true,
+        outcome: "richtig",
+        stage: 6,
+        now: progress.dueAt,
+      });
+      boxes.push(progress.box);
+    }
+    expect(boxes).toEqual([2, 3, 4, 5, 6]);
   });
 });

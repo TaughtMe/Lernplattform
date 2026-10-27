@@ -44,14 +44,14 @@ Formatänderung.
 
 ## C5 Lernarchiv (Box 6) im Wortspeicher
 
-Formatänderung. Die Entscheidung dazu steht noch zur Bestätigung durch den Entwickler aus; die Regeln sind hier als Vorschlag umgesetzt.
+Formatänderung. Bestätigt am 27.10.2026; abweichend vom Vorschlag geht ein falsches Archivwort auf Box 1 zurück.
 
 | Nr. | Regel                                                                                                                        |
 | --- | ---------------------------------------------------------------------------------------------------------------------------- |
 | A-1 | Box 5 → Box 6, wenn die fällige Wiederholung in Box 5 beim ersten Versuch auf Stufe 6 (freier Abruf) ohne Hilfe richtig ist. |
 | A-2 | Archivwörter sind nie regulär fällig.                                                                                        |
 | A-3 | Höchstens ein Archivwort je Tagesportion („Bonus“), jedes höchstens alle 30 Tage.                                            |
-| A-4 | Bonus richtig → bleibt in Box 6, der nächste Bonus frühestens in 30 Tagen. Falsch oder mit Hilfe → Box 4, morgen fällig.     |
+| A-4 | Bonus richtig → bleibt in Box 6, der nächste Bonus frühestens in 30 Tagen. Falsch oder mit Hilfe → Box 1, morgen fällig.     |
 | A-5 | Ältere App-Versionen legen Box-6-Datensätze in Quarantäne (tolerantes Lesen). Nichts geht verloren.                          |
 
 ## C6 Gastmodus (B-009, B-010)

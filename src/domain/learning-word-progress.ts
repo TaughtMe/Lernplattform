@@ -78,9 +78,7 @@ function earlier(left: string, right: string) {
  *   bleiben bei Box 5. Ein Archivwort ist nie regulär fällig; `dueAt` ist der
  *   früheste Zeitpunkt für den nächsten Bonus (+ 30 Tage). Bonusabfrage (erster
  *   Versuch, fällig) richtig: Box 6, wieder + 30 Tage. Falsch oder mit Hilfe:
- *   zurück in Box 4, morgen fällig. Das ist eine bewusste Ausnahme von W-7
- *   (sonst Box 1): Das Wort war lange sicher, ein einzelner Ausrutscher nach
- *   Monaten soll es nicht ganz zurückwerfen. Freies Üben ändert die Box nie
+ *   wie W-7: Box 1, morgen fällig. Freies Üben ändert die Box nie
  *   (W-1); ein Fehler dort lässt Box 6 stehen, der Bonus darf aber morgen
  *   kommen (wie W-3).
  * - Merkstufe (beide Modi, nur der erste Versuch): richtig ohne Hilfe →
@@ -115,7 +113,8 @@ export function updateLearningWordProgress(
         if (clean) {
           dueAt = afterDays(input.now, LEARNING_ARCHIVE_BONUS_DAYS);
         } else {
-          box = 4;
+          // Wie W-7: Box 1, morgen fällig.
+          box = 1;
           dueAt = nextDay;
         }
       } else if (clean) {
