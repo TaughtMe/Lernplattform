@@ -1,6 +1,6 @@
 "use client";
 
-import { answerAlternatives } from "../../../../src/domain/answer-normalization";
+import { AcceptedAnswers } from "../../../ui/accepted-answers";
 import styles from "../lernbox-screen.module.css";
 import type { LbImportRow } from "./types";
 
@@ -20,11 +20,6 @@ export type ImportPreviewData = {
 
 const SHOWN_PAIRS = 5;
 const SHOWN_SKIPPED = 8;
-
-/** Weitere gültige Antworten einer Rückseite (ohne den Text selbst). */
-function alsoAccepted(answer: string) {
-  return answerAlternatives(answer).filter((entry) => entry !== answer.trim());
-}
 
 /**
  * Vorschau vor dem Übernehmen: erkannte Paare, was zusätzlich als richtig gilt
@@ -53,24 +48,19 @@ export function ImportPreview({
       </h3>
       {rows.length ? (
         <ul className={styles.importPairs} aria-label="Erste erkannte Vokabeln">
-          {rows.slice(0, SHOWN_PAIRS).map((row, index) => {
-            const also = alsoAccepted(row.answer);
-            return (
-              <li key={index} className={styles.importPair}>
-                <span className={styles.importPairText}>
-                  {row.question} → {row.answer}
-                  {also.length ? (
-                    <span className={styles.importAlso}>
-                      Gilt auch: {also.join(" · ")}
-                    </span>
-                  ) : null}
-                </span>
-                {row.tag ? (
-                  <span className={styles.importTag}>{row.tag}</span>
-                ) : null}
-              </li>
-            );
-          })}
+          {rows.slice(0, SHOWN_PAIRS).map((row, index) => (
+            <li key={index} className={styles.importPair}>
+              <span className={styles.importPairText}>
+                {row.question} → {row.answer}
+                {/* Beide Richtungen: Vorder- und Rückseite zeigen ihre Alternativen. */}
+                <AcceptedAnswers text={row.question} />
+                <AcceptedAnswers text={row.answer} />
+              </span>
+              {row.tag ? (
+                <span className={styles.importTag}>{row.tag}</span>
+              ) : null}
+            </li>
+          ))}
           {more > 0 ? (
             <li className={styles.importMore}>… und {more} weitere</li>
           ) : null}

@@ -96,3 +96,53 @@ describe("VocabularyEditor, Tag-Feld", () => {
     expect(onCommaSeparates).toHaveBeenCalledWith(true);
   });
 });
+
+describe("VocabularyEditor, Gilt auch", () => {
+  const withPairs = (
+    pairs: VocabularyEditorProps["pairs"],
+  ): VocabularyEditorProps => ({ ...base("none"), pairs });
+
+  it("zeigt nichts, solange nur eine Antwort gilt", () => {
+    render(<VocabularyEditor {...base("none")} />);
+    expect(screen.queryByText(/Gilt auch:/)).not.toBeInTheDocument();
+  });
+
+  it("zeigt Klammerteile, / und weitere Antworten für beide Seiten", () => {
+    render(
+      <VocabularyEditor
+        {...withPairs([
+          {
+            id: "a",
+            left: { primary: "gehen", alternatives: [] },
+            right: { primary: "(to) go", alternatives: ["walk"] },
+          },
+          {
+            id: "b",
+            left: { primary: "Haus / Heim", alternatives: [] },
+            right: { primary: "house", alternatives: [] },
+          },
+        ])}
+      />,
+    );
+    expect(
+      screen.getByText("Gilt auch: to go · go · walk"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Gilt auch: Haus · Heim")).toBeInTheDocument();
+    expect(screen.getAllByText(/Gilt auch:/)).toHaveLength(2);
+  });
+
+  it("macht die Wirkung von „groß | riesig“ nach dem Übernehmen sichtbar", () => {
+    render(
+      <VocabularyEditor
+        {...withPairs([
+          {
+            id: "a",
+            left: { primary: "big", alternatives: [] },
+            right: { primary: "groß", alternatives: ["riesig"] },
+          },
+        ])}
+      />,
+    );
+    expect(screen.getByText("Gilt auch: riesig")).toBeInTheDocument();
+  });
+});
