@@ -1,6 +1,7 @@
 // Erzeugt von scripts/css-module-types.mjs – nicht von Hand ändern.
 declare const styles: {
   readonly actions: string;
+  readonly attemptTimes: string;
   readonly best: string;
   readonly bestValue: string;
   readonly falsch: string;
@@ -13,6 +14,7 @@ declare const styles: {
   readonly grossklein: string;
   readonly head: string;
   readonly hint: string;
+  readonly jumpHint: string;
   readonly kindLabel: string;
   readonly legend: string;
   readonly list: string;

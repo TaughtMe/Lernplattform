@@ -37,7 +37,7 @@ So öffnest du die Vorlage: `docs/design/lernraum-ui.dc.html` im Browser, Anker 
 ## 1. Entscheidungen (mit der Product Ownerin abgestimmt bzw. hier festgelegt)
 
 1. **9d ist Standard, 9e per Knopf.** Am Desktop startet jede Übung im Heft-Layout (9d). Ein Knopf „Vollbild“ im Kopf schaltet auf 9e um, „Vollbild beenden“ schaltet zurück. Die Wahl wird pro Gerät in `localStorage` gemerkt (Schlüssel `textbox-layout`, Werte `heft` | `vollbild`). Unter 900 px gilt immer 9f, der Knopf ist dort ausgeblendet.
-2. **„Durchgang wiederholen“ kommt.** In der Kontrolle führt er zurück zur Merkphase desselben Durchgangs. Das Ergebnis des ersten Versuchs bleibt erhalten und zählt allein; der neue Versuch wird als Übungsversuch daran gespeichert (geändert nach „Erster Versuch zählt“, siehe `docs/inhalte/textbox.md`). Die Lücken bleiben gleich (gleicher Seed). Der Bestwert zählt weiter nur Durchgang 4.
+2. **„Durchgang wiederholen“ kommt.** In der Kontrolle führt er zurück zur Merkphase desselben Durchgangs. Der Durchgang lässt sich beliebig oft wiederholen; jeder Versuch ist vollwertig und hat einen eigenen Prozentwert, der letzte ist das Ergebnis. Alle Versuche bleiben gespeichert (`retries`, höchstens 100 je Durchgang) und stehen im Verlauf (geändert nach Entscheidung 27.10.2026, siehe `docs/inhalte/textbox.md`). Die Lücken bleiben gleich (gleicher Seed). Der Bestwert zählt weiter nur Durchgang 4.
 3. **Abschluss bleibt.** Nach der Kontrolle in Durchgang 4 heißt der Hauptknopf weiter „Ergebnis ansehen“ und führt zum bestehenden `CompletionScreen`. Die Vorlage zeigt dort „Zurück zur Auswahl“; der Abschluss mit Bestwert und Wortspeicher-Brücke ist aber fachlich nötig (bewusste Abweichung).
 4. **„Gemeistert“** heißt: Bestwert ≥ 90 % (Konstante `TEXTBOX_MASTERED_PERCENT = 90` in `src/domain/textbox-progress.ts`). „Begonnen“ heißt: mindestens eine abgeschlossene Übung **oder** eine angefangene Einheit. Sonst „Neu“.
 5. **Schwierigkeit filtert genau eine Stufe.** Die drei Punkte funktionieren wie in der Vorlage: Klick auf Punkt _k_ wählt Stufe _k_ (Punkte 1…_k_ gefüllt), erneuter Klick auf dieselbe Stufe hebt den Filter auf. Gefiltert wird auf genau diese Stufe.
@@ -102,7 +102,7 @@ So öffnest du die Vorlage: `docs/design/lernraum-ui.dc.html` im Browser, Anker 
    - verlangt Phase `review` (`requirePhase`), sonst Fehler
    - entfernt das letzte Element aus `rounds` (es muss `round === state.round` haben, sonst Fehler)
    - setzt `phase: "memorize"`, `round` bleibt, `memorizeMs` entfernt
-   - Tests in `textbox-session.test.ts`: Durchgang 1 → `rounds` leer; Durchgang 3 → zwei Ergebnisse bleiben; Durchgang 4 vor „Ergebnis ansehen“ → zurück zu Merken in Durchgang 4; falsche Phase wirft; danach `finishMemorize` + `submitRound` liefern denselben `blanked`-Satz wie beim ersten Versuch.
+   - Tests in `textbox-session.test.ts`: Durchgang 1 → `rounds` leer; Durchgang 3 → zwei Ergebnisse bleiben; Durchgang 4 vor „Ergebnis ansehen“ → zurück zu Merken in Durchgang 4; falsche Phase wirft; danach `finishMemorize` + `submitRound` liefern denselben `blanked`-Satz wie beim ersten Versuch; alle Versuche bleiben in `retries`, der letzte bestimmt das Ergebnis.
 
 2. `src/domain/textbox-progress.ts`:
    - `export const TEXTBOX_MASTERED_PERCENT = 90;`

@@ -3,7 +3,12 @@ import {
   type LayoutToken,
   type WordResult,
 } from "../../../src/domain/text-compare";
-import type { TextboxRoundResult } from "../../../src/domain/textbox-session";
+import {
+  formatPercentSeries,
+  latestAttempt,
+  roundAttempts,
+  type TextboxRoundResult,
+} from "../../../src/domain/textbox-session";
 import type { RunFrameProps } from "./memorize-screen";
 import { RunButton, RunLayout, ScoreStatus } from "./run-layout";
 import styles from "./run-layout.module.css";
@@ -72,27 +77,22 @@ function ResultWord({
 /** Kontrolle nach einem Durchgang: Original und Eingabe Wort für Wort im Heft. */
 export function ReviewScreen({
   tokens,
-  result: firstAttempt,
-  retry = false,
+  result: roundResult,
   onNext,
   onRepeat,
   ...frame
 }: RunFrameProps & {
   tokens: readonly LayoutToken[];
-  /** Durchgang mit erstem Versuch und gegebenenfalls Übungsversuchen. */
+  /** Durchgang mit allen Versuchen; gezeigt wird der letzte, er zählt. */
   result: TextboxRoundResult;
-  /** Gezeigt wird der jüngste Übungsversuch; er zählt nicht (erster Versuch zählt). */
-  retry?: boolean;
   onNext: () => void;
   onRepeat: () => void;
 }) {
-  const latest = retry ? firstAttempt.retries?.at(-1) : undefined;
-  const result: TextboxRoundResult = latest
-    ? { ...firstAttempt, words: latest.words, score: latest.score }
-    : firstAttempt;
-  const { score, round } = result;
+  const attempts = roundAttempts(roundResult);
+  const { words, score } = latestAttempt(roundResult);
+  const { round } = roundResult;
   const byWord = new Map<number, WordResult>(
-    result.words.flatMap((word) =>
+    words.flatMap((word) =>
       word.expectedIndex === undefined
         ? []
         : [[word.expectedIndex, word] as const],
@@ -110,7 +110,6 @@ export function ReviewScreen({
           percent={score.percent}
           unit={round === 4 ? "Wörtern" : "Lücken"}
           extra={score.extra}
-          retry={latest !== undefined}
         />
       }
       hint="Grün ist richtig. Durchgestrichen ist deine Schreibweise, daneben steht das richtige Wort."
@@ -130,7 +129,7 @@ export function ReviewScreen({
       <div className={styles.paper}>
         {round === 4 ? (
           <p className={styles.lined}>
-            {reviewSequence(tokens, result.words).map(
+            {reviewSequence(tokens, words).map(
               ({ result: word, trailing }, position) => (
                 <span key={position}>
                   {position > 0 ? " " : null}
@@ -157,12 +156,12 @@ export function ReviewScreen({
           />
         )}
       </div>
-      {latest ? (
+      {attempts.length > 1 ? (
         <p className={styles.note} role="status">
-          Das war ein Übungsversuch. Dein Ergebnis bleibt der erste Versuch:{" "}
-          {firstAttempt.score.correct} von {firstAttempt.score.total}{" "}
-          {round === 4 ? "Wörtern" : "Lücken"} auf Anhieb richtig (
-          {firstAttempt.score.percent} %).
+          Versuch {attempts.length} in diesem Durchgang:{" "}
+          {formatPercentSeries(
+            attempts.map((attempt) => attempt.score.percent),
+          )}
         </p>
       ) : null}
       {score.punctuationHints > 0 ? (

@@ -8,6 +8,7 @@ import {
   finishMemorize,
   nextRound,
   repeatRound,
+  roundAttempts,
   sessionFromRun,
   startRun,
   submitRound,
@@ -245,10 +246,10 @@ describe("Backup mit Textbox-Einheiten", () => {
     ).toBe(3);
   });
 
-  it("sichert Übungsversuche mit; sie ändern das gewertete Ergebnis nicht", async () => {
+  it("sichert alle Versuche mit Zeitpunkt; der letzte bestimmt Ergebnis und Lernereignis", async () => {
     const source = createDatabase();
     const target = createDatabase();
-    // Erster Versuch in Durchgang 4: nur ein Wort, danach Übungsversuch mit dem ganzen Text.
+    // Erster Versuch in Durchgang 4: nur ein Wort, danach zwei weitere Versuche.
     let state = startRun(text, "geuebt");
     for (let round = 1; round <= 4; round += 1) {
       state = finishMemorize(state, 100);
@@ -265,19 +266,31 @@ describe("Backup mit Textbox-Einheiten", () => {
     state = submitRound(
       finishMemorize(repeatRound(state), 100),
       text,
+      "Hund Hund",
+      100,
+      t0,
+    );
+    state = submitRound(
+      finishMemorize(repeatRound(state), 100),
+      text,
       text.text,
       100,
+      t1,
     );
-    expect(state.rounds[3]!.retries![0]!.score.percent).toBe(100);
+    const attempts = roundAttempts(state.rounds[3]!);
+    expect(attempts).toHaveLength(3);
+    expect(attempts[0]!.score.percent).toBe(firstPercent);
+    expect(attempts.map((a) => a.at)).toEqual([undefined, t0, t1]);
+    expect(attempts[2]!.score.percent).toBe(100);
     const done = sessionFromRun(nextRound(state), text, {
       startedAt: t0,
       now: t1,
     });
-    expect(done.finalPercent).toBe(firstPercent);
+    expect(done.finalPercent).toBe(100);
     await createTextboxRepository(source).complete(done);
-    // Das Lernereignis folgt dem ersten Versuch (unter 90 %: nicht richtig).
+    // Das Lernereignis folgt dem letzten Versuch (ab 90 %: richtig).
     expect((await source.learningEvents.toArray())[0]?.assessment.writing).toBe(
-      "incorrect",
+      "correct",
     );
 
     const serialized = await serializePersonalLearningBackupFromDatabase(
@@ -287,7 +300,12 @@ describe("Backup mit Textbox-Einheiten", () => {
     await restorePersonalLearningBackupText(serialized, target);
     const [restored] = await createTextboxRepository(target).listCompleted();
     expect(restored).toEqual(done);
-    expect(restored!.rounds[3]!.retries).toHaveLength(1);
+    expect(restored!.rounds[3]!.retries).toHaveLength(2);
+    expect(roundAttempts(restored!.rounds[3]!).map((a) => a.at)).toEqual([
+      undefined,
+      t0,
+      t1,
+    ]);
   });
 
   it("lädt ältere Sicherungen ohne Textbox-Feld", async () => {

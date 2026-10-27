@@ -15,6 +15,8 @@ import {
   finishMemorize,
   memorizeSeconds,
   nextRound,
+  finalPercent,
+  latestAttempt,
   repeatRound,
   runFromSession,
   sessionFromRun,
@@ -222,7 +224,13 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
     if (!current || current.state.phase !== "write") return;
     void afterRound(
       current,
-      submitRound(current.state, current.text, inputs, writingMs),
+      submitRound(
+        current.state,
+        current.text,
+        inputs,
+        writingMs,
+        new Date().toISOString(),
+      ),
     );
   }
 
@@ -255,9 +263,9 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
   }
 
   /**
-   * „Durchgang wiederholen“: zurück zur Merkphase als Übungsversuch. Das
-   * Ergebnis des ersten Versuchs bleibt gespeichert und zählt allein; erst
-   * der neue Versuch wird beim Abgeben an ihn gehängt.
+   * „Durchgang wiederholen“: zurück zur Merkphase, beliebig oft. Die bisherigen
+   * Versuche bleiben gespeichert; der neue wird beim Abgeben angehängt und ist
+   * dann das Ergebnis des Durchgangs.
    */
   function onRepeat() {
     const current = runRef.current;
@@ -406,7 +414,6 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
           {...frame}
           tokens={tokens}
           result={state.rounds[state.rounds.length - 1]!}
-          retry={state.retry === true}
           onNext={() => void onNext()}
           onRepeat={onRepeat}
         />
@@ -420,7 +427,7 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
       <CompletionScreen
         title={text.title}
         rounds={state.rounds}
-        finalPercent={state.rounds[3]?.score.percent ?? 0}
+        finalPercent={finalPercent(state) ?? 0}
         previousBest={run.previousBest}
         onAgain={() => begin(text)}
         onLibrary={backToLibrary}
@@ -428,7 +435,9 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
         errorWordsHref={
           wordStorageVisible
             ? buildLearningWordsLink(
-                roundErrorWords(state.rounds[3]?.words ?? []),
+                roundErrorWords(
+                  state.rounds[3] ? latestAttempt(state.rounds[3]).words : [],
+                ),
               )
             : undefined
         }

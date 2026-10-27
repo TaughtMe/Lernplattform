@@ -1,6 +1,10 @@
 import { reflectionQuestionsFor } from "./progress-reflection";
 import { tokenizeText } from "./text-compare";
-import type { TextboxSession } from "./textbox-session";
+import {
+  latestAttempt,
+  roundAttempts,
+  type TextboxSession,
+} from "./textbox-session";
 import {
   PHENOMENON_TO_COLLECTION,
   TEXTBOX_DIFFICULTIES,
@@ -19,9 +23,27 @@ export type TextboxTextSummary = {
     trainingId: string;
     completedAt: string;
     percent: number;
+    /** Ergebnis je Durchgang: der jeweils letzte Versuch. */
     rounds: number[];
+    /** Je Durchgang alle Versuche in Reihenfolge, mit Zeitpunkt (falls bekannt). */
+    attempts: { percent: number; at?: string }[][];
   }[];
 };
+
+/** Ab so vielen Prozentpunkten zwischen zwei Versuchen gilt es als großer Sprung. */
+export const TEXTBOX_LARGE_JUMP_POINTS = 50;
+
+/**
+ * Ob zwei aufeinanderfolgende Versuche mindestens so weit auseinanderliegen.
+ * Nur ein Hinweis zum Hinsehen, keine Bewertung (auch Rückschritte zählen).
+ */
+export function hasLargeJump(percents: readonly number[]): boolean {
+  return percents.some(
+    (percent, index) =>
+      index > 0 &&
+      Math.abs(percent - percents[index - 1]!) >= TEXTBOX_LARGE_JUMP_POINTS,
+  );
+}
 
 type CompletedSession = TextboxSession & {
   completedAt: string;
@@ -77,18 +99,28 @@ export function summarizeTextboxProgress(
       sessions: 0,
       history: [],
     };
+    // Ergebnis ist der letzte Versuch in Durchgang 4. Einheiten aus 0.9.4
+    // speicherten bei Wiederholungen noch den ersten Versuch als Endwert.
+    const final = session.rounds.find((round) => round.round === 4);
+    const percent = final?.retries?.length
+      ? latestAttempt(final).score.percent
+      : session.finalPercent;
     summary.sessions += 1;
-    summary.bestPercent = Math.max(
-      summary.bestPercent ?? 0,
-      session.finalPercent,
-    );
-    summary.lastPercent = session.finalPercent;
+    summary.bestPercent = Math.max(summary.bestPercent ?? 0, percent);
+    summary.lastPercent = percent;
     summary.lastPracticedAt = session.completedAt;
     summary.history.push({
       trainingId: session.id,
       completedAt: session.completedAt,
-      percent: session.finalPercent,
-      rounds: session.rounds.map((round) => round.score.percent),
+      percent,
+      rounds: session.rounds.map((round) => latestAttempt(round).score.percent),
+      attempts: session.rounds.map((round) =>
+        roundAttempts(round).map((attempt) =>
+          attempt.at === undefined
+            ? { percent: attempt.score.percent }
+            : { percent: attempt.score.percent, at: attempt.at },
+        ),
+      ),
     });
     summaries.set(session.textId, summary);
   }
@@ -186,8 +218,8 @@ export function rankTextsForWords(
 }
 
 /**
- * Fehler und Wortanzahl je Schwerpunkt aus Durchgang 4 abgeschlossener
- * Einheiten. Fehler sind falsch, Groß-/Kleinfehler und fehlende Wörter.
+ * Fehler und Wortanzahl je Schwerpunkt aus dem letzten Versuch in Durchgang 4
+ * abgeschlossener Einheiten. Fehler sind falsch, Groß-/Kleinfehler und fehlende Wörter.
  */
 export function phenomenonErrorStats(
   sessions: TextboxSession[],
@@ -199,7 +231,7 @@ export function phenomenonErrorStats(
     const text = known.get(session.textId);
     const final = session.rounds.find((round) => round.round === 4);
     if (!text || !final) continue;
-    const { byKind, total } = final.score;
+    const { byKind, total } = latestAttempt(final).score;
     const errors = byKind.falsch + byKind["gross-klein"] + byKind.fehlt;
     for (const phenomenon of text.phenomena) {
       const entry = stats.get(phenomenon) ?? { errors: 0, words: 0 };

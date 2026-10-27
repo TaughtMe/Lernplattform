@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { formatPercentSeries } from "../../../src/domain/textbox-session";
 import {
+  hasLargeJump,
   reflectionQuestions,
   type TextboxTextSummary,
 } from "../../../src/domain/textbox-progress";
@@ -23,7 +25,10 @@ function formatDate(iso: string) {
   }).format(new Date(iso));
 }
 
-/** Alle bisherigen Leistungen zu einem Text: Werte, Diagramme und Einheiten. */
+/**
+ * Alle bisherigen Leistungen zu einem Text (Verlauf): Werte, Diagramme und
+ * Einheiten, je Durchgang mit allen Versuchen in Reihenfolge.
+ */
 export function TextDetailScreen({
   text,
   summary,
@@ -47,7 +52,7 @@ export function TextDetailScreen({
     points,
     title: "Dein Ergebnis in Durchgang 4",
     yLabel: "Richtig geschrieben",
-    xLabel: "Übungsversuch",
+    xLabel: "Übung",
   };
 
   return (
@@ -86,7 +91,7 @@ export function TextDetailScreen({
               <dd>{summary.lastPercent} %</dd>
             </div>
             <div className={styles.stat}>
-              <dt>Übungsversuche</dt>
+              <dt>Übungen</dt>
               <dd>{summary.sessions}</dd>
             </div>
           </dl>
@@ -127,11 +132,31 @@ export function TextDetailScreen({
                     <span>{entry.percent} %</span>
                   </summary>
                   <ul className={styles.sessionRounds}>
-                    {entry.rounds.map((percent, index) => (
-                      <li key={index}>
-                        Durchgang {index + 1}: {percent} %
-                      </li>
-                    ))}
+                    {entry.attempts.map((attempts, index) => {
+                      const percents = attempts.map((a) => a.percent);
+                      return (
+                        <li key={index}>
+                          Durchgang {index + 1}: {formatPercentSeries(percents)}
+                          {hasLargeJump(percents) ? (
+                            <span className={styles.jumpHint}>
+                              großer Sprung
+                            </span>
+                          ) : null}
+                          {attempts.length > 1 ? (
+                            <ol className={styles.attemptTimes}>
+                              {attempts.map((attempt, position) => (
+                                <li key={position}>
+                                  Versuch {position + 1}: {attempt.percent} %
+                                  {attempt.at
+                                    ? `, ${formatDate(attempt.at)}`
+                                    : ""}
+                                </li>
+                              ))}
+                            </ol>
+                          ) : null}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </details>
               </li>

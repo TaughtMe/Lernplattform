@@ -69,12 +69,32 @@ Layout nach Design 9b–9f, Plan: `docs/umsetzungsplan-textbox-layout.md`.
   **Begonnen** mindestens eine abgeschlossene Übung oder eine angefangene Einheit.
 - **Durchgang:** Merken, Schreiben, Kontrolle. In der Kontrolle gibt es
   **„Durchgang wiederholen“**: zurück zur Merkphase desselben Durchgangs, die
-  Lücken bleiben gleich. **Der erste Versuch zählt** (wie W-6 bis W-9 im
-  Wortspeicher): Prozentwert, „n von m Wörtern auf Anhieb richtig“, Fehlerwörter
-  und Lernstand folgen allein dem ersten Versuch. Wiederholungen werden als
-  Übungsversuche (`retries`, höchstens 5 je Durchgang) gespeichert und als
-  Selbstkorrektur angezeigt, ändern aber kein Ergebnis. Der Bestwert zählt
-  weiter nur Durchgang 4.
+  Lücken bleiben gleich. Ein Durchgang lässt sich **beliebig oft** wiederholen.
+  **Jeder Versuch ist vollwertig** und hat seinen eigenen Prozentwert; nichts
+  heißt „Übung“ oder „zählt nicht“. **Das Ergebnis des Durchgangs ist der
+  jeweils letzte Versuch** (wie bis 0.9.3): Prozentwert, Fehlerwörter und
+  Lernereignis folgen ihm; in Kontrolle und Abschluss steht „Versuch n“ mit der
+  Reihe der Prozentwerte dieses Durchgangs. Der Bestwert zählt weiter nur
+  Durchgang 4. Die Regel gilt seit der Entscheidung vom 27.10.2026 und ersetzt
+  „Erster Versuch zählt“ aus 0.9.4.
+- **Speicherung der Versuche:** Das optionale Feld `retries` am Durchgang
+  enthält die Versuche ab dem zweiten (Prozentwert, Zähler, Zeiten, Zeitpunkt
+  `at`); der erste Versuch steht wie bisher in den Feldern des Durchgangs.
+  Zusammen sind es höchstens **100 Versuche je Durchgang**: großzügig, damit
+  auch sehr häufiges Wiederholen vollständig im Verlauf steht, und zugleich
+  eine Grenze für Speicher und Sicherung. Darüber fallen die ältesten späteren
+  Versuche weg, der erste bleibt als Ausgangswert. Nur der jüngste Versuch
+  behält seine Wortliste. Daten aus 0.9.4 (erster Versuch plus höchstens 5
+  `retries`, ohne Zeitpunkt) werden als Versuchsreihe gelesen; das Sicherungsschema
+  zieht über `textboxSessionSchema` mit.
+- **Verlauf:** Die Ansicht eines Textes zeigt je Durchgang alle Versuche in
+  Reihenfolge, z. B. „Durchgang 2: 25 % → 27 % → 100 %“, darunter je Versuch
+  Prozentwert, Datum und Uhrzeit. Ein Sprung von mindestens 50 Prozentpunkten
+  zwischen zwei Versuchen ist dezent mit „großer Sprung“ markiert (auch nach
+  unten). Das ist nur ein Hinweis zum Hinsehen, keine Bewertung: Die Lehrkraft
+  erkennt Steigerung, Verschlechterung und auffällige Sprünge und sieht, ob ein
+  Kind den Text gelernt hat. Bei 0.9.4-Einheiten mit Wiederholungen gilt der
+  letzte Versuch als Endwert.
 - **Darstellung:** Am Desktop startet die Eingabe als Heft mit Linien (Navigation
   bleibt); „Vollbild“ schaltet auf die ruhige Ansicht um, die Wahl gilt pro
   Gerät. Mobil gilt immer das Heft ohne Navigation, mit Aktionsleiste unten.

@@ -430,6 +430,23 @@
   font-size: 14px;
   color: var(--ink2);
 }
+.attemptTimes {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--ink2);
+}
+.jumpHint {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
 .reflection {
   border: 1px solid var(--line2);
   border-radius: var(--radius-m);

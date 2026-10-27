@@ -6,6 +6,8 @@ import type { TextboxTextSummary } from "../../../src/domain/textbox-progress";
 import { TextDetailScreen } from "./text-detail-screen";
 
 const text = TEXTBOX_TEXTS[0]!;
+/** Je Durchgang ein einziger Versuch. */
+const single = (rounds: number[]) => rounds.map((percent) => [{ percent }]);
 const summary: TextboxTextSummary = {
   textId: text.id,
   sessions: 3,
@@ -18,18 +20,21 @@ const summary: TextboxTextSummary = {
       completedAt: "2026-10-01T08:00:00.000Z",
       percent: 70,
       rounds: [100, 90, 80, 70],
+      attempts: single([100, 90, 80, 70]),
     },
     {
       trainingId: "b",
       completedAt: "2026-10-02T08:00:00.000Z",
       percent: 90,
       rounds: [100, 100, 95, 90],
+      attempts: single([100, 100, 95, 90]),
     },
     {
       trainingId: "c",
       completedAt: "2026-10-03T08:00:00.000Z",
       percent: 60,
       rounds: [90, 80, 70, 60],
+      attempts: single([90, 80, 70, 60]),
     },
   ],
 };
@@ -52,9 +57,9 @@ describe("TextDetailScreen", () => {
     expect(
       within(stats).getByText("Letztes Ergebnis").nextSibling,
     ).toHaveTextContent("60 %");
-    expect(
-      within(stats).getByText("Übungsversuche").nextSibling,
-    ).toHaveTextContent("3");
+    expect(within(stats).getByText("Übungen").nextSibling).toHaveTextContent(
+      "3",
+    );
   });
 
   it("schaltet zwischen Linie und Säulen um und nutzt dieselben Daten", async () => {
@@ -87,6 +92,42 @@ describe("TextDetailScreen", () => {
     expect(items[2]).toHaveTextContent("70 %");
     expect(items[0]).toHaveTextContent("Durchgang 4: 60 %");
     expect(items[1]).toHaveTextContent("Durchgang 1: 100 %");
+  });
+
+  it("zeigt je Durchgang alle Versuche in Reihenfolge mit Zeitpunkt", () => {
+    setup({
+      ...summary,
+      sessions: 1,
+      history: [
+        {
+          trainingId: "x",
+          completedAt: "2026-10-04T08:00:00.000Z",
+          percent: 100,
+          rounds: [80, 100, 70, 100],
+          attempts: [
+            [{ percent: 80 }],
+            [
+              { percent: 25, at: "2026-10-04T07:50:00.000Z" },
+              { percent: 27, at: "2026-10-04T07:52:00.000Z" },
+              { percent: 100, at: "2026-10-04T07:55:00.000Z" },
+            ],
+            [{ percent: 70 }],
+            [{ percent: 100 }],
+          ],
+        },
+      ],
+    });
+    const second = screen.getByText(/Durchgang 2:/);
+    expect(second).toHaveTextContent("Durchgang 2: 25 % → 27 % → 100 %");
+    expect(second).toHaveTextContent("großer Sprung");
+    expect(second).toHaveTextContent("Versuch 1: 25 %, ");
+    expect(second).toHaveTextContent("Versuch 3: 100 %, ");
+    // Einzelne Versuche und kleine Schritte bleiben unmarkiert.
+    const first = screen.getByText(/Durchgang 1:/);
+    expect(first).toHaveTextContent("Durchgang 1: 80 %");
+    expect(first).not.toHaveTextContent("Sprung");
+    expect(first).not.toHaveTextContent("Versuch");
+    expect(screen.getAllByText("großer Sprung")).toHaveLength(1);
   });
 
   it("hält die Reflexionsfragen zunächst geschlossen", async () => {
