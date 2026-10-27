@@ -6,6 +6,7 @@
  * Fail-safe: Jeder Fehler hält den Abgleich an, lokale Daten bleiben, wie sie
  * sind; fremde Stände werden nur in einer einzigen Transaktion angewendet.
  */
+import type { TeacherDeviceType } from "../../domain/teacher-device";
 import { recordsFromBackup } from "../../storage/teacher-sync-rows";
 import {
   createTeacherSyncStore,
@@ -15,6 +16,7 @@ import {
 } from "../../storage/teacher-sync-store";
 import type { TeacherClassDatabase } from "../../storage/teacher-class-settings";
 import { dedupe } from "./dedupe";
+import { scopeForDevice } from "./device-scope";
 import {
   SYNC_FILE_V2,
   openEnvelope,
@@ -30,6 +32,7 @@ import {
   tablesInScope,
   type SyncConflict,
   type SyncRecord,
+  type SyncScope,
   type SyncTable,
 } from "./model";
 import { countPending } from "./stamping";
@@ -56,6 +59,11 @@ export type EngineDeps = {
   fileName?: string;
   /** Die Runde beginnt (Zustand „läuft“ ist gespeichert). */
   onStart?: () => void;
+  /**
+   * Gerätetyp, bei jeder Runde neu gelesen (Regel D3-3): Auf einer Tafel
+   * gleicht die Runde nur Material ab. Fehlt er, gilt „Mein Gerät“.
+   */
+  deviceType?: () => TeacherDeviceType;
 };
 
 export type RoundResult = {
@@ -114,9 +122,15 @@ const EMPTY_PAYLOAD: SyncPayload = {
   devices: [],
 };
 
+/** Umfang dieser Runde: der gespeicherte, auf der Tafel nur Material. */
+function scopeOf(deps: EngineDeps, state: SyncStateRow): SyncScope {
+  return scopeForDevice(state.scope, deps.deviceType?.() ?? "own");
+}
+
 async function loadRemote(
   deps: EngineDeps,
   state: SyncStateRow,
+  scope: SyncScope,
   fileName: string,
 ): Promise<Remote> {
   const file = await deps.target.read(fileName);
@@ -135,7 +149,7 @@ async function loadRemote(
     }
     return {
       payload: {
-        records: recordsFromBackup(legacy, state.scope, "v1-sicherung"),
+        records: recordsFromBackup(legacy, scope, "v1-sicherung"),
         tombstones: [],
         resolved: [],
         devices: [],
@@ -211,8 +225,9 @@ async function runRound(
   let newConflicts = 0;
   for (let attempt = 1; ; attempt += 1) {
     const state = await store.getState();
-    const scope = state.scope;
+    const scope = scopeOf(deps, state);
     const tables = tablesInScope(scope);
+    const tablesKey = [...tables].sort().join(",");
     const clock = createClock(state.device, state.clock ?? undefined);
     const tick = () => clock.tick(now());
 
@@ -231,7 +246,8 @@ async function runRound(
       !state.dirty &&
       pending === 0 &&
       attempt === 1 &&
-      sameEncryption
+      sameEncryption &&
+      state.lastTables === tablesKey
     ) {
       const stat = await deps.target.stat(fileName);
       if (stat && stat.etag !== null && stat.etag === state.lastEtag) {
@@ -253,7 +269,7 @@ async function runRound(
       }
     }
 
-    const remote = await loadRemote(deps, state, fileName);
+    const remote = await loadRemote(deps, state, scope, fileName);
     for (const entry of [
       ...remote.payload.records,
       ...remote.payload.tombstones,
@@ -400,6 +416,7 @@ async function runRound(
       lastEtag: etag,
       lastRevision: revision,
       lastSyncedAt: new Date(now()).toISOString(),
+      lastTables: tablesKey,
       clock: clock.last() ?? null,
       encrypted: Boolean(deps.syncKey),
       devices,

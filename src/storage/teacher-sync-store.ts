@@ -60,6 +60,12 @@ export type SyncStateRow = {
   enabled: boolean;
   provider: CloudProviderId | null;
   scope: SyncScope;
+  /**
+   * Tabellen der letzten gelungenen Runde, sortiert und mit Komma verbunden.
+   * Weicht die nächste Runde davon ab (z. B. Wechsel von der Tafel zu „Mein
+   * Gerät“), liest sie die Cloud-Datei neu, auch bei unveränderter Version.
+   */
+  lastTables?: string;
   encrypted: boolean;
   /** Version der Cloud-Datei beim letzten Abgleich. */
   lastEtag: string | null;

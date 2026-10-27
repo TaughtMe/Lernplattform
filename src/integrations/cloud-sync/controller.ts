@@ -4,6 +4,7 @@
  * Cloud-Symbol bereitstellen. Hält den Schlüssel im Arbeitsspeicher und
  * startet die Zeitsteuerung. Keine React-Abhängigkeit.
  */
+import type { TeacherDeviceType } from "../../domain/teacher-device";
 import type { TeacherClassDatabase } from "../../storage/teacher-class-settings";
 import {
   createTeacherSyncStore,
@@ -75,6 +76,8 @@ export type ControllerDeps = {
   iterations?: number;
   /** Listen neu laden, wenn ein anderes Gerät etwas gebracht hat. */
   onData?: () => void;
+  /** Gerätetyp für jede Runde (Regel D3-3): Auf der Tafel nur Material. */
+  deviceType?: () => TeacherDeviceType;
 };
 
 export function createSyncController(deps: ControllerDeps) {
@@ -165,6 +168,7 @@ export function createSyncController(deps: ControllerDeps) {
       return failed(error, state);
     }
     const result = await syncOnce({
+      ...(deps.deviceType ? { deviceType: deps.deviceType } : {}),
       database: deps.database,
       target,
       syncKey: key,
