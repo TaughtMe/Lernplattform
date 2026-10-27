@@ -65,6 +65,8 @@ Stufe 6 spricht nur das einzelne Wort mit der besten deutschen Stimme des Gerät
 
 Beim Text-Laufdiktat entscheidet die Lehrkraft, ob falsch geschriebene oder alle Wörter in den Wortspeicher der Kinder übernommen werden. Das geschieht nur auf dem Schülergerät; falsch geschriebene Wörter werden sofort fällig.
 
+**Nomen mit Artikel (G-012, Regel C2-5):** Nomen stehen im Wortspeicher mit Artikel, zum Beispiel „das Essen“. Das Kind schreibt den Artikel mit. „das Essen“ und „essen“ sind damit zwei Wörter mit eigenem Lernstand (`learning-word:das essen` und `learning-word:essen`); der Schlüssel behält das Leerzeichen und ignoriert nur Groß-/Kleinschreibung. Bei der Übernahme aus dem Laufdiktat (Fehlerwörter und „Alle Wörter“) bekommt ein Nomen den Artikel, wenn direkt davor „der“, „die“ oder „das“ steht; der Artikel wird kleingeschrieben („Das Essen ist fertig.“ wird „das Essen“). Steht davor etwas anderes („dem“, „ein“, ein Adjektiv), wird das Nomen ohne Artikel übernommen; doppelte Einträge werden zusammengefasst. Beim Eintragen eigener Wortboxen erscheint bei einem bekannten Nomen ohne Artikel der Tipp „Nomen mit Artikel eintragen, z. B. „das Essen“.“, ohne es zu verbieten. In Stufe 5 gehört ein Artikel auch ohne Komma zum Wort danach. Bestehende Lernstände werden nicht migriert.
+
 ## Tastschreibtraining als eigener Bereich
 
 Das Tastschreibtraining nutzt dieselbe positive Rückmeldung, bleibt aber fachlich von Rechtschreibung und Merkfähigkeit getrennt. Der Lernweg führt von Grundstellung und Buchstabenreihen über Großbuchstaben, Umlaute, Satzzeichen und Buchstabenfolgen bis zu Wörtern, Sätzen und freien Abschreibtexten.

@@ -1,3 +1,4 @@
+import { isNounArticle } from "./noun-article";
 import { compareGaps, type WordResult } from "./text-compare";
 
 export const LEARNING_WORD_STAGES = [1, 2, 3, 4, 5, 6] as const;
@@ -31,10 +32,60 @@ export class LearningWordInputFormatError extends Error {
   }
 }
 
+const ARTICLE_PHRASE = /^(?:der|die|das)\s+\S+$/iu;
+
+/**
+ * Sind alle mehrwortigen Begriffe „Artikel + Nomen“ („das Essen“)? Dann ist die
+ * Grenze auch ohne Komma klar: Ein Artikel gehört zum Wort danach.
+ */
+function onlyArticlePhrases(expected: readonly string[]): boolean {
+  const phrases = expected
+    .map((word) => word.normalize("NFC").trim())
+    .filter((word) => /\s/u.test(word));
+  return (
+    phrases.length > 0 && phrases.every((word) => ARTICLE_PHRASE.test(word))
+  );
+}
+
+/**
+ * Teilt eine Antwort an Leerraum und bindet jeden Artikel an das nächste Wort.
+ * Steht ein Artikel selbst als Einzelwort im Block („die“), wird er nur
+ * gebunden, wenn so ein erwarteter Begriff entsteht.
+ */
+function splitWithArticles(
+  segment: string,
+  expected: readonly string[],
+): string[] {
+  const wanted = expected.map((word) => word.normalize("NFC").trim());
+  const singles = new Set(wanted.filter((word) => !/\s/u.test(word)));
+  const phrases = new Set(
+    wanted
+      .filter((word) => /\s/u.test(word))
+      .map((word) => word.toLocaleLowerCase("de-DE")),
+  );
+  const tokens = segment.split(/\s+/u).filter(Boolean);
+  const result: string[] = [];
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]!;
+    const next = tokens[index + 1];
+    const joined = next === undefined ? "" : `${token} ${next}`;
+    const bind =
+      next !== undefined &&
+      isNounArticle(token) &&
+      (!singles.has(token) || phrases.has(joined.toLocaleLowerCase("de-DE")));
+    if (bind) {
+      result.push(joined);
+      index += 1;
+    } else result.push(token);
+  }
+  return result;
+}
+
 /**
  * Antworten brauchen andere Grenzen als der Import: Einzelwörter dürfen auch
  * durch Leerraum getrennt sein. Bei mehrwortigen Begriffen gelten ausdrücklich
- * gesetzte Kommas/Zeilenumbrüche; sonst wäre die Zuordnung mehrdeutig.
+ * gesetzte Kommas/Zeilenumbrüche; sonst wäre die Zuordnung mehrdeutig. Das gilt
+ * nicht für „Artikel + Nomen“ („das Essen“): Der Artikel gehört zum Wort danach.
  * Groß-/Kleinschreibung bleibt erhalten, damit der Import keine Antwort entfernt.
  */
 export function parseLearningWordAnswer(
@@ -42,6 +93,15 @@ export function parseLearningWordAnswer(
   expected: readonly string[],
 ): string[] {
   const normalized = input.normalize("NFC").trim();
+  if (onlyArticlePhrases(expected)) {
+    return [
+      ...new Set(
+        normalized
+          .split(/[\r\n,;]+/u)
+          .flatMap((segment) => splitWithArticles(segment, expected)),
+      ),
+    ];
+  }
   const containsPhrases = expected.some((word) => /\s/u.test(word.trim()));
   if (
     containsPhrases &&
@@ -69,7 +129,16 @@ export function buildLearningWordPattern(word: string, stage: 2 | 3): string {
   return letters
     .map((letter, index) => {
       if (!letterPattern.test(letter)) return letter;
-      if (index === 0 || index === letters.length - 1) return letter;
+      // Erster und letzter Buchstabe jedes Wortes bleiben sichtbar, auch bei
+      // „das Essen“ (Artikel + Nomen).
+      if (
+        index === 0 ||
+        index === letters.length - 1 ||
+        /\s/u.test(letters[index - 1]!) ||
+        /\s/u.test(letters[index + 1]!)
+      ) {
+        return letter;
+      }
       return index % visibleEvery === 0 ? letter : "_";
     })
     .join("");

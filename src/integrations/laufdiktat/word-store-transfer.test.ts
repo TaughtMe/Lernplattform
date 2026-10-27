@@ -50,12 +50,12 @@ describe("misspelledWords", () => {
   it("returns misspelled words of the target text", () => {
     expect(
       misspelledWords("Der Hund läuft schnell.", "Der Hunt läuft schnel."),
-    ).toEqual(["Hund", "schnell"]);
+    ).toEqual(["der Hund", "schnell"]);
   });
 
   it("includes capitalisation slips", () => {
     expect(misspelledWords("Der Hund läuft.", "Der hund läuft.")).toEqual([
-      "Hund",
+      "der Hund",
     ]);
   });
 
@@ -118,7 +118,7 @@ describe("Satzanfänge (G-012)", () => {
         "Hund und Hund. Der Hund bellt.",
         "Hunt und Hunt. Der Hunt bellt.",
       ),
-    ).toEqual(["Hund"]);
+    ).toEqual(["Hund", "der Hund"]);
     expect(
       misspelledWords(
         "Tiere sind toll. Der Tiere Zahl wächst.",
@@ -175,6 +175,97 @@ describe("Satzanfänge (G-012)", () => {
   });
 });
 
+describe("Nomen mit Artikel (G-012)", () => {
+  const fehler = (target: string, input: string) =>
+    misspelledWords(target, input);
+
+  it("hängt „der“, „die“, „das“ direkt vor dem Nomen an und schreibt ihn klein", () => {
+    expect(fehler("Das Essen ist fertig.", "Das Esen ist fertig.")).toEqual([
+      "das Essen",
+    ]);
+    expect(fehler("Wo ist die Katze?", "Wo ist die Katse?")).toEqual([
+      "die Katze",
+    ]);
+    expect(fehler("Ich sehe DER Hund.", "Ich sehe DER Hunt.")).toEqual([
+      "der Hund",
+    ]);
+  });
+
+  it("lässt das Nomen allein, wenn kein „der“, „die“ oder „das“ davorsteht", () => {
+    expect(
+      fehler("Ich gebe dem Hund Wasser.", "Ich gebe dem Hunt Wasser."),
+    ).toEqual(["Hund"]);
+    expect(fehler("Ich habe ein Haus.", "Ich habe ein Hous.")).toEqual([
+      "Haus",
+    ]);
+    expect(
+      fehler("Das große Haus steht dort.", "Das große Hous steht dort."),
+    ).toEqual(["Haus"]);
+    expect(fehler("Ich sehe die, Katze.", "Ich sehe die, Katse.")).toEqual([
+      "Katze",
+    ]);
+  });
+
+  it("setzt nach einem Komma keinen Artikel (meist ein Relativpronomen)", () => {
+    expect(
+      fehler(
+        "Das Kind, das Hunger hat, isst.",
+        "Das Kind, das Hungar hat, isst.",
+      ),
+    ).toEqual(["Hunger"]);
+    expect(fehler("Der Zoo, der Hund.", "Der Zoo, der Hunt.")).toEqual([
+      "Hund",
+    ]);
+  });
+
+  it("setzt keinen Artikel vor ein Nomen am Satzanfang", () => {
+    // „Zoo“ ist bekannt und bleibt groß; „das“ steht im Satz davor.
+    expect(
+      fehler("Ich mag das. Zoo ist gut.", "Ich mag das. Zo ist gut."),
+    ).toEqual(["Zoo"]);
+    expect(
+      fehler("Ich esse. Das Essen ist gut.", "Ich esse. Das Esen ist gut."),
+    ).toEqual(["das Essen"]);
+  });
+
+  it("fasst doppelte Einträge zusammen, trennt aber „das Essen“ von „essen“", () => {
+    expect(
+      fehler(
+        "Das Essen ist fertig. Wir wollen das Essen sehen. Kinder essen gern.",
+        "Das Esen ist fertig. Wir wollen das Esen sehen. Kinder esen gern.",
+      ),
+    ).toEqual(["das Essen", "essen"]);
+  });
+
+  it("übernimmt bei „Alle Wörter“ Nomen mit Artikel und zählt die Mindestlänge am Nomen", () => {
+    const live = parseLiveSession(
+      {
+        words: [
+          {
+            id: "t1",
+            kind: "text",
+            targetWord:
+              "Das Essen ist fertig. Der Zoo, der Hund und das Essen.",
+          },
+          { id: "t2", kind: "text", targetWord: "Wir essen mit dem Löffel." },
+        ],
+        wordStoreTransfer: "all",
+      },
+      "s-art",
+      "seed",
+    );
+    const result = buildWordStoreTransfer(live, finished)!;
+    // „der Hund“ steht nach einem Komma: ohne Artikel übernommen.
+    expect(result.words).toEqual([
+      "das Essen",
+      "fertig",
+      "Hund",
+      "essen",
+      "Löffel",
+    ]);
+  });
+});
+
 describe("buildWordStoreTransfer", () => {
   it("takes nothing for none and for older sessions without the field", () => {
     expect(buildWordStoreTransfer(session("none"), finished)).toBeUndefined();
@@ -191,13 +282,13 @@ describe("buildWordStoreTransfer", () => {
     const result = buildWordStoreTransfer(session("errors"), {
       ...finished,
       wordMisspellings: {
-        "Der Hund läuft schnell 12 Meter.": ["Hund", "schnell"],
+        "Der Hund läuft schnell 12 Meter.": ["der Hund", "schnell"],
         "Abends essen wir Suppe.": ["Suppe"],
       },
     });
     expect(result).toEqual({
-      words: ["Hund", "schnell", "Suppe"],
-      errorWords: ["Hund", "schnell", "Suppe"],
+      words: ["der Hund", "schnell", "Suppe"],
+      errorWords: ["der Hund", "schnell", "Suppe"],
     });
   });
 
@@ -213,11 +304,11 @@ describe("buildWordStoreTransfer", () => {
     expect(result.errorWords).toEqual(["im"]);
     expect(result.words).toEqual([
       "im",
-      "Hund",
+      "der Hund",
       "läuft",
       "schnell",
       "Meter",
-      "Katze",
+      "die Katze",
       "schläft",
       "Haus",
       "abends",
@@ -235,7 +326,7 @@ describe("buildWordStoreTransfer", () => {
       wordErrors: {},
       wordHelps: {},
     })!;
-    expect(result.words).toContain("Katze");
+    expect(result.words).toContain("die Katze");
     expect(result.words).not.toContain("Suppe");
   });
 

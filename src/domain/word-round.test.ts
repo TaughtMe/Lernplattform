@@ -89,6 +89,40 @@ describe("full rounds", () => {
   );
 });
 
+describe("Nomen mit Artikel (G-012)", () => {
+  const NOUNS = ["das Essen", "essen", "der Hund"];
+
+  it.each(LEARNING_WORD_STAGES)(
+    "plays stage %i with „das Essen“ and „essen“ as separate words",
+    (stage) => {
+      const done = playPerfect(start(stage, NOUNS));
+      expect(done.results.map((r) => r.word)).toEqual(NOUNS);
+      expect(wordRoundPercent(done.results)).toBe(100);
+    },
+  );
+
+  it("grades the article and the capital letter with a single word", () => {
+    const state = toRecall(start(1, NOUNS, 1));
+    const wrong = submitWordAnswer(state, "Essen");
+    expect(wrong.correct).toBe(false);
+    expect(wrong.state.lastFeedback?.words[0]!.result.kind).toBe("falsch");
+    const caseOnly = submitWordAnswer(state, "das essen");
+    expect(caseOnly.correct).toBe(false);
+    expect(caseOnly.state.lastFeedback?.words[0]!.result.kind).toBe(
+      "gross-klein",
+    );
+    expect(submitWordAnswer(state, "das Essen").correct).toBe(true);
+  });
+
+  it("accepts a stage 5 block with articles typed without commas", () => {
+    const state = toRecall(start(5, NOUNS, 3));
+    const result = submitWordAnswer(state, "der Hund das Essen essen");
+    expect(result.correct).toBe(true);
+    expect(result.attempts).toHaveLength(3);
+    expect(wordRoundPercent(result.state.results)).toBe(100);
+  });
+});
+
 describe("answers", () => {
   it("records space-separated stage 5 answers as clean first attempts", () => {
     const result = submitWordAnswer(toRecall(start(5)), "Stern Sonne Mond");

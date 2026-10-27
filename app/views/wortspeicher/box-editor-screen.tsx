@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import {
+  needsNounArticleTip,
+  NOUN_ARTICLE_TIP,
+} from "../../../src/domain/noun-article";
 import { WORD_BOX_LIMITS } from "../../../src/domain/word-box";
 import { Icon } from "../../ui/icons";
 import { Button, IconButton, Notice } from "../../ui/primitives";
@@ -42,6 +46,8 @@ export function BoxEditorScreen({
   const deletable = kind !== "fest";
   const [name, setName] = useState(title);
   const [draft, setDraft] = useState("");
+  // Tipp auch nach dem Hinzufügen zeigen, bis das Kind wieder tippt.
+  const [addedTip, setAddedTip] = useState(false);
   const [editing, setEditing] = useState<string>();
   const [edit, setEdit] = useState("");
   const [confirming, setConfirming] = useState(false);
@@ -49,6 +55,7 @@ export function BoxEditorScreen({
   function add(event: FormEvent) {
     event.preventDefault();
     if (!draft.trim()) return;
+    setAddedTip(needsNounArticleTip(draft));
     onAddWords?.(draft);
     setDraft("");
   }
@@ -131,12 +138,16 @@ export function BoxEditorScreen({
                 className="ui-field"
                 value={draft}
                 maxLength={WORD_BOX_LIMITS.wordsPerBox * 8}
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                  setAddedTip(false);
+                }}
                 onPaste={(event) => {
                   // Ein einzeiliges Feld würde Zeilenumbrüche verschlucken.
                   const pasted = event.clipboardData.getData("text");
                   if (/[\r\n]/u.test(pasted)) {
                     event.preventDefault();
+                    setAddedTip(needsNounArticleTip(pasted));
                     onAddWords?.(pasted);
                   }
                 }}
@@ -149,6 +160,11 @@ export function BoxEditorScreen({
               Hinzufügen
             </Button>
           </form>
+          {addedTip || needsNounArticleTip(draft) ? (
+            <p className={styles.hint} role="status">
+              {NOUN_ARTICLE_TIP}
+            </p>
+          ) : null}
         </>
       ) : null}
 

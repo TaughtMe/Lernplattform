@@ -5,6 +5,7 @@ import {
   chunkLearningWords,
   evaluateLearningWordBlock,
   LearningWordInputFormatError,
+  parseLearningWordAnswer,
   parseLearningWords,
   selectLearningWordRound,
   updateLearningWordStage,
@@ -158,6 +159,76 @@ describe("evaluateLearningWordBlock", () => {
       evaluateLearningWordBlock(["New York", "Hund"], "New, York, Hund")
         .allCorrect,
     ).toBe(false);
+  });
+
+  it("behandelt „Artikel + Nomen“ als ein Wort, auch ohne Komma", () => {
+    const block = ["das Essen", "essen", "Hund"];
+    expect(parseLearningWordAnswer("das Essen essen Hund", block)).toEqual([
+      "das Essen",
+      "essen",
+      "Hund",
+    ]);
+    expect(parseLearningWordAnswer("Hund, das Essen\nessen", block)).toEqual([
+      "Hund",
+      "das Essen",
+      "essen",
+    ]);
+    const result = evaluateLearningWordBlock(block, "das Essen essen Hund");
+    expect(result.allCorrect).toBe(true);
+    expect(result.extra).toEqual([]);
+  });
+
+  it("bewertet „das Essen“ und „essen“ als zwei verschiedene Antworten", () => {
+    const wrong = evaluateLearningWordBlock(
+      ["das Essen", "essen"],
+      "essen essen",
+    );
+    expect(wrong.allCorrect).toBe(false);
+    expect(wrong.words.map((entry) => entry.correct)).toEqual([false, true]);
+    expect(
+      evaluateLearningWordBlock(["das Essen", "essen"], "essen das Essen")
+        .allCorrect,
+    ).toBe(true);
+  });
+
+  it("zeigt Rechtschreib- und Großschreibfehler in „das Essen“", () => {
+    const result = evaluateLearningWordBlock(
+      ["das Essen", "Hund"],
+      "das essen Hund",
+    );
+    expect(result.words[0]!.result.kind).toBe("gross-klein");
+    expect(
+      evaluateLearningWordBlock(["das Essen", "Hund"], "das Esen Hund")
+        .words[0]!.result,
+    ).toMatchObject({ kind: "falsch", nearMiss: true });
+  });
+
+  it("hält einen Artikel, der selbst als Einzelwort im Block steht, getrennt", () => {
+    const block = ["die", "das Essen"];
+    expect(parseLearningWordAnswer("die das Essen", block)).toEqual([
+      "die",
+      "das Essen",
+    ]);
+    expect(parseLearningWordAnswer("das Essen die", block)).toEqual([
+      "das Essen",
+      "die",
+    ]);
+  });
+
+  it("verlangt weiter Trennzeichen bei anderen mehrwortigen Begriffen", () => {
+    expect(() =>
+      evaluateLearningWordBlock(
+        ["das Essen", "New York"],
+        "das Essen New York",
+      ),
+    ).toThrow(LearningWordInputFormatError);
+  });
+
+  it("lässt bei „das Essen“ den ersten und letzten Buchstaben jedes Wortes stehen", () => {
+    expect(buildLearningWordPattern("das Essen", 2)).toBe("d_s E_s_n");
+    expect(buildLearningWordLengthPattern("das Essen")).toBe(
+      "_ _ _   _ _ _ _ _",
+    );
   });
 
   it("requests boundaries before grading an ambiguous phrase block", () => {

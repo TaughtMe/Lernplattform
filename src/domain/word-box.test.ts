@@ -34,6 +34,11 @@ describe("wordKey", () => {
     expect(wordKey("  Straße ")).toBe("straße");
     expect(wordKey("Ä".normalize("NFD"))).toBe("ä");
   });
+
+  it("keeps the space inside „das Essen“, so it differs from „essen“", () => {
+    expect(wordKey("  Das Essen ")).toBe("das essen");
+    expect(wordKey("das Essen")).not.toBe(wordKey("essen"));
+  });
 });
 
 describe("wordBoxSchema", () => {
@@ -88,6 +93,17 @@ describe("addWords", () => {
       "Stern",
     ]);
     expect(result.box.updatedAt).toBe(LATER);
+  });
+
+  it("keeps „das Essen“ and „essen“ as two words and merges the same noun", () => {
+    const result = addWords(
+      box(["essen"]),
+      ["das Essen", "Das essen", "das Essen"],
+      "eigen",
+      LATER,
+    );
+    expect(result.added).toEqual(["das Essen"]);
+    expect(result.box.words.map((w) => w.text)).toEqual(["essen", "das Essen"]);
   });
 
   it("leaves the box untouched when nothing is new", () => {

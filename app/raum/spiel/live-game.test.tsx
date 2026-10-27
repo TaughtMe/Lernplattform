@@ -713,7 +713,15 @@ describe("Wörter in den Wortspeicher", () => {
     if (mockSuccess) {
       importFromLesson.mockReset();
       importFromLesson.mockResolvedValue({
-        added: ["Hund", "läuft", "Wort3", "Wort4", "Wort5", "Wort6", "Wort7"],
+        added: [
+          "der Hund",
+          "läuft",
+          "Wort3",
+          "Wort4",
+          "Wort5",
+          "Wort6",
+          "Wort7",
+        ],
         full: true,
       });
     }
@@ -747,13 +755,13 @@ describe("Wörter in den Wortspeicher", () => {
     await playWrongThenRight("errors");
     await waitFor(() => expect(importFromLesson).toHaveBeenCalledTimes(1));
     expect(importFromLesson.mock.calls[0]?.[0]).toMatchObject({
-      words: ["Hund"],
-      errorWords: ["Hund"],
+      words: ["der Hund"],
+      errorWords: ["der Hund"],
       sourceId: "session-1",
     });
     expect(
       await screen.findByText(
-        /„Hund", „läuft", „Wort3", „Wort4" und „Wort5" und 2 weitere liegen jetzt in deinem Wortspeicher/,
+        /„der Hund", „läuft", „Wort3", „Wort4" und „Wort5" und 2 weitere liegen jetzt in deinem Wortspeicher/,
       ),
     ).toBeVisible();
     expect(
@@ -783,8 +791,8 @@ describe("Wörter in den Wortspeicher", () => {
     await playWrongThenRight("all");
     await waitFor(() => expect(importFromLesson).toHaveBeenCalledTimes(1));
     expect(importFromLesson.mock.calls[0]?.[0]).toMatchObject({
-      words: ["Hund", "läuft"],
-      errorWords: ["Hund"],
+      words: ["der Hund", "läuft"],
+      errorWords: ["der Hund"],
     });
   });
 });

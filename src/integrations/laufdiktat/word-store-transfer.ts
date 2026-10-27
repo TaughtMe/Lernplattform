@@ -1,4 +1,4 @@
-import { LEARNING_WORD_COLLECTIONS } from "../../domain/german-learning-content";
+import { isKnownNoun, isNounArticle } from "../../domain/noun-article";
 import {
   alignWords,
   tokenizeText,
@@ -73,18 +73,6 @@ const ABBREVIATIONS = new Set([
   "bspw",
 ]);
 
-let knownCapitalised: ReadonlySet<string> | undefined;
-
-/** Großgeschrieben bekannte Wörter (Nomen) der eingebauten Wortboxen, einmal gebaut. */
-function capitalisedWordIndex(): ReadonlySet<string> {
-  knownCapitalised ??= new Set(
-    LEARNING_WORD_COLLECTIONS.flatMap((collection) => collection.words)
-      .map((word) => word.normalize("NFC"))
-      .filter((word) => /^\p{Lu}/u.test(word)),
-  );
-  return knownCapitalised;
-}
-
 /**
  * Indizes (unter den Wörtern) der Wörter am Satzanfang: das erste Wort des
  * Textes und jedes großgeschriebene Wort nach „.“, „!“, „?“ oder „:“, auch nach
@@ -135,16 +123,41 @@ function storeForms(text: string) {
       .filter((word, index) => !starts.has(index) && /^\p{Lu}/u.test(word))
       .map((word) => word.toLocaleLowerCase("de")),
   );
-  const known = capitalisedWordIndex();
   const keepsCapital = (word: string) =>
     isAcronym(word) ||
-    known.has(word.normalize("NFC")) ||
+    isKnownNoun(word) ||
     capitalInside.has(word.toLocaleLowerCase("de"));
   const form = (word: string, index: number) =>
     starts.has(index) && !keepsCapital(word)
       ? word.toLocaleLowerCase("de")
       : word;
-  return { tokens, words, starts, form, keepsCapital };
+  // Nomen mit Artikel (G-012): Steht direkt vor einem großgeschriebenen Wort im
+  // Satzinneren „der“, „die“ oder „das“, wird es als „das Essen“ gespeichert.
+  // Sonst („dem“, „ein“, Adjektiv dazwischen) bleibt das Nomen allein. Nach
+  // einem Komma ist „der/die/das“ meist ein Relativpronomen („das Kind, das
+  // Hunger hat“) und wird nicht übernommen.
+  const articleBefore = new Map<number, string>();
+  tokens.forEach((token, position) => {
+    const previous = tokens[position - 1];
+    const beforeArticle = tokens[position - 2];
+    if (
+      token.kind === "word" &&
+      previous?.kind === "word" &&
+      !starts.has(token.index) &&
+      /^\p{Lu}/u.test(token.text) &&
+      isNounArticle(previous.text) &&
+      !(beforeArticle?.kind === "punct" && beforeArticle.text === ",")
+    ) {
+      articleBefore.set(token.index, previous.text.toLocaleLowerCase("de"));
+    }
+  });
+  const entry = (word: string, index: number) => {
+    const article = articleBefore.get(index);
+    return article === undefined
+      ? form(word, index)
+      : `${article} ${word.normalize("NFC")}`;
+  };
+  return { tokens, words, starts, form, entry, keepsCapital };
 }
 
 /**
@@ -155,7 +168,7 @@ function storeForms(text: string) {
  * Großschreibfehler am Satzanfang („heute“ für „Heute“) zählt nicht.
  */
 export function misspelledWords(target: string, input: string): string[] {
-  const { words, starts, form, keepsCapital } = storeForms(target);
+  const { words, starts, entry, keepsCapital } = storeForms(target);
   const results = alignWords(words, wordsOf(tokenizeText(input)));
   return distinct(
     results.flatMap((result) => {
@@ -172,7 +185,7 @@ export function misspelledWords(target: string, input: string): string[] {
         return [];
       }
       return [
-        expectedIndex === undefined ? expected : form(expected, expectedIndex),
+        expectedIndex === undefined ? expected : entry(expected, expectedIndex),
       ];
     }),
   );
@@ -197,15 +210,16 @@ export function buildWordStoreTransfer(
       ...(trace.wordMisspellings?.[liveWordErrorKey(word)] ?? []),
     );
     if (trace.finished || index <= trace.currentIndex) {
-      const { words, form } = storeForms(word.targetWord);
+      const { words, entry } = storeForms(word.targetWord);
       reached.push(
         ...words
-          .map(form)
+          .map((token, index) => ({ token, stored: entry(token, index) }))
           .filter(
-            (token) =>
+            ({ token }) =>
               !isNumberOnly(token) &&
               letterCount(token) >= WORD_STORE_MIN_LETTERS,
-          ),
+          )
+          .map(({ stored }) => stored),
       );
     }
   });
