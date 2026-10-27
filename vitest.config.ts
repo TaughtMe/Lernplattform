@@ -29,6 +29,8 @@ export default defineConfig({
       exclude: [
         "**/*.test.ts",
         "src/integrations/cloud-sync/testing/**",
+        // Gemeinsame Regeltabelle der Wiederholungsmodule (nur Tests).
+        "src/domain/testing/**",
         // Lädt das Google-Skript und braucht echte Browser-Anmeldung, keine eigene Logik.
         "src/integrations/cloud-sync/google-identity.ts",
         // Erzeugt nur den Supabase-Client mit festen Optionen.
