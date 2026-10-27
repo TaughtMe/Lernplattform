@@ -146,7 +146,8 @@ export function LibraryScreen({
   bridge?: LibraryBridge | undefined;
   initialPhenomenon?: TextboxPhenomenon | undefined;
   onStartSuggested?:
-    ((textId: string, matches: readonly string[]) => void) | undefined;
+    | ((textId: string, matches: readonly string[]) => void)
+    | undefined;
 }) {
   const [filter, setFilter] = useState<TextboxFilter>(() => ({
     ...EMPTY_TEXTBOX_FILTER,

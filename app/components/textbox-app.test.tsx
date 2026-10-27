@@ -178,7 +178,7 @@ describe("TextboxApp", () => {
     );
   }
 
-  it("setzt eine angefangene Einheit mit der Merkphase des nächsten Runde fort", async () => {
+  it("setzt eine angefangene Einheit mit der Merkphase der nächsten Runde fort", async () => {
     const user = userEvent.setup();
     await setup(prepareOpen);
     await user.click(
@@ -208,7 +208,7 @@ describe("TextboxApp", () => {
     expect(await repository.getOpen(text.id)).toBeUndefined();
   });
 
-  it("behält beim Wiederholen von Runde 1 den ersten Versuch gespeichert", async () => {
+  it("behält beim Wiederholen von Runde 1 den Versuch gespeichert", async () => {
     const user = userEvent.setup();
     const { repository } = await setup();
     await startText(user);
@@ -223,7 +223,7 @@ describe("TextboxApp", () => {
     expect((await repository.getOpen(text.id))?.rounds).toHaveLength(1);
   });
 
-  it("speichert beim Wiederholen von Runde 2 weiter beide ersten Versuche", async () => {
+  it("speichert beim Wiederholen von Runde 2 weiter beide Runden", async () => {
     const user = userEvent.setup();
     const { repository } = await setup();
     await startText(user);
@@ -241,7 +241,7 @@ describe("TextboxApp", () => {
   });
 
   it(
-    "zählt in Runde 4 nur den ersten Versuch; die Korrektur bleibt Übung",
+    "wertet jeden Versuch in Runde 4; der letzte ist das Ergebnis und steht im Verlauf",
     async () => {
       const user = userEvent.setup();
       const { repository, database } = await setup();
@@ -254,20 +254,20 @@ describe("TextboxApp", () => {
           }),
         );
       }
-      // Erster Versuch: nur ein Teil des Textes.
+      // Versuch 1: nur ein Teil des Textes.
       await playRound(user, 4, "Im Garten wohnt ein Hund");
-      expect(screen.getByText(/Wörtern auf Anhieb richtig/)).toBeVisible();
-      const first = screen.getByText(/ %$/).textContent;
+      expect(screen.getByText(/Wörtern richtig geschrieben/)).toBeVisible();
+      expect(screen.queryByText(/in dieser Runde/)).not.toBeInTheDocument();
+      const first = screen.getByText(/ %$/).textContent!.replace(" %", "");
       await user.click(
         screen.getByRole("button", { name: "Runde wiederholen" }),
       );
-      // Korrektur: der ganze Text, fehlerfrei.
+      // Versuch 2: der ganze Text, fehlerfrei.
       await playRound(user, 4);
-      expect(screen.getByText("100 %")).toBeInTheDocument();
-      expect(screen.getByText(/im Übungsversuch richtig/)).toBeVisible();
       expect(screen.getByRole("status")).toHaveTextContent(
-        "Das war ein Übungsversuch. Dein Ergebnis bleibt der erste Versuch",
+        `Versuch 2 in dieser Runde: ${first} % → 100 %`,
       );
+      expect(screen.queryByText(/zählt nicht|Übungsversuch/)).toBeNull();
       await waitFor(async () => {
         const open = await repository.getOpen(text.id);
         expect(open?.rounds[3]?.retries).toHaveLength(1);
@@ -275,6 +275,7 @@ describe("TextboxApp", () => {
       const stored = (await repository.getOpen(text.id))!.rounds[3]!;
       expect(stored.score.percent).toBeLessThan(30);
       expect(stored.retries![0]!.score.percent).toBe(100);
+      expect(stored.retries![0]!.at).toBeDefined();
 
       await user.click(
         screen.getByRole("button", { name: "Ergebnis ansehen" }),
@@ -283,17 +284,21 @@ describe("TextboxApp", () => {
         await screen.findByRole("heading", { name: "Geschafft!" }),
       ).toBeInTheDocument();
       const [done] = await repository.listCompleted();
-      expect(done!.finalPercent).toBe(stored.score.percent);
-      expect(`${done!.finalPercent} %`).toBe(first);
-      expect(screen.getAllByText(`${done!.finalPercent} %`)).not.toHaveLength(
-        0,
-      );
-      expect(screen.getByText(/Wörtern auf Anhieb richtig/)).toBeVisible();
-      expect(screen.getByText("danach 1× geübt, zählt nicht")).toBeVisible();
-      // Lernstand: das Ereignis folgt dem ersten Versuch, nicht der Korrektur.
+      expect(done!.finalPercent).toBe(100);
+      expect(screen.getByText(/Ergebnis aus Runde 4, Versuch 2/)).toBeVisible();
+      expect(screen.getByText(`Versuch 2: ${first} % → 100 %`)).toBeVisible();
+      expect(screen.queryByText(/zählt nicht|Übungsversuch/)).toBeNull();
+      // Lernstand: das Ereignis folgt dem letzten Versuch.
       const events = await database.learningEvents.toArray();
       expect(events).toHaveLength(1);
-      expect(events[0]!.assessment.writing).toBe("incorrect");
+      expect(events[0]!.assessment.writing).toBe("correct");
+      // Der Verlauf zeigt die Entwicklung aller Versuche.
+      await user.click(screen.getByRole("button", { name: "Verlauf ansehen" }));
+      expect(
+        await screen.findByText(`Runde 4: ${first} % → 100 %`, {
+          exact: false,
+        }),
+      ).toBeInTheDocument();
     },
     VIER_DURCHGAENGE,
   );

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TEXTBOX_TEXTS } from "./textbox-library";
 import {
+  hasLargeJump,
   phenomenonErrorStats,
   rankTextsForWords,
   reflectionQuestions,
@@ -74,6 +75,47 @@ describe("summarizeTextboxProgress", () => {
     expect(summary.history[0]!.rounds).toEqual([90]);
   });
 
+  it("zeigt je Durchgang alle Versuche in Reihenfolge; der letzte ist das Ergebnis", () => {
+    const base = session("a", "TXT-001", 25, 1);
+    const retry = (percent: number, at: string) => ({
+      ...round4(percent),
+      at,
+    });
+    const final = {
+      ...round4(25),
+      retries: [
+        retry(27, "2026-10-01T08:05:00.000Z"),
+        retry(100, "2026-10-01T08:09:00.000Z"),
+      ],
+    };
+    const summary = summarizeTextboxProgress([
+      { ...base, finalPercent: 100, rounds: [round4(80), final] },
+    ]).get("TXT-001")!;
+    const entry = summary.history[0]!;
+    expect(entry.rounds).toEqual([80, 100]);
+    expect(entry.attempts[0]).toEqual([{ percent: 80 }]);
+    expect(entry.attempts[1]).toEqual([
+      { percent: 25 },
+      { percent: 27, at: "2026-10-01T08:05:00.000Z" },
+      { percent: 100, at: "2026-10-01T08:09:00.000Z" },
+    ]);
+  });
+
+  it("liest 0.9.4-Einheiten: Wiederholungen zählen, der Endwert folgt dem letzten Versuch", () => {
+    // 0.9.4 speicherte den ersten Versuch (30 %) als Endwert.
+    const old: TextboxSession = {
+      ...session("a", "TXT-001", 30, 1),
+      rounds: [{ ...round4(30), retries: [round4(90)] }],
+    };
+    const summary = summarizeTextboxProgress([old]).get("TXT-001")!;
+    expect(summary.history[0]).toMatchObject({ percent: 90, rounds: [90] });
+    expect(summary.bestPercent).toBe(90);
+    expect(summary.lastPercent).toBe(90);
+    expect(summary.history[0]!.attempts[0]!.map((a) => a.percent)).toEqual([
+      30, 90,
+    ]);
+  });
+
   it("zählt laufende Einheiten nicht", () => {
     const map = summarizeTextboxProgress([
       session("a", "TXT-001", undefined, 1),
@@ -81,6 +123,15 @@ describe("summarizeTextboxProgress", () => {
     ]);
     expect(map.has("TXT-001")).toBe(false);
     expect(map.get("TXT-002")?.sessions).toBe(1);
+  });
+});
+
+describe("hasLargeJump", () => {
+  it("markiert Sprünge ab 50 Prozentpunkten in beide Richtungen", () => {
+    expect(hasLargeJump([25, 27, 100])).toBe(true);
+    expect(hasLargeJump([100, 50])).toBe(true);
+    expect(hasLargeJump([25, 27, 74])).toBe(false);
+    expect(hasLargeJump([80])).toBe(false);
   });
 });
 

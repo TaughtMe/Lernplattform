@@ -36,31 +36,55 @@ export type TextboxRound = 1 | 2 | 3 | 4;
 export type TextboxPhase = "memorize" | "write" | "review" | "complete";
 
 /**
- * Ein späterer Versuch am selben Durchgang („Durchgang wiederholen“). Er ist
- * Übung und Selbstkorrektur: Er wird gespeichert und angezeigt, ändert aber
- * weder Prozentwert noch Fehlerwörter noch Lernstand. Es zählt nur der erste
- * Versuch (Regel „Erster Versuch zählt“, vgl. W-6 bis W-9 im Wortspeicher).
+ * Ein Versuch an einem Durchgang. Jeder Versuch ist vollwertig und hat seinen
+ * eigenen Prozentwert; „Durchgang wiederholen“ legt einen weiteren an, es geht
+ * keiner verloren. Die Lehrkraft sieht im Verlauf die Entwicklung aller
+ * Versuche (Steigerung, Verschlechterung, auffällige Sprünge). Das Ergebnis des
+ * Durchgangs ist der jeweils letzte Versuch.
  */
-export type TextboxRetry = {
+export type TextboxAttempt = {
   words: WordResult[];
   score: RoundScore;
   memorizeMs: number;
   writingMs: number;
+  /** Zeitpunkt der Abgabe; ältere Einheiten kennen ihn nicht. */
+  at?: string | undefined;
 };
 
-/** Höchstzahl gespeicherter Übungsversuche je Durchgang (die jüngsten bleiben). */
-export const MAX_TEXTBOX_RETRIES = 5;
+/** Ein späterer Versuch (ab dem zweiten) im Feld `retries`. */
+export type TextboxRetry = TextboxAttempt;
 
+/**
+ * Höchstzahl gespeicherter Versuche je Durchgang. Großzügig, damit auch ein
+ * Kind, das einen Text sehr oft wiederholt, vollständig im Verlauf steht;
+ * zugleich eine Grenze für Speicher und Sicherung.
+ */
+export const MAX_TEXTBOX_ATTEMPTS = 100;
+
+/**
+ * Höchstzahl der späteren Versuche (`retries`). Der erste Versuch bleibt als
+ * Ausgangswert immer erhalten; sind es mehr als 100, fallen von den späteren
+ * die ältesten zuerst weg. Die 0.9.4-Daten (höchstens 5) liegen weit darunter.
+ */
+export const MAX_TEXTBOX_RETRIES = MAX_TEXTBOX_ATTEMPTS - 1;
+
+/**
+ * Ergebnis eines Durchgangs. Die Felder `words`, `score`, `memorizeMs`,
+ * `writingMs`, `at` sind der ERSTE Versuch (so speichert es seit 0.9.4); alle
+ * weiteren stehen in `retries`. Gelesen wird immer über `roundAttempts` und
+ * `latestAttempt`.
+ */
 export type TextboxRoundResult = {
   round: TextboxRound;
   /** Wortindizes, die in diesem Durchgang ausgeblendet waren (aufsteigend). */
   blanked: number[];
-  /** Erster Versuch: nur er zählt für Ergebnis, Fehlerwörter und Lernstand. */
+  /** Erster Versuch (siehe oben). */
   words: WordResult[];
   score: RoundScore;
   memorizeMs: number;
   writingMs: number;
-  /** Spätere Versuche desselben Durchgangs (Selbstkorrektur), ohne Wertung. */
+  at?: string | undefined;
+  /** Weitere Versuche desselben Durchgangs in zeitlicher Reihenfolge. */
   retries?: TextboxRetry[] | undefined;
 };
 
@@ -75,8 +99,8 @@ export type TextboxRunState = {
   /** Merkzeit des laufenden Durchgangs, solange noch nicht abgegeben. */
   memorizeMs?: number;
   /**
-   * Der laufende Durchgang ist ein Übungsversuch („Durchgang wiederholen“):
-   * Sein Ergebnis wird an den ersten Versuch gehängt und zählt nicht.
+   * Der laufende Durchgang ist eine Wiederholung („Durchgang wiederholen“):
+   * Sein Ergebnis wird als weiterer Versuch an den Durchgang gehängt.
    */
   retry?: boolean;
   rounds: TextboxRoundResult[];
@@ -140,6 +164,7 @@ export const textboxRetrySchema: z.ZodType<TextboxRetry> = z
     score: roundScoreSchema,
     memorizeMs: z.number().nonnegative(),
     writingMs: z.number().nonnegative(),
+    at: instant.optional(),
   })
   .strict();
 
@@ -151,7 +176,9 @@ export const textboxRoundResultSchema: z.ZodType<TextboxRoundResult> = z
     score: roundScoreSchema,
     memorizeMs: z.number().nonnegative(),
     writingMs: z.number().nonnegative(),
-    // Ältere Einheiten kennen keine Übungsversuche (tolerant gelesen).
+    at: instant.optional(),
+    // Ältere Einheiten kennen weder weitere Versuche noch Zeitpunkte (tolerant
+    // gelesen); 0.9.4 speicherte höchstens 5 weitere Versuche.
     retries: z.array(textboxRetrySchema).max(MAX_TEXTBOX_RETRIES).optional(),
   })
   .strict();
@@ -187,6 +214,25 @@ export const textboxSessionSchema: z.ZodType<TextboxSession> = z
       });
     }
   });
+
+/** Alle Versuche eines Durchgangs in zeitlicher Reihenfolge (erster zuerst). */
+export function roundAttempts(round: TextboxRoundResult): TextboxAttempt[] {
+  const { words, score, memorizeMs, writingMs, at } = round;
+  return [
+    { words, score, memorizeMs, writingMs, at },
+    ...(round.retries ?? []),
+  ];
+}
+
+/** Der letzte Versuch eines Durchgangs: Er bestimmt das Ergebnis. */
+export function latestAttempt(round: TextboxRoundResult): TextboxAttempt {
+  return round.retries?.at(-1) ?? roundAttempts(round)[0]!;
+}
+
+/** Prozentwerte als Reihe, z. B. „25 % → 27 % → 100 %“. */
+export function formatPercentSeries(percents: readonly number[]): string {
+  return percents.map((percent) => `${percent} %`).join(" → ");
+}
 
 export function memorizeSeconds(difficulty: TextboxDifficulty): number {
   return MEMORIZE_SECONDS[difficulty];
@@ -307,6 +353,7 @@ export function submitRound(
   text: TextboxText,
   input: string[] | string,
   writingMs: number,
+  at?: string,
 ): TextboxRunState {
   requirePhase(state, "write");
   if (text.id !== state.textId) {
@@ -356,15 +403,17 @@ export function submitRound(
     score = scoreWords(results, blanked.length);
   }
 
-  const attempt = {
+  const attempt: TextboxAttempt = {
     words: results,
     score,
     memorizeMs: state.memorizeMs ?? 0,
     writingMs: Math.max(0, writingMs),
   };
+  if (at !== undefined) attempt.at = at;
   let rounds: TextboxRoundResult[];
   if (state.retry) {
-    // Übungsversuch: der erste Versuch bleibt unverändert, der neue kommt dazu.
+    // Wiederholung: Der Durchgang behält alle bisherigen Versuche, der neue
+    // kommt ans Ende und bestimmt nun das Ergebnis.
     const first = state.rounds[state.rounds.length - 1];
     if (first === undefined || first.round !== state.round) {
       throw new Error("Der erste Versuch dieses Durchgangs fehlt.");
@@ -373,9 +422,7 @@ export function submitRound(
       ...state.rounds.slice(0, -1),
       {
         ...first,
-        retries: [...(first.retries ?? []), attempt].slice(
-          -MAX_TEXTBOX_RETRIES,
-        ),
+        retries: appendRetry(first.retries ?? [], attempt),
       },
     ];
   } else {
@@ -384,6 +431,23 @@ export function submitRound(
   const next: TextboxRunState = { ...state, phase: "review", rounds };
   delete next.memorizeMs;
   return next;
+}
+
+/**
+ * Hängt einen Versuch an. Prozentwert, Zähler und Zeitpunkt bleiben für jeden
+ * Versuch erhalten; die Wortliste behält nur der jüngste (nur er bestimmt
+ * Fehlerwörter), damit viele Wiederholungen den Speicher nicht füllen.
+ */
+function appendRetry(
+  retries: TextboxRetry[],
+  attempt: TextboxAttempt,
+): TextboxRetry[] {
+  return [
+    ...retries.map((retry) =>
+      retry.words.length > 0 ? { ...retry, words: [] } : retry,
+    ),
+    attempt,
+  ].slice(-MAX_TEXTBOX_RETRIES);
 }
 
 export function nextRound(state: TextboxRunState): TextboxRunState {
@@ -401,9 +465,9 @@ export function nextRound(state: TextboxRunState): TextboxRunState {
 }
 
 /**
- * Beginnt den Durchgang noch einmal (gleiche Lücken) als Übungsversuch. Das
- * Ergebnis des ersten Versuchs bleibt unverändert erhalten und zählt allein;
- * der neue Versuch wird an ihn gehängt (`retries`), siehe `TextboxRetry`.
+ * Beginnt den Durchgang noch einmal (gleiche Lücken), beliebig oft. Alle
+ * bisherigen Versuche bleiben erhalten; der neue wird beim Abgeben als
+ * weiterer Versuch angehängt (`retries`) und ist dann das Ergebnis.
  */
 export function repeatRound(state: TextboxRunState): TextboxRunState {
   requirePhase(state, "review");
@@ -416,9 +480,10 @@ export function repeatRound(state: TextboxRunState): TextboxRunState {
   return next;
 }
 
-/** Hauptwert der Einheit: das Ergebnis aus Durchgang 4. */
+/** Hauptwert der Einheit: das Ergebnis des letzten Versuchs in Durchgang 4. */
 export function finalPercent(state: TextboxRunState): number | undefined {
-  return state.rounds.find((round) => round.round === 4)?.score.percent;
+  const last = state.rounds.find((round) => round.round === 4);
+  return last ? latestAttempt(last).score.percent : undefined;
 }
 
 /** Zustand einer Einheit für die Speicherung (laufend oder abgeschlossen). */

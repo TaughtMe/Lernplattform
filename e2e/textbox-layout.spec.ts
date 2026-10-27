@@ -115,7 +115,7 @@ test("Weitermachen setzt eine angefangene Übung am Desktop fort", async ({
   ).toBeVisible();
 });
 
-test("Runde wiederholen führt zurück zum Merken, der erste Versuch bleibt gespeichert", async ({
+test("Runde wiederholen führt zurück zum Merken, das Ergebnis bleibt gespeichert", async ({
   page,
 }) => {
   await openLibrary(page);
