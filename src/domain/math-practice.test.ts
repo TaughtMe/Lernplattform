@@ -11,6 +11,11 @@ import {
   type MathReview,
 } from "./math-practice";
 import { createMathAttempt } from "../storage/math-practice";
+import { learningEventV1Schema, type LearningEventV1 } from "./learning-bundle";
+import {
+  REPETITION_RULE_TABLE,
+  type RuleTableModule,
+} from "./testing/repetition-rule-table";
 import { generateMentalMathTasks, parseMentalMathTask } from "./mental-math";
 
 const task = parseMentalMathTask("7 * 8")!;
@@ -622,4 +627,64 @@ it("retains a teacher-selected multiplication row when both factors are rows", (
   entry.options.multiplicationTables = [8];
   const tasks = buildMathReviewRound([entry], () => 0.3);
   expect(tasks.slice(1).every((task) => task.source.includes("8"))).toBe(true);
+});
+
+/**
+ * Treiber der Regeltabelle: Antworten werden zu Matheereignissen, geprüft wird
+ * `mathReviews`. Der Posten entsteht durch einen Fehler vor dem Start; Stufe 0
+ * und 1 sind Box 1, ein gefestigter Posten (nicht mehr in der Liste) Box 4.
+ */
+const mathModule: RuleTableModule = {
+  name: "Mathe (mathReviews)",
+  maxBox: 4,
+  selfCheck: false,
+  create(start) {
+    const events: LearningEventV1[] = [];
+    let lastDue = start;
+    const add = (at: number, correct: boolean, help: boolean, round: string) =>
+      events.push(
+        learningEventV1Schema.parse({
+          id: `mathe-${events.length}`,
+          learningObjectId: "mathe-7-mal-8",
+          occurredAt: new Date(at).toISOString(),
+          source: "lesson",
+          learningArea: "mathematics",
+          roundId: round,
+          direction: "prompt-to-answer",
+          answerMode: "typed",
+          help: help ? "solution" : "none",
+          math: { task, options: optionsForMathTask(task), answer: "56" },
+          assessment: {
+            knowledge: correct ? "correct" : "incorrect",
+            writing: "not-assessed",
+            selfCorrected: false,
+          },
+        }),
+      );
+    // Ein Posten entsteht erst durch einen Fehler.
+    add(start - 86_400_000, false, false, "anlage");
+    const entry = () => mathReviews(events)[0];
+    return {
+      answer(input) {
+        add(input.at, input.correct, input.usedHelp ?? false, input.roundId);
+      },
+      box() {
+        const current = entry();
+        // Nach der sauberen fälligen Antwort auf Stufe 4 ist der Posten gefestigt.
+        return current ? Math.max(current.step, 1) : 4;
+      },
+      dueAt() {
+        const current = entry();
+        if (current) lastDue = Date.parse(current.dueAt);
+        return lastDue;
+      },
+    };
+  },
+};
+
+describe("Regeltabelle Vault 06 an den Mathe-Posten", () => {
+  for (const row of REPETITION_RULE_TABLE) {
+    if (row.applies && !row.applies(mathModule)) continue;
+    it(row.rule, () => row.run(mathModule));
+  }
 });
