@@ -1,3 +1,8 @@
+import {
+  REPETITION_RULES,
+  reviewRepetition,
+  type RepetitionState,
+} from "./spaced-repetition";
 import type { LearningDirection, LearningEventV1 } from "./learning-bundle";
 
 export type LeitnerBox = 1 | 2 | 3 | 4 | 5;
@@ -27,16 +32,18 @@ export const LEITNER_INTERVAL_DAYS: Record<LeitnerBox, number> = {
  */
 export const LEARNING_ARCHIVE_BONUS_DAYS = 30;
 
-function addDays(value: string, days: number): string {
-  const date = new Date(value);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString();
-}
-
-function nextBox(box: LeitnerBox): LeitnerBox {
-  return Math.min(5, box + 1) as LeitnerBox;
-}
-
+/**
+ * Box und Fälligkeit je Dimension (Wissen, Schreiben) aus den Ereignissen eines
+ * Lernobjekts. Die Entscheidung trifft der gemeinsame Kern
+ * (`REPETITION_RULES.ereignis`, Audit A-004):
+ *
+ * - Kein Aufstieg vor der Fälligkeit; je Runde höchstens ein Schritt.
+ * - Fehler: Box 1, sofort fällig. Richtig mit Hilfe: Box bleibt, Abstand der Box.
+ * - Erster richtiger Abruf nach einem Fehler: Box bleibt, morgen wieder.
+ * - Selbsteinschätzung (`answerMode: "self-check"`) hebt höchstens bis Box 3.
+ *
+ * Nicht bewertete Dimensionen eines Ereignisses (`not-assessed`) zählen nicht.
+ */
 export function deriveLeitnerProgress(input: {
   events: readonly LearningEventV1[];
   learningObjectId: string;
@@ -51,15 +58,10 @@ export function deriveLeitnerProgress(input: {
     knowledge: initial(),
     writing: initial(),
   };
-  const promotedRounds = {
-    knowledge: new Set<string>(),
-    writing: new Set<string>(),
+  const states: Record<"knowledge" | "writing", RepetitionState | undefined> = {
+    knowledge: undefined,
+    writing: undefined,
   };
-  const failedRounds = {
-    knowledge: new Set<string>(),
-    writing: new Set<string>(),
-  };
-  const needsRecovery = { knowledge: false, writing: false };
 
   const events = input.events
     .filter(
@@ -74,30 +76,36 @@ export function deriveLeitnerProgress(input: {
       const assessment = event.assessment[dimension];
       if (assessment === "not-assessed") continue;
 
-      if (assessment === "incorrect") {
-        failedRounds[dimension].add(event.roundId);
-        needsRecovery[dimension] = true;
-        progress[dimension] = {
-          box: 1,
-          dueAt: event.occurredAt,
-          lastEventId: event.id,
-        };
-        continue;
-      }
-
-      const mayAdvance =
-        event.help === "none" &&
-        !needsRecovery[dimension] &&
-        !failedRounds[dimension].has(event.roundId) &&
-        !promotedRounds[dimension].has(event.roundId);
-      const box = mayAdvance
-        ? nextBox(progress[dimension].box)
-        : progress[dimension].box;
-      if (mayAdvance) promotedRounds[dimension].add(event.roundId);
-      needsRecovery[dimension] = false;
+      const before = progress[dimension];
+      const { state, decision } = reviewRepetition(
+        states[dimension] ?? {
+          box: before.box,
+          dueAt: Date.parse(before.dueAt),
+          introduced: false,
+        },
+        {
+          now: Date.parse(event.occurredAt),
+          correct: assessment === "correct",
+          usedHelp: event.help !== "none",
+          selfCorrected: false,
+          firstAttempt: true,
+          roundId: event.roundId,
+          evidence:
+            event.answerMode === "self-check" ? "self-check" : "written",
+          scheduled: true,
+        },
+        REPETITION_RULES.ereignis,
+      );
+      states[dimension] = state;
       progress[dimension] = {
-        box,
-        dueAt: addDays(event.occurredAt, LEITNER_INTERVAL_DAYS[box]),
+        box: state.box as LeitnerBox,
+        // Fehler und unveränderte Fälligkeit behalten die Zeichenfolge der Quelle.
+        dueAt:
+          decision === "reset"
+            ? event.occurredAt
+            : Object.is(state.dueAt, Date.parse(before.dueAt))
+              ? before.dueAt
+              : new Date(state.dueAt).toISOString(),
         lastEventId: event.id,
       };
     }
