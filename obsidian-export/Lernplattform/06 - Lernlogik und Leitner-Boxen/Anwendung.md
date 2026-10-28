@@ -7,7 +7,7 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Die LernBox-Regeln (kein Aufstieg vor Fälligkeit, 8-Stunden-Fenster, ein Aufstieg je Fälligkeit) sind umgesetzt. **Abweichend** von dieser Notiz: Lernwörter steigen ohne Fälligkeitsprüfung und auch beim Abschreiben auf (A-004, D-001); Karteikarten-Selbsteinschätzung hebt bis Box 5 (D-010); „Bedeutung“ und „Schreiben“ werden je Richtung nicht getrennt gespeichert; Boxstände werden nur bei Mathe aus Ereignissen abgeleitet (A-003). Weitere Befunde: G-005, G-006, G-011. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
-> **Nachtrag Welle 3 (27.10.2026):** Zu A-004 laufen LernBox, Lernwörter, Mathe und Ereignisableitung über einen gemeinsamen Kern mit Regeltabelle; Verhaltensänderung gibt es nur in der Ereignisableitung, dort steigt nichts mehr vor der Fälligkeit auf. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+> **Nachtrag Welle 3 (27.10.2026):** Zu A-004: LernBox, Lernwörter, Mathe und Ereignisableitung entscheiden Box und Fälligkeit über einen gemeinsamen Kern (`src/domain/spaced-repetition.ts`) und bestehen dieselbe Regeltabelle aus dieser Notiz. Lernwörter steigen seit Welle 1 nur noch in der fälligen Wiederholung auf, Abschreiben hebt die Box nicht (Regeln W-1 bis W-8); neu geändert ist nur die Ereignisableitung, die nicht mehr vor der Fälligkeit aufsteigt. Details: `docs/umsetzungsplan-audit-welle-3.md`.
 
 
 ## Zweck
