@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+} from "react";
 import {
   buildRunningDictationHint,
   buildVocabularyItems,
@@ -18,8 +24,16 @@ import {
   LEARNING_BUNDLE_VERSION,
   parseLearningBundleV1,
 } from "../../../../src/domain/learning-bundle";
+import {
+  buildRunningDictationSnapshot,
+  restoreRunningDictationItems,
+  runningDictationSnapshotSchema,
+} from "../../../../src/domain/running-dictation-snapshot";
 import { createLearningBoxRepository } from "../../../../src/storage/personal-learning-events";
 import { Icon } from "../../../ui/icons";
+import { useRoundGuard } from "../../../ui/round-guard";
+import { useRoundSnapshot } from "../../../ui/use-round-snapshot";
+import { ResumeOffer } from "../../../views/shell/resume-offer";
 import { useLaufdiktatStars } from "./stars-preference";
 import {
   Button,
@@ -57,6 +71,12 @@ export function RunningDictationApp() {
   const [transferNotice, setTransferNotice] = useState("");
   const [transferDeckId, setTransferDeckId] = useState<string>();
   const [showStars, setShowStars] = useLaufdiktatStars();
+  const round = useRef({ id: "", startedAt: "" });
+  /** Zwischenstand der unterbrochenen Runde (C-001): „Weitermachen“ in den Einstellungen. */
+  const roundSnapshot = useRoundSnapshot(
+    "laufdiktat",
+    runningDictationSnapshotSchema,
+  );
   const interactionReady = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -81,6 +101,12 @@ export function RunningDictationApp() {
         ? parseRunningDictationText(source)
         : buildVocabularyItems(parseVocabularyTable(source), direction);
     if (!nextItems.length) return;
+    // Eine neue Runde ersetzt den Zwischenstand einer früheren.
+    roundSnapshot.clear();
+    round.current = {
+      id: crypto.randomUUID(),
+      startedAt: new Date().toISOString(),
+    };
     setItems(nextItems);
     setIndex(0);
     setAnswer("");
@@ -96,13 +122,63 @@ export function RunningDictationApp() {
     const correct = checkRunningDictationAnswer(current, answer);
     setLastCorrect(correct);
     if (!correct) {
-      setWrongForCurrent((value) => value + 1);
-      setErrorCounts((value) => ({
-        ...value,
-        [current.id]: (value[current.id] ?? 0) + 1,
-      }));
+      const counts = {
+        ...errorCounts,
+        [current.id]: (errorCounts[current.id] ?? 0) + 1,
+      };
+      setWrongForCurrent(wrongForCurrent + 1);
+      setErrorCounts(counts);
+      persistRound({
+        index,
+        wrongForCurrent: wrongForCurrent + 1,
+        errorCounts: counts,
+      });
     }
     setPhase("feedback");
+  }
+
+  /** Hält den Zwischenstand; ist die Runde fertig, bleibt nichts fortzusetzen. */
+  function persistRound(next: {
+    index: number;
+    wrongForCurrent: number;
+    errorCounts: Record<string, number>;
+  }) {
+    const content = buildRunningDictationSnapshot({
+      mode,
+      transfer,
+      items,
+      ...next,
+    });
+    if (!content) return roundSnapshot.clear();
+    roundSnapshot.save({
+      roundId: round.current.id,
+      startedAt: round.current.startedAt,
+      done: next.index,
+      total: items.length,
+      state: content,
+    });
+  }
+
+  /** „Weitermachen“: an der gespeicherten Aufgabe weiter, mit den bisherigen Fehlversuchen. */
+  function resumeRound() {
+    const saved = roundSnapshot.snapshot;
+    if (!saved) return;
+    const { state } = saved;
+    round.current = { id: saved.roundId, startedAt: saved.startedAt };
+    setMode(state.mode);
+    setTransfer(state.transfer);
+    setItems(restoreRunningDictationItems(state));
+    setIndex(state.index);
+    setAnswer("");
+    setWrongForCurrent(state.wrongForCurrent);
+    setErrorCounts(state.errorCounts);
+    setTransferNotice("");
+    // Nach einem Fehlversuch mit Tipps geht es dort weiter, wo geschrieben wird.
+    setPhase(
+      state.mode === "practice" && state.wrongForCurrent > 0
+        ? "write"
+        : "reveal",
+    );
   }
 
   function continueRound() {
@@ -111,6 +187,7 @@ export function RunningDictationApp() {
       setPhase(mode === "practice" ? "write" : "reveal");
       return;
     }
+    persistRound({ index: index + 1, wrongForCurrent: 0, errorCounts });
     if (index + 1 >= items.length) {
       setPhase("complete");
       void transferVocabulary();
@@ -191,6 +268,12 @@ export function RunningDictationApp() {
     setTransferNotice("");
   }
 
+  // Logo, Leiste und Zurück-Geste fragen nach; „Beenden“ lässt den Zwischenstand stehen.
+  const requestLeave = useRoundGuard({
+    active: phase !== "setup" && phase !== "complete",
+    onLeave: reset,
+  });
+
   if (phase === "setup") {
     return (
       <section className="ui-page ui-stack" aria-labelledby="running-title">
@@ -203,6 +286,16 @@ export function RunningDictationApp() {
             Ansehen, merken, verdecken und aus dem Gedächtnis schreiben.
           </p>
         </div>
+
+        {roundSnapshot.snapshot ? (
+          <ResumeOffer
+            detail={`Laufdiktat · ${roundSnapshot.snapshot.state.items.length} Aufgaben`}
+            done={roundSnapshot.snapshot.done}
+            total={roundSnapshot.snapshot.total}
+            onResume={resumeRound}
+            onDiscard={roundSnapshot.clear}
+          />
+        ) : null}
 
         <Card look="pop" className="ui-stack">
           <div
@@ -467,7 +560,7 @@ export function RunningDictationApp() {
           </div>
         ) : null}
       </div>
-      <Button variant="link" onClick={reset}>
+      <Button variant="link" onClick={requestLeave}>
         Runde beenden
       </Button>
     </section>
