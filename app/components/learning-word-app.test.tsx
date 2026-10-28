@@ -127,6 +127,8 @@ function answeredToday(objectId: string, occurredAt: string) {
 }
 
 afterEach(async () => {
+  // Der Zwischenstand einer abgebrochenen Runde bleibt im localStorage liegen.
+  localStorage.clear();
   window.history.pushState(null, "", "/");
   await Promise.all(
     databases.splice(0).map(async (database) => {

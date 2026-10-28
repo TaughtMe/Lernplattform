@@ -4,6 +4,7 @@ import { HOUSE_STATE_KEY } from "./house";
 import { LAST_BACKUP_KEY } from "./backup-reminder";
 import { LEARNER_PROFILE_KEY } from "./learner-profile";
 import { LOCAL_DATA_AREAS } from "./local-data-boundaries";
+import { ROUND_SNAPSHOT_KEYS } from "./round-snapshot";
 
 /**
  * Löscht alle Schülerdaten dieses Geräts (Gastmodus, Befunde B-009, B-010).
@@ -36,6 +37,8 @@ export const STUDENT_LOCAL_KEYS: readonly string[] = [
   "tastenwelt-keyboard-settings",
   "lernraum-spiegelschrift-bis",
   "lernraum-laufdiktat-sterne",
+  // Zwischenstand laufender Übungsrunden (C-001).
+  ...Object.values(ROUND_SNAPSHOT_KEYS),
 ];
 
 /**

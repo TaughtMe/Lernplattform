@@ -29,6 +29,11 @@ import {
 } from "../../src/domain/practice-bridge";
 import type { WordBoxView } from "../../src/domain/word-box";
 import {
+  buildWordRoundSnapshot,
+  wordRoundProgress,
+  wordRoundSnapshotSchema,
+} from "../../src/domain/word-round-snapshot";
+import {
   advanceWordRound,
   applyHelp,
   continueAfterFeedback,
@@ -56,6 +61,9 @@ import {
   wantsDailyPlan,
 } from "../lernen/plan-today";
 import { useRelease } from "../release/release-context";
+import { useRoundGuard } from "../ui/round-guard";
+import { useRoundSnapshot } from "../ui/use-round-snapshot";
+import { ResumeOffer } from "../views/shell/resume-offer";
 import { ListenAnswer } from "../views/wortspeicher/listen-answer";
 import { ButtonLink, EmptyState } from "../ui/primitives";
 import { StudentPage } from "../ui/shell/student-page";
@@ -221,10 +229,39 @@ export function LearningWordApp({
   /** Alle laufenden Speichervorgänge der Runde; der Abschluss wartet darauf. */
   const pendingWrites = useRef<Promise<unknown>>(Promise.resolve());
   const roundsRef = useRef<WordRoundRecord[]>([]);
+  /** Zwischenstand der unterbrochenen Runde (C-001): „Weitermachen“ in der Übersicht. */
+  const roundSnapshot = useRoundSnapshot(
+    "wortspeicher",
+    wordRoundSnapshotSchema,
+  );
+  const saveSnapshot = roundSnapshot.save;
 
   useEffect(() => {
     roundsRef.current = store.rounds;
   }, [store.rounds]);
+
+  // Nach jedem Schritt der Runde den Zwischenstand halten, aber erst, wenn die
+  // Antworten bis dahin in der Datenbank stehen: Er behauptet nie mehr als sie.
+  useEffect(() => {
+    if (!run) return;
+    const content = buildWordRoundSnapshot({
+      state: run.state,
+      view: run.view,
+      config: run.config,
+      startedAt: run.startedAt,
+      retry: run.retry,
+    });
+    if (!content) return;
+    const progress = wordRoundProgress(run.state);
+    pendingWrites.current = pendingWrites.current.then(() =>
+      saveSnapshot({
+        roundId: run.state.roundId,
+        startedAt: run.startedAt,
+        ...progress,
+        state: content,
+      }),
+    );
+  }, [run, saveSnapshot]);
 
   function setRun(next: Run | null) {
     runRef.current = next;
@@ -479,6 +516,9 @@ export function LearningWordApp({
       await store.saveRound(record);
     } catch {
       setCompletion({ ...base, notice: SAVE_ISSUE });
+    } finally {
+      // Die Runde ist abgeschlossen: Es gibt nichts mehr fortzusetzen.
+      roundSnapshot.clear();
     }
   }
 
@@ -526,6 +566,40 @@ export function LearningWordApp({
     setCompletion(undefined);
     await pendingWrites.current;
     await store.refresh();
+  }
+
+  // Logo, Leiste und Zurück-Geste fragen nach; „Beenden“ lässt den Zwischenstand stehen.
+  const requestLeave = useRoundGuard({
+    active: run !== null && run.state.phase !== "complete",
+    onLeave: () => void leaveRound(),
+  });
+
+  /** „Weitermachen“: die unterbrochene Runde dort aufnehmen, wo sie stand. */
+  function resumeRound() {
+    const saved = roundSnapshot.snapshot?.state;
+    if (!saved) return;
+    const resume = () => {
+      finished.current = new Set();
+      setCompletion(undefined);
+      setNotice(undefined);
+      setSheetId(undefined);
+      setHistoryId(undefined);
+      setRun({
+        state: saved.state,
+        view: saved.view,
+        config: saved.config,
+        startedAt: saved.startedAt,
+        ...(saved.retry ? { retry: true as const } : {}),
+      });
+    };
+    if (saved.state.stage !== 6) return resume();
+    // Wie beim Start: Die Stimme muss vor dem ersten Wort bereit sein.
+    setStarting(true);
+    void speech.prepare().then((readiness) => {
+      setStarting(false);
+      if (readiness === "ready") resume();
+      else setNotice(readiness === "no-voice" ? NO_VOICE : VOICE_FAILED);
+    });
   }
 
   // ---- Wortlisten ----
@@ -747,7 +821,7 @@ export function LearningWordApp({
             />
           ) : undefined
         }
-        onBack={() => void leaveRound()}
+        onBack={requestLeave}
         onFinishMemorize={() => {
           const current = runRef.current;
           if (current?.state.phase === "memorize") {
@@ -923,6 +997,18 @@ export function LearningWordApp({
         onCreate={createBox}
         onMixed={() => openStart(FALLIGE_ID)}
         worksheetHref={WORD_STORE_WORKSHEET_PATH}
+        resumeOffer={
+          roundSnapshot.snapshot ? (
+            <ResumeOffer
+              detail={`${roundSnapshot.snapshot.state.view.title} · Stufe ${roundSnapshot.snapshot.state.state.stage}`}
+              done={roundSnapshot.snapshot.done}
+              total={roundSnapshot.snapshot.total}
+              busy={starting}
+              onResume={resumeRound}
+              onDiscard={roundSnapshot.clear}
+            />
+          ) : undefined
+        }
       />
     );
   }

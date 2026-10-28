@@ -21,6 +21,8 @@ beforeEach(() => {
   list.mockReset().mockResolvedValue([]);
   progress.mockReset().mockResolvedValue({ openItems: [] });
   build.mockClear();
+  // Der Zwischenstand einer abgebrochenen Runde bleibt im localStorage liegen.
+  localStorage.clear();
   window.history.pushState(null, "", "/frei/mathematics");
 });
 

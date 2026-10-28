@@ -24,6 +24,7 @@ import {
   type TypingStats,
 } from "../../../src/tastschreiben/typing-stats";
 import { createTypingProgressRepository } from "../../../src/storage/personal-learning-events";
+import { useRoundGuard } from "../../ui/round-guard";
 import { useThemeToggle } from "../../ui/theme";
 import { profileAvatar } from "../../../src/domain/learner-profile";
 import { useLearnerProfile } from "../../ui/use-learner-profile";
@@ -131,6 +132,16 @@ export function TypingWorld() {
   function start(lesson: LessonDef, stationIndex: number) {
     setRound(newRound(lesson, stationIndex));
   }
+
+  // Logo, Leiste und Zurück-Geste fragen nach, sobald getippt wurde. Einen
+  // Zwischenstand gibt es hier bewusst nicht (C-001): Eine Übung ist ein
+  // kurzer Absatz, gespeichert wird erst das Ergebnis, und die Zeitmessung der
+  // Anschläge ließe sich nach einer Pause nicht sinnvoll fortsetzen.
+  const requestLeave = useRoundGuard({
+    active: round !== null && round.session.startedAt !== null && !round.stats,
+    onLeave: () => setRound(null),
+    resumable: false,
+  });
 
   function type(char: string) {
     setRound((current) => {
@@ -330,7 +341,7 @@ export function TypingWorld() {
           : null
       }
       onChar={type}
-      onBack={() => setRound(null)}
+      onBack={requestLeave}
       onRetry={() => start(lesson, round.stationIndex)}
       onNext={() => nextLesson && start(nextLesson, round.stationIndex)}
     />

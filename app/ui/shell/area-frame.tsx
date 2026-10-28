@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
 import { BackgroundRoomPresence } from "../../components/background-room-presence";
 import { ButtonLink } from "../primitives";
+import { RoundGuardProvider } from "../round-guard";
 import { SiteFooter } from "../site-footer";
 import { useGuestMode } from "../use-guest-mode";
 import { areaOf } from "./areas";
@@ -45,29 +46,31 @@ export function AreaFrame({
   const guest = useGuestMode();
   return (
     <FullscreenContext.Provider value={setFullscreen}>
-      {area === "student" ? (
-        <BackgroundRoomPresence
-          liveRoomConfig={liveRoomConfig}
-          enabled={!pathname.startsWith("/raum")}
-        />
-      ) : null}
-      {area === "student" ? (
-        <StudentShell
-          activePath={pathname}
-          hideNav={fullscreen === "all" ? true : fullscreen}
-          footer={fullscreen === "all" ? null : <SiteFooter compact />}
-        >
-          {children}
-        </StudentShell>
-      ) : area === "teacher" ? (
-        guest ? (
-          <GuestTeacherBlock />
+      <RoundGuardProvider>
+        {area === "student" ? (
+          <BackgroundRoomPresence
+            liveRoomConfig={liveRoomConfig}
+            enabled={!pathname.startsWith("/raum")}
+          />
+        ) : null}
+        {area === "student" ? (
+          <StudentShell
+            activePath={pathname}
+            hideNav={fullscreen === "all" ? true : fullscreen}
+            footer={fullscreen === "all" ? null : <SiteFooter compact />}
+          >
+            {children}
+          </StudentShell>
+        ) : area === "teacher" ? (
+          guest ? (
+            <GuestTeacherBlock />
+          ) : (
+            <TeacherShell pathname={pathname}>{children}</TeacherShell>
+          )
         ) : (
-          <TeacherShell pathname={pathname}>{children}</TeacherShell>
-        )
-      ) : (
-        children
-      )}
+          children
+        )}
+      </RoundGuardProvider>
     </FullscreenContext.Provider>
   );
 }

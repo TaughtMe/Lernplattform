@@ -301,6 +301,11 @@ test("the LernBox imports, filters and practises words", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Gewusst" })).toBeVisible();
   await page.getByRole("button", { name: "Weiter" }).click();
   await page.getByRole("button", { name: "Runde beenden" }).click();
+  // Mitten in der Runde fragt der Rundenschutz nach (C-001).
+  await page
+    .getByRole("alertdialog", { name: "Runde wirklich beenden?" })
+    .getByRole("button", { name: "Beenden" })
+    .click();
   await expect(page.getByRole("heading", { name: "LernBox" })).toBeVisible();
 });
 
@@ -385,6 +390,11 @@ test("many imported words give a portion of at most 20 and 'Weiterlernen' starts
 
   // Die beantwortete Aufgabe zählt in der Portion.
   await page.getByRole("button", { name: "Runde beenden" }).click();
+  // Mitten in der Runde fragt der Rundenschutz nach (C-001).
+  await page
+    .getByRole("alertdialog", { name: "Runde wirklich beenden?" })
+    .getByRole("button", { name: "Beenden" })
+    .click();
   await page.goto("/lernen");
   await expect(page.getByText("1 von 10 Aufgaben heute")).toBeVisible();
 });
