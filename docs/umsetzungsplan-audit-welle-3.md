@@ -112,3 +112,73 @@ nicht mehr als „schwierig“).
 - Gebündelter Browserlauf nach dem Zusammenführen (`npm run build`, betroffene
   Spezifikationen mit `--project=desktop-chromium --project=mobile-chrome`).
 - Die vollständige Cross-Browser-Suite in GitHub bleibt verpflichtend.
+
+## Stand der Umsetzung
+
+Stand: 27.10.2026. Alle Pakete D1 bis D5 sind umgesetzt. D2 und D3 sind als
+Vorschau in Freigabebereichen hinterlegt. Die Vorschläge unten warten auf
+Entscheidungen des Entwicklers.
+
+**D1 umgesetzt.** Der Kern liegt in `src/domain/spaced-repetition.ts`.
+LernBox, Lernwörter, Mathe und die Ereignisableitung delegieren dorthin. Alle
+bestehen die Regeltabelle `src/domain/testing/repetition-rule-table.ts`.
+Verhaltensänderung gibt es nur in der Ereignisableitung:
+
+- kein Aufstieg vor der Fälligkeit;
+- eine richtige Antwort in derselben Runde nach einem Fehler schließt ihn
+  nicht mehr;
+- Selbsteinschätzung höchstens Box 3.
+
+**D2 umgesetzt als Vorschau** (Freigabebereich `diagnostik`): `/lernen/startpunkt`,
+`/lernen/training`, `/lernen/profil`. Domänen: `src/domain/active-time.ts`,
+`src/domain/competence-profile.ts`, `src/domain/daily-training.ts`,
+`src/domain/start-point.ts`.
+
+- Das Training plant nur die offenen Elemente der Tagesportion, höchstens 20.
+- Die Uhr läuft nur auf der Trainingsseite.
+- Kopfrechnen kann nicht vorbelegt werden (keine URL-Parameter).
+- „Sicher“ je Teilbereich: mindestens 5 Einträge, 80 % davon sicher.
+
+**D3 umgesetzt** (Freigabebereich `lehrer-geraet`, Vorschau):
+
+- Gerätetyp „Mein Gerät“ oder „Tafel“. Der Tafelmodus zeigt nur Material.
+- Auf der Tafel übernimmt der Geräte-Abgleich nur `contentPackages`.
+- Beim Wechsel zur Tafel bietet die App an, Personendaten auf dem Gerät zu
+  löschen.
+- PIN-Sperre: 6 Ziffern, PBKDF2, Sperre nach 15 Minuten ohne Nutzung.
+- Offen: keine Wartezeit nach Fehlversuchen.
+
+**D4 umgesetzt.** `/lehrer/material/wortauftrag` erzeugt einen Link
+`/frei/german?woerter=…&auftrag=…`, höchstens 500 Zeichen. Der Druck erfolgt
+als Kärtchen. Aufträge werden nicht gespeichert.
+
+**D5 umgesetzt.**
+
+- D5-1 (C-001): Rundenschutz bei Logo, Leiste, Zurück-Pfeil und Geste.
+  „Weitermachen“ für Wortspeicher, LernBox, Kopfrechnen und Laufdiktat allein.
+  Die Tastenwelt hat nur die Rückfrage.
+- D5-2 (C-003): Erstkontakt mit „Loslegen“ und Tastatur-Merkmal.
+- D5-3 (C-007): Kinder-Glossar `src/domain/child-glossary.ts` mit Test.
+  Anleitungen haben einen Vorlese-Knopf, nur mit lokalen Stimmen.
+- D5-4 (C-008): „neu“ statt „erledigt“. Der Wortspeicher-Abschluss nennt, wann
+  die Fehlerwörter wiederkommen, und bietet „Diese Wörter jetzt noch einmal
+  üben“ an (freies Üben, ändert keine Box). Leerer Tag: „Heute ist noch nichts
+  geplant“.
+- D5-5 (D-012): Tempo-Punkte nur mit `showTempoPoints`, Standard aus.
+  Projektionsmodus „Für die Tafel“. Sterne im Laufdiktat allein abschaltbar.
+- D5-6 (A-006): `playwright.production.config.ts` prüft gegen den Build in
+  `wrangler dev`. CI-Job `production`.
+
+### Offene Entscheidungen des Entwicklers
+
+- Freigabe `lehrer-geraet` auf `frei` setzen.
+- Wartezeit nach falscher PIN.
+- Längengrenze des Wortauftrags (500 Zeichen) und Speichern der Aufträge.
+- Stufenfolgen des Startpunkts und Regel „sicher“.
+- Mündliches Aufdecken als Abruf werten.
+- Uhr über Module hinweg.
+- „Häufigste Fehler“ in der Projektion.
+- Battle-Text „Wer zuerst fertig ist, gewinnt“.
+- „Beenden“ bietet 24 Stunden lang „Weitermachen“ an.
+- Cloud-Abgleich und WebDAV aus den Kindereinstellungen verschieben.
+- Produktions-Browserlauf auch mobil ausführen.

@@ -7,6 +7,8 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Live-Raum (Laufdiktat, Freie Übung, Battle, Stationen) und Laufdiktat allein sind umgesetzt. Der Modus **Lernstandscheck existiert nicht mehr** (alte Einstellung „TEST“ wird als „LAUFDIKTAT“ behandelt). Befunde: Realtime-Kanäle ohne Autorisierung (B-003), Lösungen für jeden mit Raumcode lesbar (B-004), Satz nur zeichengenau richtig (D-008), Satzzerlegung an jedem Punkt (G-004), Unterrichtsfehler beschleunigen den LernBox-Aufstieg (G-011), Tempo-Punkte (D-012), Zwei-Finger-Geste ohne Alternative (E-007). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
+> **Nachtrag Welle 3 (27.10.2026):** Zu D-012 sind Tempo-Punkte nur auf Wunsch der Lehrkraft eingeschaltet (Standard aus), und die Lehrer-Liveansicht hat einen Projektionsmodus ohne Namen mit Fehlerzahlen. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+
 
 ## Zweck
 

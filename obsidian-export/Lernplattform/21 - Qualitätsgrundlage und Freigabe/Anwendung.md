@@ -14,6 +14,8 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Quality Gates laufen und sind grün. Abweichungen: Die Abdeckungsschwellen gelten nur für `src/`, nicht für `app/` (real 78,7 % Zeilen; A-005); die Browser-Suite prüft den Entwicklungsserver mit Vorschau statt des ausgelieferten Artefakts und blockiert den Service Worker (A-006, B-013); Tests auf echten Schulgeräten stehen aus. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
+> **Nachtrag Welle 3 (27.10.2026):** Zu A-006 prüft ein zusätzliches Playwright-Projekt die Hauptseiten gegen den Produktions-Build in `wrangler dev`, ein CI-Job `production` führt es aus. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+
 
 ## Zweck
 

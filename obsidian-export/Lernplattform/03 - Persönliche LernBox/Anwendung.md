@@ -7,6 +7,8 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Stapel, Ordner, beide Richtungen, Schreib- und Karteikartenmodus, Leitner 1/3/7/14/30 mit Fälligkeitsschutz und Lehrkraftpakete sind umgesetzt. Die getrennten Stände „Bedeutung/Schreiben“ fehlen im Kartenmodell, Selbsteinschätzung hebt bis Box 5 (D-010). Der Satz „Bis das Laufdiktat selbst nativ integriert ist …“ ist **überholt**. Befunde: Sicherung scheitert bei Ordnern (B-001), Richtungen teilen `lastReviewed` (G-005), Anzeigen „erledigt/schwierig“ widersprüchlich (C-008). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
+> **Nachtrag Welle 3 (27.10.2026):** Zu C-008 heißen nie geübte Karten jetzt „neu“ statt „erledigt“. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+
 
 ## Zweck
 

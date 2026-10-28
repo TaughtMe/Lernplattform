@@ -7,6 +7,8 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Installierbarkeit und Service Worker sind umgesetzt. Offline funktioniert nur, was unter der aktuellen Version schon besucht wurde; nach einem Update kaum etwas (B-013). Lehrerfunktionen sind nicht rollenbasiert geschützt (Entscheidung 43; B-009). Sicherheitsheader und CSP fehlen (B-015). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
+> **Nachtrag Welle 3 (27.10.2026):** Zu B-009 gibt es Gerätetyp, Tafelmodus und PIN-Sperre als Vorschau (Freigabe `lehrer-geraet`); die PIN-Sperre ist ein Sichtschutz, eine Wartezeit nach Fehlversuchen fehlt noch. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+
 
 ## PWA
 

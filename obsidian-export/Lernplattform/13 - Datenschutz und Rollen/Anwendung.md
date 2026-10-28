@@ -7,6 +7,8 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Technische Trennung der Datenbereiche, Pseudonyme im Raum und lokale Namenszuordnung sind umgesetzt. Offen bzw. abweichend: Rechtsrahmen (AVV, Verzeichnis, DSFA, Freigabe) fehlt (B-011, rechtlich zu prüfen); die Schreiberleichterung steht lesbar im Einschreibe-QR und ist in der projizierten Einzelansicht an der Größe erkennbar (B-008) und wirkt für das Gerät statt für das Kind (E-001); keine Personentrennung auf geteilten Geräten (B-009, B-010). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
+> **Nachtrag Welle 3 (27.10.2026):** Zu B-009 sperrt der Tafelmodus die Personenbereiche; auf „Mein Gerät“ schützt eine PIN-Sperre sie nur als Sichtschutz, nicht verschlüsselt (Vorschau, Freigabe `lehrer-geraet`). Details: `docs/umsetzungsplan-audit-welle-3.md`.
+
 
 ## Grundsatz
 

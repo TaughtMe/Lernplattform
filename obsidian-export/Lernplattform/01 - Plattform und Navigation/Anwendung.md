@@ -7,6 +7,8 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Gemeinsame App, getrennte Schüler- und Lehrerbereiche, Code- und QR-Einstiege sind umgesetzt. Die hier beschriebene Oberfläche (Heute üben, Fächer, Meine Inhalte, Mein Fortschritt, Meine Klasse) und der Monatskalender sind durch Entscheidung 48 **überholt**: Der Code zeigt die Leiste Lernen, Üben, Raum, Profil und eine Wochenleiste. Der Lehrerbereich ist auf der Startseite als „Lehrer-Login“ verlinkt, obwohl es keinen Login gibt (B-009). Weitere Befunde: C-003 (Erstkontakt), C-009 (Fortschritt schwer auffindbar). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
+> **Nachtrag Welle 3 (27.10.2026):** Zu B-009 sperrt der Gerätetyp „Tafel“ die Personenbereiche und bietet das Löschen von Personendaten an (Vorschau, Freigabe `lehrer-geraet`); zu C-003 begrüßt ein Kind ohne Lernstand mit „Loslegen“. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+
 
 ## Zweck
 

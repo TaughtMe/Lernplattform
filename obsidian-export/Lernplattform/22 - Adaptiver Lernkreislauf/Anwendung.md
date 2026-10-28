@@ -7,6 +7,8 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Umgesetzt sind Fehlerwiederholung (LernBox, Mathe-Familien), Übernahme aus dem Laufdiktat und die Tagesportion. **Nicht umgesetzt:** Kompetenzschätzung, Diagnostik, Rechtschreibstrategie-Aktivierung, Tippsequenzen aus unsicheren Tasten in der Tagesportion, Rückfluss aus Textbox und Laufdiktat allein (D-003, D-011). Die hier genannte Oberfläche (vier feste Einstiege) ist durch Entscheidung 48 **überholt**. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
+> **Nachtrag Welle 3 (27.10.2026):** Zu D-003 gibt es Startpunkt, Kompetenzprofil und Tagestraining als Vorschau (Freigabe `diagnostik`). Details: `docs/umsetzungsplan-audit-welle-3.md`.
+
 
 ## Zweck
 
