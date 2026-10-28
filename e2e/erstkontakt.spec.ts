@@ -57,7 +57,14 @@ test("the first key press with a code in a text field marks a hardware keyboard"
   page,
 }) => {
   await page.goto("/raum");
-  const first = page.getByRole("textbox", { name: "Raumcode Zeichen 1" });
+  // Auf /raum heißen die Felder „Ziffer 1“ bis „Ziffer 4“; „Raumcode Zeichen“
+  // trägt nur die Eingabe der Startseite. Der Tastendruck wird erst nach der
+  // Hydration beobachtet.
+  const first = page.getByRole("textbox", { name: "Ziffer 1" });
+  await expect(page.locator("[data-hydrated]")).toHaveAttribute(
+    "data-hydrated",
+    "true",
+  );
   await expect(first).toBeVisible();
   expect(
     await page.evaluate(

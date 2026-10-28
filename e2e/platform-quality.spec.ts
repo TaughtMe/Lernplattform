@@ -802,20 +802,26 @@ test("teacher material and assignment tools share a consistent grid", async ({
 
   // Aufgaben sind noch in der Vorschau.
   await page.goto("/lehrer/aufgaben?vorschau=an");
-  const layout = await page.evaluate(() => {
-    const boxes = [
-      'form[aria-labelledby="assignment-form-title"]',
-      'section[aria-label="Aufgabenliste"]',
-      'section[aria-labelledby="qr-generator-title"]',
-      'section[aria-labelledby="qr-reader-title"]',
-    ].map((selector) =>
+  const selectors = [
+    'form[aria-labelledby="assignment-form-title"]',
+    'section[aria-label="Aufgabenliste"]',
+    'section[aria-labelledby="qr-generator-title"]',
+    'section[aria-labelledby="qr-reader-title"]',
+  ];
+  // Die Pforte des Lehrerbereichs hält die Seite versteckt (Breite 0), bis das
+  // Gerät entschieden hat; erst dann lässt sich das Raster messen.
+  for (const selector of selectors) {
+    await expect(page.locator(selector)).toBeVisible();
+  }
+  const layout = await page.evaluate((boxSelectors) => {
+    const boxes = boxSelectors.map((selector) =>
       document.querySelector(selector)?.getBoundingClientRect(),
     );
     return boxes.map((box) => ({
       width: box?.width ?? 0,
       height: box?.height ?? 0,
     }));
-  });
+  }, selectors);
   expect(layout.every(({ width }) => width > 0)).toBe(true);
   if ((page.viewportSize()?.width ?? 0) > 800) {
     expect(Math.abs(layout[0]!.width - layout[1]!.width)).toBeLessThan(2);
