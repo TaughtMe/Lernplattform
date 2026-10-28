@@ -105,10 +105,46 @@ jobs:
           path: playwright-report
           retention-days: 14
 
-  # Sammelstatus unter dem bisherigen Namen: grün, wenn alle Browser grün sind
-  # oder die Browser-Tests bei reinen Doku-Änderungen entfallen.
+  # Hauptseiten gegen den Produktions-Build (Audit A-006): das gebaute
+  # Worker-Artefakt dist/server läuft in der lokalen Workers-Laufzeit
+  # (wrangler dev --local), ohne Vorschau-Cookie und mit erlaubtem Service
+  # Worker. Die Browser-Jobs oben testen dagegen den Entwicklungsserver.
+  production:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    name: production (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            project: production-chromium
+          - browser: webkit
+            project: production-webkit
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run build
+      - run: npm run test:e2e:production -- --project=${{ matrix.project }}
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report
+          retention-days: 14
+
+  # Sammelstatus unter dem bisherigen Namen: grün, wenn alle Browser (auch der
+  # Produktions-Build) grün sind oder die Browser-Tests bei reinen
+  # Doku-Änderungen entfallen.
   browser-quality:
-    needs: [changes, browser]
+    needs: [changes, browser, production]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -116,10 +152,12 @@ jobs:
       - env:
           CHANGES: ${{ needs.changes.result }}
           BROWSER: ${{ needs.browser.result }}
+          PRODUCTION: ${{ needs.production.result }}
         run: |
-          echo "changes: $CHANGES, browser: $BROWSER"
+          echo "changes: $CHANGES, browser: $BROWSER, production: $PRODUCTION"
           [ "$CHANGES" = "success" ] || exit 1
           [ "$BROWSER" = "success" ] || [ "$BROWSER" = "skipped" ] || exit 1
+          [ "$PRODUCTION" = "success" ] || [ "$PRODUCTION" = "skipped" ] || exit 1
 
   # Designvergleich im offiziellen Playwright-Container: Betriebssystem, Schriften
   # und Chromium sind dort festgelegt, die Darstellung ist überall gleich. Die
