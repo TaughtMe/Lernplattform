@@ -5,6 +5,7 @@ import {
 } from "../src/domain/class-enrollment";
 import { createTeacherAssignmentCode } from "../src/domain/teacher-workspace";
 import { analyzeAccessibility } from "./accessibility-helpers";
+import { markOwnDevice } from "./teacher-device-helpers";
 import { createBox, startRound } from "./wortspeicher-helpers";
 
 // Die Demo-Klasse 7b ist Testgelände und nur mit Vorschau sichtbar (Bereich
@@ -18,6 +19,12 @@ async function enablePreview(page: Page) {
     },
   ]);
 }
+
+// Mit Vorschau (`?vorschau=an`) fragt der Lehrerbereich nach dem Gerätetyp; diese
+// Tests prüfen etwas anderes und gelten für „Mein Gerät“.
+test.beforeEach(async ({ page }) => {
+  await markOwnDevice(page);
+});
 
 function isKnownFrameworkDiagnostic(message: string) {
   return (

@@ -11,6 +11,7 @@ import { createBrowserEnv } from "../../src/integrations/cloud-sync/scheduler";
 import { watchDatabaseChanges } from "../../src/integrations/cloud-sync/watch";
 import { LOCAL_DATA_AREAS } from "../../src/storage/local-data-boundaries";
 import { TeacherClassDatabase } from "../../src/storage/teacher-class-settings";
+import { readTeacherDeviceType } from "../../src/storage/teacher-device";
 
 let instance: SyncController | null = null;
 
@@ -27,6 +28,8 @@ export function getSyncController(): SyncController {
       credentials: createCredentialStore(),
       env: createBrowserEnv(),
       onData: () => window.dispatchEvent(new Event("teacher-data-changed")),
+      // Bei jeder Runde neu gelesen: Auf der Tafel gleicht der Abgleich nur Material ab.
+      deviceType: () => readTeacherDeviceType(),
     });
     watchDatabaseChanges(LOCAL_DATA_AREAS.teacher, () =>
       controller.notifyChange(),

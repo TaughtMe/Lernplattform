@@ -34,6 +34,7 @@ import {
 } from "../../src/storage/teacher-class-settings";
 import { Button, Card, Pill } from "../ui/primitives";
 import { QrCodeScanner } from "../ui/qr-scanner";
+import { useIsBoardDevice } from "../ui/use-teacher-device";
 import { manageStyles } from "../views/lehrer/manage-parts";
 import {
   DeviceDataCard,
@@ -180,6 +181,8 @@ export function TeacherProfilePanel() {
 
 /** Gruppe „Daten auf diesem Gerät“ (17a): Zahlen, Sicherung, Schutzhinweis. */
 export function TeacherDataPanel() {
+  // Auf der Tafel gibt es keinen Datenexport und -import (Regel D3-2).
+  const board = useIsBoardDevice();
   const classRepository = useMemo(() => createTeacherClassRepository(), []);
   const materialRepository = useMemo(
     () => createTeacherContentLibraryRepository(),
@@ -257,6 +260,8 @@ export function TeacherDataPanel() {
       setMessage("Die Datei ist keine gültige Lernraum-Lehrerdatenbank.");
     }
   }
+
+  if (board) return null;
 
   return (
     <SettingsGroup
