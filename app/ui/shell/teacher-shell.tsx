@@ -6,9 +6,11 @@ import {
   resolveClassSelection,
   UNASSIGNED,
 } from "../../../src/domain/teacher-content-summary";
+import { PERSONAL_DATA_AREAS } from "../../../src/domain/teacher-device";
 import { CloudBadgeConnected } from "../../components/cloud-badge-connected";
 import { useRunningRoom } from "../../lehrer/running-room";
 import { SyncConflictsHost } from "../../components/sync-conflicts-host";
+import { TeacherDeviceGate } from "../../components/teacher-device-gate";
 import { CloudSlotProvider } from "../cloud-slot";
 import { RoomBarPill } from "../../views/lehrer/start-screen";
 import { TeacherFrame } from "../../views/lehrer/teacher-frame";
@@ -26,6 +28,7 @@ import {
   teacherAreaTitle,
   type TeacherNavEntry,
 } from "./teacher-nav";
+import { useTeacherAccess } from "./use-teacher-access";
 import { useTeacherNavData } from "./use-teacher-nav-data";
 
 export { teacherAreaOf, type TeacherArea } from "./teacher-nav";
@@ -52,6 +55,9 @@ export function TeacherShell({
   const visibility = useRelease();
   const { theme, toggleTheme } = useThemeToggle();
   const data = useTeacherNavData();
+  // Gerätetyp und Sperre (B-009): Auf der Tafel und hinter der PIN keine Klassen.
+  const access = useTeacherAccess(area);
+  const personal = visibility.lehrer && !access.hidePersonal;
   const [navOpen, setNavOpen] = useState(false);
   // Läuft in diesem Fenster ein Raum, zeigt Start es in der mobilen Kopfzeile.
   const room = useRunningRoom(pathname);
@@ -98,13 +104,20 @@ export function TeacherShell({
         : entry.href,
     active: entry.area === area,
   });
-  const visible = TEACHER_NAV.filter((entry) => visibility[entry.release]);
+  const visible = TEACHER_NAV.filter(
+    (entry) =>
+      visibility[entry.release] &&
+      !(access.hidePersonal && PERSONAL_DATA_AREAS.includes(entry.area)),
+  );
   const fill = area === "live";
   // Verwalten-Seiten nach v2 (17a–c) bringen Kopf und Innenabstand selbst mit.
   const managePage =
     area === "classes" || area === "material" || area === "settings";
   // Ohne aktiven Abgleich zeichnet das Symbol nichts.
   const cloud = <CloudBadgeConnected />;
+  const page = (
+    <TeacherDeviceGate access={access}>{children}</TeacherDeviceGate>
+  );
 
   return (
     <div style={{ height: "100dvh" }}>
@@ -115,20 +128,22 @@ export function TeacherShell({
         }
         {...(managePage ? { classesOpen: false } : {})}
         eyebrow={
-          selection === UNASSIGNED
-            ? "Nicht zugeordnet"
-            : (activeClass?.name ?? "Lehrerbereich")
+          !personal
+            ? "Lehrerbereich"
+            : selection === UNASSIGNED
+              ? "Nicht zugeordnet"
+              : (activeClass?.name ?? "Lehrerbereich")
         }
         title={teacherAreaTitle(area)}
         theme={theme}
         {...(area === "content" && room
           ? { barExtra: <RoomBarPill room={room} /> }
           : {})}
-        classes={visibility.lehrer ? classes : []}
-        {...(visibility.lehrer && unassigned ? { unassigned } : {})}
+        classes={personal ? classes : []}
+        {...(personal && unassigned ? { unassigned } : {})}
         areas={visible.filter((entry) => entry.group === "area").map(item)}
         manage={visible.filter((entry) => entry.group === "manage").map(item)}
-        {...(visibility.lehrer
+        {...(personal
           ? { addClass: { href: "/lehrer/klassen", plusOnDesktop: true } }
           : {})}
         profile={{
@@ -147,11 +162,11 @@ export function TeacherShell({
         <SyncConflictsHost />
         {/* Ältere Seiten brauchen die Grundlage `.ui` (Schrift, Abstände). */}
         {fill ? (
-          <CloudSlotProvider value={cloud}>{children}</CloudSlotProvider>
+          <CloudSlotProvider value={cloud}>{page}</CloudSlotProvider>
         ) : managePage ? (
-          children
+          page
         ) : (
-          <div className="ui">{children}</div>
+          <div className="ui">{page}</div>
         )}
       </TeacherFrame>
     </div>

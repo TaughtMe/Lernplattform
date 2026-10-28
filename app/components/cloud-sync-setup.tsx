@@ -31,7 +31,9 @@ import {
   type CloudProviderId,
 } from "../../src/integrations/cloud-sync/types";
 import { createTeacherWorkspaceRepository } from "../../src/storage/teacher-class-settings";
+import { scopeForDevice } from "../../src/integrations/cloud-sync/device-scope";
 import { useTick } from "../ui/cloud-badge";
+import { useIsBoardDevice } from "../ui/use-teacher-device";
 import { cloudBadgeText, formatAgo } from "../ui/cloud-badge-model";
 import { Button, Notice, Toggle } from "../ui/primitives";
 import { cx } from "../views/parts/parts";
@@ -145,7 +147,10 @@ async function downloadBackup() {
 export function CloudSyncSetup() {
   const visible = useAreaVisible("geraete-sync");
   const { snapshot, controller } = useSyncSnapshot(visible);
+  // Auf der Tafel gibt es auch den Handabgleich nicht: Er trägt alle Lehrerdaten.
+  const board = useIsBoardDevice();
   // Ohne Freigabe bleibt der bisherige Handabgleich (Sichern/Holen) erreichbar.
+  if (!visible && board) return null;
   if (!visible) {
     return (
       <SettingsGroup
@@ -162,7 +167,11 @@ export function CloudSyncSetup() {
     <SettingsGroup
       id="cloud-abgleich"
       title="Geräte abgleichen"
-      hint="Klassen, Material und Ergebnisse zwischen deinen Lehrergeräten."
+      hint={
+        board
+          ? "Material zwischen deinen Lehrergeräten. Auf der Tafel kommen keine Personendaten an."
+          : "Klassen, Material und Ergebnisse zwischen deinen Lehrergeräten."
+      }
     >
       <div className={m.card}>
         {!snapshot || !controller ? (
@@ -199,6 +208,7 @@ function SetupWizard({ controller }: { controller: SyncController }) {
     password: "",
   });
   const [remote, setRemote] = useState<RemoteInfo | null>(null);
+  const board = useIsBoardDevice();
   const [scope, setScope] = useState<SyncScope>({ ...DEFAULT_SYNC_SCOPE });
   const [encrypt, setEncrypt] = useState(true);
   const [password, setPassword] = useState("");
@@ -543,18 +553,27 @@ function SetupWizard({ controller }: { controller: SyncController }) {
                   Doppelungen werden dir danach angeboten.
                 </Notice>
               ) : null}
+              {board ? (
+                <Notice tone="good">
+                  Dieses Gerät ist als Tafel eingerichtet: Es gleicht nur
+                  Material ab, keine Klassen, Schüler, Profile, Aufgaben oder
+                  Abgaben.
+                </Notice>
+              ) : null}
               <div className="ui-stack">
-                {(Object.keys(AREA_TEXT) as SyncArea[]).map((area) => (
-                  <Toggle
-                    key={area}
-                    label={AREA_TEXT[area].label}
-                    hint={AREA_TEXT[area].hint}
-                    checked={scope[area]}
-                    onChange={(checked) =>
-                      setScope({ ...scope, [area]: checked })
-                    }
-                  />
-                ))}
+                {(Object.keys(AREA_TEXT) as SyncArea[])
+                  .filter((area) => !board || area === "material")
+                  .map((area) => (
+                    <Toggle
+                      key={area}
+                      label={AREA_TEXT[area].label}
+                      hint={AREA_TEXT[area].hint}
+                      checked={scope[area]}
+                      onChange={(checked) =>
+                        setScope({ ...scope, [area]: checked })
+                      }
+                    />
+                  ))}
               </div>
               <p className="ui-small ui-muted">
                 Hell/Dunkel, laufende Live-Räume und Zugangsdaten bleiben auf
@@ -752,6 +771,9 @@ function ActiveSync({
   const providers = useMemo(() => cloudProviders(clientIds), [clientIds]);
   const model = useMemo(() => toBadgeModel(snapshot), [snapshot]);
   const now = useTick(10_000, true);
+  // Auf der Tafel zeigt die Liste, was wirklich abgeglichen wird (nur Material).
+  const board = useIsBoardDevice();
+  const shownScope = scopeForDevice(snapshot.scope, board ? "board" : "own");
   const [notice, setNotice] = useState("");
   const [changing, setChanging] = useState(false);
   const account =
@@ -914,7 +936,7 @@ function ActiveSync({
 
       <SyncScopeChips
         labels={(Object.keys(AREA_TEXT) as SyncArea[])
-          .filter((area) => snapshot.scope[area])
+          .filter((area) => shownScope[area])
           .map((area) => AREA_TEXT[area].label)}
       />
 
