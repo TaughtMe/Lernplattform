@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { analyzeAccessibility } from "./accessibility-helpers";
+import { hydrated } from "./hydration-helpers";
 
 // D2 (Welle 3): Startpunkt, Tagestraining und Kompetenzprofil. Die Seiten
 // liegen unter `/lernen` (Freigabebereich `lernen`).
@@ -10,6 +11,18 @@ async function expectNoHorizontalScroll(page: Page) {
       () => document.documentElement.scrollWidth <= window.innerWidth + 1,
     ),
   ).toBe(true);
+}
+
+/**
+ * Startet die Suche in der Karte „Rechtschreibung“ (0) oder „Kopfrechnen“ (1).
+ * Erst nach der Hydration: Ein früherer Klick bleibt wirkungslos.
+ */
+async function startSearch(page: Page, card: 0 | 1) {
+  await (
+    await hydrated(
+      page.getByRole("button", { name: "Startpunkt suchen" }).nth(card),
+    )
+  ).click();
 }
 
 async function answerWrong(page: Page, text = "9999") {
@@ -30,7 +43,7 @@ test("Startpunkt Kopfrechnen: zwei Fehler auf einer Stufe beenden ihn mit einem 
   await expect(page.getByText(/kein Test/)).toBeVisible();
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
 
-  await page.getByRole("button", { name: "Startpunkt suchen" }).nth(1).click();
+  await startSearch(page, 1);
   await expect(page.getByText("Aufgabe 1", { exact: true })).toBeVisible();
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
 
@@ -61,7 +74,7 @@ test("Startpunkt Rechtschreibung: schlägt die Wortbox der Stufe mit den Fehlern
   page,
 }) => {
   await page.goto("/lernen/startpunkt");
-  await page.getByRole("button", { name: "Startpunkt suchen" }).first().click();
+  await startSearch(page, 0);
   await expect(page.getByText("Aufgabe 1", { exact: true })).toBeVisible();
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
 
@@ -82,7 +95,7 @@ test("Fehler aus dem Startpunkt erscheinen im Profil und im Tagestraining", asyn
   page,
 }) => {
   await page.goto("/lernen/startpunkt");
-  await page.getByRole("button", { name: "Startpunkt suchen" }).nth(1).click();
+  await startSearch(page, 1);
   await answerWrong(page);
   await answerWrong(page);
   await expect(
@@ -127,7 +140,7 @@ test("Tagestraining: Dauer wählen, starten, aktive Zeit läuft", async ({
 }) => {
   // Ohne Lernstand ist nichts dran; erst ein Fehler gibt dem Training Inhalt.
   await page.goto("/lernen/startpunkt");
-  await page.getByRole("button", { name: "Startpunkt suchen" }).nth(1).click();
+  await startSearch(page, 1);
   await answerWrong(page);
   await answerWrong(page);
   await expect(
@@ -138,7 +151,7 @@ test("Tagestraining: Dauer wählen, starten, aktive Zeit läuft", async ({
   const ten = page.getByRole("button", { name: "10 Minuten" });
   const twenty = page.getByRole("button", { name: "20 Minuten" });
   await expect(ten).toHaveAttribute("aria-pressed", "true");
-  await twenty.click();
+  await (await hydrated(twenty)).click();
   await expect(twenty).toHaveAttribute("aria-pressed", "true");
 
   await page.getByRole("button", { name: "Training starten" }).click();
