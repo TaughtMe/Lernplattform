@@ -202,9 +202,17 @@ test("die PIN-Sperre greift nach dem Start und weist eine falsche PIN ab", async
 
   await page.getByLabel("PIN (6 Ziffern)").fill(PIN);
   await page.getByRole("button", { name: "Entsperren" }).click();
+  // Mit einer vorhandenen Klasse steht das Formular „Neue Klasse anlegen“
+  // erst nach „+ Neue Klasse“ im Bild; entsperrt zeigen sich Seite und Klasse.
   await expect(
-    page.getByRole("form", { name: "Neue Klasse anlegen" }),
+    page.getByRole("heading", { level: 2, name: "Klasse 6c" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "+ Neue Klasse" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Lehrerbereich gesperrt" }),
+  ).toHaveCount(0);
 
   await page.goto("/lehrer/material", { waitUntil: "networkidle" });
   await expect(
