@@ -123,6 +123,13 @@ export const RELEASE_AREAS = {
     routes: [],
     stage: "vorschau",
   },
+  diagnostik: {
+    label: "Startpunkt, Tagestraining und Kompetenzprofil",
+    // Welle 3, D2: noch nicht pädagogisch abgestimmt (Stufenfolgen des
+    // Startpunkts, Regel „sicher“), deshalb zunächst nur mit Vorschau.
+    routes: ["/lernen/startpunkt", "/lernen/training", "/lernen/profil"],
+    stage: "vorschau",
+  },
   gastmodus: {
     label: "Gastmodus (geteilte Geräte)",
     // Schaltet die Einstiegsseite /gast und den Knopf „Gast-QR“ der Lehrkraft.
