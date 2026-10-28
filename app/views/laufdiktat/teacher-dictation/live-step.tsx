@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { summarizeLiveProjection } from "../../../../src/domain/live-projection";
 import { Animal, cx, Eyebrow } from "../../parts/parts";
 import styles from "../teacher-dictation-screen.module.css";
 import type {
@@ -14,6 +15,8 @@ export function LiveStep({
   mode,
   live,
   roomTimes,
+  projection,
+  qrLarge,
   onExportCsv,
 }: TeacherDictationScreenProps) {
   const maxMistakes = Math.max(1, ...live.mistakes.map((entry) => entry.count));
@@ -36,119 +39,195 @@ export function LiveStep({
           jetzt als CSV sichern.
         </p>
       ) : null}
-      <div className={styles.stats}>
-        <LiveStat label="Aktiv" value={live.active} dot="var(--gold)" />
-        <LiveStat label="Fertig" value={live.finished} dot="var(--green)" />
-        <LiveStat
-          label="Gesamt"
-          value={`${live.overall} %`}
-          dot="var(--ink3)"
+      {projection ? (
+        <button
+          type="button"
+          className={styles.projectionToggle}
+          aria-pressed={projection.active}
+          onClick={() => projection.onChange(!projection.active)}
+        >
+          Für die Tafel
+        </button>
+      ) : null}
+      {projection?.active ? (
+        <ProjectionPanel
+          roomCode={roomCode}
+          qr={roomTimes && !roomTimes.joinOpen ? null : qrLarge}
+          summary={summarizeLiveProjection(live)}
         />
-      </div>
-      <div className={styles.liveGrid}>
-        <div className={styles.liveStudents}>
-          <div className={cx(styles.between, styles.studentsHead)}>
-            <span className={styles.label}>Schüler</span>
-            <button type="button" className={styles.csv} onClick={onExportCsv}>
-              Ergebnisse als CSV herunterladen
-            </button>
+      ) : (
+        <>
+          <div className={styles.stats}>
+            <LiveStat label="Aktiv" value={live.active} dot="var(--gold)" />
+            <LiveStat label="Fertig" value={live.finished} dot="var(--green)" />
+            <LiveStat
+              label="Gesamt"
+              value={`${live.overall} %`}
+              dot="var(--ink3)"
+            />
           </div>
-          {mode === "STATION" ? (
-            <ul className={styles.stations}>
-              {live.stations.map((station) => (
-                <li
-                  key={station.number}
-                  className={cx(
-                    styles.station,
-                    station.state === "done" && styles.stationDone,
-                    station.state === "active" && styles.stationActive,
-                  )}
+          <div className={styles.liveGrid}>
+            <div className={styles.liveStudents}>
+              <div className={cx(styles.between, styles.studentsHead)}>
+                <span className={styles.label}>Schüler</span>
+                <button
+                  type="button"
+                  className={styles.csv}
+                  onClick={onExportCsv}
                 >
-                  <span className={styles.stationNumber}>{station.number}</span>
-                  <span className={styles.stationState}>{station.label}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <ul className={styles.students}>
-              {live.students.map((student) => (
-                <li
-                  key={student.name}
-                  className={cx(
-                    styles.student,
-                    student.status === "offline" && styles.away,
-                    student.struggling && styles.struggling,
-                  )}
-                >
-                  <span className={styles.studentHead}>
-                    {student.animal ? (
-                      <Animal animal={student.animal} size={26} />
-                    ) : null}
-                    <span className={styles.studentName}>{student.name}</span>
-                    <StatusChip status={student.status} />
-                    {student.struggling ? (
-                      <span className={styles.needsHelp}>Braucht Hilfe</span>
-                    ) : null}
-                  </span>
-                  <span className={styles.studentMeta}>
-                    {student.progress >= student.total ? (
-                      <span className={styles.finished}>Fertig</span>
-                    ) : (
-                      <span className={styles.track}>
-                        <span
-                          style={{
-                            width: `${Math.round((student.progress / student.total) * 100)}%`,
-                          }}
+                  Ergebnisse als CSV herunterladen
+                </button>
+              </div>
+              {mode === "STATION" ? (
+                <ul className={styles.stations}>
+                  {live.stations.map((station) => (
+                    <li
+                      key={station.number}
+                      className={cx(
+                        styles.station,
+                        station.state === "done" && styles.stationDone,
+                        station.state === "active" && styles.stationActive,
+                      )}
+                    >
+                      <span className={styles.stationNumber}>
+                        {station.number}
+                      </span>
+                      <span className={styles.stationState}>
+                        {station.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className={styles.students}>
+                  {live.students.map((student) => (
+                    <li
+                      key={student.name}
+                      className={cx(
+                        styles.student,
+                        student.status === "offline" && styles.away,
+                        student.struggling && styles.struggling,
+                      )}
+                    >
+                      <span className={styles.studentHead}>
+                        {student.animal ? (
+                          <Animal animal={student.animal} size={26} />
+                        ) : null}
+                        <span className={styles.studentName}>
+                          {student.name}
+                        </span>
+                        <StatusChip status={student.status} />
+                        {student.struggling ? (
+                          <span className={styles.needsHelp}>
+                            Braucht Hilfe
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className={styles.studentMeta}>
+                        {student.progress >= student.total ? (
+                          <span className={styles.finished}>Fertig</span>
+                        ) : (
+                          <span className={styles.track}>
+                            <span
+                              style={{
+                                width: `${Math.round((student.progress / student.total) * 100)}%`,
+                              }}
+                            />
+                          </span>
+                        )}
+                        {student.mistakes ? (
+                          <span className={styles.errors}>
+                            {`${student.mistakes}✕`}
+                          </span>
+                        ) : null}
+                        <span className={styles.count}>
+                          {`${student.progress}/${student.total}`}
+                        </span>
+                      </span>
+                      {student.wordErrors?.length ? (
+                        <WordErrors
+                          name={student.name}
+                          entries={student.wordErrors}
                         />
-                      </span>
-                    )}
-                    {student.mistakes ? (
-                      <span className={styles.errors}>
-                        {`${student.mistakes}✕`}
-                      </span>
-                    ) : null}
-                    <span className={styles.count}>
-                      {`${student.progress}/${student.total}`}
-                    </span>
-                  </span>
-                  {student.wordErrors?.length ? (
-                    <WordErrors
-                      name={student.name}
-                      entries={student.wordErrors}
-                    />
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-          <button
-            type="button"
-            className={cx(styles.csv, styles.csvNarrow)}
-            onClick={onExportCsv}
-          >
-            Ergebnisse als CSV herunterladen
-          </button>
-        </div>
-        <section className={styles.mistakes} aria-label="Häufigste Fehler">
-          <Eyebrow>Häufigste Fehler</Eyebrow>
-          {live.mistakes.map((entry) => (
-            <div key={entry.word} className={styles.mistake}>
-              <span className={styles.mistakeWord}>
-                {entry.display ?? entry.word}
-              </span>
-              <span className={styles.mistakeBar}>
-                <span
-                  style={{
-                    width: `${Math.round((entry.count / maxMistakes) * 100)}%`,
-                  }}
-                />
-              </span>
-              <span className={styles.mistakeCount}>{entry.count}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button
+                type="button"
+                className={cx(styles.csv, styles.csvNarrow)}
+                onClick={onExportCsv}
+              >
+                Ergebnisse als CSV herunterladen
+              </button>
             </div>
-          ))}
-        </section>
-      </div>
+            <section className={styles.mistakes} aria-label="Häufigste Fehler">
+              <Eyebrow>Häufigste Fehler</Eyebrow>
+              {live.mistakes.map((entry) => (
+                <div key={entry.word} className={styles.mistake}>
+                  <span className={styles.mistakeWord}>
+                    {entry.display ?? entry.word}
+                  </span>
+                  <span className={styles.mistakeBar}>
+                    <span
+                      style={{
+                        width: `${Math.round((entry.count / maxMistakes) * 100)}%`,
+                      }}
+                    />
+                  </span>
+                  <span className={styles.mistakeCount}>{entry.count}</span>
+                </div>
+              ))}
+            </section>
+          </div>
+        </>
+      )}
     </div>
+  );
+}
+
+/**
+ * Ansicht für die Tafel: Raumcode, QR und Gesamtfortschritt. Sie zeigt weder
+ * Namen noch Fehlerzahlen, Fehlerwörter oder „Braucht Hilfe“.
+ */
+function ProjectionPanel({
+  roomCode,
+  qr,
+  summary,
+}: {
+  roomCode: string;
+  qr: TeacherDictationScreenProps["qrLarge"];
+  summary: ReturnType<typeof summarizeLiveProjection>;
+}) {
+  return (
+    <section className={styles.projection} aria-label="Ansicht für die Tafel">
+      {qr && roomCode ? <div className={styles.projectionQr}>{qr}</div> : null}
+      {roomCode ? (
+        <span
+          className={cx(styles.codeTiles, styles.codeTilesLarge)}
+          role="img"
+          aria-label={`Raumcode ${roomCode}`}
+        >
+          {[...roomCode].map((char, charIndex) => (
+            <span key={charIndex} aria-hidden="true">
+              {char}
+            </span>
+          ))}
+        </span>
+      ) : null}
+      <p className={styles.projectionLabel}>{summary.label}</p>
+      <span
+        className={styles.projectionTrack}
+        role="progressbar"
+        aria-label="Gesamtfortschritt"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={summary.overall}
+      >
+        <span style={{ width: `${summary.overall}%` }} />
+      </span>
+    </section>
   );
 }
 
