@@ -54,6 +54,7 @@ export const teacherPreparedSettingsSchema = z
     attempts: whole(1, 20).optional(),
     tts: flag,
     showStars: flag,
+    showTempoPoints: flag,
     strictTyping: flag,
     taskHelp: flag,
     stationCount: whole(1, 100).optional(),

@@ -21,6 +21,7 @@ const session: LiveSession = {
   vocabularyTransfer: "none",
   wordStoreTransfer: "none",
   showStars: false,
+  showTempoPoints: false,
   shuffleWords: false,
   strictTypingMode: false,
   showTaskAfterErrors: false,

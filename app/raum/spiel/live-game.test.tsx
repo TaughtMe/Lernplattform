@@ -43,6 +43,7 @@ const session: LiveSession = {
   vocabularyTransfer: "none",
   wordStoreTransfer: "none",
   showStars: true,
+  showTempoPoints: false,
   shuffleWords: false,
   strictTypingMode: false,
   showTaskAfterErrors: false,
@@ -156,6 +157,38 @@ describe("LiveRunningDictationGame", () => {
     expect(
       screen.getByRole("link", { name: "Zum persönlichen Lernraum" }),
     ).toHaveAttribute("href", "/lernen");
+  });
+
+  it("zeigt Tempo-Punkte am Rundenende nur, wenn die Lehrkraft sie einschaltet", async () => {
+    const user = userEvent.setup();
+    async function finishRound(tempo: boolean) {
+      const { container, unmount } = render(
+        <LiveRunningDictationGame
+          code="4829"
+          studentName="Mia"
+          session={{ ...session, showTempoPoints: tempo }}
+          connectionWarning=""
+          initialProgress={null}
+          onProgress={vi.fn()}
+        />,
+      );
+      revealWithTwoFingers(container);
+      await user.type(
+        screen.getByRole("textbox", { name: "Deine Antwort" }),
+        "Schulweg{Enter}",
+      );
+      await waitFor(() =>
+        expect(screen.getByText("Geschafft, Mia!")).toBeVisible(),
+      );
+      return unmount;
+    }
+    const unmount = await finishRound(false);
+    expect(screen.queryByText("Tempo-Punkte")).not.toBeInTheDocument();
+    expect(screen.queryByText("Streak-Punkte")).not.toBeInTheDocument();
+    expect(screen.getByText("Fehler")).toBeVisible();
+    unmount();
+    await finishRound(true);
+    expect(screen.getByText("Tempo-Punkte")).toBeVisible();
   });
 
   it("shows incorrect feedback as an error in classic Laufdiktat", async () => {

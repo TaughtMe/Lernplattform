@@ -128,11 +128,22 @@ describe("TeacherLiveRoom (Lehrerbereich v2, 14b/14c)", () => {
       screen.getByRole("button", { name: /^Sterne zeigen/ }),
     ).toBeInTheDocument();
 
+    // Tempo-Punkte sind ein Angebot der Lehrkraft und standardmäßig aus.
+    const tempo = screen.getByRole("button", { name: /^Tempo-Punkte zeigen/ });
+    expect(tempo).toHaveAttribute("aria-pressed", "false");
+    await user.click(tempo);
+    expect(
+      screen.getByRole("button", { name: /^Tempo-Punkte zeigen/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+
     await user.click(screen.getByRole("button", { name: /^Stationen / }));
     expect(screen.getByText("Anzahl Stationen")).toBeInTheDocument();
-    // Stationen haben weder Sterne noch „Nur getippte Eingaben“.
+    // Stationen haben weder Sterne noch Tempo-Punkte noch „Nur getippte Eingaben“.
     expect(
       screen.queryByRole("button", { name: /^Sterne zeigen/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Tempo-Punkte zeigen/ }),
     ).not.toBeInTheDocument();
     const tts = screen.getByRole("button", { name: /^Vorlesen/ });
     expect(tts).toHaveAttribute("aria-pressed", "false");

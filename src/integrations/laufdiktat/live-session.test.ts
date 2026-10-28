@@ -26,6 +26,18 @@ describe("native Laufdiktat live sessions", () => {
     expect(first.vocabularyTransfer).toBe("errors");
   });
 
+  it("zeigt Tempo-Punkte nur, wenn die Sitzung sie ausdrücklich einschaltet", () => {
+    const words = [{ id: "1", kind: "text", targetWord: "Schule" }];
+    const parse = (extra: Record<string, unknown>) =>
+      parseLiveSession({ words, ...extra }, "s", "seed").showTempoPoints;
+    // Ältere Sitzungen ohne das Feld und kaputte Werte: aus.
+    expect(parse({})).toBe(false);
+    expect(parse({ showTempoPoints: "ja" })).toBe(false);
+    expect(parse({ showTempoPoints: null })).toBe(false);
+    expect(parse({ showTempoPoints: false })).toBe(false);
+    expect(parse({ showTempoPoints: true })).toBe(true);
+  });
+
   it("keeps the source answer rules for text, vocabulary and math", () => {
     expect(
       checkLiveAnswer({ id: "t", kind: "text", targetWord: "Haus" }, "haus"),

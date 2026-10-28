@@ -52,6 +52,7 @@ export function buildLiveRoomConfig({
     uebungMaxAttempts: settings.attempts,
     uebungAssistanceEnabled: settings.assistance,
     showStars: settings.showStars,
+    showTempoPoints: settings.showTempoPoints,
     strictTypingMode: settings.strictTyping,
     showTaskAfterErrors: settings.taskHelp,
     stationCount: settings.stationCount,

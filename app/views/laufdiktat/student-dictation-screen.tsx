@@ -53,7 +53,8 @@ export type StudentDictationScreenProps = {
   result: {
     mistakes: number;
     hints: number;
-    points: number;
+    /** Tempo-Punkte; `null` = keine Anzeige (Lehrkraft hat sie nicht eingeschaltet). */
+    points: number | null;
     savedWords: readonly string[];
     /** Weitere übernommene Wörter, die nicht einzeln genannt werden. */
     savedWordsMore?: number;
@@ -744,10 +745,12 @@ function DonePhase({
       <div className={styles.stats}>
         <Stat value={result.mistakes} label="Fehler" />
         <Stat value={result.hints} label="Spicker" />
-        <Stat
-          value={`+${result.points}`}
-          label={done?.pointsLabel ?? "Streak-Punkte"}
-        />
+        {result.points !== null ? (
+          <Stat
+            value={`+${result.points}`}
+            label={done?.pointsLabel ?? "Streak-Punkte"}
+          />
+        ) : null}
       </div>
       {words.length ? (
         <p className={styles.doneNote}>

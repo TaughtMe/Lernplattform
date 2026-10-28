@@ -35,6 +35,7 @@ import {
   useTeacherLiveRoom,
   type TeacherLiveModel,
 } from "./use-teacher-live-room";
+import { useProjectionMode } from "./hooks/use-projection-mode";
 import styles from "./teacher-live-room.module.css";
 
 /** Die echten Modi des Laufdiktats als Auswahlkarten (Schritt 2). */
@@ -63,6 +64,7 @@ export function TeacherLiveRoom({
   const [t, refs] = useTeacherLiveRoom(liveRoomConfig, clock);
   const { theme, toggleTheme } = useThemeToggle();
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [projection, setProjection] = useProjectionMode();
   const stationMode = t.gameMode === "STATION";
   // Fehlerstand je Schüler beim Wechsel der Aufgabe: daraus folgt, wer gerade hängt.
   const [errorBase, setErrorBase] = useState<ErrorBase>({});
@@ -75,6 +77,7 @@ export function TeacherLiveRoom({
     strict: t.strictTyping,
     taskHelp: t.taskHelp,
     stars: t.showStars,
+    tempo: t.showTempoPoints,
     ink: t.battleInk,
     flicker: t.battleFlicker,
   };
@@ -88,6 +91,7 @@ export function TeacherLiveRoom({
     if (option === "strict") t.setStrictTyping(!t.strictTyping);
     if (option === "taskHelp") t.setTaskHelp(!t.taskHelp);
     if (option === "stars") t.setShowStars(!t.showStars);
+    if (option === "tempo") t.setShowTempoPoints(!t.showTempoPoints);
     if (option === "ink") t.setBattleInk(!t.battleInk);
     if (option === "flicker") t.setBattleFlicker(!t.battleFlicker);
   }
@@ -182,6 +186,7 @@ export function TeacherLiveRoom({
           }),
         )}
         {...(roomTimes ? { roomTimes } : {})}
+        projection={{ active: projection, onChange: setProjection }}
         title={t.title}
         stored={t.contentId !== null}
         onTitle={t.setTitle}

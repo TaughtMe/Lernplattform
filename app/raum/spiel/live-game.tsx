@@ -442,10 +442,13 @@ export function LiveRunningDictationGame({
   }
 
   const stars = computeRunningDictationStars(errors, session.words.length);
-  const tempo = speedPoints(
-    session.words.reduce((sum, word) => sum + word.targetWord.length, 0),
-    finalDuration,
-  );
+  // Tempo ist nur Anzeige und nur auf Wunsch der Lehrkraft (Befund D-012).
+  const tempo = session.showTempoPoints
+    ? speedPoints(
+        session.words.reduce((sum, word) => sum + word.targetWord.length, 0),
+        finalDuration,
+      )
+    : null;
   const exitSheet = (
     <Sheet
       open={showExitConfirm}

@@ -139,6 +139,7 @@ describe("Optionen je Modus", () => {
       "shuffle",
       "strict",
       "stars",
+      "tempo",
     ]);
     expect(ids("LAUFDIKTAT", "math")).toEqual([
       "tts",
@@ -146,12 +147,14 @@ describe("Optionen je Modus", () => {
       "strict",
       "taskHelp",
       "stars",
+      "tempo",
     ]);
     expect(ids("BATTLE", "text")).toEqual([
       "tts",
       "shuffle",
       "strict",
       "stars",
+      "tempo",
       "ink",
       "flicker",
     ]);

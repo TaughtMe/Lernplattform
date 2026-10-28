@@ -20,6 +20,7 @@ import {
 } from "../../../../src/domain/learning-bundle";
 import { createLearningBoxRepository } from "../../../../src/storage/personal-learning-events";
 import { Icon } from "../../../ui/icons";
+import { useLaufdiktatStars } from "./stars-preference";
 import {
   Button,
   ButtonLink,
@@ -27,6 +28,7 @@ import {
   Pill,
   ProgressBar,
   Segmented,
+  Toggle,
 } from "../../../ui/primitives";
 
 type Phase = "setup" | "reveal" | "write" | "feedback" | "complete";
@@ -54,6 +56,7 @@ export function RunningDictationApp() {
   const [lastCorrect, setLastCorrect] = useState(false);
   const [transferNotice, setTransferNotice] = useState("");
   const [transferDeckId, setTransferDeckId] = useState<string>();
+  const [showStars, setShowStars] = useLaufdiktatStars();
   const interactionReady = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -288,6 +291,14 @@ export function RunningDictationApp() {
             </div>
           ) : null}
 
+          <Toggle
+            label="Sterne am Ende zeigen"
+            hint="Nur auf diesem Gerät. Ohne Sterne siehst du nur deine Zahlen."
+            checked={showStars}
+            disabled={!interactionReady}
+            onChange={setShowStars}
+          />
+
           <Button
             size="lg"
             variant="green"
@@ -310,14 +321,16 @@ export function RunningDictationApp() {
             <Icon name="trophy" size={56} />
           </span>
           <p className="ui-eyebrow">Runde abgeschlossen</p>
-          <p
-            className="ui-game__stars"
-            role="img"
-            aria-label={`${stars} von 5 Sternen`}
-          >
-            {"★".repeat(stars)}
-            <span className="ui-faint">{"★".repeat(5 - stars)}</span>
-          </p>
+          {showStars ? (
+            <p
+              className="ui-game__stars"
+              role="img"
+              aria-label={`${stars} von 5 Sternen`}
+            >
+              {"★".repeat(stars)}
+              <span className="ui-faint">{"★".repeat(5 - stars)}</span>
+            </p>
+          ) : null}
           <h1 className="ui-h-fun">Geschafft!</h1>
           <div className="ui-grid2 ui-game__tiles">
             <span>

@@ -12,6 +12,7 @@ describe("gameSettingsReducer", () => {
       attempts: 3,
       tts: false,
       showStars: true,
+      showTempoPoints: false,
       strictTyping: false,
       taskHelp: true,
       stationCount: 20,

@@ -22,6 +22,7 @@ export type GameSettings = {
   attempts: number;
   tts: boolean;
   showStars: boolean;
+  showTempoPoints: boolean;
   strictTyping: boolean;
   taskHelp: boolean;
   stationCount: number;
@@ -48,6 +49,7 @@ export function initialGameSettings(): GameSettings {
     attempts: 3,
     tts: false,
     showStars: true,
+    showTempoPoints: false,
     strictTyping: false,
     taskHelp: true,
     stationCount: 20,
@@ -124,6 +126,7 @@ export function useGameSettings() {
       setAttempts: setterFor("attempts"),
       setTts: setterFor("tts"),
       setShowStars: setterFor("showStars"),
+      setShowTempoPoints: setterFor("showTempoPoints"),
       setStrictTyping: setterFor("strictTyping"),
       setTaskHelp: setterFor("taskHelp"),
       setStationCount: setterFor("stationCount"),
@@ -178,6 +181,7 @@ export function useGameSettings() {
       setAttempts: setters.setAttempts,
       setTts: setters.setTts,
       setShowStars: setters.setShowStars,
+      setShowTempoPoints: setters.setShowTempoPoints,
       setStrictTyping: setters.setStrictTyping,
       setTaskHelp: setters.setTaskHelp,
       setStationCount: setters.setStationCount,

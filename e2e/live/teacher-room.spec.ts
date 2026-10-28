@@ -188,6 +188,39 @@ test("the live view shows progress per animal and the most frequent errors", asy
   });
 });
 
+test("Für die Tafel zeigt nur Raumcode und Gesamtfortschritt und bleibt auf dem Gerät gemerkt", async ({
+  page,
+}) => {
+  await restoreRoom(page, "live");
+  const toggle = page.getByRole("button", { name: "Für die Tafel" });
+  // Standard: aus, die Liste mit Namen und Fehlerwörtern ist sichtbar.
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Koala 2" }),
+  ).toBeVisible();
+  await toggle.click();
+  const panel = page.getByRole("region", { name: "Ansicht für die Tafel" });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText(/ von \d+ fertig$/)).toBeVisible();
+  await expect(panel.getByLabel("Raumcode 4829")).toBeVisible();
+  await expect(
+    panel.getByRole("img", { name: "QR-Code zum Raum 4829" }),
+  ).toBeVisible();
+  await expect(page.getByText("Koala 2", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Braucht Hilfe")).toHaveCount(0);
+  await expect(page.getByText(/^Fehlerwörter/)).toHaveCount(0);
+  await accessible(page);
+  // Nach dem Neuladen bleibt der Zustand auf diesem Gerät erhalten.
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Für die Tafel" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Für die Tafel" }).click();
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Koala 2" }),
+  ).toBeVisible();
+});
+
 /** Legt einen Text in der lokalen Ablage an (die App erzeugt die Datenbank beim Öffnen). */
 async function seedStoredText(page: Page) {
   await page.goto("/lehrer");

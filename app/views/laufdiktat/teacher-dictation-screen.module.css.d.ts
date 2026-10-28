@@ -45,6 +45,11 @@ declare const styles: {
   readonly offline: string;
   readonly practice: string;
   readonly previous: string;
+  readonly projection: string;
+  readonly projectionLabel: string;
+  readonly projectionQr: string;
+  readonly projectionToggle: string;
+  readonly projectionTrack: string;
   readonly qr: string;
   readonly qrButton: string;
   readonly qrClose: string;
