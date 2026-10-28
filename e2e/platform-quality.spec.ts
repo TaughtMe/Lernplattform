@@ -674,9 +674,9 @@ test("the personal learning room keeps today's task focused and separates suppor
 }) => {
   await page.goto("/lernen");
 
-  // Design 3a/3b: das Tier in der Mitte, ein Weiter-Knopf.
+  // Design 3a/3b: das Tier in der Mitte, ein Haupt-Knopf (frisches Gerät: „Loslegen“, D5-2).
   await expect(
-    page.getByRole("link", { name: "Weiterlernen" }).last(),
+    page.getByRole("link", { name: "Loslegen" }).last(),
   ).toBeVisible();
   const layout = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
@@ -1139,8 +1139,9 @@ test("a class error becomes practice and disappears after correction", async ({
     page.getByRole("heading", { name: "Richtig gelöst" }),
   ).toBeVisible();
 
+  // Ohne offenen Schritt heißt der Knopf „Frei üben“ statt „Weiterlernen“ (D5-2).
   await page.goto("/lernen");
   await expect(
-    page.getByRole("link", { name: "Weiterlernen" }).last(),
+    page.getByRole("link", { name: /^(Weiterlernen|Frei üben)$/ }).last(),
   ).not.toHaveAttribute("href", /aufgaben\/vokabeln/);
 });
