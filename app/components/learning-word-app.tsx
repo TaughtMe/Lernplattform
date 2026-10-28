@@ -99,11 +99,15 @@ type Run = {
   view: WordBoxView;
   config: Config;
   startedAt: string;
+  /** Freie Runde mit genau den Fehlerwörtern der vorigen Runde. */
+  retry?: true;
 };
 
 type Completion = {
   view: WordBoxView;
   config: Config;
+  /** Die Runde war eine Wiederholung der Fehlerwörter; ihre Wörter bleiben fest. */
+  retry?: true;
   stage: LearningWordStage;
   percent: number;
   results: WordRoundState["results"];
@@ -307,7 +311,7 @@ export function LearningWordApp({
     setHistoryId(id);
   }
 
-  function begin(view: WordBoxView, requested: Config) {
+  function begin(view: WordBoxView, requested: Config, retry = false) {
     if (view.words.length === 0) return;
     // Auch bei veralteter Auswahl nie eine gesperrte Stufe starten.
     const chosen = lockedStage(view.id, requested.stage)
@@ -331,7 +335,29 @@ export function LearningWordApp({
       view,
       config: chosen,
       startedAt: new Date().toISOString(),
+      ...(retry ? { retry: true as const } : {}),
     });
+  }
+
+  /**
+   * „Diese Wörter jetzt noch einmal üben“: genau die Fehlerwörter der Runde in
+   * einer freien Runde (eigene Kennung, nicht „Trainingswörter heute“). Freies
+   * Üben ändert keine Box (Regel W-1); ein Fehler macht das Wort wie sonst
+   * spätestens morgen wieder dran.
+   */
+  function retryMissed(done: Completion) {
+    const words = done.results
+      .filter((entry) => !entry.firstTry)
+      .map((entry) => entry.word);
+    if (words.length === 0) return;
+    const view: WordBoxView = {
+      id: FEHLER_BOX_ID,
+      kind: "textbox",
+      title: "Fehlerwörter",
+      words,
+      editable: false,
+    };
+    begin(view, { ...done.config, roundSize: "all" }, true);
   }
 
   function onStartRound() {
@@ -431,6 +457,7 @@ export function LearningWordApp({
     const base: Completion = {
       view,
       config: chosen,
+      ...(done.retry ? { retry: true as const } : {}),
       stage: state.stage,
       percent,
       results: state.results,
@@ -786,9 +813,13 @@ export function LearningWordApp({
             : undefined
         }
         onAgain={() => {
-          const view = findView(completion.view.id) ?? completion.view;
-          begin(view, completion.config);
+          // Eine Wiederholung der Fehlerwörter behält ihre Wörter.
+          const view = completion.retry
+            ? completion.view
+            : (findView(completion.view.id) ?? completion.view);
+          begin(view, completion.config, completion.retry === true);
         }}
+        onRetryMissed={() => retryMissed(completion)}
         onHistory={() => {
           const id = completion.view.id;
           setRun(null);

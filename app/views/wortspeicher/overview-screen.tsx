@@ -114,8 +114,8 @@ export function OverviewScreen({
           </p>
           <p className="ui-small ui-muted">
             {dueCount > 0
-              ? "Fällige Wörter aus deinen Runden, quer durch alle Wortboxen."
-              : "Noch nichts fällig. Wähle eine Wortbox und starte eine Runde."}
+              ? "Diese Wörter sind heute dran, quer durch alle Wortboxen."
+              : "Heute ist noch nichts geplant. Wähle eine Wortbox und starte eine Runde."}
           </p>
         </div>
         <Button

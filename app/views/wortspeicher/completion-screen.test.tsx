@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import type { WordRoundWordResult } from "../../../src/domain/word-round";
 import { CompletionScreen } from "./completion-screen";
 
@@ -107,5 +108,39 @@ describe("CompletionScreen", () => {
         /bei Fehlern oder mit Hilfe sind sie morgen wieder dran/,
       ),
     ).toBeInTheDocument();
+  });
+
+  it("sagt, wann die Fehlerwörter wiederkommen, und bietet genau sie zum sofortigen Üben an", async () => {
+    const onRetryMissed = vi.fn();
+    setup({ onRetryMissed });
+    expect(
+      screen.getByRole("heading", {
+        name: "Diese Wörter kommen morgen wieder",
+      }),
+    ).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("sofort wieder fällig");
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Diese Wörter jetzt noch einmal üben",
+      }),
+    );
+    expect(onRetryMissed).toHaveBeenCalledOnce();
+  });
+
+  it("zeigt ohne Fehlerwörter weder Liste noch Wiederholung", () => {
+    setup({
+      results: [result("Sonne", true), result("Mond", true)],
+      onRetryMissed: () => undefined,
+    });
+    expect(
+      screen.queryByRole("heading", {
+        name: "Diese Wörter kommen morgen wieder",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Diese Wörter jetzt noch einmal üben",
+      }),
+    ).not.toBeInTheDocument();
   });
 });
