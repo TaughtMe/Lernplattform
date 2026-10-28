@@ -31,6 +31,7 @@ export function CompletionScreen({
   textSuggestion,
   textboxHref,
   onAgain,
+  onRetryMissed,
   onOtherStage,
   onHistory,
 }: {
@@ -57,6 +58,11 @@ export function CompletionScreen({
   /** Rückfall ohne passenden Text: „Mit einem Text weiterüben“. */
   textboxHref?: string | undefined;
   onAgain: () => void;
+  /**
+   * „Diese Wörter jetzt noch einmal üben“: eine freie Runde mit genau den
+   * Fehlerwörtern (ändert keine Box, Regel W-1). Ohne Funktion fehlt der Knopf.
+   */
+  onRetryMissed?: (() => void) | undefined;
   onOtherStage: () => void;
   onHistory: () => void;
 }) {
@@ -140,7 +146,7 @@ export function CompletionScreen({
 
       {missed.length > 0 ? (
         <>
-          <h2 className="ui-label">Diese Wörter üben wir noch einmal</h2>
+          <h2 className="ui-label">Diese Wörter kommen morgen wieder</h2>
           <ul className={styles.missed}>
             {missed.map((entry) => (
               <li key={entry.word}>{entry.word}</li>
@@ -158,7 +164,16 @@ export function CompletionScreen({
       {textSuggestion}
 
       <div className={styles.actions}>
-        <Button size="lg" onClick={onAgain}>
+        {missed.length > 0 && onRetryMissed ? (
+          <Button size="lg" onClick={onRetryMissed}>
+            Diese Wörter jetzt noch einmal üben
+          </Button>
+        ) : null}
+        <Button
+          size="lg"
+          variant={missed.length > 0 && onRetryMissed ? "soft" : "primary"}
+          onClick={onAgain}
+        >
           Nochmal üben
         </Button>
         <Button size="lg" variant="soft" onClick={onOtherStage}>

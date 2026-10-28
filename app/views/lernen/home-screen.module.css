@@ -183,6 +183,53 @@
   color: var(--ink2);
 }
 
+/* Erstkontakt: große Karten statt Tagesziel (Befund C-003). */
+.start {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.startCard {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 80px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+.startCard:hover {
+  border-color: var(--accent);
+}
+.startCard > img {
+  flex: none;
+  display: block;
+}
+.startText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+.startText > strong {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.startText > span {
+  font-size: 13px;
+  color: var(--ink2);
+}
+
 /* ---------- Fortschrittsspalte (nur breit) ---------- */
 .side {
   display: none;

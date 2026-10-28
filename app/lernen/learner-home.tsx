@@ -4,8 +4,13 @@ import {
   RestoreBackupCloud,
   StorageProtectionNotice,
 } from "../components/storage-protection";
+import {
+  firstContactAreas,
+  hasLearnedNothing,
+  homeMainAction,
+} from "../../src/domain/first-contact";
 import { profileAvatar } from "../../src/domain/learner-profile";
-import { useAreaVisible } from "../release/release-context";
+import { useAreaVisible, useRelease } from "../release/release-context";
 import { useThemeToggle } from "../ui/theme";
 import { useLearnerProfile } from "../ui/use-learner-profile";
 import { HomeScreen } from "../views/lernen/home-screen";
@@ -20,16 +25,38 @@ export function LearnerHome() {
   // Serie, Abzeichen und Duell nur mit Freigabe (Entscheidung 47).
   const motivation = useAreaVisible("motivation");
   const duel = useAreaVisible("duell");
+  const visibility = useRelease();
 
   // „Weiterlernen“ führt in das Modul des ersten offenen Portionselements (bei
   // Klassenaufgaben direkt zu deren Übungsseite); ist die Portion erledigt oder
   // leer, bleibt die erste Empfehlung.
   const { plan } = snapshot;
-  const continueHref =
+  // Erstkontakt: ein Kind ohne Lernstand sieht Karten für die Kernbereiche,
+  // „Loslegen“ führt in den ersten sichtbaren Bereich (Befund C-003).
+  const firstContact =
+    snapshot.loaded &&
+    hasLearnedNothing({
+      hasLearningState: snapshot.hasLearningState,
+      planTotal: plan.total,
+      className: snapshot.className,
+    });
+  const areas = firstContactAreas(visibility);
+  const nextRoute =
     plan.firstOpenRoute ??
     (plan.firstOpenModule
       ? planModuleHref(plan.firstOpenModule)
-      : (snapshot.recommendations[0]?.route ?? "/ueben"));
+      : snapshot.recommendations[0]?.route);
+  const continueHref = firstContact
+    ? (areas[0]?.href ?? "/ueben")
+    : (nextRoute ?? "/ueben");
+  // Bis der Lernstand geladen ist, steht die neutrale Beschriftung da.
+  const mainLabel = snapshot.loaded
+    ? homeMainAction({
+        firstContact,
+        hasNextStep: nextRoute !== undefined,
+        planTotal: plan.total,
+      })
+    : "Loslegen";
 
   return (
     <HomeScreen
@@ -46,6 +73,8 @@ export function LearnerHome() {
       done={plan.done}
       target={plan.total}
       continueHref={continueHref}
+      mainLabel={mainLabel}
+      firstContact={firstContact ? { areas } : undefined}
       week={weekStates(snapshot.activeDays)}
       due={{ done: plan.done, total: plan.total }}
       difficult={snapshot.difficult}

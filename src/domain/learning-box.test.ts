@@ -14,15 +14,18 @@ import {
   isLearningBoxCardDueFor,
   isLearningBoxCardLongUnpracticed,
   isLearningBoxCardScheduledDue,
+  isLearningBoxDirectionNew,
   isLearningBoxLongUnpracticed,
   LEARNING_BOX_RECOVERY_GAP_HOURS,
   LEARNING_BOX_SELF_CHECK_MAX_BOX,
   learningBoxAttemptKey,
+  learningBoxDeckStatus,
   learningBoxDirectionAt,
   parseLearningBoxImport,
   placeLiveVocabularyCard,
   processLearningBoxResult,
   sortLearningBoxCards,
+  type LearningBoxCard,
 } from "./learning-box";
 import {
   learningBoxEventFields,
@@ -1249,5 +1252,67 @@ describe("Regeltabelle Vault 06 an der LernBox", () => {
     expect(REPETITION_RULES.lernbox.recovery.gapMs).toBe(
       LEARNING_BOX_RECOVERY_GAP_HOURS * 60 * 60 * 1000,
     );
+  });
+});
+
+describe("learningBoxDeckStatus (was ist im Stapel heute offen)", () => {
+  const DAY = 86_400_000;
+  const NOW = 10 * DAY;
+  const fresh = (question: string) =>
+    createLearningBoxCard({
+      deckId: "deck",
+      question,
+      answer: "Antwort",
+      now: NOW,
+    });
+  /** Beide Richtungen geübt und erst in einer Woche wieder an der Reihe. */
+  const rested = (question: string): LearningBoxCard => ({
+    ...fresh(question),
+    box: 3,
+    interval: 7,
+    nextReview: NOW + 7 * DAY,
+    lastReviewed: NOW,
+    reverseBox: 3,
+    reverseInterval: 7,
+    reverseNextReview: NOW + 7 * DAY,
+  });
+
+  it("nennt einen Stapel mit nie geübten Karten „neu“, nie „erledigt“", () => {
+    const status = learningBoxDeckStatus(
+      [fresh("a"), fresh("b"), fresh("c")],
+      NOW,
+    );
+    expect(status).toEqual({ state: "new", due: 0, fresh: 3 });
+  });
+
+  it("nennt einen Stapel „fällig“, sobald eine geübte Karte dran ist; Fälliges geht vor Neuem", () => {
+    const due: LearningBoxCard = { ...rested("a"), nextReview: NOW - DAY };
+    const status = learningBoxDeckStatus([due, fresh("b")], NOW);
+    expect(status).toEqual({ state: "due", due: 1, fresh: 1 });
+  });
+
+  it("nennt einen Stapel „erledigt“ nur, wenn nichts fällig und nichts neu ist", () => {
+    expect(learningBoxDeckStatus([rested("a"), rested("b")], NOW)).toEqual({
+      state: "done",
+      due: 0,
+      fresh: 0,
+    });
+    expect(learningBoxDeckStatus([], NOW).state).toBe("done");
+  });
+
+  it("zählt die nie geübte Rückrichtung erst als neu, wenn vorwärts Box 2 erreicht ist", () => {
+    const base: LearningBoxCard = {
+      ...rested("a"),
+      reverseInterval: 0,
+      reverseBox: 1,
+    };
+    expect(learningBoxDeckStatus([{ ...base, box: 1 }], NOW).state).toBe(
+      "done",
+    );
+    expect(learningBoxDeckStatus([{ ...base, box: 2 }], NOW).state).toBe("new");
+    expect(isLearningBoxDirectionNew({ ...base, box: 2 }, "reverse", NOW)).toBe(
+      true,
+    );
+    expect(isLearningBoxDirectionNew(base, "forward", NOW)).toBe(false);
   });
 });

@@ -58,4 +58,15 @@ describe("OverviewScreen", () => {
   it("zeigt ohne Runde „Noch nicht geübt“", () => {
     expect(setup(undefined)).toHaveTextContent("Noch nicht geübt");
   });
+
+  it("nennt einen leeren Tag „noch nichts geplant“ und nicht „nichts fällig“ (C-008)", () => {
+    setup(undefined);
+    expect(
+      screen.getByText(/Heute ist noch nichts geplant\./),
+    ).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("nichts fällig");
+    expect(
+      screen.getByRole("button", { name: "Gemischt trainieren" }),
+    ).toBeDisabled();
+  });
 });

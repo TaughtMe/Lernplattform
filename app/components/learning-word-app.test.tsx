@@ -842,6 +842,121 @@ describe("Freies Üben und fällige Wiederholung", () => {
     return word.textContent!;
   }
 
+  it("bietet nach der Wiederholung genau die Fehlerwörter als freies Üben an und ändert dabei keine Box (C-008)", async () => {
+    const user = userEvent.setup();
+    const { progress, rounds } = await setup({
+      prepare: async ({ boxes }) => {
+        await boxes.importFromLesson({
+          words: ["Hund", "Katze"],
+          errorWords: ["Hund", "Katze"],
+          sourceId: "s",
+        });
+      },
+    });
+    const mixed = await screen.findByRole("button", {
+      name: "Gemischt trainieren",
+    });
+    await waitFor(() => expect(mixed).toBeEnabled());
+    await user.click(mixed);
+    const sheet = await screen.findByRole("dialog");
+    await user.selectOptions(
+      within(sheet).getByLabelText("Wörter in dieser Runde"),
+      "all",
+    );
+    await user.click(within(sheet).getByRole("button", { name: "Starten" }));
+
+    // Ein Wort gleich richtig, das andere erst nach einem Fehler.
+    const first = await readMemorizedWord();
+    await user.click(screen.getByRole("button", { name: "Wörter verdecken" }));
+    await answer(user, first);
+    const second = await readMemorizedWord();
+    await user.click(screen.getByRole("button", { name: "Wörter verdecken" }));
+    await answer(user, "Xx");
+    await user.click(
+      await screen.findByRole("button", { name: "Noch einmal versuchen" }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Wörter verdecken" }),
+    );
+    await answer(user, second);
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+
+    // Der Abschluss sagt, wann das Fehlerwort wiederkommt, und nennt nur dieses.
+    expect(
+      screen.getByRole("heading", {
+        name: "Diese Wörter kommen morgen wieder",
+      }),
+    ).toBeInTheDocument();
+    await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
+    const before = new Map((await progress.list()).map((e) => [e.word, e]));
+    expect(before.get(second)).toMatchObject({ box: 1 });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Diese Wörter jetzt noch einmal üben",
+      }),
+    );
+    // Die neue Runde hat genau das Fehlerwort (Stufe 4: Merken, verdecken, schreiben).
+    expect(await readMemorizedWord()).toBe(second);
+    await user.click(screen.getByRole("button", { name: "Wörter verdecken" }));
+    await answer(user, second);
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+    expect(screen.getByText("1 Wort geübt")).toBeInTheDocument();
+    await waitFor(async () => expect(await rounds.list()).toHaveLength(2));
+    await waitFor(async () =>
+      expect(
+        (await progress.list()).find((e) => e.word === second)!.attempts,
+      ).toBeGreaterThan(before.get(second)!.attempts),
+    );
+
+    // Freies Üben: keine Box ändert sich, keine Fälligkeit rückt weiter.
+    const after = new Map((await progress.list()).map((e) => [e.word, e]));
+    for (const word of [first, second]) {
+      expect(after.get(word)).toMatchObject({
+        box: before.get(word)!.box,
+        dueAt: before.get(word)!.dueAt,
+      });
+    }
+    expect((await rounds.list()).map((round) => round.boxId)).toContain(
+      "fehler",
+    );
+  });
+
+  it("bietet beim freien Üben ebenfalls nur die Fehlerwörter an und bleibt beim Wiederholen bei ihnen", async () => {
+    const user = userEvent.setup();
+    await setup({
+      prepare: async ({ database, boxes }) => {
+        await boxes.create("Test", ["Ball"]);
+        await seedProgress(database, "Ball", { box: 3, stage: 3 });
+      },
+    });
+    await openBox(user, "Test");
+    await startRound(user, 1);
+    await answer(user, "Bal");
+    await user.click(
+      await screen.findByRole("button", { name: "Noch einmal versuchen" }),
+    );
+    await answer(user, "Ball");
+    await screen.findByRole("heading", { name: "Geschafft!" }, SLOW);
+    await user.click(
+      screen.getByRole("button", {
+        name: "Diese Wörter jetzt noch einmal üben",
+      }),
+    );
+    await answer(user, "Ball");
+    await screen.findByText("1 Wort geübt", {}, SLOW);
+    // „Nochmal üben“ bleibt bei denselben Wörtern, solange sie die Runde bilden.
+    await user.click(screen.getByRole("button", { name: "Nochmal üben" }));
+    await answer(user, "Ball");
+    expect(await screen.findByText("1 Wort geübt", {}, SLOW)).toBeVisible();
+    // Richtig auf Anhieb: kein Fehlerwort mehr, also auch keine Wiederholung.
+    expect(
+      screen.queryByRole("button", {
+        name: "Diese Wörter jetzt noch einmal üben",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it("zeigt bei den Fehlerwörtern „n Wörter geübt“ statt eines Prozentwerts", async () => {
     const user = userEvent.setup();
     const { rounds } = await setup({ query: "?woerter=Ball&quelle=fehler" });

@@ -7,6 +7,7 @@ import {
   type ClassModule,
 } from "../../src/domain/class-workspace";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
+import { readHardwareKeyboardSeen } from "../../src/storage/hardware-keyboard";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
 import { Icon } from "../ui/icons";
 import { EmptyState, Pill } from "../ui/primitives";
@@ -38,7 +39,7 @@ export function DailyPracticePanel({
   useEffect(() => {
     let active = true;
     repository
-      .list({ enabledModules })
+      .list({ enabledModules, hardwareKeyboard: readHardwareKeyboardSeen() })
       .then((recommendations) => {
         if (!active) return;
         setPractice(recommendations);

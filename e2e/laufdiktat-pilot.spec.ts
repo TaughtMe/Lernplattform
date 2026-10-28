@@ -45,8 +45,9 @@ test("the complete learning and teacher workspaces are reachable", async ({
   page,
 }) => {
   await page.goto("/lernen");
+  // Frisches Gerät: Die Hauptschaltfläche heißt „Loslegen“ (D5-2).
   await expect(
-    page.getByRole("link", { name: "Weiterlernen" }).last(),
+    page.getByRole("link", { name: "Loslegen" }).last(),
   ).toBeVisible();
 
   await page.goto("/lehrer/klassen");

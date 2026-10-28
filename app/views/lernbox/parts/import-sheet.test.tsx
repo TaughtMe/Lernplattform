@@ -11,6 +11,8 @@ const DECK = {
   folderId: null,
   total: 0,
   due: 0,
+  fresh: 0,
+  state: "done",
   boxes: [0, 0, 0, 0, 0],
   longUnpracticed: 0,
   sourceLabel: "eigene",

@@ -12,6 +12,15 @@ export type WeekDay = {
   today: boolean;
 };
 
+export type FirstContactView = {
+  areas: ReadonlyArray<{
+    href: string;
+    title: string;
+    text: string;
+    icon: string;
+  }>;
+};
+
 export type HomeScreenProps = {
   /** Kopfzeile, z. B. „Klasse 7b“ oder „Lernraum“. */
   title: string;
@@ -21,6 +30,13 @@ export type HomeScreenProps = {
   done: number;
   target: number;
   continueHref: string;
+  /** Beschriftung der Hauptschaltfläche; Vorgabe „Weiterlernen“. */
+  mainLabel?: string | undefined;
+  /**
+   * Erstkontakt (Kind ohne Lernstand): kurze Begrüßung und große Karten statt
+   * Tagesziel und Kacheln.
+   */
+  firstContact?: FirstContactView | undefined;
   week: readonly WeekDay[];
   due: { done: number; total: number };
   difficult: ReadonlyArray<{ label: string; detail: string }>;
@@ -40,7 +56,8 @@ const RING = { size: 290, radius: 132, stroke: 11 };
 
 /** Lernen-Startseite (Design 3b/2b mobil, 3a breit). */
 export function HomeScreen(props: HomeScreenProps) {
-  const { done, target, due, difficult, week } = props;
+  const { done, target, due, difficult, week, firstContact } = props;
+  const mainLabel = props.mainLabel ?? "Weiterlernen";
   const length = 2 * Math.PI * RING.radius;
   // Ohne Portion ist der Tag erledigt (Ring voll, wenn geübt wurde).
   const ratio = target > 0 ? Math.min(1, done / target) : done > 0 ? 1 : 0;
@@ -98,7 +115,7 @@ export function HomeScreen(props: HomeScreenProps) {
               <Link
                 href={props.continueHref}
                 className={styles.disc}
-                aria-label="Weiterlernen"
+                aria-label={mainLabel}
               >
                 {props.animal ? (
                   <Animal
@@ -121,19 +138,21 @@ export function HomeScreen(props: HomeScreenProps) {
                 {props.animal ? avatarLabel(props.animal) : "Dein Lernraum"}
               </p>
               <p className={styles.today}>
-                {target === 0
-                  ? done > 0
-                    ? "Alles Fällige erledigt – alles Weitere ist ein Extra"
-                    : "Heute ist nichts dran – frei üben"
-                  : done >= target
-                    ? "Tagesziel geschafft – alles Weitere ist ein Extra"
-                    : `${done} von ${target} ${target === 1 ? "Aufgabe" : "Aufgaben"} heute`}
+                {firstContact
+                  ? "Schön, dass du da bist! Womit möchtest du anfangen?"
+                  : target === 0
+                    ? done > 0
+                      ? "Alles Fällige erledigt – alles Weitere ist ein Extra"
+                      : "Heute ist noch nichts geplant – such dir etwas aus"
+                    : done >= target
+                      ? "Tagesziel geschafft – alles Weitere ist ein Extra"
+                      : `${done} von ${target} ${target === 1 ? "Aufgabe" : "Aufgaben"} heute`}
               </p>
             </div>
             <div className={styles.actions}>
               <Link href={props.continueHref} className={styles.continue}>
                 <Icon name="arrow" size={20} strokeWidth={2} />
-                Weiterlernen
+                {mainLabel}
               </Link>
               {props.duelHref ? (
                 <Link href={props.duelHref} className={styles.duel}>
@@ -142,16 +161,39 @@ export function HomeScreen(props: HomeScreenProps) {
                 </Link>
               ) : null}
             </div>
-            <div className={styles.cards}>
-              <div className={styles.card}>
-                <p className={styles.cardValue}>{open}</p>
-                <p className={styles.cardLabel}>heute dran</p>
+            {firstContact ? (
+              <ul className={styles.start} aria-label="Das kannst du üben">
+                {firstContact.areas.map((area) => (
+                  <li key={area.href}>
+                    <Link href={area.href} className={styles.startCard}>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- lokales SVG, ohne Rasteroptimierung */}
+                      <img
+                        src={`/illustrations/practice/${area.icon}.svg`}
+                        width={56}
+                        height={56}
+                        alt=""
+                      />
+                      <span className={styles.startText}>
+                        <strong>{area.title}</strong>
+                        <span>{area.text}</span>
+                      </span>
+                      <Icon name="arrow" size={18} strokeWidth={2.2} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className={styles.cards}>
+                <div className={styles.card}>
+                  <p className={styles.cardValue}>{open}</p>
+                  <p className={styles.cardLabel}>heute dran</p>
+                </div>
+                <div className={styles.card}>
+                  <p className={styles.cardValue}>{difficult.length}</p>
+                  <p className={styles.cardLabel}>schwierige Wörter</p>
+                </div>
               </div>
-              <div className={styles.card}>
-                <p className={styles.cardValue}>{difficult.length}</p>
-                <p className={styles.cardLabel}>schwierige Wörter</p>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -210,7 +252,9 @@ export function HomeScreen(props: HomeScreenProps) {
             <p className={styles.hint}>
               {open
                 ? `Noch ${open} ${open === 1 ? "Aufgabe" : "Aufgaben"}, dann ist der Tag voll.`
-                : "Für heute ist alles geschafft."}
+                : due.total === 0
+                  ? "Heute ist noch nichts geplant."
+                  : "Für heute ist alles geschafft."}
             </p>
           </section>
 

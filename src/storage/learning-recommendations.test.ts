@@ -198,6 +198,48 @@ describe("shared learning recommendations", () => {
     ]);
   });
 
+  it("schlägt die Tastenwelt ohne bekannte Hardwaretastatur nicht als ersten Schritt vor (C-003)", async () => {
+    const database = new PersonalLearningDatabase(
+      `recommendations-${crypto.randomUUID()}`,
+    );
+    databases.push(database);
+    const repository = createLearningRecommendationRepository(database);
+    const now = "2026-08-24T12:00:00.000Z";
+    expect(
+      await repository.list({
+        enabledModules: ["typing"],
+        now,
+        hardwareKeyboard: false,
+      }),
+    ).toEqual([]);
+    // Mit Tastatur bleibt der Lernweg der erste Vorschlag.
+    expect(
+      await repository.list({
+        enabledModules: ["typing"],
+        now,
+        hardwareKeyboard: true,
+      }),
+    ).toMatchObject([{ module: "typing", reason: "next-step" }]);
+
+    // Wer in der Tastenwelt schon geübt hat, bekommt den Lernweg weiter.
+    await database.typingProgress.put({
+      id: "grundstellung-zeigefinger",
+      completed: false,
+      bestWpm: 5,
+      bestAccuracy: 70,
+      attempts: 1,
+      lastPracticedAt: now,
+      problemChars: [],
+    });
+    expect(
+      await repository.list({
+        enabledModules: ["typing"],
+        now,
+        hardwareKeyboard: false,
+      }),
+    ).toMatchObject([{ module: "typing" }]);
+  });
+
   it("derives error recommendations from legacy events without module metadata", async () => {
     const database = new PersonalLearningDatabase(
       `recommendations-${crypto.randomUUID()}`,

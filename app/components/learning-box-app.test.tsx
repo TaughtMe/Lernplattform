@@ -157,8 +157,11 @@ describe("LernBox: Heute dran aus der Tagesportion", () => {
     );
     expect(within(heute).getByText("Vokabeln aus 1 Stapel")).toBeVisible();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    // Neue Karten sind nicht fällig: Der Stapel zeigt keine Fälligkeit.
+    // Neue Karten sind nicht fällig: Der Stapel zeigt keine Fälligkeit, er heißt
+    // „neu“ und nie „erledigt“, solange Karten in „Heute dran“ stehen (C-008).
     expect(screen.queryByText(/heute$/)).not.toBeInTheDocument();
+    expect(screen.getByText("4 neu")).toBeVisible();
+    expect(screen.queryByText("erledigt")).not.toBeInTheDocument();
   });
 
   it("öffnet mit ?heute=1 das Start-Fenster ohne Richtungswahl und übt jedes Element in seiner Richtung", async () => {

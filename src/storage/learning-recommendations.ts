@@ -182,6 +182,13 @@ export function createLearningRecommendationRepository(
       enabledModules: readonly ClassModule[];
       now?: string;
       limit?: number;
+      /**
+       * Wurde auf dem Gerät schon eine Hardwaretastatur benutzt? Ohne sie
+       * schlägt die Tastenwelt keinen ersten Schritt vor (Befund C-003); wer
+       * dort schon geübt hat, bekommt den Lernweg weiter. Ohne Angabe gilt
+       * „ja“, die Oberfläche übergibt den echten Wert.
+       */
+      hardwareKeyboard?: boolean;
     }) => {
       const now = input.now ?? new Date().toISOString();
       const nowMs = new Date(now).getTime();
@@ -322,7 +329,8 @@ export function createLearningRecommendationRepository(
             !completedTyping.has(lesson.id) &&
             isTypingLessonUnlocked(lesson.id, completedTyping),
         );
-      if (nextTyping) {
+      const typingStarted = typingProgress.some((item) => item.attempts > 0);
+      if (nextTyping && ((input.hardwareKeyboard ?? true) || typingStarted)) {
         const progress = typingProgress.find(
           (item) => item.id === nextTyping.id,
         );

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { DailyPlanModule } from "../../src/domain/daily-plan";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createDailyPlanRepository } from "../../src/storage/daily-plan";
+import { readHardwareKeyboardSeen } from "../../src/storage/hardware-keyboard";
 import { hasPersonalLearningState } from "../../src/storage/learning-state";
 import { createLearningRecommendationRepository } from "../../src/storage/learning-recommendations";
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
@@ -72,6 +73,8 @@ export function useLearnerDashboard() {
         await Promise.all([
           recommendations.list({
             enabledModules: ["vocabulary", "german", "mathematics", "typing"],
+            // Die Tastenwelt kommt erst vor, wenn schon eine Tastatur benutzt wurde.
+            hardwareKeyboard: readHardwareKeyboardSeen(),
           }),
           dailyPlan.progress(now.toISOString()),
           database.learningEvents.toArray(),

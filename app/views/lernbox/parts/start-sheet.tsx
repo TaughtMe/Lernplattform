@@ -13,7 +13,8 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
   const labels = props.directionLabelsFor(scope);
   const deck = props.decks.find((entry) => entry.id === scope);
   const dueDecks =
-    props.todayDecks ?? props.decks.filter((entry) => entry.due > 0).length;
+    props.todayDecks ??
+    props.decks.filter((entry) => entry.state !== "done").length;
   // Die Richtung kommt je Vokabel aus der Tagesportion.
   const directionFromPlan = scope === props.planScope;
   const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
@@ -36,7 +37,7 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
       : scope === "errors"
         ? `${plural(props.errorCount, "Vokabel", "Vokabeln")} zum Wiederholen`
         : deck
-          ? plural(deck.due || deck.total, "Vokabel", "Vokabeln")
+          ? plural(deck.due || deck.fresh || deck.total, "Vokabel", "Vokabeln")
           : "";
   return (
     <Modal title={title} subtitle={subtitle} onClose={props.onCloseSheet}>

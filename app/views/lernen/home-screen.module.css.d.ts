@@ -34,6 +34,9 @@ declare const styles: {
   readonly screen: string;
   readonly side: string;
   readonly stage: string;
+  readonly start: string;
+  readonly startCard: string;
+  readonly startText: string;
   readonly streak: string;
   readonly title: string;
   readonly today: string;

@@ -425,6 +425,57 @@ export function isLearningBoxCardScheduledDue(
   );
 }
 
+/**
+ * Eine Richtung ist „neu“, wenn sie noch nie geübt wurde und schon angeboten
+ * werden darf. Die Rückrichtung kommt erst, wenn vorwärts (wirksam) Box 2
+ * erreicht ist. Dieselbe Regel nutzen Tagesportion und Stapelanzeige, damit
+ * beide über neue Karten dasselbe sagen.
+ */
+export function isLearningBoxDirectionNew(
+  card: LearningBoxCard,
+  direction: LearningBoxDirection,
+  now = Date.now(),
+) {
+  const interval =
+    direction === "forward" ? card.interval : card.reverseInterval;
+  if (interval !== 0) return false;
+  return (
+    direction === "forward" ||
+    effectiveLearningBoxLevel(card, "forward", now) >= 2
+  );
+}
+
+/** Stand eines Stapels heute: etwas ist fällig, es gibt Neues, oder nichts ist offen. */
+export type LearningBoxDeckState = "due" | "new" | "done";
+
+export interface LearningBoxDeckStatus {
+  state: LearningBoxDeckState;
+  /** Karten, die nach Zeitplan fällig sind (schon einmal geübt). */
+  due: number;
+  /** Karten mit einer neuen, noch nie geübten Richtung. */
+  fresh: number;
+}
+
+/**
+ * Was ist in einem Stapel heute offen? Gemeinsame Antwort für Stapelkarte und
+ * Kopfzeile: Fälliges steht vor Neuem; „erledigt“ heißt, dass weder etwas
+ * fällig ist noch eine Karte neu wäre (nie geübte Karten sind nie „erledigt“).
+ */
+export function learningBoxDeckStatus(
+  cards: readonly LearningBoxCard[],
+  now = Date.now(),
+): LearningBoxDeckStatus {
+  const due = cards.filter((card) =>
+    isLearningBoxCardScheduledDue(card, now),
+  ).length;
+  const fresh = cards.filter(
+    (card) =>
+      isLearningBoxDirectionNew(card, "forward", now) ||
+      isLearningBoxDirectionNew(card, "reverse", now),
+  ).length;
+  return { state: due > 0 ? "due" : fresh > 0 ? "new" : "done", due, fresh };
+}
+
 /** Schlüssel „Karte + Richtung“ für die Bewertung innerhalb einer Runde. */
 export function learningBoxAttemptKey(
   cardId: string,
