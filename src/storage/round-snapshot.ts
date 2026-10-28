@@ -43,24 +43,29 @@ export function saveRoundSnapshot(
   }
 }
 
+/** Roher Eintrag für `useSyncExternalStore` (bleibt zwischen Aufrufen gleich, solange nichts gespeichert wird). */
+export function readRoundSnapshotRaw(
+  module: RoundSnapshotModule,
+  getStorage: () => SnapshotStorage = defaultStorage,
+): string | null {
+  try {
+    return getStorage().getItem(ROUND_SNAPSHOT_KEYS[module]);
+  } catch {
+    return null;
+  }
+}
+
 /** Liest den Zwischenstand des Moduls; `null`, wenn keiner da oder er nicht brauchbar ist. */
 export function loadRoundSnapshot<State>(
   module: RoundSnapshotModule,
   schema: z.ZodType<State>,
   options: { now?: Date; getStorage?: () => SnapshotStorage } = {},
 ): RoundSnapshot<State> | null {
-  try {
-    const raw = (options.getStorage ?? defaultStorage)().getItem(
-      ROUND_SNAPSHOT_KEYS[module],
-    );
-    return parseRoundSnapshot(raw, {
-      module,
-      now: options.now ?? new Date(),
-      state: schema,
-    });
-  } catch {
-    return null;
-  }
+  return parseRoundSnapshot(readRoundSnapshotRaw(module, options.getStorage), {
+    module,
+    now: options.now ?? new Date(),
+    state: schema,
+  });
 }
 
 /** Verwirft den Zwischenstand (Runde beendet oder „Neu anfangen“). */

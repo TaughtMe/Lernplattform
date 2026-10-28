@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 import { WORD_BOX_LIMITS } from "../../../src/domain/word-box";
 import {
@@ -61,6 +61,7 @@ export function OverviewScreen({
   onCreate,
   onMixed,
   worksheetHref,
+  resumeOffer,
 }: {
   tiles: readonly WordBoxTile[];
   dueCount: number;
@@ -75,6 +76,8 @@ export function OverviewScreen({
   onCreate: (title: string) => void | Promise<void>;
   onMixed: () => void;
   worksheetHref?: string | undefined;
+  /** „Weitermachen“ für eine unterbrochene Runde (C-001). */
+  resumeOffer?: ReactNode;
 }) {
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
@@ -103,6 +106,8 @@ export function OverviewScreen({
           </ButtonLink>
         ) : null}
       </header>
+
+      {resumeOffer}
 
       <div className="ui-card ui-card--dark ui-ws__hero">
         <div className="ui-grow">
