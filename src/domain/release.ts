@@ -108,6 +108,14 @@ export const RELEASE_AREAS = {
     // erscheint wieder der Handabgleich.
     stage: "frei",
   },
+  "lehrer-geraet": {
+    label: "Gerätetyp und Sperre im Lehrerbereich",
+    // Kein eigener Pfad: schaltet die Wahl „Mein Gerät“ / „Tafel“ beim ersten
+    // Öffnen des Lehrerbereichs, die Sperre der Personenbereiche auf der Tafel
+    // und die PIN-Sperre in den Lehrer-Einstellungen (Befund B-009).
+    routes: [],
+    stage: "vorschau",
+  },
   spiegelschrift: {
     label: "Spiegelschrift im Lesetext",
     // Kein eigener Pfad: schaltet Schalter in den Einstellungen und die
