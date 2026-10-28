@@ -1,6 +1,8 @@
 import { getLearningWordCollection } from "./german-learning-content";
 import type { LearningWordStage } from "./learning-word";
+import { compareGaps } from "./text-compare";
 import {
+  checkMentalMathAnswer,
   generateMentalMathTasks,
   type MentalMathOperation,
   type MentalMathTask,
@@ -175,6 +177,11 @@ export function buildSpellingStartPoint(): StartPointTask<SpellingTask>[] {
   );
 }
 
+/** Richtig ist genau das Wort, mit Groß- und Kleinschreibung (wie im Wortspeicher). */
+export function isSpellingAnswerCorrect(word: string, input: string) {
+  return compareGaps([word], [input])[0]?.kind === "richtig";
+}
+
 export type SpellingSuggestion = {
   subject: "spelling";
   collectionId: string;
@@ -268,6 +275,10 @@ export function buildMathStartPoint(
       payload: { task, levelId: level.id },
     }));
   });
+}
+
+export function isMathAnswerCorrect(task: MentalMathTask, input: string) {
+  return checkMentalMathAnswer(task, input);
 }
 
 export type MathSuggestion = {
