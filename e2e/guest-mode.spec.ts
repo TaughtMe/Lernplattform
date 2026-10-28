@@ -6,6 +6,7 @@ import {
 import { createClassSealKeyPair } from "../src/domain/class-seal";
 import { createGuestPass, createGuestPassLink } from "../src/domain/guest-pass";
 import { analyzeAccessibility } from "./accessibility-helpers";
+import { markOwnDevice } from "./teacher-device-helpers";
 
 // Gastmodus für geteilte Geräte (Befunde B-009, B-010): Ein Gast-QR der
 // Lehrkraft macht das Gerät für eine Unterrichtsnutzung zum Gastgerät, dessen
@@ -76,6 +77,8 @@ const band = (page: Page) => page.getByRole("region", { name: "Gastmodus" });
 
 test.beforeEach(async ({ page }) => {
   await enablePreview(page);
+  // Die Lehrerseiten fragen mit Vorschau nach dem Gerätetyp; hier gilt „Mein Gerät“.
+  await markOwnDevice(page);
 });
 
 test("gültiger Gast-Link startet auf einem leeren Gerät den Gastmodus ohne Weg in den Lehrerbereich", async ({

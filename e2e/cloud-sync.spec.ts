@@ -7,6 +7,7 @@ import {
   type Page,
 } from "@playwright/test";
 import { createFakeWebDav } from "../src/integrations/cloud-sync/testing/fake-webdav";
+import { markOwnDevice } from "./teacher-device-helpers";
 
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"];
 const PASSWORD = "pferd-batterie-klammer";
@@ -57,6 +58,9 @@ async function device(browser: Browser, baseURL: string | undefined) {
     locale: "de-DE",
     ...(baseURL ? { baseURL } : {}),
   });
+  // Mit Vorschau fragt der Lehrerbereich nach dem Gerätetyp; beide Geräte sind
+  // hier eigene Lehrergeräte („Tafel“ ist nur ihr Name).
+  await markOwnDevice(context);
   const page = await context.newPage();
   return { context, page };
 }
