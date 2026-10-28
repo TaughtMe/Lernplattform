@@ -75,6 +75,11 @@ test("math errors survive reload and practice works offline with keyboard and he
     .boundingBox();
   expect(check!.height).toBeGreaterThanOrEqual(44);
   await page.getByRole("button", { name: "Runde beenden" }).click();
+  // Mitten in der Runde fragt der Rundenschutz nach (C-001).
+  await page
+    .getByRole("alertdialog", { name: "Runde wirklich beenden?" })
+    .getByRole("button", { name: "Beenden" })
+    .click();
   await expect(page.getByRole("heading", { name: "Heute üben" })).toBeVisible();
   await context.setOffline(false);
 });
