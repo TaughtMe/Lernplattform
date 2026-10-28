@@ -254,6 +254,10 @@
 @container student-main (min-width: 900px) {
   .main:has([data-side-rail]) > footer {
     position: relative;
+    /* Der klebende Abstand der Mobilansicht (`bottom`) würde sonst die
+       relativ positionierte Zeile um die Höhe der Tab-Leiste nach oben
+       schieben und den Inhalt überdecken. */
+    bottom: auto;
     margin-right: 356px;
   }
   .main:has([data-side-rail]) > footer::after {
