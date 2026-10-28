@@ -50,6 +50,7 @@ import {
 } from "../../lernen/plan-today";
 import { describeRound, operationLabels, todaysReviews } from "./round-text";
 import { Icon } from "../../ui/icons";
+import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { useRoundGuard } from "../../ui/round-guard";
 import { useRoundSnapshot } from "../../ui/use-round-snapshot";
 import { ResumeOffer } from "../../views/shell/resume-offer";
@@ -74,6 +75,10 @@ type Screen = "setup" | "round" | "complete";
  * `random` ist der Zufall für neue Aufgaben und die Reihenfolge der Runde;
  * Tests geben einen festen Zufall vor.
  */
+/** Anleitung auf der Einstellungsseite; wird auch vorgelesen. */
+const SETUP_INTRO =
+  "Stelle deine Aufgaben selbst zusammen. Alle Zahlen liegen zwischen „Von“ und „Bis“.";
+
 export function MentalMathApp({
   random = Math.random,
 }: { random?: () => number } = {}) {
@@ -322,7 +327,7 @@ export function MentalMathApp({
       setPreparedSettings(settingsKey);
       setNotice("");
     } catch {
-      setNotice("Bitte wähle einen gültigen Zahlenraum.");
+      setNotice("Bitte wähle gültige Zahlen bei „Von“ und „Bis“.");
     }
   }
 
@@ -357,7 +362,7 @@ export function MentalMathApp({
       );
     } catch {
       setNotice(
-        "Keine passenden Aufgaben. Bitte prüfe Zahlenraum, Rechenarten und Nullregeln.",
+        "Keine passenden Aufgaben. Prüfe Zahlen, Rechenarten und Regeln.",
       );
     }
   }
@@ -538,10 +543,8 @@ export function MentalMathApp({
           <h1 id="math-title" className="ui-h-page">
             Kopfrechnen
           </h1>
-          <p className="ui-small ui-muted">
-            Stelle genau die Aufgaben zusammen, die du üben möchtest. Alle
-            Zahlen und Ergebnisse bleiben in deinem gewählten Zahlenraum.
-          </p>
+          <p className="ui-small ui-muted">{SETUP_INTRO}</p>
+          <ReadAloudButton text={SETUP_INTRO} />
         </div>
 
         {roundSnapshot.snapshot ? (
@@ -603,8 +606,7 @@ export function MentalMathApp({
                 </Button>
               ) : null}
               <p className="ui-tiny ui-muted">
-                Deine Antworten bleiben auf diesem Gerät. Nutze auf gemeinsam
-                genutzten Geräten ein eigenes Browserprofil.
+                Deine Antworten bleiben auf diesem Gerät.
               </p>
             </>
           ) : null}
@@ -912,8 +914,7 @@ export function MentalMathApp({
             </Button>
           ) : null}
           <p className="ui-tiny ui-muted">
-            Eine Korrektur allein reicht noch nicht. Sichere Antworten werden
-            später wiederholt.
+            Aufgaben mit Fehlern kommen später noch einmal.
           </p>
           <div className="ui-grid2">
             <Button variant="ghost" onClick={() => setScreen("setup")}>

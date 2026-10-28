@@ -98,7 +98,7 @@ export function RoundScreen({
           <div>
             <p className="ui-h-section">{title}</p>
             <span className="ui-small ui-muted">
-              Merkstufe {stage} · {STAGE_COPY[stage].title} ·{" "}
+              Stufe {stage} · {STAGE_COPY[stage].title} ·{" "}
               {isBlock ? "Block" : "Wort"}{" "}
               <strong>
                 {index + 1} / {total}
@@ -142,7 +142,7 @@ export function RoundScreen({
 
         {phase === "recall" ? (
           <form className="ui-stack" onSubmit={submit}>
-            <p className="ui-eyebrow">Selbstständig schreiben</p>
+            <p className="ui-eyebrow">Jetzt schreibst du</p>
             {stage <= 3 ? (
               <StagePrompt word={word} stage={stage as 1 | 2 | 3} />
             ) : null}

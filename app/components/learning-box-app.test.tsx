@@ -192,7 +192,7 @@ describe("LernBox: Heute dran aus der Tagesportion", () => {
     ).not.toBeInTheDocument();
 
     // Die Selbsteinschätzung nennt ihre Grenze (D-010), das Schreiben nicht.
-    const limit = "Bis Box 3 per Selbsteinschätzung, danach schriftlich.";
+    const limit = "Mündlich zählt bis Box 3. Danach musst du schreiben.";
     expect(within(sheet).queryByText(limit)).not.toBeInTheDocument();
     await user.click(within(sheet).getByRole("button", { name: "Mündlich" }));
     expect(within(sheet).getByText(limit)).toBeVisible();

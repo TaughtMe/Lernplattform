@@ -52,8 +52,8 @@ export function TextboxProgressSection({
     if (state.sessions.length === 0) {
       return (
         <EmptyState title="Noch keine Textbox-Übung abgeschlossen">
-          Sobald du einen Text in allen vier Durchgängen geschafft hast, siehst
-          du hier deine Entwicklung.
+          Sobald du einen Text in allen vier Runden geschafft hast, siehst du
+          hier deine Entwicklung.
           <div style={{ marginTop: 12 }}>
             <ButtonLink href={TEXTBOX_PATH}>Zur Textbox</ButtonLink>
           </div>
@@ -92,7 +92,7 @@ export function TextboxProgressSection({
 
         <LineChart
           points={points}
-          title="Dein Ergebnis in Durchgang 4, alle Übungen"
+          title="Dein Ergebnis in Runde 4, alle Übungen"
           yLabel="Richtig geschrieben"
           xLabel="Übung"
         />

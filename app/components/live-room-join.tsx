@@ -416,7 +416,7 @@ export function LiveRoomJoin({
       setView(joined.status === "live" ? "starting" : "lobby");
     } catch {
       setView("join");
-      setError("Der Raum konnte nicht erreicht werden. Bitte prüfe den Code.");
+      setError("Keine Verbindung zum Raum. Frag deine Lehrkraft.");
     } finally {
       joinBusy.current = false;
     }

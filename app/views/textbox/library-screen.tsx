@@ -51,7 +51,7 @@ function matchSentence(matches: number, total: number) {
   return `Enthält ${matches} deiner ${total} Wörter.`;
 }
 
-/** Durchgang, in dem eine angefangene Einheit weitergeht (1 bis 4). */
+/** Runde, in der eine angefangene Einheit weitergeht (1 bis 4). */
 function openRound(session: TextboxSession) {
   return Math.min(4, session.rounds.length + 1);
 }
@@ -76,12 +76,12 @@ function LevelDots({
   );
 }
 
-/** Statuspille einer Karte: offener Durchgang, gemeistert, Bestwert oder neu. */
+/** Statuspille einer Karte: offene Runde, gemeistert, Bestwert oder neu. */
 function statusOf(entry: LibraryEntry, stand: TextboxStand) {
   const best = entry.summary?.bestPercent;
   if (entry.open) {
     return {
-      label: `Durchgang ${openRound(entry.open)} offen`,
+      label: `Runde ${openRound(entry.open)} offen`,
       tone: styles.pillOpen,
     };
   }
@@ -324,8 +324,8 @@ export function LibraryScreen({
             Du hast „{pending.text.title}“ schon angefangen.
           </p>
           <p className={styles.noticeText}>
-            Du bist bei Durchgang {pending.open ? openRound(pending.open) : 1}{" "}
-            von 4. „Neu beginnen“ verwirft die angefangene Übung.
+            Du bist bei Runde {pending.open ? openRound(pending.open) : 1} von
+            4. „Neu beginnen“ verwirft die angefangene Übung.
           </p>
           <div className={styles.actions}>
             <Button onClick={() => onResume(pending.text.id)}>
@@ -412,7 +412,7 @@ export function LibraryScreen({
                       ))}
                     </span>
                     <span className={styles.resumeRound}>
-                      Durchgang {round} von 4
+                      Runde {round} von 4
                     </span>
                   </span>
                 </li>

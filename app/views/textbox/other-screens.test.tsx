@@ -22,7 +22,7 @@ const frame = {
 };
 
 describe("MemorizeScreen", () => {
-  it("markiert in Durchgang 1 die späteren Lücken mit Farbe und Unterstreichung", async () => {
+  it("markiert in Runde 1 die späteren Lücken mit Farbe und Unterstreichung", async () => {
     const onReady = vi.fn();
     render(
       <MemorizeScreen
@@ -36,7 +36,7 @@ describe("MemorizeScreen", () => {
       />,
     );
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Durchgang 1 von 4: Merken",
+      "Runde 1 von 4: Merken",
     );
     expect(screen.getByRole("timer")).toHaveTextContent("0:45");
     expect(
@@ -71,7 +71,7 @@ describe("MemorizeScreen", () => {
     ).not.toContain("mirrored");
   });
 
-  it("zeigt ab Durchgang 2 keine Markierung", () => {
+  it("zeigt ab Runde 2 keine Markierung", () => {
     render(
       <MemorizeScreen
         round={2}
@@ -186,16 +186,16 @@ describe("ReviewScreen", () => {
     expect(screen.queryByRole("list", { name: /Zeichen/ })).toBeNull();
     expect(screen.getByText(/2 Unterschiede/)).toBeInTheDocument();
     await userEvent.click(
-      screen.getByRole("button", { name: "Weiter zu Durchgang 2" }),
+      screen.getByRole("button", { name: "Weiter zu Runde 2" }),
     );
     expect(onNext).toHaveBeenCalledOnce();
     await userEvent.click(
-      screen.getByRole("button", { name: "Durchgang wiederholen" }),
+      screen.getByRole("button", { name: "Runde wiederholen" }),
     );
     expect(onRepeat).toHaveBeenCalledOnce();
   });
 
-  it("zeigt in Durchgang 4 den Fließtext und beschriftet den letzten Schritt", () => {
+  it("zeigt in Runde 4 den Fließtext und beschriftet den letzten Schritt", () => {
     render(
       <ReviewScreen
         {...frame}
@@ -233,7 +233,7 @@ describe("ReviewScreen", () => {
       screen.getByRole("button", { name: "Ergebnis ansehen" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Durchgang 4 von 4: Kontrolle",
+      "Runde 4 von 4: Kontrolle",
     );
   });
 
@@ -250,7 +250,7 @@ describe("ReviewScreen", () => {
       />,
     );
     const steps = within(
-      screen.getByRole("list", { name: "Ablauf eines Durchgangs" }),
+      screen.getByRole("list", { name: "Ablauf einer Runde" }),
     ).getAllByRole("listitem");
     expect(steps[0]!.className).toMatch(/stepDone/);
     expect(steps[2]).toHaveAttribute("aria-current", "step");
@@ -538,7 +538,7 @@ describe("LibraryScreen", () => {
       entries: [openEntry, entries[0]!],
     });
     const section = screen.getByRole("region", { name: "Weitermachen" });
-    expect(section).toHaveTextContent("Durchgang 2 von 4");
+    expect(section).toHaveTextContent("Runde 2 von 4");
     await user.click(
       within(section).getByRole("button", {
         name: `${third.title} fortsetzen`,
@@ -547,7 +547,7 @@ describe("LibraryScreen", () => {
     expect(handlers.onResume).toHaveBeenCalledWith(third.id);
     expect(handlers.onStart).not.toHaveBeenCalled();
     const openCard = card(third.title);
-    expect(openCard).toHaveTextContent("Durchgang 2 offen");
+    expect(openCard).toHaveTextContent("Runde 2 offen");
     await user.click(
       screen.getByRole("button", { name: `${third.title} weiterüben` }),
     );
@@ -567,7 +567,7 @@ describe("LibraryScreen", () => {
     });
     expect(screen.getByText("Hinweis")).toBeInTheDocument();
     const group = screen.getByRole("group", { name: "Angefangene Übung" });
-    expect(group).toHaveTextContent("Durchgang 3 von 4");
+    expect(group).toHaveTextContent("Runde 3 von 4");
     await user.click(within(group).getByRole("button", { name: "Fortsetzen" }));
     await user.click(
       within(group).getByRole("button", { name: "Neu beginnen" }),

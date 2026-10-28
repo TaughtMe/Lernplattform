@@ -401,7 +401,7 @@ describe("shared learning recommendations", () => {
       recommendations.find((item) => item.module === "german"),
     ).toMatchObject({
       reason: "due",
-      title: "Fällige Lernwörter wiederholen",
+      title: "Lernwörter für heute üben",
     });
     expect(
       recommendations.find((item) => item.module === "typing"),

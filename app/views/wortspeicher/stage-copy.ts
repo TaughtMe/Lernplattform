@@ -1,6 +1,6 @@
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 
-/** Titel und Kurzbeschreibung der sechs Merkstufen (Plan 2.3). */
+/** Titel und Kurzbeschreibung der sechs Stufen (Plan 2.3). */
 export const STAGE_COPY: Record<
   LearningWordStage,
   { title: string; detail: string }
@@ -9,7 +9,7 @@ export const STAGE_COPY: Record<
   2: { title: "Wenige Lücken", detail: "Ein Teil der Buchstaben fehlt." },
   3: {
     title: "Viele Lücken",
-    detail: "Du rekonstruierst fast das ganze Wort.",
+    detail: "Du schreibst fast das ganze Wort selbst.",
   },
   4: {
     title: "Ansehen & verdecken",

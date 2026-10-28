@@ -4,7 +4,7 @@ import { TEXTBOX_TEXTS } from "../src/domain/textbox-library";
 
 /**
  * Neues Layout der Textbox (Design 9b–9f): Auswahl mit Filtern, Eingabe im Heft,
- * Vollbild und Durchgang wiederholen. Der Durchlauf über alle Durchgänge und die
+ * Vollbild und Runde wiederholen. Der Durchlauf über alle Runden und die
  * Fachlogik prüft textbox.spec.ts.
  */
 const text = TEXTBOX_TEXTS[0]!;
@@ -44,7 +44,7 @@ async function useDark(page: Page) {
 
 async function playGapRound(page: Page, round: number) {
   await expect(
-    page.getByRole("heading", { name: `Durchgang ${round} von 4: Merken` }),
+    page.getByRole("heading", { name: `Runde ${round} von 4: Merken` }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Ich bin bereit" }).click();
   await expect(
@@ -52,7 +52,7 @@ async function playGapRound(page: Page, round: number) {
   ).toBeFocused();
   await page.getByRole("button", { name: "Prüfen" }).click();
   await expect(
-    page.getByRole("heading", { name: `Durchgang ${round} von 4: Kontrolle` }),
+    page.getByRole("heading", { name: `Runde ${round} von 4: Kontrolle` }),
   ).toBeVisible();
 }
 
@@ -106,32 +106,32 @@ test("Weitermachen setzt eine angefangene Übung am Desktop fort", async ({
   await playGapRound(page, 1);
   await page.reload();
   const section = page.getByRole("region", { name: "Weitermachen" });
-  await expect(section).toContainText("Durchgang 2 von 4");
+  await expect(section).toContainText("Runde 2 von 4");
   await section
     .getByRole("button", { name: `${text.title} fortsetzen` })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Durchgang 2 von 4: Merken" }),
+    page.getByRole("heading", { name: "Runde 2 von 4: Merken" }),
   ).toBeVisible();
 });
 
-test("Durchgang wiederholen führt zurück zum Merken, der erste Versuch bleibt gespeichert", async ({
+test("Runde wiederholen führt zurück zum Merken, der erste Versuch bleibt gespeichert", async ({
   page,
 }) => {
   await openLibrary(page);
   await page.getByRole("button", { name: `${text.title} üben` }).click();
   await playGapRound(page, 1);
-  await page.getByRole("button", { name: "Weiter zu Durchgang 2" }).click();
+  await page.getByRole("button", { name: "Weiter zu Runde 2" }).click();
   await playGapRound(page, 2);
-  await page.getByRole("button", { name: "Durchgang wiederholen" }).click();
+  await page.getByRole("button", { name: "Runde wiederholen" }).click();
   await expect(
-    page.getByRole("heading", { name: "Durchgang 2 von 4: Merken" }),
+    page.getByRole("heading", { name: "Runde 2 von 4: Merken" }),
   ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: `${text.title} weiterüben` }),
   ).toBeVisible();
-  await expect(page.getByText("Durchgang 3 offen").first()).toBeVisible();
+  await expect(page.getByText("Runde 3 offen").first()).toBeVisible();
 });
 
 test("mobil: Tab-Leiste weg, Aktionsleiste sichtbar, Lücke nicht verdeckt", async ({
@@ -207,19 +207,19 @@ for (const theme of ["hell", "dunkel"] as const) {
     await expectAccessible(page); // Kontrolle
     for (const round of [2, 3] as const) {
       await page
-        .getByRole("button", { name: `Weiter zu Durchgang ${round}` })
+        .getByRole("button", { name: `Weiter zu Runde ${round}` })
         .click();
       await playGapRound(page, round);
     }
-    await page.getByRole("button", { name: "Weiter zu Durchgang 4" }).click();
+    await page.getByRole("button", { name: "Weiter zu Runde 4" }).click();
     await page.getByRole("button", { name: "Ich bin bereit" }).click();
     const field = page.getByRole("textbox", {
       name: "Dein Text aus dem Gedächtnis",
     });
-    await expectAccessible(page); // Durchgang 4
+    await expectAccessible(page); // Runde 4
     await field.fill("Im Garten");
     await page.getByRole("button", { name: "Prüfen" }).click();
-    await expectAccessible(page); // Kontrolle Durchgang 4
+    await expectAccessible(page); // Kontrolle Runde 4
   });
 }
 

@@ -2,7 +2,7 @@ import type { TextboxRoundResult } from "../../../src/domain/textbox-session";
 import { Button, ButtonLink, ProgressBar } from "../../ui/primitives";
 import styles from "./textbox.module.css";
 
-/** Abschluss einer Einheit: Ergebnis aus Durchgang 4 und die vier Durchgänge. */
+/** Abschluss einer Einheit: Ergebnis aus Runde 4 und die vier Runden. */
 export function CompletionScreen({
   title,
   rounds,
@@ -42,7 +42,7 @@ export function CompletionScreen({
         </div>
       </header>
       <div className={styles.final}>
-        <p className={styles.scoreDetail}>Ergebnis aus Durchgang 4</p>
+        <p className={styles.scoreDetail}>Ergebnis aus Runde 4</p>
         <p className={styles.percent}>{finalPercent} %</p>
         {final ? (
           <p className={styles.scoreDetail}>
@@ -51,10 +51,10 @@ export function CompletionScreen({
         ) : null}
         {record ? <p role="status">{record}</p> : null}
       </div>
-      <ul className={styles.rounds} aria-label="Die vier Durchgänge">
+      <ul className={styles.rounds} aria-label="Die vier Runden">
         {rounds.map((round) => (
           <li key={round.round} className={styles.roundCard}>
-            <span>Durchgang {round.round}</span>
+            <span>Runde {round.round}</span>
             <span className={styles.roundValue}>{round.score.percent} %</span>
             {round.retries?.length ? (
               <span>danach {round.retries.length}× geübt, zählt nicht</span>
@@ -62,7 +62,7 @@ export function CompletionScreen({
             <ProgressBar
               value={round.score.percent}
               max={100}
-              label={`Durchgang ${round.round}: ${round.score.percent} Prozent`}
+              label={`Runde ${round.round}: ${round.score.percent} Prozent`}
             />
           </li>
         ))}

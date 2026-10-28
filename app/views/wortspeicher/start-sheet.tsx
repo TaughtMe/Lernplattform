@@ -3,6 +3,7 @@
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
 import { Button, Notice } from "../../ui/primitives";
+import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { Sheet } from "../../ui/sheet";
 import {
   BLOCK_SIZES,
@@ -26,7 +27,7 @@ export type StartSheetStage = {
   disabledHint?: string | undefined;
 };
 
-/** Startblatt: Merkstufe, Rundengröße und Starten (Plan 2.3). */
+/** Startblatt: Stufe, Rundengröße und Starten (Plan 2.3). */
 export function StartSheet({
   title,
   strategy,
@@ -84,8 +85,12 @@ export function StartSheet({
         ) : null}
 
         <h3 className="ui-label" id="stufen-title">
-          Merkstufe wählen
+          Stufe wählen
         </h3>
+        <ReadAloudButton
+          label="Stufe vorlesen"
+          text={`Stufe ${stage}: ${STAGE_COPY[stage].title}. ${STAGE_COPY[stage].detail} Tippe auf Starten.`}
+        />
         <ol className={styles.stages} aria-labelledby="stufen-title">
           {stages.map((entry) => (
             <li key={entry.stage}>

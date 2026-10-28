@@ -35,7 +35,7 @@ describe("HistoryScreen", () => {
       screen.getByText("Noch keine abgeschlossene Runde"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("group", { name: "Merkstufe" }),
+      screen.queryByRole("group", { name: "Stufe" }),
     ).not.toBeInTheDocument();
   });
 
@@ -76,7 +76,7 @@ describe("HistoryScreen", () => {
       roundRecord("a", { stage: 1, percent: 50, day: 1 }),
       roundRecord("b", { stage: 4, percent: 90, day: 2 }),
     ]);
-    const group = screen.getByRole("group", { name: "Merkstufe" });
+    const group = screen.getByRole("group", { name: "Stufe" });
     expect(
       within(group).getByRole("button", { name: "Stufe 2" }),
     ).toBeDisabled();
@@ -91,7 +91,7 @@ describe("HistoryScreen", () => {
       within(group).getByRole("button", { name: "Stufe 4" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(
-      screen.getByRole("img", { name: /Merkstufe 4: ein Wert, 90 Prozent/ }),
+      screen.getByRole("img", { name: /Stufe 4: ein Wert, 90 Prozent/ }),
     ).toBeInTheDocument();
   });
 

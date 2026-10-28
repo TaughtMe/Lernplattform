@@ -89,12 +89,12 @@ describe("WordStoreProgressSection", () => {
     expect(stats).toHaveTextContent("2Abgeschlossene Runden");
 
     const byStage = within(section).getByRole("list", {
-      name: "Wörter nach Merkstufe",
+      name: "Wörter nach Stufe",
     });
     expect(within(byStage).getAllByRole("listitem")).toHaveLength(6);
     expect(
       within(byStage).getByRole("progressbar", {
-        name: "Merkstufe 6: 2 Wörter",
+        name: "Stufe 6: 2 Wörter",
       }),
     ).toBeInTheDocument();
 

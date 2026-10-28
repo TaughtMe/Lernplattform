@@ -24,14 +24,14 @@ async function expectAccessible(page: Page) {
 
 async function playGapRound(page: Page, round: number) {
   await expect(
-    page.getByRole("heading", { name: `Durchgang ${round} von 4: Merken` }),
+    page.getByRole("heading", { name: `Runde ${round} von 4: Merken` }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Ich bin bereit" }).click();
   const first = page.getByRole("textbox", { name: /^Lücke 1 von/ });
   await expect(first).toBeFocused();
   await page.getByRole("button", { name: "Prüfen" }).click();
   await expect(
-    page.getByRole("heading", { name: `Durchgang ${round} von 4: Kontrolle` }),
+    page.getByRole("heading", { name: `Runde ${round} von 4: Kontrolle` }),
   ).toBeVisible();
 }
 
@@ -49,7 +49,7 @@ test("Kachel „Textbox“ erscheint unter Üben", async ({ page }) => {
     .toBe(true);
 });
 
-test("ein Text läuft durch alle vier Durchgänge und der Bestwert bleibt", async ({
+test("ein Text läuft durch alle vier Runden und der Bestwert bleibt", async ({
   page,
 }) => {
   await page.goto("/frei/german/textbox");
@@ -57,7 +57,7 @@ test("ein Text läuft durch alle vier Durchgänge und der Bestwert bleibt", asyn
   await expectAccessible(page);
 
   await page.getByRole("button", { name: `${text.title} üben` }).click();
-  // Durchgang 1: Zielwörter sind farbig und zusätzlich unterstrichen markiert.
+  // Runde 1: Zielwörter sind farbig und zusätzlich unterstrichen markiert.
   await expect(page.locator("mark").first()).toBeVisible();
   await expect(page.getByRole("timer")).toBeVisible();
   await expectAccessible(page);
@@ -73,19 +73,19 @@ test("ein Text läuft durch alle vier Durchgänge und der Bestwert bleibt", asyn
   await expectAccessible(page);
   await page.getByRole("button", { name: "Prüfen" }).click();
   await expect(
-    page.getByRole("heading", { name: "Durchgang 1 von 4: Kontrolle" }),
+    page.getByRole("heading", { name: "Runde 1 von 4: Kontrolle" }),
   ).toBeVisible();
   await expectAccessible(page);
-  await page.getByRole("button", { name: "Weiter zu Durchgang 2" }).click();
+  await page.getByRole("button", { name: "Weiter zu Runde 2" }).click();
 
   await playGapRound(page, 2);
-  await page.getByRole("button", { name: "Weiter zu Durchgang 3" }).click();
+  await page.getByRole("button", { name: "Weiter zu Runde 3" }).click();
   await playGapRound(page, 3);
-  await page.getByRole("button", { name: "Weiter zu Durchgang 4" }).click();
+  await page.getByRole("button", { name: "Weiter zu Runde 4" }).click();
 
-  // Durchgang 4: freies Schreiben des ganzen Textes.
+  // Runde 4: freies Schreiben des ganzen Textes.
   await expect(
-    page.getByRole("heading", { name: "Durchgang 4 von 4: Merken" }),
+    page.getByRole("heading", { name: "Runde 4 von 4: Merken" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Ich bin bereit" }).click();
   const field = page.getByRole("textbox", {
@@ -106,7 +106,7 @@ test("ein Text läuft durch alle vier Durchgänge und der Bestwert bleibt", asyn
   for (const round of [1, 2, 3] as const) {
     await playGapRound(page, round);
     await page
-      .getByRole("button", { name: `Weiter zu Durchgang ${round + 1}` })
+      .getByRole("button", { name: `Weiter zu Runde ${round + 1}` })
       .click();
   }
   await page.getByRole("button", { name: "Ich bin bereit" }).click();
@@ -139,15 +139,15 @@ test("eine unterbrochene Übung lässt sich nach dem Neuladen fortsetzen", async
   await page.goto("/frei/german/textbox");
   await page.getByRole("button", { name: `${text.title} üben` }).click();
   await playGapRound(page, 1);
-  await page.getByRole("button", { name: "Weiter zu Durchgang 2" }).click();
+  await page.getByRole("button", { name: "Weiter zu Runde 2" }).click();
   await playGapRound(page, 2);
 
   await page.reload();
   await page.getByRole("button", { name: `${text.title} weiterüben` }).click();
-  await expect(page.getByText(/Durchgang 3 von 4/).first()).toBeVisible();
+  await expect(page.getByText(/Runde 3 von 4/).first()).toBeVisible();
   await page.getByRole("button", { name: "Fortsetzen", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Durchgang 3 von 4: Merken" }),
+    page.getByRole("heading", { name: "Runde 3 von 4: Merken" }),
   ).toBeVisible();
   await expect(page.locator("mark")).toHaveCount(0);
 });
@@ -174,7 +174,7 @@ async function completeRun(page: Page, typed: string) {
   for (const round of [1, 2, 3] as const) {
     await playGapRound(page, round);
     await page
-      .getByRole("button", { name: `Weiter zu Durchgang ${round + 1}` })
+      .getByRole("button", { name: `Weiter zu Runde ${round + 1}` })
       .click();
   }
   await page.getByRole("button", { name: "Ich bin bereit" }).click();
@@ -202,7 +202,7 @@ test("Verlauf zeigt Werte und Diagramme, barrierefrei in beiden Farbschemata", a
   await expect(stats).toContainText("Übungsversuche2");
 
   const chart = page.getByRole("img", {
-    name: /^Dein Ergebnis in Durchgang 4/,
+    name: /^Dein Ergebnis in Runde 4/,
   });
   await expect(chart).toBeVisible();
   await expectAccessible(page);

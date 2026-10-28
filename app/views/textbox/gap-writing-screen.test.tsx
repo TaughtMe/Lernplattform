@@ -91,7 +91,7 @@ describe("GapWritingScreen", () => {
     expect(screen.getByText("0 von 3 Lücken ausgefüllt")).toBeInTheDocument();
     await user.keyboard("Hund");
     expect(screen.getByText("1 von 3 Lücken ausgefüllt")).toBeInTheDocument();
-    const steps = screen.getByRole("list", { name: "Ablauf eines Durchgangs" });
+    const steps = screen.getByRole("list", { name: "Ablauf einer Runde" });
     expect(steps.children[0]!.className).toMatch(/stepDone/);
     await user.click(
       screen.getByRole("button", { name: "Zurück zur Auswahl" }),

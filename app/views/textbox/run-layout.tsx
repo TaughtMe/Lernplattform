@@ -12,10 +12,10 @@ import styles from "./run-layout.module.css";
 
 export const TEXTBOX_STEPS = ["Merken", "Schreiben", "Kontrolle"] as const;
 
-/** Die drei Schritte eines Durchgangs; erledigte Schritte sind grün. */
+/** Die drei Schritte einer Runde; erledigte Schritte sind grün. */
 export function StepList({ active }: { active: 0 | 1 | 2 }) {
   return (
-    <ol className={styles.steps} aria-label="Ablauf eines Durchgangs">
+    <ol className={styles.steps} aria-label="Ablauf einer Runde">
       {TEXTBOX_STEPS.map((step, index) => (
         <li
           key={step}
@@ -108,9 +108,9 @@ export function RunLayout({
       id="textbox-title"
       className={styles.title}
       tabIndex={-1}
-      aria-label={`Durchgang ${round} von 4: ${TEXTBOX_STEPS[step]}`}
+      aria-label={`Runde ${round} von 4: ${TEXTBOX_STEPS[step]}`}
     >
-      Durchgang {round} von 4
+      Runde {round} von 4
       <span className={styles.stepName}>: {TEXTBOX_STEPS[step]}</span>
     </h1>
   );
@@ -147,7 +147,7 @@ export function RunLayout({
           </button>
           <div className={styles.vbTitles}>
             <p className={styles.vbTitle}>{textTitle}</p>
-            <p className={styles.vbRound}>Durchgang {round} von 4</p>
+            <p className={styles.vbRound}>Runde {round} von 4</p>
           </div>
           {toggleButton}
           <StepList active={step} />

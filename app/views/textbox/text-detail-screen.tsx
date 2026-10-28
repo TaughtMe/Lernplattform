@@ -45,7 +45,7 @@ export function TextDetailScreen({
   const questions = summary ? reflectionQuestions(summary) : [];
   const chartProps = {
     points,
-    title: "Dein Ergebnis in Durchgang 4",
+    title: "Dein Ergebnis in Runde 4",
     yLabel: "Richtig geschrieben",
     xLabel: "Übungsversuch",
   };
@@ -129,7 +129,7 @@ export function TextDetailScreen({
                   <ul className={styles.sessionRounds}>
                     {entry.rounds.map((percent, index) => (
                       <li key={index}>
-                        Durchgang {index + 1}: {percent} %
+                        Runde {index + 1}: {percent} %
                       </li>
                     ))}
                   </ul>

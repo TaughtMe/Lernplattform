@@ -41,7 +41,7 @@ export type DemoLibraryText = {
   best: number | null;
   /** Anzahl abgeschlossener Übungen. */
   count: number;
-  /** Offener Durchgang einer angefangenen Einheit. */
+  /** Offene Runde einer angefangenen Einheit. */
   open?: 1 | 2 | 3 | 4;
 };
 
@@ -191,7 +191,7 @@ export const DEMO_TOKENS: readonly DemoToken[] = DEMO_TEXT.split(" ").map(
   },
 );
 
-/** Positionen der Lücken je Durchgang (Durchgang 4 hat keine). */
+/** Positionen der Lücken je Runde (Runde 4 hat keine). */
 export const DEMO_GAP_SETS: Record<1 | 2 | 3, readonly number[]> = (() => {
   const first = DEMO_TOKENS.filter((t) => DEMO_TARGET_WORDS.includes(t.word));
   const second = DEMO_TOKENS.filter(
@@ -217,7 +217,7 @@ export const DEMO_MISSPELLINGS: Readonly<Record<string, string>> = {
   Handtuch: "Hanttuch",
 };
 
-/** Beispiel-Eingabe für Durchgang 4: der ganze Text, „ganz“ fehlt. */
+/** Beispiel-Eingabe für Runde 4: der ganze Text, „ganz“ fehlt. */
 export const DEMO_FREE_TEXT = DEMO_TOKENS.filter((t) => t.word !== "ganz")
   .map((t) => (DEMO_MISSPELLINGS[t.word] ?? t.word) + t.punct)
   .join(" ");
@@ -244,13 +244,13 @@ function gapResult(token: DemoToken): WordResult {
   };
 }
 
-/** Kontrolle Durchgang 1: nur die Lückenwörter, in Textreihenfolge. */
+/** Kontrolle Runde 1: nur die Lückenwörter, in Textreihenfolge. */
 export const DEMO_GAP_RESULTS: readonly WordResult[] = DEMO_GAP_SETS[1].map(
   (index) => gapResult(DEMO_TOKENS[index] as DemoToken),
 );
 
 /**
- * Kontrolle Durchgang 4: Beispiel-Eingabe gegen den Text, fertig ausgerichtet.
+ * Kontrolle Runde 4: Beispiel-Eingabe gegen den Text, fertig ausgerichtet.
  * Falsch geschriebene Wörter stehen als `falsch`, das fehlende „ganz“ als `fehlt`.
  */
 export const DEMO_FREE_RESULTS: readonly WordResult[] = DEMO_TOKENS.map(
@@ -332,7 +332,7 @@ function demoRoundResult(round: 1 | 2 | 3): TextboxRoundResult {
   };
 }
 
-/** Kontrolle als fertiges Rundenergebnis: Durchgang 1 (Lücken) oder 4 (frei geschrieben). */
+/** Kontrolle als fertiges Rundenergebnis: Runde 1 (Lücken) oder 4 (frei geschrieben). */
 export function demoReviewResult(round: 1 | 4): TextboxRoundResult {
   const words = round === 1 ? DEMO_GAP_RESULTS : DEMO_FREE_RESULTS;
   const count = (kind: WordResult["kind"]) =>

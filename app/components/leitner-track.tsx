@@ -19,7 +19,7 @@ export function LeitnerTrack({
         <h3 className="ui-label">{label}</h3>
         <strong className="ui-small">Box {currentBox}</strong>
       </div>
-      <ol className="ui-leitner__boxes" aria-label="Fünf Leitner-Boxen">
+      <ol className="ui-leitner__boxes" aria-label="Fünf Boxen">
         {BOXES.map((box) => (
           <li
             className={

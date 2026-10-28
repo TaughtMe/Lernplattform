@@ -43,3 +43,25 @@ Der Test und das Render-Skript bilden die Systemschriften der Schaltflächen (`-
 | 15a, 15c, 15d          | Lehrerbereich v2: Start (Neues Laufdiktat, Vorbereitet/Archiv, aus anderen Klassen holen) | `/lehrer`                                                      |
 | 14b, 14c, 15b, 16a–16b | Lehrerbereich v2: Schritt 1 Inhalt, Schritt 2 Modus                                       | `/lehrer/live`                                                 |
 | 17a–17c                | Lehrerbereich v2: Einstellungen, Freigabe an Schüler, Klassen                             | `/lehrer/einstellungen`, `/lehrer/material`, `/lehrer/klassen` |
+
+## Kinder-Wortwahl (Glossar)
+
+Texte, die Kinder sehen oder vorgelesen bekommen, nutzen einfache Wörter und kurze Sätze (Richtwert: höchstens 10 Wörter je Satz). Die verbindliche Liste steht in `src/domain/child-glossary.ts` (Audit C-007). `src/domain/child-glossary.test.ts` durchsucht damit die sichtbaren Texte der Schüleransichten (JSX-Text und Zeichenketten, auch in `aria-label`, `title` und `placeholder`; keine Bezeichner, Kommentare oder `className`) und schlägt bei einem verbotenen Fachwort fehl. Nicht geprüft werden Lehrerbereich, Entwicklerseiten, Rechtstexte und die Lehrer-Editoren des Laufdiktats.
+
+| Statt …                                       | schreiben wir …                            |
+| --------------------------------------------- | ------------------------------------------ |
+| Durchgang                                     | Runde                                      |
+| Merkstufe                                     | Stufe                                      |
+| fällig, überfällig, Fälligkeit                | heute dran, kommt wieder                   |
+| Fälligkeit einer Aufgabe                      | Abgabe bis                                 |
+| Wiederholungsfälligkeit, Wiederholungsabstand | entfällt; sagen, wann ein Wort wiederkommt |
+| Leitner, Leitner-Prinzip                      | entfällt (die Boxen reichen)               |
+| Zahlenraum                                    | Zahlen bis … oder „Von“ und „Bis“          |
+| Browserprofil                                 | entfällt (Hinweis für Erwachsene)          |
+| Klassenbeitrag                                | zählt für deine Klasse                     |
+
+Bewusst erlaubt bleiben „Stapel“ (in der LernBox ein bekanntes Wort; kein Verwaltungsjargon wie „Stapelverwaltung“), „Box“ und „Wortbox“, „Stufe“ und „Runde“.
+
+Neue Fachwörter kommen mit Ersatz und Begründung in die Liste. Eine Ausnahme für eine einzelne Datei steht mit Grund in `CHILD_GLOSSARY_EXCEPTIONS`. Intern (Code, Kommentare, Domänenfehler, Tests) dürfen die Fachwörter bleiben.
+
+**Vorlesen.** Anleitungen der Hauptabläufe haben den Knopf „Vorlesen“ (`app/ui/read-aloud-button.tsx`). Er nutzt nur Stimmen, die auf dem Gerät laufen (Befund B-012), und fehlt, wenn es keine gibt.

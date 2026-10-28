@@ -71,9 +71,9 @@ export function AdaptiveProgressPanel() {
         </div>
       </div>
       <p className="ui-small ui-muted">
-        Jede Übung zählt. {summary.privateActivities} Aktivitäten bleiben rein
-        persönlich; {summary.classContributions} sind als Klassenbeitrag
-        gekennzeichnet. Vollständige Antworten werden nicht übertragen.
+        Jede Übung zählt. {summary.privateActivities} Übungen sieht nur du.{" "}
+        {summary.classContributions} zählen für deine Klasse. Ganze Antworten
+        werden nicht gesendet.
       </p>
     </div>
   );

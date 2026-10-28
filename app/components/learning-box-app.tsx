@@ -395,9 +395,7 @@ export function LearningBoxApp({
     if (!planQueue) setDirection(choice.direction);
     setSheet(null);
     if (planQueue ? planQueue.length === 0 : pool.length === 0) {
-      setNotice(
-        planQueue ? PLAN_DONE_NOTICE : "Dafür ist gerade nichts fällig.",
-      );
+      setNotice(planQueue ? PLAN_DONE_NOTICE : "Dafür ist heute nichts dran.");
       return;
     }
     setNotice("");

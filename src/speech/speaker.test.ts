@@ -4,6 +4,7 @@ import {
   SPEAK_DELAY_MS,
   SPEECH_RATE,
   VOICE_WAIT_MS,
+  hasLocalVoiceFor,
   hasVoiceFor,
   isSpeechAvailable,
   prepareSpeech,
@@ -31,6 +32,7 @@ type FakeVoice = {
   lang: string;
   voiceURI: string;
   default: boolean;
+  localService?: boolean;
 };
 const anna: FakeVoice = {
   name: "Anna (Premium)",
@@ -315,5 +317,54 @@ describe("prepareSpeech", () => {
     const ready = prepareSpeech("de-DE", { timeoutMs: 500 });
     await vi.advanceTimersByTimeAsync(600);
     await expect(ready).resolves.toBe("no-voice");
+  });
+});
+
+describe("local voices only (B-012)", () => {
+  const cloud: FakeVoice = {
+    name: "Google Deutsch",
+    lang: "de-DE",
+    voiceURI: "cloud",
+    default: false,
+    localService: false,
+  };
+  const onDevice: FakeVoice = {
+    name: "Anna",
+    lang: "de-DE",
+    voiceURI: "local",
+    default: false,
+    localService: true,
+  };
+
+  it("hasLocalVoiceFor ignores network voices", async () => {
+    installSynth([cloud]);
+    await preloadVoices();
+    expect(hasVoiceFor("de-DE")).toBe(true);
+    expect(hasLocalVoiceFor("de-DE")).toBe(false);
+  });
+
+  it("hasLocalVoiceFor finds a voice that runs on the device", async () => {
+    installSynth([cloud, onDevice]);
+    await preloadVoices();
+    expect(hasLocalVoiceFor("de-DE")).toBe(true);
+    expect(hasLocalVoiceFor("en-GB")).toBe(false);
+  });
+
+  it("speaks with the local voice even if a network voice ranks higher", async () => {
+    const env = installSynth([cloud, onDevice]);
+    const done = speak("Rad", "de-DE", { localOnly: true });
+    await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
+    expect(env.spoken).toHaveLength(1);
+    expect(env.spoken[0]).toMatchObject({ voice: onDevice });
+    await vi.advanceTimersByTimeAsync(50);
+    await done;
+  });
+
+  it("stays silent instead of falling back to a network voice", async () => {
+    const env = installSynth([cloud]);
+    await speak("Rad", "de-DE", { localOnly: true });
+    await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
+    expect(env.spoken).toHaveLength(0);
+    expect(env.log).toEqual([]);
   });
 });

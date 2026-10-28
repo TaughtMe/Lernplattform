@@ -22,7 +22,7 @@ const text = TEXTBOX_TEXTS[0]!; // „Der kleine Hund“
 const databases: PersonalLearningDatabase[] = [];
 
 /**
- * Ein Durchlauf mit allen vier Durchgängen tippt den ganzen Text und rendert
+ * Ein Durchlauf mit allen vier Runden tippt den ganzen Text und rendert
  * dabei viele Ansichten. Allein dauert er etwa 2 s; auf einem ausgelasteten
  * Rechner (voller Testlauf, CI) reichen die 5 s Standard nicht. Gilt nur für
  * diese Durchläufe, nicht pauschal.
@@ -80,7 +80,7 @@ async function playRound(
 ) {
   expect(
     await screen.findByRole("heading", {
-      name: `Durchgang ${round} von 4: Merken`,
+      name: `Runde ${round} von 4: Merken`,
     }),
   ).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Ich bin bereit" }));
@@ -97,14 +97,14 @@ async function playRound(
   await user.click(screen.getByRole("button", { name: "Prüfen" }));
   expect(
     await screen.findByRole("heading", {
-      name: `Durchgang ${round} von 4: Kontrolle`,
+      name: `Runde ${round} von 4: Kontrolle`,
     }),
   ).toBeInTheDocument();
 }
 
 describe("TextboxApp", () => {
   it(
-    "führt einen Text durch alle vier Durchgänge und merkt sich den Bestwert",
+    "führt einen Text durch alle vier Runden und merkt sich den Bestwert",
     async () => {
       const user = userEvent.setup();
       const { database, repository } = await setup();
@@ -114,7 +114,7 @@ describe("TextboxApp", () => {
         expect(screen.getByText("0 %")).toBeInTheDocument(); // alle Lücken leer
         await user.click(
           screen.getByRole("button", {
-            name: `Weiter zu Durchgang ${round + 1}`,
+            name: `Weiter zu Runde ${round + 1}`,
           }),
         );
       }
@@ -142,7 +142,7 @@ describe("TextboxApp", () => {
     VIER_DURCHGAENGE,
   );
 
-  it("zeigt in Durchgang 1 Markierungen und schreibt in den Lücken", async () => {
+  it("zeigt in Runde 1 Markierungen und schreibt in den Lücken", async () => {
     const user = userEvent.setup();
     await setup();
     await startText(user);
@@ -158,7 +158,7 @@ describe("TextboxApp", () => {
     expect(screen.queryByRole("timer")).not.toBeInTheDocument();
   });
 
-  /** Legt vor dem Öffnen eine Einheit an, die nach Durchgang 1 unterbrochen wurde. */
+  /** Legt vor dem Öffnen eine Einheit an, die nach Runde 1 unterbrochen wurde. */
   async function prepareOpen(
     repository: ReturnType<typeof createTextboxRepository>,
   ) {
@@ -178,7 +178,7 @@ describe("TextboxApp", () => {
     );
   }
 
-  it("setzt eine angefangene Einheit mit der Merkphase des nächsten Durchgangs fort", async () => {
+  it("setzt eine angefangene Einheit mit der Merkphase des nächsten Runde fort", async () => {
     const user = userEvent.setup();
     await setup(prepareOpen);
     await user.click(
@@ -187,10 +187,10 @@ describe("TextboxApp", () => {
     const group = await screen.findByRole("group", {
       name: "Angefangene Übung",
     });
-    expect(group).toHaveTextContent("Durchgang 2 von 4");
+    expect(group).toHaveTextContent("Runde 2 von 4");
     await user.click(within(group).getByRole("button", { name: "Fortsetzen" }));
     expect(
-      await screen.findByRole("heading", { name: "Durchgang 2 von 4: Merken" }),
+      await screen.findByRole("heading", { name: "Runde 2 von 4: Merken" }),
     ).toBeInTheDocument();
     expect(document.querySelector("mark")).toBeNull();
   });
@@ -203,12 +203,12 @@ describe("TextboxApp", () => {
     );
     await user.click(screen.getByRole("button", { name: "Neu beginnen" }));
     expect(
-      await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" }),
+      await screen.findByRole("heading", { name: "Runde 1 von 4: Merken" }),
     ).toBeInTheDocument();
     expect(await repository.getOpen(text.id)).toBeUndefined();
   });
 
-  it("behält beim Wiederholen von Durchgang 1 den ersten Versuch gespeichert", async () => {
+  it("behält beim Wiederholen von Runde 1 den ersten Versuch gespeichert", async () => {
     const user = userEvent.setup();
     const { repository } = await setup();
     await startText(user);
@@ -216,38 +216,32 @@ describe("TextboxApp", () => {
     await waitFor(async () =>
       expect(await repository.getOpen(text.id)).toBeDefined(),
     );
-    await user.click(
-      screen.getByRole("button", { name: "Durchgang wiederholen" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Runde wiederholen" }));
     expect(
-      await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" }),
+      await screen.findByRole("heading", { name: "Runde 1 von 4: Merken" }),
     ).toBeInTheDocument();
     expect((await repository.getOpen(text.id))?.rounds).toHaveLength(1);
   });
 
-  it("speichert beim Wiederholen von Durchgang 2 weiter beide ersten Versuche", async () => {
+  it("speichert beim Wiederholen von Runde 2 weiter beide ersten Versuche", async () => {
     const user = userEvent.setup();
     const { repository } = await setup();
     await startText(user);
     await playRound(user, 1);
-    await user.click(
-      screen.getByRole("button", { name: "Weiter zu Durchgang 2" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Weiter zu Runde 2" }));
     await playRound(user, 2);
     await waitFor(async () =>
       expect((await repository.getOpen(text.id))?.rounds).toHaveLength(2),
     );
-    await user.click(
-      screen.getByRole("button", { name: "Durchgang wiederholen" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Runde wiederholen" }));
     expect(
-      await screen.findByRole("heading", { name: "Durchgang 2 von 4: Merken" }),
+      await screen.findByRole("heading", { name: "Runde 2 von 4: Merken" }),
     ).toBeInTheDocument();
     expect((await repository.getOpen(text.id))?.rounds).toHaveLength(2);
   });
 
   it(
-    "zählt in Durchgang 4 nur den ersten Versuch; die Korrektur bleibt Übung",
+    "zählt in Runde 4 nur den ersten Versuch; die Korrektur bleibt Übung",
     async () => {
       const user = userEvent.setup();
       const { repository, database } = await setup();
@@ -256,7 +250,7 @@ describe("TextboxApp", () => {
         await playRound(user, round);
         await user.click(
           screen.getByRole("button", {
-            name: `Weiter zu Durchgang ${round + 1}`,
+            name: `Weiter zu Runde ${round + 1}`,
           }),
         );
       }
@@ -265,7 +259,7 @@ describe("TextboxApp", () => {
       expect(screen.getByText(/Wörtern auf Anhieb richtig/)).toBeVisible();
       const first = screen.getByText(/ %$/).textContent;
       await user.click(
-        screen.getByRole("button", { name: "Durchgang wiederholen" }),
+        screen.getByRole("button", { name: "Runde wiederholen" }),
       );
       // Korrektur: der ganze Text, fehlerfrei.
       await playRound(user, 4);
@@ -314,7 +308,7 @@ describe("TextboxApp", () => {
         await playRound(user, round);
         await user.click(
           screen.getByRole("button", {
-            name: `Weiter zu Durchgang ${round + 1}`,
+            name: `Weiter zu Runde ${round + 1}`,
           }),
         );
       }
@@ -357,7 +351,7 @@ describe("TextboxApp", () => {
         await playRound(user, round);
         await user.click(
           screen.getByRole("button", {
-            name: `Weiter zu Durchgang ${round + 1}`,
+            name: `Weiter zu Runde ${round + 1}`,
           }),
         );
       }
@@ -386,7 +380,7 @@ describe("TextboxApp", () => {
       await user.click(screen.getByRole("button", { name: "Erneut üben" }));
       expect(
         await screen.findByRole("heading", {
-          name: "Durchgang 1 von 4: Merken",
+          name: "Runde 1 von 4: Merken",
         }),
       ).toBeInTheDocument();
     },
@@ -408,7 +402,7 @@ describe("TextboxApp", () => {
           name: `${text.title} mit deinen Wörtern üben`,
         }),
       );
-      await screen.findByRole("heading", { name: "Durchgang 1 von 4: Merken" });
+      await screen.findByRole("heading", { name: "Runde 1 von 4: Merken" });
       // „Wiese“ gehört nicht zu den Zielwörtern, wird aber als geübtes Wort markiert.
       expect(
         [...document.querySelectorAll("mark")].map((mark) =>
@@ -453,7 +447,7 @@ describe("TextboxApp", () => {
         await playRound(user, round);
         await user.click(
           screen.getByRole("button", {
-            name: `Weiter zu Durchgang ${round + 1}`,
+            name: `Weiter zu Runde ${round + 1}`,
           }),
         );
       }

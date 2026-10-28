@@ -63,7 +63,7 @@ describe("TextboxProgressSection", () => {
     expect(section).toHaveTextContent("3Abgeschlossene Übungen");
     expect(
       within(section).getByRole("img", {
-        name: /Dein Ergebnis in Durchgang 4, alle Übungen: 3 Werte/,
+        name: /Dein Ergebnis in Runde 4, alle Übungen: 3 Werte/,
       }),
     ).toBeInTheDocument();
     const byDifficulty = within(section).getByRole("list", {

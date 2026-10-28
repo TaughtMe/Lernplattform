@@ -151,7 +151,7 @@ export function StudentAssignments() {
                     <p className="ui-small">{assignment.instructions}</p>
                     <p className="ui-tiny ui-muted">
                       {assignment.dueDate
-                        ? `Fällig am ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`
+                        ? `Abgabe bis ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`
                         : "Ohne Frist"}
                     </p>
                   </div>
