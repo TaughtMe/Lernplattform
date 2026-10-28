@@ -75,7 +75,7 @@ export function DailyPracticePanel({
   if (practice.length === 0) {
     return (
       <EmptyState title="Im Moment ist nichts offen.">
-        Fehlerhafte oder später fällige Inhalte erscheinen automatisch hier.
+        Fehler und Karten, die bald wiederkommen, erscheinen hier.
       </EmptyState>
     );
   }
@@ -97,7 +97,7 @@ export function DailyPracticePanel({
               {item.reason === "error"
                 ? "Aus deinem letzten Fehler"
                 : item.reason === "due"
-                  ? "Heute fällig"
+                  ? "Heute dran"
                   : "Dein nächster Schritt"}
             </Pill>
           </span>

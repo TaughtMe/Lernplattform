@@ -257,8 +257,8 @@ export function RunningDictationApp() {
     setTransferDeckId(result.deckId);
     setTransferNotice(
       result.added > 0
-        ? `${result.added} Vokabeln sind jetzt in deiner LernBox fällig.`
-        : `${result.reused} vorhandene Vokabeln wurden wieder fällig markiert.`,
+        ? `${result.added} Vokabeln sind heute in deiner LernBox dran.`
+        : `${result.reused} vorhandene Vokabeln sind heute wieder dran.`,
     );
   }
 

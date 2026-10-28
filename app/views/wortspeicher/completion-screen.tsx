@@ -88,7 +88,7 @@ export function CompletionScreen({
             Geschafft!
           </h1>
           <p className={styles.subtitle}>
-            {title} · Merkstufe {stage}: {STAGE_COPY[stage].title}
+            {title} · Stufe {stage}: {STAGE_COPY[stage].title}
           </p>
         </div>
       </header>
@@ -157,8 +157,8 @@ export function CompletionScreen({
 
       <p className="ui-small ui-muted">
         {mode === "due"
-          ? "Merkstufe und Wiederholungsfälligkeit wurden lokal gespeichert. Wörter, die du auf Anhieb richtig geschrieben hast, kommen später wieder; bei Fehlern oder mit Hilfe sind sie morgen wieder dran."
-          : "Merkstufe und Fälligkeit wurden lokal gespeichert. Freies Üben verändert den Abstand der Wiederholung nicht; Wörter mit Fehler oder Hilfe sind spätestens morgen wieder dran."}
+          ? "Deine Stufen sind gespeichert. Richtige Wörter kommen später wieder. Wörter mit Fehler oder Hilfe kommen morgen wieder."
+          : "Deine Stufen sind gespeichert. Freies Üben ändert nicht, wann Wörter wiederkommen. Wörter mit Fehler oder Hilfe kommen spätestens morgen wieder."}
       </p>
 
       {textSuggestion}

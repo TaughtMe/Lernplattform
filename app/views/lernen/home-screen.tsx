@@ -142,7 +142,7 @@ export function HomeScreen(props: HomeScreenProps) {
                   ? "Schön, dass du da bist! Womit möchtest du anfangen?"
                   : target === 0
                     ? done > 0
-                      ? "Alles Fällige erledigt – alles Weitere ist ein Extra"
+                      ? "Alles für heute erledigt – alles Weitere ist ein Extra"
                       : "Heute ist noch nichts geplant – such dir etwas aus"
                     : done >= target
                       ? "Tagesziel geschafft – alles Weitere ist ein Extra"

@@ -162,8 +162,8 @@ function eventCandidates(
       candidates.push({
         id: "vocabulary-events-due",
         module: "vocabulary",
-        title: first.practice?.title ?? "Fällige Vokabeln wiederholen",
-        detail: "Der passende Wiederholungsabstand ist erreicht.",
+        title: first.practice?.title ?? "Vokabeln für heute üben",
+        detail: "Diese Karten sind heute wieder dran.",
         route: first.practice?.route ?? "/lernbox",
         reason: "due",
         amount: due.length,
@@ -268,11 +268,11 @@ export function createLearningRecommendationRepository(
           title:
             errorCards.length > 0
               ? "Unsichere Vokabeln erneut abrufen"
-              : "Fällige Vokabeln wiederholen",
+              : "Vokabeln für heute üben",
           detail:
             errorCards.length > 0
               ? "Diese Karten waren zuletzt noch nicht sicher."
-              : "Der passende Wiederholungsabstand ist erreicht.",
+              : "Diese Karten sind heute wieder dran.",
           route: "/lernbox",
           reason: errorCards.length > 0 ? "error" : "due",
           amount: errorCards.length || dueCards.length,
@@ -301,11 +301,11 @@ export function createLearningRecommendationRepository(
           title:
             errorWords.length > 0
               ? "Unsichere Lernwörter festigen"
-              : "Fällige Lernwörter wiederholen",
+              : "Lernwörter für heute üben",
           detail:
             errorWords.length > 0
-              ? "Die passenden Merkstufen helfen beim nächsten sicheren Abruf."
-              : "Die Wörter sind nach ihrem persönlichen Abstand wieder fällig.",
+              ? "Übe sie noch einmal, dann sitzen sie."
+              : "Diese Wörter sind heute wieder dran.",
           route: "/frei/german/lernwoerter",
           reason: errorWords.length > 0 ? "error" : "due",
           amount: errorWords.length || dueWords.length,

@@ -476,7 +476,7 @@ test("a native Laufdiktat mistake becomes due LernBox practice", async ({
   await page.getByRole("button", { name: "Runde abschließen" }).click();
 
   await expect(
-    page.getByText("1 Vokabeln sind jetzt in deiner LernBox fällig."),
+    page.getByText("1 Vokabeln sind heute in deiner LernBox dran."),
   ).toBeVisible();
   await page.getByRole("link", { name: "Meine Fehler jetzt üben" }).click();
   await expect(
@@ -582,7 +582,7 @@ test("a vocabulary session advances through several due cards", async ({
 }) => {
   await enablePreview(page);
   await page.goto("/klasse/7b/aufgaben/vokabeln");
-  await expect(page.getByText("5 von 5 Karten fällig")).toBeVisible();
+  await expect(page.getByText("5 von 5 Karten heute dran")).toBeVisible();
   await page.getByRole("button", { name: "Lernrunde starten" }).click();
   await expect(page.getByLabel("Karte 1 von 5")).toBeVisible();
 

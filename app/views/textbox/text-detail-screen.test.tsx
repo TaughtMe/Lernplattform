@@ -61,7 +61,7 @@ describe("TextDetailScreen", () => {
     const user = userEvent.setup();
     setup();
     const accessibleName =
-      "Dein Ergebnis in Durchgang 4: 3 Werte, von 70 Prozent auf 60 Prozent gesunken, Bestwert 90 Prozent.";
+      "Dein Ergebnis in Runde 4: 3 Werte, von 70 Prozent auf 60 Prozent gesunken, Bestwert 90 Prozent.";
     const line = screen.getByRole("img");
     expect(line).toHaveAccessibleName(accessibleName);
     expect(line.querySelector("path[class*=line]")).not.toBeNull();
@@ -76,7 +76,7 @@ describe("TextDetailScreen", () => {
     expect(bars.querySelectorAll("path[class*=bar]")).toHaveLength(3);
   });
 
-  it("listet alle Übungen, neueste zuerst, mit den vier Durchgängen", () => {
+  it("listet alle Übungen, neueste zuerst, mit den vier Runden", () => {
     setup();
     const list = screen.getByRole("list", { name: "Alle Übungen" });
     const items = within(list)
@@ -85,8 +85,8 @@ describe("TextDetailScreen", () => {
     expect(items).toHaveLength(3);
     expect(items[0]).toHaveTextContent("60 %");
     expect(items[2]).toHaveTextContent("70 %");
-    expect(items[0]).toHaveTextContent("Durchgang 4: 60 %");
-    expect(items[1]).toHaveTextContent("Durchgang 1: 100 %");
+    expect(items[0]).toHaveTextContent("Runde 4: 60 %");
+    expect(items[1]).toHaveTextContent("Runde 1: 100 %");
   });
 
   it("hält die Reflexionsfragen zunächst geschlossen", async () => {

@@ -105,8 +105,8 @@ export function WordStoreProgressSection({
           </div>
         </div>
 
-        <h3 className="ui-label">Wörter nach Merkstufe</h3>
-        <ul className="ui-stack" aria-label="Wörter nach Merkstufe">
+        <h3 className="ui-label">Wörter nach Stufe</h3>
+        <ul className="ui-stack" aria-label="Wörter nach Stufe">
           {LEARNING_WORD_STAGES.map((stage) => (
             <li key={stage}>
               <span className="ui-small">
@@ -116,7 +116,7 @@ export function WordStoreProgressSection({
               <ProgressBar
                 value={summary.byStage[stage]}
                 max={maxInStage}
-                label={`Merkstufe ${stage}: ${summary.byStage[stage]} Wörter`}
+                label={`Stufe ${stage}: ${summary.byStage[stage]} Wörter`}
               />
             </li>
           ))}

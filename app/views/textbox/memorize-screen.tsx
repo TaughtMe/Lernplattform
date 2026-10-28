@@ -16,7 +16,7 @@ export type RunFrameProps = Pick<
   "layout" | "textTitle" | "textMeta" | "onBack" | "onToggleLayout"
 >;
 
-/** Merkphase: der ganze Text; in Durchgang 1 sind die späteren Lücken markiert. */
+/** Merkphase: der ganze Text; in Runde 1 sind die späteren Lücken markiert. */
 export function MemorizeScreen({
   round,
   tokens,
@@ -29,7 +29,7 @@ export function MemorizeScreen({
 }: RunFrameProps & {
   round: 1 | 2 | 3 | 4;
   tokens: readonly LayoutToken[];
-  /** Wortindizes, die markiert werden (nur Durchgang 1). */
+  /** Wortindizes, die markiert werden (nur Runde 1). */
   markedWords: ReadonlySet<number>;
   secondsLeft: number;
   totalSeconds: number;

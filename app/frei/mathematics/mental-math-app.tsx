@@ -322,7 +322,7 @@ export function MentalMathApp({
       setPreparedSettings(settingsKey);
       setNotice("");
     } catch {
-      setNotice("Bitte wähle einen gültigen Zahlenraum.");
+      setNotice("Bitte wähle gültige Zahlen bei „Von“ und „Bis“.");
     }
   }
 
@@ -357,7 +357,7 @@ export function MentalMathApp({
       );
     } catch {
       setNotice(
-        "Keine passenden Aufgaben. Bitte prüfe Zahlenraum, Rechenarten und Nullregeln.",
+        "Keine passenden Aufgaben. Prüfe Zahlen, Rechenarten und Regeln.",
       );
     }
   }
@@ -539,8 +539,8 @@ export function MentalMathApp({
             Kopfrechnen
           </h1>
           <p className="ui-small ui-muted">
-            Stelle genau die Aufgaben zusammen, die du üben möchtest. Alle
-            Zahlen und Ergebnisse bleiben in deinem gewählten Zahlenraum.
+            Stelle deine Aufgaben selbst zusammen. Alle Zahlen liegen zwischen
+            „Von“ und „Bis“.
           </p>
         </div>
 
@@ -603,8 +603,7 @@ export function MentalMathApp({
                 </Button>
               ) : null}
               <p className="ui-tiny ui-muted">
-                Deine Antworten bleiben auf diesem Gerät. Nutze auf gemeinsam
-                genutzten Geräten ein eigenes Browserprofil.
+                Deine Antworten bleiben auf diesem Gerät.
               </p>
             </>
           ) : null}
@@ -912,8 +911,7 @@ export function MentalMathApp({
             </Button>
           ) : null}
           <p className="ui-tiny ui-muted">
-            Eine Korrektur allein reicht noch nicht. Sichere Antworten werden
-            später wiederholt.
+            Aufgaben mit Fehlern kommen später noch einmal.
           </p>
           <div className="ui-grid2">
             <Button variant="ghost" onClick={() => setScreen("setup")}>

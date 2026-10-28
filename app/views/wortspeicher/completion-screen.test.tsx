@@ -95,18 +95,14 @@ describe("CompletionScreen", () => {
   it("erklärt den Lernstand je nach Art der Runde", () => {
     setup({ mode: "free" });
     expect(
-      screen.getByText(
-        /Freies Üben verändert den Abstand der Wiederholung nicht/,
-      ),
+      screen.getByText(/Freies Üben ändert nicht, wann Wörter wiederkommen/),
     ).toBeInTheDocument();
   });
 
   it("erklärt den Lernstand der fälligen Wiederholung", () => {
     setup({ mode: "due" });
     expect(
-      screen.getByText(
-        /bei Fehlern oder mit Hilfe sind sie morgen wieder dran/,
-      ),
+      screen.getByText(/Wörter mit Fehler oder Hilfe kommen morgen wieder/),
     ).toBeInTheDocument();
   });
 

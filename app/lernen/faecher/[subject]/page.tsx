@@ -52,8 +52,8 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
             Heute üben
           </h2>
           <p className="ui-small ui-muted">
-            Fällige Inhalte und frühere Fehler aus {subject.label} werden hier
-            als eigener Fachblock ausgewählt.
+            Das ist heute dran in {subject.label}. Auch frühere Fehler sind
+            dabei.
           </p>
           <DailyPracticePanel enabledModules={[subject.id]} />
         </Card>
@@ -70,7 +70,7 @@ export default async function SubjectPage({ params }: SubjectPageProps) {
             </h2>
             <p className="ui-small ui-muted">
               Wähle Inhalt und Übungsart selbst. Die Ergebnisse fließen in
-              denselben persönlichen Lernstand wie fällige Wiederholungen.
+              denselben Lernstand wie das Üben für heute.
             </p>
             <ButtonLink href={subject.practiceRoute}>
               {subject.practiceLabel}

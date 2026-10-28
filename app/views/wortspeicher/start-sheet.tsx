@@ -26,7 +26,7 @@ export type StartSheetStage = {
   disabledHint?: string | undefined;
 };
 
-/** Startblatt: Merkstufe, Rundengröße und Starten (Plan 2.3). */
+/** Startblatt: Stufe, Rundengröße und Starten (Plan 2.3). */
 export function StartSheet({
   title,
   strategy,
@@ -84,7 +84,7 @@ export function StartSheet({
         ) : null}
 
         <h3 className="ui-label" id="stufen-title">
-          Merkstufe wählen
+          Stufe wählen
         </h3>
         <ol className={styles.stages} aria-labelledby="stufen-title">
           {stages.map((entry) => (

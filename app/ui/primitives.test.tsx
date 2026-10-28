@@ -72,12 +72,12 @@ describe("Lernraum-UI-Grundbausteine", () => {
   it("begrenzt Fortschrittswerte und beschriftet sie", () => {
     const { container } = render(
       <>
-        <ProgressBar value={30} max={24} label="Heute fällig" />
+        <ProgressBar value={30} max={24} label="Heute dran" />
         <ProgressBar value={3} max={0} label="Leer" />
         <ProgressRing value={18} max={24} size={120} />
       </>,
     );
-    const bar = screen.getByRole("progressbar", { name: "Heute fällig" });
+    const bar = screen.getByRole("progressbar", { name: "Heute dran" });
     expect(bar).toHaveAttribute("aria-valuenow", "24");
     expect(bar.querySelector("span")).toHaveStyle({ width: "100%" });
     expect(

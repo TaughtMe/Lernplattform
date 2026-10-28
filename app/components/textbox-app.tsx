@@ -60,7 +60,7 @@ const SAVE_ISSUE =
   "Die Übung konnte auf diesem Gerät nicht gespeichert werden. Du kannst trotzdem weiterüben.";
 
 /**
- * Steuert die Textbox: Bibliothek, vier Durchgänge mit Merken, Schreiben und
+ * Steuert die Textbox: Bibliothek, vier Runden mit Merken, Schreiben und
  * Kontrolle sowie das Speichern. Die Ansichten bekommen nur Props.
  */
 export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
@@ -255,7 +255,7 @@ export function TextboxApp({ repository }: { repository?: TextboxRepository }) {
   }
 
   /**
-   * „Durchgang wiederholen“: zurück zur Merkphase als Übungsversuch. Das
+   * „Runde wiederholen“: zurück zur Merkphase als Übungsversuch. Das
    * Ergebnis des ersten Versuchs bleibt gespeichert und zählt allein; erst
    * der neue Versuch wird beim Abgeben an ihn gehängt.
    */

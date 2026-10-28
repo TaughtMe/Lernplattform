@@ -22,7 +22,7 @@ import { TextFlow } from "./text-flow";
 /** Längste Eingabe in einer Lücke; schützt vor festgehaltenen Tasten. */
 export const MAX_GAP_LENGTH = 40;
 
-/** Breite der Lücken in Durchgang 3 (kalibrierbar, Plan 1.4). */
+/** Breite der Lücken in Runde 3 (kalibrierbar, Plan 1.4). */
 const UNIFORM_GAP_WIDTH = 11;
 
 /** Die Schreibzeit startet mit dem ersten Tastenanschlag. */
@@ -30,7 +30,7 @@ function markStart(ref: { current: number | null }) {
   if (ref.current === null) ref.current = Date.now();
 }
 
-/** Schreibt direkt in die Lücken des Textes (Durchgang 1 bis 3). */
+/** Schreibt direkt in die Lücken des Textes (Runde 1 bis 3). */
 export function GapWritingScreen({
   round,
   tokens,

@@ -16,10 +16,10 @@ import type { RunFrameProps } from "./memorize-screen";
 import { RunButton, RunLayout } from "./run-layout";
 import styles from "./run-layout.module.css";
 
-/** Längster Text in Durchgang 4; schützt vor festgehaltenen Tasten. */
+/** Längster Text in Runde 4; schützt vor festgehaltenen Tasten. */
 export const MAX_FREE_TEXT_LENGTH = 4000;
 
-/** Durchgang 4: der ganze Text aus dem Gedächtnis in ein leeres Feld. */
+/** Runde 4: der ganze Text aus dem Gedächtnis in ein leeres Feld. */
 export function FreeWritingScreen({
   onSubmit,
   initialFocus = true,

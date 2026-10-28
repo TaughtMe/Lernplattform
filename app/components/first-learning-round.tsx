@@ -279,8 +279,8 @@ export function FirstLearningRound() {
           School words
         </h1>
         <p className="ui-small ui-muted">
-          Lerne einen ganzen Stapel in beide Richtungen. Fällige Karten werden
-          automatisch ausgewählt und nach dem Leitner-Prinzip wiederholt.
+          Lerne einen ganzen Stapel in beide Richtungen. Die Karten für heute
+          sind schon ausgewählt.
         </p>
       </div>
 
@@ -406,10 +406,10 @@ export function FirstLearningRound() {
               <p className="ui-small">
                 {sessionItems.length > 0
                   ? `${stats.correct} gewusst · ${stats.wrong} noch zu üben`
-                  : "Für diese Auswahl ist im Moment keine Karte fällig."}
+                  : "Heute ist hier keine Karte dran."}
               </p>
               <div className="ui-grid2">
-                <Button onClick={startRound}>Fällige Karten neu laden</Button>
+                <Button onClick={startRound}>Karten für heute neu laden</Button>
                 <Button variant="ghost" onClick={() => setStage("overview")}>
                   Auswahl ändern
                 </Button>
@@ -499,7 +499,7 @@ function SessionOverview({
       <p className="ui-eyebrow">Lernrunde vorbereiten</p>
       <h2 className="ui-h-section">{stack.title}</h2>
       <p className="ui-small ui-muted">
-        Wähle, wie du die heute fälligen Karten bearbeiten möchtest.
+        Wähle, wie du die Karten für heute üben willst.
       </p>
 
       <fieldset className="ui-checks">
@@ -552,7 +552,7 @@ function SessionOverview({
       <div className="ui-between ui-wrap">
         <span className="ui-small">
           <strong>{dueCount}</strong> von {exampleBundle.vocabulary.length}{" "}
-          Karten fällig
+          Karten heute dran
         </span>
         <Button onClick={onStart} disabled={loading}>
           {loading ? "Lernstand wird geladen …" : "Lernrunde starten"}

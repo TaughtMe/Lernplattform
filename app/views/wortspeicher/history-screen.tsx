@@ -79,7 +79,7 @@ export function HistoryScreen({
   const questions = reflectionQuestionsFor(ofStage);
   const chartProps = {
     points,
-    title: `Dein Ergebnis in Merkstufe ${stage}`,
+    title: `Dein Ergebnis in Stufe ${stage}`,
     yLabel: "Auf Anhieb richtig",
     xLabel: "Runde",
   };
@@ -119,7 +119,7 @@ export function HistoryScreen({
         </EmptyState>
       ) : (
         <>
-          <div className="ui-seg" role="group" aria-label="Merkstufe">
+          <div className="ui-seg" role="group" aria-label="Stufe">
             {LEARNING_WORD_STAGES.map((value) => (
               <button
                 key={value}

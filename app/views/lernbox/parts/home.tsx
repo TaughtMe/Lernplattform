@@ -77,8 +77,7 @@ export function Home(props: LernBoxScreenProps) {
           <BoxChart decks={decks} onPick={(box) => start(`box:${box}`)} />
           {longUnpracticed > 0 ? (
             <p className={styles.muted}>
-              {longUnpracticed} lange nicht geübt (seit mindestens 14 Tagen
-              überfällig)
+              {longUnpracticed} lange nicht geübt (seit 14 Tagen oder mehr)
             </p>
           ) : null}
           <p className={styles.muted}>

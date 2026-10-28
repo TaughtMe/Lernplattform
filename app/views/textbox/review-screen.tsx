@@ -14,7 +14,7 @@ import { TextFlow } from "./text-flow";
  * falsch = eigene Schreibweise durchgestrichen + richtiges Wort grün, fehlt =
  * rote Umrandung, zusätzlich = nur durchgestrichen, Groß/klein = durchgestrichen
  * + Wort mit Akzent-Umrandung. Die unsichtbaren Präfixe nennen die Art für
- * Screenreader. In Durchgang 4 bleiben richtige Wörter schlicht.
+ * Screenreader. In Runde 4 bleiben richtige Wörter schlicht.
  */
 function ResultWord({
   result,
@@ -69,7 +69,7 @@ function ResultWord({
   );
 }
 
-/** Kontrolle nach einem Durchgang: Original und Eingabe Wort für Wort im Heft. */
+/** Kontrolle nach einer Runde: Original und Eingabe Wort für Wort im Heft. */
 export function ReviewScreen({
   tokens,
   result: firstAttempt,
@@ -79,7 +79,7 @@ export function ReviewScreen({
   ...frame
 }: RunFrameProps & {
   tokens: readonly LayoutToken[];
-  /** Durchgang mit erstem Versuch und gegebenenfalls Übungsversuchen. */
+  /** Runde mit erstem Versuch und gegebenenfalls Übungsversuchen. */
   result: TextboxRoundResult;
   /** Gezeigt wird der jüngste Übungsversuch; er zählt nicht (erster Versuch zählt). */
   retry?: boolean;
@@ -117,12 +117,10 @@ export function ReviewScreen({
       actions={
         <>
           <RunButton variant="secondary" onClick={onRepeat}>
-            Durchgang wiederholen
+            Runde wiederholen
           </RunButton>
           <RunButton onClick={onNext}>
-            {round === 4
-              ? "Ergebnis ansehen"
-              : `Weiter zu Durchgang ${round + 1}`}
+            {round === 4 ? "Ergebnis ansehen" : `Weiter zu Runde ${round + 1}`}
           </RunButton>
         </>
       }

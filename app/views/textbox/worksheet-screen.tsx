@@ -63,8 +63,8 @@ export function WorksheetScreen({
       </p>
       {rows.length === 0 ? (
         <EmptyState title="Noch keine Textbox-Übung abgeschlossen">
-          Sobald du einen Text in allen vier Durchgängen geschafft hast,
-          erscheint er hier.
+          Sobald du einen Text in allen vier Runden geschafft hast, erscheint er
+          hier.
         </EmptyState>
       ) : (
         <table className={styles.table}>
