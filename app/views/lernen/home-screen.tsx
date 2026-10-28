@@ -2,8 +2,13 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { avatarLabel } from "../../../src/domain/learner-profile";
 import { Icon } from "../../ui/icons";
+import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./home-screen.module.css";
+
+/** Begrüßung beim ersten Öffnen; wird auch vorgelesen. */
+const FIRST_CONTACT_INTRO =
+  "Schön, dass du da bist! Womit möchtest du anfangen?";
 
 export type WeekDay = {
   short: string;
@@ -139,7 +144,7 @@ export function HomeScreen(props: HomeScreenProps) {
               </p>
               <p className={styles.today}>
                 {firstContact
-                  ? "Schön, dass du da bist! Womit möchtest du anfangen?"
+                  ? FIRST_CONTACT_INTRO
                   : target === 0
                     ? done > 0
                       ? "Alles für heute erledigt – alles Weitere ist ein Extra"
@@ -148,6 +153,11 @@ export function HomeScreen(props: HomeScreenProps) {
                       ? "Tagesziel geschafft – alles Weitere ist ein Extra"
                       : `${done} von ${target} ${target === 1 ? "Aufgabe" : "Aufgaben"} heute`}
               </p>
+              {firstContact ? (
+                <ReadAloudButton
+                  text={`${FIRST_CONTACT_INTRO} ${firstContact.areas.map((area) => area.title).join(", ")}.`}
+                />
+              ) : null}
             </div>
             <div className={styles.actions}>
               <Link href={props.continueHref} className={styles.continue}>

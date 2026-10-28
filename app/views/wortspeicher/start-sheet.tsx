@@ -3,6 +3,7 @@
 import type { LearningWordStage } from "../../../src/domain/learning-word";
 import { practicedWordsLabel } from "../../../src/domain/word-store-progress";
 import { Button, Notice } from "../../ui/primitives";
+import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { Sheet } from "../../ui/sheet";
 import {
   BLOCK_SIZES,
@@ -86,6 +87,10 @@ export function StartSheet({
         <h3 className="ui-label" id="stufen-title">
           Stufe wählen
         </h3>
+        <ReadAloudButton
+          label="Stufe vorlesen"
+          text={`Stufe ${stage}: ${STAGE_COPY[stage].title}. ${STAGE_COPY[stage].detail} Tippe auf Starten.`}
+        />
         <ol className={styles.stages} aria-labelledby="stufen-title">
           {stages.map((entry) => (
             <li key={entry.stage}>
