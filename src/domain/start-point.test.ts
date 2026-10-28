@@ -184,6 +184,7 @@ describe("Startpunkt: Folge des Kopfrechnens", () => {
     expect(mathSuggestion(tasks, given)).toEqual({
       subject: "math",
       levelId: "bis-100",
+      label: "Plus und Minus bis 100",
       operations: ["add", "subtract"],
       maxValue: 100,
       reason: "stopped",

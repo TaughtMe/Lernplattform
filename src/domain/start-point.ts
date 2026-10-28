@@ -224,6 +224,8 @@ export function spellingSuggestion(
 
 export type MathLevel = {
   id: string;
+  /** Kurzer Name für das Kind, z. B. „Plus und Minus bis 100“. */
+  label: string;
   operations: readonly MentalMathOperation[];
   maxValue: number;
   /** Ohne Angabe gelten alle Reihen. */
@@ -232,12 +234,42 @@ export type MathLevel = {
 
 /** Stufen des Kopfrechnens, aufsteigend (Zahlenraum, dann Einmaleins, dann Tausender). */
 export const MATH_LEVELS: readonly MathLevel[] = [
-  { id: "bis-10", operations: ["add", "subtract"], maxValue: 10 },
-  { id: "bis-20", operations: ["add", "subtract"], maxValue: 20 },
-  { id: "bis-100", operations: ["add", "subtract"], maxValue: 100 },
-  { id: "mal", operations: ["multiply"], maxValue: 100 },
-  { id: "geteilt", operations: ["divide"], maxValue: 100 },
-  { id: "bis-1000", operations: ["add", "subtract"], maxValue: 1000 },
+  {
+    id: "bis-10",
+    label: "Plus und Minus bis 10",
+    operations: ["add", "subtract"],
+    maxValue: 10,
+  },
+  {
+    id: "bis-20",
+    label: "Plus und Minus bis 20",
+    operations: ["add", "subtract"],
+    maxValue: 20,
+  },
+  {
+    id: "bis-100",
+    label: "Plus und Minus bis 100",
+    operations: ["add", "subtract"],
+    maxValue: 100,
+  },
+  {
+    id: "mal",
+    label: "Mal-Aufgaben (Einmaleins)",
+    operations: ["multiply"],
+    maxValue: 100,
+  },
+  {
+    id: "geteilt",
+    label: "Geteilt-Aufgaben (Einmaleins)",
+    operations: ["divide"],
+    maxValue: 100,
+  },
+  {
+    id: "bis-1000",
+    label: "Plus und Minus bis 1000",
+    operations: ["add", "subtract"],
+    maxValue: 1000,
+  },
 ];
 
 export type MathStartTask = { task: MentalMathTask; levelId: string };
@@ -284,6 +316,7 @@ export function isMathAnswerCorrect(task: MentalMathTask, input: string) {
 export type MathSuggestion = {
   subject: "math";
   levelId: string;
+  label: string;
   operations: readonly MentalMathOperation[];
   maxValue: number;
   reason: StartPointReason;
@@ -302,6 +335,7 @@ export function mathSuggestion(
   return {
     subject: "math",
     levelId: level.id,
+    label: level.label,
     operations: level.operations,
     maxValue: level.maxValue,
     reason: target.reason,
