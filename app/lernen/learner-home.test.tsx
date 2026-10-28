@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import Dexie from "dexie";
@@ -10,7 +10,10 @@ import {
   type LearningBoxCard,
 } from "../../src/domain/learning-box";
 import { learningWordId } from "../../src/domain/learning-word-progress";
+import { resolveStages, resolveVisibility } from "../../src/domain/release";
+import { markHardwareKeyboardSeen } from "../../src/storage/hardware-keyboard";
 import { PersonalLearningDatabase } from "../../src/storage/personal-learning-events";
+import { ReleaseProvider } from "../release/release-context";
 import { LearnerHome } from "./learner-home";
 
 // Die Startseite öffnet die Datenbank des persönlichen Bereichs mit dem
@@ -224,15 +227,126 @@ describe("LearnerHome", () => {
     ).toHaveAttribute("href", "/klasse/7b/aufgaben");
   });
 
-  it("zeigt ohne Lernstand keine Portion und keinen Rückstand", async () => {
+  it("begrüßt ein Kind ohne Lernstand mit drei Karten und „Loslegen“ statt „Weiterlernen“ (C-003)", async () => {
     render(<LearnerHome />);
     expect(
-      await screen.findByText("Heute ist nichts dran – frei üben"),
+      await screen.findByText(
+        "Schön, dass du da bist! Womit möchtest du anfangen?",
+      ),
     ).toBeVisible();
-    expect(screen.getByText("Für heute ist alles geschafft.")).toBeVisible();
+    const cards = within(
+      screen.getByRole("list", { name: "Das kannst du üben" }),
+    ).getAllByRole("link");
+    expect(cards.map((card) => card.textContent)).toEqual([
+      expect.stringContaining("Wörter üben"),
+      expect.stringContaining("Rechnen"),
+      expect.stringContaining("Vokabeln"),
+    ]);
+    expect(cards.map((card) => card.getAttribute("href"))).toEqual([
+      "/frei/german/lernwoerter",
+      "/frei/mathematics",
+      "/lernbox",
+    ]);
+    // Die Hauptschaltfläche führt in Deutsch, nie in die Tastenwelt.
+    const start = screen.getAllByRole("link", { name: "Loslegen" });
+    expect(start.length).toBeGreaterThan(0);
+    for (const link of start) {
+      expect(link).toHaveAttribute("href", "/frei/german/lernwoerter");
+    }
     expect(
-      screen.getAllByRole("link", { name: "Weiterlernen" })[0],
-    ).toHaveAttribute("href", "/ueben");
+      screen.queryByRole("link", { name: "Weiterlernen" }),
+    ).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Heute ist nichts dran");
+    expect(document.body).not.toHaveTextContent("Tastenwelt");
+    expect(screen.queryByText("schwierige Wörter")).not.toBeInTheDocument();
+  });
+
+  it("zeigt im Erstkontakt nur Bereiche, die laut Freigaberegister sichtbar sind", async () => {
+    render(
+      <ReleaseProvider
+        value={resolveVisibility(
+          resolveStages("wortspeicher=aus,lernbox=vorschau"),
+          false,
+        )}
+      >
+        <LearnerHome />
+      </ReleaseProvider>,
+    );
+    const list = await screen.findByRole("list", {
+      name: "Das kannst du üben",
+    });
+    expect(
+      within(list)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/frei/mathematics"]);
+    for (const link of screen.getAllByRole("link", { name: "Loslegen" })) {
+      expect(link).toHaveAttribute("href", "/frei/mathematics");
+    }
+  });
+
+  it("sagt an einem leeren Tag „noch nichts geplant“ und bietet „Frei üben“ statt „Weiterlernen“ an", async () => {
+    // Ein Wort ist geübt, aber erst in der Zukunft wieder dran: Lernstand ja, Portion leer.
+    await seed(async (database) => {
+      await database.learningWordProgress.put({
+        id: learningWordId("Fahrrad"),
+        word: "Fahrrad",
+        stage: 2,
+        box: 3,
+        dueAt: new Date(NOW.getTime() + 5 * DAY).toISOString(),
+        attempts: 2,
+        incorrectAttempts: 0,
+        helpUses: 0,
+        lastPracticedAt: new Date(NOW.getTime() - DAY).toISOString(),
+      });
+    });
+    render(<LearnerHome />);
+    expect(
+      await screen.findByText(
+        "Heute ist noch nichts geplant – such dir etwas aus",
+      ),
+    ).toBeVisible();
+    expect(screen.getByText("Heute ist noch nichts geplant.")).toBeVisible();
+    expect(document.body).not.toHaveTextContent("nichts dran");
+    expect(document.body).not.toHaveTextContent("alles geschafft");
+    expect(
+      screen.queryByRole("link", { name: "Weiterlernen" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("list", { name: "Das kannst du üben" }),
+    ).toBeNull();
+    // Ohne Tastatur-Merkmal ist die Tastenwelt nicht der Vorschlag.
+    for (const link of await screen.findAllByRole("link", {
+      name: "Frei üben",
+    })) {
+      expect(link).toHaveAttribute("href", "/ueben");
+    }
+  });
+
+  it("empfiehlt die Tastenwelt erst, wenn auf dem Gerät eine Hardwaretastatur benutzt wurde", async () => {
+    await seed(async (database) => {
+      await database.learningWordProgress.put({
+        id: learningWordId("Fahrrad"),
+        word: "Fahrrad",
+        stage: 2,
+        box: 3,
+        dueAt: new Date(NOW.getTime() + 5 * DAY).toISOString(),
+        attempts: 2,
+        incorrectAttempts: 0,
+        helpUses: 0,
+        lastPracticedAt: new Date(NOW.getTime() - DAY).toISOString(),
+      });
+    });
+    markHardwareKeyboardSeen();
+    render(<LearnerHome />);
+    await screen.findByText(
+      "Heute ist noch nichts geplant – such dir etwas aus",
+    );
+    for (const link of await screen.findAllByRole("link", {
+      name: "Weiterlernen",
+    })) {
+      expect(link).toHaveAttribute("href", "/frei/typing");
+    }
   });
 
   it("stürzt nicht ab und zeigt keinen Rückstand, wenn der Lernstand nicht lädt", async () => {
@@ -241,11 +355,18 @@ describe("LearnerHome", () => {
     });
     render(<LearnerHome />);
     expect(
-      await screen.findByText("Heute ist nichts dran – frei üben"),
+      await screen.findByText(
+        "Heute ist noch nichts geplant – such dir etwas aus",
+      ),
     ).toBeVisible();
     expect(
       screen.queryByText(/von \d+ Aufgaben heute/),
     ).not.toBeInTheDocument();
+    // Ein unlesbarer Lernstand ist kein Erstkontakt.
+    await screen.findAllByRole("link", { name: "Frei üben" });
+    expect(
+      screen.queryByRole("list", { name: "Das kannst du üben" }),
+    ).toBeNull();
   });
 });
 
@@ -350,7 +471,9 @@ describe("LearnerHome: Schutz vor Speicherverlust", () => {
       await database.learningEvents.put({ id: "kaputt" } as never);
     });
     render(<LearnerHome />);
-    await screen.findByText("Heute ist nichts dran – frei üben");
+    await screen.findByText(
+      "Heute ist noch nichts geplant – such dir etwas aus",
+    );
     expect(
       screen.queryByRole("link", { name: RESTORE }),
     ).not.toBeInTheDocument();

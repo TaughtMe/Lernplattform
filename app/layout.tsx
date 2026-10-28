@@ -7,6 +7,7 @@ import { releaseVisibility } from "./release/release-config";
 import { ReleaseProvider } from "./release/release-context";
 import { AreaFrame } from "./ui/shell/area-frame";
 import { GuestModeHost } from "./ui/guest-mode-host";
+import { HardwareKeyboardHost } from "./ui/hardware-keyboard-host";
 import { ServiceWorkerRegistration } from "./ui/service-worker-registration";
 import { UpdateToast } from "./ui/update-toast";
 import { SiteFooter } from "./ui/site-footer";
@@ -122,6 +123,7 @@ export default async function RootLayout({
           <ServiceWorkerRegistration />
           <UpdateToast />
           <GuestModeHost />
+          <HardwareKeyboardHost />
         </ReleaseProvider>
       </body>
     </html>
