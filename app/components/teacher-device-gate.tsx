@@ -95,7 +95,10 @@ export function TeacherDeviceGate({
     case "open":
       return <>{children}</>;
     case "loading":
-      return null;
+      // Vor dem Hydrieren kennt nur das Gerät den Gerätetyp: Der Server rendert
+      // die Seite versteckt, sichtbar wird sie erst, wenn die Pforte entschieden
+      // hat. Personendaten liegen ohnehin nur auf dem Gerät.
+      return <div hidden>{children}</div>;
     case "choose":
       return <DeviceChooser onChoose={(type) => void choose(type)} />;
     case "board-block":

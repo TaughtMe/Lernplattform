@@ -94,7 +94,7 @@ test("server-renders the released pilot entry pages", async () => {
 
 test("server-renders the complete learning and teacher workspaces", async () => {
   for (const [path, title] of [
-    ["/lernen", "Weiterlernen"],
+    ["/lernen", "Loslegen"],
     ["/ueben", "Tastenwelt"],
     ["/frei/typing", "Bereiche von der Grundstellung"],
     ["/lernen/material", "Lernwerkstatt"],
