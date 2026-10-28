@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { ownTeacherDeviceState } from "./e2e/teacher-device-state";
 
 const isCI = Boolean(process.env["CI"]);
 
@@ -16,6 +17,7 @@ export default defineConfig({
   use: {
     ...devices["Desktop Chrome"],
     baseURL: "http://localhost:3000",
+    storageState: ownTeacherDeviceState("http://localhost:3000"),
     deviceScaleFactor: 1,
     serviceWorkers: "block",
     locale: "de-DE",

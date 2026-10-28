@@ -11,6 +11,9 @@ const LOCK_KEY = "lernraum.lehrer-sperre";
 const PIN = "482913";
 const BOARD = "Tafel / geteiltes Gerät (nur Material)";
 
+// Diese Datei prüft die Auswahl selbst und beginnt ohne Gerätetyp.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test.beforeEach(async ({ page }) => {
   await page
     .context()

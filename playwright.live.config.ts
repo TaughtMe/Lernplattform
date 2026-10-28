@@ -1,11 +1,16 @@
 import { defineConfig } from "@playwright/test";
 import base from "./playwright.config";
+import { ownTeacherDeviceState } from "./e2e/teacher-device-state";
 
 export default defineConfig({
   ...base,
   testDir: "./e2e/live",
   testIgnore: [],
-  use: { ...base.use, baseURL: "http://localhost:3001" },
+  use: {
+    ...base.use,
+    baseURL: "http://localhost:3001",
+    storageState: ownTeacherDeviceState("http://localhost:3001"),
+  },
   webServer: {
     command: "npm run dev -- --port 3001",
     url: "http://localhost:3001",
