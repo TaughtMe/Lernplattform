@@ -35,6 +35,7 @@ export const STUDENT_LOCAL_KEYS: readonly string[] = [
   "textbox-layout",
   "tastenwelt-keyboard-settings",
   "lernraum-spiegelschrift-bis",
+  "lernraum-laufdiktat-sterne",
 ];
 
 /**
