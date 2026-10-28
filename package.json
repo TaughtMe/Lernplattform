@@ -24,6 +24,7 @@
     "test:e2e": "playwright test",
     "test:e2e:chromium": "playwright test --project=desktop-chromium --project=mobile-chrome --project=minimum-width",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
+    "test:e2e:production": "playwright test --config playwright.production.config.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:database && npm run build && npm run test:render",
     "quality": "npm run check && npm run test:e2e && npm run test:e2e:live",
     "css-types": "node scripts/css-module-types.mjs",
