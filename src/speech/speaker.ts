@@ -88,6 +88,16 @@ export function hasVoiceFor(lang: string): boolean {
   return pickVoice(readVoices(), lang) !== null;
 }
 
+/** Nur Stimmen, die auf dem Gerät laufen: Der Text verlässt es nicht (B-012). */
+function localVoices(): SpeechSynthesisVoice[] {
+  return readVoices().filter((voice) => voice.localService);
+}
+
+/** Gibt es eine passende Stimme, die auf dem Gerät läuft? */
+export function hasLocalVoiceFor(lang: string): boolean {
+  return pickVoice(localVoices(), lang) !== null;
+}
+
 /** Spricht eine Äußerung und wartet auf ihr Ende (oder Fehler, oder Sicherheitsgrenze). */
 function utter(
   speech: SpeechSynthesis,
@@ -124,6 +134,11 @@ export type SpeakOptions = {
   rate?: number;
   /** Gespeicherte Wunschstimme (Vorlese-Plan 3.4). */
   voiceURI?: string | null;
+  /**
+   * Nur Stimmen, die auf dem Gerät laufen. Gibt es keine, bleibt es stumm,
+   * statt den Text an eine Netzwerkstimme zu schicken (B-012).
+   */
+  localOnly?: boolean;
 };
 
 /**
@@ -148,7 +163,9 @@ export async function speak(
     ]);
   }
   if (mine !== generation) return;
+  if (options.localOnly) voices = voices.filter((entry) => entry.localService);
   const voice = pickVoice(voices, lang, options.voiceURI);
+  if (options.localOnly && !voice) return;
   speech.cancel();
   await delay(SPEAK_DELAY_MS);
   // Zwischenzeitlich wurde schon etwas Neues angefordert: nur das Neueste zählt.
