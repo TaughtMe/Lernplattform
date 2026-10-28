@@ -27,6 +27,7 @@ function session(
     vocabularyTransfer,
     wordStoreTransfer: "none",
     showStars: true,
+    showTempoPoints: false,
     shuffleWords: false,
     strictTypingMode: false,
     showTaskAfterErrors: false,

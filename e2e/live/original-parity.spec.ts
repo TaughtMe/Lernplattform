@@ -69,7 +69,12 @@ async function accessible(page: Page, screenshot: string) {
 test("original practice hints and visible copy correction", async ({
   page,
 }) => {
-  await join(page, { gameMode: "UEBUNG", uebungMaxAttempts: 2 });
+  // Tempo-Punkte erscheinen nur, wenn die Lehrkraft sie einschaltet (D-012).
+  await join(page, {
+    gameMode: "UEBUNG",
+    uebungMaxAttempts: 2,
+    showTempoPoints: true,
+  });
   await revealAndRelease(page);
   const answer = page.getByRole("textbox", { name: "Deine Antwort" });
   await answer.fill("x");
@@ -88,6 +93,20 @@ test("original practice hints and visible copy correction", async ({
     page.getByRole("heading", { name: "Geschafft, Mia!" }),
   ).toBeVisible();
   await expect(page.getByText("Tempo-Punkte")).toBeVisible();
+});
+test("round end shows no tempo points unless the teacher enabled them", async ({
+  page,
+}) => {
+  await join(page, { gameMode: "UEBUNG" });
+  await revealAndRelease(page);
+  const answer = page.getByRole("textbox", { name: "Deine Antwort" });
+  await answer.fill("Haus");
+  await answer.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "Geschafft, Mia!" }),
+  ).toBeVisible();
+  await expect(page.getByText("Tempo-Punkte")).toHaveCount(0);
+  await expect(page.getByText("Streak-Punkte")).toHaveCount(0);
 });
 test("station hides on touch release and returns to number selection", async ({
   page,

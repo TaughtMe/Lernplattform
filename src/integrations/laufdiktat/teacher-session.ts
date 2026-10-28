@@ -48,6 +48,8 @@ export type TeacherSessionOptions = {
   uebungMaxAttempts?: number;
   uebungAssistanceEnabled?: boolean;
   showStars?: boolean;
+  /** Tempo-Punkte am Rundenende zeigen; ohne Angabe aus. */
+  showTempoPoints?: boolean;
   strictTypingMode?: boolean;
   showTaskAfterErrors?: boolean;
   stationCount?: number;
@@ -73,6 +75,7 @@ export type TeacherRoomConfig = {
   vocabularyTag?: string;
   classSeal?: string;
   showStars: boolean;
+  showTempoPoints: boolean;
   shuffleWords: boolean;
   strictTypingMode: boolean;
   showTaskAfterErrors: boolean;
@@ -183,6 +186,8 @@ export function buildTeacherRoomConfig(
       : {}),
     ...(options.classSeal ? { classSeal: options.classSeal } : {}),
     showStars: options.gameMode !== "STATION" && (options.showStars ?? true),
+    showTempoPoints:
+      options.gameMode !== "STATION" && (options.showTempoPoints ?? false),
     shuffleWords: options.gameMode !== "STATION" && options.shuffleWords,
     strictTypingMode:
       options.gameMode !== "STATION" && (options.strictTypingMode ?? false),

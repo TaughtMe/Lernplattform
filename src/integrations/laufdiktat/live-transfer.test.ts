@@ -18,6 +18,7 @@ function session(overrides: Partial<LiveSession> = {}): LiveSession {
     vocabularyTransfer: "all",
     wordStoreTransfer: "none",
     showStars: true,
+    showTempoPoints: false,
     shuffleWords: false,
     strictTypingMode: false,
     showTaskAfterErrors: false,

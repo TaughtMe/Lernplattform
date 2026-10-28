@@ -76,6 +76,7 @@ export function useContentRestore({
       attempts: restored.uebungMaxAttempts,
       tts: restored.isTtsEnabled,
       showStars: restored.showStars,
+      showTempoPoints: restored.showTempoPoints,
       strictTyping: restored.strictTypingMode,
       taskHelp: restored.showTaskAfterErrors,
       stationCount: restored.stationCount,

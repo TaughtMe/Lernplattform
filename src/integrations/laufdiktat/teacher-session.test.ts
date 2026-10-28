@@ -172,6 +172,34 @@ describe("teacher live session builder", () => {
     ).toBe("none");
   });
 
+  it("schaltet Tempo-Punkte nur auf Wunsch ein und nie bei Stationen", () => {
+    const base = {
+      contentMode: "text" as const,
+      source: "Ein Wort.",
+      vocabularyDirection: "left-to-right" as const,
+      shuffleWords: false,
+      repeatWrongAnswers: false,
+    };
+    expect(
+      buildTeacherRoomConfig({ ...base, gameMode: "LAUFDIKTAT" })
+        .showTempoPoints,
+    ).toBe(false);
+    expect(
+      buildTeacherRoomConfig({
+        ...base,
+        gameMode: "BATTLE",
+        showTempoPoints: true,
+      }).showTempoPoints,
+    ).toBe(true);
+    expect(
+      buildTeacherRoomConfig({
+        ...base,
+        gameMode: "STATION",
+        showTempoPoints: true,
+      }).showTempoPoints,
+    ).toBe(false);
+  });
+
   it("preserves the distinct station and battle rules from Laufdiktat", () => {
     const station = buildTeacherRoomConfig({
       contentMode: "text",

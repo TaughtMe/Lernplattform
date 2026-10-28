@@ -60,6 +60,7 @@ export const DEMO_TEACHER: TeacherDictationScreenProps = {
     strict: true,
     taskHelp: true,
     stars: true,
+    tempo: false,
     ink: true,
     flicker: true,
   },

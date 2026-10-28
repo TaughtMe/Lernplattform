@@ -63,6 +63,12 @@ export function dictationOptionList(
       show: !station,
     },
     {
+      id: "tempo",
+      label: "Tempo-Punkte zeigen",
+      hint: "Am Ende steht, wie schnell geschrieben wurde; zählt nicht als Lernerfolg",
+      show: !station,
+    },
+    {
       id: "ink",
       label: "Tinten-Angriff",
       hint: "Treffer verdecken kurz den Text",

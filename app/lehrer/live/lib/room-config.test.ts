@@ -74,6 +74,16 @@ describe("buildLiveRoomConfig", () => {
     );
   });
 
+  it("gibt Tempo-Punkte nur weiter, wenn die Lehrkraft sie eingeschaltet hat", () => {
+    expect(buildLiveRoomConfig({ ...BASE }).showTempoPoints).toBe(false);
+    expect(
+      buildLiveRoomConfig({
+        ...BASE,
+        settings: { ...initialGameSettings(), showTempoPoints: true },
+      }).showTempoPoints,
+    ).toBe(true);
+  });
+
   it("nimmt Mathe-Optionen nur im Mathe-Modus mit", () => {
     const settings = {
       ...initialGameSettings(),

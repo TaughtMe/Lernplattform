@@ -43,6 +43,8 @@ const liveSessionConfigSchema = z
     /** Abdruck des Klassenstempels; nur dann kann eine Freigabe wirken. */
     classSeal: classSealFingerprintSchema.optional(),
     showStars: z.boolean().default(true),
+    /** Tempo-Punkte am Rundenende; nur auf Wunsch der Lehrkraft, ältere Sitzungen: aus. */
+    showTempoPoints: z.boolean().catch(false),
     shuffleWords: z.boolean().default(false),
     strictTypingMode: z.boolean().default(false),
     /** Mathe: Aufgabe nach mehreren Fehlern im Antwortfeld wieder zeigen. */

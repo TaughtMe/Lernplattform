@@ -75,6 +75,7 @@ export function TeacherLiveRoom({
     strict: t.strictTyping,
     taskHelp: t.taskHelp,
     stars: t.showStars,
+    tempo: t.showTempoPoints,
     ink: t.battleInk,
     flicker: t.battleFlicker,
   };
@@ -88,6 +89,7 @@ export function TeacherLiveRoom({
     if (option === "strict") t.setStrictTyping(!t.strictTyping);
     if (option === "taskHelp") t.setTaskHelp(!t.taskHelp);
     if (option === "stars") t.setShowStars(!t.showStars);
+    if (option === "tempo") t.setShowTempoPoints(!t.showTempoPoints);
     if (option === "ink") t.setBattleInk(!t.battleInk);
     if (option === "flicker") t.setBattleFlicker(!t.battleFlicker);
   }

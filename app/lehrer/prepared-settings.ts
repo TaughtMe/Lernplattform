@@ -46,6 +46,7 @@ const GAME_KEYS = [
   "attempts",
   "tts",
   "showStars",
+  "showTempoPoints",
   "strictTyping",
   "taskHelp",
   "stationCount",

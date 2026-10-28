@@ -19,7 +19,14 @@ export type SplitOptions = {
 };
 export type DictationMode = "LAUFDIKTAT" | "UEBUNG" | "BATTLE" | "STATION";
 export type DictationOption =
-  "tts" | "shuffle" | "strict" | "taskHelp" | "stars" | "ink" | "flicker";
+  | "tts"
+  | "shuffle"
+  | "strict"
+  | "taskHelp"
+  | "stars"
+  | "tempo"
+  | "ink"
+  | "flicker";
 
 /** Ein Modus als Auswahlkarte im Schritt „Modus“ (Design 14c/16a/16b). */
 export type EditorMode = { id: DictationMode; title: string; text: string };

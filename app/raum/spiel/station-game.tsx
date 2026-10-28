@@ -161,7 +161,7 @@ export function LiveStationGame({
     typed: "",
     station: { count: session.stationCount, selected: stationNumber },
     battle: { charge: 0, shieldActive: false },
-    result: { mistakes: 0, hints: peeks, points: 0, savedWords: [] },
+    result: { mistakes: 0, hints: peeks, points: null, savedWords: [] },
     unit: "Aufgabe" as const,
     notices,
   };
