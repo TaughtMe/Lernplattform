@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LearningBoxDeckState } from "../../../../src/domain/learning-box";
 import { type Theme } from "../../parts/parts";
 
@@ -138,6 +139,8 @@ export type LernBoxScreenProps = {
    * entfällt die Richtungswahl im Start-Fenster.
    */
   planScope?: string;
+  /** „Weitermachen“ für eine unterbrochene Runde (C-001); steht oben in der Übersicht. */
+  resumeOffer?: ReactNode;
   main:
     | { kind: "home" }
     | { kind: "edit"; edit: LbEdit }

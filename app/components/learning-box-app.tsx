@@ -22,6 +22,11 @@ import {
   type LearningBoxMode,
   type LearningBoxSessionDirection,
 } from "../../src/domain/learning-box";
+import {
+  buildLearningBoxSnapshot,
+  learningBoxSnapshotSchema,
+  restoreLearningBoxQueue,
+} from "../../src/domain/learning-box-snapshot";
 import { VOCABULARY_LANGUAGES } from "../../src/domain/running-dictation";
 import {
   extractTransferCode,
@@ -45,8 +50,11 @@ import {
   openModuleItems,
   wantsDailyPlan,
 } from "../lernen/plan-today";
+import { useRoundGuard } from "../ui/round-guard";
 import { StudentPage } from "../ui/shell/student-page";
+import { useRoundSnapshot } from "../ui/use-round-snapshot";
 import { useThemeToggle } from "../ui/theme";
+import { ResumeOffer } from "../views/shell/resume-offer";
 import {
   LernBoxScreen,
   type LbCard,
@@ -130,6 +138,7 @@ type Session = {
   /** Übungsrunde einer Box: nichts wird verschoben oder gespeichert. */
   practice: boolean;
   roundId: string;
+  startedAt: string;
   /** Schon bewertete Karte+Richtung dieser Runde: nur der erste Versuch zählt (C3-1). */
   attempted: string[];
   finished: boolean;
@@ -226,6 +235,8 @@ export function LearningBoxApp({
     success: null,
   });
   const refreshRevision = useRef(0);
+  /** Zwischenstand der unterbrochenen Runde (C-001): „Weitermachen“ in der Übersicht. */
+  const roundSnapshot = useRoundSnapshot("lernbox", learningBoxSnapshotSchema);
 
   const refresh = useCallback(async () => {
     const revision = ++refreshRevision.current;
@@ -390,6 +401,8 @@ export function LearningBoxApp({
       return;
     }
     setNotice("");
+    // Eine neue Runde ersetzt den Zwischenstand einer früheren.
+    roundSnapshot.clear();
     setSession({
       title,
       mode: choice.mode,
@@ -401,7 +414,64 @@ export function LearningBoxApp({
       stats: { correct: 0, wrong: 0 },
       practice: box > 0,
       roundId: crypto.randomUUID(),
+      startedAt: new Date().toISOString(),
       attempted: [],
+      finished: false,
+    });
+  }
+
+  /**
+   * Hält den Zwischenstand nach jeder bewerteten Antwort und jedem Weiter. Die
+   * Antwort steht dann längst in der Datenbank (`assess` wartet darauf); ein
+   * Ende der Runde oder nichts mehr zu tun räumt den Zwischenstand ab.
+   */
+  function persist(next: Session) {
+    const content = buildLearningBoxSnapshot({
+      title: next.title,
+      mode: next.mode,
+      practice: next.practice,
+      queue: next.queue,
+      index: next.index,
+      answered: next.feedback !== null,
+      stats: next.stats,
+      attempted: next.attempted,
+      finished: next.finished,
+    });
+    if (!content) return roundSnapshot.clear();
+    roundSnapshot.save({
+      roundId: next.roundId,
+      startedAt: next.startedAt,
+      done: content.done,
+      total: content.queue.length,
+      state: content,
+    });
+  }
+
+  /** „Weitermachen“: Die Karten kommen frisch aus der Datenbank, die Stelle aus dem Zwischenstand. */
+  function resumeSession() {
+    const saved = roundSnapshot.snapshot;
+    if (!saved) return;
+    const restored = restoreLearningBoxQueue(saved.state, cards);
+    if (!restored) {
+      roundSnapshot.clear();
+      setNotice("Diese Runde ist schon vorbei.");
+      return;
+    }
+    setNotice("");
+    setMode(saved.state.mode);
+    setSession({
+      title: saved.state.title,
+      mode: saved.state.mode,
+      queue: restored.queue,
+      index: restored.index,
+      answer: "",
+      revealed: false,
+      feedback: null,
+      stats: saved.state.stats,
+      practice: saved.state.practice,
+      roundId: saved.roundId,
+      startedAt: saved.startedAt,
+      attempted: saved.state.attempted,
       finished: false,
     });
   }
@@ -455,7 +525,7 @@ export function LearningBoxApp({
       wrong: session.stats.wrong + (correct ? 0 : 1),
     };
     if (session.mode === "writing") {
-      setSession({
+      const next: Session = {
         ...session,
         queue,
         stats,
@@ -475,7 +545,9 @@ export function LearningBoxApp({
             ? "nur geübt"
             : nextLabel(updated, item.direction),
         },
-      });
+      };
+      setSession(next);
+      persist(next);
     } else {
       advance({ ...session, queue, stats, attempted });
     }
@@ -483,21 +555,29 @@ export function LearningBoxApp({
 
   function advance(current: Session) {
     const index = current.index + 1;
-    setSession({
+    const next: Session = {
       ...current,
       index,
       answer: "",
       revealed: false,
       feedback: null,
       finished: index >= current.queue.length,
-    });
-    if (index >= current.queue.length) void refresh();
+    };
+    setSession(next);
+    persist(next);
+    if (next.finished) void refresh();
   }
 
   function endSession() {
     setSession(null);
     void refresh();
   }
+
+  // Logo, Leiste und Zurück-Geste fragen nach; „Beenden“ lässt den Zwischenstand stehen.
+  const requestLeave = useRoundGuard({
+    active: session !== null && !session.finished,
+    onLeave: endSession,
+  });
 
   async function run(action: () => Promise<unknown>, message?: string) {
     try {
@@ -702,6 +782,17 @@ export function LearningBoxApp({
         dueTotal={todayQueue.length}
         todayDecks={todayDecks}
         planScope="heute"
+        resumeOffer={
+          !loading && !session && roundSnapshot.snapshot ? (
+            <ResumeOffer
+              detail={roundSnapshot.snapshot.state.title}
+              done={roundSnapshot.snapshot.done}
+              total={roundSnapshot.snapshot.total}
+              onResume={resumeSession}
+              onDiscard={roundSnapshot.clear}
+            />
+          ) : undefined
+        }
         errorCount={mistakes.length}
         languages={LANGUAGE_CHOICES}
         mode={mode}
@@ -727,7 +818,7 @@ export function LearningBoxApp({
           setNotice("");
         }}
         onBack={() => {
-          if (session) endSession();
+          if (session) requestLeave();
           else {
             setView("home");
             setNotice("");
@@ -873,7 +964,7 @@ export function LearningBoxApp({
             say(prompt.question, forward ? deck.frontLocale : deck.backLocale);
           else say(prompt.answer, forward ? deck.backLocale : deck.frontLocale);
         }}
-        onEndSession={endSession}
+        onEndSession={requestLeave}
       />
     </StudentPage>
   );

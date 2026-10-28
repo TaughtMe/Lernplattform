@@ -36,6 +36,8 @@ export function Home(props: LernBoxScreenProps) {
         </p>
       ) : null}
 
+      {props.resumeOffer}
+
       <div className={styles.overview}>
         <section className={styles.hero} aria-label="Heute dran">
           <span className={styles.heroLabel}>Heute dran</span>
