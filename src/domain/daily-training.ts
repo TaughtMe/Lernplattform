@@ -186,3 +186,37 @@ export function trainingStepHref(item: DailyPlanItem): string {
 export function trainingMinutesLabel(ms: number): number {
   return Math.max(1, Math.round(ms / 60_000));
 }
+
+export type TrainingSegment = {
+  module: DailyPlanModule;
+  href: string;
+  steps: TrainingStep[];
+  /** Geschätzte Dauer des Abschnitts in Sekunden. */
+  seconds: number;
+};
+
+/**
+ * Fasst aufeinanderfolgende Schritte mit demselben Ziel zu einem Abschnitt
+ * zusammen: Das Kind öffnet ein Modul einmal, nicht für jede Aufgabe neu.
+ */
+export function trainingSegments(
+  steps: readonly TrainingStep[],
+): TrainingSegment[] {
+  const segments: TrainingSegment[] = [];
+  for (const step of steps) {
+    const href = trainingStepHref(step.item);
+    const last = segments.at(-1);
+    if (last && last.href === href) {
+      last.steps.push(step);
+      last.seconds += step.seconds;
+    } else {
+      segments.push({
+        module: step.item.module,
+        href,
+        steps: [step],
+        seconds: step.seconds,
+      });
+    }
+  }
+  return segments;
+}

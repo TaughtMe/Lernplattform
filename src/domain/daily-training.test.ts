@@ -11,6 +11,7 @@ import {
   TRAINING_SECONDS,
   planTraining,
   trainingMinutesLabel,
+  trainingSegments,
   trainingStatus,
   trainingStepHref,
 } from "./daily-training";
@@ -335,5 +336,39 @@ describe("Tagestraining: Hilfen", () => {
     expect(trainingMinutesLabel(20_000)).toBe(1);
     expect(trainingMinutesLabel(9.4 * 60_000)).toBe(9);
     expect(trainingMinutesLabel(10 * 60_000)).toBe(10);
+  });
+});
+
+describe("Tagestraining: Abschnitte", () => {
+  it("fasst aufeinanderfolgende Schritte desselben Ziels zusammen", () => {
+    const plan = planTraining({
+      items: [
+        item("a", "error", "mathematics"),
+        item("b", "error", "mathematics"),
+        item("c", "review", "german"),
+        item("d", "review", "mathematics"),
+        { ...item("e", "new", "vocabulary"), route: "/klasse/x" },
+        { ...item("f", "new", "vocabulary"), route: "/klasse/x" },
+      ],
+      minutes: 20,
+      profile: EMPTY,
+    });
+    const segments = trainingSegments(plan.steps);
+    expect(
+      segments.map((segment) => [
+        segment.href,
+        segment.steps.map((step) => step.item.key),
+        segment.seconds,
+      ]),
+    ).toEqual([
+      ["/frei/mathematics?heute=1", ["a", "b"], 150],
+      ["/frei/german/lernwoerter?heute=1", ["c"], 45],
+      ["/frei/mathematics?heute=1", ["d"], 75],
+      ["/klasse/x", ["e", "f"], 40],
+    ]);
+  });
+
+  it("liefert für kein Element keinen Abschnitt", () => {
+    expect(trainingSegments([])).toEqual([]);
   });
 });
