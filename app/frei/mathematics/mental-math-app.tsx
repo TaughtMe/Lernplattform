@@ -33,17 +33,26 @@ import {
   mathOptionsSchema,
   mathReviews,
   mathRoundReviews,
+  type MathOptions,
   type MathReview,
   type MathPracticeTask,
 } from "../../../src/domain/math-practice";
+import {
+  buildMathRoundSnapshot,
+  mathRoundSnapshotSchema,
+  restoreMathTasks,
+} from "../../../src/domain/math-round-snapshot";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
   PLAN_DONE_NOTICE,
   PLAN_FAILED_NOTICE,
-  openModuleItems,
   wantsDailyPlan,
 } from "../../lernen/plan-today";
+import { describeRound, operationLabels, todaysReviews } from "./round-text";
 import { Icon } from "../../ui/icons";
+import { useRoundGuard } from "../../ui/round-guard";
+import { useRoundSnapshot } from "../../ui/use-round-snapshot";
+import { ResumeOffer } from "../../views/shell/resume-offer";
 import {
   Button,
   ButtonLink,
@@ -53,12 +62,6 @@ import {
   Toggle,
 } from "../../ui/primitives";
 
-const operationLabels: Record<MentalMathOperation, string> = {
-  add: "Plus",
-  subtract: "Minus",
-  multiply: "Mal",
-  divide: "Geteilt",
-};
 const symbols: Record<MentalMathOperation, string> = {
   add: "+",
   subtract: "−",
@@ -66,59 +69,6 @@ const symbols: Record<MentalMathOperation, string> = {
   divide: ":",
 };
 type Screen = "setup" | "round" | "complete";
-
-/**
- * Art und Anzahl der erzeugten Runde in einem Satz, z. B. „12 Aufgaben · Plus
- * und Minus bis 100 · Lücken“. Die Vorschau verrät keine Lösung (Audit C-013).
- */
-function describeRound(settings: {
-  count: number;
-  operations: readonly MentalMathOperation[];
-  minValue: number;
-  maxValue: number;
-  tables: readonly number[];
-  gapMode: boolean;
-}) {
-  const names = (Object.keys(operationLabels) as MentalMathOperation[])
-    .filter((operation) => settings.operations.includes(operation))
-    .map((operation) => operationLabels[operation]);
-  const kinds =
-    names.length > 1
-      ? `${names.slice(0, -1).join(", ")} und ${names.at(-1)}`
-      : (names[0] ?? "");
-  const usesTables = settings.operations.some(
-    (operation) => operation === "multiply" || operation === "divide",
-  );
-  const tables = settings.tables.join(", ");
-  return [
-    `${settings.count} ${settings.count === 1 ? "Aufgabe" : "Aufgaben"}`,
-    `${kinds} ${settings.minValue > 0 ? `von ${settings.minValue} ` : ""}bis ${settings.maxValue}`,
-    ...(usesTables && settings.tables.length
-      ? [`${settings.tables.length === 1 ? "Reihe" : "Reihen"} ${tables}`]
-      : []),
-    ...(settings.gapMode ? ["Lücken"] : []),
-  ].join(" · ");
-}
-
-/**
- * Posten der Tagesportion: je offenem Mathe-Element der am längsten fällige
- * Posten seiner Familie. Was inzwischen nicht mehr fällig ist, zählt nicht.
- * `buildMathReviewRound` nimmt höchstens fünf Posten; der Rest folgt in der
- * nächsten Runde.
- */
-function todaysReviews(
-  progress: Parameters<typeof openModuleItems>[0],
-  reviews: readonly MathReview[],
-  now: string,
-) {
-  // `mathReviews` ist nach Fälligkeit sortiert: der erste Treffer ist der älteste.
-  return openModuleItems(progress, "mathematics").flatMap((item) => {
-    const review = reviews.find(
-      (entry) => item.objectIds.includes(entry.id) && entry.dueAt <= now,
-    );
-    return review ? [review] : [];
-  });
-}
 
 /**
  * `random` ist der Zufall für neue Aufgaben und die Reihenfolge der Runde;
@@ -138,6 +88,14 @@ export function MentalMathApp({
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const roundId = useRef("");
+  const roundStartedAt = useRef("");
+  /** Einstellung der erzeugten Runde; Wiederholungen und eigene Aufgaben haben keine. */
+  const roundOptions = useRef<MathOptions | null>(null);
+  /** Zwischenstand der unterbrochenen Runde (C-001): „Weitermachen“ in den Einstellungen. */
+  const roundSnapshot = useRoundSnapshot(
+    "kopfrechnen",
+    mathRoundSnapshotSchema,
+  );
   const [screen, setScreen] = useState<Screen>("setup");
   const [operations, setOperations] = useState<MentalMathOperation[]>([
     "add",
@@ -291,11 +249,18 @@ export function MentalMathApp({
       active = false;
       window.clearTimeout(nextTimer.current);
     };
-  }, [dailyPlan, repository]);
+  }, [dailyPlan, repository]); // eslint-disable-line react-hooks/exhaustive-deps -- läuft einmal je Speicher; beginRound ändert nur Zustand und Refs
 
-  function beginRound(next: MathPracticeTask[]) {
+  function beginRound(
+    next: MathPracticeTask[],
+    options: MathOptions | null = null,
+  ) {
     if (!next.length) return;
+    // Eine neue Runde ersetzt den Zwischenstand einer früheren.
+    roundSnapshot.clear();
     roundId.current = crypto.randomUUID();
+    roundStartedAt.current = new Date().toISOString();
+    roundOptions.current = options;
     attempt.current = 0;
     corrected.current = false;
     pending.current = null;
@@ -375,6 +340,20 @@ export function MentalMathApp({
                 : createTasks(),
               random,
             ),
+        // Die Einstellung gehört zu den gespeicherten Antworten der erzeugten Runde.
+        manualMode
+          ? null
+          : {
+              operations,
+              minValue,
+              maxValue,
+              count,
+              allowNegativeResults: allowNegative,
+              excludeZeroOperand,
+              excludeZeroResult,
+              multiplicationTables: tables,
+              gapMode,
+            },
       );
     } catch {
       setNotice(
@@ -387,12 +366,85 @@ export function MentalMathApp({
     beginRound(buildMathReviewRound(due));
   }
 
+  /**
+   * Hält den Zwischenstand der Runde nach einer gespeicherten Antwort. Die
+   * Antwort steht dann schon als Ereignis in der Datenbank. Ist die Runde
+   * fertig, bleibt nichts fortzusetzen.
+   */
+  function persistRound(next: {
+    index: number;
+    mistakes: number;
+    helpCount: number;
+    help: boolean;
+    corrected: boolean;
+    wrongTries: number;
+  }) {
+    const content = buildMathRoundSnapshot({
+      tasks,
+      attempt: attempt.current,
+      options: roundOptions.current,
+      ...next,
+    });
+    if (!content) return roundSnapshot.clear();
+    roundSnapshot.save({
+      roundId: roundId.current,
+      startedAt: roundStartedAt.current,
+      done: next.index,
+      total: tasks.length,
+      state: content,
+    });
+  }
+
   /** Lösungsweg zeigen: zählt wie bisher als Hilfe, die Aufgabe bleibt zur Wiederholung. */
   function showSolution() {
     pending.current = null;
     if (!help) setHelpCount((value) => value + 1);
     setHelp(true);
+    persistRound({
+      index,
+      mistakes,
+      helpCount: help ? helpCount : helpCount + 1,
+      help: true,
+      corrected: corrected.current,
+      wrongTries: wrongTries.current,
+    });
   }
+
+  /** „Weitermachen“: die Runde dort aufnehmen, wo sie stand. */
+  function resumeRound() {
+    const saved = roundSnapshot.snapshot;
+    if (!saved) return;
+    const { state } = saved;
+    roundId.current = saved.roundId;
+    roundStartedAt.current = saved.startedAt;
+    roundOptions.current = state.options ?? null;
+    attempt.current = state.attempt;
+    corrected.current = state.corrected;
+    wrongTries.current = state.wrongTries;
+    pending.current = null;
+    setHint("");
+    setHelp(state.help);
+    setTasks(restoreMathTasks(state));
+    setIndex(state.index);
+    setAnswer("");
+    setFeedback("");
+    setMistakes(state.mistakes);
+    setHelpCount(state.helpCount);
+    setNotice("");
+    setPlanNotice(null);
+    setScreen("round");
+  }
+
+  /** Verlässt die Runde; der Zwischenstand bleibt für „Weitermachen“ stehen. */
+  function leaveRound() {
+    window.clearTimeout(nextTimer.current);
+    setScreen("setup");
+  }
+  // Logo, Leiste und Zurück-Geste fragen nach, solange eine Runde läuft.
+  const requestLeave = useRoundGuard({
+    active: screen === "round",
+    onLeave: leaveRound,
+  });
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -404,21 +456,7 @@ export function MentalMathApp({
     try {
       pending.current ??= await createMathAttempt({
         task: current,
-        ...(!current.practiceKey && !manualMode
-          ? {
-              options: {
-                operations,
-                minValue,
-                maxValue,
-                count,
-                allowNegativeResults: allowNegative,
-                excludeZeroOperand,
-                excludeZeroResult,
-                multiplicationTables: tables,
-                gapMode,
-              },
-            }
-          : {}),
+        ...(roundOptions.current ? { options: roundOptions.current } : {}),
         answer,
         roundId: roundId.current,
         attemptId: String(attempt.current),
@@ -446,9 +484,27 @@ export function MentalMathApp({
             mentalMathHint(current, classifyMentalMathError(current, answer)),
           );
         else if (!help) showSolution();
+        persistRound({
+          index,
+          mistakes: mistakes + 1,
+          helpCount:
+            help || wrongTries.current === 1 ? helpCount : helpCount + 1,
+          help: help || wrongTries.current !== 1,
+          corrected: true,
+          wrongTries: wrongTries.current,
+        });
         inputRef.current?.select();
       } else {
         setFeedback("correct");
+        // Die nächste Aufgabe beginnt ohne Fehlversuch und ohne Lösungsweg.
+        persistRound({
+          index: index + 1,
+          mistakes,
+          helpCount,
+          help: false,
+          corrected: false,
+          wrongTries: 0,
+        });
         nextTimer.current = window.setTimeout(() => {
           if (index + 1 >= tasks.length) setScreen("complete");
           else setIndex((value) => value + 1);
@@ -487,6 +543,16 @@ export function MentalMathApp({
             Zahlen und Ergebnisse bleiben in deinem gewählten Zahlenraum.
           </p>
         </div>
+
+        {roundSnapshot.snapshot ? (
+          <ResumeOffer
+            detail={`Kopfrechnen · ${roundSnapshot.snapshot.state.tasks.length} Aufgaben`}
+            done={roundSnapshot.snapshot.done}
+            total={roundSnapshot.snapshot.total}
+            onResume={resumeRound}
+            onDiscard={roundSnapshot.clear}
+          />
+        ) : null}
 
         <Card
           look="dark"
@@ -951,14 +1017,7 @@ export function MentalMathApp({
           >
             Lösungsweg zeigen
           </Button>
-          <Button
-            variant="link"
-            disabled={saving}
-            onClick={() => {
-              window.clearTimeout(nextTimer.current);
-              setScreen("setup");
-            }}
-          >
+          <Button variant="link" disabled={saving} onClick={requestLeave}>
             Runde beenden
           </Button>
         </div>
