@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { analyzeAccessibility } from "./accessibility-helpers";
+import { hydrated } from "./hydration-helpers";
 import { createBox, startRound } from "./wortspeicher-helpers";
 
 /**
@@ -139,7 +140,10 @@ const MODULES: RoundModule[] = [
     path: "/frei/mathematics",
     start: async (page) => {
       await page.goto("/frei/mathematics");
-      await page.getByRole("button", { name: "Eigene Aufgaben" }).click();
+      // Ein Klick vor der Hydration verpufft; dann bliebe das Feld aus.
+      await (
+        await hydrated(page.getByRole("button", { name: "Eigene Aufgaben" }))
+      ).click();
       await page
         .getByRole("textbox", { name: "Eine Aufgabe pro Zeile" })
         .fill(
