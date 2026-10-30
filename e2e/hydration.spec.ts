@@ -43,12 +43,12 @@ async function openUnhydrated(page: Page, path: string) {
 }
 
 async function expectUnhydrated(page: Page) {
-  await expect(page.locator("html")).not.toHaveAttribute("data-hydrated");
+  await expect(page.locator("html")).not.toHaveAttribute("data-app-hydrated");
   await expect(page.locator("body")).toHaveAttribute("aria-busy", "true");
 }
 
 async function expectHydrated(page: Page) {
-  await expect(page.locator("html")).toHaveAttribute("data-hydrated", "");
+  await expect(page.locator("html")).toHaveAttribute("data-app-hydrated", "");
   await expect(page.locator("body")).not.toHaveAttribute("aria-busy");
 }
 

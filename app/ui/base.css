@@ -70,9 +70,9 @@ body {
  * werden erst nach kurzer Wartezeit gedämpft, damit schnelle Ladevorgänge
  * nicht flackern. Links bleiben wirksam (normale Navigation). Textfelder
  * sperrt zusätzlich hydration-boot.ts gegen Tastatur und Einfügen.
- * `<html data-hydrated>` setzt HydrationMark.
+ * `<html data-app-hydrated>` setzt HydrationMark.
  */
-html:not([data-hydrated])
+html:not([data-app-hydrated])
   :where(button, input, textarea, select, [role="button"]) {
   pointer-events: none;
   animation: lr-hydration-wait 0.2s ease 0.6s forwards;

@@ -11,21 +11,21 @@ function beforeInput(target: Element) {
 }
 
 beforeEach(() => {
-  document.documentElement.removeAttribute("data-hydrated");
+  document.documentElement.removeAttribute("data-app-hydrated");
   document.body.setAttribute("aria-busy", "true");
 });
 
 afterEach(() => {
   document.body.innerHTML = "";
-  document.documentElement.removeAttribute("data-hydrated");
+  document.documentElement.removeAttribute("data-app-hydrated");
   document.body.removeAttribute("aria-busy");
 });
 
 describe("HydrationMark", () => {
-  it("setzt data-hydrated und nimmt aria-busy zurück, sobald React übernommen hat", async () => {
+  it("setzt data-app-hydrated und nimmt aria-busy zurück, sobald React übernommen hat", async () => {
     render(<HydrationMark />);
     await waitFor(() =>
-      expect(document.documentElement).toHaveAttribute("data-hydrated"),
+      expect(document.documentElement).toHaveAttribute("data-app-hydrated"),
     );
     expect(document.body).not.toHaveAttribute("aria-busy");
   });
@@ -34,7 +34,7 @@ describe("HydrationMark", () => {
 describe("Eingabesperre vor der Hydration", () => {
   // Das Skript steht im Server-Render inline im <head>; hier wird es gleich
   // ausgeführt und danach wieder entfernt.
-  it("sperrt Eingaben in Textfelder, bis data-hydrated gesetzt ist", () => {
+  it("sperrt Eingaben in Textfelder, bis data-app-hydrated gesetzt ist", () => {
     new Function(hydrationBootScript)();
     const input = document.createElement("input");
     const area = document.createElement("textarea");
@@ -46,7 +46,7 @@ describe("Eingabesperre vor der Hydration", () => {
     // Andere Elemente bleiben unberührt (Knöpfe sperrt allein das CSS).
     expect(beforeInput(button)).toBe(false);
 
-    document.documentElement.setAttribute("data-hydrated", "");
+    document.documentElement.setAttribute("data-app-hydrated", "");
     expect(beforeInput(input)).toBe(false);
     expect(beforeInput(area)).toBe(false);
   });
@@ -55,9 +55,9 @@ describe("Eingabesperre vor der Hydration", () => {
 describe("base.css", () => {
   const css = readFileSync("app/ui/base.css", "utf8");
 
-  it("sperrt Knöpfe und Felder nur ohne data-hydrated und lässt Links frei", () => {
+  it("sperrt Knöpfe und Felder nur ohne data-app-hydrated und lässt Links frei", () => {
     const rule = css.match(
-      /html:not\(\[data-hydrated\]\)\s*:where\(([^)]*)\)\s*\{([^}]*)\}/,
+      /html:not\(\[data-app-hydrated\]\)\s*:where\(([^)]*)\)\s*\{([^}]*)\}/,
     );
     expect(rule).not.toBeNull();
     expect(rule?.[1]).toContain("button");
@@ -67,7 +67,7 @@ describe("base.css", () => {
   });
 
   it("verändert den hydrierten Zustand nicht", () => {
-    // Die Dämpfung hängt allein an html:not([data-hydrated]); keine Regel ohne
+    // Die Dämpfung hängt allein an html:not([data-app-hydrated]); keine Regel ohne
     // diese Bedingung nutzt die Animation.
     expect(css.match(/lr-hydration-wait/g)).toHaveLength(2);
   });
