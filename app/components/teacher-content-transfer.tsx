@@ -1,6 +1,5 @@
 "use client";
 
-import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   pickerLocale,
@@ -24,20 +23,26 @@ import { contentKindOf } from "../../src/domain/teacher-content-summary";
 import { createTeacherContentLibraryRepository } from "../../src/storage/teacher-class-settings";
 import {
   forgetTransfers,
-  readActiveTransfers,
   rememberTransfer,
+  transferKindOf,
   transferTimeLeft,
-  type ActiveTransfer,
 } from "../lehrer/material/active-transfers";
 import { cx } from "../views/parts/parts";
+import {
+  formatTransferCode,
+  LiveTransferQr,
+  shortDate,
+  useTransferClock,
+  type TransferClock,
+} from "./teacher-transfer-shared";
+import { TeacherWordListTransfer } from "./teacher-word-list-transfer";
 import { manageStyles as m, ManagePage } from "../views/lehrer/manage-parts";
 import {
+  KindSwitch,
   LiveTransfers,
   PackageEditor,
   PackageList,
-  TransferBig,
   TransferLayout,
-  TransferResult,
   type SaveState,
 } from "../views/lehrer/transfer-screen";
 import {
@@ -53,16 +58,6 @@ const SAVE_DELAY = 600;
 const NEW_TITLE = "Neues Vokabelpaket";
 const DEFAULT_LEFT = "en-GB";
 const DEFAULT_RIGHT = "de-DE";
-
-function formatTransferCode(value: string) {
-  return value.match(/.{1,4}/g)?.join(" ") ?? value;
-}
-
-const shortDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-  });
 
 /** Das Paket im Editor; `id` fehlt, solange es noch nie gespeichert wurde. */
 type Draft = {
@@ -99,22 +94,57 @@ const emptyDraft = (): Draft => ({
 const canSave = (draft: Draft) =>
   draft.title.trim().length > 0 && completePairs(draft.rows) > 0;
 
+type Kind = "vocabulary" | "wordlist";
+
 /**
- * Freigabe an Schüler (Lehrerbereich v2, 17b): Vokabelpakete der Ablage
- * bearbeiten, lokal speichern (beim Tippen) und verschlüsselt für höchstens
- * 24 Stunden freigeben. Texte und Mathe bleiben in der Ablage.
+ * Freigabe an Schüler (Lehrerbereich v2, 17b): Vokabelpakete und Lernwortlisten
+ * der Ablage bearbeiten, lokal speichern (beim Tippen) und verschlüsselt für
+ * höchstens 24 Stunden freigeben. Texte und Mathe bleiben in der Ablage.
  */
 export function TeacherContentTransfer({
   transferConfig,
 }: {
   transferConfig: LiveRoomConfig | null;
 }) {
+  const [kind, setKind] = useState<Kind>("vocabulary");
+  const clock = useTransferClock();
+  return (
+    <ManagePage
+      title="Freigabe an Schüler"
+      lead="Vokabelpakete und Lernwortlisten per QR-Code auf die Geräte der Schüler geben. Verschlüsselt und nach 24 Stunden gelöscht."
+    >
+      <KindSwitch
+        value={kind}
+        options={[
+          { value: "vocabulary", label: "Vokabelpakete" },
+          { value: "wordlist", label: "Lernwortlisten" },
+        ]}
+        onChange={setKind}
+      />
+      {kind === "vocabulary" ? (
+        <VocabularyTransfer transferConfig={transferConfig} clock={clock} />
+      ) : (
+        <TeacherWordListTransfer
+          transferConfig={transferConfig}
+          clock={clock}
+        />
+      )}
+    </ManagePage>
+  );
+}
+
+function VocabularyTransfer({
+  transferConfig,
+  clock,
+}: {
+  transferConfig: LiveRoomConfig | null;
+  clock: TransferClock;
+}) {
+  const { transfers, setTransfers, now, setNow } = clock;
   const library = useMemo(() => createTeacherContentLibraryRepository(), []);
   const [packages, setPackages] = useState<TeacherContentPackage[]>([]);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [save, setSave] = useState<SaveState>("unsaved");
-  const [transfers, setTransfers] = useState<ActiveTransfer[]>([]);
-  const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -134,21 +164,6 @@ export function TeacherContentTransfer({
         .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
     [packages],
   );
-
-  // Laufende Freigaben und ihre Restzeit; die Uhr läuft halbminütlich.
-  useEffect(() => {
-    const tick = () => {
-      const time = Date.now();
-      setNow(time);
-      setTransfers(readActiveTransfers(time));
-    };
-    const first = window.setTimeout(tick, 0);
-    const id = window.setInterval(tick, 30_000);
-    return () => {
-      window.clearTimeout(first);
-      window.clearInterval(id);
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -411,9 +426,11 @@ export function TeacherContentTransfer({
     }
   }
 
-  const live = transfers.find(({ packageId }) => packageId === draft.id);
-  const liveOf = (id: string) =>
-    transfers.find(({ packageId }) => packageId === id);
+  const mine = transfers.filter(
+    (entry) => transferKindOf(entry) === "vocabulary",
+  );
+  const live = mine.find(({ packageId }) => packageId === draft.id);
+  const liveOf = (id: string) => mine.find(({ packageId }) => packageId === id);
   const items = vocabularyPackages.map((entry) => {
     const share = liveOf(entry.id);
     return {
@@ -439,145 +456,114 @@ export function TeacherContentTransfer({
     live && typeof window !== "undefined"
       ? createTransferLink(window.location.origin, live.code)
       : "";
-  const liveTime = live ? transferTimeLeft(live, now) : null;
 
   return (
-    <ManagePage
-      title="Freigabe an Schüler"
-      lead="Vokabelpakete per QR-Code auf die Geräte der Schüler geben. Verschlüsselt und nach 24 Stunden gelöscht."
+    <TransferLayout
+      side={
+        <>
+          <PackageList
+            items={listed}
+            selectedId={draft.id ?? ""}
+            onPick={pick}
+            onNew={() =>
+              void open(
+                emptyDraft(),
+                "Neues, noch nicht gespeichertes Paket geöffnet.",
+              )
+            }
+            onExport={exportLibrary}
+            onImport={(file) => void importLibrary(file)}
+          />
+          <LiveTransfers
+            items={mine.map((entry) => {
+              const time = transferTimeLeft(entry, now);
+              return {
+                id: entry.packageId,
+                title: entry.title,
+                meta: `${entry.pairs} Paare · Code ${formatTransferCode(entry.code).slice(0, 4)} …`,
+                left: `${time.short} · ${time.until}`,
+                fraction: time.fraction,
+              };
+            })}
+            actionLabel="QR zeigen"
+            onAction={pick}
+          />
+        </>
+      }
     >
-      <TransferLayout
-        side={
-          <>
-            <PackageList
-              items={listed}
-              selectedId={draft.id ?? ""}
-              onPick={pick}
-              onNew={() =>
-                void open(
-                  emptyDraft(),
-                  "Neues, noch nicht gespeichertes Paket geöffnet.",
-                )
-              }
-              onExport={exportLibrary}
-              onImport={(file) => void importLibrary(file)}
-            />
-            <LiveTransfers
-              items={transfers.map((entry) => {
-                const time = transferTimeLeft(entry, now);
-                return {
-                  id: entry.packageId,
-                  title: entry.title,
-                  meta: `${entry.pairs} Paare · Code ${formatTransferCode(entry.code).slice(0, 4)} …`,
-                  left: `${time.short} · ${time.until}`,
-                  fraction: time.fraction,
-                };
-              })}
-              actionLabel="QR zeigen"
-              onAction={pick}
-            />
-          </>
+      <PackageEditor
+        title={draft.title}
+        languages={VOCABULARY_LANGUAGES}
+        left={draft.left}
+        right={draft.right}
+        rows={draft.rows}
+        save={save}
+        live={Boolean(live)}
+        busy={busy}
+        shareDisabled={!canSave(draft)}
+        onTitle={(title) => edit({ title })}
+        onLeft={(left) => edit({ left })}
+        onRight={(right) => edit({ right })}
+        onSwap={() =>
+          edit({
+            left: draft.right,
+            right: draft.left,
+            rows: swapRows(draft.rows),
+          })
         }
-      >
-        <PackageEditor
-          title={draft.title}
-          languages={VOCABULARY_LANGUAGES}
-          left={draft.left}
-          right={draft.right}
-          rows={draft.rows}
-          save={save}
-          live={Boolean(live)}
-          busy={busy}
-          shareDisabled={!canSave(draft)}
-          onTitle={(title) => edit({ title })}
-          onLeft={(left) => edit({ left })}
-          onRight={(right) => edit({ right })}
-          onSwap={() =>
-            edit({
-              left: draft.right,
-              right: draft.left,
-              rows: swapRows(draft.rows),
-            })
-          }
-          onRows={(rows) => edit({ rows })}
-          onImportFile={(file) => void importVocabularyFile(file)}
-          onShare={() => void publish()}
-          onDelete={draft.id ? () => setConfirmDelete(true) : undefined}
+        onRows={(rows) => edit({ rows })}
+        onImportFile={(file) => void importVocabularyFile(file)}
+        onShare={() => void publish()}
+        onDelete={draft.id ? () => setConfirmDelete(true) : undefined}
+      />
+      {confirmDelete ? (
+        <div
+          className={cx(m.notice, m.noticeBad)}
+          role="alertdialog"
+          aria-label="Paket löschen"
+        >
+          <p className={m.noticeText}>
+            „{draft.title}“ aus der lokalen Bibliothek löschen? Eine laufende
+            Freigabe bleibt bis zu ihrem Ablauf gültig.
+          </p>
+          <span className={m.actions}>
+            <button
+              type="button"
+              className={cx(m.soft, m.danger)}
+              onClick={() => void removeCurrent()}
+            >
+              Löschen
+            </button>
+            <button
+              type="button"
+              className={m.soft}
+              onClick={() => setConfirmDelete(false)}
+            >
+              Abbrechen
+            </button>
+          </span>
+        </div>
+      ) : null}
+      {notice ? (
+        <p className={m.notice} role="status">
+          {notice}
+        </p>
+      ) : null}
+      {error ? (
+        <p className={cx(m.notice, m.noticeBad)} role="alert">
+          {error}
+        </p>
+      ) : null}
+      {live && qrValue ? (
+        <LiveTransferQr
+          live={live}
+          now={now}
+          link={qrValue}
+          qrLabel="QR-Code für das verschlüsselte Vokabelpaket"
+          big={big}
+          onBig={setBig}
         />
-        {confirmDelete ? (
-          <div
-            className={cx(m.notice, m.noticeBad)}
-            role="alertdialog"
-            aria-label="Paket löschen"
-          >
-            <p className={m.noticeText}>
-              „{draft.title}“ aus der lokalen Bibliothek löschen? Eine laufende
-              Freigabe bleibt bis zu ihrem Ablauf gültig.
-            </p>
-            <span className={m.actions}>
-              <button
-                type="button"
-                className={cx(m.soft, m.danger)}
-                onClick={() => void removeCurrent()}
-              >
-                Löschen
-              </button>
-              <button
-                type="button"
-                className={m.soft}
-                onClick={() => setConfirmDelete(false)}
-              >
-                Abbrechen
-              </button>
-            </span>
-          </div>
-        ) : null}
-        {notice ? (
-          <p className={m.notice} role="status">
-            {notice}
-          </p>
-        ) : null}
-        {error ? (
-          <p className={cx(m.notice, m.noticeBad)} role="alert">
-            {error}
-          </p>
-        ) : null}
-        {live && liveTime && qrValue ? (
-          <>
-            <TransferResult
-              qr={
-                <QRCodeSVG
-                  value={qrValue}
-                  size={184}
-                  level="M"
-                  marginSize={0}
-                  role="img"
-                  aria-label="QR-Code für das verschlüsselte Vokabelpaket"
-                />
-              }
-              status={`${liveTime.short} · ${liveTime.until}`}
-              code={formatTransferCode(live.code)}
-              onBig={() => setBig(true)}
-            />
-            <TransferBig
-              open={big}
-              title={live.title}
-              code={formatTransferCode(live.code)}
-              qr={
-                <QRCodeSVG
-                  value={qrValue}
-                  size={460}
-                  level="M"
-                  marginSize={0}
-                  role="img"
-                  aria-label={`QR-Code für ${live.title}, groß`}
-                />
-              }
-              onClose={() => setBig(false)}
-            />
-          </>
-        ) : null}
-      </TransferLayout>
-    </ManagePage>
+      ) : null}
+    </TransferLayout>
   );
 }

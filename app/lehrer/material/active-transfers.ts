@@ -4,10 +4,15 @@
  * jede nach höchstens 24 Stunden; hier steht nur, was dieses Gerät
  * freigegeben hat, damit QR und Code nach dem Neuladen wieder erscheinen.
  */
+export type TransferKind = "vocabulary" | "wordlist";
+
 export type ActiveTransfer = {
   packageId: string;
   title: string;
+  /** Anzahl der Vokabelpaare bzw. Lernwörter. */
   pairs: number;
+  /** Fehlt bei Freigaben aus der Zeit vor den Lernwortlisten = Vokabeln. */
+  kind?: TransferKind;
   /** 24-stelliger Code ohne Trennzeichen. */
   code: string;
   publishedAt: string;
@@ -23,11 +28,17 @@ function isTransfer(value: unknown): value is ActiveTransfer {
     typeof entry["packageId"] === "string" &&
     typeof entry["title"] === "string" &&
     typeof entry["pairs"] === "number" &&
+    (entry["kind"] === undefined ||
+      entry["kind"] === "vocabulary" ||
+      entry["kind"] === "wordlist") &&
     typeof entry["code"] === "string" &&
     typeof entry["publishedAt"] === "string" &&
     typeof entry["expiresAt"] === "string"
   );
 }
+
+export const transferKindOf = (entry: ActiveTransfer): TransferKind =>
+  entry.kind ?? "vocabulary";
 
 /** Noch gültige Freigaben (je Paket höchstens eine, siehe `rememberTransfer`). */
 export function readActiveTransfers(now: number): ActiveTransfer[] {

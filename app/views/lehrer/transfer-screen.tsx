@@ -44,10 +44,13 @@ export type PackageItem = {
   live?: string | undefined;
 };
 
-/** „Vokabelpakete“: gespeicherte Pakete als Liste, dazu die Bibliothek. */
+/** Vokabelpakete oder Lernwortlisten: gespeicherte Pakete als Liste, dazu die Bibliothek. */
 export function PackageList({
   items,
   selectedId,
+  heading = "Vokabelpakete",
+  newLabel = "Neues Vokabelpaket",
+  showLibrary = true,
   onPick,
   onNew,
   onExport,
@@ -55,6 +58,12 @@ export function PackageList({
 }: {
   items: readonly PackageItem[];
   selectedId: string;
+  /** Überschrift der Liste. */
+  heading?: string;
+  /** Beschriftung des „+ Neu“-Knopfs für Hilfstechnik. */
+  newLabel?: string;
+  /** Export und Import der ganzen Bibliothek; nur einmal je Seite nötig. */
+  showLibrary?: boolean;
   onPick?: (id: string) => void;
   onNew?: () => void;
   onExport?: () => void;
@@ -66,12 +75,12 @@ export function PackageList({
     <section className={cx(m.card, styles.listCard)} aria-labelledby={titleId}>
       <div className={styles.listHead}>
         <h2 className={styles.listTitle} id={titleId}>
-          Vokabelpakete
+          {heading}
         </h2>
         <button
           type="button"
           className={cx(m.soft, m.small)}
-          aria-label="Neues Vokabelpaket"
+          aria-label={newLabel}
           onClick={onNew}
         >
           + Neu
@@ -107,38 +116,40 @@ export function PackageList({
           ))}
         </ul>
       )}
-      <div className={styles.libraryRow}>
-        <span className={styles.libraryLabel}>Bibliothek</span>
-        <button
-          type="button"
-          className={m.link}
-          aria-label="Bibliothek exportieren"
-          disabled={items.length === 0}
-          onClick={onExport}
-        >
-          Exportieren
-        </button>
-        <button
-          type="button"
-          className={m.link}
-          aria-label="Bibliothek importieren"
-          onClick={() => input.current?.click()}
-        >
-          Importieren
-        </button>
-        <input
-          ref={input}
-          hidden
-          type="file"
-          accept="application/json,.json"
-          aria-label="Datei mit Lehrkraftbibliothek auswählen"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            if (file) onImport?.(file);
-          }}
-        />
-      </div>
+      {showLibrary ? (
+        <div className={styles.libraryRow}>
+          <span className={styles.libraryLabel}>Bibliothek</span>
+          <button
+            type="button"
+            className={m.link}
+            aria-label="Bibliothek exportieren"
+            disabled={items.length === 0}
+            onClick={onExport}
+          >
+            Exportieren
+          </button>
+          <button
+            type="button"
+            className={m.link}
+            aria-label="Bibliothek importieren"
+            onClick={() => input.current?.click()}
+          >
+            Importieren
+          </button>
+          <input
+            ref={input}
+            hidden
+            type="file"
+            accept="application/json,.json"
+            aria-label="Datei mit Lehrkraftbibliothek auswählen"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) onImport?.(file);
+            }}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -478,11 +489,167 @@ export function PackageEditor({
   );
 }
 
+/** Schüler holen die Vokabeln in der LernBox ab. */
+const VOCABULARY_HINT =
+  "Schüler tippen in ihrer LernBox auf „Code eingeben“ und scannen. Ohne Kamera geht es mit dem Code.";
+
+/** Wahl zwischen Vokabelpaketen und Lernwortlisten. */
+export function KindSwitch<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: ReadonlyArray<{ value: T; label: string }>;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div
+      className={m.actions}
+      role="group"
+      aria-label="Was möchtest du freigeben?"
+    >
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={option.value === value ? m.green : m.soft}
+          aria-pressed={option.value === value}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Editor einer Lernwortliste: Titel, Wörter, Freigabe. */
+export function WordListEditor({
+  title,
+  text,
+  count,
+  maxWords,
+  titleMax,
+  note,
+  save,
+  live,
+  busy = false,
+  shareDisabled = false,
+  onTitle,
+  onText,
+  onShare,
+  onDelete,
+}: {
+  title: string;
+  text: string;
+  /** Erkannte Wörter. */
+  count: number;
+  maxWords: number;
+  titleMax: number;
+  /** Hinweis unter dem Feld, z. B. zu doppelten Wörtern. */
+  note?: string | undefined;
+  save: SaveState;
+  live: boolean;
+  busy?: boolean;
+  shareDisabled?: boolean;
+  onTitle?: (value: string) => void;
+  onText?: (value: string) => void;
+  onShare?: () => void;
+  onDelete?: (() => void) | undefined;
+}) {
+  const hintId = useId();
+  return (
+    <section className={m.card} aria-label="Lernwortliste">
+      <div className={styles.editorBody}>
+        <label className={m.field}>
+          Titel der Liste
+          <input
+            className={cx(m.input, styles.titleInput)}
+            value={title}
+            maxLength={titleMax}
+            onChange={(event) => onTitle?.(event.target.value)}
+          />
+        </label>
+        <div className={styles.words}>
+          <label className={m.field}>
+            Wörter
+            <textarea
+              className={m.input}
+              rows={10}
+              value={text}
+              spellCheck={false}
+              aria-describedby={hintId}
+              onChange={(event) => onText?.(event.target.value)}
+            />
+          </label>
+          <div className={styles.wordsHead}>
+            <span className={m.count}>
+              {count} von {maxWords} Wörtern
+            </span>
+          </div>
+          <span className={m.hint} id={hintId}>
+            Ein Wort pro Zeile oder mit Komma getrennt. Die Schüler legen daraus
+            eine eigene Wortbox mit dem Titel als Namen an. Auf dem Server liegt
+            die Liste nur verschlüsselt und höchstens 24 Stunden.
+          </span>
+          {note ? <span className={m.hint}>{note}</span> : null}
+        </div>
+      </div>
+      <div className={styles.editorFoot}>
+        {save === "saved" ? (
+          <span className={m.saved}>
+            <ManageIcon name="check" size={15} strokeWidth={2.4} />
+            Lokal gespeichert
+          </span>
+        ) : (
+          <span className={cx(m.saved, styles.unsaved)}>
+            {save === "saving"
+              ? "Wird gespeichert …"
+              : "Noch nicht gespeichert"}
+          </span>
+        )}
+        {onDelete ? (
+          <button
+            type="button"
+            className={cx(m.iconBtn, m.iconDanger, "package-delete")}
+            aria-label="Liste löschen"
+            title="Liste löschen"
+            onClick={onDelete}
+          >
+            <ManageIcon name="trash" />
+          </button>
+        ) : null}
+        {live ? (
+          <button
+            type="button"
+            className={cx(m.soft, styles.reshare)}
+            disabled={busy || shareDisabled}
+            onClick={onShare}
+          >
+            {busy ? "Wird verschlüsselt …" : "Neu freigeben"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={cx(m.green, styles.share)}
+            disabled={busy || shareDisabled}
+            onClick={onShare}
+          >
+            {busy ? "Wird verschlüsselt …" : "Für Schüler freigeben"}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /** Dunkler Kasten unter dem Paket: QR, Code und „Groß zeigen“. */
 export function TransferResult({
   qr,
   status,
   code,
+  hint = VOCABULARY_HINT,
   onBig,
 }: {
   /** Der QR-Code (z. B. `QRCodeSVG`). */
@@ -491,6 +658,8 @@ export function TransferResult({
   status: string;
   /** Code in Vierergruppen. */
   code: string;
+  /** Wie die Schüler den Code einlösen (Standard: LernBox). */
+  hint?: string;
   onBig?: () => void;
 }) {
   const titleId = useId();
@@ -506,10 +675,7 @@ export function TransferResult({
         <h2 className={styles.resultTitle} id={titleId}>
           QR-Code scannen
         </h2>
-        <p className={styles.resultHint}>
-          Schüler tippen in ihrer LernBox auf „Code eingeben“ und scannen. Ohne
-          Kamera geht es mit dem Code.
-        </p>
+        <p className={styles.resultHint}>{hint}</p>
         <span className={styles.code}>{code}</span>
         <div className={styles.resultActions}>
           <button type="button" className={m.gold} onClick={onBig}>

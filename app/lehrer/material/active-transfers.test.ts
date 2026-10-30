@@ -3,6 +3,7 @@ import {
   forgetTransfers,
   readActiveTransfers,
   rememberTransfer,
+  transferKindOf,
   transferTimeLeft,
   type ActiveTransfer,
 } from "./active-transfers";
@@ -33,6 +34,22 @@ describe("laufende Freigaben", () => {
     const active = readActiveTransfers(NOW);
     expect(active.map((entry) => entry.code)).toEqual(["B".repeat(24)]);
     expect(forgetTransfers("a", NOW)).toEqual([]);
+  });
+
+  it("kennt die Art der Freigabe; ohne Angabe sind es Vokabeln", () => {
+    rememberTransfer(transfer("a", NOW), NOW);
+    rememberTransfer({ ...transfer("b", NOW), kind: "wordlist" }, NOW);
+    const [b, a] = readActiveTransfers(NOW);
+    expect(transferKindOf(a!)).toBe("vocabulary");
+    expect(transferKindOf(b!)).toBe("wordlist");
+  });
+
+  it("verwirft Einträge mit unbekannter Art", () => {
+    window.localStorage.setItem(
+      "lernraum:lehrer:freigaben",
+      JSON.stringify([{ ...transfer("x", NOW), kind: "bild" }]),
+    );
+    expect(readActiveTransfers(NOW)).toEqual([]);
   });
 
   it("nennt Restzeit und Ende", () => {

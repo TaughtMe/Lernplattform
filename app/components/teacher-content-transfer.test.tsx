@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ACTIVE_TRANSFERS_KEY } from "../lehrer/material/active-transfers";
@@ -39,7 +45,7 @@ const entry = (
   id: string,
   title: string,
   source = "school;Schule;Unit 3\nclassroom;Klassenzimmer",
-  kind?: "text" | "math",
+  kind?: "text" | "math" | "wordlist",
 ) => ({
   id,
   revision: 1,
@@ -228,5 +234,181 @@ describe("TeacherContentTransfer", () => {
     expect(
       await screen.findByText(/wurde aus der lokalen Bibliothek gelöscht/),
     ).toBeVisible();
+  });
+
+  describe("Lernwortlisten", () => {
+    const list = (id: string, title: string, source = "Brief\nSieb") => ({
+      ...entry(id, title, source, "wordlist"),
+      promptLocale: "de-DE",
+      answerLocale: "de-DE",
+    });
+
+    async function openWordLists(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(screen.getByRole("button", { name: "Lernwortlisten" }));
+    }
+
+    it("zeigt nur Lernwortlisten und wechselt mit dem Schalter", async () => {
+      const user = userEvent.setup();
+      libraryRepository.list.mockResolvedValue([
+        entry("v1", "Schule Unit 3"),
+        list("w1", "Wörter mit ie"),
+      ]);
+      render(<TeacherContentTransfer transferConfig={CONFIG} />);
+      await screen.findByDisplayValue("Schule Unit 3");
+      expect(
+        screen.getByRole("button", { name: "Vokabelpakete" }),
+      ).toHaveAttribute("aria-pressed", "true");
+
+      await openWordLists(user);
+      const region = await screen.findByRole("region", {
+        name: "Lernwortlisten",
+      });
+      expect(within(region).getByText("Wörter mit ie")).toBeVisible();
+      expect(within(region).queryByText("Schule Unit 3")).toBeNull();
+      expect(within(region).getByText(/2 Wörter · geändert/)).toBeVisible();
+      expect(screen.getByLabelText("Titel der Liste")).toHaveValue(
+        "Wörter mit ie",
+      );
+      expect(screen.getByLabelText("Wörter")).toHaveValue("Brief\nSieb");
+    });
+
+    it("legt eine neue Liste an und speichert sie beim Tippen als Art wordlist", async () => {
+      const user = userEvent.setup();
+      render(<TeacherContentTransfer transferConfig={CONFIG} />);
+      await openWordLists(user);
+      expect(screen.getByText("Noch nicht gespeichert")).toBeVisible();
+      expect(
+        screen.getByRole("button", { name: "Für Schüler freigeben" }),
+      ).toBeDisabled();
+
+      await user.clear(screen.getByLabelText("Titel der Liste"));
+      await user.type(screen.getByLabelText("Titel der Liste"), "ie-Wörter");
+      await user.type(
+        screen.getByLabelText("Wörter"),
+        "Brief, Sieb{Enter}brief",
+      );
+      expect(screen.getByText("2 von 200 Wörtern")).toBeVisible();
+      expect(
+        screen.getByText(/1 Einträge werden nicht mitgegeben/),
+      ).toBeVisible();
+
+      await waitFor(() => expect(libraryRepository.put).toHaveBeenCalled());
+      expect(libraryRepository.put).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          title: "ie-Wörter",
+          kind: "wordlist",
+          source: "Brief\nSieb",
+        }),
+      );
+      expect(await screen.findByText("Lokal gespeichert")).toBeVisible();
+    });
+
+    it("sperrt die Freigabe bei zu vielen Wörtern und sagt warum", async () => {
+      const user = userEvent.setup();
+      libraryRepository.list.mockResolvedValue([list("w1", "Liste")]);
+      render(<TeacherContentTransfer transferConfig={CONFIG} />);
+      await openWordLists(user);
+      await screen.findByDisplayValue("Liste");
+      const many = Array.from({ length: 201 }, (_, i) => `wort${i}`).join(",");
+      fireEvent.change(screen.getByLabelText("Wörter"), {
+        target: { value: many },
+      });
+      expect(screen.getByText(/zu viele Wörter/)).toBeVisible();
+      expect(
+        screen.getByRole("button", { name: "Für Schüler freigeben" }),
+      ).toBeDisabled();
+    });
+
+    it("gibt die Liste verschlüsselt frei und zeigt QR zur Lernwerkstatt", async () => {
+      const user = userEvent.setup();
+      libraryRepository.list.mockResolvedValue([list("w1", "Wörter mit ie")]);
+      render(<TeacherContentTransfer transferConfig={CONFIG} />);
+      await openWordLists(user);
+      await screen.findByDisplayValue("Wörter mit ie");
+
+      await user.click(
+        screen.getByRole("button", { name: "Für Schüler freigeben" }),
+      );
+
+      expect(publishTransferPayload).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          schemaVersion: "1.1.0",
+          kind: "word-list",
+          id: "w1",
+          revision: 2,
+          title: "Wörter mit ie",
+          words: ["Brief", "Sieb"],
+        }),
+      );
+      expect(
+        await screen.findByText("2345 6789 ABCD EFGH JKLM NPQR"),
+      ).toBeVisible();
+      expect(
+        screen.getByRole("img", {
+          name: "QR-Code für die verschlüsselte Lernwortliste",
+        }),
+      ).toBeVisible();
+      expect(screen.getByText(/Lernwerkstatt/)).toBeVisible();
+      const live = screen.getByRole("region", { name: "Läuft gerade" });
+      expect(within(live).getByText(/2 Wörter · Code 2345/)).toBeVisible();
+      const stored = JSON.parse(
+        window.localStorage.getItem(ACTIVE_TRANSFERS_KEY) ?? "[]",
+      );
+      expect(stored[0]).toMatchObject({ packageId: "w1", kind: "wordlist" });
+      expect(libraryRepository.put).toHaveBeenLastCalledWith(
+        expect.objectContaining({ kind: "wordlist", revision: 2 }),
+      );
+    });
+
+    it("trennt die Freigaben beider Arten in „Läuft gerade“", async () => {
+      const user = userEvent.setup();
+      libraryRepository.list.mockResolvedValue([
+        entry("v1", "Schule Unit 3"),
+        list("w1", "Wörter mit ie"),
+      ]);
+      render(<TeacherContentTransfer transferConfig={CONFIG} />);
+      await screen.findByDisplayValue("Schule Unit 3");
+      await user.click(
+        screen.getByRole("button", { name: "Für Schüler freigeben" }),
+      );
+      await screen.findByText("2345 6789 ABCD EFGH JKLM NPQR");
+
+      await openWordLists(user);
+      await screen.findByDisplayValue("Wörter mit ie");
+      const live = screen.getByRole("region", { name: "Läuft gerade" });
+      expect(within(live).queryByText("Schule Unit 3")).toBeNull();
+      expect(
+        screen.queryByRole("img", { name: /QR-Code für das verschlüsselte/ }),
+      ).toBeNull();
+    });
+
+    it("erklärt eine fehlende Übertragungskonfiguration", async () => {
+      const user = userEvent.setup();
+      libraryRepository.list.mockResolvedValue([list("w1", "Liste")]);
+      render(<TeacherContentTransfer transferConfig={null} />);
+      await openWordLists(user);
+      await screen.findByDisplayValue("Liste");
+      await user.click(
+        screen.getByRole("button", { name: "Für Schüler freigeben" }),
+      );
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "noch nicht konfiguriert",
+      );
+      expect(publishTransferPayload).not.toHaveBeenCalled();
+    });
+
+    it("löscht eine Liste erst nach Bestätigung", async () => {
+      const user = userEvent.setup();
+      libraryRepository.list.mockResolvedValue([list("w1", "Liste")]);
+      render(<TeacherContentTransfer transferConfig={null} />);
+      await openWordLists(user);
+      await screen.findByDisplayValue("Liste");
+      await user.click(screen.getByRole("button", { name: "Liste löschen" }));
+      expect(libraryRepository.remove).not.toHaveBeenCalled();
+      libraryRepository.list.mockResolvedValue([]);
+      await user.click(screen.getByRole("button", { name: "Löschen" }));
+      expect(libraryRepository.remove).toHaveBeenCalledWith("w1");
+    });
   });
 });
