@@ -1,3 +1,4 @@
+import { HydrationGate } from "../../ui/hydration-gate";
 import {
   Button,
   ButtonLink,
@@ -78,7 +79,7 @@ export function TrainingScreen({
         Wähle, wie lange du üben möchtest. Wir suchen die Aufgaben für dich aus.
       </PageHeader>
 
-      <div className="ui-stack">
+      <HydrationGate className="ui-stack">
         <p className="ui-label" id="training-dauer">
           Wie lange?
         </p>
@@ -99,7 +100,7 @@ export function TrainingScreen({
             </button>
           ))}
         </div>
-      </div>
+      </HydrationGate>
 
       {status === "loading" ? (
         <p className="ui-small ui-muted" role="status">

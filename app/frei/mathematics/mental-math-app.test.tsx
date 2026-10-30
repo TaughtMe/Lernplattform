@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DailyPlanItem } from "../../../src/domain/daily-plan";
@@ -8,6 +8,7 @@ import {
   shuffleMathTasks,
 } from "../../../src/domain/mental-math";
 import { createMathAttempt } from "../../../src/storage/math-practice";
+import { serverRender } from "../../../tests/server-render";
 import { MentalMathApp } from "./mental-math-app";
 
 const { put, list, progress, build } = vi.hoisted(() => ({
@@ -106,6 +107,30 @@ describe("MentalMathApp", () => {
     await waitFor(() =>
       expect(screen.getByText("Gut gerechnet")).toBeVisible(),
     );
+  });
+});
+
+describe("Kopfrechnen vor dem Hydrieren", () => {
+  it("sperrt die Einstellungen, bis „Eigene Aufgaben“ ankommt", async () => {
+    const user = userEvent.setup();
+    const { container, hydrate } = serverRender(<MentalMathApp />);
+    const early = within(container);
+    expect(
+      early.getByRole("button", { name: "Eigene Aufgaben" }),
+    ).toBeDisabled();
+    expect(early.getByRole("button", { name: /Plus/ })).toBeDisabled();
+    expect(early.getByRole("spinbutton", { name: "Von" })).toBeDisabled();
+    expect(early.getByRole("button", { name: "Runde starten" })).toBeDisabled();
+
+    hydrate();
+    await user.click(screen.getByRole("button", { name: "Eigene Aufgaben" }));
+    const source = screen.getByRole("textbox", {
+      name: "Eine Aufgabe pro Zeile",
+    });
+    await user.clear(source);
+    await user.type(source, "6 + 7");
+    expect(source).toHaveValue("6 + 7");
+    expect(screen.getByText(/1 gültige Aufgabe/)).toBeVisible();
   });
 });
 

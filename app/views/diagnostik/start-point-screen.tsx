@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
+import { HydrationGate } from "../../ui/hydration-gate";
 import { Button, ButtonLink, Card, PageHeader } from "../../ui/primitives";
 
 export type StartPointChoice = {
@@ -55,7 +56,7 @@ export function StartPointScreen(props: StartPointScreenProps) {
           Das ist kein Test und es gibt keine Note. Du machst ein paar Aufgaben,
           dann sagen wir dir, womit du gut anfangen kannst.
         </PageHeader>
-        <div className="ui-stack">
+        <HydrationGate className="ui-stack">
           {props.choices.map((choice) => (
             <Card key={choice.id} className="ui-stack">
               <h2 className="ui-h-section">{choice.title}</h2>
@@ -67,7 +68,7 @@ export function StartPointScreen(props: StartPointScreenProps) {
               </div>
             </Card>
           ))}
-        </div>
+        </HydrationGate>
       </div>
     );
   }

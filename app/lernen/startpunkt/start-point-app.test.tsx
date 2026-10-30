@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { serverRender } from "../../../tests/server-render";
 import { StartPointApp } from "./start-point-app";
 
 /** Fester Zufall, damit die Rechenaufgaben in jedem Lauf gleich sind. */
@@ -169,5 +170,26 @@ describe("Startpunkt: Container", () => {
       screen.getAllByRole("button", { name: "Startpunkt suchen" })[1]!,
     );
     expect(screen.getByRole("button", { name: "Weiter" })).toBeDisabled();
+  });
+});
+
+describe("Startpunkt: vor dem Hydrieren", () => {
+  it("sperrt „Startpunkt suchen“ sichtbar, bis Klicks ankommen", async () => {
+    const user = userEvent.setup();
+    const app = <StartPointApp repository={repository()} random={seeded()} />;
+    const { container, hydrate } = serverRender(app);
+    const early = within(container).getAllByRole("button", {
+      name: "Startpunkt suchen",
+    });
+    expect(early).toHaveLength(2);
+    for (const button of early) expect(button).toBeDisabled();
+
+    hydrate();
+    const math = screen.getAllByRole("button", {
+      name: "Startpunkt suchen",
+    })[1]!;
+    expect(math).toBeEnabled();
+    await user.click(math);
+    expect(screen.getByText("Aufgabe 1")).toBeInTheDocument();
   });
 });

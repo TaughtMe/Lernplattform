@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LAUFDIKTAT_STARS_KEY } from "./stars-preference";
+import { serverRender } from "../../../../tests/server-render";
 import { RunningDictationApp } from "./running-dictation-app";
 
 vi.mock("../../../../src/storage/personal-learning-events", () => ({
@@ -58,5 +59,27 @@ describe("RunningDictationApp, Sterne am Ende", () => {
     expect(
       await screen.findByRole("checkbox", { name: "Sterne am Ende zeigen" }),
     ).not.toBeChecked();
+  });
+});
+
+describe("RunningDictationApp vor dem Hydrieren", () => {
+  it("sperrt das Textfeld, damit React keinen getippten Text zurücksetzt", async () => {
+    const user = userEvent.setup();
+    const { container, hydrate } = serverRender(<RunningDictationApp />);
+    const early = within(container);
+    expect(early.getByRole("textbox")).toBeDisabled();
+    expect(
+      early.getByRole("button", { name: "Laufdiktat starten" }),
+    ).toBeDisabled();
+
+    hydrate();
+    const source = screen.getByRole("textbox");
+    expect(source).toBeEnabled();
+    await user.clear(source);
+    await user.type(source, "Mein eigener Satz.");
+    expect(source).toHaveValue("Mein eigener Satz.");
+    expect(
+      screen.getByRole("button", { name: "Laufdiktat starten" }),
+    ).toBeEnabled();
   });
 });

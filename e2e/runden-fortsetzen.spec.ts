@@ -1,6 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
 import { analyzeAccessibility } from "./accessibility-helpers";
-import { hydrated } from "./hydration-helpers";
 import { createBox, startRound } from "./wortspeicher-helpers";
 
 /**
@@ -143,10 +142,7 @@ const MODULES: RoundModule[] = [
     path: "/frei/mathematics",
     start: async (page) => {
       await page.goto("/frei/mathematics");
-      // Ein Klick vor der Hydration verpufft; dann bliebe das Feld aus.
-      await (
-        await hydrated(page.getByRole("button", { name: "Eigene Aufgaben" }))
-      ).click();
+      await page.getByRole("button", { name: "Eigene Aufgaben" }).click();
       await page
         .getByRole("textbox", { name: "Eine Aufgabe pro Zeile" })
         .fill(
@@ -174,12 +170,9 @@ const MODULES: RoundModule[] = [
     path: "/frei/german/laufdiktat",
     start: async (page) => {
       await page.goto("/frei/german/laufdiktat");
-      // Eingaben vor der Hydration werden zurückgesetzt (Beispieltext, 2 Sätze).
-      await (
-        await hydrated(
-          page.getByRole("textbox", { name: /^Text – Sätze und Zeilen/ }),
-        )
-      ).fill(SENTENCES.join(" "));
+      await page
+        .getByRole("textbox", { name: /^Text – Sätze und Zeilen/ })
+        .fill(SENTENCES.join(" "));
       await page.getByRole("button", { name: "Laufdiktat starten" }).click();
       await expect(page.getByText("1 / 10", { exact: true })).toBeVisible();
     },

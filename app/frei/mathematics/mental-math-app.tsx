@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type FormEvent,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   MULTIPLICATION_TABLES,
   generateMentalMathTasks,
@@ -49,6 +42,7 @@ import {
   wantsDailyPlan,
 } from "../../lernen/plan-today";
 import { describeRound, operationLabels, todaysReviews } from "./round-text";
+import { HydrationGate } from "../../ui/hydration-gate";
 import { Icon } from "../../ui/icons";
 import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { useRoundGuard } from "../../ui/round-guard";
@@ -165,11 +159,6 @@ export function MentalMathApp({
   const [hint, setHint] = useState("");
   const wrongTries = useRef(0);
   const nextTimer = useRef(0);
-  const interactionReady = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
-  );
 
   const manualTasks = useMemo(
     () =>
@@ -617,7 +606,8 @@ export function MentalMathApp({
           ) : null}
         </Card>
 
-        <div className="ui-math__layout">
+        {/* Bis zur Hydration gesperrt: sonst gehen frühe Klicks und Eingaben verloren. */}
+        <HydrationGate className="ui-math__layout">
           <Card
             look="pop"
             className="ui-stack"
@@ -676,7 +666,6 @@ export function MentalMathApp({
                         type="button"
                         className="ui-select-card ui-math__op"
                         aria-pressed={operations.includes(operation)}
-                        disabled={!interactionReady}
                         key={operation}
                         onClick={() => toggleOperation(operation)}
                       >
@@ -875,16 +864,14 @@ export function MentalMathApp({
               size="lg"
               variant="green"
               disabled={
-                !interactionReady ||
-                loadState === "loading" ||
-                (manualMode && !manualTasks.length)
+                loadState === "loading" || (manualMode && !manualTasks.length)
               }
               onClick={startRound}
             >
               Runde starten
             </Button>
           </Card>
-        </div>
+        </HydrationGate>
       </section>
     );
   }

@@ -1,6 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
 import { analyzeAccessibility } from "./accessibility-helpers";
-import { hydrated } from "./hydration-helpers";
 
 // D2 (Welle 3): Startpunkt, Tagestraining und Kompetenzprofil. Die Seiten
 // liegen unter `/lernen` (Freigabebereich `lernen`).
@@ -15,14 +14,13 @@ async function expectNoHorizontalScroll(page: Page) {
 
 /**
  * Startet die Suche in der Karte „Rechtschreibung“ (0) oder „Kopfrechnen“ (1).
- * Erst nach der Hydration: Ein früherer Klick bleibt wirkungslos.
+ * Der Knopf ist bis zur Hydration gesperrt; der Klick wartet darauf.
  */
 async function startSearch(page: Page, card: 0 | 1) {
-  await (
-    await hydrated(
-      page.getByRole("button", { name: "Startpunkt suchen" }).nth(card),
-    )
-  ).click();
+  await page
+    .getByRole("button", { name: "Startpunkt suchen" })
+    .nth(card)
+    .click();
 }
 
 async function answerWrong(page: Page, text = "9999") {
@@ -151,7 +149,7 @@ test("Tagestraining: Dauer wählen, starten, aktive Zeit läuft", async ({
   const ten = page.getByRole("button", { name: "10 Minuten" });
   const twenty = page.getByRole("button", { name: "20 Minuten" });
   await expect(ten).toHaveAttribute("aria-pressed", "true");
-  await (await hydrated(twenty)).click();
+  await twenty.click();
   await expect(twenty).toHaveAttribute("aria-pressed", "true");
 
   await page.getByRole("button", { name: "Training starten" }).click();

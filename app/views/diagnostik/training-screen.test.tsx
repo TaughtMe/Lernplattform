@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { serverRender } from "../../../tests/server-render";
 import {
   TrainingScreen,
   formatClock,
@@ -191,5 +192,29 @@ describe("TrainingScreen", () => {
     for (const word of [/fällig/i, /leitner/i, /durchgang/i, /merkstufe/i]) {
       expect(document.body).not.toHaveTextContent(word);
     }
+  });
+});
+
+describe("TrainingScreen vor dem Hydrieren", () => {
+  it("sperrt die Dauer, bis ein Klick ankommt", async () => {
+    const user = userEvent.setup();
+    const onMinutes = vi.fn();
+    const ui = (
+      <TrainingScreen
+        status="loading"
+        minutes={10}
+        onMinutes={onMinutes}
+        segments={[]}
+        clock={clock()}
+      />
+    );
+    const { container, hydrate } = serverRender(ui);
+    expect(
+      within(container).getByRole("button", { name: "20 Minuten" }),
+    ).toBeDisabled();
+
+    hydrate();
+    await user.click(screen.getByRole("button", { name: "20 Minuten" }));
+    expect(onMinutes).toHaveBeenCalledWith(20);
   });
 });

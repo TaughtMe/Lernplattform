@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type FormEvent,
-} from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import {
   buildRunningDictationHint,
   buildVocabularyItems,
@@ -30,6 +24,7 @@ import {
   runningDictationSnapshotSchema,
 } from "../../../../src/domain/running-dictation-snapshot";
 import { createLearningBoxRepository } from "../../../../src/storage/personal-learning-events";
+import { HydrationGate } from "../../../ui/hydration-gate";
 import { Icon } from "../../../ui/icons";
 import { ReadAloudButton } from "../../../ui/read-aloud-button";
 import { useRoundGuard } from "../../../ui/round-guard";
@@ -81,11 +76,6 @@ export function RunningDictationApp() {
   const roundSnapshot = useRoundSnapshot(
     "laufdiktat",
     runningDictationSnapshotSchema,
-  );
-  const interactionReady = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false,
   );
   const current = items[index];
   const totalErrors = Object.values(errorCounts).reduce(
@@ -301,109 +291,109 @@ export function RunningDictationApp() {
           />
         ) : null}
 
-        <Card look="pop" className="ui-stack">
-          <div
-            className="ui-grid-auto"
-            style={{ ["--min" as string]: "240px" }}
-          >
-            <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
-              <span className="ui-label">Inhalt</span>
-              <Segmented
-                label="Inhalt"
-                value={kind}
-                disabled={!interactionReady}
-                onChange={selectKind}
-                options={[
-                  { value: "text", label: "Text und Sätze" },
-                  { value: "vocabulary", label: "Vokabeln" },
-                ]}
-              />
+        {/* Bis zur Hydration gesperrt: sonst setzt React den Text zurück. */}
+        <Card look="pop">
+          <HydrationGate className="ui-stack">
+            <div
+              className="ui-grid-auto"
+              style={{ ["--min" as string]: "240px" }}
+            >
+              <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
+                <span className="ui-label">Inhalt</span>
+                <Segmented
+                  label="Inhalt"
+                  value={kind}
+                  onChange={selectKind}
+                  options={[
+                    { value: "text", label: "Text und Sätze" },
+                    { value: "vocabulary", label: "Vokabeln" },
+                  ]}
+                />
+              </div>
+              <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
+                <span className="ui-label">Übungsart</span>
+                <Segmented
+                  label="Übungsart"
+                  value={mode}
+                  onChange={setMode}
+                  options={[
+                    { value: "running-dictation", label: "Klassisch" },
+                    { value: "practice", label: "Mit Tipps" },
+                  ]}
+                />
+              </div>
             </div>
-            <div className="ui-stack" style={{ ["--gap" as string]: "6px" }}>
-              <span className="ui-label">Übungsart</span>
-              <Segmented
-                label="Übungsart"
-                value={mode}
-                disabled={!interactionReady}
-                onChange={setMode}
-                options={[
-                  { value: "running-dictation", label: "Klassisch" },
-                  { value: "practice", label: "Mit Tipps" },
-                ]}
-              />
-            </div>
-          </div>
 
-          <label
-            className="ui-stack ui-label"
-            style={{ ["--gap" as string]: "6px" }}
-          >
-            {kind === "text"
-              ? "Text – Sätze und Zeilen werden getrennt"
-              : "Vokabeln – eine Zeile pro Paar: Vorderseite;Rückseite"}
-            <textarea
-              className="ui-textarea"
-              value={source}
-              onChange={(event) => setSource(event.target.value)}
-              rows={7}
+            <label
+              className="ui-stack ui-label"
+              style={{ ["--gap" as string]: "6px" }}
+            >
+              {kind === "text"
+                ? "Text – Sätze und Zeilen werden getrennt"
+                : "Vokabeln – eine Zeile pro Paar: Vorderseite;Rückseite"}
+              <textarea
+                className="ui-textarea"
+                value={source}
+                onChange={(event) => setSource(event.target.value)}
+                rows={7}
+              />
+            </label>
+
+            {kind === "vocabulary" ? (
+              <div className="ui-grid2">
+                <label
+                  className="ui-stack ui-label"
+                  style={{ ["--gap" as string]: "6px" }}
+                >
+                  Abfragerichtung
+                  <select
+                    className="ui-input"
+                    value={direction}
+                    onChange={(event) =>
+                      setDirection(event.target.value as VocabularyDirection)
+                    }
+                  >
+                    <option value="left-to-right">Links → rechts</option>
+                    <option value="right-to-left">Rechts → links</option>
+                    <option value="mixed">Gemischt</option>
+                  </select>
+                </label>
+                <label
+                  className="ui-stack ui-label"
+                  style={{ ["--gap" as string]: "6px" }}
+                >
+                  Nach der Runde
+                  <select
+                    className="ui-input"
+                    value={transfer}
+                    onChange={(event) =>
+                      setTransfer(event.target.value as TransferChoice)
+                    }
+                  >
+                    <option value="errors">Nur Fehler in die LernBox</option>
+                    <option value="all">Alle in die LernBox</option>
+                    <option value="none">Nichts übernehmen</option>
+                  </select>
+                </label>
+              </div>
+            ) : null}
+
+            <Toggle
+              label="Sterne am Ende zeigen"
+              hint="Nur auf diesem Gerät. Ohne Sterne siehst du nur deine Zahlen."
+              checked={showStars}
+              onChange={setShowStars}
             />
-          </label>
 
-          {kind === "vocabulary" ? (
-            <div className="ui-grid2">
-              <label
-                className="ui-stack ui-label"
-                style={{ ["--gap" as string]: "6px" }}
-              >
-                Abfragerichtung
-                <select
-                  className="ui-input"
-                  value={direction}
-                  onChange={(event) =>
-                    setDirection(event.target.value as VocabularyDirection)
-                  }
-                >
-                  <option value="left-to-right">Links → rechts</option>
-                  <option value="right-to-left">Rechts → links</option>
-                  <option value="mixed">Gemischt</option>
-                </select>
-              </label>
-              <label
-                className="ui-stack ui-label"
-                style={{ ["--gap" as string]: "6px" }}
-              >
-                Nach der Runde
-                <select
-                  className="ui-input"
-                  value={transfer}
-                  onChange={(event) =>
-                    setTransfer(event.target.value as TransferChoice)
-                  }
-                >
-                  <option value="errors">Nur Fehler in die LernBox</option>
-                  <option value="all">Alle in die LernBox</option>
-                  <option value="none">Nichts übernehmen</option>
-                </select>
-              </label>
-            </div>
-          ) : null}
-
-          <Toggle
-            label="Sterne am Ende zeigen"
-            hint="Nur auf diesem Gerät. Ohne Sterne siehst du nur deine Zahlen."
-            checked={showStars}
-            disabled={!interactionReady}
-            onChange={setShowStars}
-          />
-
-          <Button
-            size="lg"
-            variant="green"
-            onClick={start}
-            disabled={!interactionReady || !source.trim()}
-          >
-            Laufdiktat starten
-          </Button>
+            <Button
+              size="lg"
+              variant="green"
+              onClick={start}
+              disabled={!source.trim()}
+            >
+              Laufdiktat starten
+            </Button>
+          </HydrationGate>
         </Card>
       </section>
     );
