@@ -8,6 +8,8 @@ import { ReleaseProvider } from "./release/release-context";
 import { AreaFrame } from "./ui/shell/area-frame";
 import { GuestModeHost } from "./ui/guest-mode-host";
 import { HardwareKeyboardHost } from "./ui/hardware-keyboard-host";
+import { hydrationBootScript } from "./ui/hydration-boot";
+import { HydrationMark } from "./ui/hydration-mark";
 import { ServiceWorkerRegistration } from "./ui/service-worker-registration";
 import { UpdateToast } from "./ui/update-toast";
 import { SiteFooter } from "./ui/site-footer";
@@ -113,13 +115,16 @@ export default async function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest" />
         <script dangerouslySetInnerHTML={{ __html: installPromptScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: hydrationBootScript }} />
       </head>
-      <body>
+      {/* aria-busy fällt weg, sobald HydrationMark die Seite freigibt. */}
+      <body aria-busy="true">
         <ReleaseProvider value={visibility}>
           <CloudClientIdsProvider value={cloudClientIds}>
             <AreaFrame liveRoomConfig={liveRoomConfig}>{children}</AreaFrame>
           </CloudClientIdsProvider>
           <SiteFooter />
+          <HydrationMark />
           <ServiceWorkerRegistration />
           <UpdateToast />
           <GuestModeHost />
