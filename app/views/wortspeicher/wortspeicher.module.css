@@ -60,6 +60,13 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+/* Lange Beschriftungen („Diese Wörter jetzt noch einmal üben“) brechen um,
+   statt bei 320 px aus der Seite zu ragen. */
+.actions > :global(.ui-btn) {
+  max-width: 100%;
+  padding-block: 8px;
+  white-space: normal;
+}
 
 /* ---- Übersicht ---- */
 .sectionHead {
