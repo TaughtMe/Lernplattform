@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { avatarLabel } from "../../../src/domain/learner-profile";
 import type { TodayTask } from "../../../src/domain/today-tasks";
 import { Icon } from "../../ui/icons";
-import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./home-screen.module.css";
 
@@ -184,9 +183,6 @@ export function HomeScreen(props: HomeScreenProps) {
                       ? "Tagesziel geschafft – alles Weitere ist ein Extra"
                       : `${done} von ${target} ${target === 1 ? "Aufgabe" : "Aufgaben"} heute`}
               </p>
-              {firstContact ? (
-                <ReadAloudButton text={FIRST_CONTACT_INTRO} />
-              ) : null}
             </div>
             <div className={styles.actions}>
               <Link href={props.continueHref} className={styles.continue}>
