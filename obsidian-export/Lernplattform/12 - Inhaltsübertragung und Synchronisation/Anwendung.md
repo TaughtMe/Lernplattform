@@ -15,7 +15,7 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Die verschlüsselte 24-Stunden-Übergabe ist für Vokabelpakete umgesetzt. Befunde: Die Geheimnisse entstehen auf dem Server, die Verschlüsselung ist daher keine Ende-zu-Ende-Verschlüsselung gegenüber Supabase (B-017); das Anlegen von Transfers ist nicht rate-limitiert (B-006); andere Inhaltsarten (Lernwörter, Texte, Rechenvorgaben) sind nicht übertragbar (E-002). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
-> **Nachtrag Welle 3 (27.10.2026):** Zu E-002 lassen sich Lernwörter jetzt als Wortauftrag über Link oder Kärtchen weitergeben, ohne Personendaten und ohne Speicherung; Texte und Rechenvorgaben sind nicht Teil dieses Schritts. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+> **Nachtrag Welle 3 (27.10.2026):** Zu E-002 trägt die Übertragung neben Vokabelpaketen (`schemaVersion` 1.0.0) auch Lernwortlisten (1.1.0, Titel und bis zu 200 Wörter, gleiche Verschlüsselung, keine Datenbankänderung). Das Kind sieht die Liste zuerst und legt sie nach Bestätigung als Wortbox im Wortspeicher an; dasselbe Paket zweimal übernehmen legt keine zweite Wortbox an. Ältere App-Versionen lehnen das neue Format ab. Texte und Rechenvorgaben sind nicht Teil dieses Schritts. Details: `docs/umsetzungsplan-audit-welle-3.md`.
 
 
 ## Aktueller Implementierungsstand

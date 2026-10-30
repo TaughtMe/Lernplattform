@@ -167,7 +167,8 @@ erweitert, statt eine zweite Ablage zu bauen. Alle neuen Felder sind optional:
   Version kann eine ältere App-Version nicht mehr einlesen (`.strict()`). Das ist eine bekannte
   Grenze und wird dokumentiert.
 - Die **Freigabe an Schüler** (24-h-Übergabe) bietet nur `kind = vocabulary` an. Supabase-Verträge
-  bleiben unverändert.
+  bleiben unverändert. (Stand Welle 3: zusätzlich `kind = wordlist`, siehe
+  `docs/umsetzungsplan-audit-welle-3.md`, D4.)
 - Die Ablage zeigt die Inhalte der gewählten Klasse bzw. die nicht zugeordneten (E4), sortiert
   nach `lastUsedAt ?? updatedAt` (neueste zuerst). Das Datum in der Zeile ist dieser Wert. Die
   Zahl rechts („14 Inhalte“) bezieht sich auf diese Auswahl.

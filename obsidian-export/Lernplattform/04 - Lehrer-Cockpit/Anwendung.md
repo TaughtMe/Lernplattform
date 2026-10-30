@@ -7,7 +7,7 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 
 > **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Teilweise implementiert.** Klassen, Schülerliste, Einschreibe-QR, Inhaltsablage, Laufdiktat-Dashboard, Vokabelfreigabe und Aufgaben (Freigabe `vorschau`) mit Abgabeprotokoll sind umgesetzt. Gruppen und Häuser sind ausgeschaltet, der fortlaufende Scanmodus mit Ton/Vibration fehlt, ein **Lernstandscheck existiert nicht mehr**. Befunde: kein Zugriffsschutz auf geteilten Geräten (B-009), QR-Bogen druckt nur die erste Seite (C-006), Inhalte nur über den Laufdiktat-Assistenten (C-010), nur Vokabeln zuweisbar (E-002), kaum Rückmeldung über Lernstände (E-003), keine Übergabe an Vertretung (E-008). Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
-> **Nachtrag Welle 3 (27.10.2026):** Zu B-009 gibt es für geteilte Geräte einen Tafelmodus ohne Personenbereiche und eine PIN-Sperre auf „Mein Gerät“ (Vorschau, Freigabe `lehrer-geraet`); zu E-002 gibt es einen Wortauftrag als Link oder Kärtchen ohne Personendaten, der nicht gespeichert wird. Details: `docs/umsetzungsplan-audit-welle-3.md`.
+> **Nachtrag Welle 3 (27.10.2026):** Zu B-009 gibt es für geteilte Geräte einen Tafelmodus ohne Personenbereiche und eine PIN-Sperre auf „Mein Gerät“ (Vorschau, Freigabe `lehrer-geraet`); zu E-002 gibt die Lehrkraft unter „Freigabe an Schüler“ Lernwortlisten (Titel, bis zu 200 Wörter) über die verschlüsselte Inhaltsübertragung frei; die Kinder übernehmen sie als Wortbox. Details: `docs/umsetzungsplan-audit-welle-3.md`.
 
 
 ## Zweck

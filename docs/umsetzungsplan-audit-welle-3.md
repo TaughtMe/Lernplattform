@@ -69,14 +69,42 @@ der Fälligkeit, um genau eine Box, nie über die höchste Box.
 | D3-4 | **Lokale Sperre** (zweiter Schritt, nur auf „Mein Gerät“ wählbar): PIN mit 6 Ziffern, gespeichert nur als PBKDF2-Ableitung. Personenbereiche verlangen die PIN nach dem Start und nach 15 Minuten ohne Nutzung. Die Sperre ist ein Sichtschutz, keine Verschlüsselung; die Oberfläche sagt das. Vergessene PIN: Sperre aufheben löscht die Personendaten auf diesem Gerät (Material bleibt). |
 | D3-5 | Tests: Im Tafelmodus liegen nach einem Abgleich keine Schülernamen in IndexedDB; gesperrte Routen zeigen den Hinweis; die PIN-Sperre greift.                                                                                                                                                                                                                                                 |
 
-## D4 Auftrags-QR ohne Personendaten (E-002), zuerst Lernwörter
+## D4 Lernwortlisten für Schüler (E-002)
 
-| Nr.  | Regel                                                                                                                                                                                                     |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D4-1 | Im Lehrerbereich (Material) entsteht ein **Wortauftrag**: Titel (optional) und Wortliste, geprüft mit `parseWordsParam` (höchstens 50 Wörter). Daraus Link und QR auf `/frei/german?woerter=…&auftrag=…`. |
-| D4-2 | Der Auftrag enthält keine Personendaten und nichts, was ein Kind identifiziert. Mehrere Aufträge (z. B. je Leistungsgruppe) lassen sich als Kärtchen auf einem Blatt drucken.                             |
-| D4-3 | Auf dem Schülergerät öffnet der Link den Wortspeicher mit dem Blatt „Wörter übernehmen“, der Titel ist als Wortbox-Name vorbelegt. Gespeichert wird erst nach Bestätigung.                                |
-| D4-4 | Zu lange Listen für einen gut lesbaren QR werden vor dem Erzeugen gemeldet. E2E-Test: Auftrag erzeugen, Link öffnen, Wörter übernehmen.                                                                   |
+Entscheidung des Entwicklers: Der Wortauftrag per URL-QR (Wörter im Link)
+entfällt, weil er neben der Supabase-Übertragung nur irritiert. Lernwortlisten
+gehen stattdessen über die vorhandene verschlüsselte Inhaltsübertragung, wie
+heute die Vokabelpakete.
+
+| Nr.  | Regel                                                                                                                                                                                                                                                                                          |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D4-1 | Im Lehrerbereich (Freigabe an Schüler, `/lehrer/material`) gibt es neben den Vokabelpaketen die **Lernwortliste**: Titel und Wörter, höchstens 200. Die Wörter werden wie bei `parseWordsParam` geprüft (`isBridgeWord`): kein Steuerzeichen, keine Spitzklammern, höchstens 60 Zeichen.       |
+| D4-2 | Die Liste wird beim Tippen lokal gespeichert, in `contentPackages` mit `kind: "wordlist"` (ein Wort je Zeile). So reist sie mit Sicherung, Bibliotheksdatei und Geräteabgleich (auch auf die Tafel als Material). Startseite und Live-Raum zeigen sie nicht (`isRoomContent`).                 |
+| D4-3 | Freigabe über `publishTransferPayload`: verschlüsselt, Code oder QR, 24 Stunden, Supabase speichert nur Chiffretext. **Keine Datenbankänderung.** Der QR führt auf `/lernen/material#code=…` (Lernwerkstatt).                                                                                  |
+| D4-4 | Das Kind sieht Titel und Wörter und speichert erst nach Bestätigung als eigene Wortbox (Name = Titel). Die Wortbox-Id folgt aus dem Paket (`wordListBoxId`): dasselbe Paket zweimal übernehmen legt keine zweite Wortbox an und ergänzt höchstens neue Wörter. Die LernBox nimmt sie nicht an. |
+| D4-5 | Tests: Paketschema, Ablehnung unbekannter und zu großer Pakete, idempotente Übernahme, Komponenten (Lehrer, Kind), E2E `e2e/live/wortliste-uebertragung.spec.ts`.                                                                                                                              |
+
+### Formatänderung der Übertragung
+
+Die Nutzlast ist jetzt entweder ein Vokabelpaket oder eine Lernwortliste:
+
+| Nutzlast      | `schemaVersion` | Inhalt                                                                                  |
+| ------------- | --------------- | --------------------------------------------------------------------------------------- |
+| Vokabelpaket  | `1.0.0`         | unverändert (`LearningBundleV1`)                                                        |
+| Lernwortliste | `1.1.0`         | `kind: "word-list"`, `id`, `revision`, `createdAt`, `title` (≤ 60), `words` (1 bis 200) |
+
+- Die Spalte `schema_version` der Tabelle nimmt `1.1.0` ohne Änderung auf
+  (nur Längenprüfung 1 bis 30 Zeichen).
+- Neue App: Eine Version außerhalb von `1.0.0` und `1.1.0` wird schon an der
+  Zeile, vor dem Entschlüsseln, mit „Dieses Paket ist neuer als deine App“
+  abgelehnt; ein beschädigtes Paket meldet „beschädigt oder zu groß“.
+- Ältere App-Versionen kennen nur `1.0.0` und lehnen eine Lernwortliste beim
+  Prüfen ab (Zod-Fehler, nichts wird übernommen, kein Absturz). Ihre Meldung ist
+  technisch, weil sie sich nachträglich nicht ändern lässt. Bis alle Geräte
+  aktualisiert sind, hilft der Hinweis an die Lehrkraft: Seite neu laden.
+- Ablageart `wordlist`: Eine ältere Version weist den Eintrag beim
+  Geräteabgleich als unlesbar zurück (`rejected`) und liest die Bibliotheksdatei
+  nicht ein (strenges Schema). Sie legt nichts Falsches an.
 
 ## D5 Offene Befunde aus dem Audit
 
@@ -94,16 +122,16 @@ nicht mehr als „schwierig“).
 
 ## Pakete
 
-| Paket | Inhalt             | Hauptdateien                                                                             |
-| ----- | ------------------ | ---------------------------------------------------------------------------------------- |
-| D1a   | Kern, Regeltabelle | `src/domain/spaced-repetition.ts`, `src/domain/testing/repetition-rule-table.ts`         |
-| D1b   | LernBox            | `src/domain/learning-box.ts` (`processLearningBoxResult`)                                |
-| D1c   | Lernwörter         | `src/domain/learning-word-progress.ts`                                                   |
-| D1d   | Mathe, Ereignisse  | `src/domain/math-practice.ts` (`mathReviews`), `src/domain/leitner-schedule.ts`          |
-| D2    | Diagnostik         | neue Domänenmodule, `src/storage/daily-plan.ts`, `app/lernen`                            |
-| D3    | Lehrerbereich      | `app/lehrer`, `app/ui/shell`, `src/storage/teacher-*`, Geräte-Abgleich                   |
-| D4    | Auftrags-QR        | `src/domain/practice-bridge.ts`, Lehrer-Material, `app/components/learning-word-app.tsx` |
-| D5-x  | je Befund          | siehe Tabelle D5                                                                         |
+| Paket | Inhalt             | Hauptdateien                                                                                                                            |
+| ----- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| D1a   | Kern, Regeltabelle | `src/domain/spaced-repetition.ts`, `src/domain/testing/repetition-rule-table.ts`                                                        |
+| D1b   | LernBox            | `src/domain/learning-box.ts` (`processLearningBoxResult`)                                                                               |
+| D1c   | Lernwörter         | `src/domain/learning-word-progress.ts`                                                                                                  |
+| D1d   | Mathe, Ereignisse  | `src/domain/math-practice.ts` (`mathReviews`), `src/domain/leitner-schedule.ts`                                                         |
+| D2    | Diagnostik         | neue Domänenmodule, `src/storage/daily-plan.ts`, `app/lernen`                                                                           |
+| D3    | Lehrerbereich      | `app/lehrer`, `app/ui/shell`, `src/storage/teacher-*`, Geräte-Abgleich                                                                  |
+| D4    | Lernwortlisten     | `src/domain/word-list-package.ts`, `src/domain/transfer-payload.ts`, Freigabe an Schüler, `app/components/student-content-transfer.tsx` |
+| D5-x  | je Befund          | siehe Tabelle D5                                                                                                                        |
 
 ## Prüfungen
 
@@ -162,9 +190,13 @@ Verhaltensänderung gibt es nur in der Ereignisableitung:
   hebt sie nicht auf; die richtige PIN setzt den Zähler zurück. „PIN
   vergessen“ bleibt möglich.
 
-**D4 umgesetzt.** `/lehrer/material/wortauftrag` erzeugt einen Link
-`/frei/german?woerter=…&auftrag=…`, höchstens 500 Zeichen. Der Druck erfolgt
-als Kärtchen. Aufträge werden nicht gespeichert.
+**D4 umgesetzt (Lernwortlisten statt Wortauftrag).** Der Wortauftrag per
+URL-QR ist entfernt (Seite `/lehrer/material/wortauftrag`, `auftrag=`,
+`buildWordOrderLink`). `?woerter=` (Textbox zum Wortspeicher) und
+`parseWordsParam` bleiben. Lernwortlisten (bis zu 200 Wörter) werden unter
+„Freigabe an Schüler“ angelegt und über die vorhandene Übertragung freigegeben;
+das Kind übernimmt sie in der Lernwerkstatt nach Bestätigung als Wortbox.
+Formatänderung siehe Abschnitt D4.
 
 **D5 umgesetzt.**
 
@@ -199,7 +231,6 @@ als Kärtchen. Aufträge werden nicht gespeichert.
 ### Offene Entscheidungen des Entwicklers
 
 - Freigabe `lehrer-geraet` auf `frei` setzen.
-- Längengrenze des Wortauftrags (500 Zeichen) und Speichern der Aufträge.
 - Stufenfolgen des Startpunkts und Regel „sicher“.
 - Uhr über Module hinweg.
 - „Beenden“ bietet 24 Stunden lang „Weitermachen“ an.
