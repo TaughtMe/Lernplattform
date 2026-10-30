@@ -183,8 +183,8 @@
   color: var(--ink2);
 }
 
-/* Erstkontakt: große Karten statt Tagesziel (Befund C-003). */
-.start {
+/* Aufgabenkarten: je Bereich mit Aufgaben heute eine Karte zum Abarbeiten. */
+.tasks {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -193,7 +193,7 @@
   padding: 0;
   list-style: none;
 }
-.startCard {
+.task {
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -207,27 +207,61 @@
   color: var(--ink);
   text-decoration: none;
 }
-.startCard:hover {
+a.task:hover {
   border-color: var(--accent);
 }
-.startCard > img {
+.task > img {
   flex: none;
   display: block;
 }
-.startText {
+.taskText {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
-.startText > strong {
+.taskText > strong {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
-.startText > span {
+.taskText > span:not(.taskBar) {
   font-size: 13px;
   color: var(--ink2);
+}
+.taskBar {
+  display: block;
+  height: 6px;
+  margin-top: 2px;
+  border-radius: 3px;
+  background: var(--surface2);
+  overflow: hidden;
+}
+.taskBar > span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gold);
+}
+.taskDone {
+  box-shadow: none;
+  background: transparent;
+}
+.taskDone > img {
+  opacity: 0.55;
+}
+.taskDone .taskBar {
+  display: none;
+}
+.taskCheck {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* ---------- Fortschrittsspalte (nur breit) ---------- */

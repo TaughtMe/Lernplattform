@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { avatarLabel } from "../../../src/domain/learner-profile";
+import type { TodayTask } from "../../../src/domain/today-tasks";
 import { Icon } from "../../ui/icons";
 import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
@@ -8,22 +9,13 @@ import styles from "./home-screen.module.css";
 
 /** Begrüßung beim ersten Öffnen; wird auch vorgelesen. */
 const FIRST_CONTACT_INTRO =
-  "Schön, dass du da bist! Womit möchtest du anfangen?";
+  "Schön, dass du da bist! Tippe auf Loslegen und such dir etwas aus.";
 
 export type WeekDay = {
   short: string;
   label: string;
   state: "active" | "missed" | "upcoming";
   today: boolean;
-};
-
-export type FirstContactView = {
-  areas: ReadonlyArray<{
-    href: string;
-    title: string;
-    text: string;
-    icon: string;
-  }>;
 };
 
 export type HomeScreenProps = {
@@ -37,11 +29,14 @@ export type HomeScreenProps = {
   continueHref: string;
   /** Beschriftung der Hauptschaltfläche; Vorgabe „Weiterlernen“. */
   mainLabel?: string | undefined;
+  /** Erstkontakt (Kind ohne Lernstand): kurze Begrüßung statt Tagesziel und Kacheln. */
+  firstContact?: boolean | undefined;
   /**
-   * Erstkontakt (Kind ohne Lernstand): kurze Begrüßung und große Karten statt
-   * Tagesziel und Kacheln.
+   * Bereiche mit Aufgaben heute (offene zuerst, geschaffte mit Haken am Ende).
+   * Ersetzen die Kacheln „heute dran“ und „schwierige Wörter“; ohne Eintrag
+   * bleibt es bei den Kacheln.
    */
-  firstContact?: FirstContactView | undefined;
+  todayTasks?: readonly TodayTask[] | undefined;
   week: readonly WeekDay[];
   due: { done: number; total: number };
   difficult: ReadonlyArray<{ label: string; detail: string }>;
@@ -57,11 +52,47 @@ export type HomeScreenProps = {
   headAction?: ReactNode;
 };
 
+/** Inhalt einer Aufgabenkarte: Bild, Titel, Stand und Pfeil beziehungsweise Haken. */
+function TaskBody({ task }: { task: TodayTask }) {
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element -- lokales SVG, ohne Rasteroptimierung */}
+      <img
+        src={`/illustrations/practice/${task.icon}.svg`}
+        width={56}
+        height={56}
+        alt=""
+      />
+      <span className={styles.taskText}>
+        <strong>{task.title}</strong>
+        <span>
+          {task.finished
+            ? "geschafft"
+            : `${task.done} von ${task.total} geschafft`}
+        </span>
+        <span className={styles.taskBar} aria-hidden="true">
+          <span
+            style={{ width: `${Math.round((task.done / task.total) * 100)}%` }}
+          />
+        </span>
+      </span>
+      {task.finished ? (
+        <span className={styles.taskCheck}>
+          <Icon name="check" size={18} strokeWidth={2.6} />
+        </span>
+      ) : (
+        <Icon name="arrow" size={18} strokeWidth={2.2} />
+      )}
+    </>
+  );
+}
+
 const RING = { size: 290, radius: 132, stroke: 11 };
 
 /** Lernen-Startseite (Design 3b/2b mobil, 3a breit). */
 export function HomeScreen(props: HomeScreenProps) {
   const { done, target, due, difficult, week, firstContact } = props;
+  const tasks = props.todayTasks ?? [];
   const mainLabel = props.mainLabel ?? "Weiterlernen";
   const length = 2 * Math.PI * RING.radius;
   // Ohne Portion ist der Tag erledigt (Ring voll, wenn geübt wurde).
@@ -154,9 +185,7 @@ export function HomeScreen(props: HomeScreenProps) {
                       : `${done} von ${target} ${target === 1 ? "Aufgabe" : "Aufgaben"} heute`}
               </p>
               {firstContact ? (
-                <ReadAloudButton
-                  text={`${FIRST_CONTACT_INTRO} ${firstContact.areas.map((area) => area.title).join(", ")}.`}
-                />
+                <ReadAloudButton text={FIRST_CONTACT_INTRO} />
               ) : null}
             </div>
             <div className={styles.actions}>
@@ -171,28 +200,23 @@ export function HomeScreen(props: HomeScreenProps) {
                 </Link>
               ) : null}
             </div>
-            {firstContact ? (
-              <ul className={styles.start} aria-label="Das kannst du üben">
-                {firstContact.areas.map((area) => (
-                  <li key={area.href}>
-                    <Link href={area.href} className={styles.startCard}>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- lokales SVG, ohne Rasteroptimierung */}
-                      <img
-                        src={`/illustrations/practice/${area.icon}.svg`}
-                        width={56}
-                        height={56}
-                        alt=""
-                      />
-                      <span className={styles.startText}>
-                        <strong>{area.title}</strong>
-                        <span>{area.text}</span>
-                      </span>
-                      <Icon name="arrow" size={18} strokeWidth={2.2} />
-                    </Link>
+            {tasks.length > 0 ? (
+              <ul className={styles.tasks} aria-label="Aufgaben für heute">
+                {tasks.map((task) => (
+                  <li key={task.id}>
+                    {task.finished ? (
+                      <div className={cx(styles.task, styles.taskDone)}>
+                        <TaskBody task={task} />
+                      </div>
+                    ) : (
+                      <Link href={task.href} className={styles.task}>
+                        <TaskBody task={task} />
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
-            ) : (
+            ) : firstContact ? null : (
               <div className={styles.cards}>
                 <div className={styles.card}>
                   <p className={styles.cardValue}>{open}</p>

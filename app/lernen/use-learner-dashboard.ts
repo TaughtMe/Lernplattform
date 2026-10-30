@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { DailyPlanModule } from "../../src/domain/daily-plan";
+import type { DailyPlanItem, DailyPlanModule } from "../../src/domain/daily-plan";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createDailyPlanRepository } from "../../src/storage/daily-plan";
 import { readHardwareKeyboardSeen } from "../../src/storage/hardware-keyboard";
@@ -20,6 +20,9 @@ export type DashboardPlan = {
   firstOpenModule: DailyPlanModule | null;
   /** Eigene Übungsroute des ersten offenen Elements (z. B. Klassenaufgabe). */
   firstOpenRoute: string | null;
+  /** Alle Elemente der Portion und die Schlüssel der offenen (für die Aufgabenkarten). */
+  items: Array<Pick<DailyPlanItem, "key" | "module" | "route">>;
+  openKeys: string[];
 };
 
 export type DashboardSnapshot = {
@@ -44,6 +47,8 @@ const EMPTY: DashboardSnapshot = {
     openByModule: { vocabulary: 0, german: 0, mathematics: 0 },
     firstOpenModule: null,
     firstOpenRoute: null,
+    items: [],
+    openKeys: [],
   },
   activeDays: [],
   streak: 0,
@@ -98,6 +103,12 @@ export function useLearnerDashboard() {
           openByModule: progress.openByModule,
           firstOpenModule: progress.openItems[0]?.module ?? null,
           firstOpenRoute: progress.openItems[0]?.route ?? null,
+          items: progress.plan.items.map(({ key, module, route }) => ({
+            key,
+            module,
+            ...(route ? { route } : {}),
+          })),
+          openKeys: progress.openItems.map((item) => item.key),
         },
         activeDays,
         streak: countStreak(activeDays, now),

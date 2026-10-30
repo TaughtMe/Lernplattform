@@ -96,7 +96,13 @@ describe("LearnerHome", () => {
     render(<LearnerHome />);
 
     expect(await screen.findByText("0 von 20 Aufgaben heute")).toBeVisible();
-    expect(screen.getByText("heute dran")).toBeVisible();
+    // Statt der Kacheln steht die Aufgabenkarte des Bereichs mit Aufgaben.
+    const card = within(
+      screen.getByRole("list", { name: "Aufgaben für heute" }),
+    ).getByRole("link", { name: /Vokabeln/ });
+    expect(card).toHaveAttribute("href", "/lernbox?heute=1");
+    expect(card).toHaveTextContent("0 von 20 geschafft");
+    expect(screen.queryByText("schwierige Wörter")).not.toBeInTheDocument();
     expect(screen.getByText("0 / 20")).toBeVisible();
     expect(
       screen.getByText("Noch 20 Aufgaben, dann ist der Tag voll."),
@@ -106,6 +112,62 @@ describe("LearnerHome", () => {
     for (const link of screen.getAllByRole("link", { name: "Weiterlernen" })) {
       expect(link).toHaveAttribute("href", "/lernbox?heute=1");
     }
+  });
+
+  it("zeigt je Bereich mit Aufgaben eine Karte; geschaffte rücken mit Haken ans Ende", async () => {
+    const word = "Fahrrad";
+    await seed(async (database) => {
+      await database.learningWordProgress.put({
+        id: learningWordId(word),
+        word,
+        stage: 2,
+        box: 3,
+        dueAt: new Date(NOW.getTime() - DAY).toISOString(),
+        attempts: 2,
+        incorrectAttempts: 0,
+        helpUses: 0,
+        lastPracticedAt: new Date(NOW.getTime() - 3 * DAY).toISOString(),
+      });
+      await database.learningBoxCards.bulkPut([dueCard(1)]);
+    });
+    const first = render(<LearnerHome />);
+    const list = await screen.findByRole("list", {
+      name: "Aufgaben für heute",
+    });
+    // Deutsch und Vokabeln haben Aufgaben, Mathe nicht: zwei Karten, offen.
+    expect(
+      within(list)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(
+      expect.arrayContaining([
+        "/frei/german/lernwoerter?heute=1",
+        "/lernbox?heute=1",
+      ]),
+    );
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(list).queryByText(/Rechnen/)).not.toBeInTheDocument();
+    first.unmount();
+
+    // Das Wort ist geübt: Die Karte bleibt, mit Haken, und steht hinten.
+    await seed(async (database) => {
+      await database.learningEvents.put({
+        ...event(learningWordId(word), new Date(NOW.getTime() + 60_000)),
+        source: "learning-word",
+        learningArea: "german",
+      });
+    });
+    render(<LearnerHome />);
+    await screen.findByText("1 von 3 Aufgaben heute");
+    const items = within(
+      screen.getByRole("list", { name: "Aufgaben für heute" }),
+    ).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("Vokabeln");
+    expect(items[0]).toHaveTextContent("0 von 2 geschafft");
+    expect(items[1]).toHaveTextContent("Wörter üben");
+    expect(items[1]).toHaveTextContent("geschafft");
+    expect(within(items[1]!).queryByRole("link")).toBeNull();
   });
 
   it("lädt auch unter React StrictMode (Dexie öffnet nach dem Cleanup wieder)", async () => {
@@ -227,31 +289,21 @@ describe("LearnerHome", () => {
     ).toHaveAttribute("href", "/klasse/7b/aufgaben");
   });
 
-  it("begrüßt ein Kind ohne Lernstand mit drei Karten und „Loslegen“ statt „Weiterlernen“ (C-003)", async () => {
+  it("begrüßt ein Kind ohne Lernstand ohne Bereichskarten; „Loslegen“ führt nach „Üben“ (C-003)", async () => {
     render(<LearnerHome />);
     expect(
       await screen.findByText(
-        "Schön, dass du da bist! Womit möchtest du anfangen?",
+        "Schön, dass du da bist! Tippe auf Loslegen und such dir etwas aus.",
       ),
     ).toBeVisible();
-    const cards = within(
-      screen.getByRole("list", { name: "Das kannst du üben" }),
-    ).getAllByRole("link");
-    expect(cards.map((card) => card.textContent)).toEqual([
-      expect.stringContaining("Wörter üben"),
-      expect.stringContaining("Rechnen"),
-      expect.stringContaining("Vokabeln"),
-    ]);
-    expect(cards.map((card) => card.getAttribute("href"))).toEqual([
-      "/frei/german/lernwoerter",
-      "/frei/mathematics",
-      "/lernbox",
-    ]);
-    // Die Hauptschaltfläche führt in Deutsch, nie in die Tastenwelt.
+    // Alles ist auch über „Üben“ erreichbar: keine festen Karten.
+    expect(
+      screen.queryByRole("list", { name: "Aufgaben für heute" }),
+    ).not.toBeInTheDocument();
     const start = screen.getAllByRole("link", { name: "Loslegen" });
     expect(start.length).toBeGreaterThan(0);
     for (const link of start) {
-      expect(link).toHaveAttribute("href", "/frei/german/lernwoerter");
+      expect(link).toHaveAttribute("href", "/ueben");
     }
     expect(
       screen.queryByRole("link", { name: "Weiterlernen" }),
@@ -261,28 +313,22 @@ describe("LearnerHome", () => {
     expect(screen.queryByText("schwierige Wörter")).not.toBeInTheDocument();
   });
 
-  it("zeigt im Erstkontakt nur Bereiche, die laut Freigaberegister sichtbar sind", async () => {
+  it("zeigt Aufgabenkarten nur für Bereiche, die laut Freigaberegister sichtbar sind", async () => {
+    await seed(async (database) => {
+      await database.learningBoxCards.bulkPut([dueCard(1)]);
+    });
     render(
       <ReleaseProvider
-        value={resolveVisibility(
-          resolveStages("wortspeicher=aus,lernbox=vorschau"),
-          false,
-        )}
+        value={resolveVisibility(resolveStages("lernbox=vorschau"), false)}
       >
         <LearnerHome />
       </ReleaseProvider>,
     );
-    const list = await screen.findByRole("list", {
-      name: "Das kannst du üben",
-    });
+    await screen.findByText("0 von 2 Aufgaben heute");
+    // Die Aufgaben zählen im Ziel, die Karte des verborgenen Bereichs fehlt.
     expect(
-      within(list)
-        .getAllByRole("link")
-        .map((link) => link.getAttribute("href")),
-    ).toEqual(["/frei/mathematics"]);
-    for (const link of screen.getAllByRole("link", { name: "Loslegen" })) {
-      expect(link).toHaveAttribute("href", "/frei/mathematics");
-    }
+      screen.queryByRole("list", { name: "Aufgaben für heute" }),
+    ).not.toBeInTheDocument();
   });
 
   it("sagt an einem leeren Tag „noch nichts geplant“ und bietet „Frei üben“ statt „Weiterlernen“ an", async () => {
@@ -313,7 +359,7 @@ describe("LearnerHome", () => {
       screen.queryByRole("link", { name: "Weiterlernen" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("list", { name: "Das kannst du üben" }),
+      screen.queryByRole("list", { name: "Aufgaben für heute" }),
     ).toBeNull();
     // Ohne Tastatur-Merkmal ist die Tastenwelt nicht der Vorschlag.
     for (const link of await screen.findAllByRole("link", {
@@ -365,7 +411,7 @@ describe("LearnerHome", () => {
     // Ein unlesbarer Lernstand ist kein Erstkontakt.
     await screen.findAllByRole("link", { name: "Frei üben" });
     expect(
-      screen.queryByRole("list", { name: "Das kannst du üben" }),
+      screen.queryByRole("list", { name: "Aufgaben für heute" }),
     ).toBeNull();
   });
 });

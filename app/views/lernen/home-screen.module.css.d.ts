@@ -34,10 +34,13 @@ declare const styles: {
   readonly screen: string;
   readonly side: string;
   readonly stage: string;
-  readonly start: string;
-  readonly startCard: string;
-  readonly startText: string;
   readonly streak: string;
+  readonly task: string;
+  readonly taskBar: string;
+  readonly taskCheck: string;
+  readonly taskDone: string;
+  readonly taskText: string;
+  readonly tasks: string;
   readonly title: string;
   readonly today: string;
   readonly upcoming: string;

@@ -1,16 +1,9 @@
 /**
  * Erstkontakt auf der Lernen-Startseite (Befund C-003): Ein Kind ohne Lernstand
- * bekommt keine Empfehlung aus dem Nichts, sondern eine kurze Begrüßung mit
- * den Kernbereichen. Alles hier ist rein; Lernstand und Freigaben kommen von
- * außen.
+ * bekommt keine Empfehlung aus dem Nichts, sondern eine kurze Begrüßung; „Loslegen“
+ * führt nach „Üben“. Bereichskarten gibt es erst, wenn heute Aufgaben anstehen
+ * (`today-tasks.ts`). Alles hier ist rein; der Lernstand kommt von außen.
  */
-import type { ReleaseAreaId, ReleaseVisibility } from "./release";
-
-type FirstContactAreaId = Extract<
-  ReleaseAreaId,
-  "wortspeicher" | "mathe" | "lernbox"
->;
-
 /** Was die Startseite über das Gerät weiß; `null` heißt „unbekannt“. */
 export interface FirstContactInput {
   /** Hat das Gerät irgendeinen persönlichen Lernstand (`hasPersonalLearningState`)? */
@@ -32,50 +25,6 @@ export function hasLearnedNothing(input: FirstContactInput): boolean {
     input.planTotal === 0 &&
     input.className === null
   );
-}
-
-export interface FirstContactArea {
-  area: FirstContactAreaId;
-  href: string;
-  title: string;
-  text: string;
-  /** Bild unter `/illustrations/practice/<icon>.svg`. */
-  icon: "wortspeicher" | "kopfrechnen" | "lernbox";
-}
-
-/** Die drei Kernbereiche für den Einstieg, in der Reihenfolge der Karten. */
-const FIRST_CONTACT_AREAS: readonly FirstContactArea[] = [
-  {
-    area: "wortspeicher",
-    href: "/frei/german/lernwoerter",
-    title: "Wörter üben",
-    text: "Wörter richtig schreiben lernen.",
-    icon: "wortspeicher",
-  },
-  {
-    area: "mathe",
-    href: "/frei/mathematics",
-    title: "Rechnen",
-    text: "Kopfrechnen im eigenen Tempo.",
-    icon: "kopfrechnen",
-  },
-  {
-    area: "lernbox",
-    href: "/lernbox",
-    title: "Vokabeln",
-    text: "Wörter in einer anderen Sprache lernen.",
-    icon: "lernbox",
-  },
-];
-
-/**
- * Einstiegskarten nur für Bereiche, die laut Freigaberegister sichtbar sind.
- * Die Tastenwelt gehört nie dazu: Sie braucht eine Tastatur.
- */
-export function firstContactAreas(
-  visibility: Pick<ReleaseVisibility, FirstContactAreaId>,
-): FirstContactArea[] {
-  return FIRST_CONTACT_AREAS.filter((entry) => visibility[entry.area]);
 }
 
 export type HomeMainAction = "Loslegen" | "Weiterlernen" | "Frei üben";

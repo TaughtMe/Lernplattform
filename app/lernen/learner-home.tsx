@@ -5,11 +5,11 @@ import {
   StorageProtectionNotice,
 } from "../components/storage-protection";
 import {
-  firstContactAreas,
   hasLearnedNothing,
   homeMainAction,
 } from "../../src/domain/first-contact";
 import { profileAvatar } from "../../src/domain/learner-profile";
+import { todayTasks } from "../../src/domain/today-tasks";
 import { useAreaVisible, useRelease } from "../release/release-context";
 import { useThemeToggle } from "../ui/theme";
 import { useLearnerProfile } from "../ui/use-learner-profile";
@@ -31,8 +31,8 @@ export function LearnerHome() {
   // Klassenaufgaben direkt zu deren Übungsseite); ist die Portion erledigt oder
   // leer, bleibt die erste Empfehlung.
   const { plan } = snapshot;
-  // Erstkontakt: ein Kind ohne Lernstand sieht Karten für die Kernbereiche,
-  // „Loslegen“ führt in den ersten sichtbaren Bereich (Befund C-003).
+  // Erstkontakt: ein Kind ohne Lernstand wird begrüßt, „Loslegen“ führt nach
+  // „Üben“ (Befund C-003). Bereichskarten gibt es nur für Aufgaben von heute.
   const firstContact =
     snapshot.loaded &&
     hasLearnedNothing({
@@ -40,15 +40,18 @@ export function LearnerHome() {
       planTotal: plan.total,
       className: snapshot.className,
     });
-  const areas = firstContactAreas(visibility);
+  const tasks = todayTasks({
+    items: plan.items,
+    openKeys: plan.openKeys,
+    visibility,
+    moduleHref: planModuleHref,
+  });
   const nextRoute =
     plan.firstOpenRoute ??
     (plan.firstOpenModule
       ? planModuleHref(plan.firstOpenModule)
       : snapshot.recommendations[0]?.route);
-  const continueHref = firstContact
-    ? (areas[0]?.href ?? "/ueben")
-    : (nextRoute ?? "/ueben");
+  const continueHref = firstContact ? "/ueben" : (nextRoute ?? "/ueben");
   // Bis der Lernstand geladen ist, steht die neutrale Beschriftung da.
   const mainLabel = snapshot.loaded
     ? homeMainAction({
@@ -74,7 +77,8 @@ export function LearnerHome() {
       target={plan.total}
       continueHref={continueHref}
       mainLabel={mainLabel}
-      firstContact={firstContact ? { areas } : undefined}
+      firstContact={firstContact}
+      todayTasks={tasks}
       week={weekStates(snapshot.activeDays)}
       due={{ done: plan.done, total: plan.total }}
       difficult={snapshot.difficult}

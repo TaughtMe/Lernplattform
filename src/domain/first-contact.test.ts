@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  firstContactAreas,
   hasLearnedNothing,
   homeMainAction,
 } from "./first-contact";
-import { resolveStages, resolveVisibility } from "./release";
 
 const fresh = { hasLearningState: false, planTotal: 0, className: null };
 
@@ -21,34 +19,6 @@ describe("hasLearnedNothing", () => {
 
   it("hält ein Kind mit unlesbarem Lernstand nicht für neu", () => {
     expect(hasLearnedNothing({ ...fresh, hasLearningState: null })).toBe(false);
-  });
-});
-
-describe("firstContactAreas", () => {
-  const visibility = (overrides: string) =>
-    resolveVisibility(resolveStages(overrides), false);
-
-  it("bietet Wörter üben, Rechnen und Vokabeln an, nie die Tastenwelt", () => {
-    const areas = firstContactAreas(visibility(""));
-    expect(areas.map((entry) => entry.title)).toEqual([
-      "Wörter üben",
-      "Rechnen",
-      "Vokabeln",
-    ]);
-    expect(areas.map((entry) => entry.href)).toEqual([
-      "/frei/german/lernwoerter",
-      "/frei/mathematics",
-      "/lernbox",
-    ]);
-    expect(areas.some((entry) => entry.href.includes("typing"))).toBe(false);
-  });
-
-  it("zeigt nur Bereiche, die laut Freigaberegister sichtbar sind", () => {
-    const areas = firstContactAreas(visibility("lernbox=aus,mathe=vorschau"));
-    expect(areas.map((entry) => entry.title)).toEqual(["Wörter üben"]);
-    expect(
-      firstContactAreas(visibility("lernbox=aus,mathe=aus,wortspeicher=aus")),
-    ).toEqual([]);
   });
 });
 
