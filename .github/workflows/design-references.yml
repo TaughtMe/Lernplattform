@@ -50,7 +50,7 @@ jobs:
           # Ohne das Geheimnis gilt das GITHUB_TOKEN: Pushes damit lösen keine
           # Workflows aus (siehe docs/design/README.md).
           token: ${{ secrets.DESIGN_REFERENCES_TOKEN || github.token }}
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
