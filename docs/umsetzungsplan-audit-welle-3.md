@@ -182,3 +182,14 @@ als Kärtchen. Aufträge werden nicht gespeichert.
 - „Beenden“ bietet 24 Stunden lang „Weitermachen“ an.
 - Cloud-Abgleich und WebDAV aus den Kindereinstellungen verschieben.
 - Produktions-Browserlauf auch mobil ausführen.
+
+### Prüfstand
+
+- Unit-Tests, Lint, Format, Typprüfung, Build und Server-Rendering grün.
+- Browser: vollständige Suite in Desktop-Chromium und die neuen bzw.
+  geänderten Specs in Mobil-Chromium grün; Firefox, WebKit und der neue Job
+  `production` laufen erst in GitHub.
+- Designvergleich lokal gegen den Stand vor Welle 3: Nur `9d-gaps` ist
+  zusätzlich rot. Grund ist die bewusste Glossar-Änderung im Titel („Runde 2 ·
+  Schreiben“ statt „Durchgang 2 · Schreiben“). Die Referenz wird im Pull
+  Request über das Label `design-referenzen-erneuern` erneuert.
