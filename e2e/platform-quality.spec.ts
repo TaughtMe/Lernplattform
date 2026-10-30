@@ -101,7 +101,6 @@ test("primary pages have no automatically detectable WCAG A/AA violations", asyn
     "/lehrer/live",
     "/lehrer/klassen",
     "/lehrer/material",
-    "/lehrer/material/wortauftrag",
     "/lehrer/aufgaben",
     "/lehrer/einstellungen",
   ]) {

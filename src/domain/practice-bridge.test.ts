@@ -1,4 +1,3 @@
-import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
   BRIDGE_MAX_WORDS,
@@ -6,13 +5,7 @@ import {
   buildLearningWordsLink,
   buildHistoryLink,
   buildTextboxLink,
-  buildWordOrderLink,
-  ORDER_DEFAULT_TITLE,
-  ORDER_LINK_MAX_LENGTH,
-  ORDER_TITLE_MAX,
   parseHistoryParams,
-  parseOrderTitleParam,
-  readOrderWords,
   parseSourceParam,
   parseCollectionParam,
   parseWordsParam,
@@ -48,6 +41,8 @@ describe("parseWordsParam", () => {
     expect(parseWordsParam("Ball,<script>")).toEqual([]);
     expect(parseWordsParam("Ball,Ka\u0000tze")).toEqual([]);
     expect(parseWordsParam("x".repeat(5000))).toEqual([]);
+    // Halbe Ersatzzeichen ließen sich nicht verlustfrei in eine Adresse schreiben.
+    expect(parseWordsParam("Ba\ud800ll")).toEqual([]);
   });
 
   it("normalisiert auf NFC", () => {
@@ -156,209 +151,5 @@ describe("Wortspeicher-Links: Quelle und Verlauf", () => {
       "/frei/german/lernwoerter?wortbox=silent-h&ansicht=verlauf",
     );
     expect(buildHistoryLink("Böse Id")).toBe("/frei/german/lernwoerter");
-  });
-});
-
-describe("Wortauftrag (D4)", () => {
-  const origin = "https://lernraum.example";
-
-  describe("parseOrderTitleParam", () => {
-    it("liest einen kurzen Titel und ordnet Leerzeichen", () => {
-      expect(parseOrderTitleParam("Gruppe  A")).toBe("Gruppe A");
-      expect(parseOrderTitleParam("  Wörter mit ie ")).toBe("Wörter mit ie");
-    });
-
-    it("ignoriert leere, zu lange und unsaubere Titel", () => {
-      expect(parseOrderTitleParam(null)).toBeUndefined();
-      expect(parseOrderTitleParam("   ")).toBeUndefined();
-      expect(parseOrderTitleParam("a".repeat(ORDER_TITLE_MAX + 1))).toBe(
-        undefined,
-      );
-      expect(parseOrderTitleParam("a".repeat(ORDER_TITLE_MAX))).toBeDefined();
-      expect(parseOrderTitleParam("<b>Fett</b>")).toBeUndefined();
-      expect(parseOrderTitleParam("Gruppe\u0000A")).toBeUndefined();
-      expect(parseOrderTitleParam("a\ud800b")).toBeUndefined();
-    });
-  });
-
-  describe("readOrderWords", () => {
-    it("trennt an Komma, Semikolon und Zeilen und entfernt Doppelte", () => {
-      expect(readOrderWords("Ball, Fuß;ball\nStraße\r\n\n Haus ,")).toEqual({
-        words: ["Ball", "Fuß", "Straße", "Haus"],
-        ignored: 1,
-        surplus: 0,
-      });
-    });
-
-    it("zählt unbrauchbare Wörter und Überschuss", () => {
-      const many = Array.from({ length: 52 }, (_, i) => `wort${i}`).join("\n");
-      const reading = readOrderWords(`${many}\n<b>\n${"x".repeat(61)}`);
-      expect(reading.words).toHaveLength(BRIDGE_MAX_WORDS);
-      expect(reading.surplus).toBe(2);
-      expect(reading.ignored).toBe(2);
-    });
-  });
-
-  describe("buildWordOrderLink", () => {
-    it("baut Adresse mit Wörtern und Titel", () => {
-      const result = buildWordOrderLink(
-        { title: "Gruppe A", text: "Ball\nStraße, Fuß" },
-        origin,
-      );
-      expect(result).toMatchObject({
-        ok: true,
-        title: "Gruppe A",
-        words: ["Ball", "Straße", "Fuß"],
-      });
-      if (!result.ok) return;
-      const url = new URL(result.url);
-      expect(url.origin).toBe(origin);
-      expect(url.pathname).toBe("/frei/german");
-      expect(parseWordsParam(url.searchParams.get("woerter"))).toEqual(
-        result.words,
-      );
-      expect(parseOrderTitleParam(url.searchParams.get("auftrag"))).toBe(
-        "Gruppe A",
-      );
-    });
-
-    it("setzt ohne Titel den Standardnamen und gibt ohne Ursprung nur den Pfad", () => {
-      const result = buildWordOrderLink({ text: "Ball" });
-      expect(result).toEqual({
-        ok: true,
-        url: `/frei/german?woerter=Ball&auftrag=${ORDER_DEFAULT_TITLE}`,
-        words: ["Ball"],
-        title: ORDER_DEFAULT_TITLE,
-        ignored: 0,
-      });
-    });
-
-    it("meldet fehlende Wörter, zu viele Wörter und schlechte Titel verständlich", () => {
-      expect(buildWordOrderLink({ text: " , \n" })).toMatchObject({
-        ok: false,
-        problem: "keine-woerter",
-        message: "Schreibe mindestens ein Wort auf.",
-      });
-      const many = Array.from({ length: 51 }, (_, i) => `wort${i}`).join(",");
-      expect(buildWordOrderLink({ text: many })).toMatchObject({
-        ok: false,
-        problem: "zu-viele-woerter",
-      });
-      expect(
-        buildWordOrderLink({ title: "a".repeat(41), text: "Ball" }),
-      ).toMatchObject({ ok: false, problem: "titel-zu-lang" });
-      expect(buildWordOrderLink({ title: "<b>", text: "Ball" })).toMatchObject({
-        ok: false,
-        problem: "titel-zeichen",
-      });
-      expect(
-        buildWordOrderLink({ title: "A\u0007B", text: "Ball" }),
-      ).toMatchObject({ ok: false, problem: "titel-zeichen" });
-    });
-
-    it("macht aus Zeilenumbrüchen im Titel ein Leerzeichen", () => {
-      expect(
-        buildWordOrderLink({ title: "Gruppe\nA", text: "Ball" }),
-      ).toMatchObject({ ok: true, title: "Gruppe A" });
-    });
-
-    it("lehnt Listen ab, deren Adresse für einen lesbaren QR zu lang ist", () => {
-      // 50 Wörter mit je 30 Zeichen: gültig, aber viel zu dicht.
-      const long = Array.from(
-        { length: 50 },
-        (_, i) => `${"b".repeat(28)}${String(i).padStart(2, "0")}`,
-      ).join("\n");
-      const result = buildWordOrderLink({ text: long }, origin);
-      expect(result).toMatchObject({ ok: false, problem: "link-zu-lang" });
-      if (!result.ok) expect(result.message).toMatch(/zwei Aufträge/);
-    });
-
-    it("zählt die Grenze an der vollständigen Adresse", () => {
-      const withOrigin = (extra: number) =>
-        buildWordOrderLink({ text: "Ball" }, `https://${"a".repeat(extra)}`);
-      const base = withOrigin(0);
-      if (!base.ok) throw new Error("Grundlage ungültig");
-      const room = ORDER_LINK_MAX_LENGTH - base.url.length;
-      const atLimit = withOrigin(room);
-      expect(atLimit.ok && atLimit.url.length).toBe(ORDER_LINK_MAX_LENGTH);
-      expect(withOrigin(room + 1)).toMatchObject({
-        ok: false,
-        problem: "link-zu-lang",
-      });
-    });
-
-    it("kodiert Sonderzeichen so, dass der Schüler sie unverändert liest", () => {
-      const result = buildWordOrderLink({
-        title: "Fuß & Ball + mehr",
-        text: "a+b, c&d, e=f, 50%, ÄÖÜ, 𝔘nicode",
-      });
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      const params = new URL(result.url, "https://x.invalid").searchParams;
-      expect(parseWordsParam(params.get("woerter"))).toEqual(result.words);
-      expect(parseOrderTitleParam(params.get("auftrag"))).toBe(result.title);
-    });
-
-    it("enthält nichts außer Wörtern und Titel", () => {
-      const result = buildWordOrderLink({ title: "Gruppe A", text: "Ball" });
-      if (!result.ok) throw new Error("ungültig");
-      const keys = [
-        ...new URL(result.url, "https://x.invalid").searchParams.keys(),
-      ];
-      expect(keys).toEqual(["woerter", "auftrag"]);
-    });
-
-    it("Eigenschaft: bauen und lesen ergibt dieselben Wörter und denselben Titel", () => {
-      fc.assert(
-        fc.property(
-          fc.array(fc.string({ unit: "binary", maxLength: 70 }), {
-            maxLength: 60,
-          }),
-          fc.string({ unit: "binary", maxLength: 50 }),
-          (words, title) => {
-            const result = buildWordOrderLink(
-              { title, text: words.join("\n") },
-              origin,
-            );
-            if (!result.ok) return;
-            const params = new URL(result.url).searchParams;
-            expect(parseWordsParam(params.get("woerter"))).toEqual(
-              result.words,
-            );
-            expect(parseOrderTitleParam(params.get("auftrag"))).toBe(
-              result.title,
-            );
-            expect(result.url.length).toBeLessThanOrEqual(
-              ORDER_LINK_MAX_LENGTH,
-            );
-          },
-        ),
-        { numRuns: 300 },
-      );
-    });
-
-    it("Eigenschaft: saubere Wortlisten kommen unverändert und in Reihenfolge an", () => {
-      const word = fc
-        .stringMatching(/^[A-Za-zÄÖÜäöüß]{1,10}$/)
-        .map((value) => value.normalize("NFC"));
-      fc.assert(
-        fc.property(
-          fc.uniqueArray(word, {
-            selector: (value) => value.toLocaleLowerCase("de"),
-            minLength: 1,
-            maxLength: 20,
-          }),
-          (words) => {
-            const result = buildWordOrderLink({ text: words.join(", ") });
-            expect(result.ok).toBe(true);
-            if (!result.ok) return;
-            expect(result.words).toEqual(words);
-            const params = new URL(result.url, "https://x.invalid")
-              .searchParams;
-            expect(parseWordsParam(params.get("woerter"))).toEqual(words);
-          },
-        ),
-      );
-    });
   });
 });

@@ -103,66 +103,9 @@ describe("Wortspeicher ↔ Textbox", () => {
   });
 });
 
-describe("Wortauftrag der Lehrkraft (?auftrag=)", () => {
-  it("öffnet das Blatt „Wörter aus dem Auftrag“ und speichert noch nichts", async () => {
-    open("?woerter=Quarz,Ball&auftrag=Gruppe%20A", undefined);
-    const sheet = await screen.findByRole("dialog", {
-      name: "Wörter aus dem Auftrag",
-    });
-    expect(
-      within(sheet).getByRole("list", { name: "Wörter aus dem Auftrag" }),
-    ).toHaveTextContent("QuarzBall");
-    expect(sheet).toHaveTextContent("2 Wörter aus deinem Auftrag");
-    expect(await databases[0]?.wordBoxes.count()).toBe(0);
-  });
-
-  it("belegt den Namen der Wortbox mit dem Titel vor; gespeichert wird erst nach Bestätigung", async () => {
-    const user = userEvent.setup();
-    open("?woerter=Quarz,Ball&auftrag=Gruppe%20A", undefined);
-    const sheet = await screen.findByRole("dialog", {
-      name: "Wörter aus dem Auftrag",
-    });
-    await user.click(
-      within(sheet).getByRole("button", { name: "In eine Wortbox speichern" }),
-    );
-    expect(within(sheet).getByLabelText("Name der neuen Wortbox")).toHaveValue(
-      "Gruppe A",
-    );
-    expect(await databases[0]?.wordBoxes.count()).toBe(0);
-    await user.click(within(sheet).getByRole("button", { name: "Speichern" }));
-    await within(sheet).findByText(/Die Wörter liegen jetzt in der Wortbox/);
-    const boxes = await databases[0]?.wordBoxes.toArray();
-    expect(boxes?.map((box) => box.title)).toEqual(["Gruppe A"]);
-  });
-
-  it("übt die Auftragswörter unter dem Namen des Auftrags", async () => {
-    const user = userEvent.setup();
-    open("?woerter=Quarz&auftrag=Gruppe%20A", undefined);
-    const sheet = await screen.findByRole("dialog", {
-      name: "Wörter aus dem Auftrag",
-    });
-    await user.click(within(sheet).getByRole("button", { name: "Jetzt üben" }));
-    expect(
-      await screen.findByRole("dialog", { name: "Gruppe A" }),
-    ).toBeInTheDocument();
-  });
-
-  it("ignoriert einen ungültigen Titel und nimmt den Standardnamen", async () => {
-    const user = userEvent.setup();
-    open("?woerter=Quarz&auftrag=%3Cb%3E", undefined);
-    const sheet = await screen.findByRole("dialog", {
-      name: "Wörter aus der Textbox",
-    });
-    await user.click(
-      within(sheet).getByRole("button", { name: "In eine Wortbox speichern" }),
-    );
-    expect(within(sheet).getByLabelText("Name der neuen Wortbox")).toHaveValue(
-      "Aus der Textbox",
-    );
-  });
-
+describe("Ungültige Wörter in der Adresse", () => {
   it("zeigt ohne gültige Wörter kein Blatt", async () => {
-    open("?woerter=%3Cb%3E&auftrag=Gruppe%20A", undefined);
+    open("?woerter=%3Cb%3E", undefined);
     expect(
       await screen.findByRole("heading", { name: "Wortspeicher" }),
     ).toBeInTheDocument();

@@ -107,7 +107,6 @@ test("server-renders the complete learning and teacher workspaces", async () => 
     ["/lehrer", "Neues Laufdiktat"],
     ["/lehrer/klassen", "Klassen und Schüler"],
     ["/lehrer/material", "Freigabe an Schüler"],
-    ["/lehrer/material/wortauftrag", "Wortauftrag"],
     ["/lehrer/aufgaben", "Aufgaben"],
     ["/lehrer/einstellungen", "Einstellungen"],
   ]) {

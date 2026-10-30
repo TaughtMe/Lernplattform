@@ -12,13 +12,11 @@ const NEW_BOX = "neu";
 
 /**
  * Blatt „Wörter aus der Textbox“ (`?woerter=`, Plan 2.9). Es wird nichts ohne
- * eine der beiden Aktionen gespeichert. Mit `orderTitle` (Wortauftrag der
- * Lehrkraft, `?auftrag=`) ist der Titel als Name der neuen Wortbox vorbelegt.
+ * eine der beiden Aktionen gespeichert.
  */
 export function TextboxWordsSheet({
   words,
   source = "textbox",
-  orderTitle,
   ownBoxes,
   error,
   saved,
@@ -29,8 +27,6 @@ export function TextboxWordsSheet({
   words: readonly string[];
   /** Woher die Wörter kommen: aus der Textbox oder von den Fehlern der Fortschrittsseite. */
   source?: "textbox" | "fehler";
-  /** Name aus dem Wortauftrag der Lehrkraft; er ersetzt Quelle und Standardnamen. */
-  orderTitle?: string | undefined;
   ownBoxes: readonly { id: string; title: string }[];
   error?: string | undefined;
   /** Titel der Wortbox, in der die Wörter gerade gespeichert wurden. */
@@ -40,15 +36,14 @@ export function TextboxWordsSheet({
   onSave: (target: { boxId?: string; title: string }) => void;
   onClose: () => void;
 }) {
-  const sheetTitle = orderTitle
-    ? "Wörter aus dem Auftrag"
-    : source === "fehler"
+  const sheetTitle =
+    source === "fehler"
       ? "Wörter mit den meisten Fehlern"
       : "Wörter aus der Textbox";
   const [saving, setSaving] = useState(false);
   const [target, setTarget] = useState(NEW_BOX);
   const [title, setTitle] = useState(
-    orderTitle ?? (source === "fehler" ? ERROR_BOX_TITLE : TEXTBOX_BOX_TITLE),
+    source === "fehler" ? ERROR_BOX_TITLE : TEXTBOX_BOX_TITLE,
   );
 
   return (
@@ -56,11 +51,9 @@ export function TextboxWordsSheet({
       <div className="ui-stack">
         <p className="ui-small ui-muted">
           {words.length === 1 ? "1 Wort" : `${words.length} Wörter`}{" "}
-          {orderTitle
-            ? "aus deinem Auftrag"
-            : source === "fehler"
-              ? "aus deinem Fortschritt"
-              : "aus deiner Textbox-Übung"}
+          {source === "fehler"
+            ? "aus deinem Fortschritt"
+            : "aus deiner Textbox-Übung"}
           :
         </p>
         <ul className={styles.missed} aria-label={sheetTitle}>
