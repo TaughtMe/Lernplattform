@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import katex from "katex";
+import { stripMathDelimiters } from "../../src/domain/mental-math";
 
 type MathDisplayProps = {
   text: string;
@@ -9,6 +10,16 @@ type MathDisplayProps = {
   displayMode?: boolean;
   className?: string;
 };
+
+/**
+ * Macht aus einer getippten Rechenzeile KaTeX-Quelltext: Umrandung mit `$`
+ * entfällt, das Dezimalkomma bekommt keinen Abstand, `*` wird zum Malpunkt.
+ */
+function katexSource(text: string) {
+  return stripMathDelimiters(text)
+    .replace(/(\d),(?=\d)/g, "$1{,}")
+    .replace(/\*/g, "\\cdot ");
+}
 
 /**
  * Shows a math prompt: plain text normally, or KaTeX-rendered for the more
@@ -25,7 +36,7 @@ export function MathDisplay({
   const html = useMemo(() => {
     if (!isLatex) return null;
     try {
-      return katex.renderToString(text, {
+      return katex.renderToString(katexSource(text), {
         throwOnError: false,
         displayMode,
         strict: false,
@@ -46,4 +57,24 @@ export function MathDisplay({
     );
   }
   return <span className={className}>{text}</span>;
+}
+
+/**
+ * Text mit eingebetteten Formeln: Was zwischen zwei `$` steht, wird mit KaTeX
+ * gesetzt, der Rest bleibt Text. So können Lösungsschritte einen Bruch
+ * enthalten („Jetzt rechnest du zu Ende: 23 + $\frac{1}{2}$.“).
+ */
+export function MathText({ text }: { text: string }) {
+  const parts = text.split(/\$([^$]+)\$/);
+  return (
+    <>
+      {parts.map((part, index) =>
+        index % 2 === 1 ? (
+          <MathDisplay key={index} text={part} isLatex />
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
 }

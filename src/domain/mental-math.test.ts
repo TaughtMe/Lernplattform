@@ -9,6 +9,8 @@ import {
   insertAtSelection,
   isGapUnique,
   isLatexMathSyntax,
+  isLatexMathTask,
+  stripMathDelimiters,
   mathAnswerMatches,
   mathNumbersEqual,
   normalizeMathChainInput,
@@ -193,6 +195,40 @@ describe("manually typed math chains", () => {
     expect(isLatexMathSyntax("2^3")).toBe(true);
     expect(isLatexMathSyntax("3 + 4 - 2")).toBe(false);
     expect(isLatexMathSyntax("7 + 8")).toBe(false);
+  });
+});
+
+describe("isLatexMathTask", () => {
+  const mixed = (prompt: string) => ({
+    prompt,
+    operation: "mixed-expression" as const,
+  });
+
+  it("erkennt Brüche, Potenzen und Wurzeln im Aufgabentext", () => {
+    expect(isLatexMathTask(mixed("19 + 1 + 3+ \\frac{1}{2}"))).toBe(true);
+    expect(isLatexMathTask(mixed("\\frac{3}{4} + \\frac{1}{4}"))).toBe(true);
+    expect(isLatexMathTask(mixed("\\sqrt{16} + 2"))).toBe(true);
+    expect(isLatexMathTask(mixed("2^3 + 1"))).toBe(true);
+  });
+
+  it("erkennt LaTeX auch, wenn der Text nicht auswertbar ist oder Umrandung hat", () => {
+    expect(isLatexMathTask(mixed("\\left(1+2\\right) \\cdot 3"))).toBe(true);
+    expect(isLatexMathTask(mixed("$\\frac{1}{2} + 1$"))).toBe(true);
+    expect(isLatexMathTask(mixed("\\(2 + 3\\)"))).toBe(true);
+  });
+
+  it("lässt gewöhnliche Aufgaben als Text", () => {
+    expect(isLatexMathTask(mixed("19 + 1 + 3 + 5"))).toBe(false);
+    expect(isLatexMathTask(mixed("(2 + 3) · 4"))).toBe(false);
+    expect(isLatexMathTask(mixed("7 + _ = 15"))).toBe(false);
+    // Aufgaben mit zwei Zahlen sind nie LaTeX.
+    expect(isLatexMathTask({ prompt: "7 + 8", operation: "add" })).toBe(false);
+  });
+
+  it("entfernt Umrandungen", () => {
+    expect(stripMathDelimiters("$\\frac{1}{2}$")).toBe("\\frac{1}{2}");
+    expect(stripMathDelimiters("\\(1 + 2\\)")).toBe("1 + 2");
+    expect(stripMathDelimiters(" 1 + 2 ")).toBe("1 + 2");
   });
 });
 

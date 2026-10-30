@@ -1,3 +1,4 @@
+import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
   classifyMentalMathError,
@@ -5,11 +6,7 @@ import {
   mentalMathSolutionSteps,
   type MentalMathErrorKind,
 } from "./mental-math-feedback";
-import {
-  displayMathNumber,
-  parseMentalMathTask,
-  type MathGapSlot,
-} from "./mental-math";
+import { parseMentalMathTask, type MathGapSlot } from "./mental-math";
 
 function task(source: string, gap?: MathGapSlot) {
   const parsed = parseMentalMathTask(source, 0, gap);
@@ -151,23 +148,22 @@ describe("mentalMathSolutionSteps", () => {
       undefined,
       [
         "47 + 3 = 50 (bis zum vollen Zehner).",
-        "Von der 8 bleiben 5 übrig: 50 + 5 = 55.",
-        "Die Lösung ist 55.",
+        "Von der 8 bleiben 5 übrig.",
+        "Jetzt rechnest du zu Ende: 50 + 5.",
       ],
     ],
     [
       "47 + 28",
       undefined,
-      ["47 + 20 = 67.", "67 + 8 = 75.", "Die Lösung ist 75."],
+      ["47 + 20 = 67.", "Jetzt rechnest du zu Ende: 67 + 8."],
     ],
-    ["47 + 30", undefined, ["47 + 30 = 77.", "Die Lösung ist 77."]],
     [
       "62 - 5",
       undefined,
       [
         "62 − 2 = 60 (bis zum vollen Zehner).",
-        "Von der 5 bleiben 3 übrig: 60 − 3 = 57.",
-        "Die Lösung ist 57.",
+        "Von der 5 bleiben 3 übrig.",
+        "Jetzt rechnest du zu Ende: 60 − 3.",
       ],
     ],
     [
@@ -176,26 +172,25 @@ describe("mentalMathSolutionSteps", () => {
       [
         "347 + 200 = 547.",
         "547 + 80 = 627.",
-        "627 + 5 = 632.",
-        "Die Lösung ist 632.",
+        "Jetzt rechnest du zu Ende: 627 + 5.",
       ],
     ],
     [
       "3 - 8",
       undefined,
       [
-        "8 − 3 = 5.",
+        "Rechne andersherum: 8 − 3.",
         "Du nimmst mehr weg, als da ist. Darum kommt ein Minus davor.",
-        "Die Lösung ist -5.",
+        "Jetzt rechnest du zu Ende.",
       ],
     ],
     [
       "0,5 + 0,7",
       undefined,
       [
-        "Rechne ohne Komma: 5 + 7 = 12.",
+        "Rechne ohne Komma: 5 + 7.",
         "Setze das Komma wieder: Es hat so viele Stellen wie in der Aufgabe.",
-        "Die Lösung ist 1,2.",
+        "Jetzt rechnest du zu Ende.",
       ],
     ],
     [
@@ -204,8 +199,7 @@ describe("mentalMathSolutionSteps", () => {
       [
         "Kernaufgabe: 5 · 7 = 35.",
         "Dazu kommt: 3 · 7 = 21.",
-        "35 + 21 = 56.",
-        "Die Lösung ist 56.",
+        "Jetzt rechnest du zu Ende: 35 + 21.",
       ],
     ],
     [
@@ -213,19 +207,19 @@ describe("mentalMathSolutionSteps", () => {
       undefined,
       [
         "Rechne mit 10: 10 · 6 = 60.",
-        "Ein 6er zu viel: 60 − 6 = 54.",
-        "Die Lösung ist 54.",
+        "Ein 6er ist zu viel.",
+        "Jetzt rechnest du zu Ende: 60 − 6.",
       ],
     ],
     [
       "3 * 4",
       undefined,
-      ["Zähle in 4er-Schritten, 3 Mal: 4, 8, 12.", "Die Lösung ist 12."],
+      ["Zähle in 4er-Schritten, 3 Mal: 4, 8, …", "Jetzt rechnest du zu Ende."],
     ],
     [
       "7 * 10",
       undefined,
-      ["Mal 10 heißt: eine Null anhängen.", "Die Lösung ist 70."],
+      ["Mal 10 heißt: eine Null anhängen.", "Jetzt rechnest du zu Ende."],
     ],
     [
       "12 * 5",
@@ -233,8 +227,7 @@ describe("mentalMathSolutionSteps", () => {
       [
         "Zerlege 12 in 10 und 2.",
         "10 · 5 = 50 und 2 · 5 = 10.",
-        "50 + 10 = 60.",
-        "Die Lösung ist 60.",
+        "Jetzt rechnest du zu Ende: 50 + 10.",
       ],
     ],
     [
@@ -242,8 +235,8 @@ describe("mentalMathSolutionSteps", () => {
       undefined,
       [
         "Umkehraufgabe: 56 : 8 = ?, weil ? · 8 = 56.",
-        "8er-Reihe: 8 · 7 = 56.",
-        "Die Lösung ist 7.",
+        "Geh in der 8er-Reihe weiter, bis du bei 56 bist.",
+        "Jetzt rechnest du zu Ende.",
       ],
     ],
     [
@@ -251,37 +244,42 @@ describe("mentalMathSolutionSteps", () => {
       undefined,
       [
         "Umkehraufgabe: 144 : 12 = ?, weil ? · 12 = 144.",
-        "Probe: 12 · 12 = 144.",
-        "Die Lösung ist 12.",
+        "Mach zur Probe: Dein Ergebnis · 12 muss 144 ergeben.",
+        "Jetzt rechnest du zu Ende.",
       ],
     ],
     [
       "7 + 5",
       "left",
-      [
-        "Drehe die Aufgabe um: 12 − 5 = 7.",
-        "Probe: 7 + 5 = 12.",
-        "Die Lösung ist 7.",
-      ],
+      ["Drehe die Aufgabe um und rechne 12 − 5.", "Jetzt rechnest du zu Ende."],
     ],
     [
       "9 - 4",
       "right",
-      [
-        "Drehe die Aufgabe um: 9 − 5 = 4.",
-        "Probe: 9 − 4 = 5.",
-        "Die Lösung ist 4.",
-      ],
+      ["Drehe die Aufgabe um und rechne 9 − 5.", "Jetzt rechnest du zu Ende."],
     ],
     [
       "6 * 7",
       "left",
+      ["Drehe die Aufgabe um und rechne 42 : 7.", "Jetzt rechnest du zu Ende."],
+    ],
+    // Die Lücke „Ergebnis“ ist eine normale Aufgabe: nichts umdrehen.
+    [
+      "47 + 28",
+      "result",
+      ["47 + 20 = 67.", "Jetzt rechnest du zu Ende: 67 + 8."],
+    ],
+    // Ohne Zerlegung: nur die Strategie, nie „20 + 3 = 23“.
+    [
+      "20 + 3",
+      undefined,
       [
-        "Drehe die Aufgabe um: 42 : 7 = 6.",
-        "Probe: 6 · 7 = 42.",
-        "Die Lösung ist 6.",
+        "Rechne in kleinen Schritten: Zerlege die zweite Zahl in Zehner und Einer.",
       ],
     ],
+    ["47 + 30", undefined, ["Zerlege am Zehner: 47 + 30 = 47 + 3 + 27."]],
+    ["5 * 0", undefined, ["Was passiert, wenn du mit null malnimmst?"]],
+    ["1 * 5", undefined, ["Was passiert, wenn du mit eins malnimmst?"]],
   ];
 
   for (const [source, gap, expected] of cases)
@@ -289,7 +287,7 @@ describe("mentalMathSolutionSteps", () => {
       expect(mentalMathSolutionSteps(task(source, gap))).toEqual(expected);
     });
 
-  it("liefert für jede Aufgabe 1 bis 4 Schritte mit dem Ergebnis am Ende", () => {
+  it("nennt das Ergebnis in keinem Schritt und kein Schritt verrät es allein", () => {
     const sources = [
       "0 + 0",
       "9 + 9",
@@ -309,11 +307,150 @@ describe("mentalMathSolutionSteps", () => {
     for (const source of sources) {
       const t = task(source);
       const steps = mentalMathSolutionSteps(t);
-      expect(steps.length).toBeGreaterThanOrEqual(1);
-      expect(steps.length).toBeLessThanOrEqual(4);
-      expect(steps.at(-1)).toBe(
-        `Die Lösung ist ${displayMathNumber(t.answer)}.`,
-      );
+      expect(steps.length, source).toBeGreaterThanOrEqual(1);
+      expect(steps.length, source).toBeLessThanOrEqual(4);
+      expect(revealing(t, steps), source).toEqual([]);
     }
+  });
+});
+
+/** Zeilen, die das Endergebnis der Aufgabe nennen (außer als Zahl der Aufgabe selbst). */
+function revealing(t: ReturnType<typeof task>, steps: string[]) {
+  const answer = t.answer;
+  const shown =
+    t.source
+      .replace(/,/g, ".")
+      .match(/\d+(?:\.\d+)?/g)
+      ?.map(Number) ?? [];
+  return steps.filter((step) => {
+    if (/Die Lösung|Das Ergebnis ist/.test(step)) return true;
+    const text = step.replace(/\$[^$]*\$/g, " ").replace(/,/g, ".");
+    // „… = <Ergebnis>“ ist immer eine Verrat, auch wenn die Zahl sonst vorkäme.
+    for (const match of text.matchAll(
+      /=\s*(−|-)?(\d+(?:\.\d+)?)(?!\s*[:·+−*/])/g,
+    )) {
+      const value = (match[1] ? -1 : 1) * Number(match[2]);
+      if (Math.abs(value - answer) < 1e-9 && !shown.includes(Math.abs(value)))
+        return true;
+    }
+    return false;
+  });
+}
+
+describe("mentalMathSolutionSteps: gemischte Ausdrücke", () => {
+  it("zeigt die ersten Rechenschritte und lässt den letzten aus", () => {
+    const t = task("19 + 1 + 3+ \\frac{1}{2}");
+    expect(t.operation).toBe("mixed-expression");
+    expect(t.answer).toBe(23.5);
+    expect(mentalMathSolutionSteps(t)).toEqual([
+      "Rechne zuerst 19 + 1 = 20.",
+      "Dann 20 + 3 = 23.",
+      "Jetzt rechnest du zu Ende: 23 + $\\frac{1}{2}$.",
+    ]);
+  });
+
+  it("rechnet Klammern zuerst und dann Punkt vor Strich", () => {
+    expect(mentalMathSolutionSteps(task("(2 + 3) * 4 + 6"))).toEqual([
+      "Rechne zuerst die Klammer: 2 + 3 = 5.",
+      "Dann Punkt vor Strich: 5 · 4 = 20.",
+      "Jetzt rechnest du zu Ende: 20 + 6.",
+    ]);
+    expect(mentalMathSolutionSteps(task("2 * 3 + 4 * 5 + 1"))).toEqual([
+      "Rechne zuerst Punkt vor Strich: 2 · 3 = 6 und 4 · 5 = 20.",
+      "Dann 6 + 20 = 26.",
+      "Jetzt rechnest du zu Ende: 26 + 1.",
+    ]);
+    expect(mentalMathSolutionSteps(task("(2 + 3) * 4"))).toEqual([
+      "Rechne zuerst die Klammer: 2 + 3 = 5.",
+      "Jetzt rechnest du zu Ende: 5 · 4.",
+    ]);
+  });
+
+  it("zeigt bei Minus und Dezimalzahlen die Zwischenwerte", () => {
+    expect(mentalMathSolutionSteps(task("20 - 5 - 3 + 1,5"))).toEqual([
+      "Rechne zuerst 20 − 5 = 15.",
+      "Dann 15 − 3 = 12.",
+      "Jetzt rechnest du zu Ende: 12 + 1,5.",
+    ]);
+  });
+
+  it("nennt nur die Strategie, wenn kein Teilschritt möglich ist", () => {
+    const strategy = [
+      "Rechne Schritt für Schritt: Klammern zuerst, dann Punkt vor Strich.",
+    ];
+    for (const source of [
+      "\\frac{3}{4} + \\frac{1}{4}",
+      "2^3",
+      "\\sqrt{9}",
+      "2 + 3 + 0",
+      "(2 + 3)",
+      "4 * 5 * 6",
+    ])
+      expect(mentalMathSolutionSteps(task(source)), source).toEqual(strategy);
+  });
+
+  it("zeigt nie einen Zwischenwert, der schon das Ergebnis ist", () => {
+    // 7 + 8 = 15 wäre schon das Ergebnis von 7 + 8 + 0.
+    expect(mentalMathSolutionSteps(task("7 + 8 + 0"))).toHaveLength(1);
+    const steps = mentalMathSolutionSteps(task("3 + 4 + 1 - 1"));
+    expect(steps.some((step) => step.includes("= 8"))).toBe(false);
+  });
+});
+
+describe("Eigenschaft: Der Lösungsweg verrät das Ergebnis nie", () => {
+  const operand = fc.integer({ min: 0, max: 99 });
+  const decimal = fc
+    .tuple(fc.integer({ min: 0, max: 99 }), fc.integer({ min: 0, max: 9 }))
+    .map(([whole, tenth]) => `${whole},${tenth}`);
+  const number = fc.oneof(operand.map(String), decimal);
+  const operator = fc.constantFrom("+", "-", "*", ":");
+  const gap = fc.constantFrom<MathGapSlot | undefined>(
+    undefined,
+    "left",
+    "right",
+    "result",
+  );
+
+  function check(t: ReturnType<typeof task> | null) {
+    if (!t) return;
+    const steps = mentalMathSolutionSteps(t);
+    expect(steps.length).toBeGreaterThanOrEqual(1);
+    expect(steps.length).toBeLessThanOrEqual(4);
+    expect(revealing(t, steps), `${t.source} → ${steps.join(" / ")}`).toEqual(
+      [],
+    );
+    // Wer mehr als eine Zeile zeigt, endet mit der Aufforderung zum Selbstrechnen.
+    if (steps.length > 1)
+      expect(steps.at(-1)).toMatch(/^Jetzt rechnest du zu Ende/);
+  }
+
+  it("bei Aufgaben mit zwei Zahlen und Lücken", () => {
+    fc.assert(
+      fc.property(number, operator, number, gap, (left, op, right, slot) => {
+        check(parseMentalMathTask(`${left} ${op} ${right}`, 0, slot));
+      }),
+      { numRuns: 600 },
+    );
+  });
+
+  it("bei Aufgaben mit mehreren Rechenzeichen und Klammern", () => {
+    const part = fc.oneof(
+      number,
+      fc.tuple(number, operator, number).map(([a, o, b]) => `(${a} ${o} ${b})`),
+      fc.tuple(number, number).map(([a, b]) => `\\frac{${a}}{${b}}`),
+    );
+    fc.assert(
+      fc.property(
+        part,
+        fc.array(fc.tuple(operator, part), { minLength: 1, maxLength: 5 }),
+        (first, rest) => {
+          const source = [first, ...rest.map(([o, p]) => `${o} ${p}`)].join(
+            " ",
+          );
+          check(parseMentalMathTask(source));
+        },
+      ),
+      { numRuns: 600 },
+    );
   });
 });

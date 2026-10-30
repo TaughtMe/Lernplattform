@@ -7,6 +7,7 @@ import {
   type MentalMathExpression,
   type MentalMathTask,
 } from "./mental-math";
+import { expressionSteps } from "./mental-math-expression-steps";
 
 /**
  * Hinweise und Lösungsweg bei falschen Kopfrechen-Antworten (Audit D-008).
@@ -16,8 +17,8 @@ import {
  * die Oberfläche dem Kind nie die Fehlerart, nur die passende Strategie
  * (`mentalMathHint`). Die Fehlerart ist für Lehrkräfte gedacht und dort als
  * Vermutung zu kennzeichnen. Die Funktionen sind rein und verraten die Lösung
- * nicht; erst `mentalMathSolutionSteps` endet mit dem Ergebnis (Regel M-1:
- * Kinder sehen vor der Runde keine Lösungen).
+ * nicht; auch `mentalMathSolutionSteps` endet vor dem Ergebnis und fordert
+ * das Kind zum Zu-Ende-Rechnen auf (Regeln M-1 und C4-3).
  */
 export type MentalMathErrorKind =
   | "sign"
@@ -151,6 +152,9 @@ export function classifyMentalMathError(
   return "unknown";
 }
 
+const MIXED_STRATEGY =
+  "Rechne Schritt für Schritt: Klammern zuerst, dann Punkt vor Strich.";
+
 function show(value: number) {
   return displayMathNumber(value);
 }
@@ -254,8 +258,12 @@ function decimalPlaces(value: number) {
   return text.includes(".") ? text.split(".")[1]!.length : 0;
 }
 
-function solved(answer: number) {
-  return `Die Lösung ist ${show(answer)}.`;
+/** Schlusszeile jedes Lösungswegs: Das Ergebnis rechnet das Kind selbst. */
+const FINISH = "Jetzt rechnest du zu Ende.";
+
+/** Schlusszeile mit dem, was noch zu rechnen bleibt (ohne Ergebnis). */
+function finish(rest?: string) {
+  return rest ? `Jetzt rechnest du zu Ende: ${rest}.` : FINISH;
 }
 
 function gapSteps(task: MentalMathTask, parts: MentalMathExpression) {
@@ -275,23 +283,20 @@ function gapSteps(task: MentalMathTask, parts: MentalMathExpression) {
       gap === "left"
         ? expressionText(result, "*", right)
         : expressionText(left, "/", result);
-  return [
-    `Drehe die Aufgabe um: ${inverse} = ${show(task.answer)}.`,
-    `Probe: ${expressionText(left, operator, right)} = ${show(result)}.`,
-    solved(task.answer),
-  ];
+  return [`Drehe die Aufgabe um und rechne ${inverse}.`, FINISH];
 }
 
 function addSubtractSteps(parts: MentalMathExpression) {
-  const { left, operator, right, result } = parts;
+  const { left, operator, right } = parts;
   const sign = mathOperatorSymbol(operator);
   const integers = isInteger(left) && isInteger(right);
   if (!integers) return decimalSteps(parts);
   if (left < 0 || right < 0) return [];
   if (operator === "-" && left < right)
     return [
-      `${show(right)} − ${show(left)} = ${show(right - left)}.`,
+      `Rechne andersherum: ${show(right)} − ${show(left)}.`,
       "Du nimmst mehr weg, als da ist. Darum kommt ein Minus davor.",
+      FINISH,
     ];
   const ones = left % 10;
   const step = operator === "+" ? 10 - ones : ones;
@@ -299,26 +304,28 @@ function addSubtractSteps(parts: MentalMathExpression) {
     const zehner = operator === "+" ? left + step : left - step;
     return [
       `${show(left)} ${sign} ${step} = ${zehner} (bis zum vollen Zehner).`,
-      `Von der ${right} bleiben ${right - step} übrig: ${zehner} ${sign} ${right - step} = ${show(result)}.`,
+      `Von der ${right} bleiben ${right - step} übrig.`,
+      finish(`${zehner} ${sign} ${right - step}`),
     ];
   }
   const rightParts = digitParts(right);
   if (rightParts.length >= 2 && rightParts.length <= 3) {
+    // Alle Teilschritte bis auf den letzten; er bleibt dem Kind.
     const steps: string[] = [];
     let running = left;
-    for (const part of rightParts) {
+    for (const part of rightParts.slice(0, -1)) {
       const next = operator === "+" ? running + part : running - part;
       steps.push(`${running} ${sign} ${part} = ${next}.`);
       running = next;
     }
-    return steps;
+    return [...steps, finish(`${running} ${sign} ${rightParts.at(-1)}`)];
   }
-  return [`${expressionText(left, operator, right)} = ${show(result)}.`];
+  return [];
 }
 
 /** Ohne Komma rechnen und das Komma wieder setzen (Plus, Minus, Mal). */
 function decimalSteps(parts: MentalMathExpression) {
-  const { left, operator, right, result } = parts;
+  const { left, operator, right } = parts;
   if (operator === "/") return [];
   const places =
     operator === "*"
@@ -328,89 +335,93 @@ function decimalSteps(parts: MentalMathExpression) {
         );
   const scaledLeft = Math.round(left * 10 ** places[0]!);
   const scaledRight = Math.round(right * 10 ** places[1]!);
-  const scaledResult = Math.round(
-    result * 10 ** (operator === "*" ? places[0]! + places[1]! : places[0]!),
-  );
   return [
-    `Rechne ohne Komma: ${scaledLeft} ${mathOperatorSymbol(operator)} ${scaledRight} = ${scaledResult}.`,
+    `Rechne ohne Komma: ${scaledLeft} ${mathOperatorSymbol(operator)} ${scaledRight}.`,
     "Setze das Komma wieder: Es hat so viele Stellen wie in der Aufgabe.",
+    FINISH,
   ];
 }
 
 function multiplySteps(parts: MentalMathExpression) {
-  const { left, right, result } = parts;
+  const { left, right } = parts;
   if (!isInteger(left) || !isInteger(right)) return decimalSteps(parts);
   const [small, big] = left <= right ? [left, right] : [right, left];
   if (small < 0) return [];
-  if (small <= 1 || big === 10 || big === 100)
-    return small === 0
-      ? ["Mal null ergibt immer null."]
-      : big === 10 || big === 100
-        ? [
-            `Mal ${big} heißt: ${big === 10 ? "eine Null" : "zwei Nullen"} anhängen.`,
-          ]
-        : [`${show(left)} · ${show(right)} = ${show(result)}.`];
+  if (small === 0) return ["Was passiert, wenn du mit null malnimmst?"];
+  if (small === 1) return ["Was passiert, wenn du mit eins malnimmst?"];
+  if (big === 10 || big === 100)
+    return [
+      `Mal ${big} heißt: ${big === 10 ? "eine Null" : "zwei Nullen"} anhängen.`,
+      FINISH,
+    ];
   if (big === 9)
     return [
       `Rechne mit 10: 10 · ${small} = ${10 * small}.`,
-      `Ein ${small}er zu viel: ${10 * small} − ${small} = ${show(result)}.`,
+      `Ein ${small}er ist zu viel.`,
+      finish(`${10 * small} − ${small}`),
     ];
   if (big >= 6 && big < 10)
     return [
       `Kernaufgabe: 5 · ${small} = ${5 * small}.`,
       `Dazu kommt: ${big - 5} · ${small} = ${(big - 5) * small}.`,
-      `${5 * small} + ${(big - 5) * small} = ${show(result)}.`,
+      finish(`${5 * small} + ${(big - 5) * small}`),
     ];
   if (big <= 5)
     return [
-      `Zähle in ${big}er-Schritten, ${small} Mal: ${Array.from({ length: small }, (_, index) => big * (index + 1)).join(", ")}.`,
+      `Zähle in ${big}er-Schritten, ${small} Mal: ${Array.from({ length: small - 1 }, (_, index) => big * (index + 1)).join(", ")}, …`,
+      FINISH,
     ];
   const bigParts = digitParts(big);
   if (big < 100 && bigParts.length === 2)
     return [
       `Zerlege ${big} in ${bigParts[0]} und ${bigParts[1]}.`,
       `${bigParts[0]} · ${small} = ${bigParts[0]! * small} und ${bigParts[1]} · ${small} = ${bigParts[1]! * small}.`,
-      `${bigParts[0]! * small} + ${bigParts[1]! * small} = ${show(result)}.`,
+      finish(`${bigParts[0]! * small} + ${bigParts[1]! * small}`),
     ];
-  return [`${expressionText(left, "*", right)} = ${show(result)}.`];
+  return [];
 }
 
 function divideSteps(parts: MentalMathExpression) {
   const { left, right, result } = parts;
   const reverse = `Umkehraufgabe: ${show(left)} : ${show(right)} = ?, weil ? · ${show(right)} = ${show(left)}.`;
   if (!isInteger(left) || !isInteger(right) || !isInteger(result))
-    return [reverse];
+    return [reverse, FINISH];
   if (right > 1 && right <= 10)
     return [
       reverse,
-      `${right}er-Reihe: ${right} · ${show(result)} = ${show(left)}.`,
+      `Geh in der ${right}er-Reihe weiter, bis du bei ${show(left)} bist.`,
+      FINISH,
     ];
-  return [reverse, `Probe: ${show(right)} · ${show(result)} = ${show(left)}.`];
+  return [
+    reverse,
+    `Mach zur Probe: Dein Ergebnis · ${show(right)} muss ${show(left)} ergeben.`,
+    FINISH,
+  ];
 }
 
 /**
- * Lösungsweg in 1 bis 4 kurzen Schritten, der letzte nennt das Ergebnis.
- * Passend zur Aufgabe: Zerlegen am Zehner und Stellenwert bei Plus und Minus,
- * Kernaufgabe beim Einmaleins, Umkehraufgabe bei Division und Lückenaufgaben.
+ * Lösungsweg in 2 bis 4 kurzen Schritten. Er zeigt den Weg und Zwischenergebnisse, aber nie das Endergebnis; die letzte Zeile fordert das Kind auf,
+ * selbst zu Ende zu rechnen (Regel C4-3). Passend zur Aufgabe: Zerlegen am
+ * Zehner und Stellenwert bei Plus und Minus, Kernaufgabe beim Einmaleins,
+ * Umkehraufgabe bei Division und Lückenaufgaben, bei gemischten Ausdrücken
+ * (Klammern, mehrere Rechenzeichen, Brüche) die ersten Rechenschritte nach den
+ * Rechenregeln. Gibt es keinen sinnvollen Teilschritt, bleibt nur die
+ * Strategie. Text in `$…$` ist LaTeX (`MathText`).
  */
 export function mentalMathSolutionSteps(task: MentalMathTask): string[] {
   const parts = partsOf(task);
-  if (!parts)
-    return [
-      "Rechne Schritt für Schritt: Klammern zuerst, dann Punkt vor Strich.",
-      solved(task.answer),
-    ];
-  if (task.gap) return gapSteps(task, parts);
+  if (!parts) {
+    const { steps, rest } = expressionSteps(task.source, task.answer);
+    return steps.length
+      ? [...steps, finish(rest ?? undefined)]
+      : [MIXED_STRATEGY];
+  }
+  if (task.gap && task.gap !== "result") return gapSteps(task, parts);
   const steps =
     parts.operator === "+" || parts.operator === "-"
       ? addSubtractSteps(parts)
       : parts.operator === "*"
         ? multiplySteps(parts)
         : divideSteps(parts);
-  const withResult = steps.length
-    ? steps
-    : [
-        `${expressionText(parts.left, parts.operator, parts.right)} = ${show(parts.result)}.`,
-      ];
-  return [...withResult, solved(task.answer)];
+  return steps.length ? steps : [strategyHint(parts)];
 }

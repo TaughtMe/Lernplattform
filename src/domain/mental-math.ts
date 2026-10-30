@@ -438,6 +438,38 @@ export function isLatexMathSyntax(input: string) {
   );
 }
 
+/**
+ * Anzeigetext einer Aufgabe, die als LaTeX gesetzt werden muss. Lehrkräfte
+ * dürfen `$…$` oder `\(…\)` um die Zeile schreiben; die Umrandung zählt nicht.
+ */
+export function stripMathDelimiters(input: string) {
+  const text = input.trim();
+  const dollars = text.match(/^\$+([^$]*)\$+$/);
+  if (dollars) return dollars[1]!.trim();
+  const parens = text.match(/^\\\(([\s\S]*)\\\)$/);
+  return parens ? parens[1]!.trim() : text;
+}
+
+/**
+ * Muss diese Aufgabe mit KaTeX gezeigt werden? Der Text einer Aufgabe kommt
+ * als Zeichenkette an (Ereignis `math.task`, Wiederholungsposten): bei Brüchen,
+ * Potenzen und Wurzeln steht dort roher LaTeX-Text. Erkannt wird das an der
+ * Rechenfähigkeit (`isLatexMathSyntax`) und an LaTeX-Zeichen (`\frac`, `^`,
+ * geschweifte Klammern), auch wenn die Zeile nicht auswertbar ist. Nur
+ * gemischte Ausdrücke kommen infrage; Aufgaben aus dem Generator sind Text.
+ */
+export function isLatexMathTask(
+  task: Pick<MentalMathTask, "prompt" | "operation">,
+) {
+  if (task.operation !== "mixed-expression") return false;
+  const text = stripMathDelimiters(task.prompt);
+  return (
+    isLatexMathSyntax(text) ||
+    /\\[a-zA-Z]+|\^|[{}]/.test(text) ||
+    text !== task.prompt.trim()
+  );
+}
+
 type MentalMathExpressionValues = Pick<
   MentalMathExpression,
   "left" | "right" | "result"
