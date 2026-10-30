@@ -180,6 +180,13 @@ als Kärtchen. Aufträge werden nicht gespeichert.
   geplant“.
 - D5-5 (D-012): Tempo-Punkte nur mit `showTempoPoints`, Standard aus.
   Projektionsmodus „Für die Tafel“. Sterne im Laufdiktat allein abschaltbar.
+  Entscheidung des Entwicklers: Der Projektionsmodus zeigt wieder die
+  „Häufigsten Fehler“ der Klasse (höchstens 5 Wörter mit Zahl,
+  `summarizeLiveProjection`); sie hängen am Wort, nie an einem Kind. Weiter
+  gibt es keine Namen, keine Fehlerzahlen je Kind und kein „Braucht Hilfe“.
+  Das Battle hat keine echten Gewinner: „Wer zuerst fertig ist, gewinnt“ heißt
+  jetzt „Gemeinsam die Runde abschließen“ (Fokus auf genaues Abtippen); andere
+  Battle-Texte versprechen weder Sieg noch Tempo (Test `constants.test.ts`).
 - D5-6 (A-006): `playwright.production.config.ts` prüft gegen den Build in
   `wrangler dev`. CI-Job `production`.
 
@@ -189,8 +196,6 @@ als Kärtchen. Aufträge werden nicht gespeichert.
 - Längengrenze des Wortauftrags (500 Zeichen) und Speichern der Aufträge.
 - Stufenfolgen des Startpunkts und Regel „sicher“.
 - Uhr über Module hinweg.
-- „Häufigste Fehler“ in der Projektion.
-- Battle-Text „Wer zuerst fertig ist, gewinnt“.
 - „Beenden“ bietet 24 Stunden lang „Weitermachen“ an.
 - Cloud-Abgleich und WebDAV aus den Kindereinstellungen verschieben.
 - Produktions-Browserlauf auch mobil ausführen.

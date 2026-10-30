@@ -188,7 +188,7 @@ test("the live view shows progress per animal and the most frequent errors", asy
   });
 });
 
-test("Für die Tafel zeigt nur Raumcode und Gesamtfortschritt und bleibt auf dem Gerät gemerkt", async ({
+test("Für die Tafel zeigt Raumcode, Gesamtfortschritt und häufigste Fehler ohne Namen und bleibt auf dem Gerät gemerkt", async ({
   page,
 }) => {
   await restoreRoom(page, "live");
@@ -205,6 +205,12 @@ test("Für die Tafel zeigt nur Raumcode und Gesamtfortschritt und bleibt auf dem
   await expect(panel.getByLabel("Raumcode 4829")).toBeVisible();
   await expect(
     panel.getByRole("img", { name: "QR-Code zum Raum 4829" }),
+  ).toBeVisible();
+  // Die Fehler der Klasse hängen am Wort, nicht am Kind.
+  await expect(
+    panel
+      .getByRole("region", { name: "Häufigste Fehler" })
+      .getByText("Hof", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Koala 2", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Braucht Hilfe")).toHaveCount(0);

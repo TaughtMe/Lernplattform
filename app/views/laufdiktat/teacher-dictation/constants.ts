@@ -72,9 +72,9 @@ export const MODES: ReadonlyArray<{
     sub: "Gegeneinander tippen, mit Störangriffen",
     icon: "swords",
     flow: [
-      "Beide starten gleichzeitig",
-      "Abtippen, Angriffe einsetzen",
-      "Wer zuerst fertig ist, gewinnt",
+      "Alle starten gleichzeitig",
+      "Genau abtippen, Angriffe laden",
+      "Gemeinsam die Runde abschließen",
     ],
   },
   {

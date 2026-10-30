@@ -188,8 +188,10 @@ export function LiveStep({
 }
 
 /**
- * Ansicht für die Tafel: Raumcode, QR und Gesamtfortschritt. Sie zeigt weder
- * Namen noch Fehlerzahlen, Fehlerwörter oder „Braucht Hilfe“.
+ * Ansicht für die Tafel: Raumcode, QR, Gesamtfortschritt und die häufigsten
+ * Fehlerwörter der ganzen Klasse. Die Wörter hängen an keinem Kind: Die Ansicht
+ * zeigt weder Namen noch Fehlerzahlen je Kind, Fehlerwörter je Tier oder
+ * „Braucht Hilfe“.
  */
 function ProjectionPanel({
   roomCode,
@@ -198,7 +200,11 @@ function ProjectionPanel({
 }: {
   roomCode: string;
   qr: TeacherDictationScreenProps["qrLarge"];
-  summary: ReturnType<typeof summarizeLiveProjection>;
+  summary: ReturnType<
+    typeof summarizeLiveProjection<
+      TeacherDictationScreenProps["live"]["mistakes"][number]
+    >
+  >;
 }) {
   return (
     <section className={styles.projection} aria-label="Ansicht für die Tafel">
@@ -227,6 +233,29 @@ function ProjectionPanel({
       >
         <span style={{ width: `${summary.overall}%` }} />
       </span>
+      {summary.mistakes.length > 0 ? (
+        <section
+          className={cx(styles.mistakes, styles.projectionMistakes)}
+          aria-label="Häufigste Fehler"
+        >
+          <Eyebrow>Häufigste Fehler</Eyebrow>
+          {summary.mistakes.map((entry) => (
+            <div key={entry.word} className={styles.mistake}>
+              <span className={styles.mistakeWord}>
+                {entry.display ?? entry.word}
+              </span>
+              <span className={styles.mistakeBar}>
+                <span
+                  style={{
+                    width: `${Math.round((entry.count / summary.mistakes[0]!.count) * 100)}%`,
+                  }}
+                />
+              </span>
+              <span className={styles.mistakeCount}>{entry.count}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
     </section>
   );
 }

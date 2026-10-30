@@ -47,6 +47,7 @@ declare const styles: {
   readonly previous: string;
   readonly projection: string;
   readonly projectionLabel: string;
+  readonly projectionMistakes: string;
   readonly projectionQr: string;
   readonly projectionToggle: string;
   readonly projectionTrack: string;

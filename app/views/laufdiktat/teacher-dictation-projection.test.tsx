@@ -9,6 +9,11 @@ describe("TeacherDictationScreen, Projektionsmodus „Für die Tafel“", () => 
     ...DEMO_TEACHER.live,
     active: 3,
     finished: 1,
+    // Die Klasse als Ganzes: Wörter mit Zahl, kein Kind.
+    mistakes: [
+      { word: "Vogel", count: 1 },
+      { word: "Pilze", count: 4 },
+    ],
     students: [
       {
         name: "Müder Koala",
@@ -50,7 +55,7 @@ describe("TeacherDictationScreen, Projektionsmodus „Für die Tafel“", () => 
   });
 
   it.each(["LAUFDIKTAT", "STATION"] as const)(
-    "zeigt in der Projektion nur Raumcode, QR und Gesamtfortschritt (%s)",
+    "zeigt in der Projektion Raumcode, QR, Gesamtfortschritt und häufigste Fehler (%s)",
     async (mode) => {
       const onChange = vi.fn();
       render(
@@ -76,12 +81,21 @@ describe("TeacherDictationScreen, Projektionsmodus „Für die Tafel“", () => 
       expect(
         within(panel).getByRole("progressbar", { name: "Gesamtfortschritt" }),
       ).toBeInTheDocument();
+      // Die häufigsten Fehler der Klasse: nur Wörter, häufigstes zuerst.
+      const mistakes = within(panel).getByRole("region", {
+        name: "Häufigste Fehler",
+      });
+      expect(
+        within(mistakes)
+          .getAllByText(/^(Pilze|Vogel)$/)
+          .map((node) => node.textContent),
+      ).toEqual(["Pilze", "Vogel"]);
       // Nichts Personenbezogenes auf dem Schirm.
       expect(screen.queryByText("Müder Koala")).not.toBeInTheDocument();
       expect(screen.queryByText("Braucht Hilfe")).not.toBeInTheDocument();
       expect(screen.queryByText("3✕")).not.toBeInTheDocument();
       expect(screen.queryByText(/Fehlerwörter/)).not.toBeInTheDocument();
-      expect(screen.queryByText("Pilze")).not.toBeInTheDocument();
+      expect(screen.queryByText("2✕")).not.toBeInTheDocument();
       expect(
         screen.queryByRole("button", {
           name: "Ergebnisse als CSV herunterladen",
@@ -93,6 +107,20 @@ describe("TeacherDictationScreen, Projektionsmodus „Für die Tafel“", () => 
       expect(onChange).toHaveBeenCalledWith(false);
     },
   );
+
+  it("lässt den Block weg, solange es keine Fehler gibt", () => {
+    render(
+      <TeacherDictationScreen
+        {...DEMO_TEACHER}
+        step="live"
+        live={{ ...live, mistakes: [] }}
+        projection={{ active: true, onChange: vi.fn() }}
+      />,
+    );
+    expect(
+      screen.queryByRole("region", { name: "Häufigste Fehler" }),
+    ).not.toBeInTheDocument();
+  });
 
   it("zeigt keinen QR, wenn der Beitritt geschlossen ist", () => {
     render(

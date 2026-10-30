@@ -338,6 +338,24 @@
   border-radius: 999px;
   background: var(--green);
 }
+/* Häufigste Fehler auf der Tafel: größer als in der Lehrerliste, weil man sie aus der Ferne liest. */
+.projectionMistakes {
+  box-sizing: border-box;
+  width: min(100%, 520px);
+  text-align: left;
+}
+.projectionMistakes .mistake {
+  grid-template-columns: minmax(70px, 30%) 1fr 24px;
+}
+.projectionMistakes .mistakeWord {
+  font-size: clamp(16px, 2.6dvh, 24px);
+}
+.projectionMistakes .mistakeBar {
+  height: 10px;
+}
+.projectionMistakes .mistakeCount {
+  font-size: 16px;
+}
 .stat {
   padding: 12px 14px;
   border: 1px solid var(--line);

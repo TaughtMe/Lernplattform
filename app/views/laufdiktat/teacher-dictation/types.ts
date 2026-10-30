@@ -133,9 +133,9 @@ export type TeacherDictationScreenProps = {
   };
   roomTimes?: RoomTimes;
   /**
-   * Projektionsmodus „Für die Tafel“ im Live-Schritt: nur Raumcode, QR und
-   * Gesamtfortschritt, keine Namen mit Fehlerzahlen (Befund D-012). Ohne
-   * Angabe fehlt der Umschalter.
+   * Projektionsmodus „Für die Tafel“ im Live-Schritt: Raumcode, QR,
+   * Gesamtfortschritt und die häufigsten Fehlerwörter der Klasse, keine Namen
+   * mit Fehlerzahlen (Befund D-012). Ohne Angabe fehlt der Umschalter.
    */
   projection?: {
     active: boolean;
