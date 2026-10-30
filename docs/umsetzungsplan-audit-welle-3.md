@@ -111,14 +111,14 @@ Die Nutzlast ist jetzt entweder ein Vokabelpaket oder eine Lernwortliste:
 Am Stand 0.9.4 nachgeprüft: alle offen, C-008 teilweise (neue Vokabeln gelten
 nicht mehr als „schwierig“).
 
-| Nr.  | Befund | Regel                                                                                                                                                                                                                                                                                                                                       |
-| ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D5-1 | C-001  | Während einer Runde fragen Logo, untere Leiste, Zurück-Pfeil und Zurück-Geste nach („Runde wirklich beenden? Deine Antworten bis hier sind gespeichert.“, Standard „Weiterüben“). Wortspeicher, LernBox, Kopfrechnen und Laufdiktat allein halten einen Zwischenstand und bieten beim nächsten Öffnen „Weitermachen“ an (Stand „3 von 10“). |
-| D5-2 | C-003  | Ein Kind ohne Lernstand sieht eine kurze Begrüßung mit großen Karten „Wörter üben“, „Rechnen“, „Vokabeln“ und „Loslegen“ statt „Weiterlernen“. Die Tastenwelt wird nur empfohlen, wenn auf dem Gerät schon eine Hardwaretastatur benutzt wurde.                                                                                             |
-| D5-3 | C-007  | Ein Kinder-Glossar legt einfache Wörter fest („Runde“ statt „Durchgang“, „Stufe“ statt „Merkstufe“, „heute üben“ statt „fällig“, „Kartenstapel“ statt „Stapel“ nur wo nötig, kein „Leitner“). Ein Test meldet verbotene Wörter in Schüleransichten. Anleitungen haben einen Vorlese-Knopf (lokale Stimme).                                  |
-| D5-4 | C-008  | Nie geübte Karten heißen „neu“, nie „erledigt“. Der Wortspeicher-Abschluss sagt, wann die Fehlerwörter wiederkommen, und bietet „Diese Wörter jetzt noch einmal üben“ (freies Üben, ändert keine Box). Ein leerer Tag heißt „Heute ist noch nichts geplant“.                                                                                |
-| D5-5 | D-012  | Tempo-Punkte nur, wenn die Lehrkraft sie einschaltet (Standard aus). Die Lehrer-Liveansicht hat einen Projektionsmodus ohne Namen mit Fehlerzahlen. Sterne im Laufdiktat allein sind abschaltbar.                                                                                                                                           |
-| D5-6 | A-006  | Ein Playwright-Projekt prüft die Hauptseiten gegen den Produktions-Build ohne Vorschau; ein CI-Job führt es aus.                                                                                                                                                                                                                            |
+| Nr.  | Befund | Regel                                                                                                                                                                                                                                                                                                                                                      |
+| ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D5-1 | C-001  | Während einer Runde fragen Logo, untere Leiste, Zurück-Pfeil und Zurück-Geste nach („Runde wirklich beenden? Deine Antworten bis hier sind gespeichert.“, Standard „Weiterüben“). Wortspeicher, LernBox, Kopfrechnen und Laufdiktat allein halten einen Zwischenstand und bieten beim nächsten Öffnen „Weitermachen“ an (Stand „3 von 10“).                |
+| D5-2 | C-003  | Ein Kind ohne Lernstand sieht eine kurze Begrüßung und „Loslegen“ (führt nach „Üben“) statt „Weiterlernen“. Bereichskarten (Bild, Titel, „3 von 5 geschafft“, geschaffte mit Haken am Ende) erscheinen nur für Bereiche mit Aufgaben in der Tagesportion. Die Tastenwelt wird nur empfohlen, wenn auf dem Gerät schon eine Hardwaretastatur benutzt wurde. |
+| D5-3 | C-007  | Ein Kinder-Glossar legt einfache Wörter fest („Runde“ statt „Durchgang“, „Stufe“ statt „Merkstufe“, „heute üben“ statt „fällig“, „Kartenstapel“ statt „Stapel“ nur wo nötig, kein „Leitner“). Ein Test meldet verbotene Wörter in Schüleransichten. Anleitungen haben einen Vorlese-Knopf (lokale Stimme).                                                 |
+| D5-4 | C-008  | Nie geübte Karten heißen „neu“, nie „erledigt“. Der Wortspeicher-Abschluss sagt, wann die Fehlerwörter wiederkommen, und bietet „Diese Wörter jetzt noch einmal üben“ (freies Üben, ändert keine Box). Ein leerer Tag heißt „Heute ist noch nichts geplant“.                                                                                               |
+| D5-5 | D-012  | Tempo-Punkte nur, wenn die Lehrkraft sie einschaltet (Standard aus). Die Lehrer-Liveansicht hat einen Projektionsmodus ohne Namen mit Fehlerzahlen. Sterne im Laufdiktat allein sind abschaltbar.                                                                                                                                                          |
+| D5-6 | A-006  | Ein Playwright-Projekt prüft die Hauptseiten gegen den Produktions-Build ohne Vorschau; ein CI-Job führt es aus.                                                                                                                                                                                                                                           |
 
 ## Pakete
 
@@ -203,7 +203,15 @@ Formatänderung siehe Abschnitt D4.
 - D5-1 (C-001): Rundenschutz bei Logo, Leiste, Zurück-Pfeil und Geste.
   „Weitermachen“ für Wortspeicher, LernBox, Kopfrechnen und Laufdiktat allein.
   Die Tastenwelt hat nur die Rückfrage.
-- D5-2 (C-003): Erstkontakt mit „Loslegen“ und Tastatur-Merkmal.
+- D5-2 (C-003): Erstkontakt mit „Loslegen“ und Tastatur-Merkmal. Entscheidung
+  des Entwicklers: Die festen Karten „Wörter üben“, „Rechnen“, „Vokabeln“
+  entfallen (alles ist über „Üben“ erreichbar); „Loslegen“ führt nach `/ueben`.
+  Stattdessen zeigt die Lernen-Startseite je Bereich mit Aufgaben in der
+  Tagesportion eine Karte (`src/domain/today-tasks.ts`, `todayTasks`): offene
+  Bereiche zuerst, geschaffte mit Haken am Ende, nur sichtbare Bereiche laut
+  Freigaberegister. Aufgaben mit eigener Route (Unterricht) bilden eine Karte
+  „Aus dem Unterricht“. Ohne Aufgaben bleiben die bisherigen Kacheln. Die
+  Design-Ansichten 3a/3b (Status „offen“) bleiben unverändert.
 - D5-3 (C-007): Kinder-Glossar `src/domain/child-glossary.ts` mit Test.
   Anleitungen haben einen Vorlese-Knopf, nur mit lokalen Stimmen.
 - D5-4 (C-008): „neu“ statt „erledigt“. Der Wortspeicher-Abschluss nennt, wann
