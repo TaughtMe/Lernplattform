@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DailyPlanItem } from "../../../src/domain/daily-plan";
@@ -201,6 +201,22 @@ describe("Vorschau vor der Runde (C-013, M-1)", () => {
     );
   });
 
+  it("setzt Brüche in der Liste eigener Aufgaben mit KaTeX", async () => {
+    const user = userEvent.setup();
+    render(<MentalMathApp />);
+    await user.click(screen.getByRole("button", { name: "Eigene Aufgaben" }));
+    const input = screen.getByRole("textbox", {
+      name: "Eine Aufgabe pro Zeile",
+    });
+    await user.clear(input);
+    await user.click(input);
+    await user.paste("7 + 8\n19 + 1 + 3+ \\frac{1}{2}");
+    const items = within(screen.getByRole("list")).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]!.querySelector(".katex")).toBeNull();
+    expect(items[1]!.querySelector(".katex")).not.toBeNull();
+  });
+
   it("zeigt eigene Aufgaben ohne Ergebnis", async () => {
     const user = userEvent.setup();
     render(<MentalMathApp />);
@@ -262,13 +278,15 @@ it("marks solutions as help and allows a short round to end", async () => {
   await user.clear(source);
   await user.type(source, "2 + 3");
   await user.click(screen.getByRole("button", { name: "Runde starten" }));
-  await user.click(screen.getByRole("button", { name: "Lösungsweg zeigen" }));
-  await user.type(
-    screen.getByRole("textbox", { name: "Dein Ergebnis" }),
-    "5{Enter}",
+  const answer = screen.getByRole("textbox", { name: "Dein Ergebnis" });
+  await user.type(answer, "4{Enter}");
+  await user.click(
+    await screen.findByRole("button", { name: "Lösungsweg zeigen" }),
   );
+  await user.clear(answer);
+  await user.type(answer, "5{Enter}");
   await screen.findByText("Gut gerechnet");
-  expect(put.mock.calls[0]![0].help).toBe("solution");
+  expect(put.mock.calls[1]![0].help).toBe("solution");
   expect(
     screen.getByRole("link", { name: "Für heute fertig" }),
   ).toHaveAttribute("href", "/");
@@ -283,7 +301,9 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
       name: "Eine Aufgabe pro Zeile",
     });
     await user.clear(input);
-    await user.type(input, source);
+    // Einfügen statt Tippen: „{“ ist bei user.type eine Tastenangabe.
+    await user.click(input);
+    await user.paste(source);
     await user.click(screen.getByRole("button", { name: "Runde starten" }));
     return {
       user,
@@ -295,23 +315,33 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
     const { user, answer } = await start("47 + 8");
     // Vor dem ersten Versuch weder Hinweis noch Lösung (Regel M-1).
     expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Die Lösung ist/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Lösungsweg zeigen" }),
+    ).not.toBeInTheDocument();
 
     await user.type(answer, "45{Enter}");
     expect(await screen.findByText("Noch nicht.")).toBeVisible();
     expect(
       screen.getByText("Zerlege am Zehner: 47 + 8 = 47 + 3 + 5."),
     ).toBeVisible();
-    expect(screen.queryByText(/Die Lösung ist/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/So geht es/)).not.toBeInTheDocument();
+    // Jetzt gibt es den Knopf für den Lösungsweg.
+    expect(
+      screen.getByRole("button", { name: "Lösungsweg zeigen" }),
+    ).toBeEnabled();
     // Keine Fehlerdiagnose für das Kind.
     expect(screen.queryByText(/vermutlich|Zehnerübergang/i)).toBeNull();
 
     await user.clear(answer);
     await user.type(answer, "65{Enter}");
-    expect(await screen.findByText("Die Lösung ist 55.")).toBeVisible();
     expect(
-      screen.getByText("Von der 8 bleiben 5 übrig: 50 + 5 = 55."),
+      await screen.findByText("Jetzt rechnest du zu Ende: 50 + 5."),
     ).toBeVisible();
+    expect(screen.getByText("Von der 8 bleiben 5 übrig.")).toBeVisible();
+    // Die Lösung kommt in der Hilfe nie vor.
+    expect(
+      screen.getByText("So geht es:").closest("div"),
+    ).not.toHaveTextContent(/55|Die Lösung/);
     expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
   });
 
@@ -321,7 +351,7 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
     await screen.findByText("Noch nicht.");
     await user.clear(answer);
     await user.type(answer, "55{Enter}");
-    await screen.findByText("Die Lösung ist 56.");
+    await screen.findByText("Jetzt rechnest du zu Ende: 35 + 21.");
     await user.clear(answer);
     await user.type(answer, "56{Enter}");
     await screen.findByText("Gut gerechnet");
@@ -338,12 +368,65 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
   });
 
   it("zeigt den Lösungsweg auch auf Knopfdruck und zählt ihn als Hilfe", async () => {
-    const { user } = await start("56 : 8");
-    await user.click(screen.getByRole("button", { name: "Lösungsweg zeigen" }));
+    const { user, answer } = await start("56 : 8");
+    await user.type(answer, "6{Enter}");
+    await user.click(
+      await screen.findByRole("button", { name: "Lösungsweg zeigen" }),
+    );
     expect(
       screen.getByText("Umkehraufgabe: 56 : 8 = ?, weil ? · 8 = 56."),
     ).toBeVisible();
-    expect(screen.getByText("Die Lösung ist 7.")).toBeVisible();
+    expect(screen.getByText("Jetzt rechnest du zu Ende.")).toBeVisible();
+    expect(screen.queryByText(/Die Lösung|7/)).not.toBeInTheDocument();
+  });
+
+  it("zeigt Tipp und Knopf erst nach dem Fehlversuch an dieser Aufgabe", async () => {
+    const { user, answer } = await start("2 + 3\n4 + 4");
+    expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Lösungsweg zeigen" }),
+    ).not.toBeInTheDocument();
+    await user.type(answer, "9{Enter}");
+    expect(
+      await screen.findByRole("button", { name: "Lösungsweg zeigen" }),
+    ).toBeVisible();
+    expect(screen.getByText(/Tipp:/)).toBeVisible();
+    // Die nächste Aufgabe beginnt wieder ohne Hilfe.
+    await user.clear(answer);
+    await user.type(answer, "5{Enter}");
+    await screen.findByText("Aufgabe 2 von 2");
+    expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Lösungsweg zeigen" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("setzt eine Aufgabe mit Bruch mit KaTeX und zeigt einen Lösungsweg ohne Ergebnis", async () => {
+    const { user, answer } = await start("19 + 1 + 3+ \\frac{1}{2}");
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading.querySelector(".katex")).not.toBeNull();
+    // Sichtbar ist der gesetzte Bruch, nicht der LaTeX-Text.
+    expect(heading.querySelector(".katex-html")).not.toHaveTextContent(
+      "\\frac",
+    );
+    await user.type(answer, "20{Enter}");
+    await user.click(
+      await screen.findByRole("button", { name: "Lösungsweg zeigen" }),
+    );
+    const help = screen.getByText("So geht es:").closest("div")!;
+    expect(help).toHaveTextContent("Rechne zuerst 19 + 1 = 20.");
+    expect(help).toHaveTextContent("Dann 20 + 3 = 23.");
+    // Der Bruch im letzten Schritt ist gesetzt, die Lösung steht nirgends.
+    expect(help.querySelector(".katex")).not.toBeNull();
+    expect(help).not.toHaveTextContent(/23[,.]5|Die Lösung/);
+    expect(help.querySelector(".katex-html")).not.toHaveTextContent("\\frac");
+  });
+
+  it("zeigt gewöhnliche Aufgaben ohne KaTeX", async () => {
+    await start("7 + 8");
+    expect(
+      screen.getByRole("heading", { level: 1 }).querySelector(".katex"),
+    ).toBeNull();
   });
 });
 

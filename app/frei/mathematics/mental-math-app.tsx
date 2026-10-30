@@ -11,6 +11,7 @@ import {
 import {
   MULTIPLICATION_TABLES,
   generateMentalMathTasks,
+  isLatexMathTask,
   parseMentalMathTask,
   shuffleMathTasks,
   type MathGapSlot,
@@ -22,6 +23,7 @@ import {
   mentalMathHint,
   mentalMathSolutionSteps,
 } from "../../../src/domain/mental-math-feedback";
+import { MathDisplay, MathText } from "../../components/math-display";
 import { createDailyPlanRepository } from "../../../src/storage/daily-plan";
 import {
   createMathAttempt,
@@ -161,8 +163,11 @@ export function MentalMathApp({
   const [helpCount, setHelpCount] = useState(0);
   const [help, setHelp] = useState(false);
   // Hinweis nach dem ersten Fehlversuch an dieser Aufgabe (D-008); der zweite
-  // Fehlversuch zeigt den Lösungsweg. Gewertet wird weiter der erste Versuch.
+  // Fehlversuch zeigt den Lösungsweg, der das Ergebnis nicht nennt (C4-3).
+  // Gewertet wird weiter der erste Versuch.
   const [hint, setHint] = useState("");
+  // Tipp und „Lösungsweg zeigen“ gibt es erst nach dem ersten Fehlversuch.
+  const [failed, setFailed] = useState(false);
   const wrongTries = useRef(0);
   const nextTimer = useRef(0);
   const interactionReady = useSyncExternalStore(
@@ -271,6 +276,7 @@ export function MentalMathApp({
     pending.current = null;
     wrongTries.current = 0;
     setHint("");
+    setFailed(false);
     setHelp(false);
     setTasks(next);
     setIndex(0);
@@ -427,9 +433,17 @@ export function MentalMathApp({
     corrected.current = state.corrected;
     wrongTries.current = state.wrongTries;
     pending.current = null;
-    setHint("");
+    const restored = restoreMathTasks(state);
+    const resumed = restored[state.index];
+    // Nach einem Fehlversuch bleibt der Tipp stehen, solange noch kein Lösungsweg offen ist.
+    setHint(
+      resumed && state.wrongTries > 0 && !state.help
+        ? mentalMathHint(resumed, "unknown")
+        : "",
+    );
+    setFailed(state.wrongTries > 0);
     setHelp(state.help);
-    setTasks(restoreMathTasks(state));
+    setTasks(restored);
     setIndex(state.index);
     setAnswer("");
     setFeedback("");
@@ -482,6 +496,7 @@ export function MentalMathApp({
       if (!correct) {
         corrected.current = true;
         wrongTries.current += 1;
+        setFailed(true);
         setMistakes((value) => value + 1);
         setFeedback("incorrect");
         if (wrongTries.current === 1)
@@ -517,6 +532,7 @@ export function MentalMathApp({
           setFeedback("");
           setHelp(false);
           setHint("");
+          setFailed(false);
           wrongTries.current = 0;
           corrected.current = false;
         }, 450);
@@ -840,7 +856,12 @@ export function MentalMathApp({
                 <ol className="ui-list ui-math__preview">
                   {preview.map((task) => (
                     <li key={task.id}>
-                      <strong className="ui-grow">{task.prompt}</strong>
+                      <strong className="ui-grow">
+                        <MathDisplay
+                          text={task.prompt}
+                          isLatex={isLatexMathTask(task)}
+                        />
+                      </strong>
                     </li>
                   ))}
                 </ol>
@@ -946,7 +967,10 @@ export function MentalMathApp({
       <div className="ui-game__card ui-math__card">
         <p className="ui-eyebrow">Kopfrechnen</p>
         <h1 id="math-task-title" className="ui-game__prompt ui-math__task">
-          {current.prompt}
+          <MathDisplay
+            text={current.prompt}
+            isLatex={isLatexMathTask(current)}
+          />
         </h1>
         <form className="ui-math__answer" onSubmit={submit}>
           <label htmlFor="mental-math-answer" className="ui-sr-only">
@@ -1002,7 +1026,9 @@ export function MentalMathApp({
               </p>
               <ol className="ui-math__steps">
                 {solutionSteps.map((step) => (
-                  <li key={step}>{step}</li>
+                  <li key={step}>
+                    <MathText text={step} />
+                  </li>
                 ))}
               </ol>
               <p>Rechne die nächste Aufgabe wieder ohne Hilfe.</p>
@@ -1010,14 +1036,16 @@ export function MentalMathApp({
           ) : null}
         </div>
         <div className="ui-row ui-wrap">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={saving || feedback === "correct"}
-            onClick={showSolution}
-          >
-            Lösungsweg zeigen
-          </Button>
+          {failed ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={saving || feedback === "correct"}
+              onClick={showSolution}
+            >
+              Lösungsweg zeigen
+            </Button>
+          ) : null}
           <Button variant="link" disabled={saving} onClick={requestLeave}>
             Runde beenden
           </Button>
