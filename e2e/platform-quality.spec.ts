@@ -394,6 +394,17 @@ test("many imported words give a portion of at most 20 and 'Weiterlernen' starts
     .getByRole("alertdialog", { name: "Runde wirklich beenden?" })
     .getByRole("button", { name: "Beenden" })
     .click();
+  // Nach dem Ende nimmt der Rundenschutz seinen Verlaufseintrag per
+  // `history.back()` zurück. Ein `goto` mitten in diesem Schritt bricht ihn ab
+  // (net::ERR_ABORTED); erst warten, bis der Eintrag weg ist.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (history.state as Record<string, unknown> | null)?.["lernraumRunde"],
+      ),
+    )
+    .toBeUndefined();
   await page.goto("/lernen");
   await expect(page.getByText("1 von 10 Aufgaben heute")).toBeVisible();
 });
