@@ -10,6 +10,7 @@ import {
   isGapUnique,
   isLatexMathSyntax,
   isLatexMathTask,
+  spokenMathText,
   stripMathDelimiters,
   mathAnswerMatches,
   mathNumbersEqual,
@@ -223,6 +224,18 @@ describe("isLatexMathTask", () => {
     expect(isLatexMathTask(mixed("7 + _ = 15"))).toBe(false);
     // Aufgaben mit zwei Zahlen sind nie LaTeX.
     expect(isLatexMathTask({ prompt: "7 + 8", operation: "add" })).toBe(false);
+  });
+
+  it("macht aus LaTeX gesprochene Sprache", () => {
+    expect(spokenMathText("19 + 1 + 3+ \\frac{1}{2}")).toBe(
+      "19 plus 1 plus 3 plus 1 durch 2",
+    );
+    expect(spokenMathText("\\sqrt{16} - 2^{3}")).toBe(
+      "Wurzel aus 16 minus 2 hoch 3",
+    );
+    expect(spokenMathText("$(2 + 3) \\cdot 4$")).toBe(
+      "Klammer auf 2 plus 3 Klammer zu mal 4",
+    );
   });
 
   it("entfernt Umrandungen", () => {

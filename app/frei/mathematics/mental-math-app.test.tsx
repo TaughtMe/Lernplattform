@@ -405,6 +405,8 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
     const { user, answer } = await start("19 + 1 + 3+ \\frac{1}{2}");
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading.querySelector(".katex")).not.toBeNull();
+    // Screenreader bekommen die Aufgabe als gesprochenen Text.
+    expect(heading).toHaveAccessibleName("19 plus 1 plus 3 plus 1 durch 2");
     // Sichtbar ist der gesetzte Bruch, nicht der LaTeX-Text.
     expect(heading.querySelector(".katex-html")).not.toHaveTextContent(
       "\\frac",

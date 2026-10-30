@@ -55,8 +55,19 @@ test("math errors survive reload and practice works offline with keyboard and he
     .getByRole("button", { name: "Meine Fehler und Wiederholungen üben" })
     .click();
   await expect(answer).toBeFocused();
+  // Tipp und Lösungsweg gibt es erst nach dem ersten Fehlversuch.
+  await expect(
+    page.getByRole("button", { name: "Lösungsweg zeigen" }),
+  ).toHaveCount(0);
+  await answer.fill("55");
+  await answer.press("Enter");
+  await expect(page.getByText("Noch nicht.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Lösungsweg zeigen" }).click();
-  await expect(page.getByText(/Die Lösung ist 56/)).toBeVisible();
+  await expect(
+    page.getByText("Jetzt rechnest du zu Ende: 35 + 21."),
+  ).toBeVisible();
+  // Die Lösung steht in der Hilfe nie.
+  await expect(page.getByText(/Die Lösung ist/)).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await answer.fill("56");
   await answer.press("Enter");
@@ -149,4 +160,47 @@ test("the preview before a round shows no solutions and no single tasks", async 
   // Weder die erste Rundenaufgabe noch ihr Ergebnis stand in der Vorschau.
   expect(setupText).not.toContain(firstTask);
   expect(setupText).not.toContain(`${firstTask} =`);
+});
+
+test("a fraction task is typeset and its help never shows the result", async ({
+  page,
+}) => {
+  await page.goto("/frei/mathematics");
+  await page.getByRole("button", { name: "Eigene Aufgaben" }).click();
+  await page
+    .getByRole("textbox", { name: "Eine Aufgabe pro Zeile" })
+    .fill("19 + 1 + 3+ \\frac{1}{2}");
+  await page.getByRole("button", { name: "Runde starten" }).click();
+  const task = page.locator("#math-task-title");
+  await expect(task.locator(".katex")).toBeVisible();
+  await expect(task.locator(".katex-html")).not.toContainText("frac");
+  // Vor dem ersten Fehlversuch gibt es weder Tipp noch Lösungsweg.
+  await expect(
+    page.getByRole("button", { name: "Lösungsweg zeigen" }),
+  ).toHaveCount(0);
+  const answer = page.getByRole("textbox", { name: "Dein Ergebnis" });
+  await answer.fill("23");
+  await answer.press("Enter");
+  await expect(page.getByText("Noch nicht.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Lösungsweg zeigen" }).click();
+  const help = page.getByText("So geht es:").locator("xpath=ancestor::div[1]");
+  await expect(help).toContainText("Rechne zuerst 19 + 1 = 20.");
+  await expect(help).toContainText("Dann 20 + 3 = 23.");
+  await expect(help.locator(".katex")).toBeVisible();
+  await expect(help).not.toContainText(/23[,.]5|Die Lösung/);
+  await page.screenshot({
+    path: test.info().outputPath("math-fraction-help.png"),
+    fullPage: true,
+  });
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+    ),
+  ).toBe(true);
+  await answer.fill("23,5");
+  await answer.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "Gut gerechnet" }),
+  ).toBeVisible();
 });

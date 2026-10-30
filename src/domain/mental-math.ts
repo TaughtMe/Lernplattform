@@ -470,6 +470,38 @@ export function isLatexMathTask(
   );
 }
 
+/**
+ * Aufgabentext zum Vorlesen und für Hilfsmittel: aus LaTeX wird gesprochene
+ * Sprache („19 plus 1 plus 3 plus 1 durch 2“). KaTeX versteckt seine
+ * Darstellung vor Screenreadern, deshalb bekommt eine Überschrift mit Formel
+ * diesen Text als Namen.
+ */
+export function spokenMathText(input: string) {
+  let text = stripMathDelimiters(input)
+    .replace(/\\(?:left|right)\b/g, "")
+    .replace(/\\cdot\b/g, "·");
+  for (let round = 0; round < 8; round += 1) {
+    const next = text
+      .replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, " $1 durch $2 ")
+      .replace(/\\sqrt\s*\[([^\]]*)\]\s*\{([^{}]*)\}/g, " $1-te Wurzel aus $2 ")
+      .replace(/\\sqrt\s*\{([^{}]*)\}/g, " Wurzel aus $1 ")
+      .replace(/\^\s*\{([^{}]*)\}/g, " hoch $1 ");
+    if (next === text) break;
+    text = next;
+  }
+  return text
+    .replace(/\^\s*(-?\d+)/g, " hoch $1 ")
+    .replace(/\+/g, " plus ")
+    .replace(/[-−]/g, " minus ")
+    .replace(/[*×·]/g, " mal ")
+    .replace(/[:÷/]/g, " geteilt durch ")
+    .replace(/\(/g, " Klammer auf ")
+    .replace(/\)/g, " Klammer zu ")
+    .replace(/[{}\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 type MentalMathExpressionValues = Pick<
   MentalMathExpression,
   "left" | "right" | "result"

@@ -36,11 +36,13 @@ Formatänderung.
 
 ## C4 Kopfrechnen (D-008)
 
-| Nr.  | Regel                                                                                                                       |
-| ---- | --------------------------------------------------------------------------------------------------------------------------- |
-| C4-1 | Regelbasierte Fehlerklassifikation als reine Funktion. Sie ist nur für die Lehrkraft sichtbar und zeigt ihre Unsicherheit.  |
-| C4-2 | Erster Fehlversuch: Strategiehinweis statt nur „Noch nicht“.                                                                |
-| C4-3 | Zweiter Fehlversuch oder „Lösungsweg zeigen“: Lösungsweg in kurzen Schritten mit Ergebnis. Gewertet wird der erste Versuch. |
+| Nr.  | Regel                                                                                                                           |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| C4-1 | Regelbasierte Fehlerklassifikation als reine Funktion. Sie ist nur für die Lehrkraft sichtbar und zeigt ihre Unsicherheit.      |
+| C4-2 | Erster Fehlversuch: Strategiehinweis statt nur „Noch nicht“. Vorher gibt es weder Tipp noch „Lösungsweg zeigen“.                |
+| C4-3 | Zweiter Fehlversuch oder „Lösungsweg zeigen“: Lösungsweg in kurzen Schritten ohne Endergebnis. Gewertet wird der erste Versuch. |
+
+Nachtrag zu C4-3: Der Lösungsweg nennt das Endergebnis nie. Zwischenergebnisse sind erlaubt, die letzte Zeile fordert zum Zu-Ende-Rechnen auf („Jetzt rechnest du zu Ende.“). Ein einzelner Schritt, der das Ergebnis verrät, entfällt; dann bleibt nur die Strategie. Gemischte Ausdrücke (mehrere Rechenzeichen, Klammern, Brüche) zeigen die ersten Rechenschritte nach den Rechenregeln ohne den letzten. Aufgaben mit Bruch, Potenz oder Wurzel werden in Kopfrechnen überall mit KaTeX gesetzt.
 
 ## C5 Lernarchiv (Box 6) im Wortspeicher
 

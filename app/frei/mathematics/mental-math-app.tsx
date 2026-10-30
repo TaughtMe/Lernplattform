@@ -12,6 +12,7 @@ import {
   MULTIPLICATION_TABLES,
   generateMentalMathTasks,
   isLatexMathTask,
+  spokenMathText,
   parseMentalMathTask,
   shuffleMathTasks,
   type MathGapSlot,
@@ -966,7 +967,14 @@ export function MentalMathApp({
       </div>
       <div className="ui-game__card ui-math__card">
         <p className="ui-eyebrow">Kopfrechnen</p>
-        <h1 id="math-task-title" className="ui-game__prompt ui-math__task">
+        <h1
+          id="math-task-title"
+          className="ui-game__prompt ui-math__task"
+          // KaTeX ist für Screenreader unsichtbar: Die Überschrift trägt den gesprochenen Text.
+          {...(isLatexMathTask(current)
+            ? { "aria-label": spokenMathText(current.prompt) }
+            : {})}
+        >
           <MathDisplay
             text={current.prompt}
             isLatex={isLatexMathTask(current)}
