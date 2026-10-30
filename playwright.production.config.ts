@@ -59,5 +59,10 @@ export default defineConfig({
   projects: [
     { name: "production-chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "production-webkit", use: { ...devices["Desktop Safari"] } },
+    // Handy-Fenster wie in der Entwicklungs-Suite (`mobile-chrome`,
+    // `mobile-safari`): Die Schüler üben meist am Handy, und die Navigation
+    // liegt dort in der unteren Leiste bzw. in der Schublade.
+    { name: "production-mobile-chrome", use: { ...devices["Pixel 7"] } },
+    { name: "production-iphone", use: { ...devices["iPhone 14"] } },
   ],
 });

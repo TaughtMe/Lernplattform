@@ -188,7 +188,13 @@ als Kärtchen. Aufträge werden nicht gespeichert.
   jetzt „Gemeinsam die Runde abschließen“ (Fokus auf genaues Abtippen); andere
   Battle-Texte versprechen weder Sieg noch Tempo (Test `constants.test.ts`).
 - D5-6 (A-006): `playwright.production.config.ts` prüft gegen den Build in
-  `wrangler dev`. CI-Job `production`.
+  `wrangler dev`. CI-Job `production`. Entscheidung des Entwicklers: Der Lauf prüft auch mobil.
+  `playwright.production.config.ts` hat zusätzlich `production-mobile-chrome`
+  (Pixel 7) und `production-iphone` (iPhone 14, WebKit); der Job führt im
+  Chromium-Eintrag Desktop und Handy-Chromium, im WebKit-Eintrag Desktop Safari
+  und iPhone aus. Die Spezifikation `hauptseiten.spec.ts` lief ohne Änderung
+  (Hell/Dunkel-Umschalter und Fußlinks sind mobil erreichbar). Lokal grün:
+  Chromium und Handy-Chromium; WebKit läuft erst in GitHub.
 
 ### Offene Entscheidungen des Entwicklers
 
@@ -198,11 +204,13 @@ als Kärtchen. Aufträge werden nicht gespeichert.
 - Uhr über Module hinweg.
 - „Beenden“ bietet 24 Stunden lang „Weitermachen“ an.
 - Cloud-Abgleich und WebDAV aus den Kindereinstellungen verschieben.
-- Produktions-Browserlauf auch mobil ausführen.
 
 ### Prüfstand
 
 - Unit-Tests, Lint, Format, Typprüfung, Build und Server-Rendering grün.
+- Nach den Entscheidungen des Entwicklers: Produktionslauf in Chromium und
+  Handy-Chromium (52 Tests), `lehrer-tafelmodus` in Desktop-Chromium und der
+  Live-Raum (`teacher-room`) grün.
 - Browser: vollständige Suite in Desktop-Chromium und die neuen bzw.
   geänderten Specs in Mobil-Chromium grün; Firefox, WebKit und der neue Job
   `production` laufen erst in GitHub.

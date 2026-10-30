@@ -119,10 +119,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Je Engine der Desktop- und der Handy-Lauf gegen denselben Build.
           - browser: chromium
-            project: production-chromium
+            projects: --project=production-chromium --project=production-mobile-chrome
           - browser: webkit
-            project: production-webkit
+            projects: --project=production-webkit --project=production-iphone
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -132,11 +133,11 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npm run build
-      - run: npm run test:e2e:production -- --project=${{ matrix.project }}
+      - run: npm run test:e2e:production -- ${{ matrix.projects }}
       - uses: actions/upload-artifact@v6
         if: failure()
         with:
-          name: playwright-report-${{ matrix.project }}
+          name: playwright-report-production-${{ matrix.browser }}
           path: playwright-report
           retention-days: 14
 
