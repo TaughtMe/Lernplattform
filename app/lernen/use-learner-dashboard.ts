@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { DailyPlanItem, DailyPlanModule } from "../../src/domain/daily-plan";
+import type {
+  DailyPlanItem,
+  DailyPlanModule,
+} from "../../src/domain/daily-plan";
 import type { LearningRecommendation } from "../../src/domain/learning-recommendation";
 import { createDailyPlanRepository } from "../../src/storage/daily-plan";
 import { readHardwareKeyboardSeen } from "../../src/storage/hardware-keyboard";

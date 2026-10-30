@@ -59,14 +59,14 @@ export function todayTasks(input: {
   const open = new Set(input.openKeys);
   const groups = new Map<string, TodayTask>();
   for (const item of input.items) {
-    const module = MODULES[item.module];
-    if (!input.visibility[module.area]) continue;
+    const entry = MODULES[item.module];
+    if (!input.visibility[entry.area]) continue;
     const id = item.route ?? item.module;
     const group = groups.get(id) ?? {
       id,
       module: item.module,
-      title: item.route ? LESSON_TITLE : module.title,
-      icon: module.icon,
+      title: item.route ? LESSON_TITLE : entry.title,
+      icon: entry.icon,
       href: item.route ?? input.moduleHref(item.module),
       done: 0,
       total: 0,

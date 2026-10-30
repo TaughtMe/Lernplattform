@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  hasLearnedNothing,
-  homeMainAction,
-} from "./first-contact";
+import { hasLearnedNothing, homeMainAction } from "./first-contact";
 
 const fresh = { hasLearningState: false, planTotal: 0, className: null };
 
