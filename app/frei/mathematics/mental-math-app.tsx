@@ -24,7 +24,7 @@ import {
   mentalMathHint,
   mentalMathSolutionSteps,
 } from "../../../src/domain/mental-math-feedback";
-import { MathDisplay, MathText } from "../../components/math-display";
+import { MathDisplay } from "../../components/math-display";
 import { createDailyPlanRepository } from "../../../src/storage/daily-plan";
 import {
   createMathAttempt,
@@ -51,6 +51,7 @@ import {
   PLAN_FAILED_NOTICE,
   wantsDailyPlan,
 } from "../../lernen/plan-today";
+import { SolutionHelp } from "./solution-help";
 import { describeRound, operationLabels, todaysReviews } from "./round-text";
 import { Icon } from "../../ui/icons";
 import { ReadAloudButton } from "../../ui/read-aloud-button";
@@ -61,7 +62,6 @@ import {
   Button,
   ButtonLink,
   Card,
-  Notice,
   ProgressBar,
   Toggle,
 } from "../../ui/primitives";
@@ -1027,21 +1027,7 @@ export function MentalMathApp({
               <strong>Tipp:</strong> {hint}
             </p>
           ) : null}
-          {help ? (
-            <Notice>
-              <p>
-                <strong>So geht es:</strong>
-              </p>
-              <ol className="ui-math__steps">
-                {solutionSteps.map((step) => (
-                  <li key={step}>
-                    <MathText text={step} />
-                  </li>
-                ))}
-              </ol>
-              <p>Rechne die nächste Aufgabe wieder ohne Hilfe.</p>
-            </Notice>
-          ) : null}
+          {help ? <SolutionHelp steps={solutionSteps} /> : null}
         </div>
         <div className="ui-row ui-wrap">
           {failed ? (
