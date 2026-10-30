@@ -195,7 +195,9 @@ describe("TeacherContentTransfer", () => {
     );
     // Ein zweites Mal freigeben erzeugt eine neue Fassung.
     await user.click(screen.getByRole("button", { name: "Neu freigeben" }));
-    await waitFor(() => expect(publishTransferPayload).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(publishTransferPayload).toHaveBeenCalledTimes(2),
+    );
     expect(publishTransferPayload.mock.calls[1]?.[1].revision).toBe(3);
   });
 

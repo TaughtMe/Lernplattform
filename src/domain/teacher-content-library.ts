@@ -4,8 +4,17 @@ export const TEACHER_CONTENT_LIBRARY_FORMAT =
   "lernraum.teacher-content-library" as const;
 export const TEACHER_CONTENT_LIBRARY_VERSION = 1 as const;
 
-/** Art eines abgelegten Inhalts; fehlt sie, ist es ein Vokabelpaket (Altbestand). */
-export const teacherContentKindSchema = z.enum(["vocabulary", "text", "math"]);
+/**
+ * Art eines abgelegten Inhalts; fehlt sie, ist es ein Vokabelpaket (Altbestand).
+ * „wordlist“ ist eine Lernwortliste für die Übertragung an Schüler (D4): ein
+ * Wort je Zeile in `source`. Sie ist kein Raum-Inhalt und startet kein Laufdiktat.
+ */
+export const teacherContentKindSchema = z.enum([
+  "vocabulary",
+  "text",
+  "math",
+  "wordlist",
+]);
 export type TeacherContentKind = z.infer<typeof teacherContentKindSchema>;
 
 /** Zerlegung eines Textes in Abschnitte (nur Art „Text“). */

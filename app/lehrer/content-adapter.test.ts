@@ -5,8 +5,10 @@ import {
   type LiveContentDraft,
 } from "./content-adapter";
 import { buildRunningDictationSections } from "../../src/domain/running-dictation-sections";
-import type { TeacherContentPackage } from "../../src/domain/teacher-content-library";
-import { textSplitConfigFor } from "../../src/domain/teacher-content-summary";
+import {
+  textSplitConfigFor,
+  type RoomContentPackage,
+} from "../../src/domain/teacher-content-summary";
 
 const NOW = "2026-10-05T08:00:00.000Z";
 const CLASS_A = "123e4567-e89b-42d3-a456-426614174001";
@@ -132,7 +134,7 @@ describe("Feineinstellungen der Zerlegung", () => {
   });
 
   it("liest ein Paket ohne die neuen Felder wie früher", () => {
-    const old: TeacherContentPackage = {
+    const old: RoomContentPackage = {
       id: "alt",
       revision: 1,
       title: "Alt",
@@ -207,7 +209,7 @@ describe("liveContentToPackage", () => {
     expect(entry.classIds).toBeUndefined();
   });
 
-  const existing: TeacherContentPackage = {
+  const existing: RoomContentPackage = {
     id: "alt",
     revision: 4,
     title: "Eins",

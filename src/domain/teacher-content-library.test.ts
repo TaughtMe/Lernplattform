@@ -34,6 +34,21 @@ describe("teacher content library file", () => {
     ]);
   });
 
+  it("keeps a word list (kind wordlist) through export and import", () => {
+    const list: TeacherContentPackage = {
+      ...entry,
+      id: "package-wl",
+      kind: "wordlist",
+      source: "Brief\nSieb",
+      promptLocale: "de-DE",
+      answerLocale: "de-DE",
+    };
+    const file = createTeacherContentLibraryFile([list, entry]);
+    expect(
+      parseTeacherContentLibraryFile(JSON.parse(JSON.stringify(file))),
+    ).toEqual(file);
+  });
+
   it("rejects duplicate package IDs and unknown file versions", () => {
     expect(() => createTeacherContentLibraryFile([entry, entry])).toThrow(
       /Doppelte Paket-ID/,

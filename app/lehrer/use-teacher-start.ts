@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { TeacherClass } from "../../src/domain/class-enrollment";
-import type { TeacherContentPackage } from "../../src/domain/teacher-content-library";
 import {
   activeClassIdsOf,
   contentKindOf,
@@ -13,10 +12,12 @@ import {
   describeState,
   filterByClass,
   isArchived,
+  isRoomContent,
   resolveClassSelection,
   sortForLibrary,
   sortPrepared,
   UNASSIGNED,
+  type RoomContentPackage,
 } from "../../src/domain/teacher-content-summary";
 import type { TeacherProfile } from "../../src/domain/teacher-workspace";
 import {
@@ -42,7 +43,7 @@ const KINDS: readonly StartKind[] = ["text", "vocabulary", "math"];
 
 type Loaded = {
   classes: TeacherClass[];
-  packages: TeacherContentPackage[];
+  packages: RoomContentPackage[];
   profile: TeacherProfile | undefined;
 };
 
@@ -55,7 +56,7 @@ const normalize = (value: string) =>
   value.normalize("NFKC").toLocaleLowerCase("de").replace(/\s+/g, " ").trim();
 
 /** Archiv: zuletzt durchgeführt zuerst. */
-function sortArchived(entries: readonly TeacherContentPackage[]) {
+function sortArchived(entries: readonly RoomContentPackage[]) {
   return [...entries].sort(
     (left, right) =>
       Date.parse(right.lastUsedAt ?? "") - Date.parse(left.lastUsedAt ?? "") ||
@@ -101,7 +102,12 @@ export function useTeacherStart(): {
       ])
         .then(([classes, packages, profile]) => {
           if (!active) return;
-          setLoaded({ classes, packages, profile });
+          // Lernwortlisten (D4) sind keine Raum-Inhalte und fehlen in der Ablage.
+          setLoaded({
+            classes,
+            packages: packages.filter(isRoomContent),
+            profile,
+          });
           setFailed(false);
         })
         .catch(() => active && setFailed(true));
@@ -169,7 +175,7 @@ export function useTeacherStart(): {
     const course = classes.find((item) => item.id === id);
     return course ? classShortName(course.name) : id;
   };
-  const toRow = (entry: TeacherContentPackage, meta: string): StartRow => {
+  const toRow = (entry: RoomContentPackage, meta: string): StartRow => {
     const ids = activeClassIdsOf(entry, activeIds).sort(
       (left, right) =>
         Number(right === selection) - Number(left === selection) ||
@@ -193,7 +199,7 @@ export function useTeacherStart(): {
   const archived = sortArchived(mine.filter((entry) => isArchived(entry)));
 
   // „Aus anderen Klassen holen“: alles, was noch nicht bei der Klasse ist.
-  const fetchable = (entry: TeacherContentPackage) =>
+  const fetchable = (entry: RoomContentPackage) =>
     !(entry.classIds ?? []).includes(selection) || entry.id in justAdded;
   const sources = selectedClass
     ? [
@@ -252,7 +258,7 @@ export function useTeacherStart(): {
   async function change(action: () => Promise<unknown>) {
     try {
       await action();
-      const next = await library.list();
+      const next = (await library.list()).filter(isRoomContent);
       setLoaded((current) =>
         current ? { ...current, packages: next } : current,
       );

@@ -14,6 +14,7 @@ import {
   describeState,
   filterByClass,
   isArchived,
+  isRoomContent,
   isUnassigned,
   resolveClassSelection,
   changedDate,
@@ -51,6 +52,19 @@ describe("Inhaltsart und Schema", () => {
       "vocabulary",
     );
     expect(contentKindOf({ kind: "math" })).toBe("math");
+  });
+
+  it("kennt die Lernwortliste (D4) und hält sie aus den Raum-Inhalten heraus", () => {
+    const list = teacherContentPackageSchema.parse({
+      ...base,
+      kind: "wordlist",
+      source: "Brief\nSieb",
+      promptLocale: "de-DE",
+      answerLocale: "de-DE",
+    });
+    expect(contentKindOf(list)).toBe("wordlist");
+    expect(isRoomContent(list)).toBe(false);
+    expect(isRoomContent(base)).toBe(true);
   });
 
   it("weist ungültige Klassen-IDs, eine fremde Art und zu viele Klassen ab", () => {
@@ -99,6 +113,15 @@ describe("Metazeile", () => {
     expect(describeContent({ ...text, textSplit: "zeile" })).toBe(
       "1 Abschnitt · 5 Wörter",
     );
+  });
+
+  it("zählt Lernwörter je Zeile", () => {
+    expect(
+      describeContent({ ...base, kind: "wordlist", source: "Brief\n\nSieb\n" }),
+    ).toBe("2 Lernwörter");
+    expect(
+      describeContent({ ...base, kind: "wordlist", source: "Brief" }),
+    ).toBe("1 Lernwort");
   });
 
   it("zählt Mathe-Aufgaben je Zeile", () => {

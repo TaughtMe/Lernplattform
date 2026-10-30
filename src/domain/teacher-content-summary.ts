@@ -24,6 +24,24 @@ export const UNASSIGNED = "ohne" as const;
 /** Längster vorgeschlagener Titel. */
 export const SUGGESTED_TITLE_LENGTH = 60;
 
+/** Inhalte, aus denen ein Raum entsteht; Lernwortlisten (D4) gehören nicht dazu. */
+export type RoomContentKind = Exclude<TeacherContentKind, "wordlist">;
+export type RoomContentPackage = TeacherContentPackage & {
+  kind?: RoomContentKind | undefined;
+};
+
+export function isRoomContent(
+  entry: TeacherContentPackage,
+): entry is RoomContentPackage {
+  return entry.kind !== "wordlist";
+}
+
+export function contentKindOf(
+  entry: Pick<RoomContentPackage, "kind">,
+): RoomContentKind;
+export function contentKindOf(
+  entry: Pick<TeacherContentPackage, "kind">,
+): TeacherContentKind;
 export function contentKindOf(
   entry: Pick<TeacherContentPackage, "kind">,
 ): TeacherContentKind {
@@ -210,6 +228,10 @@ export function describeContent(
     const tasks = entry.source.split(/\r?\n/).filter((line) => line.trim());
     return plural(tasks.length, "Aufgabe", "Aufgaben");
   }
+  if (kind === "wordlist") {
+    const words = entry.source.split(/\r?\n/).filter((line) => line.trim());
+    return plural(words.length, "Lernwort", "Lernwörter");
+  }
   const pairs = parseVocabularyTable(entry.source).length;
   return `${plural(pairs, "Vokabel", "Vokabeln")} · ${languageName(entry.promptLocale)}`;
 }
@@ -269,7 +291,7 @@ export function sortForLibrary<
 
 export type LibrarySortKey = "title" | "kind" | "date" | "ran";
 
-const KIND_RANK = { text: 0, vocabulary: 1, math: 2 } as const;
+const KIND_RANK = { text: 0, vocabulary: 1, math: 2, wordlist: 3 } as const;
 
 /**
  * Sortiert die Ablage nach Titel, Aufgabentyp, Änderungsdatum oder letzter

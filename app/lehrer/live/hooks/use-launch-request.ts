@@ -10,10 +10,11 @@ import {
 } from "react";
 import type { TextSplitConfig } from "../../../../src/domain/running-dictation-sections";
 import type { VocabularyLocales } from "../../../../src/domain/running-dictation";
-import type {
-  TeacherContentPackage,
-  TeacherPreparedSettings,
-} from "../../../../src/domain/teacher-content-library";
+import type { TeacherPreparedSettings } from "../../../../src/domain/teacher-content-library";
+import {
+  isRoomContent,
+  type RoomContentPackage,
+} from "../../../../src/domain/teacher-content-summary";
 import type { LiveRoomConfig } from "../../../../src/integrations/laufdiktat/live-room-client";
 import type { OpenedLiveRoom } from "../../../../src/integrations/laufdiktat/room-api";
 import type {
@@ -94,7 +95,7 @@ export function useLaunchRequest({
     if (hydrated && !liveRoomConfig) markRestoreChecked();
   }, [hydrated, liveRoomConfig]);
 
-  function applyLoadedContent(entry: TeacherContentPackage) {
+  function applyLoadedContent(entry: RoomContentPackage) {
     const loaded = packageToLiveContent(entry);
     setContentMode(loaded.contentMode);
     setSources((current) => ({
@@ -146,7 +147,7 @@ export function useLaunchRequest({
       const id = intent?.contentId ?? contentParam;
       if (id) {
         const entry = await createTeacherContentLibraryRepository().get(id);
-        if (!entry) {
+        if (!entry || !isRoomContent(entry)) {
           setError("Dieser Inhalt ist nicht mehr in der Ablage.");
           return;
         }

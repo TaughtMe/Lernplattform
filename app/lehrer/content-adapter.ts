@@ -5,7 +5,6 @@ import {
 } from "../../src/domain/running-dictation";
 import type { TextSplitConfig } from "../../src/domain/running-dictation-sections";
 import type {
-  TeacherContentKind,
   TeacherContentPackage,
   TeacherPreparedSettings,
   TeacherTextSplit,
@@ -16,12 +15,14 @@ import {
   splitOptionsOfPackage,
   suggestTitle,
   textSplitConfigFor,
+  type RoomContentKind,
+  type RoomContentPackage,
   type TextSplitOptions,
 } from "../../src/domain/teacher-content-summary";
 
 /** Was der Live-Raum zum Bearbeiten eines abgelegten Inhalts braucht. */
 export type LiveContent = {
-  contentMode: TeacherContentKind;
+  contentMode: RoomContentKind;
   source: string;
   title: string;
   /** Nur Text: Zerlegung in Stationen. */
@@ -32,9 +33,7 @@ export type LiveContent = {
 };
 
 /** Paket der Ablage → Zustand des Live-Raums. */
-export function packageToLiveContent(
-  entry: TeacherContentPackage,
-): LiveContent {
+export function packageToLiveContent(entry: RoomContentPackage): LiveContent {
   const textSplit = entry.textSplit ?? "satz";
   return {
     contentMode: contentKindOf(entry),
@@ -53,7 +52,7 @@ export function packageToLiveContent(
 }
 
 export type LiveContentDraft = {
-  contentMode: TeacherContentKind;
+  contentMode: RoomContentKind;
   source: string;
   title: string;
   textSplit: TeacherTextSplit;
@@ -89,7 +88,7 @@ export function liveContentToPackage(input: {
    * ein Eintrag, der mehreren Klassen gehört (Lehrerbereich v2, 15a).
    */
   addToClass?: boolean;
-}): TeacherContentPackage {
+}): RoomContentPackage {
   const { draft, existing, now } = input;
   const title =
     draft.title.trim() || suggestTitle(draft.source) || "Ohne Titel";

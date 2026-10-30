@@ -6,7 +6,10 @@ import {
   createTeacherContentLibraryRepository,
   createTeacherProfileRepository,
 } from "../../../src/storage/teacher-class-settings";
-import { isUnassigned } from "../../../src/domain/teacher-content-summary";
+import {
+  isRoomContent,
+  isUnassigned,
+} from "../../../src/domain/teacher-content-summary";
 import { TEACHER_CLASSES_CHANGE_EVENT } from "./teacher-classes";
 
 export type TeacherNavClass = {
@@ -66,8 +69,8 @@ export function useTeacherNavData(): TeacherNavData {
       if (!active) return;
       setData({
         classes: rows,
-        unassignedCount: packages.filter((entry) =>
-          isUnassigned(entry, activeIds),
+        unassignedCount: packages.filter(
+          (entry) => isRoomContent(entry) && isUnassigned(entry, activeIds),
         ).length,
         profileName: profile?.displayName ?? "",
         lastClassId: profile?.lastLiveClassId,
