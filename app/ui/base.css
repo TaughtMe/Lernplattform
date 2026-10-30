@@ -64,6 +64,26 @@ body {
   }
 }
 
+/*
+ * Vor der Hydration tun Knöpfe und Felder nichts (Klicks gehen verloren, ein
+ * Submit lädt die Seite neu). Sie sind deshalb sofort nicht bedienbar und
+ * werden erst nach kurzer Wartezeit gedämpft, damit schnelle Ladevorgänge
+ * nicht flackern. Links bleiben wirksam (normale Navigation). Textfelder
+ * sperrt zusätzlich hydration-boot.ts gegen Tastatur und Einfügen.
+ * `<html data-hydrated>` setzt HydrationMark.
+ */
+html:not([data-hydrated])
+  :where(button, input, textarea, select, [role="button"]) {
+  pointer-events: none;
+  animation: lr-hydration-wait 0.2s ease 0.6s forwards;
+}
+
+@keyframes lr-hydration-wait {
+  to {
+    opacity: 0.55;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
