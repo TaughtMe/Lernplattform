@@ -65,6 +65,36 @@ describe("Kompetenzprofil: Texte", () => {
     ).toMatch(/Mehr messen wir hier noch nicht/);
   });
 
+  it("weist bei Vokabeln das Schreiben getrennt vom Wissen aus", () => {
+    const deck = (writing: { practiced: number }, safe = false) =>
+      competenceExplanation(
+        entry({
+          kind: "vokabelstapel",
+          objects: 10,
+          safe: safe ? 10 : 3,
+          needed: 8,
+          writing,
+          ...(safe ? { level: "sicher", reason: { code: "safe" } } : {}),
+        }),
+      );
+    // Ein Stapel kann „sicher“ sein, auch wenn nie geschrieben wurde.
+    expect(deck({ practiced: 0 }, true)).toBe(
+      "Das sitzt. Du hast die Karten an mehreren Tagen richtig gewusst. Schreiben hast du hier noch nicht geübt.",
+    );
+    expect(deck({ practiced: 4 }, true)).toMatch(
+      /Geschrieben hast du 4 von 10 Karten\.$/,
+    );
+    expect(deck({ practiced: 10 }, true)).toBe(
+      "Das sitzt. Du hast die Karten an mehreren Tagen richtig gewusst.",
+    );
+    expect(deck({ practiced: 0 })).toBe(
+      "3 von 10 Karten sind sicher. Für „sicher“ brauchst du 8. Schreiben hast du hier noch nicht geübt.",
+    );
+    for (const text of [deck({ practiced: 0 }, true), deck({ practiced: 4 })]) {
+      for (const word of FORBIDDEN) expect(text).not.toMatch(word);
+    }
+  });
+
   it("ordnet die Gruppen fest und lässt leere weg", () => {
     const groups = profileGroups([
       entry({

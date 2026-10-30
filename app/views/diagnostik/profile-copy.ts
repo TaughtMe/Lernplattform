@@ -41,14 +41,32 @@ const MATH_MISSING: Readonly<Record<string, string>> = {
   breadth: "Übe noch mehr verschiedene Aufgaben.",
 };
 
-/** Ein Satz, warum der Teilbereich so heißt. */
+/**
+ * Vokabelstapel: Aufdecken zählt für die Bedeutung, das Schreiben steht extra.
+ * So sieht das Kind, dass ein Stapel „sicher“ sein kann und Schreiben trotzdem
+ * noch offen ist.
+ */
+function writingSentence(entry: CompetenceEntry): string {
+  if (!entry.writing) return "";
+  if (entry.writing.practiced === 0) {
+    return " Schreiben hast du hier noch nicht geübt.";
+  }
+  if (entry.writing.practiced < entry.objects) {
+    return ` Geschrieben hast du ${entry.writing.practiced} von ${entry.objects} Karten.`;
+  }
+  return "";
+}
+
+/** Ein Satz (bei Vokabeln zwei), warum der Teilbereich so heißt. */
 export function competenceExplanation(entry: CompetenceEntry): string {
   const reason = entry.reason;
   switch (reason.code) {
     case "no-answers":
       return "Hier hast du noch nichts geübt.";
     case "safe":
-      return "Das sitzt. Du hast es an mehreren Tagen ohne Hilfe richtig gemacht.";
+      return entry.kind === "vokabelstapel"
+        ? `Das sitzt. Du hast die Karten an mehreren Tagen richtig gewusst.${writingSentence(entry)}`
+        : "Das sitzt. Du hast es an mehreren Tagen ohne Hilfe richtig gemacht.";
     case "no-recall-box":
       return "Du übst hier. Mehr messen wir hier noch nicht.";
     case "building": {
@@ -59,7 +77,7 @@ export function competenceExplanation(entry: CompetenceEntry): string {
           .join(" ");
       }
       const noun = entry.kind === "vokabelstapel" ? "Karten" : "Wörtern";
-      return `${entry.safe} von ${entry.objects} ${noun} sind sicher. Für „sicher“ brauchst du ${entry.needed}.`;
+      return `${entry.safe} von ${entry.objects} ${noun} sind sicher. Für „sicher“ brauchst du ${entry.needed}.${writingSentence(entry)}`;
     }
   }
 }

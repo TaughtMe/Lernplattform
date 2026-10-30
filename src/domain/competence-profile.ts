@@ -28,6 +28,13 @@ import { mathFamilyKey, mathReviews } from "./math-practice";
  * Selbsteinschätzung nach dem Aufdecken und die Wiederholung direkt nach dem
  * Fehler zählen nicht (D-004).
  *
+ * Ausnahme Vokabeln (Entscheidung D2, wie die LernBox selbst): Bei einer
+ * LernBox-Karte zählt auch „Gewusst“ nach dem Aufdecken (`answerMode:
+ * "self-check"`) als Abruf für die **Bedeutung**. Schreiben bringt Bedeutung
+ * und Schreiben weiter, Aufdecken nur die Bedeutung. Ein Stapel kann deshalb
+ * mündlich „sicher“ werden (die Box steigt mündlich höchstens bis 3, das reicht
+ * genau dafür). Ob auch geschrieben wurde, steht getrennt in `writing`.
+ *
  * Ein Teilbereich ist „sicher“, wenn mindestens `COMPETENCE_SAFE_SHARE` seiner
  * Objekte sicher sind, mindestens aber `COMPETENCE_MIN_SAFE_OBJECTS` (bei
  * kleinen Teilbereichen alle). Für Mathe gelten dieselben zwei Bedingungen auf
@@ -78,6 +85,12 @@ export type CompetenceEntry = {
   open: number;
   /** Lokale Tage mit richtigem Abruf ohne Hilfe im Teilbereich. */
   cleanDays: number;
+  /**
+   * Nur Vokabelstapel: Wie viele Karten hat das Kind schon geschrieben (richtig,
+   * getippt, ohne Hilfe)? „Sicher“ gilt auch ohne Schreiben (Bedeutung gewusst);
+   * das Schreiben steht hier getrennt.
+   */
+  writing?: { practiced: number };
 };
 
 export type CompetenceProfile = {
@@ -104,8 +117,13 @@ export type CompetenceSources = {
 };
 
 type ObjectEvidence = {
-  /** Lokale Tage mit richtigem Abruf ohne Hilfe (erste Antwort je Runde). */
+  /**
+   * Lokale Tage mit richtigem Abruf ohne Hilfe (erste Antwort je Runde). Bei
+   * LernBox-Karten zählt auch mündliches „Gewusst“ (Bedeutung).
+   */
   cleanDays: Set<string>;
+  /** Lokale Tage mit richtigem, getipptem Abruf ohne Hilfe (Schreiben). */
+  writtenDays: Set<string>;
   /** Die letzte Antwort war falsch. */
   lastIncorrect: boolean;
 };
@@ -128,6 +146,20 @@ function isUnaidedRecall(event: LearningEventV1) {
   );
 }
 
+/**
+ * LernBox mündlich: „Gewusst“ nach dem Aufdecken. Die Karte bewertet nur die
+ * Bedeutung (`writing: "not-assessed"`); nur für sie ist das ein Abruf.
+ */
+function isOralMeaningRecall(event: LearningEventV1) {
+  return (
+    event.source === "learning-box" &&
+    event.answerMode === "self-check" &&
+    !event.assessment.selfCorrected &&
+    event.assessment.knowledge === "correct" &&
+    event.assessment.writing !== "incorrect"
+  );
+}
+
 function byTime(left: LearningEventV1, right: LearningEventV1) {
   return (
     left.occurredAt.localeCompare(right.occurredAt) ||
@@ -141,6 +173,7 @@ function collectEvidence(events: readonly LearningEventV1[]) {
   for (const event of [...events].sort(byTime)) {
     const current = evidence.get(event.learningObjectId) ?? {
       cleanDays: new Set<string>(),
+      writtenDays: new Set<string>(),
       lastIncorrect: false,
     };
     current.lastIncorrect = isIncorrect(event);
@@ -148,8 +181,12 @@ function collectEvidence(events: readonly LearningEventV1[]) {
     const attempt = `${event.learningObjectId}|${event.roundId}|${event.direction}`;
     if (!seenAttempts.has(attempt)) {
       seenAttempts.add(attempt);
+      const day = localDayKey(event.occurredAt);
       if (isUnaidedRecall(event)) {
-        current.cleanDays.add(localDayKey(event.occurredAt));
+        current.cleanDays.add(day);
+        current.writtenDays.add(day);
+      } else if (isOralMeaningRecall(event)) {
+        current.cleanDays.add(day);
       }
     }
     evidence.set(event.learningObjectId, current);
@@ -174,7 +211,10 @@ type ShareCounts = {
 
 /** Anteilsregel für Wortboxen und Vokabelstapel. */
 function shareEntry(
-  base: Pick<CompetenceEntry, "id" | "kind" | "module" | "label" | "route">,
+  base: Pick<
+    CompetenceEntry,
+    "id" | "kind" | "module" | "label" | "route" | "writing"
+  >,
   counts: ShareCounts,
 ): CompetenceEntry {
   const needed = Math.min(
@@ -346,11 +386,13 @@ function deckEntries(
     let started = 0;
     let safe = 0;
     let open = 0;
+    let written = 0;
     for (const card of cards) {
       addArea(areas, card.id, id);
       const own = evidence.get(card.id);
       if (own || card.interval > 0 || card.reverseInterval > 0) started += 1;
       if (isSafeObject(cardBox(card, sources.now), own)) safe += 1;
+      if (own && own.writtenDays.size > 0) written += 1;
       if (own?.lastIncorrect) open += 1;
       for (const day of own?.cleanDays ?? []) days.add(day);
     }
@@ -362,6 +404,7 @@ function deckEntries(
           module: "vocabulary",
           label: deck.title,
           route: "/lernbox",
+          writing: { practiced: written },
         },
         { objects: cards.length, started, safe, open, cleanDays: days.size },
       ),

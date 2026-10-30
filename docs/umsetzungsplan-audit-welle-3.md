@@ -138,6 +138,16 @@ Verhaltensänderung gibt es nur in der Ereignisableitung:
 - Die Uhr läuft nur auf der Trainingsseite.
 - Kopfrechnen kann nicht vorbelegt werden (keine URL-Parameter).
 - „Sicher“ je Teilbereich: mindestens 5 Einträge, 80 % davon sicher.
+- Mündliches Aufdecken (Entscheidung des Entwicklers): Bei Vokabelkarten zählt
+  „Gewusst“ nach dem Aufdecken (`answerMode: "self-check"`, Quelle
+  `learning-box`) als Abruf für die **Bedeutung**, so wie die LernBox selbst:
+  Schreiben bringt Bedeutung und Schreiben weiter, Aufdecken nur die Bedeutung
+  (das Schreiben bewegt sich nicht; die Box steigt mündlich höchstens bis 3,
+  das genügt für „sicher“). Ein Vokabelstapel kann damit mündlich oder
+  schriftlich „sicher“ werden. Das Schreiben steht getrennt im Eintrag
+  (`writing.practiced`, Karten mit richtig getipptem Abruf) und in der Ansicht
+  als Satz: „Schreiben hast du hier noch nicht geübt.“ bzw. „Geschrieben hast
+  du 4 von 10 Karten.“ Wortboxen bleiben unverändert: Dort zählt nur Tippen.
 
 **D3 umgesetzt** (Freigabebereich `lehrer-geraet`, Vorschau):
 
@@ -178,7 +188,6 @@ als Kärtchen. Aufträge werden nicht gespeichert.
 - Freigabe `lehrer-geraet` auf `frei` setzen.
 - Längengrenze des Wortauftrags (500 Zeichen) und Speichern der Aufträge.
 - Stufenfolgen des Startpunkts und Regel „sicher“.
-- Mündliches Aufdecken als Abruf werten.
 - Uhr über Module hinweg.
 - „Häufigste Fehler“ in der Projektion.
 - Battle-Text „Wer zuerst fertig ist, gewinnt“.

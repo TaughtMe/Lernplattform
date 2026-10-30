@@ -341,32 +341,139 @@ describe("Kompetenzprofil: Vokabelstapel", () => {
     });
   });
 
-  it("zählt mündliches Aufdecken (Lösung gezeigt) nicht als Abruf ohne Hilfe", () => {
-    const entry = card("c1", "d1", {
-      box: 4,
-      interval: 7,
-      nextReview: NOW + 86_400_000,
-      lastReviewed: NOW - 86_400_000,
-    });
-    const oral = (day: number) =>
+  describe("mündliches Aufdecken (Entscheidung D2)", () => {
+    /** Karte in Box 3, die mündlich höchstens erreichbar ist. */
+    const boxThree = (id: string) =>
+      card(id, "d1", {
+        box: 3,
+        interval: 7,
+        nextReview: NOW + 86_400_000,
+        lastReviewed: NOW - 86_400_000,
+      });
+    /** „Gewusst“ nach dem Aufdecken, wie die LernBox es als Ereignis ablegt. */
+    const oral = (id: string, day: number, correct = true) =>
       learningEvent({
-        learningObjectId: "c1",
+        learningObjectId: id,
         source: "learning-box",
         occurredAt: noon(day),
         answerMode: "self-check",
         help: "solution",
+        assessment: {
+          knowledge: correct ? "correct" : "incorrect",
+          writing: "not-assessed",
+          selfCorrected: false,
+        },
       });
-    const profile = buildCompetenceProfile(
-      sources({
-        wordBoxes: [],
-        decks,
-        cards: [entry],
-        events: [oral(20), oral(22)],
-      }),
-    );
-    expect(entryOf(profile, "vokabelstapel:d1")).toMatchObject({
-      started: 1,
-      safe: 0,
+    const written = (id: string, day: number) =>
+      learningEvent({
+        learningObjectId: id,
+        source: "learning-box",
+        occurredAt: noon(day),
+      });
+
+    it("macht einen Stapel mündlich „sicher“ und weist das Schreiben getrennt aus", () => {
+      const cards = Array.from({ length: 5 }, (_, i) => boxThree(`c${i}`));
+      const events = cards.flatMap((entry) => [
+        oral(entry.id, 20),
+        oral(entry.id, 22),
+      ]);
+      const profile = buildCompetenceProfile(
+        sources({ wordBoxes: [], decks, cards, events }),
+      );
+      expect(entryOf(profile, "vokabelstapel:d1")).toMatchObject({
+        level: "sicher",
+        reason: { code: "safe" },
+        safe: 5,
+        cleanDays: 2,
+        writing: { practiced: 0 },
+      });
+    });
+
+    it("zählt Schreiben für die Bedeutung mit und ergänzt es im Schreib-Stand", () => {
+      const cards = Array.from({ length: 5 }, (_, i) => boxThree(`c${i}`));
+      const events = cards.flatMap((entry, index) => [
+        // Ein Tag mündlich, ein Tag geschrieben: zusammen zwei Tage Bedeutung.
+        oral(entry.id, 20),
+        ...(index < 2 ? [written(entry.id, 22)] : [oral(entry.id, 22)]),
+      ]);
+      const profile = buildCompetenceProfile(
+        sources({ wordBoxes: [], decks, cards, events }),
+      );
+      expect(entryOf(profile, "vokabelstapel:d1")).toMatchObject({
+        level: "sicher",
+        safe: 5,
+        writing: { practiced: 2 },
+      });
+    });
+
+    it("zählt „Nicht gewusst“ und Aufdecken an nur einem Tag nicht", () => {
+      const cards = Array.from({ length: 5 }, (_, i) => boxThree(`c${i}`));
+      const wrong = buildCompetenceProfile(
+        sources({
+          wordBoxes: [],
+          decks,
+          cards,
+          events: cards.flatMap((entry) => [
+            oral(entry.id, 20),
+            oral(entry.id, 22, false),
+          ]),
+        }),
+      );
+      expect(entryOf(wrong, "vokabelstapel:d1")).toMatchObject({
+        level: "im-aufbau",
+        safe: 0,
+        open: 5,
+      });
+      const oneDay = buildCompetenceProfile(
+        sources({
+          wordBoxes: [],
+          decks,
+          cards,
+          events: cards.flatMap((entry) => [
+            oral(entry.id, 20),
+            { ...oral(entry.id, 20), id: `${entry.id}-zweite`, roundId: "r2" },
+          ]),
+        }),
+      );
+      expect(entryOf(oneDay, "vokabelstapel:d1").safe).toBe(0);
+    });
+
+    it("bleibt an die Box gebunden: Box 2 wird mündlich nicht „sicher“", () => {
+      const cards = Array.from({ length: 5 }, (_, i) => ({
+        ...boxThree(`c${i}`),
+        box: 2 as const,
+      }));
+      const profile = buildCompetenceProfile(
+        sources({
+          wordBoxes: [],
+          decks,
+          cards,
+          events: cards.flatMap((entry) => [
+            oral(entry.id, 20),
+            oral(entry.id, 22),
+          ]),
+        }),
+      );
+      expect(entryOf(profile, "vokabelstapel:d1").safe).toBe(0);
+    });
+
+    it("gilt nur für die LernBox, nicht für Wortboxen", () => {
+      const id = learningWordId("Hund");
+      const selfCheck = (day: number) =>
+        learningEvent({
+          learningObjectId: id,
+          source: "learning-word",
+          occurredAt: noon(day),
+          answerMode: "self-check",
+          help: "solution",
+        });
+      const profile = buildCompetenceProfile(
+        sources({
+          events: [selfCheck(20), selfCheck(22)],
+          words: [wordProgress("Hund", 4)],
+        }),
+      );
+      expect(entryOf(profile, "wortbox:final-devoicing").safe).toBe(0);
     });
   });
 });
