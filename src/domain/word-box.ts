@@ -150,6 +150,34 @@ export function removeWord(box: WordBox, word: string, now: string): WordBox {
     : { ...box, words, updatedAt: now };
 }
 
+/**
+ * Feste Wortbox-Id für ein Lernwortlisten-Paket der Lehrkraft (D4): dasselbe
+ * Paket ergibt immer dieselbe Id, damit eine zweite Übernahme keine zweite
+ * Wortbox anlegt. Ein 128-Bit-Fingerabdruck (cyrb128) in der Form einer UUID,
+ * ohne Server und ohne neues Feld im Speicher.
+ */
+export function wordListBoxId(packageId: string): string {
+  let h1 = 1779033703;
+  let h2 = 3144134277;
+  let h3 = 1013904242;
+  let h4 = 2773480762;
+  for (let index = 0; index < packageId.length; index += 1) {
+    const code = packageId.charCodeAt(index);
+    h1 = h2 ^ Math.imul(h1 ^ code, 597399067);
+    h2 = h3 ^ Math.imul(h2 ^ code, 2869860233);
+    h3 = h4 ^ Math.imul(h3 ^ code, 951274213);
+    h4 = h1 ^ Math.imul(h4 ^ code, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  const hex = [h1 ^ h2 ^ h3 ^ h4, h2 ^ h1, h3 ^ h1, h4 ^ h1]
+    .map((value) => (value >>> 0).toString(16).padStart(8, "0"))
+    .join("");
+  return `eigen-${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
 const COPY_SUFFIX = " (Kopie)";
 
 /** Legt aus einer festen Wortbox eine eigene Wortbox „<Titel> (Kopie)“ an. */

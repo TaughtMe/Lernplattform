@@ -6,7 +6,11 @@ import {
   createPersonalLearningBackup,
   parsePersonalLearningBackup,
 } from "../domain/personal-backup";
-import { WORD_BOX_LIMITS, type WordBox } from "../domain/word-box";
+import {
+  WORD_BOX_LIMITS,
+  wordListBoxId,
+  type WordBox,
+} from "../domain/word-box";
 import type { WordRoundRecord } from "../domain/word-store-progress";
 import {
   exportPersonalLearningBackup,
@@ -212,6 +216,111 @@ describe("Wortbox-Repository", () => {
     await repository.removeWord(box.id, "Haus");
     await repository.remove(box.id);
     expect(await database.learningWordProgress.count()).toBe(1);
+  });
+});
+
+describe("Lernwortliste der Lehrkraft (D4)", () => {
+  const list = {
+    packageId: "teacher-package-wl",
+    title: "Wörter mit ie",
+    words: ["Brief", "Sieb"],
+    now: t0,
+  };
+
+  it("legt eine eigene Wortbox mit dem Titel als Namen an", async () => {
+    const repository = createWordBoxRepository(createDatabase());
+    const result = await repository.importWordList(list);
+    expect(result).toMatchObject({ existed: false, added: 2, skipped: 0 });
+    const boxes = await repository.list();
+    expect(boxes).toHaveLength(1);
+    expect(boxes[0]).toMatchObject({
+      id: wordListBoxId("teacher-package-wl"),
+      kind: "eigen",
+      title: "Wörter mit ie",
+    });
+    expect(boxes[0]?.words.map((word) => word.text)).toEqual(["Brief", "Sieb"]);
+  });
+
+  it("legt dieselbe Liste beim zweiten Übernehmen nicht doppelt an", async () => {
+    const database = createDatabase();
+    const repository = createWordBoxRepository(database);
+    await repository.importWordList(list);
+    const again = await repository.importWordList({ ...list, now: t1 });
+    expect(again).toMatchObject({ existed: true, added: 0 });
+    expect(await database.wordBoxes.count()).toBe(1);
+    // Nichts wurde verändert, auch nicht der Zeitstempel.
+    expect((await repository.list())[0]?.updatedAt).toBe(t0.toISOString());
+  });
+
+  it("ergänzt nur neue Wörter und lässt den Namen einer vorhandenen Wortbox", async () => {
+    const database = createDatabase();
+    const repository = createWordBoxRepository(database);
+    const first = await repository.importWordList(list);
+    await repository.rename(first.box.id, "Meine ie-Wörter", t1);
+    const again = await repository.importWordList({
+      ...list,
+      words: ["Brief", "Tiger"],
+      now: t1,
+    });
+    expect(again).toMatchObject({ existed: true, added: 1 });
+    const [box] = await repository.list();
+    expect(box?.title).toBe("Meine ie-Wörter");
+    expect(box?.words.map((word) => word.text)).toEqual([
+      "Brief",
+      "Sieb",
+      "Tiger",
+    ]);
+  });
+
+  it("legt für ein anderes Paket eine eigene Wortbox an", async () => {
+    const repository = createWordBoxRepository(createDatabase());
+    await repository.importWordList(list);
+    await repository.importWordList({
+      ...list,
+      packageId: "teacher-package-2",
+    });
+    expect(await repository.list()).toHaveLength(2);
+  });
+
+  it("hält die Grenze von 50 eigenen Wortboxen ein, auch für Lernwortlisten", async () => {
+    const repository = createWordBoxRepository(createDatabase());
+    await repository.importWordList(list);
+    for (let i = 1; i < WORD_BOX_LIMITS.ownBoxes; i += 1) {
+      await repository.create(`Box ${i}`);
+    }
+    await expect(
+      repository.importWordList({ ...list, packageId: "teacher-package-2" }),
+    ).rejects.toThrow(/höchstens 50/);
+    // Eine schon übernommene Liste lässt sich trotzdem erneut übernehmen.
+    await expect(repository.importWordList(list)).resolves.toMatchObject({
+      existed: true,
+    });
+  });
+
+  it("meldet ungültige Wörter als übersprungen und prüft den Titel", async () => {
+    const repository = createWordBoxRepository(createDatabase());
+    const result = await repository.importWordList({
+      ...list,
+      words: ["Brief", "Ka\u0000tze"],
+    });
+    expect(result).toMatchObject({ added: 1, skipped: 1 });
+    await expect(
+      repository.importWordList({ ...list, title: "  " }),
+    ).rejects.toThrow(/Titel/);
+  });
+
+  it("bleibt in der Sicherung und beim Wiederherstellen eine normale Wortbox", async () => {
+    const database = createDatabase();
+    await createWordBoxRepository(database).importWordList(list);
+    const text = await serializePersonalLearningBackupFromDatabase(database);
+    const target = createDatabase();
+    await restorePersonalLearningBackup(JSON.parse(text), target);
+    expect(
+      await target.wordBoxes.get(wordListBoxId("teacher-package-wl")),
+    ).toMatchObject({ title: "Wörter mit ie" });
+    // Eine Übernahme nach der Wiederherstellung findet die Wortbox wieder.
+    await createWordBoxRepository(target).importWordList(list);
+    expect(await target.wordBoxes.count()).toBe(1);
   });
 });
 

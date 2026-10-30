@@ -20,6 +20,7 @@ import {
   renameWord,
   wordBoxSchema,
   wordKey,
+  wordListBoxId,
   type WordBox,
   type WordBoxWordSource,
 } from "../domain/word-box";
@@ -1205,6 +1206,55 @@ export function createWordBoxRepository(
         );
         await database.wordBoxes.add(box);
         return box;
+      });
+    },
+    /**
+     * Übernimmt eine Lernwortliste der Lehrkraft (D4) als eigene Wortbox mit dem
+     * Titel als Namen. Die Id folgt aus dem Paket (`wordListBoxId`): dasselbe
+     * Paket zweimal übernehmen legt keine zweite Wortbox an, sondern ergänzt
+     * höchstens neue Wörter. Der Name einer vorhandenen Wortbox bleibt.
+     */
+    importWordList: async (input: {
+      packageId: string;
+      title: string;
+      words: readonly string[];
+      now?: Date;
+    }) => {
+      assertTitle(input.title);
+      const at = (input.now ?? new Date()).toISOString();
+      const id = wordListBoxId(input.packageId);
+      return database.transaction("rw", database.wordBoxes, async () => {
+        const stored = await database.wordBoxes.get(id);
+        if (stored) {
+          const result = addWords(read(stored), input.words, "eigen", at);
+          if (result.added.length > 0) {
+            await database.wordBoxes.put(parse(result.box));
+          }
+          return {
+            box: result.box,
+            existed: true,
+            added: result.added.length,
+            skipped: result.skipped.length,
+          };
+        }
+        await assertRoom();
+        const empty: WordBox = {
+          id,
+          kind: "eigen",
+          title: input.title.trim(),
+          words: [],
+          createdAt: at,
+          updatedAt: at,
+        };
+        const result = addWords(empty, input.words, "eigen", at);
+        const box = parse(result.box);
+        await database.wordBoxes.add(box);
+        return {
+          box,
+          existed: false,
+          added: result.added.length,
+          skipped: result.skipped.length,
+        };
       });
     },
     /**

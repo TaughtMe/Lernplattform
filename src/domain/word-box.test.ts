@@ -9,6 +9,7 @@ import {
   renameWord,
   wordBoxSchema,
   wordKey,
+  wordListBoxId,
   type WordBox,
 } from "./word-box";
 
@@ -33,6 +34,33 @@ describe("wordKey", () => {
   it("normalises case, whitespace and unicode form", () => {
     expect(wordKey("  Straße ")).toBe("straße");
     expect(wordKey("Ä".normalize("NFD"))).toBe("ä");
+  });
+});
+
+describe("wordListBoxId", () => {
+  it("ergibt für dasselbe Paket immer dieselbe gültige Id", () => {
+    const id = wordListBoxId("teacher-package-1");
+    expect(wordListBoxId("teacher-package-1")).toBe(id);
+    expect(id).toMatch(/^eigen-[0-9a-f-]{36}$/);
+    expect(
+      wordBoxSchema.safeParse({
+        id,
+        kind: "eigen",
+        title: "Liste",
+        words: [],
+        createdAt: "2026-10-30T08:00:00.000Z",
+        updatedAt: "2026-10-30T08:00:00.000Z",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("unterscheidet verschiedene Pakete", () => {
+    const ids = new Set(
+      Array.from({ length: 500 }, (_, i) =>
+        wordListBoxId(`teacher-package-${i}`),
+      ),
+    );
+    expect(ids.size).toBe(500);
   });
 });
 
