@@ -747,7 +747,7 @@ test("the personal learning room keeps today's task focused and separates suppor
   await page.waitForLoadState("networkidle");
   await page.goto("/lernen/fortschritt");
   await expect(
-    page.getByText(/Vollständige Antworten werden nicht übertragen/),
+    page.getByText(/Ganze Antworten werden nicht gesendet/),
   ).toBeVisible();
 });
 
