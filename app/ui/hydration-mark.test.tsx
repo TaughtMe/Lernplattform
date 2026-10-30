@@ -66,9 +66,10 @@ describe("base.css", () => {
     expect(rule?.[2]).toContain("pointer-events: none");
   });
 
-  it("verändert den hydrierten Zustand nicht", () => {
-    // Die Dämpfung hängt allein an html:not([data-app-hydrated]); keine Regel ohne
-    // diese Bedingung nutzt die Animation.
-    expect(css.match(/lr-hydration-wait/g)).toHaveLength(2);
+  it("dämpft nicht, damit der Kontrast auch vor der Hydration reicht", () => {
+    const rule = css.match(
+      /html:not\(\[data-app-hydrated\]\)\s*:where\([^)]*\)\s*\{([^}]*)\}/,
+    );
+    expect(rule?.[1]).not.toMatch(/opacity|animation/);
   });
 });
