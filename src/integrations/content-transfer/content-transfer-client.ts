@@ -1,9 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LearningBundleV1 } from "../../domain/learning-bundle";
 import {
-  decryptLearningBundle,
-  encryptLearningBundle,
-  type DownloadedEncryptedBundle,
+  isWordListPackage,
+  SUPPORTED_TRANSFER_VERSIONS,
+  TransferPayloadError,
+  UNKNOWN_VERSION_MESSAGE,
+  type TransferPayload,
+} from "../../domain/transfer-payload";
+import {
+  decryptTransferPayload,
+  encryptTransferPayload,
+  type DownloadedEncryptedPayload,
 } from "./crypto";
 
 type TransferDownloadRow = {
@@ -33,7 +40,14 @@ function firstRow<T>(data: unknown): T | undefined {
   return Array.isArray(data) ? (data[0] as T | undefined) : undefined;
 }
 
-function downloadPayload(row: TransferDownloadRow): DownloadedEncryptedBundle {
+/** Eine Version, die diese App nicht kennt, wird vor dem Entschlüsseln abgelehnt. */
+function assertSupportedVersion(row: TransferDownloadRow) {
+  if (!SUPPORTED_TRANSFER_VERSIONS.includes(row.schema_version)) {
+    throw new TransferPayloadError(UNKNOWN_VERSION_MESSAGE);
+  }
+}
+
+function downloadPayload(row: TransferDownloadRow): DownloadedEncryptedPayload {
   return {
     ciphertext: row.ciphertext,
     nonce: row.nonce,
@@ -53,9 +67,13 @@ export function transferErrorMessage(message: string) {
   return message;
 }
 
-export async function publishLearningBundle(
+/**
+ * Gibt ein Vokabelpaket oder eine Lernwortliste frei: verschlüsselt im Browser,
+ * auf dem Server liegt nur Chiffretext, höchstens `ttlMinutes` lang.
+ */
+export async function publishTransferPayload(
   client: SupabaseClient,
-  bundle: LearningBundleV1,
+  bundle: TransferPayload,
   ttlMinutes = 1440,
 ): Promise<PublishedContentTransfer> {
   const reservation = await client.rpc("reserve_content_transfer", {
@@ -76,7 +94,7 @@ export async function publishLearningBundle(
   if (!capability)
     throw new Error("Der Transferraum konnte nicht angelegt werden.");
 
-  const encrypted = await encryptLearningBundle(bundle, {
+  const encrypted = await encryptTransferPayload(bundle, {
     retrievalToken: capability.retrieval_token,
     manualTransferCode: capability.manual_transfer_code,
   });
@@ -104,10 +122,10 @@ export async function publishLearningBundle(
   };
 }
 
-export async function retrieveLearningBundleByQr(
+export async function retrieveTransferByQr(
   client: SupabaseClient,
   payload: TransferQrPayload,
-): Promise<LearningBundleV1> {
+): Promise<TransferPayload> {
   if (payload.version !== 1) throw new Error("Unbekannter Transfer-QR-Code.");
   const response = await client.rpc("retrieve_content_transfer_by_qr", {
     p_transfer_id: payload.transferId,
@@ -117,16 +135,17 @@ export async function retrieveLearningBundleByQr(
     throw new Error(transferErrorMessage(response.error.message));
   const row = firstRow<TransferDownloadRow>(response.data);
   if (!row) throw new Error("Das Paket ist ungültig oder bereits abgelaufen.");
-  return decryptLearningBundle(downloadPayload(row), {
+  assertSupportedVersion(row);
+  return decryptTransferPayload(downloadPayload(row), {
     kind: "qr",
     secret: payload.retrievalToken,
   });
 }
 
-export async function retrieveLearningBundleByCode(
+export async function retrieveTransferByCode(
   client: SupabaseClient,
   transferCode: string,
-): Promise<LearningBundleV1> {
+): Promise<TransferPayload> {
   const response = await client.rpc("retrieve_content_transfer_by_code", {
     p_transfer_code: transferCode,
   });
@@ -134,10 +153,39 @@ export async function retrieveLearningBundleByCode(
     throw new Error(transferErrorMessage(response.error.message));
   const row = firstRow<TransferDownloadRow>(response.data);
   if (!row) throw new Error("Der Code ist ungültig, gesperrt oder abgelaufen.");
-  return decryptLearningBundle(downloadPayload(row), {
+  assertSupportedVersion(row);
+  return decryptTransferPayload(downloadPayload(row), {
     kind: "manual",
     secret: transferCode,
   });
+}
+
+/** Die LernBox nimmt nur Vokabelpakete; eine Lernwortliste gehört in den Wortspeicher. */
+export function requireVocabularyBundle(
+  payload: TransferPayload,
+): LearningBundleV1 {
+  if (isWordListPackage(payload)) {
+    throw new TransferPayloadError(
+      "Das ist eine Lernwortliste. Du übernimmst sie in der Lernwerkstatt unter „Von deiner Lehrkraft“.",
+    );
+  }
+  return payload;
+}
+
+export async function retrieveLearningBundleByQr(
+  client: SupabaseClient,
+  payload: TransferQrPayload,
+): Promise<LearningBundleV1> {
+  return requireVocabularyBundle(await retrieveTransferByQr(client, payload));
+}
+
+export async function retrieveLearningBundleByCode(
+  client: SupabaseClient,
+  transferCode: string,
+): Promise<LearningBundleV1> {
+  return requireVocabularyBundle(
+    await retrieveTransferByCode(client, transferCode),
+  );
 }
 
 export function serializeTransferQrPayload(payload: TransferQrPayload): string {
@@ -167,6 +215,8 @@ export function parseTransferQrPayload(value: string): TransferQrPayload {
 
 export const TRANSFER_CODE_LENGTH = 24;
 const TRANSFER_PATH = "/lernbox";
+/** Hier übernimmt das Kind eine Lernwortliste (Wortspeicher). */
+export const WORD_LIST_TRANSFER_PATH = "/lernen/material";
 const TRANSFER_LINK_KEY = "code";
 
 /** Großbuchstaben und Ziffern, höchstens 24 Zeichen; Trennzeichen entfallen. */
@@ -177,13 +227,20 @@ export function normalizeTransferCode(value: string) {
     .slice(0, TRANSFER_CODE_LENGTH);
 }
 
-/** Link für den QR-Code: öffnet die LernBox mit vorbefülltem Code-Feld. */
-export function createTransferLink(origin: string, code: string) {
+/**
+ * Link für den QR-Code: öffnet die LernBox (Vokabelpaket) oder mit `path` die
+ * Lernwerkstatt (Lernwortliste) mit vorbefülltem Code-Feld.
+ */
+export function createTransferLink(
+  origin: string,
+  code: string,
+  path = TRANSFER_PATH,
+) {
   const normalized = normalizeTransferCode(code);
   if (normalized.length !== TRANSFER_CODE_LENGTH) {
     throw new Error("Ungültiger Transfercode.");
   }
-  const url = new URL(TRANSFER_PATH, origin);
+  const url = new URL(path, origin);
   // Im Hash, damit der Code nie an einen Server gesendet wird.
   url.hash = `${TRANSFER_LINK_KEY}=${normalized}`;
   return url.toString();

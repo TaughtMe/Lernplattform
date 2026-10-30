@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ACTIVE_TRANSFERS_KEY } from "../lehrer/material/active-transfers";
 import { TeacherContentTransfer } from "./teacher-content-transfer";
 
-const { publishLearningBundle, libraryRepository } = vi.hoisted(() => ({
-  publishLearningBundle: vi.fn(),
+const { publishTransferPayload, libraryRepository } = vi.hoisted(() => ({
+  publishTransferPayload: vi.fn(),
   libraryRepository: {
     get: vi.fn(),
     list: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock(
     ...(await importOriginal<
       typeof import("../../src/integrations/content-transfer/content-transfer-client")
     >()),
-    publishLearningBundle,
+    publishTransferPayload,
   }),
 );
 
@@ -60,7 +60,7 @@ describe("TeacherContentTransfer", () => {
     libraryRepository.put.mockReset().mockResolvedValue(undefined);
     libraryRepository.putMany.mockReset().mockResolvedValue(undefined);
     libraryRepository.remove.mockReset().mockResolvedValue(undefined);
-    publishLearningBundle.mockReset().mockResolvedValue({
+    publishTransferPayload.mockReset().mockResolvedValue({
       qrPayload: {
         version: 1,
         transferId: "transfer-1",
@@ -161,7 +161,7 @@ describe("TeacherContentTransfer", () => {
       screen.getByRole("button", { name: "Für Schüler freigeben" }),
     );
 
-    expect(publishLearningBundle).toHaveBeenCalledWith(
+    expect(publishTransferPayload).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         id: "v1",
@@ -195,8 +195,8 @@ describe("TeacherContentTransfer", () => {
     );
     // Ein zweites Mal freigeben erzeugt eine neue Fassung.
     await user.click(screen.getByRole("button", { name: "Neu freigeben" }));
-    await waitFor(() => expect(publishLearningBundle).toHaveBeenCalledTimes(2));
-    expect(publishLearningBundle.mock.calls[1]?.[1].revision).toBe(3);
+    await waitFor(() => expect(publishTransferPayload).toHaveBeenCalledTimes(2));
+    expect(publishTransferPayload.mock.calls[1]?.[1].revision).toBe(3);
   });
 
   it("explains a missing transfer configuration", async () => {
@@ -210,7 +210,7 @@ describe("TeacherContentTransfer", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "noch nicht konfiguriert",
     );
-    expect(publishLearningBundle).not.toHaveBeenCalled();
+    expect(publishTransferPayload).not.toHaveBeenCalled();
   });
 
   it("deletes a package only after confirming", async () => {

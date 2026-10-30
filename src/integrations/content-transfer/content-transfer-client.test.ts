@@ -1,17 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 import { buildTeacherVocabularyBundle } from "../../domain/teacher-content-transfer";
+import { buildWordListPackage } from "../../domain/word-list-package";
 import {
   createTransferLink,
   extractTransferCode,
   parseTransferQrPayload,
-  publishLearningBundle,
+  publishTransferPayload,
   retrieveLearningBundleByCode,
   retrieveLearningBundleByQr,
+  retrieveTransferByCode,
+  retrieveTransferByQr,
   serializeTransferQrPayload,
   transferErrorMessage,
 } from "./content-transfer-client";
-import { encryptLearningBundle } from "./crypto";
+import { encryptTransferPayload } from "./crypto";
 
 const manualCode = "23456789ABCDEFGHJKLMNPQR";
 const retrievalToken = "retrieval-token-with-enough-entropy";
@@ -41,7 +44,7 @@ describe("content transfer client failures", () => {
 
   it("explains missing database rights instead of the raw error", async () => {
     await expect(
-      publishLearningBundle(
+      publishTransferPayload(
         clientWithRpc({
           data: null,
           error: {
@@ -63,7 +66,7 @@ describe("content transfer client failures", () => {
   });
 
   it("rejects damaged ciphertext before it reaches the LernBox", async () => {
-    const encrypted = await encryptLearningBundle(bundle, {
+    const encrypted = await encryptTransferPayload(bundle, {
       retrievalToken,
       manualTransferCode: manualCode,
     });
@@ -103,7 +106,9 @@ const reservationRow = {
 };
 
 /** Bildet Reservieren, Hochladen und Abrufen der Datenbankfunktionen nach. */
-function fakeTransferServer() {
+function fakeTransferServer(
+  payload: { id: string; schemaVersion: string; revision: number } = bundle,
+) {
   let stored: Record<string, unknown> | null = null;
   const rpc = vi.fn(async (name: string, args: Record<string, unknown>) => {
     if (name === "reserve_content_transfer") {
@@ -111,9 +116,9 @@ function fakeTransferServer() {
     }
     if (name === "upload_content_transfer") {
       stored = {
-        package_id: bundle.id,
-        schema_version: bundle.schemaVersion,
-        content_version: bundle.revision,
+        package_id: payload.id,
+        schema_version: payload.schemaVersion,
+        content_version: payload.revision,
         ciphertext: args["p_ciphertext"],
         nonce: args["p_nonce"],
         wrapped_key: args["p_wrapped_key_qr"],
@@ -137,7 +142,7 @@ function fakeTransferServer() {
 describe("content transfer client round trip", () => {
   it("publishes a bundle and retrieves it by QR payload and by manual code", async () => {
     const { client, rpc } = fakeTransferServer();
-    const published = await publishLearningBundle(client, bundle, 60);
+    const published = await publishTransferPayload(client, bundle, 60);
 
     expect(rpc).toHaveBeenCalledWith(
       "reserve_content_transfer",
@@ -161,7 +166,7 @@ describe("content transfer client round trip", () => {
 describe("content transfer client publishing failures", () => {
   it("reports a failed reservation", async () => {
     await expect(
-      publishLearningBundle(
+      publishTransferPayload(
         clientWithRpc({ data: null, error: { message: "Failed to fetch" } }),
         bundle,
       ),
@@ -170,10 +175,10 @@ describe("content transfer client publishing failures", () => {
 
   it("reports a missing transfer room", async () => {
     await expect(
-      publishLearningBundle(clientWithRpc({ data: [], error: null }), bundle),
+      publishTransferPayload(clientWithRpc({ data: [], error: null }), bundle),
     ).rejects.toThrow("Transferraum konnte nicht angelegt werden");
     await expect(
-      publishLearningBundle(
+      publishTransferPayload(
         clientWithRpc({ data: "kein-array", error: null }),
         bundle,
       ),
@@ -191,13 +196,13 @@ describe("content transfer client publishing failures", () => {
       }) as unknown as SupabaseClient;
 
     await expect(
-      publishLearningBundle(
+      publishTransferPayload(
         withUpload({ data: null, error: { message: "network down" } }),
         bundle,
       ),
     ).rejects.toThrow("Keine Verbindung zum Server");
     await expect(
-      publishLearningBundle(withUpload({ data: false, error: null }), bundle),
+      publishTransferPayload(withUpload({ data: false, error: null }), bundle),
     ).rejects.toThrow("nicht übernommen");
   });
 });
@@ -233,7 +238,7 @@ describe("content transfer client retrieval failures", () => {
 
   it("rejects a manual code that does not match the stored package", async () => {
     const { client } = fakeTransferServer();
-    await publishLearningBundle(client, bundle);
+    await publishTransferPayload(client, bundle);
     await expect(
       retrieveLearningBundleByCode(client, "FALSCHER-CODE-000000000"),
     ).rejects.toThrow();
@@ -291,5 +296,88 @@ describe("transfer link and scanned text", () => {
     expect(extractTransferCode("hallo welt!")).toBeNull();
     expect(extractTransferCode("2345-6789")).toBeNull();
     expect(() => createTransferLink("https://x.example", "ABC")).toThrow();
+  });
+});
+
+describe("Lernwortliste in der Übertragung", () => {
+  const wordList = buildWordListPackage({
+    id: "teacher-package-wl",
+    revision: 1,
+    title: "Wörter mit ie",
+    text: "Brief, Sieb",
+    now: "2026-10-30T10:00:00.000Z",
+  });
+  const qr = (payload: { retrievalToken: string }) => ({
+    version: 1 as const,
+    transferId: "transfer-1",
+    retrievalToken: payload.retrievalToken,
+  });
+
+  it("geht verschlüsselt hin und kommt unverändert an", async () => {
+    const { client, rpc } = fakeTransferServer(wordList);
+    const published = await publishTransferPayload(client, wordList);
+
+    expect(rpc).toHaveBeenCalledWith(
+      "reserve_content_transfer",
+      expect.objectContaining({
+        p_package_id: "teacher-package-wl",
+        p_schema_version: "1.1.0",
+        p_ttl_minutes: 1440,
+      }),
+    );
+    const upload = rpc.mock.calls.find(
+      ([name]) => name === "upload_content_transfer",
+    );
+    // Auf dem Server liegt nur Chiffretext, keine Wörter und kein Titel.
+    expect(JSON.stringify(upload)).not.toMatch(/Brief|Sieb|Wörter mit ie/);
+
+    await expect(
+      retrieveTransferByQr(client, qr(published.qrPayload)),
+    ).resolves.toEqual(wordList);
+    await expect(
+      retrieveTransferByCode(client, published.manualTransferCode),
+    ).resolves.toEqual(wordList);
+  });
+
+  it("wird von der LernBox mit einem Hinweis abgelehnt, nicht übernommen", async () => {
+    const { client } = fakeTransferServer(wordList);
+    const published = await publishTransferPayload(client, wordList);
+    await expect(
+      retrieveLearningBundleByCode(client, published.manualTransferCode),
+    ).rejects.toThrow("Das ist eine Lernwortliste");
+    await expect(
+      retrieveLearningBundleByQr(client, qr(published.qrPayload)),
+    ).rejects.toThrow("Lernwerkstatt");
+  });
+
+  it("lehnt eine unbekannte Version schon an der Zeile ab, ohne zu entschlüsseln", async () => {
+    const future = { ...wordList, schemaVersion: "9.0.0" };
+    const client = clientWithRpc({
+      error: null,
+      data: [
+        {
+          package_id: "p",
+          schema_version: future.schemaVersion,
+          content_version: 1,
+          ciphertext: "x",
+          nonce: "x",
+          wrapped_key: "x",
+          crypto_metadata: {},
+          expires_at: "2026-10-31T10:00:00.000Z",
+        },
+      ],
+    });
+    await expect(retrieveTransferByCode(client, manualCode)).rejects.toThrow(
+      "neuer als deine App",
+    );
+    await expect(
+      retrieveTransferByQr(client, qr({ retrievalToken })),
+    ).rejects.toThrow("neuer als deine App");
+  });
+
+  it("baut den Link für die Lernwerkstatt mit dem Code im Hash", () => {
+    expect(
+      createTransferLink("https://x.example", manualCode, "/lernen/material"),
+    ).toBe(`https://x.example/lernen/material#code=${manualCode}`);
   });
 });

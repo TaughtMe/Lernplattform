@@ -1,8 +1,8 @@
 import { base64ToBytes, bytesToBase64 } from "../crypto/base64";
 import {
-  parseLearningBundleV1,
-  type LearningBundleV1,
-} from "../../domain/learning-bundle";
+  parseTransferPayload,
+  type TransferPayload,
+} from "../../domain/transfer-payload";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -18,7 +18,7 @@ export type TransferCryptoMetadata = {
   encoding: "base64";
 };
 
-export type EncryptedLearningBundle = {
+export type EncryptedTransferPayload = {
   ciphertext: string;
   nonce: string;
   wrappedKeyQr: string;
@@ -26,7 +26,7 @@ export type EncryptedLearningBundle = {
   cryptoMetadata: TransferCryptoMetadata;
 };
 
-export type DownloadedEncryptedBundle = {
+export type DownloadedEncryptedPayload = {
   ciphertext: string;
   nonce: string;
   wrappedKey: string;
@@ -127,11 +127,12 @@ function parseMetadata(value: unknown): TransferCryptoMetadata {
   return value as TransferCryptoMetadata;
 }
 
-export async function encryptLearningBundle(
-  bundle: LearningBundleV1,
+/** Verschlüsselt ein Vokabelpaket oder eine Lernwortliste. */
+export async function encryptTransferPayload(
+  payload: TransferPayload,
   secrets: { retrievalToken: string; manualTransferCode: string },
-): Promise<EncryptedLearningBundle> {
-  const validated = parseLearningBundleV1(bundle);
+): Promise<EncryptedTransferPayload> {
+  const validated = parseTransferPayload(payload);
   const contentKey = await crypto.subtle.generateKey(
     { name: "AES-GCM", length: 256 },
     true,
@@ -176,10 +177,11 @@ export async function encryptLearningBundle(
   };
 }
 
-export async function decryptLearningBundle(
-  encrypted: DownloadedEncryptedBundle,
+/** Entschlüsselt und prüft die Nutzlast; unbekannte Versionen werden abgelehnt. */
+export async function decryptTransferPayload(
+  encrypted: DownloadedEncryptedPayload,
   credential: { kind: "qr" | "manual"; secret: string },
-): Promise<LearningBundleV1> {
+): Promise<TransferPayload> {
   const metadata = parseMetadata(encrypted.cryptoMetadata);
   const wrappingKey = await deriveWrappingKey(
     credential.secret,
@@ -193,5 +195,5 @@ export async function decryptLearningBundle(
     contentKey,
     base64ToBytes(encrypted.ciphertext),
   );
-  return parseLearningBundleV1(JSON.parse(decoder.decode(plaintext)));
+  return parseTransferPayload(JSON.parse(decoder.decode(plaintext)));
 }

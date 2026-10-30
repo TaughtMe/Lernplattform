@@ -14,7 +14,7 @@ import {
 } from "../../src/domain/teacher-content-library";
 import {
   createTransferLink,
-  publishLearningBundle,
+  publishTransferPayload,
 } from "../../src/integrations/content-transfer/content-transfer-client";
 import {
   getLiveRoomClient,
@@ -373,7 +373,7 @@ export function TeacherContentTransfer({
         promptLocale: value.left,
         answerLocale: value.right,
       });
-      const result = await publishLearningBundle(
+      const result = await publishTransferPayload(
         getLiveRoomClient(transferConfig),
         bundle,
       );

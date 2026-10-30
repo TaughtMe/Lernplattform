@@ -24,6 +24,11 @@ const wordSchema = z
   // Wörter sind nur Text (und lassen sich verlustfrei in eine Adresse schreiben).
   .regex(/^[^\p{Cc}\p{Cs}<>]+$/u);
 
+/** Nimmt die Wortbrücke dieses Wort an (NFC, ohne Steuerzeichen und Spitzklammern, höchstens 60 Zeichen)? */
+export function isBridgeWord(word: string): boolean {
+  return wordSchema.safeParse(word).success;
+}
+
 export const bridgeWordsSchema = z
   .array(wordSchema)
   .min(1)

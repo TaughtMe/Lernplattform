@@ -3,7 +3,8 @@ import {
   LEARNING_BUNDLE_VERSION,
   parseLearningBundleV1,
 } from "../../domain/learning-bundle";
-import { decryptLearningBundle, encryptLearningBundle } from "./crypto";
+import { buildWordListPackage } from "../../domain/word-list-package";
+import { decryptTransferPayload, encryptTransferPayload } from "./crypto";
 
 const bundle = parseLearningBundleV1({
   schemaVersion: LEARNING_BUNDLE_VERSION,
@@ -33,10 +34,10 @@ describe("encrypted content transfer", () => {
       retrievalToken: "qr-token-with-at-least-sixteen-characters",
       manualTransferCode: "ABCD-EFGH-JKLM-NPQR-STUV-WXYZ",
     };
-    const encrypted = await encryptLearningBundle(bundle, secrets);
+    const encrypted = await encryptTransferPayload(bundle, secrets);
 
     await expect(
-      decryptLearningBundle(
+      decryptTransferPayload(
         {
           ciphertext: encrypted.ciphertext,
           nonce: encrypted.nonce,
@@ -48,7 +49,7 @@ describe("encrypted content transfer", () => {
     ).resolves.toEqual(bundle);
 
     await expect(
-      decryptLearningBundle(
+      decryptTransferPayload(
         {
           ciphertext: encrypted.ciphertext,
           nonce: encrypted.nonce,
@@ -61,12 +62,12 @@ describe("encrypted content transfer", () => {
   });
 
   it("rejects a wrong retrieval proof", async () => {
-    const encrypted = await encryptLearningBundle(bundle, {
+    const encrypted = await encryptTransferPayload(bundle, {
       retrievalToken: "correct-qr-token-with-enough-entropy",
       manualTransferCode: "ABCD-EFGH-JKLM-NPQR-STUV-WXYZ",
     });
     await expect(
-      decryptLearningBundle(
+      decryptTransferPayload(
         {
           ciphertext: encrypted.ciphertext,
           nonce: encrypted.nonce,
@@ -76,5 +77,41 @@ describe("encrypted content transfer", () => {
         { kind: "qr", secret: "wrong-qr-token-with-enough-entropy" },
       ),
     ).rejects.toThrow();
+  });
+
+  it("verschlüsselt auch eine Lernwortliste und prüft sie beim Entschlüsseln", async () => {
+    const list = buildWordListPackage({
+      id: "teacher-package-wl",
+      revision: 1,
+      title: "Wörter mit ie",
+      text: "Brief, Sieb",
+      now: "2026-10-30T10:00:00.000Z",
+    });
+    const secrets = {
+      retrievalToken: "qr-token-with-at-least-sixteen-characters",
+      manualTransferCode: "ABCD-EFGH-JKLM-NPQR-STUV-WXYZ",
+    };
+    const encrypted = await encryptTransferPayload(list, secrets);
+    expect(encrypted.ciphertext).not.toContain("Brief");
+    await expect(
+      decryptTransferPayload(
+        {
+          ciphertext: encrypted.ciphertext,
+          nonce: encrypted.nonce,
+          wrappedKey: encrypted.wrappedKeyQr,
+          cryptoMetadata: encrypted.cryptoMetadata,
+        },
+        { kind: "qr", secret: secrets.retrievalToken },
+      ),
+    ).resolves.toEqual(list);
+  });
+
+  it("verschlüsselt keine ungültige Nutzlast", async () => {
+    await expect(
+      encryptTransferPayload({ schemaVersion: "9.9.9" } as never, {
+        retrievalToken: "qr-token-with-at-least-sixteen-characters",
+        manualTransferCode: "ABCD-EFGH-JKLM-NPQR-STUV-WXYZ",
+      }),
+    ).rejects.toThrow("neuer als deine App");
   });
 });
