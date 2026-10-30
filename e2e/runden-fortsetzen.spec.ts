@@ -171,9 +171,12 @@ const MODULES: RoundModule[] = [
     path: "/frei/german/laufdiktat",
     start: async (page) => {
       await page.goto("/frei/german/laufdiktat");
-      await page
-        .getByRole("textbox", { name: /^Text – Sätze und Zeilen/ })
-        .fill(SENTENCES.join(" "));
+      // Eingaben vor der Hydration werden zurückgesetzt (Beispieltext, 2 Sätze).
+      await (
+        await hydrated(
+          page.getByRole("textbox", { name: /^Text – Sätze und Zeilen/ }),
+        )
+      ).fill(SENTENCES.join(" "));
       await page.getByRole("button", { name: "Laufdiktat starten" }).click();
       await expect(page.getByText("1 / 10", { exact: true })).toBeVisible();
     },
