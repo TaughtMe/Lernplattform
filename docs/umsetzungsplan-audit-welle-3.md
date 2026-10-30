@@ -146,7 +146,11 @@ Verhaltensänderung gibt es nur in der Ereignisableitung:
 - Beim Wechsel zur Tafel bietet die App an, Personendaten auf dem Gerät zu
   löschen.
 - PIN-Sperre: 6 Ziffern, PBKDF2, Sperre nach 15 Minuten ohne Nutzung.
-- Offen: keine Wartezeit nach Fehlversuchen.
+- Wartezeit (Entscheidung des Entwicklers): Nach 5 falschen Eingaben ist die
+  Eingabe 1 Minute gesperrt, danach gibt es wieder 5 Versuche. Zähler und Ende
+  der Wartezeit liegen lokal (`lernraum.lehrer-sperre-versuche`), Neuladen
+  hebt sie nicht auf; die richtige PIN setzt den Zähler zurück. „PIN
+  vergessen“ bleibt möglich.
 
 **D4 umgesetzt.** `/lehrer/material/wortauftrag` erzeugt einen Link
 `/frei/german?woerter=…&auftrag=…`, höchstens 500 Zeichen. Der Druck erfolgt
@@ -172,7 +176,6 @@ als Kärtchen. Aufträge werden nicht gespeichert.
 ### Offene Entscheidungen des Entwicklers
 
 - Freigabe `lehrer-geraet` auf `frei` setzen.
-- Wartezeit nach falscher PIN.
 - Längengrenze des Wortauftrags (500 Zeichen) und Speichern der Aufträge.
 - Stufenfolgen des Startpunkts und Regel „sicher“.
 - Mündliches Aufdecken als Abruf werten.

@@ -1,12 +1,29 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import type { TeacherDeviceType } from "../../src/domain/teacher-device";
+import {
+  pinAttemptsLeft,
+  pinWaitMs,
+  recordWrongPin,
+  resetPinAttempts,
+} from "../../src/domain/teacher-lock";
 import { verifyPin } from "../../src/integrations/crypto/pin";
 import {
   clearPinVerifier,
   markUnlocked,
+  parsePinAttempts,
+  pinAttemptsSnapshot,
+  readPinAttempts,
   readPinVerifier,
+  savePinAttempts,
+  subscribePinVerifier,
 } from "../../src/storage/teacher-lock";
 import type { TeacherAccess } from "../ui/shell/use-teacher-access";
 import {
@@ -20,6 +37,8 @@ import {
   applyDeviceType,
   deletePersonalDataOnDevice,
 } from "./teacher-device-actions";
+
+const serverSnapshot = () => null;
 
 /**
  * Pforte des Lehrerbereichs (Befund B-009, Regeln D3-1, D3-2, D3-4): zeigt statt
@@ -37,6 +56,27 @@ export function TeacherDeviceGate({
   const [offer, setOffer] = useState<PersonalDataSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Falsche Eingaben und Wartezeit liegen lokal (Regel D3-4): Neuladen hebt sie nicht auf.
+  const rawAttempts = useSyncExternalStore(
+    subscribePinVerifier,
+    () => pinAttemptsSnapshot(),
+    serverSnapshot,
+  );
+  const attempts = useMemo(() => parsePinAttempts(rawAttempts), [rawAttempts]);
+  const [now, setNow] = useState(Date.now);
+  const waitMs = pinWaitMs(attempts, now);
+
+  // Die Restzeit läuft sekundengenau mit und endet mit der Wartezeit.
+  useEffect(() => {
+    if (attempts.lockedUntil === null) return undefined;
+    const refresh = () => setNow(Date.now());
+    refresh();
+    const timer = window.setInterval(() => {
+      refresh();
+      if (pinWaitMs(attempts, Date.now()) === 0) window.clearInterval(timer);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [attempts]);
 
   async function choose(type: TeacherDeviceType) {
     const result = await applyDeviceType(type);
@@ -57,12 +97,31 @@ export function TeacherDeviceGate({
   }
 
   async function unlock(pin: string) {
+    // Frisch aus dem Speicher lesen: Ein zweiter Tab darf die Wartezeit nicht umgehen.
+    if (pinWaitMs(readPinAttempts(), Date.now()) > 0) {
+      setNow(Date.now());
+      return;
+    }
     setBusy(true);
     setError("");
     const verifier = readPinVerifier();
     const ok = verifier ? await verifyPin(pin, verifier) : false;
-    if (ok) markUnlocked(Date.now());
-    else setError("Die PIN stimmt nicht.");
+    if (ok) {
+      savePinAttempts(resetPinAttempts());
+      markUnlocked(Date.now());
+    } else {
+      const next = recordWrongPin(readPinAttempts(), Date.now());
+      savePinAttempts(next);
+      const left = pinAttemptsLeft(next);
+      // Die fünfte falsche Eingabe zeigt die Wartezeit statt dieser Meldung.
+      setError(
+        next.lockedUntil !== null
+          ? ""
+          : left <= 2
+            ? `Die PIN stimmt nicht. Noch ${left === 1 ? "1 Versuch" : `${left} Versuche`}.`
+            : "Die PIN stimmt nicht.",
+      );
+    }
     setBusy(false);
   }
 
@@ -108,6 +167,7 @@ export function TeacherDeviceGate({
         <PinLockScreen
           busy={busy}
           error={error}
+          waitMs={waitMs}
           onSubmit={(pin) => void unlock(pin)}
           onForgot={() => void forgot()}
         />

@@ -14,7 +14,11 @@ import {
   resolveVisibility,
   type ReleaseVisibility,
 } from "../../../src/domain/release";
-import { LOCK_IDLE_LIMIT_MS } from "../../../src/domain/teacher-lock";
+import {
+  LOCK_IDLE_LIMIT_MS,
+  MAX_PIN_ATTEMPTS,
+  PIN_LOCKOUT_MS,
+} from "../../../src/domain/teacher-lock";
 import { createPinVerifier } from "../../../src/integrations/crypto/pin";
 import { LOCAL_DATA_AREAS } from "../../../src/storage/local-data-boundaries";
 import {
@@ -28,8 +32,10 @@ import {
   saveTeacherDevice,
 } from "../../../src/storage/teacher-device";
 import {
+  readPinAttempts,
   readPinVerifier,
   resetLockSession,
+  savePinAttempts,
   savePinVerifier,
 } from "../../../src/storage/teacher-lock";
 import { countTeacherPersonalData } from "../../../src/storage/teacher-personal-data";
@@ -327,6 +333,83 @@ describe("PIN-Sperre (D3-4)", () => {
     await userEvent.type(screen.getByLabelText("PIN (6 Ziffern)"), PIN);
     await userEvent.click(screen.getByRole("button", { name: "Entsperren" }));
     expect(await screen.findByText("Seiteninhalt")).toBeInTheDocument();
+  });
+
+  /** Gibt eine PIN ein und bestätigt. */
+  async function enterPin(pin: string) {
+    await userEvent.type(await screen.findByLabelText("PIN (6 Ziffern)"), pin);
+    await userEvent.click(screen.getByRole("button", { name: "Entsperren" }));
+  }
+
+  it("sperrt die Eingabe nach 5 falschen PINs für eine Minute", async () => {
+    renderShell("/lehrer/klassen");
+    for (let i = 1; i < MAX_PIN_ATTEMPTS; i += 1) {
+      await enterPin("111111");
+      await waitFor(() =>
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          "Die PIN stimmt nicht.",
+        ),
+      );
+    }
+    // Vor der Wartezeit sagt die Meldung, wie viele Versuche bleiben.
+    expect(screen.getByRole("alert")).toHaveTextContent("Noch 1 Versuch");
+
+    await enterPin("111111");
+    expect(await screen.findByText(/Zu viele falsche PINs/)).toBeVisible();
+    expect(screen.getByText(/Wieder möglich in 1 Minute/)).toBeVisible();
+    expect(screen.getByLabelText("PIN (6 Ziffern)")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "PIN vergessen" })).toBeEnabled();
+    expect(readPinAttempts().lockedUntil).not.toBeNull();
+  });
+
+  it("behält die Wartezeit nach dem Neuladen und öffnet sie nach einer Minute wieder", async () => {
+    const start = Date.now();
+    savePinAttempts({ failures: 0, lockedUntil: start + PIN_LOCKOUT_MS });
+    const { unmount } = renderShell("/lehrer/klassen");
+    expect(await screen.findByText(/Zu viele falsche PINs/)).toBeVisible();
+    expect(screen.getByLabelText("PIN (6 Ziffern)")).toBeDisabled();
+    unmount();
+
+    // Neues Laden der Seite: gleicher Speicher, gleiche Sperre.
+    vi.spyOn(Date, "now").mockReturnValue(start + 30_000);
+    renderShell("/lehrer/klassen");
+    expect(
+      await screen.findByText(/Wieder möglich in 30 Sekunden/),
+    ).toBeVisible();
+
+    vi.spyOn(Date, "now").mockReturnValue(start + PIN_LOCKOUT_MS + 1);
+    await waitFor(
+      () => expect(screen.getByLabelText("PIN (6 Ziffern)")).toBeEnabled(),
+      { timeout: 3000 },
+    );
+    expect(screen.queryByText(/Zu viele falsche PINs/)).not.toBeInTheDocument();
+    await enterPin(PIN);
+    expect(await screen.findByText("Seiteninhalt")).toBeInTheDocument();
+  });
+
+  it("setzt den Zähler mit der richtigen PIN zurück", async () => {
+    savePinAttempts({ failures: 3, lockedUntil: null });
+    renderShell("/lehrer/klassen");
+    await enterPin(PIN);
+    expect(await screen.findByText("Seiteninhalt")).toBeInTheDocument();
+    expect(readPinAttempts()).toEqual({ failures: 0, lockedUntil: null });
+  });
+
+  it("lässt „PIN vergessen“ auch während der Wartezeit zu", async () => {
+    await seed();
+    savePinAttempts({ failures: 0, lockedUntil: Date.now() + PIN_LOCKOUT_MS });
+    renderShell("/lehrer/klassen");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "PIN vergessen" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Sperre aufheben und Personendaten löschen",
+      }),
+    );
+    expect(await screen.findByText("Seiteninhalt")).toBeInTheDocument();
+    expect(readPinVerifier()).toBeNull();
+    expect(readPinAttempts()).toEqual({ failures: 0, lockedUntil: null });
   });
 
   it("sperrt nach 15 Minuten ohne Nutzung wieder", async () => {

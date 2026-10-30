@@ -84,6 +84,31 @@ describe("PinLockScreen", () => {
     );
   });
 
+  it("sperrt die Eingabe während der Wartezeit und nennt die Restzeit", async () => {
+    const onSubmit = vi.fn();
+    const onForgot = vi.fn();
+    render(
+      <PinLockScreen waitMs={44_100} onSubmit={onSubmit} onForgot={onForgot} />,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Zu viele falsche PINs",
+    );
+    expect(screen.getByText(/Wieder möglich in 45 Sekunden/)).toBeVisible();
+    expect(screen.getByLabelText("PIN (6 Ziffern)")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Entsperren" })).toBeDisabled();
+    // „PIN vergessen“ bleibt der Weg heraus.
+    await userEvent.click(
+      screen.getByRole("button", { name: "PIN vergessen" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Sperre aufheben und Personendaten löschen",
+      }),
+    );
+    expect(onForgot).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("fragt vor dem Aufheben der Sperre nach und kann abbrechen", async () => {
     const onForgot = vi.fn();
     render(<PinLockScreen onSubmit={vi.fn()} onForgot={onForgot} />);

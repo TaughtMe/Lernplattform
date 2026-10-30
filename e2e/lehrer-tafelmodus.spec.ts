@@ -220,6 +220,61 @@ test("die PIN-Sperre greift nach dem Start und weist eine falsche PIN ab", async
   ).toHaveCount(0);
 });
 
+test("fünf falsche PINs sperren die Eingabe für eine Minute, auch nach dem Neuladen", async ({
+  page,
+}) => {
+  await chooseDevice(page, "Mein Gerät");
+  await page.goto("/lehrer/einstellungen", { waitUntil: "networkidle" });
+  await page.getByLabel(/Neue PIN/).fill(PIN);
+  await page.getByLabel("PIN wiederholen").fill(PIN);
+  await page.getByRole("button", { name: "PIN festlegen" }).click();
+  await expect(
+    page.getByRole("button", { name: "Sperre ausschalten" }),
+  ).toBeVisible();
+
+  // Die Uhr gehört dem Test: Die Minute vergeht erst mit `fastForward`.
+  await page.clock.install({ time: new Date("2026-10-30T09:00:00Z") });
+  await page.goto("/lehrer/klassen", { waitUntil: "networkidle" });
+  const field = page.getByLabel("PIN (6 Ziffern)");
+  for (let i = 0; i < 5; i += 1) {
+    await field.fill("111111");
+    await page.getByRole("button", { name: "Entsperren" }).click();
+    if (i < 4) {
+      await expect(page.getByRole("alert")).toContainText(
+        "Die PIN stimmt nicht.",
+      );
+    }
+  }
+  await expect(page.getByRole("alert")).toContainText("Zu viele falsche PINs");
+  await expect(page.getByText(/Wieder möglich in/)).toBeVisible();
+  await expect(field).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Entsperren" })).toBeDisabled();
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
+
+  // Neuladen hebt die Wartezeit nicht auf; selbst die richtige PIN geht nicht.
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByLabel("PIN (6 Ziffern)")).toBeDisabled();
+  await expect(page.getByText(/Wieder möglich in/)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "PIN vergessen" }),
+  ).toBeEnabled();
+
+  // Nach einer Minute ist die Eingabe wieder frei; die richtige PIN öffnet.
+  await page.clock.fastForward(61_000);
+  await expect(page.getByLabel("PIN (6 Ziffern)")).toBeEnabled();
+  await expect(page.getByText(/Zu viele falsche PINs/)).toHaveCount(0);
+  await page.getByLabel("PIN (6 Ziffern)").fill(PIN);
+  await page.getByRole("button", { name: "Entsperren" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Lehrerbereich gesperrt" }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("lernraum.lehrer-sperre-versuche"),
+    ),
+  ).toBeNull();
+});
+
 test("„PIN vergessen“ hebt die Sperre nach Bestätigung auf und löscht die Personendaten", async ({
   page,
 }) => {

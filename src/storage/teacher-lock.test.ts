@@ -1,14 +1,22 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { LOCK_IDLE_LIMIT_MS, isLocked } from "../domain/teacher-lock";
+import {
+  LOCK_IDLE_LIMIT_MS,
+  NO_PIN_ATTEMPTS,
+  isLocked,
+} from "../domain/teacher-lock";
 import { createPinVerifier } from "../integrations/crypto/pin";
 import {
+  TEACHER_LOCK_ATTEMPTS_KEY,
   TEACHER_LOCK_KEY,
   clearPinVerifier,
   lockSessionSnapshot,
   markUnlocked,
+  parsePinAttempts,
   parsePinVerifier,
+  readPinAttempts,
   readPinVerifier,
   resetLockSession,
+  savePinAttempts,
   savePinVerifier,
   touchLockSession,
 } from "./teacher-lock";
@@ -35,6 +43,43 @@ describe("Prüfwert der PIN", () => {
     for (const raw of ["", "x", "null", '{"v":1}', '{"v":1,"salt":1}']) {
       expect(parsePinVerifier(raw), raw).toBeNull();
     }
+  });
+});
+
+describe("Falsche Eingaben", () => {
+  it("überstehen ein Neuladen und werden mit dem Zähler 0 gelöscht", () => {
+    expect(readPinAttempts()).toEqual(NO_PIN_ATTEMPTS);
+    const attempts = { failures: 0, lockedUntil: T0 + 60_000 };
+    expect(savePinAttempts(attempts)).toBe(true);
+    expect(readPinAttempts()).toEqual(attempts);
+    expect(savePinAttempts({ failures: 0, lockedUntil: null })).toBe(true);
+    expect(localStorage.getItem(TEACHER_LOCK_ATTEMPTS_KEY)).toBeNull();
+  });
+
+  it("liest Kaputtes und Fremdes als „keine falschen Eingaben“", () => {
+    for (const raw of [
+      "",
+      "x",
+      "null",
+      "[]",
+      '{"failures":-1,"lockedUntil":null}',
+      '{"failures":1.5,"lockedUntil":null}',
+      '{"failures":"2","lockedUntil":null}',
+      '{"failures":1,"lockedUntil":"x"}',
+      '{"failures":1}',
+    ]) {
+      expect(parsePinAttempts(raw), raw).toEqual(NO_PIN_ATTEMPTS);
+    }
+    expect(parsePinAttempts('{"failures":3,"lockedUntil":null}')).toEqual({
+      failures: 3,
+      lockedUntil: null,
+    });
+  });
+
+  it("enden, wenn die Sperre aufgehoben wird", async () => {
+    savePinAttempts({ failures: 3, lockedUntil: null });
+    clearPinVerifier();
+    expect(readPinAttempts()).toEqual(NO_PIN_ATTEMPTS);
   });
 });
 

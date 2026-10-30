@@ -15,6 +15,8 @@ import {
 import {
   PIN_LENGTH,
   PIN_LOCK_NOTICE,
+  PIN_LOCKOUT_MS,
+  describePinWait,
   sanitizePinInput,
 } from "../../../src/domain/teacher-lock";
 import { Button, ButtonLink, Notice } from "../../ui/primitives";
@@ -190,6 +192,7 @@ function PinField({
   onChange,
   focusOnMount = false,
   invalid = false,
+  disabled = false,
   describedBy,
 }: {
   label: string;
@@ -197,6 +200,7 @@ function PinField({
   onChange: (value: string) => void;
   focusOnMount?: boolean;
   invalid?: boolean;
+  disabled?: boolean;
   describedBy?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
@@ -216,6 +220,7 @@ function PinField({
         maxLength={PIN_LENGTH}
         pattern="[0-9]*"
         value={value}
+        disabled={disabled}
         aria-invalid={invalid || undefined}
         {...(describedBy ? { "aria-describedby": describedBy } : {})}
         onChange={(event) => onChange(sanitizePinInput(event.target.value))}
@@ -224,15 +229,22 @@ function PinField({
   );
 }
 
-/** Sperrbildschirm: PIN eingeben oder, bei vergessener PIN, die Sperre aufheben. */
+/**
+ * Sperrbildschirm: PIN eingeben oder, bei vergessener PIN, die Sperre aufheben.
+ * Nach zu vielen falschen Eingaben (`waitMs` > 0) ist die Eingabe für die
+ * Restzeit gesperrt; „PIN vergessen“ bleibt möglich.
+ */
 export function PinLockScreen({
   busy = false,
   error = "",
+  waitMs = 0,
   onSubmit,
   onForgot,
 }: {
   busy?: boolean;
   error?: string;
+  /** Restzeit der Wartezeit nach falschen Eingaben in Millisekunden; 0 = frei. */
+  waitMs?: number;
   onSubmit: (pin: string) => void;
   /** Sperre aufheben; löscht die Personendaten dieses Geräts. */
   onForgot: () => void;
@@ -240,8 +252,10 @@ export function PinLockScreen({
   const [pin, setPin] = useState("");
   const [forgot, setForgot] = useState(false);
   const errorId = useId();
+  const waiting = waitMs > 0;
   const submit = (event: FormEvent) => {
     event.preventDefault();
+    if (waiting) return;
     onSubmit(pin);
     setPin("");
   };
@@ -279,16 +293,31 @@ export function PinLockScreen({
             value={pin}
             onChange={setPin}
             focusOnMount
-            invalid={Boolean(error)}
-            {...(error ? { describedBy: errorId } : {})}
+            disabled={waiting}
+            invalid={Boolean(error) || waiting}
+            {...(error || waiting ? { describedBy: errorId } : {})}
           />
-          {error ? (
+          {waiting ? (
+            <div id={errorId}>
+              {/* Die Meldung steht einmal im Alert; die Restzeit läuft ohne Ansage mit. */}
+              <Notice tone="bad" role="alert">
+                Zu viele falsche PINs. Die Eingabe ist für{" "}
+                {describePinWait(PIN_LOCKOUT_MS)} gesperrt.
+              </Notice>
+              <p className="ui-small">
+                Wieder möglich in {describePinWait(waitMs)}.
+              </p>
+            </div>
+          ) : error ? (
             <Notice tone="bad" role="alert" id={errorId}>
               {error}
             </Notice>
           ) : null}
           <div className="ui-row ui-wrap">
-            <Button type="submit" disabled={busy || pin.length !== PIN_LENGTH}>
+            <Button
+              type="submit"
+              disabled={busy || waiting || pin.length !== PIN_LENGTH}
+            >
               Entsperren
             </Button>
             <Button variant="link" onClick={() => setForgot(true)}>
