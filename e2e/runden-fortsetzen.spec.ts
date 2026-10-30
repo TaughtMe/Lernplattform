@@ -55,6 +55,8 @@ type RoundModule = {
   answerThree: (page: Page) => Promise<void>;
   /** Zeigt die vierte Aufgabe von zehn. */
   expectFourth: (page: Page) => Promise<void>;
+  /** Die Runde füllt das Handy und hat dort kein Logo (nur Leiste und „Runde beenden“). */
+  noLogoOnPhone?: boolean;
 };
 
 async function chooseFromPlusMenu(page: Page, item: RegExp) {
@@ -94,6 +96,7 @@ const MODULES: RoundModule[] = [
   {
     name: "LernBox",
     path: "/lernbox",
+    noLogoOnPhone: true,
     start: async (page) => {
       await page.goto("/lernbox");
       await chooseFromPlusMenu(page, /Selbst eintragen/);
@@ -257,14 +260,18 @@ for (const unit of MODULES) {
       await expect(bar).toBeFocused();
       await expect(page).toHaveURL(new RegExp(`${unit.path}$`));
 
-      // Logo: in der Leiste, auf kleinen Bildschirmen im Kopf der Seite.
-      await page
+      // Logo: in der Leiste, auf kleinen Bildschirmen im Kopf der Seite. Die
+      // LernBox-Runde zeigt am Handy keins; dort fragt „Runde beenden“ selbst.
+      const logo = page
         .getByRole("link", { name: "Zur Startseite" })
-        .filter({ visible: true })
-        .first()
-        .click();
-      await expect(dialog).toBeVisible();
-      await dialog.getByRole("button", { name: "Weiterüben" }).click();
+        .filter({ visible: true });
+      if (unit.noLogoOnPhone && (page.viewportSize()?.width ?? 0) < 900) {
+        await expect(logo).toHaveCount(0);
+      } else {
+        await logo.first().click();
+        await expect(dialog).toBeVisible();
+        await dialog.getByRole("button", { name: "Weiterüben" }).click();
+      }
 
       // Noch einmal zurück: „Beenden“ verlässt die Runde, der Stand bleibt.
       await page.goBack();
