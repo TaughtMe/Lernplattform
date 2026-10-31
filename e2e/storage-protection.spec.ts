@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 
 // Schutz vor Speicherverlust (Audit B-002, Regeln S-4 und S-5): Auf einem

@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, hydrationAware, test } from "./fixtures";
 
 test("local preview exposes the clear learner entries", async ({ page }) => {
   await page.goto("/");
@@ -188,8 +188,8 @@ test("a configured teacher and student can complete one live round", async ({
     "Benötigt die eigens provisionierte lokale Supabase-Pilotumgebung.",
   );
 
-  const teacher = await browser.newPage();
-  const student = await browser.newPage();
+  const teacher = hydrationAware(await browser.newPage());
+  const student = hydrationAware(await browser.newPage());
   await teacher.goto("/lehrer/live");
   await teacher
     .getByRole("textbox", { name: "Text" })

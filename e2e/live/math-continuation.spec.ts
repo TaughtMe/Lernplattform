@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { revealAndRelease } from "./hold";
 
 for (const withError of [true, false])

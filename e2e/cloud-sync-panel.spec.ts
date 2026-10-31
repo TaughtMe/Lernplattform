@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 
 test("the cloud sync card opens the WebDAV form on demand and stays accessible", async ({

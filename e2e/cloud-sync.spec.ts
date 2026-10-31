@@ -1,11 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import {
   expect,
+  hydrationAware,
   test,
   type Browser,
   type BrowserContext,
   type Page,
-} from "@playwright/test";
+} from "./fixtures";
 import { createFakeWebDav } from "../src/integrations/cloud-sync/testing/fake-webdav";
 import { markOwnDevice } from "./teacher-device-helpers";
 
@@ -61,7 +62,7 @@ async function device(browser: Browser, baseURL: string | undefined) {
   // Mit Vorschau fragt der Lehrerbereich nach dem Gerätetyp; beide Geräte sind
   // hier eigene Lehrergeräte („Tafel“ ist nur ihr Name).
   await markOwnDevice(context);
-  const page = await context.newPage();
+  const page = hydrationAware(await context.newPage());
   return { context, page };
 }
 

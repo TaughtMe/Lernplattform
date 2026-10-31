@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "../fixtures";
 import { readFileSync } from "node:fs";
 import { revealAndRelease } from "./hold";
 const LIVE_APP_VERSION = `lernraum-${JSON.parse(readFileSync("package.json", "utf8")).version}`;

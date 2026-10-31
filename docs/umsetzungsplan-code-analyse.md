@@ -34,8 +34,8 @@ absichert. Teilplan 4 hat mehrere Stufen und darf über mehrere Pull Requests ge
   committete Config mit `executablePath: "/opt/pw-browsers/chromium"` starten; nicht
   `playwright install` ausführen.
 - **Prüfungen vor jedem Push:** `npm run check` vollständig (Formatierung, Lint, Typen,
-  Abdeckung, Datenbankvertrag, Build und Render-Test). Danach `public/sw.js` und
-  `public/version.json` zurücksetzen, falls der Build sie verändert hat. Bei Änderungen an Oberfläche oder Routen zusätzlich
+  Abdeckung, Datenbankvertrag, Build und Render-Test). `public/sw.js` und
+  `public/version.json` erzeugt der Build; sie sind nicht eingecheckt (A-014). Bei Änderungen an Oberfläche oder Routen zusätzlich
   die im Teilplan genannten Playwright-Tests (Projekte `desktop-chromium` und `mobile-chrome`).
   Die volle Cross-Browser-Suite läuft in GitHub; deren Status nach dem Push nicht wiederholt
   abfragen (siehe `AGENTS.md`). Ein lokaler `npm run test:design` mit älterem Chromium ist nur im Vergleich aussagekräftig: Denselben Lauf auf dem Ausgangsstand (vor den eigenen Commits) wiederholen; nur zusätzliche rote Ansichten zählen als Befund. Maßgeblich ist `design-quality` in GitHub (siehe `docs/design/README.md`).

@@ -90,6 +90,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 55  | Wortspeicher                                        | gültig                                             | Teilweise                  | Wiederholungsregeln widersprechen Vault 06 (A-004, D-001)                    |
 | 56  | Textbox-Heft-Layout                                 | gültig                                             | Implementiert              | –                                                                            |
 | 57  | Tagesportion 20 und Wiederholungsregeln             | gültig                                             | Implementiert              | Stückzahl statt Zeitbudget, Lernwörter ohne Fälligkeitsschutz (D-011, A-004) |
+| 58  | Vorlesen nur in der Aufgabe                         | gültig; nimmt D5-3 für Start- und Einstellungsblätter zurück | Implementiert      | –                                                                            |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 
@@ -278,5 +279,8 @@ sie gesondert gekennzeichnet.
 ## Pflegehinweis
 
 Neue Entscheidungen werden weiterhin im Entscheidungsprotokoll eingetragen und
-hier mit einer Zeile ergänzt. Entscheidung 53 sollte zusätzlich in das
+hier mit einer Zeile ergänzt. Eine zurückgenommene oder umgedrehte Festlegung
+bekommt ebenfalls einen Eintrag: mit „Zurückgenommen“ (was vorher galt, wann
+und warum es endete) und „Nicht wieder einbauen“, damit eine spätere Sitzung
+sie nicht erneut umsetzt. Entscheidung 53 sollte zusätzlich in das
 Entscheidungsprotokoll übernommen werden (Vorschlag zur Prüfung).
