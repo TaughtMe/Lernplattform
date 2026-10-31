@@ -18,8 +18,10 @@ describe("Vokabeltabelle", () => {
       { a: "go", b: "gehen", tag: "" },
     ]);
     expect(sourceFromRows(rows)).toBe("school;Schule;Unit 3\ngo;gehen");
-    // Ein Semikolon in der Zelle erzwingt Tab als Trenner.
-    expect(sourceFromRows([{ a: "a;b", b: "c", tag: "" }])).toBe("a;b\tc");
+    // Ein Semikolon in der Zelle steht in Anführungszeichen und bleibt lesbar.
+    const quoted = sourceFromRows([{ a: "a;b", b: "c", tag: "" }]);
+    expect(quoted).toBe('"a;b";c');
+    expect(rowsFromSource(quoted)).toEqual([{ a: "a;b", b: "c", tag: "" }]);
     expect(sourceFromRows([{ a: "", b: "", tag: "" }])).toBe("");
   });
 
@@ -39,5 +41,14 @@ describe("Vokabeltabelle", () => {
       { a: "blue", b: "blau", tag: "Farben" },
     ]);
     expect(swapRows(base)).toEqual([{ a: "y", b: "x", tag: "" }]);
+  });
+
+  it("lässt den Tag nie in der Rückseite, auch bei gemischten Trennern", () => {
+    const expected = [{ a: "Pasta | Nudeln", b: "pasta", tag: "Unit 1" }];
+    expect(rowsFromSource("Pasta | Nudeln\tpasta;Unit 1")).toEqual(expected);
+    expect(pasteRows([], 0, "Pasta | Nudeln\tpasta;Unit 1\nx;y")).toEqual([
+      ...expected,
+      { a: "x", b: "y", tag: "" },
+    ]);
   });
 });

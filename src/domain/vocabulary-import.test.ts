@@ -26,8 +26,11 @@ describe("parseVocabularyImport", () => {
     ]);
   });
 
-  it("prefers tabs so semicolons stay inside a cell", () => {
-    expect(pairs("a; b\tc")).toEqual([["a; b", "c", undefined]]);
+  it("splits at both separators in every line, so a mix never leaves a tag in the back", () => {
+    expect(pairs("a; b\tc")).toEqual([["a", "b", "c"]]);
+    expect(pairs("Pasta | Nudeln\tpasta;Unit 1")).toEqual([
+      ["Pasta | Nudeln", "pasta", "Unit 1"],
+    ]);
   });
 
   it("keeps alternatives with a pipe and reads the third column as tag", () => {
@@ -155,6 +158,122 @@ describe("parseVocabularyImport", () => {
     expect(pair?.right).toEqual({ primary: "groß", alternatives: ["riesig"] });
     const [plain] = parseVocabularyTable("groß;groß, riesig");
     expect(plain?.right).toEqual({ primary: "groß, riesig", alternatives: [] });
+  });
+});
+
+describe("Import-Fehler: Tag in der Rückseite (gemischte Trenner)", () => {
+  // Fehlerbild aus der Kartenliste: Rückseite „pasta;Unit 1“ und zusätzlich
+  // der Tag „Unit 1“. Ursache war die Wahl des Trenners je Zeile: Enthielt die
+  // Zeile einen Tab, blieb jedes Semikolon Teil der Zelle.
+  const expected = [
+    ["Pasta | Nudeln", "pasta", "Unit 1"],
+    ["mit Kohlensäure", "fizzy (drink/water)", "Unit 1"],
+    ["Nachtisch | Dessert", "dessert", "Unit 1"],
+    ["als Snack", "as a snack", "Unit 1"],
+  ];
+
+  it("liest eine Semikolon-CSV aus Excel (CRLF, BOM, Kopfzeile)", () => {
+    const csv =
+      "\uFEFFVorderseite;Rückseite;Tag\r\n" +
+      "Pasta | Nudeln;pasta;Unit 1\r\n" +
+      "mit Kohlensäure;fizzy (drink/water);Unit 1\r\n" +
+      "Nachtisch | Dessert;dessert;Unit 1\r\n" +
+      "als Snack;as a snack;Unit 1\r\n";
+    expect(pairs(csv)).toEqual(expected);
+  });
+
+  it("liest Tab-getrennte Zeilen aus Sheets", () => {
+    const tsv = expected.map((row) => row.join("\t")).join("\r\n");
+    expect(pairs(tsv)).toEqual(expected);
+  });
+
+  it("liest eine Datei mit gemischten Trennern, auch innerhalb einer Zeile", () => {
+    const mixed = [
+      "Pasta | Nudeln\tpasta;Unit 1",
+      "mit Kohlensäure;fizzy (drink/water)\tUnit 1",
+      "Nachtisch | Dessert\tdessert\tUnit 1",
+      "als Snack;as a snack;Unit 1",
+    ].join("\n");
+    expect(pairs(mixed)).toEqual(expected);
+  });
+
+  it("lässt eine dritte Tab-Spalte nie in der Rückseite stehen", () => {
+    // Der Tag steht schon in Spalte C, das Semikolon-Stück ist dieselbe Angabe.
+    const [entry] = parseVocabularyImport(
+      "Pasta | Nudeln\tpasta;Unit 1\tUnit 1",
+    ).entries;
+    expect(entry).toMatchObject({
+      front: "Pasta | Nudeln",
+      back: "pasta",
+      tag: "Unit 1",
+    });
+  });
+
+  it("behandelt „|“, „/“ und Klammern als Teil der Zelle, nie als Trenner", () => {
+    expect(
+      pairs("fizzy | sparkling\tmit Kohlensäure / sprudelnd (Getränk);Unit 2"),
+    ).toEqual([
+      ["fizzy | sparkling", "mit Kohlensäure / sprudelnd (Getränk)", "Unit 2"],
+    ]);
+    expect(pairs("(to) go;gehen / fahren | laufen;Verben")).toEqual([
+      ["(to) go", "gehen / fahren | laufen", "Verben"],
+    ]);
+  });
+
+  it("entfernt CSV-Anführungszeichen und behält Trenner in der Zelle", () => {
+    expect(
+      pairs(
+        '"Pasta | Nudeln";"pasta";"Unit 1"\r\n' +
+          '"Haus";"home; house";"Unit 1"\r\n' +
+          '"Er sagt ""hi""";"he says ""hi""";\r\n' +
+          '"a\tb";c',
+      ),
+    ).toEqual([
+      ["Pasta | Nudeln", "pasta", "Unit 1"],
+      ["Haus", "home; house", "Unit 1"],
+      ['Er sagt "hi"', 'he says "hi"', undefined],
+      ["a\tb", "c", undefined],
+    ]);
+  });
+
+  it("lässt unvollständige Anführungszeichen stehen", () => {
+    expect(
+      pairs('5" Zoll;inch\n"Hallo" sagte er;said;Unit 1\n"offen;x'),
+    ).toEqual([
+      ['5" Zoll', "inch", undefined],
+      ['"Hallo" sagte er', "said", "Unit 1"],
+      ['"offen', "x", undefined],
+    ]);
+  });
+
+  it("zeigt in der Vorschau Karten ohne Tag in der Rückseite", () => {
+    const { entries } = parseVocabularyImport(
+      "Pasta | Nudeln\tpasta;Unit 1\tUnit 1",
+    );
+    expect(toLearningBoxImportRows(entries)).toEqual([
+      { question: "Pasta | Nudeln", answer: "pasta", tag: "Unit 1" },
+    ]);
+  });
+
+  it("liest dieselben Zeilen im Laufdiktat gleich", () => {
+    const [pair] = parseVocabularyTable("Pasta | Nudeln\tpasta;Unit 1");
+    expect(pair).toMatchObject({
+      left: { primary: "Pasta", alternatives: ["Nudeln"] },
+      right: { primary: "pasta", alternatives: [] },
+      tag: "Unit 1",
+    });
+  });
+
+  it("trennt auch hier am Komma nur nach Bestätigung (C2-3)", () => {
+    const line = "groß, riesig\tbig, huge;Unit 1";
+    expect(parseVocabularyImport(line).entries[0]).toMatchObject({
+      front: "groß, riesig",
+      back: "big, huge",
+      tag: "Unit 1",
+    });
+    expect(
+      parseVocabularyImport(line, { commaSeparates: true }).entries[0],
+    ).toMatchObject({ front: "groß | riesig", back: "big | huge" });
   });
 });
 

@@ -9,11 +9,17 @@ import {
  * Eine Vokabel pro Zeile. Spalten sind mit Tabulator (aus Excel oder Sheets
  * kopiert) oder Semikolon getrennt, das Komma ist bewusst kein Trenner, weil
  * es in Vokabeln vorkommt. Die dritte Spalte ist der Tag; weitere richtige
- * Antworten stehen mit „|“ in derselben Zelle.
+ * Antworten stehen mit „|“ in derselben Zelle („/“ und Klammerteile bleiben
+ * ebenfalls in der Zelle).
  *
- * Ein Semikolon in einer Antwort („home; house“) ist deshalb ein
- * Spaltentrenner: „house“ wird zum Tag, und ab der vierten Spalte wird alles
- * verworfen. Die Vorschau zeigt den Tag, so fällt das vor dem Übernehmen auf.
+ * Beide Trenner gelten in jeder Zeile, auch gemischt („Pasta\tpasta;Unit 1“
+ * sind drei Spalten). Früher entschied ein Tab die ganze Zeile, dann blieb
+ * „pasta;Unit 1“ als Rückseite stehen. Ein Semikolon in einer Antwort
+ * („home; house“) ist deshalb ein Spaltentrenner: „house“ wird zum Tag, und
+ * ab der vierten Spalte wird alles verworfen. Die Vorschau zeigt den Tag, so
+ * fällt das vor dem Übernehmen auf. Wer ein Semikolon oder einen Tab in der
+ * Zelle braucht, setzt die Zelle wie in CSV in Anführungszeichen
+ * (`"home; house"`, ein Anführungszeichen darin doppelt).
  * Das Komma trennt Alternativen nur auf ausdrückliche Bestätigung
  * (`commaSeparates`, G-003); `commaCandidates` zählt, wie viele Zeilen davon
  * betroffen wären, damit die Oberfläche den Schalter anbieten kann.
@@ -64,10 +70,58 @@ export const VOCABULARY_SKIP_REASONS = {
 const HEADER_FRONT = new Set(["vorderseite", "front"]);
 const HEADER_BACK = new Set(["rückseite", "rueckseite", "back"]);
 
-function splitCells(line: string) {
-  return (line.includes("\t") ? line.split("\t") : line.split(";")).map(
-    (cell) => cell.trim(),
-  );
+const isDelimiter = (char: string | undefined) => char === ";" || char === "\t";
+
+/**
+ * Zerlegt eine Zeile in Zellen: Tab und Semikolon trennen, beides auch in
+ * derselben Zeile. Eine Zelle in geraden Anführungszeichen (CSV-Export aus
+ * Excel oder Sheets) behält Trenner und doppelte Anführungszeichen; ohne
+ * schließendes Anführungszeichen vor dem nächsten Trenner gilt sie als
+ * gewöhnlicher Text.
+ */
+export function splitVocabularyCells(line: string): string[] {
+  const cells: string[] = [];
+  let start = 0;
+  for (;;) {
+    let open = start;
+    while (line[open] === " ") open += 1;
+    if (line[open] === '"') {
+      let value = "";
+      let at = open + 1;
+      let closed = false;
+      while (at < line.length) {
+        if (line[at] !== '"') value += line[at++];
+        else if (line[at + 1] === '"') {
+          value += '"';
+          at += 2;
+        } else {
+          closed = true;
+          at += 1;
+          break;
+        }
+      }
+      let after = at;
+      while (line[after] === " ") after += 1;
+      if (closed && (after >= line.length || isDelimiter(line[after]))) {
+        cells.push(value.trim());
+        if (after >= line.length) return cells;
+        start = after + 1;
+        continue;
+      }
+    }
+    let end = start;
+    while (end < line.length && !isDelimiter(line[end])) end += 1;
+    cells.push(line.slice(start, end).trim());
+    if (end >= line.length) return cells;
+    start = end + 1;
+  }
+}
+
+/** Gegenstück zu `splitVocabularyCells`: setzt eine Zelle bei Bedarf in Anführungszeichen. */
+export function quoteVocabularyCell(cell: string): string {
+  return /[;\t]/.test(cell) || cell.startsWith('"')
+    ? `"${cell.replaceAll('"', '""')}"`
+    : cell;
 }
 
 /** Kopfzeile der Vorlage: `Vorderseite;Rückseite[;Tag]`, auch englisch. */
@@ -121,7 +175,7 @@ export function parseVocabularyImport(
       if (!line) return;
       ordinal += 1;
       const lineNumber = index + 1;
-      const cells = splitCells(line);
+      const cells = splitVocabularyCells(line);
       // Nur die erste nicht leere Zeile kann eine Kopfzeile sein.
       if (ordinal === 0 && isHeaderLine(cells)) {
         headerSkipped = true;

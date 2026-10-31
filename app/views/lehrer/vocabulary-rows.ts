@@ -1,16 +1,21 @@
 /**
  * Zeilen der Vokabeltabelle (Freigabe an Schüler, 17b) und ihr Textformat
  * in der Ablage: eine Zeile je Paar, `links;rechts;tag` (Tab statt `;`
- * erlaubt), Alternativen mit `|` bleiben Teil der Zelle.
+ * erlaubt, auch gemischt), Alternativen mit `|` bleiben Teil der Zelle.
+ * Zerlegt wird wie beim Import (`splitVocabularyCells`).
  */
+import {
+  quoteVocabularyCell,
+  splitVocabularyCells,
+} from "../../../src/domain/vocabulary-import";
+
 export type VocabularyRowValue = { a: string; b: string; tag: string };
 
 const EMPTY: VocabularyRowValue = { a: "", b: "", tag: "" };
 
-/** Zerlegt eine Zeile an Tab, sonst an Semikolon. */
+/** Zerlegt eine Zeile an Tab und Semikolon, die dritte Spalte ist der Tag. */
 function splitLine(line: string): VocabularyRowValue {
-  const cells = line.includes("\t") ? line.split("\t") : line.split(";");
-  const [a = "", b = "", tag = ""] = cells.map((cell) => cell.trim());
+  const [a = "", b = "", tag = ""] = splitVocabularyCells(line.trim());
   return { a, b, tag };
 }
 
@@ -26,17 +31,15 @@ export function rowsFromSource(source: string): VocabularyRowValue[] {
 /**
  * Zeilen → Text der Ablage. Auch halb ausgefüllte Zeilen bleiben erhalten
  * (der Leser überspringt sie), leere entfallen. Enthält eine Zelle ein
- * Semikolon, trennt die Zeile mit Tab.
+ * Semikolon oder einen Tab, steht sie in Anführungszeichen.
  */
 export function sourceFromRows(rows: readonly VocabularyRowValue[]): string {
   return rows
     .filter((row) => row.a.trim() || row.b.trim() || row.tag.trim())
     .map((row) => {
-      const cells = [row.a, row.b, ...(row.tag.trim() ? [row.tag] : [])].map(
-        (cell) => cell.trim(),
-      );
-      const separator = cells.some((cell) => cell.includes(";")) ? "\t" : ";";
-      return cells.join(separator);
+      return [row.a, row.b, ...(row.tag.trim() ? [row.tag] : [])]
+        .map((cell) => quoteVocabularyCell(cell.trim()))
+        .join(";");
     })
     .join("\n");
 }
