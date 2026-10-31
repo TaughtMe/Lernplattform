@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { revealAndRelease } from "./hold";
 
 /** Text-Laufdiktat: Falsch geschriebene Wörter landen im Wortspeicher des Kindes. */

@@ -661,3 +661,16 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Begründung:** Ein erreichbares Tagesziel motiviert, eine Zahl über 200 entmutigt. Verteiltes Üben mit wachsenden Abständen festigt besser als Aufschieben und späteres Abarbeiten. Der Rückstand bleibt im Lernstand erhalten, wird aber nicht als Zahl gezeigt und schiebt sich nicht in den Vordergrund. Wer die Portion geschafft hat, darf frei weiterüben, ohne dass das Ziel mitwächst.
 
 **Bekannte Grenzen:** Ein Plan wird beim ersten Öffnen einer Lernseite am Tag erzeugt; Karten, die danach angelegt oder importiert werden, kommen erst am nächsten Tag in die Portion. Klassenaufgaben und Wortschatz-Ereignisse ohne LernBox-Karte führen über ihre eigene Übungsroute, nicht über das Modul. Wortspeicher-Boxen, Textbox und Tastschreiben sind nicht Teil der Portion.
+
+## 58. Vorlesen nur in der Aufgabe – 31. Oktober 2026
+
+**Beschlossen:** Der Knopf „Vorlesen“ (`app/ui/read-aloud-button.tsx`, nur lokale Stimmen, Befund B-012) steht dort, wo das Kind den Text für die Aufgabe braucht. Die Lernen-Startseite und die Start- und Einstellungsblätter vor einer Runde (LernBox, Wortspeicher, Kopfrechnen, Laufdiktat allein) haben ihn nicht.
+
+**Zurückgenommen:** In D5-3 (C-007, `docs/umsetzungsplan-audit-welle-3.md`) bekamen am 28. Oktober 2026 „die Anleitungen der Hauptabläufe“ einen Vorlese-Knopf, auch die Begrüßung auf der Startseite und die Startblätter. Am 30. Oktober entfiel er auf der Startseite, am 31. Oktober auf den Start- und Einstellungsblättern. Die Komponente bleibt erhalten.
+
+**Begründung:** Vorlesen hilft beim Lösen einer Aufgabe, nicht bei Begrüßung und Einstellungen. Auf diesen Blättern wäre der Knopf ein weiteres Bedienelement ohne Lernnutzen.
+
+**Nicht wieder einbauen:** Der Knopf kommt nicht zurück auf Startseite, Start- oder Einstellungsblätter, auch wenn eine Anleitung dort lang wirkt. Eine neue Stelle in einer Aufgabe ist erlaubt.
+
+**Bekannte Grenzen:** Kinder, die noch nicht lesen können, brauchen für den Einstieg in eine Runde weiter Hilfe von Erwachsenen. Ohne lokale deutsche Stimme fehlt der Knopf überall.
+

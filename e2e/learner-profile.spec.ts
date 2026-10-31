@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("the profile uses original animals, keeps the choice and supports keyboard and small screens", async ({
   page,

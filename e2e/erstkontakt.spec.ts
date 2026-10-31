@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 import { seedDueWords } from "./wortspeicher-helpers";
 

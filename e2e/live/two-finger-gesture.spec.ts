@@ -1,4 +1,4 @@
-import { expect, test, type CDPSession, type Page } from "@playwright/test";
+import { expect, test, type CDPSession, type Page } from "../fixtures";
 import { readFileSync } from "node:fs";
 
 const LIVE_APP_VERSION = `lernraum-${JSON.parse(readFileSync("package.json", "utf8")).version}`;

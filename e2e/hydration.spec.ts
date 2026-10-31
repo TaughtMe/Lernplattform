@@ -2,7 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 // Eingaben vor der Hydration (Welle 3): Auf einem langsamen Schul-iPad kommt
 // das HTML lange vor dem JavaScript an. Dieser Test verzichtet bewusst auf
-// `hydrated()` aus hydration-helpers.ts und bedient die Seite, solange die
+// `hydrated()` aus hydration-helpers.ts und auf das automatische Warten aus
+// fixtures.ts (deshalb der Import direkt aus @playwright/test) und bedient die Seite, solange die
 // Skripte noch unterwegs sind. Erwartet wird: Bedienelemente sind erkennbar
 // inaktiv, ein früher Tipp bewirkt nichts Halbes und getippter Text geht nicht
 // verloren, weil das Feld ihn gar nicht erst annimmt.

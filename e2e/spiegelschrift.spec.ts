@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { TEXTBOX_TEXTS } from "../src/domain/textbox-library";
 
 const text = TEXTBOX_TEXTS[0]!;

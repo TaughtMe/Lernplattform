@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, hydrationAware, test, type Page } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 import { createBox } from "./wortspeicher-helpers";
 
@@ -95,7 +95,7 @@ test("Sicherung rettet unlesbare Originale auch über ein leeres Profil", async 
     locale: "de-DE",
   });
   try {
-    const target = await fresh.newPage();
+    const target = hydrationAware(await fresh.newPage());
     await target.goto("/lernen/einstellungen");
     await expect(target.getByLabel("Sicherung laden")).toBeEnabled();
     await target.getByLabel("Sicherung laden").setInputFiles(path!);
