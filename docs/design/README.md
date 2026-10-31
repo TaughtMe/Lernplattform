@@ -64,4 +64,4 @@ Bewusst erlaubt bleiben „Stapel“ (in der LernBox ein bekanntes Wort; kein Ve
 
 Neue Fachwörter kommen mit Ersatz und Begründung in die Liste. Eine Ausnahme für eine einzelne Datei steht mit Grund in `CHILD_GLOSSARY_EXCEPTIONS`. Intern (Code, Kommentare, Domänenfehler, Tests) dürfen die Fachwörter bleiben.
 
-**Vorlesen.** Anleitungen in den Übungen haben den Knopf „Vorlesen“ (`app/ui/read-aloud-button.tsx`). Er nutzt nur Stimmen, die auf dem Gerät laufen (Befund B-012), und fehlt, wenn es keine gibt. Die Lernen-Startseite hat keinen Vorlese-Knopf.
+**Vorlesen.** Der Knopf „Vorlesen“ (`app/ui/read-aloud-button.tsx`) gehört in die Aufgabe, wo das Kind den Text braucht. Die Start- und Einstellungsblätter vor einer Runde (LernBox, Wortspeicher, Kopfrechnen, Laufdiktat allein) und die Lernen-Startseite haben ihn nicht. Er nutzt nur Stimmen, die auf dem Gerät laufen (Befund B-012), und fehlt, wenn es keine gibt.

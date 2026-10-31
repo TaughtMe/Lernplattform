@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ReadAloudButton } from "../../../ui/read-aloud-button";
 import { plural } from "./format";
 import { Modal } from "./modal";
 import type { LbDirection, LbMode, LernBoxScreenProps } from "./types";
@@ -73,9 +72,6 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
             Mündlich zählt bis Box 3. Danach musst du schreiben.
           </p>
         ) : null}
-        <ReadAloudButton
-          text={`Wie willst du üben? Du kannst schreiben oder mündlich üben. Tippe dann auf Los geht's.`}
-        />
       </div>
       {directionFromPlan ? null : (
         <div className={styles.field}>

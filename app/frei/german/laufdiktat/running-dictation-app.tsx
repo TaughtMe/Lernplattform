@@ -31,7 +31,6 @@ import {
 } from "../../../../src/domain/running-dictation-snapshot";
 import { createLearningBoxRepository } from "../../../../src/storage/personal-learning-events";
 import { Icon } from "../../../ui/icons";
-import { ReadAloudButton } from "../../../ui/read-aloud-button";
 import { useRoundGuard } from "../../../ui/round-guard";
 import { useRoundSnapshot } from "../../../ui/use-round-snapshot";
 import { ResumeOffer } from "../../../views/shell/resume-offer";
@@ -288,7 +287,6 @@ export function RunningDictationApp() {
             Laufdiktat
           </h1>
           <p className="ui-small ui-muted">{SETUP_INTRO}</p>
-          <ReadAloudButton text={SETUP_INTRO} />
         </div>
 
         {roundSnapshot.snapshot ? (

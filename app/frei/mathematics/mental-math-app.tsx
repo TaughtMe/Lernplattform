@@ -54,7 +54,6 @@ import {
 import { SolutionHelp } from "./solution-help";
 import { describeRound, operationLabels, todaysReviews } from "./round-text";
 import { Icon } from "../../ui/icons";
-import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { useRoundGuard } from "../../ui/round-guard";
 import { useRoundSnapshot } from "../../ui/use-round-snapshot";
 import { ResumeOffer } from "../../views/shell/resume-offer";
@@ -561,7 +560,6 @@ export function MentalMathApp({
             Kopfrechnen
           </h1>
           <p className="ui-small ui-muted">{SETUP_INTRO}</p>
-          <ReadAloudButton text={SETUP_INTRO} />
         </div>
 
         {roundSnapshot.snapshot ? (
