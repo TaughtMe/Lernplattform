@@ -59,7 +59,7 @@ Nicht ohne neue Architekturentscheidung eingeführt werden globale State-Manager
 
 ### Bei jeder Änderung
 
-`npm run check` muss erfolgreich sein. Es prüft Formatierung, Linting, strikte Typen, Testabdeckung, Produktions-Build und Server-Rendering.
+`npm run check` muss vor der Zusammenführung erfolgreich sein; verbindlich ist der Lauf im GitHub-Job `code-quality`. Es prüft Formatierung, Linting, strikte Typen, Testabdeckung, Datenbankverträge, Produktions-Build und Server-Rendering. Welche Teile davon lokal vor dem Push laufen, regelt `AGENTS.md` („Prüfungen und CI“) risikobasiert; das Gate selbst bleibt unverändert.
 
 ### Bei jeder Änderung an Oberfläche oder Ablauf
 
@@ -67,7 +67,7 @@ Nicht ohne neue Architekturentscheidung eingeführt werden globale State-Manager
 
 `npm run test:e2e:production` (`playwright.production.config.ts`, Spezifikation `e2e/production/hauptseiten.spec.ts`) prüft die Hauptseiten gegen den **Produktions-Build**: Nach `npm run build` läuft das Worker-Artefakt `dist/server` mit `wrangler dev --local` (kein Login, keine Netzressourcen); `vinext start` scheitert unter Node an `cloudflare:`-Importen (`ERR_UNSUPPORTED_ESM_URL_SCHEME`). Anders als die Entwicklungs-Suite gibt es hier weder Vorschau-Cookie noch `LERNRAUM_VORSCHAU`, und der Service Worker ist erlaubt. Geprüft werden je Hauptseite Status 200, Überschrift, axe (WCAG A/AA 2.2), eine Interaktion, die erst nach der Hydration reagiert (Hell/Dunkel-Umschalter, Plus-Menü der LernBox, clientseitige Navigation ohne Neuladen), keine Konsolen- und Laufzeitfehler; außerdem, dass Bereiche mit Stufe `vorschau` oder `aus` umleiten, und dass sich `/sw.js` registriert. In GitHub läuft der Lauf als Job `production` und gehört zum Sammelstatus `browser-quality`. Je Engine laufen zwei Projekte gegen denselben Build: Chromium als `production-chromium` (Desktop) und `production-mobile-chrome` (Pixel 7), WebKit als `production-webkit` (Desktop Safari) und `production-iphone` (iPhone 14); die Spezifikation ist unverändert und gilt für alle vier. Eine Wiederholung gibt es nur in CI und nur für die Spur; `failOnFlakyTests` lässt den Lauf trotzdem scheitern. Die Default-Suite sammelt `e2e/production` nicht ein.
 
-Zusätzlich muss mindestens `npm run test:e2e:chromium` laufen. Vor einem Meilenstein läuft `npm run quality` über die vollständige Browser- und Gerätematrix.
+Zusätzlich muss mindestens `npm run test:e2e:chromium` erfolgreich sein; in GitHub läuft die vollständige Browser-Matrix für jeden Pull Request mit Codeänderungen. Vor einem Meilenstein läuft `npm run quality` über die vollständige Browser- und Gerätematrix.
 
 ### Mindestabdeckung
 

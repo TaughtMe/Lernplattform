@@ -10,6 +10,7 @@ Setze Lernraum-Änderungen als überprüfbare Nutzerergebnisse um. Ermittle zuer
 ## Relevanten Kontext laden
 
 - Beachte `AGENTS.md` und behandle es als aktuellen Einstieg in die Projektregeln.
+- Lies aus den folgenden Dokumenten nur die betroffenen Abschnitte; `docs/README.md` ordnet sie ein.
 - Lies `docs/architecture.md` bei Änderungen an Modulen, Datenbereichen, Speicherung oder Integration.
 - Lies `docs/engineering-quality.md` für die betroffenen Architektur-, Test-, Barrierefreiheits- und Sicherheitsregeln.
 - Lies `docs/device-support.md` bei Änderungen an Oberfläche oder Bedienablauf.
@@ -43,7 +44,6 @@ Behandle Schülerdaten, Rollenentscheidungen, Authentifizierung, Freigabecodes, 
 
 ## Abschließen
 
-- Wähle lokale Prüfungen proportional zu Risiko und Umfang.
-- Prüfe vor einem Push die relevanten statischen Checks und den Produktions-Build; ergänze bei UI-Änderungen fokussierte Browser- und Barrierefreiheitstests.
-- Frage externe CI-Ergebnisse nur auf ausdrücklichen Wunsch oder bei einem gemeldeten konkreten Fehlschlag ab. Erstelle dafür keine Automation.
+- Prüfe und pushe nach `AGENTS.md` („Prüfungen und CI“, „Branches und Freigabe“): lokale Prüfungen proportional zu Risiko und Umfang, Arbeitsbranch und Pull Request gegen `claude/lernraum-ui-v2`, kein CI-Polling.
+- Kennzeichne Änderungen an Schülerdaten, Speicherung, Migrationen oder Synchronisierung im Pull Request.
 - Berichte knapp das erreichte Nutzerergebnis, die wesentlichen Änderungen und die tatsächlich ausgeführten Prüfungen. Nenne verbleibende Unsicherheiten ausdrücklich.
