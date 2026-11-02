@@ -6,7 +6,7 @@
 
 ## Produktivbranch schützen
 
-- `claude/lernraum-ui-v2` ist der Produktivbranch: nie direkt pushen, nie selbst mergen oder deployen.
+- Produktivbranch ist der GitHub-Standardbranch (`git ls-remote --symref origin HEAD`, derzeit `claude/lernraum-ui-v2`): nie direkt pushen, nie selbst mergen oder deployen.
 - Arbeit auf eigenem Branch, Übernahme nur per Pull Request.
 
 ## Fachliche Arbeit

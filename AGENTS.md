@@ -4,8 +4,8 @@ Gemeinsame, verbindliche Regelbasis für Codex und Claude Code (`CLAUDE.md` verw
 
 ## Branches und Freigabe
 
-- `claude/lernraum-ui-v2` ist der Produktivbranch. Nie direkt darauf pushen.
-- Jede Änderung auf einem eigenen Arbeitsbranch umsetzen und nur per Pull Request gegen `claude/lernraum-ui-v2` anbieten. GitHub Actions laufen für Pull Requests; ein Arbeitsbranch ohne Pull Request wird nicht geprüft (Ausnahme: `codex/**`).
+- Produktivbranch ist immer der **GitHub-Standardbranch** des Repositorys, unabhängig von Name oder Präfix (derzeit `claude/lernraum-ui-v2`, nicht `main`). Vor dem ersten Push ermitteln: `git ls-remote --symref origin HEAD`. Nie raten, nie nach Branchnamen oder Änderungsmenge schließen; ist die Abfrage nicht möglich, nachfragen.
+- Nie direkt auf den Produktivbranch pushen. Jede Änderung auf einem eigenen Arbeitsbranch umsetzen und nur per Pull Request gegen den Produktivbranch anbieten. GitHub Actions laufen für Pull Requests; ein Arbeitsbranch ohne Pull Request wird nicht geprüft (Ausnahme: `codex/**`).
 - Kein automatisches Merge, kein Auto-Merge und kein Deployment in die Produktivumgebung durch Agenten. Merge und Freigabe entscheidet die projektverantwortliche Person.
 - Änderungen mit möglicher Wirkung auf Schülerdaten, Speicherung, Migrationen oder Synchronisierung im Pull Request ausdrücklich als solche kennzeichnen und nach den Risikoregeln des Skills prüfen.
 - Vor riskanten Migrationen (Dexie, Supabase) Wiederherstellbarkeit sicherstellen: Migrationskette getestet, Rückweg oder Sicherung beschrieben.

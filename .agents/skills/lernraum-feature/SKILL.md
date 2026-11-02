@@ -44,6 +44,6 @@ Behandle Schülerdaten, Rollenentscheidungen, Authentifizierung, Freigabecodes, 
 
 ## Abschließen
 
-- Prüfe und pushe nach `AGENTS.md` („Prüfungen und CI“, „Branches und Freigabe“): lokale Prüfungen proportional zu Risiko und Umfang, Arbeitsbranch und Pull Request gegen `claude/lernraum-ui-v2`, kein CI-Polling.
+- Prüfe und pushe nach `AGENTS.md` („Prüfungen und CI“, „Branches und Freigabe“): lokale Prüfungen proportional zu Risiko und Umfang, Arbeitsbranch und Pull Request gegen den Produktivbranch (GitHub-Standardbranch), kein CI-Polling.
 - Kennzeichne Änderungen an Schülerdaten, Speicherung, Migrationen oder Synchronisierung im Pull Request.
 - Berichte knapp das erreichte Nutzerergebnis, die wesentlichen Änderungen und die tatsächlich ausgeführten Prüfungen. Nenne verbleibende Unsicherheiten ausdrücklich.
