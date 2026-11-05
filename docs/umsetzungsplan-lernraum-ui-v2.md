@@ -57,6 +57,10 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
   - Tablet hochkant (ab 760 px Höhe): Die Seite füllt die Höhe, beide Listen scrollen getrennt. Auf niedrigen Bildschirmen (Handy quer) scrollt die Seite.
   - Hinweistext im Suchfeld in `--ink3` statt `#8d8677` (Kontrast AA). Hell/Dunkel steht in Leiste bzw. Kopfzeile; der Designvergleich blendet es aus (`hide`). Der Schutzhinweis ohne Lehrerprofil steht klein am Ende der Seite.
   - Lokaler Designvergleich: 15a 1,07 %, 15c 0,84 %, 15d 0,81 %. Der Rest sind die Schrift der Schaltflächen (fett aus Liberation Sans Regular) und das Logo der Leiste.
+- **Wortspeicher (4d–4f, Status `referenz`, festgehalten 05.11.2026):** Die Seite `/frei/german/lernwoerter` folgt der Vorlage in Aufbau und Stil: dunkle Karte „N Trainingswörter heute“ mit „Gemischt trainieren“, Wortbox-Karten mit Beispielwörtern, Balken „x / y sicher“ und Listen-Knopf, Hinweis „antippen öffnet die Übung“; die Runde mit Zurück-Pfeil, Titel, „Wort n / m“, Fortschrittsbalken, Feld „Wort schreiben“ und „Prüfen“. Sie wird nicht 1:1 verglichen, weil sie bewusst abweicht:
+  - **Eigene Seite unter „Üben“.** Statt „Lernen“ mit Umschalter „Vokabeln | Wortspeicher“ heißt die Seite „Wortspeicher“; LernBox und Wortspeicher haben eigene Kacheln auf `/ueben`. Rechts oben steht „Laufzettel“ statt „Wortliste ansehen und bearbeiten“; die Wörter einer Wortbox bearbeitet der Listen-Knopf der Karte.
+  - **Karten.** Unter dem Balken stehen die zuletzt geübte Stufe und der Fortschritt in der Box („Stufe 3 · 25 % der Box (1 von 4 Wörtern)“ bzw. „Stufe 3 · 8 Wörter geübt“), solange keine Runde abgeschlossen ist „Noch nicht geübt“. Am Ende steht die Karte „Neue Wortbox“. Am Desktop passen vier statt drei Karten nebeneinander.
+  - **Runde nach Stufen (4e).** Die Vorlage zeigt einen Lückensatz mit Lautsprecher und „Tipp“. Der Wortspeicher übt nach Stufen (1 Abschreiben, 2 Wenige Lücken, 3 Viele Lücken, 4 Ansehen & verdecken, 5 Wörter merken, 6 Hören und schreiben) aus `docs/umsetzungsplan-wortspeicher.md`; der Kopf nennt Stufe und Übungsart.
 - **Lehrerbereich (3c/3d, ersetzt durch 15a/15c/15d, Status `referenz`):**
   - Start-Overlay: Es zeigt die vier echten Modi des Laufdiktats statt der drei vereinfachten der Vorlage (Laufdiktat/Test/Üben) und keine Schalter für „Selbstkorrektur“ und „Punkte“, die es fachlich nicht gibt. Der Raumcode erscheint erst in der Lobby, weil er beim Erstellen des Raums entsteht. Das Overlay hat keine Referenzbilder; die Ansicht steht nur im Katalog (`3c-start`, `3d-start`).
   - Ergänzungen ohne Vorlage: Eintrag „Nicht zugeordnet“ in der Leiste, Knopf „Zuordnen“ in der Ablage, Dialog „Klassen zuordnen“, Gruppe „Verwalten“ unter „Bereich“. Alle sind optionale Props; ohne sie zeigt die Ansicht genau die Vorlage.
@@ -98,18 +102,18 @@ Beim Nachmessen der Vorlage fielen drei Browser-Standards auf, die das Aussehen 
 
 Jeder Schritt endet mit grünem Designvergleich, grünen statischen Prüfungen und Freigabe der Ansicht durch die Projektverantwortliche Lehrkraft im Katalog, bevor die Anbindung beginnt.
 
-| Schritt | Screens                    | Ansicht                            | Anbindung                                                                                                           |
-| ------- | -------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 1       | Grundlage                  | ✅ Tokens, Schriften, Vergleich    | –                                                                                                                   |
-| 2       | 2a Startseite              | ✅                                 | ✅ `/`: Tierprofil, Raumcode, QR-Scanner; Tier → eigener Lernraum                                                   |
-| 3       | 5a/5b Laufdiktat Schüler   | ✅ alle Phasen, hell/dunkel        | ✅ `/raum`: Stationen, Halten/Lesen/Schreiben, Hilfen, Battle-Leiste, Ergebnis; Beitritt und Lobby im Schülerrahmen |
-| 4       | 5c/5d Laufdiktat Lehrkraft | ✅ alle Schritte, Optionen-Overlay | ✅ `/lehrer/live`: Text/Vokabeln/Mathe, Satz/Zeile/Wort, Sortieren, Datei, Modi, Optionen, Lobby mit QR, Live, CSV  |
-| 5       | 4a–4c LernBox              | ✅ Leiste einklappbar, hell/dunkel | ✅ `/lernbox`: Ordner, Stapel, Modus/Richtung (auch gemischt), Runde, Vorlesen, Vokabelliste, Import                |
-| 6       | 2b/3a/3b Dashboard         | ✅ 3a/3b, Schülerrahmen, Üben      | ✅ `/lernen`: Tagesziel (Tagesportion), Woche, heute dran, schwierige Wörter; `/ueben`: Bereichskacheln             |
-| 7       | 4d–4f Wortspeicher         | offen                              | offen                                                                                                               |
-| 8       | 1d/2c/3c/3d Lehrerbereich  | ✅ 3c/3d (1d/2c als Referenz)      | ✅ `/lehrer`: Ablage nach Klassen, Startfenster, Rahmen; `/lehrer/live`: Inhalt laden und ablegen, Raumfristen      |
-| 9       | 6a–6c Tastenwelt           | ✅ Lernweg, Übung, Ergebnis        | ✅ `/frei/typing`: Stationen, Fehler-Stopp, Serie, Sterne, Tasten-Extra                                             |
-| 10      | 7a–7c Häuser               | offen                              | offen                                                                                                               |
+| Schritt | Screens                    | Ansicht                              | Anbindung                                                                                                           |
+| ------- | -------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| 1       | Grundlage                  | ✅ Tokens, Schriften, Vergleich      | –                                                                                                                   |
+| 2       | 2a Startseite              | ✅                                   | ✅ `/`: Tierprofil, Raumcode, QR-Scanner; Tier → eigener Lernraum                                                   |
+| 3       | 5a/5b Laufdiktat Schüler   | ✅ alle Phasen, hell/dunkel          | ✅ `/raum`: Stationen, Halten/Lesen/Schreiben, Hilfen, Battle-Leiste, Ergebnis; Beitritt und Lobby im Schülerrahmen |
+| 4       | 5c/5d Laufdiktat Lehrkraft | ✅ alle Schritte, Optionen-Overlay   | ✅ `/lehrer/live`: Text/Vokabeln/Mathe, Satz/Zeile/Wort, Sortieren, Datei, Modi, Optionen, Lobby mit QR, Live, CSV  |
+| 5       | 4a–4c LernBox              | ✅ Leiste einklappbar, hell/dunkel   | ✅ `/lernbox`: Ordner, Stapel, Modus/Richtung (auch gemischt), Runde, Vorlesen, Vokabelliste, Import                |
+| 6       | 2b/3a/3b Dashboard         | ✅ 3a/3b, Schülerrahmen, Üben        | ✅ `/lernen`: Tagesziel (Tagesportion), Woche, heute dran, schwierige Wörter; `/ueben`: Bereichskacheln             |
+| 7       | 4d–4f Wortspeicher         | ✅ als Referenz (siehe Abweichungen) | ✅ `/frei/german/lernwoerter`: Trainingswörter heute, Wortboxen, Stufen, Runde, Laufzettel                          |
+| 8       | 1d/2c/3c/3d Lehrerbereich  | ✅ 3c/3d (1d/2c als Referenz)        | ✅ `/lehrer`: Ablage nach Klassen, Startfenster, Rahmen; `/lehrer/live`: Inhalt laden und ablegen, Raumfristen      |
+| 9       | 6a–6c Tastenwelt           | ✅ Lernweg, Übung, Ergebnis          | ✅ `/frei/typing`: Stationen, Fehler-Stopp, Serie, Sterne, Tasten-Extra                                             |
+| 10      | 7a–7c Häuser               | offen                                | offen                                                                                                               |
 
 Bereiche ohne Vorlage (Klassenverwaltung, Material, Aufgaben, Kopfrechnen) bleiben bis zu einem eigenen Design in ihrer jetzigen Form und werden über das Freigaberegister gesteuert.
 
@@ -141,7 +145,7 @@ Bereiche ohne Vorlage (Klassenverwaltung, Material, Aufgaben, Kopfrechnen) bleib
 - **Cloud-Synchronisation (Grundlage):** WebDAV sofort nutzbar, OneDrive und Google Drive vorbereitet, bis die Konten eingerichtet sind; siehe [cloud-sync.md](cloud-sync.md).
 - **Aufgaben der Lehrkraft** stehen vorerst auf `vorschau` (`lehrer-aufgaben`) und kommen später.
 - **Laufdiktat → LernBox:** Runden-Tag im Vokabelheft (Vorschlag aus den Einstellungen), eigener Tag je Vokabel geht vor. In Stationen wird nicht übernommen, weil sich dort mehrere Kinder ein Gerät teilen.
-- **Noch in alter Oberfläche (im neuen Rahmen):** Wortspeicher, Kopfrechnen, Laufdiktat allein, Klassenseiten und Aufgaben des Lehrerbereichs, bis ihre Screens an der Reihe sind. Klassen, Freigabe an Schüler und Einstellungen folgen seit Oktober 2026 dem Lehrerbereich v2 (17a–c).
+- **Noch in alter Oberfläche (im neuen Rahmen):** Kopfrechnen, Laufdiktat allein, Klassenseiten und Aufgaben des Lehrerbereichs, bis ihre Screens an der Reihe sind. Klassen, Freigabe an Schüler und Einstellungen folgen seit Oktober 2026 dem Lehrerbereich v2 (17a–c).
 
 ## Regeln für die Anbindung
 
