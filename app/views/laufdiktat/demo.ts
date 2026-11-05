@@ -33,7 +33,7 @@ export const DEMO_STUDENT: StudentDictationScreenProps = {
 const DEMO_STUDENTS = [
   { name: "Schlauer Fuchs", animal: "Fuchs", progress: 5, mistakes: 0 },
   { name: "Ruhiges Capybara", animal: "Capybara", progress: 8, mistakes: 1 },
-  { name: "Flinker Igel", animal: "Igel", progress: 3, mistakes: 0 },
+  { name: "Igel", animal: "Igel", progress: 3, mistakes: 0 },
   { name: "Müder Koala", animal: "Koala", progress: 8, mistakes: 2 },
   { name: "Lustiges Lama", animal: "Lama", progress: 6, mistakes: 0 },
   { name: "Wilder Orca", animal: "Orca", progress: 2, mistakes: 0 },

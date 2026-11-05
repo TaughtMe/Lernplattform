@@ -24,10 +24,10 @@ describe("animal profile", () => {
       ).toBe(true);
   });
   it.each([
-    ["Fuchs", "Schneller Fuchs"],
-    ["Katze", "Schnelle Katze"],
-    ["Einhorn", "Schnelles Einhorn"],
-  ])("keeps %s and forms its name", (animal, name) => {
+    ["Fuchs", "Fuchs"],
+    ["Katze", "Katze"],
+    ["Einhorn", "Einhorn"],
+  ])("keeps %s and names it without an adjective", (animal, name) => {
     expect(learnerDisplayName(createLearnerProfile(animal, () => 0))).toBe(
       name,
     );

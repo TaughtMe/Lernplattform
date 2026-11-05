@@ -5,7 +5,7 @@
  * Tier-Raster (Koala, Tiefseefisch, Löwin – je zweimal, in dieser Reihenfolge).
  * Das ist ein Versteck, keine Sicherheitsgrenze: die SVGs sind öffentlich.
  */
-export const FIGURES: ReadonlyArray<{ id: string; name: string }> = [
+export const SECRET_FIGURES: ReadonlyArray<{ id: string; name: string }> = [
   { id: "perlenohrring", name: "Mädchen mit dem Perlenohrring" },
   { id: "cervantes", name: "Cervantes" },
   { id: "demogorgon-1", name: "Demogorgon" },
@@ -60,6 +60,23 @@ export const FIGURES: ReadonlyArray<{ id: string; name: string }> = [
   { id: "yoda-baby", name: "Yoda Baby" },
   { id: "yoda-1", name: "Yoda" },
   { id: "yoda-2", name: "Yoda" },
+];
+
+/**
+ * Schüler-Figuren (schwarz-weiße Zeichnungen, eigene Auswahl): im Profil
+ * immer sichtbar, ohne Tipp-Folge. Name und Raum bleiben wie bei den
+ * geheimen Figuren beim Tier.
+ */
+export const STUDENT_FIGURES: ReadonlyArray<{ id: string; name: string }> = [
+  { id: "schueler-locken", name: "Schülerin mit Locken" },
+  { id: "schueler-pony", name: "Schüler mit Pony" },
+  { id: "schueler-kurzhaar", name: "Schüler mit kurzen Haaren" },
+  { id: "schuelerin-lang", name: "Schülerin mit langen Haaren" },
+];
+
+export const FIGURES: ReadonlyArray<{ id: string; name: string }> = [
+  ...STUDENT_FIGURES,
+  ...SECRET_FIGURES,
 ];
 
 export const FIGURE_IDS = FIGURES.map((figure) => figure.id) as [
