@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, type ReactNode } from "react";
+import { downloadVocabularyTemplate } from "../../ui/vocabulary-template-download";
 import { cx } from "../parts/parts";
 import { ManageIcon, manageStyles as m } from "./manage-parts";
 import { ModalDialog } from "./modal-dialog";
@@ -365,6 +366,14 @@ export function PackageEditor({
             <button
               type="button"
               className={cx(m.soft, m.small, styles.importButton)}
+              onClick={downloadVocabularyTemplate}
+            >
+              <ManageIcon name="download" />
+              Vorlage herunterladen
+            </button>
+            <button
+              type="button"
+              className={cx(m.soft, m.small)}
               onClick={() => fileInput.current?.click()}
             >
               <ManageIcon name="upload" />
