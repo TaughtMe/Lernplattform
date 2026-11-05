@@ -272,11 +272,22 @@ function NavContent(
               type="button"
               className={styles.groupToggle}
               aria-expanded={classesOpen}
+              aria-label="Klassen"
               onClick={() => setClassesOpen((open) => !open)}
             >
               <Chevron open={classesOpen} />
-              Klassen
+              {addClass ? null : "Klassen"}
             </button>
+            {addClass ? (
+              <Link
+                href={addClass.href}
+                className={styles.groupLink}
+                aria-label="Klassenübersicht"
+                onClick={close}
+              >
+                Klassen
+              </Link>
+            ) : null}
             {plus}
           </span>
         ) : (

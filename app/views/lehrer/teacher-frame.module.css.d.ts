@@ -32,6 +32,7 @@ declare const styles: {
   readonly frame: string;
   readonly group: string;
   readonly groupLabel: string;
+  readonly groupLink: string;
   readonly groupToggle: string;
   readonly head: string;
   readonly headTheme: string;

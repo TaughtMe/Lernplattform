@@ -213,6 +213,24 @@
 .liveAction:hover {
   border-color: var(--accent);
 }
+/* Keine Freigabe aktiv: Karte rot statt grün. */
+.liveIdle {
+  border-color: var(--bad);
+}
+.liveIdle .liveHead {
+  border-bottom-color: var(--bad);
+  background: var(--bad-bg);
+}
+.liveIdle .liveDot,
+.liveIdle .liveCount {
+  background: var(--bad);
+}
+.liveIdle .liveCount {
+  color: var(--bad-bg);
+}
+.liveIdle .liveTitle {
+  color: var(--bad);
+}
 .liveEmpty {
   padding: 16px;
   font-size: 13px;

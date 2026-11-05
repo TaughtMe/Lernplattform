@@ -351,6 +351,19 @@
   text-transform: inherit;
   cursor: pointer;
 }
+.groupLink {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  color: inherit;
+  text-decoration: none;
+}
+.groupLink:hover {
+  color: var(--nav-accent);
+}
+.drawerInner .groupLink {
+  min-height: 44px;
+}
 .groupToggle:hover {
   color: var(--nav-accent);
 }
