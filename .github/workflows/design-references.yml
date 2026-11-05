@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
     env:
       BRANCH: ${{ inputs.branch || github.head_ref }}
     steps:

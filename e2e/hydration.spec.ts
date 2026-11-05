@@ -138,7 +138,7 @@ test("Links bleiben vor der Hydration bedienbar", async ({ page }) => {
     page.getByRole("button", { name: "Startpunkt suchen" }).first(),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Profileinstellungen" }),
+    page.getByRole("link", { name: "Profil-Einstellungen" }),
   ).toHaveCSS("pointer-events", "auto");
   release();
 });

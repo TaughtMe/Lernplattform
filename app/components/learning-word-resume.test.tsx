@@ -227,7 +227,9 @@ describe("Wortspeicher: Runde fortsetzen (C-001)", { timeout: 30_000 }, () => {
     }
 
     // Profil.
-    await user.click(screen.getByRole("link", { name: "Profileinstellungen" }));
+    await user.click(
+      screen.getByRole("link", { name: "Profil-Einstellungen" }),
+    );
     await screen.findByRole("alertdialog");
     await user.click(screen.getByRole("button", { name: "Weiterüben" }));
 
