@@ -249,6 +249,28 @@ function neighborHint(parts: MentalMathExpression) {
   return `Nutze die Nachbaraufgabe: ${show(left)} · ${show(right)} = ${show(left)} · ${right - 1} + ${show(left)}.`;
 }
 
+/**
+ * Allgemeine Strategie zu einer Aufgabe mit zwei Zahlen. Nicht als Tipp nach
+ * einem Fehler (dort gibt es bei unbekannter Fehlerart keinen), sondern als
+ * Rückfall im Lösungsweg, wenn kein Teilschritt ohne Ergebnis möglich ist.
+ */
+function strategyHint(parts: MentalMathExpression) {
+  const { left, operator, right } = parts;
+  if (operator === "+" || operator === "-")
+    return (
+      bridgeHint(parts) ??
+      "Rechne in kleinen Schritten: Zerlege die zweite Zahl in Zehner und Einer."
+    );
+  if (operator === "*") {
+    return isInteger(left) && isInteger(right) && Math.min(left, right) >= 2
+      ? neighborHint(parts)
+      : "Rechne zuerst ohne Komma oder Null und setze sie danach wieder ein.";
+  }
+  return right !== 0 && isInteger(left) && isInteger(right)
+    ? `Umkehraufgabe: ${show(left)} : ${show(right)} = ?, weil ? · ${show(right)} = ${show(left)}.`
+    : "Nutze die Umkehraufgabe: Mal und Geteilt gehören zusammen.";
+}
+
 function digitParts(value: number) {
   const digits = String(value);
   return [...digits]

@@ -354,7 +354,12 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
 
     await user.clear(answer);
     await user.type(answer, "8{Enter}");
-    expect(await screen.findByText("Die Lösung ist 55.")).toBeVisible();
+    expect(
+      await screen.findByText("Jetzt rechnest du zu Ende: 50 + 5."),
+    ).toBeVisible();
+    expect(
+      screen.getByText("So geht es:").closest("div"),
+    ).not.toHaveTextContent(/55|Die Lösung/);
     expect(screen.queryByText(/Tipp:/)).not.toBeInTheDocument();
   });
 
@@ -399,7 +404,8 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
     expect(
       screen.queryByRole("button", { name: "Lösungsweg zeigen" }),
     ).not.toBeInTheDocument();
-    await user.type(answer, "9{Enter}");
+    // 6 statt 5: um eins daneben, eine erkennbare Fehlerart mit Tipp.
+    await user.type(answer, "6{Enter}");
     expect(
       await screen.findByRole("button", { name: "Lösungsweg zeigen" }),
     ).toBeVisible();
