@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 test("failed automatic join keeps the code and retries only on request", async ({
   page,

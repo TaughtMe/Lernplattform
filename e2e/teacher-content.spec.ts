@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 
 const CLASS_A = "123e4567-e89b-42d3-a456-426614174001";

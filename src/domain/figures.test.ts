@@ -75,7 +75,7 @@ describe("secret figures", () => {
     expect(avatarLabel("figur:guy-fawkes")).toBe("Guy Fawkes");
     expect(avatarLabel("Fuchs")).toBe("Fuchs");
     // Der Name folgt der Figur, nicht dem vorher gewählten Tier.
-    expect(learnerDisplayName(base)).toBe("Schneller Fuchs");
+    expect(learnerDisplayName(base)).toBe("Fuchs");
     expect(learnerDisplayName(profile)).toBe("Yoda");
     expect(
       learnerProfileSchema.safeParse({ ...base, figure: "unbekannt" }).success,

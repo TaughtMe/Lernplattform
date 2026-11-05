@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { revealAndRelease } from "./hold";
 
 test("completion survives failed delivery, retry and reload", async ({

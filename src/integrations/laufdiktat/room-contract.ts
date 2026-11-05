@@ -34,6 +34,15 @@ export const progressRowSchema = z.object({
   finished: z.boolean(),
   duration_ms: z.number().int().min(0).max(86_400_000).nullish(),
   word_errors: z.record(z.string(), count).nullish(),
+  /**
+   * Erste falsche Antwort je Mathe-Aufgabe (nur Lehrkraft-Abruf). Fehlt das
+   * Feld (ältere Server) oder ist es unlesbar, gilt es als leer: Die CSV-Spalte
+   * bleibt dann leer, der Rest des Abrufs funktioniert weiter.
+   */
+  first_wrong_answers: z
+    .record(z.string().max(2_000), z.string().max(32))
+    .nullish()
+    .catch(undefined),
   station_number: z.number().int().min(1).max(200).nullish(),
 });
 export const studentRowSchema = progressRowSchema.extend({

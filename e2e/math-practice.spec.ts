@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("math errors survive reload and practice works offline with keyboard and help", async ({
   page,
@@ -25,7 +25,8 @@ test("math errors survive reload and practice works offline with keyboard and he
   await page.getByRole("button", { name: "Runde starten" }).click();
   const answer = page.getByRole("textbox", { name: "Dein Ergebnis" });
   await expect(answer).toBeFocused();
-  await answer.fill("54");
+  // 49 = 7 · 7: erkennbare Fehlerart (Nachbaraufgabe), deshalb mit Tipp.
+  await answer.fill("49");
   await answer.press("Enter");
   await expect(page.getByText("Noch nicht.", { exact: true })).toBeVisible();
   await expect(page.getByText(/Nutze die Nachbaraufgabe/)).toBeVisible();

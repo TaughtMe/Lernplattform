@@ -84,22 +84,30 @@ function caseOf(letter: string) {
   return letter === letter.toLocaleLowerCase("de-DE") ? "klein" : "groß";
 }
 
+function nameOf(letter: string) {
+  return letter.trim() === "" ? "Leerzeichen" : letter;
+}
+
 /** Sätze für Screenreader, nur für abweichende Stellen („3. Buchstabe: m statt n“). */
 export function describeLetterDiff(diff: readonly LetterDiff[]): string[] {
   const texts: string[] = [];
   for (const entry of diff) {
     if (entry.kind === "gleich") continue;
     if (entry.kind === "fehlt") {
-      texts.push(`${entry.position}. Buchstabe fehlt: ${entry.expected}`);
+      texts.push(
+        `${entry.position}. Buchstabe fehlt: ${nameOf(entry.expected!)}`,
+      );
     } else if (entry.kind === "zuviel") {
-      texts.push(`${entry.position}. Buchstabe zu viel: ${entry.actual}`);
+      texts.push(
+        `${entry.position}. Buchstabe zu viel: ${nameOf(entry.actual!)}`,
+      );
     } else if (sameLetterIgnoringCase(entry.expected!, entry.actual!)) {
       texts.push(
         `${entry.position}. Buchstabe: ${caseOf(entry.actual!)} statt ${caseOf(entry.expected!)}`,
       );
     } else {
       texts.push(
-        `${entry.position}. Buchstabe: ${entry.actual} statt ${entry.expected}`,
+        `${entry.position}. Buchstabe: ${nameOf(entry.actual!)} statt ${nameOf(entry.expected!)}`,
       );
     }
   }

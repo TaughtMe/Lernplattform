@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // Die Konfiguration blockiert Service Worker; hier werden sie gebraucht.
 test.describe("installability", () => {

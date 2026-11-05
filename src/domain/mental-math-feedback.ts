@@ -31,6 +31,24 @@ export type MentalMathErrorKind =
   | "neighbor-fact"
   | "unknown";
 
+/**
+ * Bezeichnung der vermuteten Fehlerart für Lehrkräfte (CSV-Export, Spalte
+ * „Fehlerart (Vermutung)“). Bei `unknown` gibt es keine Bezeichnung: Eine
+ * leere Zelle ist ehrlicher als ein geratener Name. Kindern nie anzeigen.
+ */
+export const MENTAL_MATH_ERROR_LABELS: Readonly<
+  Record<Exclude<MentalMathErrorKind, "unknown">, string>
+> = {
+  sign: "Vorzeichen",
+  "digit-swap": "Zahlendreher",
+  "place-value": "Stellenwert",
+  "decimal-point": "Komma",
+  "operation-mix": "Rechenart verwechselt",
+  "tens-bridge": "Zehnerübergang",
+  "off-by-one": "um eins daneben",
+  "neighbor-fact": "Nachbaraufgabe",
+};
+
 /** Toleranz für Vergleiche von Dezimalzahlen (Aufgaben rechnen mit 1e-9). */
 const EPSILON = 1e-9;
 
@@ -177,6 +195,7 @@ function bridgeHint(parts: MentalMathExpression): string | null {
   const { left, operator, right } = parts;
   if (!isInteger(left) || !isInteger(right) || left < 0 || right < 0)
     return null;
+  if (right > 0 && right % 10 === 0) return wholeTensHint(parts);
   const ones = left % 10;
   if (ones === 0) return null;
   const step = operator === "+" ? 10 - ones : ones;
@@ -186,13 +205,29 @@ function bridgeHint(parts: MentalMathExpression): string | null {
 }
 
 /**
+ * Plus oder Minus ganze Zehner: Es gibt keinen Zehnerübergang, also auch
+ * nichts „am Zehner zu zerlegen“. Gerechnet wird nur mit den Zehnern, die
+ * Einer bleiben gleich. Wird das Ergebnis negativ, stimmt das nicht mehr.
+ */
+function wholeTensHint({ left, operator, right }: MentalMathExpression) {
+  if (operator === "-" && right > left) return null;
+  const sign = mathOperatorSymbol(operator);
+  const ones = left % 10 === 0 ? "" : " Die Einer bleiben gleich.";
+  return `Rechne nur mit den Zehnern: ${show(left)} ${sign} ${show(right)} heißt ${Math.floor(left / 10)} Zehner ${sign} ${right / 10} Zehner.${ones}`;
+}
+
+/**
  * Kurzer Strategiehinweis für das Kind. Er nennt die Strategie, nie die
  * Fehlerart und nie das Ergebnis; Zahlen aus der Aufgabe dürfen vorkommen.
+ * Bei unbekannter Fehlerart gibt es keinen Hinweis (`null`, Entscheidung
+ * 27.10.2026): Ein geratener Tipp ohne Bezug zum Fehler würde mehr verwirren
+ * als helfen. Der Lösungsweg bleibt davon unberührt.
  */
 export function mentalMathHint(
   task: MentalMathTask,
   errorKind: MentalMathErrorKind,
-): string {
+): string | null {
+  if (errorKind === "unknown") return null;
   const parts = partsOf(task);
   if (!parts)
     return "Rechne Schritt für Schritt: Klammern zuerst, Punkt vor Strich.";
@@ -217,8 +252,6 @@ export function mentalMathHint(
       return "Mach die Probe mit der Umkehraufgabe: Rechne rückwärts und schau, ob du wieder bei der ersten Zahl landest.";
     case "neighbor-fact":
       return neighborHint(parts);
-    case "unknown":
-      return strategyHint(parts);
   }
 }
 
@@ -229,6 +262,11 @@ function neighborHint(parts: MentalMathExpression) {
   return `Nutze die Nachbaraufgabe: ${show(left)} · ${show(right)} = ${show(left)} · ${right - 1} + ${show(left)}.`;
 }
 
+/**
+ * Allgemeine Strategie zu einer Aufgabe mit zwei Zahlen. Nicht als Tipp nach
+ * einem Fehler (dort gibt es bei unbekannter Fehlerart keinen), sondern als
+ * Rückfall im Lösungsweg, wenn kein Teilschritt ohne Ergebnis möglich ist.
+ */
 function strategyHint(parts: MentalMathExpression) {
   const { left, operator, right } = parts;
   if (operator === "+" || operator === "-")

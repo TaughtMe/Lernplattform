@@ -4,6 +4,7 @@ import {
   classifyMentalMathError,
   mentalMathHint,
   mentalMathSolutionSteps,
+  MENTAL_MATH_ERROR_LABELS,
   type MentalMathErrorKind,
 } from "./mental-math-feedback";
 import { parseMentalMathTask, type MathGapSlot } from "./mental-math";
@@ -93,11 +94,13 @@ describe("mentalMathHint", () => {
   it("nennt dem Kind nur Strategien, nie die Fehlerart", () => {
     for (const [kind, examples] of Object.entries(catalogue))
       for (const [source, , gap] of examples) {
+        if (kind === "unknown") continue;
         const hint = mentalMathHint(
           task(source, gap),
           kind as MentalMathErrorKind,
         );
-        expect(hint.length).toBeGreaterThan(10);
+        expect(hint).not.toBeNull();
+        expect(hint!.length).toBeGreaterThan(10);
         for (const word of forbidden) expect(hint).not.toContain(word);
       }
   });
@@ -107,6 +110,7 @@ describe("mentalMathHint", () => {
       for (const [source, , gap] of examples) {
         const t = task(source, gap);
         const hint = mentalMathHint(t, kind as MentalMathErrorKind);
+        if (hint === null) continue;
         const numbers = hint.replace(/,/g, ".").match(/\d+(?:\.\d+)?/g) ?? [];
         // Die Lösung darf nur vorkommen, wenn sie auch in der Aufgabe steht.
         const shown = source.replace(/,/g, ".").match(/\d+(?:\.\d+)?/g) ?? [];
@@ -128,16 +132,26 @@ describe("mentalMathHint", () => {
     expect(mentalMathHint(task("7 * 8"), "neighbor-fact")).toBe(
       "Nutze die Nachbaraufgabe: 7 · 8 = 7 · 7 + 7.",
     );
-    expect(mentalMathHint(task("56 : 8"), "unknown")).toBe(
-      "Umkehraufgabe: 56 : 8 = ?, weil ? · 8 = 56.",
-    );
     expect(mentalMathHint(task("6 * 7", "result"), "operation-mix")).toContain(
       "Probe",
     );
   });
 
-  it("fällt bei Plus und Minus ohne Übergang auf kleine Schritte zurück", () => {
-    expect(mentalMathHint(task("12 + 5"), "unknown")).toContain("Zehner");
+  it("gibt bei unbekannter Fehlerart keinen Hinweis, auch keinen allgemeinen", () => {
+    expect(mentalMathHint(task("56 : 8"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("12 + 5"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("7 * 8"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("7 + 5", "left"), "unknown")).toBeNull();
+    expect(mentalMathHint(task("(2 + 3) * 4"), "unknown")).toBeNull();
+  });
+
+  it("liefert für jede erkannte Fehlerart einen Hinweis", () => {
+    for (const [kind, examples] of Object.entries(catalogue))
+      if (kind !== "unknown")
+        for (const [source, , gap] of examples)
+          expect(
+            mentalMathHint(task(source, gap), kind as MentalMathErrorKind),
+          ).not.toBeNull();
   });
 });
 
@@ -277,7 +291,28 @@ describe("mentalMathSolutionSteps", () => {
         "Rechne in kleinen Schritten: Zerlege die zweite Zahl in Zehner und Einer.",
       ],
     ],
-    ["47 + 30", undefined, ["Zerlege am Zehner: 47 + 30 = 47 + 3 + 27."]],
+    // Ganze Zehner: kein Zehnerübergang, also nicht „am Zehner zerlegen“.
+    [
+      "47 + 30",
+      undefined,
+      [
+        "Rechne nur mit den Zehnern: 47 + 30 heißt 4 Zehner + 3 Zehner. Die Einer bleiben gleich.",
+      ],
+    ],
+    [
+      "11 - 10",
+      undefined,
+      [
+        "Rechne nur mit den Zehnern: 11 − 10 heißt 1 Zehner − 1 Zehner. Die Einer bleiben gleich.",
+      ],
+    ],
+    [
+      "22 - 20",
+      undefined,
+      [
+        "Rechne nur mit den Zehnern: 22 − 20 heißt 2 Zehner − 2 Zehner. Die Einer bleiben gleich.",
+      ],
+    ],
     ["5 * 0", undefined, ["Was passiert, wenn du mit null malnimmst?"]],
     ["1 * 5", undefined, ["Was passiert, wenn du mit eins malnimmst?"]],
   ];
@@ -293,6 +328,10 @@ describe("mentalMathSolutionSteps", () => {
       "9 + 9",
       "100 - 1",
       "15 - 20",
+      // Regression: „= 11 − …“ enthält die Ziffer 1 (= Ergebnis), verrät es aber nicht.
+      "11 - 10",
+      "22 - 20",
+      "33 - 30",
       "1 * 9",
       "0 * 5",
       "10 * 10",
@@ -314,6 +353,22 @@ describe("mentalMathSolutionSteps", () => {
   });
 });
 
+describe("revealing (Testhilfe)", () => {
+  it("liest Zahlen nach „=“ ganz und nicht nur ihre erste Ziffer", () => {
+    expect(revealing(task("11 - 10"), ["11 − 10 = 11 − 1 − 9."])).toEqual([]);
+    expect(revealing(task("22 - 20"), ["22 − 20 = 22 − 2 − 18."])).toEqual([]);
+    expect(revealing(task("2,5 + 1"), ["Rechne 2,5 + 1 = 3,5 − 0."])).toEqual(
+      [],
+    );
+  });
+
+  it("erkennt das Ergebnis weiterhin, auch am Satzende und als Dezimalzahl", () => {
+    expect(revealing(task("11 - 10"), ["11 − 10 = 1."])).toHaveLength(1);
+    expect(revealing(task("22 - 20"), ["Also = 2"])).toHaveLength(1);
+    expect(revealing(task("2,5 + 1"), ["2,5 + 1 = 3,5."])).toHaveLength(1);
+  });
+});
+
 /** Zeilen, die das Endergebnis der Aufgabe nennen (außer als Zahl der Aufgabe selbst). */
 function revealing(t: ReturnType<typeof task>, steps: string[]) {
   const answer = t.answer;
@@ -327,7 +382,7 @@ function revealing(t: ReturnType<typeof task>, steps: string[]) {
     const text = step.replace(/\$[^$]*\$/g, " ").replace(/,/g, ".");
     // „… = <Ergebnis>“ ist immer eine Verrat, auch wenn die Zahl sonst vorkäme.
     for (const match of text.matchAll(
-      /=\s*(−|-)?(\d+(?:\.\d+)?)(?!\s*[:·+−*/])/g,
+      /=\s*(−|-)?(\d+(?:\.\d+)?)(?!\d|\.\d|\s*[:·+−*/])/g,
     )) {
       const value = (match[1] ? -1 : 1) * Number(match[2]);
       if (Math.abs(value - answer) < 1e-9 && !shown.includes(Math.abs(value)))
@@ -452,5 +507,20 @@ describe("Eigenschaft: Der Lösungsweg verrät das Ergebnis nie", () => {
       ),
       { numRuns: 600 },
     );
+  });
+});
+
+describe("Bezeichnungen für Lehrkräfte", () => {
+  it("benennt jede Fehlerart außer unbekannt, ohne Ergebnis", () => {
+    expect(MENTAL_MATH_ERROR_LABELS).toEqual({
+      sign: "Vorzeichen",
+      "digit-swap": "Zahlendreher",
+      "place-value": "Stellenwert",
+      "decimal-point": "Komma",
+      "operation-mix": "Rechenart verwechselt",
+      "tens-bridge": "Zehnerübergang",
+      "off-by-one": "um eins daneben",
+      "neighbor-fact": "Nachbaraufgabe",
+    });
   });
 });

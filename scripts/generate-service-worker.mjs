@@ -19,18 +19,38 @@ const sourceExtensions = new Set([
   ".json",
 ]);
 
+// Testdateien werden nicht ausgeliefert. Sie zählen nicht zum Fingerabdruck,
+// sonst löst eine reine Teständerung bei allen Kindern einen Update-Hinweis aus
+// (Audit A-014).
+const isTestOnly = (name) => /\.(test|spec)\.[^.]+$/.test(name);
+const testOnlyDirectories = new Set(["testing"]);
+
 async function collectFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...(await collectFiles(path)));
-    else if (sourceExtensions.has(extname(entry.name))) files.push(path);
+    if (entry.isDirectory()) {
+      if (!testOnlyDirectories.has(entry.name))
+        files.push(...(await collectFiles(path)));
+    } else if (
+      sourceExtensions.has(extname(entry.name)) &&
+      !isTestOnly(entry.name)
+    )
+      files.push(path);
   }
   return files;
 }
 
-const files = [templatePath, join(projectRoot, "package.json")];
+// public/sw.js und public/version.json sind nicht eingecheckt (.gitignore):
+// predev und prebuild erzeugen sie bei jedem Start und Build neu. Mitgehasht
+// werden auch Lockfile (neue Abhängigkeiten ändern das Bundle) und proxy.ts.
+const files = [
+  templatePath,
+  join(projectRoot, "package.json"),
+  join(projectRoot, "package-lock.json"),
+  join(projectRoot, "proxy.ts"),
+];
 for (const sourceRoot of sourceRoots) {
   files.push(...(await collectFiles(join(projectRoot, sourceRoot))));
 }

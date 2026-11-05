@@ -25,6 +25,7 @@ declare const styles: {
   readonly packageTitle: string;
   readonly packages: string;
   readonly pair: string;
+  readonly pairAlso: string;
   readonly pairText: string;
   readonly pairs: string;
   readonly panel: string;

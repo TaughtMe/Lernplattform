@@ -71,4 +71,19 @@ describe("diffLetters", () => {
       "t",
     ]);
   });
+
+  it("vergleicht „das Essen“ mit Leerzeichen und nennt es beim Namen", () => {
+    expect(describeLetterDiff(diffLetters("das Essen", "dasEssen"))).toEqual([
+      "4. Buchstabe fehlt: Leerzeichen",
+    ]);
+    expect(describeLetterDiff(diffLetters("das Essen", "das essen"))).toEqual([
+      "5. Buchstabe: klein statt groß",
+    ]);
+    expect(describeLetterDiff(diffLetters("essen", "das essen"))).toEqual([
+      "1. Buchstabe zu viel: d",
+      "2. Buchstabe zu viel: a",
+      "3. Buchstabe zu viel: s",
+      "4. Buchstabe zu viel: Leerzeichen",
+    ]);
+  });
 });

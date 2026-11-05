@@ -10,6 +10,7 @@ import type {
   CatalogPackage,
   CatalogTagGroup,
 } from "../../../src/domain/vocabulary-catalog";
+import { AcceptedAnswers } from "../../ui/accepted-answers";
 import { Icon } from "../../ui/icons";
 import { ModalDialog } from "../lehrer/modal-dialog";
 import styles from "./vocabulary-picker.module.css";
@@ -233,6 +234,16 @@ export function VocabularyPicker(props: VocabularyPickerProps) {
                                     {side(pair.left)} → {side(pair.right)}
                                   </span>
                                 </label>
+                                <div className={styles.pairAlso}>
+                                  <AcceptedAnswers
+                                    text={side(pair.left)}
+                                    omit={pair.left.primary}
+                                  />
+                                  <AcceptedAnswers
+                                    text={side(pair.right)}
+                                    omit={pair.right.primary}
+                                  />
+                                </div>
                               </li>
                             ))}
                           </ul>

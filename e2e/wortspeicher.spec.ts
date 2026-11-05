@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 import { createBox, seedDueWords } from "./wortspeicher-helpers";
 

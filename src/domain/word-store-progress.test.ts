@@ -288,6 +288,22 @@ describe("boxCoverage", () => {
     };
   }
 
+  it("zählt „das Essen“ und „essen“ als zwei Wörter der Wortbox", () => {
+    const base = round("n", 1, 100, 1);
+    const nouns: WordRoundRecord = {
+      ...base,
+      words: [
+        { ...base.words[0]!, word: "das Essen", firstTry: true },
+        { ...base.words[0]!, word: "essen", firstTry: false },
+      ],
+    };
+    expect(boxCoverage(["das Essen", "essen"], [nouns], "box", 1)).toEqual({
+      mastered: 1,
+      total: 2,
+      percent: 50,
+    });
+  });
+
   it("zählt den Anteil der ganzen Wortbox, nicht der Runde", () => {
     const first = coverageRound("a", 1, 0, 10);
     expect(boxCoverage(WORDS, [first], "box", 1)).toEqual({

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 import { TEXTBOX_TEXTS } from "../src/domain/textbox-library";
 
@@ -199,7 +199,7 @@ test("Verlauf zeigt Werte und Diagramme, barrierefrei in beiden Farbschemata", a
   await expect(page.getByRole("heading", { name: text.title })).toBeVisible();
   const stats = page.locator("dl");
   await expect(stats).toContainText("100 %");
-  await expect(stats).toContainText("Übungsversuche2");
+  await expect(stats).toContainText("Übungen2");
 
   const chart = page.getByRole("img", {
     name: /^Dein Ergebnis in Runde 4/,

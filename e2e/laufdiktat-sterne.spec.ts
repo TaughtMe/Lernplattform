@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import { hydrated } from "./hydration-helpers";
 
 /** Spielt im Laufdiktat allein einen Satz bis zum Rundenende. */

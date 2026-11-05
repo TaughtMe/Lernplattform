@@ -99,6 +99,24 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    files: ["e2e/**/*.spec.ts"],
+    ignores: ["e2e/hydration.spec.ts", "e2e/design/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@playwright/test",
+              message:
+                "Browser-Tests importieren test und expect aus e2e/fixtures.ts: goto und reload warten dort auf die Hydration.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

@@ -96,4 +96,17 @@ describe("German learning content", () => {
     );
     expect(separating).toEqual([]);
   });
+
+  it("hat über alle Wortboxen keine Wörter, die sich nur in der Groß-/Kleinschreibung unterscheiden", () => {
+    // Sonst teilten sich z. B. „essen“ und „Essen“ einen Lernstand (G-012, C2-5).
+    const spellings = new Map<string, Set<string>>();
+    for (const word of LEARNING_WORD_COLLECTIONS.flatMap((c) => c.words)) {
+      const key = word.normalize("NFC").toLocaleLowerCase("de-DE");
+      spellings.set(key, (spellings.get(key) ?? new Set()).add(word));
+    }
+    const pairs = [...spellings.values()]
+      .filter((variants) => variants.size > 1)
+      .map((variants) => [...variants]);
+    expect(pairs).toEqual([]);
+  });
 });

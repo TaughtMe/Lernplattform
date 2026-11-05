@@ -369,7 +369,23 @@
 }
 .chevron {
   display: inline-block;
+  /* doppelt so groß wie die Schrift: besser sichtbar (Überarbeitung Nov 2026) */
+  font-size: 2em;
+  line-height: 1;
   transition: transform 0.15s;
+}
+/* „Klassen“ und „Verwalten“ in der Leiste: fett, bündig links; „+“ rechts. */
+.v2 .groupLabel {
+  justify-content: flex-start;
+  gap: 6px;
+  font-weight: 800;
+}
+.v2 .groupLabel .plus {
+  margin-left: auto;
+}
+.v2 .groupToggle,
+.v2 .groupLink {
+  font-weight: 800;
 }
 .chevronOpen {
   transform: rotate(90deg);
@@ -504,8 +520,10 @@ a.profileSub:hover {
 .drawerInner .area {
   min-height: 46px;
 }
-/* Klassen/Verwalten aufklappen: in der Schublade 44 px Tippfläche. */
+/* Klassen/Verwalten aufklappen: in der Schublade 44 × 44 px Tippfläche, auch
+   wenn „Klassen“ als eigener Link daneben steht und der Knopf nur den Pfeil hält. */
 .drawerInner .groupToggle {
+  min-width: 44px;
   min-height: 44px;
 }
 .drawerInner .profile {

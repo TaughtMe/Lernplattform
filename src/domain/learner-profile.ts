@@ -12,6 +12,13 @@ export const ADJECTIVES = [
   "Stark",
   "Frech",
 ];
+/**
+ * Eigenschaftswörter („Mutig“ …) im Namen sind abgeschaltet: der Name ist nur
+ * das Tier. Die Liste und das Profilfeld bleiben, damit ältere Profile gültig
+ * sind und der Zusatz sich wieder einschalten lässt.
+ */
+export const USE_ADJECTIVES = false;
+
 export const ANIMALS: Array<{ name: string; g: "m" | "f" | "n" }> = [
   { name: "Koala", g: "m" },
   { name: "Fledermaus", g: "f" },
@@ -176,6 +183,7 @@ export function learnerDisplayName(profile: LearnerProfile) {
   if (figure) return figure;
   if (!profile.animal) return "Lernender";
   const animal = ANIMALS.find((animal) => animal.name === profile.animal)!;
+  if (!USE_ADJECTIVES) return animal.name;
   const ending = animal.g === "m" ? "er" : animal.g === "f" ? "e" : "es";
   return `${profile.adjective}${ending} ${animal.name}`;
 }
