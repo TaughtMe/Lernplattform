@@ -434,13 +434,10 @@ export function MentalMathApp({
     wrongTries.current = state.wrongTries;
     pending.current = null;
     const restored = restoreMathTasks(state);
-    const resumed = restored[state.index];
-    // Nach einem Fehlversuch bleibt der Tipp stehen, solange noch kein Lösungsweg offen ist.
-    setHint(
-      resumed && state.wrongTries > 0 && !state.help
-        ? mentalMathHint(resumed, "unknown")
-        : "",
-    );
+    // Der Zwischenstand speichert die falsche Antwort nicht, die Fehlerart ist
+    // nach dem Fortsetzen also unbekannt. Bei unbekannter Fehlerart gibt es
+    // keinen Tipp (C4-4); der Knopf „Lösungsweg zeigen“ bleibt.
+    setHint("");
     setFailed(state.wrongTries > 0);
     setHelp(state.help);
     setTasks(restored);
