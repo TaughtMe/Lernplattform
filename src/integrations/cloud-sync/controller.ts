@@ -26,6 +26,10 @@ import type { SyncScope } from "./model";
 import { createSyncScheduler, type SchedulerEnv } from "./scheduler";
 import { createSyncTarget } from "./target";
 import {
+  GOOGLE_DRIVE_DISABLED_MESSAGE,
+  GOOGLE_DRIVE_ENABLED,
+} from "./providers";
+import {
   CloudSyncError,
   type CloudProviderId,
   type CloudSyncTarget,
@@ -267,6 +271,15 @@ export function createSyncController(deps: ControllerDeps) {
     async resume() {
       const state = await store.getState();
       if (!state.enabled) return;
+      if (state.provider === "google-drive" && !GOOGLE_DRIVE_ENABLED) {
+        // Abgeschaltet (Entscheidung 59): pausiert lassen, nicht abgleichen.
+        await store.patchState({
+          status: "error",
+          error: GOOGLE_DRIVE_DISABLED_MESSAGE,
+        });
+        await emit();
+        return;
+      }
       if (state.encrypted) {
         memoryKey = await deps.credentials.loadKey();
         if (!memoryKey) {

@@ -204,13 +204,7 @@ test.describe("Vorschau-Bereiche im Schulbetrieb", () => {
   // ohne Vorschau-Cookie auf eine freie Seite um. Im Entwicklungsserver ist
   // die Vorschau immer an, deshalb sieht nur dieser Lauf, ob die Sperre im
   // Build greift.
-  for (const path of [
-    "/klasse/7b",
-    "/lehrer/aufgaben",
-    "/haus",
-    "/duell",
-    "/demo",
-  ]) {
+  for (const path of ["/klasse/7b", "/haus", "/duell", "/demo"]) {
     test(`${path} leitet ohne Vorschau um`, async ({ page, context }) => {
       expect(
         (await context.cookies()).filter((c) => c.name === "lernraum-vorschau"),
@@ -227,11 +221,10 @@ test.describe("Vorschau-Bereiche im Schulbetrieb", () => {
   }
 });
 
-test.describe("Vorschau-Schalter im Schulbetrieb", () => {
-  // Spiegelschrift (Stufe `vorschau`) hat keinen eigenen Pfad, nur einen
-  // Schalter in den Einstellungen. Ohne Vorschau fehlt er; geprüft wird nach
-  // der Hydration, wenn die Einstellungen vollständig gerendert sind.
-  test("Einstellungen zeigen ohne Vorschau keinen Spiegelschrift-Schalter", async ({
+test.describe("Freigegebene Bereiche im Schulbetrieb", () => {
+  // Seit Entscheidung 59 frei: ohne Vorschau-Cookie erreichbar bzw. sichtbar.
+  // Geprüft wird nach der Hydration, wenn die Seiten vollständig gerendert sind.
+  test("Einstellungen zeigen ohne Vorschau den Spiegelschrift-Schalter", async ({
     page,
   }) => {
     await page.goto("/lernen/einstellungen");
@@ -240,8 +233,26 @@ test.describe("Vorschau-Schalter im Schulbetrieb", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("checkbox", { name: "Spiegelschrift im Lesetext" }),
-    ).toHaveCount(0);
+    ).toHaveCount(1);
   });
+
+  for (const path of [
+    "/lernen/startpunkt",
+    "/lernen/training",
+    "/lernen/profil",
+    "/lehrer/aufgaben",
+  ]) {
+    test(`${path} leitet ohne Vorschau nicht um`, async ({ page }) => {
+      await page.goto(path);
+      expect(new URL(page.url()).pathname).toBe(path);
+      // Die Aufgabenseite ist noch in der alten Oberfläche und beginnt mit h2.
+      await expect(
+        path === "/lehrer/aufgaben"
+          ? page.getByRole("heading", { name: "Arbeitsaufträge planen" })
+          : page.getByRole("heading", { level: 1 }),
+      ).toBeVisible();
+    });
+  }
 });
 
 test.describe("Service Worker im Produktions-Build", () => {

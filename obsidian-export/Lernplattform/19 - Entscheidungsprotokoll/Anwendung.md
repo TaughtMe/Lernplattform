@@ -674,3 +674,10 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 
 **Bekannte Grenzen:** Kinder, die noch nicht lesen können, brauchen für den Einstieg in eine Runde weiter Hilfe von Erwachsenen. Ohne lokale deutsche Stimme fehlt der Knopf überall.
 
+## 59. Freigaben in der Beta und Google Drive aus – 5. November 2026
+
+**Beschlossen:** Die Projektverantwortliche Lehrkraft gibt vier Bereiche frei, die bisher nur mit Vorschau sichtbar waren: **Gastmodus** (`gastmodus`, Gast-QR und `/gast`), **Aufgaben der Lehrkraft** (`lehrer-aufgaben`, `/lehrer/aufgaben`), **Startpunkt, Tagestraining und Kompetenzprofil** (`diagnostik`) und **Spiegelschrift** (`spiegelschrift`). Alle stehen im Freigaberegister `src/domain/release.ts` auf `frei`. **Google Drive** im Cloud-Abgleich ist abgeschaltet (`GOOGLE_DRIVE_ENABLED = false` in `src/integrations/cloud-sync/providers.ts`); OneDrive und WebDAV bleiben.
+
+**Begründung:** Die Plattform läuft als Beta. Die Bereiche sind gebaut und getestet; ihr Nutzen zeigt sich erst im Unterricht. Google Drive funktioniert im Abgleich noch nicht und soll nicht als Wahl erscheinen.
+
+**Bekannte Grenzen:** Die pädagogische Abstimmung der Diagnostik (Stufenfolgen des Startpunkts, Regel „sicher“, Welle 3, D2) steht noch aus und wird in der Beta beobachtet. Für den Gastmodus bleibt das Restrisiko SR-004 akzeptiert. Mit `LERNRAUM_FREIGABE` lässt sich jeder Bereich wieder auf `vorschau` stellen.
