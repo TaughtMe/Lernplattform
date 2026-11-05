@@ -15,13 +15,8 @@ const transformOf = (page: Page, selector: string) =>
     .first()
     .evaluate((el) => getComputedStyle(el).transform);
 
-test("ohne Vorschau gibt es keinen Schalter", async ({ page }) => {
-  await page.goto("/lernen/einstellungen");
-  await expect(
-    page.getByRole("heading", { name: "Darstellung" }),
-  ).toBeVisible();
-  await expect(page.getByRole("checkbox", { name: switchName })).toHaveCount(0);
-});
+// „Ohne Vorschau gibt es keinen Schalter“ prüft e2e/production/hauptseiten.spec.ts:
+// Im Entwicklungsserver ist die Vorschau immer an.
 
 test("Schalter spiegelt nur den Lesetext und schaltet sich nach 7 Tagen von selbst aus", async ({
   page,

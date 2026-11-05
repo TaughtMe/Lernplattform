@@ -227,6 +227,23 @@ test.describe("Vorschau-Bereiche im Schulbetrieb", () => {
   }
 });
 
+test.describe("Vorschau-Schalter im Schulbetrieb", () => {
+  // Spiegelschrift (Stufe `vorschau`) hat keinen eigenen Pfad, nur einen
+  // Schalter in den Einstellungen. Ohne Vorschau fehlt er; geprüft wird nach
+  // der Hydration, wenn die Einstellungen vollständig gerendert sind.
+  test("Einstellungen zeigen ohne Vorschau keinen Spiegelschrift-Schalter", async ({
+    page,
+  }) => {
+    await page.goto("/lernen/einstellungen");
+    await expect(
+      page.getByRole("heading", { name: "Darstellung" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("checkbox", { name: "Spiegelschrift im Lesetext" }),
+    ).toHaveCount(0);
+  });
+});
+
 test.describe("Service Worker im Produktions-Build", () => {
   test("/sw.js wird ausgeliefert und registriert sich", async ({ page }) => {
     const runtimeErrors = collectRuntimeErrors(page);
