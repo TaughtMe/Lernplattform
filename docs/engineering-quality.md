@@ -59,7 +59,7 @@ Nicht ohne neue Architekturentscheidung eingeführt werden globale State-Manager
 
 ### Bei jeder Änderung
 
-`npm run check` muss erfolgreich sein. Es prüft Formatierung, Linting, strikte Typen, Testabdeckung, Produktions-Build und Server-Rendering.
+`npm run check` muss vor der Zusammenführung erfolgreich sein; verbindlich ist der Lauf im GitHub-Job `code-quality`. Es prüft Formatierung, Linting, strikte Typen, Testabdeckung, Datenbankverträge, Produktions-Build und Server-Rendering. Welche Teile davon lokal vor dem Push laufen, regelt `AGENTS.md` („Prüfungen und CI“) risikobasiert; das Gate selbst bleibt unverändert.
 
 ### Bei jeder Änderung an Oberfläche oder Ablauf
 
@@ -71,7 +71,7 @@ Nicht ohne neue Architekturentscheidung eingeführt werden globale State-Manager
 
 **Generierte Dateien.** `public/sw.js` und `public/version.json` sind nicht eingecheckt. `predev` und `prebuild` erzeugen sie mit `scripts/generate-service-worker.mjs`; der Fingerabdruck lässt Testdateien aus und schließt `package-lock.json` und `proxy.ts` ein (Audit A-014). Sie werden nicht von Hand committet.
 
-Zusätzlich muss mindestens `npm run test:e2e:chromium` laufen. Vor einem Meilenstein läuft `npm run quality` über die vollständige Browser- und Gerätematrix.
+Zusätzlich muss mindestens `npm run test:e2e:chromium` erfolgreich sein; in GitHub läuft die vollständige Browser-Matrix für jeden Pull Request mit Codeänderungen. Vor einem Meilenstein läuft `npm run quality` über die vollständige Browser- und Gerätematrix.
 
 ### Mindestabdeckung
 
