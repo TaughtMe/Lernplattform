@@ -195,6 +195,9 @@ Einträge als Wörter. Diese Fälle deckt `npm run test:database` ab.
   `room_attacks.target_id` ohne führenden Index (Tabelle kurzlebig und klein).
 - Offen: Realtime „Allow public access“ deaktivieren (Schritt 4), Client
   bereitstellen (Schritt 5) und alte Verbindungen prüfen (Schritt 6).
+- Nachtrag 05.11.2026: Realtime „Allow public access“ ist laut
+  Projektverantwortlicher Lehrkraft schon länger deaktiviert (Schritt 4
+  erledigt).
 
 **05.11.2026, Supabase-Projekt „Lernraum“ (`bidzvtwadsmifkmpoxpq`, eu-west-1):**
 

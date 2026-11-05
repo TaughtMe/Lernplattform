@@ -28,8 +28,8 @@ declare const styles: {
   readonly liveCount: string;
   readonly liveDot: string;
   readonly liveEmpty: string;
-  readonly liveIdle: string;
   readonly liveHead: string;
+  readonly liveIdle: string;
   readonly liveItem: string;
   readonly liveLeft: string;
   readonly liveList: string;
