@@ -4,7 +4,9 @@ import {
   createTeacherContentLibraryRepository,
   TeacherClassDatabase,
 } from "../../storage/teacher-class-settings";
+import { createTeacherSyncStore } from "../../storage/teacher-sync-store";
 import { createSyncController, type SyncSnapshot } from "./controller";
+import { GOOGLE_DRIVE_DISABLED_MESSAGE } from "./providers";
 import { createCredentialStore } from "./credentials";
 import { SYNC_FILE_V2, readEnvelopeHeader } from "./envelope";
 import { DEFAULT_SYNC_SCOPE } from "./model";
@@ -180,6 +182,35 @@ describe("sync controller", () => {
     });
     await restarted.unlock(PASSWORD);
     expect((await restarted.snapshot()).status).toBe("idle");
+    restarted.stop();
+  });
+
+  it("lässt eine gespeicherte Google-Drive-Verbindung pausiert (Entscheidung 59)", async () => {
+    const server = createFakeWebDav();
+    const home = device(server);
+    await createTeacherSyncStore(home.database).patchState({
+      enabled: true,
+      provider: "google-drive",
+      encrypted: false,
+    });
+    const fetcher = vi.fn(server.fetcher);
+    const restarted = createSyncController({
+      database: home.database,
+      credentials: home.credentials,
+      env: createFakeEnv().env,
+      fetcher,
+      iterations: 1000,
+    });
+    await restarted.resume();
+    const state = await restarted.snapshot();
+    expect(state.status).toBe("error");
+    expect(state.error).toBe(GOOGLE_DRIVE_DISABLED_MESSAGE);
+    // Auch „Jetzt abgleichen“ (eine Runde) erreicht keinen Server.
+    await restarted.syncNow().catch(() => undefined);
+    expect((await restarted.snapshot()).error).toBe(
+      GOOGLE_DRIVE_DISABLED_MESSAGE,
+    );
+    expect(fetcher).not.toHaveBeenCalled();
     restarted.stop();
   });
 

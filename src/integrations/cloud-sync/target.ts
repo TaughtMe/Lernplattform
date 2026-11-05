@@ -7,6 +7,10 @@ import {
   type CloudSyncTarget,
 } from "./types";
 import { createWebDavTarget } from "./webdav";
+import {
+  GOOGLE_DRIVE_DISABLED_MESSAGE,
+  GOOGLE_DRIVE_ENABLED,
+} from "./providers";
 
 /**
  * Speicherziel für eine Runde. OneDrive und Google Drive erneuern ihr
@@ -28,6 +32,9 @@ export async function createSyncTarget(
       );
     }
     return createWebDavTarget(connection, fetcher);
+  }
+  if (provider === "google-drive" && !GOOGLE_DRIVE_ENABLED) {
+    throw new CloudSyncError("not-configured", GOOGLE_DRIVE_DISABLED_MESSAGE);
   }
   let token: string;
   try {

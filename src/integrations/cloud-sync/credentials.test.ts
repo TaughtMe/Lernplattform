@@ -111,9 +111,10 @@ describe("createSyncTarget", () => {
     expect((await createSyncTarget("onedrive", fresh())).provider).toBe(
       "onedrive",
     );
-    expect((await createSyncTarget("google-drive", fresh())).provider).toBe(
-      "google-drive",
-    );
+    // Google Drive ist abgeschaltet (Entscheidung 59): kein Ziel trotz Token.
+    await expect(
+      createSyncTarget("google-drive", fresh()),
+    ).rejects.toMatchObject({ code: "not-configured" });
     window.localStorage.clear();
   });
 });

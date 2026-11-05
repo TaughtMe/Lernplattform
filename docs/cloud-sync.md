@@ -174,7 +174,9 @@ den Anbietern **zusätzlich** eintragen.
    Services):** Der Abgleich funktioniert dort noch nicht. `GOOGLE_DRIVE_ENABLED`
    in `src/integrations/cloud-sync/providers.ts` steht deshalb auf `false`;
    Google Drive erscheint auch mit Client-ID als „Noch nicht eingerichtet“
-   (Entscheidung 59). Einrichtung für später: Google Cloud
+   (Entscheidung 59). Eine schon gespeicherte Google-Drive-Verbindung bleibt
+   pausiert: `resume()` startet den Abgleich nicht, `createSyncTarget` baut
+   kein Ziel, die Statuszeile nennt den Grund. Einrichtung für später: Google Cloud
    Console, Drive API aktivieren, OAuth-Zustimmungsbildschirm (Branding,
    Testnutzer), OAuth-Client „Webanwendung“ mit der Adresse der Seite unter
    „Autorisierte JavaScript-Quellen“ (Scope `drive.appdata`). Client-ID als

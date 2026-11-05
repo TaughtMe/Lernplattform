@@ -12,9 +12,15 @@ export type CloudProviderInfo = {
 /**
  * Google Drive ist abgeschaltet (Entscheidung 59, 05.11.2026): Der Abgleich
  * funktioniert dort noch nicht. Auch mit gesetzter Client-ID erscheint es als
- * „Noch nicht eingerichtet“ und lässt sich nicht wählen.
+ * „Noch nicht eingerichtet“ und lässt sich nicht wählen. Eine schon
+ * gespeicherte Verbindung bleibt pausiert: `createSyncTarget` baut kein Ziel,
+ * und `resume()` startet den Abgleich nicht.
  */
 export const GOOGLE_DRIVE_ENABLED = false;
+
+/** Meldung für einen gespeicherten Google-Drive-Abgleich, solange er aus ist. */
+export const GOOGLE_DRIVE_DISABLED_MESSAGE =
+  "Google Drive ist abgeschaltet. Der Abgleich ist pausiert; bitte OneDrive oder WebDAV einrichten.";
 
 /** Anbieter mit Status für die Einstellungen. */
 export function cloudProviders(clientIds: OAuthClientIds): CloudProviderInfo[] {
