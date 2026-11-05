@@ -10,8 +10,9 @@ import { markOwnDevice } from "./teacher-device-helpers";
 
 // Gastmodus für geteilte Geräte (Befunde B-009, B-010): Ein Gast-QR der
 // Lehrkraft macht das Gerät für eine Unterrichtsnutzung zum Gastgerät, dessen
-// Schülerdaten am Ende gelöscht werden. Der Bereich `gastmodus` steht auf
-// `vorschau`; die Tests schalten die Vorschau über das Cookie ein.
+// Schülerdaten am Ende gelöscht werden. Der Bereich `gastmodus` ist frei; die
+// Tests schalten die Vorschau trotzdem ein, weil die Lehrerseiten damit nach
+// dem Gerätetyp fragen (Bereich `lehrer-geraet`).
 
 const ORIGIN = "http://localhost:3000";
 const GUEST_KEY = "lernraum.gastmodus";

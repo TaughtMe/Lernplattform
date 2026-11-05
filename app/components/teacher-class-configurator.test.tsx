@@ -317,11 +317,32 @@ describe("TeacherClassConfigurator", () => {
 
   it("zeigt den Gast-QR nur, wenn der Bereich Gastmodus sichtbar ist", async () => {
     const user = userEvent.setup();
-    render(<TeacherClassConfigurator />);
+    render(
+      <ReleaseProvider
+        value={resolveVisibility(resolveStages("gastmodus=vorschau"), false)}
+      >
+        <TeacherClassConfigurator />
+      </ReleaseProvider>,
+    );
     await createClass(user);
     expect(
       screen.queryByRole("button", { name: /Gast-QR/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it("zeigt den Gast-QR ohne Vorschau, weil der Gastmodus frei ist", async () => {
+    const user = userEvent.setup();
+    render(
+      <ReleaseProvider
+        value={resolveVisibility(resolveStages(undefined), false)}
+      >
+        <TeacherClassConfigurator />
+      </ReleaseProvider>,
+    );
+    await createClass(user);
+    expect(
+      await screen.findByRole("button", { name: "Gast-QR (90 Minuten)" }),
+    ).toBeVisible();
   });
 
   it("erstellt einen Gast-QR mit 90 Minuten Laufzeit", async () => {

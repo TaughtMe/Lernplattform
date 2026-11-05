@@ -23,6 +23,9 @@ Stand: 27.10.2026. Grundlage ist Version 0.9.4 (`9f23917`) auf
   als „großer Sprung“. Gespeichert werden höchstens 100 Versuche je Durchgang; nur
   der jüngste behält die Wortliste. Das ersetzt die Regel „erster Versuch zählt“
   aus 0.9.4.
+- Gastmodus für geteilte Geräte: Freigabe von `vorschau` auf `frei` (05.11.2026).
+  Der Gast-QR der Lehrkraft und die Seite `/gast` sind damit für alle sichtbar.
+  Das Restrisiko SR-004 bleibt unverändert akzeptiert.
 - Kopfrechnen: Bei unbekannter Fehlerart erscheint kein Tipp mehr, nur „Noch nicht.“.
 - Live-Raum: Der CSV-Export der Lehrkraft enthält je Kind und Mathe-Aufgabe einen
   Abschnitt mit der Spalte „Fehlerart (Vermutung)“. Dafür überträgt das Kindgerät
@@ -31,7 +34,7 @@ Stand: 27.10.2026. Grundlage ist Version 0.9.4 (`9f23917`) auf
 
 ## Formatänderungen
 
-- Supabase: Die Migration `20261027120000_math_first_wrong_answers` legt die Spalte
+- Supabase: Die Migration `20261105111441_math_first_wrong_answers` legt die Spalte
   `room_students.first_wrong_answers` an und ergänzt `upsert_progress_secure` um ein
   optionales letztes Argument. Aufrufe der Version 0.9.4 funktionieren weiter. Die
   Migration muss vor dem neuen Client eingespielt sein (siehe

@@ -134,8 +134,9 @@ export const RELEASE_AREAS = {
     label: "Gastmodus (geteilte Geräte)",
     // Schaltet die Einstiegsseite /gast und den Knopf „Gast-QR“ der Lehrkraft.
     // Das Band „Gastmodus“ erscheint, solange ein Gastmodus auf dem Gerät läuft.
+    // Seit 05.11.2026 für alle frei (Restrisiko SR-004 bleibt akzeptiert).
     routes: ["/gast"],
-    stage: "vorschau",
+    stage: "frei",
   },
   motivation: {
     label: "Häuser, Serie und Abzeichen",

@@ -206,7 +206,6 @@ test.describe("Vorschau-Bereiche im Schulbetrieb", () => {
   // Build greift.
   for (const path of [
     "/klasse/7b",
-    "/gast",
     "/lehrer/aufgaben",
     "/haus",
     "/duell",
