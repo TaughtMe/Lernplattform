@@ -77,7 +77,7 @@ export function StudentFrame({
           <Link
             href={profileHref}
             className={styles.profile}
-            aria-label="Profileinstellungen"
+            aria-label="Profil-Einstellungen"
             aria-current={profileActive ? "page" : undefined}
             onClick={(event) => {
               if (!event.metaKey && !event.ctrlKey && !event.shiftKey)

@@ -30,7 +30,7 @@ test("the profile uses original animals, keeps the choice and supports keyboard 
   await expect(fox).toHaveAttribute("aria-pressed", "true");
   await expect(
     page
-      .getByRole("link", { name: "Profileinstellungen" })
+      .getByRole("link", { name: "Profil-Einstellungen" })
       .filter({ visible: true }),
   ).toHaveAttribute("aria-current", "page");
 
