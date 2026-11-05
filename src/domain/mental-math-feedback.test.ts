@@ -277,7 +277,28 @@ describe("mentalMathSolutionSteps", () => {
         "Rechne in kleinen Schritten: Zerlege die zweite Zahl in Zehner und Einer.",
       ],
     ],
-    ["47 + 30", undefined, ["Zerlege am Zehner: 47 + 30 = 47 + 3 + 27."]],
+    // Ganze Zehner: kein Zehnerübergang, also nicht „am Zehner zerlegen“.
+    [
+      "47 + 30",
+      undefined,
+      [
+        "Rechne nur mit den Zehnern: 47 + 30 heißt 4 Zehner + 3 Zehner. Die Einer bleiben gleich.",
+      ],
+    ],
+    [
+      "11 - 10",
+      undefined,
+      [
+        "Rechne nur mit den Zehnern: 11 − 10 heißt 1 Zehner − 1 Zehner. Die Einer bleiben gleich.",
+      ],
+    ],
+    [
+      "22 - 20",
+      undefined,
+      [
+        "Rechne nur mit den Zehnern: 22 − 20 heißt 2 Zehner − 2 Zehner. Die Einer bleiben gleich.",
+      ],
+    ],
     ["5 * 0", undefined, ["Was passiert, wenn du mit null malnimmst?"]],
     ["1 * 5", undefined, ["Was passiert, wenn du mit eins malnimmst?"]],
   ];
@@ -293,6 +314,10 @@ describe("mentalMathSolutionSteps", () => {
       "9 + 9",
       "100 - 1",
       "15 - 20",
+      // Regression: „= 11 − …“ enthält die Ziffer 1 (= Ergebnis), verrät es aber nicht.
+      "11 - 10",
+      "22 - 20",
+      "33 - 30",
       "1 * 9",
       "0 * 5",
       "10 * 10",
@@ -314,6 +339,22 @@ describe("mentalMathSolutionSteps", () => {
   });
 });
 
+describe("revealing (Testhilfe)", () => {
+  it("liest Zahlen nach „=“ ganz und nicht nur ihre erste Ziffer", () => {
+    expect(revealing(task("11 - 10"), ["11 − 10 = 11 − 1 − 9."])).toEqual([]);
+    expect(revealing(task("22 - 20"), ["22 − 20 = 22 − 2 − 18."])).toEqual([]);
+    expect(revealing(task("2,5 + 1"), ["Rechne 2,5 + 1 = 3,5 − 0."])).toEqual(
+      [],
+    );
+  });
+
+  it("erkennt das Ergebnis weiterhin, auch am Satzende und als Dezimalzahl", () => {
+    expect(revealing(task("11 - 10"), ["11 − 10 = 1."])).toHaveLength(1);
+    expect(revealing(task("22 - 20"), ["Also = 2"])).toHaveLength(1);
+    expect(revealing(task("2,5 + 1"), ["2,5 + 1 = 3,5."])).toHaveLength(1);
+  });
+});
+
 /** Zeilen, die das Endergebnis der Aufgabe nennen (außer als Zahl der Aufgabe selbst). */
 function revealing(t: ReturnType<typeof task>, steps: string[]) {
   const answer = t.answer;
@@ -327,7 +368,7 @@ function revealing(t: ReturnType<typeof task>, steps: string[]) {
     const text = step.replace(/\$[^$]*\$/g, " ").replace(/,/g, ".");
     // „… = <Ergebnis>“ ist immer eine Verrat, auch wenn die Zahl sonst vorkäme.
     for (const match of text.matchAll(
-      /=\s*(−|-)?(\d+(?:\.\d+)?)(?!\s*[:·+−*/])/g,
+      /=\s*(−|-)?(\d+(?:\.\d+)?)(?!\d|\.\d|\s*[:·+−*/])/g,
     )) {
       const value = (match[1] ? -1 : 1) * Number(match[2]);
       if (Math.abs(value - answer) < 1e-9 && !shown.includes(Math.abs(value)))

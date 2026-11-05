@@ -177,12 +177,25 @@ function bridgeHint(parts: MentalMathExpression): string | null {
   const { left, operator, right } = parts;
   if (!isInteger(left) || !isInteger(right) || left < 0 || right < 0)
     return null;
+  if (right > 0 && right % 10 === 0) return wholeTensHint(parts);
   const ones = left % 10;
   if (ones === 0) return null;
   const step = operator === "+" ? 10 - ones : ones;
   if (right <= step) return null;
   const sign = mathOperatorSymbol(operator);
   return `Zerlege am Zehner: ${show(left)} ${sign} ${show(right)} = ${show(left)} ${sign} ${step} ${sign} ${right - step}.`;
+}
+
+/**
+ * Plus oder Minus ganze Zehner: Es gibt keinen Zehnerübergang, also auch
+ * nichts „am Zehner zu zerlegen“. Gerechnet wird nur mit den Zehnern, die
+ * Einer bleiben gleich. Wird das Ergebnis negativ, stimmt das nicht mehr.
+ */
+function wholeTensHint({ left, operator, right }: MentalMathExpression) {
+  if (operator === "-" && right > left) return null;
+  const sign = mathOperatorSymbol(operator);
+  const ones = left % 10 === 0 ? "" : " Die Einer bleiben gleich.";
+  return `Rechne nur mit den Zehnern: ${show(left)} ${sign} ${show(right)} heißt ${Math.floor(left / 10)} Zehner ${sign} ${right / 10} Zehner.${ones}`;
 }
 
 /**
