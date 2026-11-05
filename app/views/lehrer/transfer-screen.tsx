@@ -178,7 +178,14 @@ export function LiveTransfers({
 }) {
   const titleId = useId();
   return (
-    <section className={cx(m.card, styles.liveCard)} aria-labelledby={titleId}>
+    <section
+      className={cx(
+        m.card,
+        styles.liveCard,
+        items.length === 0 && styles.liveIdle,
+      )}
+      aria-labelledby={titleId}
+    >
       <div className={styles.liveHead}>
         <span className={styles.liveDot} aria-hidden="true" />
         <h2 className={styles.liveTitle} id={titleId}>
