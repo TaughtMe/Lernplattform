@@ -11,7 +11,7 @@ describe("cloudProviders", () => {
     ).toEqual(["onedrive", "google-drive", "webdav"]);
   });
 
-  it("macht OneDrive und Google Drive von der Client-ID abhängig", () => {
+  it("macht OneDrive von der Client-ID abhängig; Google Drive bleibt aus", () => {
     expect(available({ onedrive: null, "google-drive": null })).toEqual({
       onedrive: false,
       "google-drive": false,
@@ -22,9 +22,10 @@ describe("cloudProviders", () => {
       "google-drive": false,
       webdav: true,
     });
+    // Google Drive ist abgeschaltet (Entscheidung 59), auch mit Client-ID.
     expect(available({ onedrive: null, "google-drive": "xyz" })).toEqual({
       onedrive: false,
-      "google-drive": true,
+      "google-drive": false,
       webdav: true,
     });
   });

@@ -96,8 +96,8 @@ export const RELEASE_AREAS = {
   "lehrer-aufgaben": {
     label: "Aufgaben der Lehrkraft",
     routes: ["/lehrer/aufgaben"],
-    // Kommt später; bis dahin nur mit Vorschau auf dem Gerät.
-    stage: "vorschau",
+    // Seit 05.11.2026 frei (Entscheidung 59).
+    stage: "frei",
   },
   "geraete-sync": {
     label: "Geräte abgleichen (Lehrkraft)",
@@ -119,16 +119,17 @@ export const RELEASE_AREAS = {
   spiegelschrift: {
     label: "Spiegelschrift im Lesetext",
     // Kein eigener Pfad: schaltet Schalter in den Einstellungen und die
-    // Anzeige im Einprägen der Textbox.
+    // Anzeige im Einprägen der Textbox. Seit 05.11.2026 frei (Entscheidung 59).
     routes: [],
-    stage: "vorschau",
+    stage: "frei",
   },
   diagnostik: {
     label: "Startpunkt, Tagestraining und Kompetenzprofil",
-    // Welle 3, D2: noch nicht pädagogisch abgestimmt (Stufenfolgen des
-    // Startpunkts, Regel „sicher“), deshalb zunächst nur mit Vorschau.
+    // Welle 3, D2. Seit 05.11.2026 frei (Entscheidung 59), obwohl die
+    // pädagogische Abstimmung (Stufenfolgen des Startpunkts, Regel „sicher“)
+    // noch aussteht; Beobachtung in der Beta.
     routes: ["/lernen/startpunkt", "/lernen/training", "/lernen/profil"],
-    stage: "vorschau",
+    stage: "frei",
   },
   gastmodus: {
     label: "Gastmodus (geteilte Geräte)",

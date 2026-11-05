@@ -15,8 +15,9 @@ const transformOf = (page: Page, selector: string) =>
     .first()
     .evaluate((el) => getComputedStyle(el).transform);
 
-// „Ohne Vorschau gibt es keinen Schalter“ prüft e2e/production/hauptseiten.spec.ts:
-// Im Entwicklungsserver ist die Vorschau immer an.
+// Spiegelschrift ist frei (Entscheidung 59). Dass der Schalter ohne Vorschau
+// erscheint, prüft e2e/production/hauptseiten.spec.ts: Im Entwicklungsserver
+// ist die Vorschau immer an.
 
 test("Schalter spiegelt nur den Lesetext und schaltet sich nach 7 Tagen von selbst aus", async ({
   page,
