@@ -113,10 +113,11 @@ Changelogs war im Recherchewerkzeug nicht lesbar; die HTML-Fassung wurde geprüf
 Die Migration wurde mit der Supabase-CLI angelegt. Eine relevante Änderung für
 das verwendete tokengebundene HTTP-Verfahren ergab sich daraus nicht.
 
-## Migration `20261027120000_math_first_wrong_answers`: vor dem Client einspielen
+## Migration `20261105111441_math_first_wrong_answers`: vor dem Client einspielen
 
-Stand: 27.10.2026. Nicht produktiv eingespielt; die Prüfung und das Einspielen
-folgen getrennt (Testumgebung zuerst, wie oben).
+Stand: 05.11.2026. Produktiv eingespielt (siehe Bereitstellungsprotokoll). Die
+Datei hieß bis dahin `20261027120000_math_first_wrong_answers.sql` und trägt jetzt
+die Version aus dem Migrationsverlauf.
 
 **Zweck.** Im Live-Raum überträgt das Kindgerät bei Mathe-Aufgaben die erste
 falsche Antwort je Aufgabe (höchstens 32 Zeichen) an die Lehrkraft. Das
@@ -194,3 +195,20 @@ Einträge als Wörter. Diese Fälle deckt `npm run test:database` ab.
   `room_attacks.target_id` ohne führenden Index (Tabelle kurzlebig und klein).
 - Offen: Realtime „Allow public access“ deaktivieren (Schritt 4), Client
   bereitstellen (Schritt 5) und alte Verbindungen prüfen (Schritt 6).
+
+**05.11.2026, Supabase-Projekt „Lernraum“ (`bidzvtwadsmifkmpoxpq`, eu-west-1):**
+
+- Vorher: letzte Migration `20261022045055_secure_room_activity`;
+  `upsert_progress_secure` mit genau der 13-Argument-Signatur, die die Migration
+  ersetzt; Spalte `room_students.first_wrong_answers` nicht vorhanden.
+- `math_first_wrong_answers` über die Supabase-Verbindung als Migration
+  eingespielt (ohne eigenes `begin`/`commit`, Supabase führt sie in einer
+  Transaktion aus). Version im Verlauf: `20261105111441`; die Datei im Repository
+  wurde auf diese Version umbenannt.
+- Danach: Spalte `first_wrong_answers jsonb` vorhanden; genau eine Funktion
+  `upsert_progress_secure` mit 14 Argumenten; ausführen darf nur `anon`, nicht
+  `authenticated`.
+- Probe unter der Rolle `anon` ohne Schreibzugriff: Aufruf mit 13 Argumenten
+  (Client 0.9.4) und mit 14 Argumenten (0.9.5) werden beide aufgelöst und enden
+  an der Raumprüfung („Raum oder Sitzung ist nicht aktiv“).
+- Der Client 0.9.5 folgt mit dem Merge von Version 0.9.5.

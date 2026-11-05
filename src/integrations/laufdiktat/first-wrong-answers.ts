@@ -4,7 +4,7 @@
  * CSV-Export ableitet; die Oberfläche zeigt die Fehlerart nicht an.
  */
 
-/** Längste übertragene Antwort; der Server (Migration 20261027120000) lehnt Längeres ab. */
+/** Längste übertragene Antwort; der Server (Migration 20261105111441) lehnt Längeres ab. */
 export const FIRST_WRONG_ANSWER_MAX_LENGTH = 32;
 
 /**
