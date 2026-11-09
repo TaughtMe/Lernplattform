@@ -681,3 +681,17 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Begründung:** Die Plattform läuft als Beta. Die Bereiche sind gebaut und getestet; ihr Nutzen zeigt sich erst im Unterricht. Google Drive funktioniert im Abgleich noch nicht und soll nicht als Wahl erscheinen.
 
 **Bekannte Grenzen:** Die pädagogische Abstimmung der Diagnostik (Stufenfolgen des Startpunkts, Regel „sicher“, Welle 3, D2) steht noch aus und wird in der Beta beobachtet. Für den Gastmodus bleibt das Restrisiko SR-004 akzeptiert. Mit `LERNRAUM_FREIGABE` lässt sich jeder Bereich wieder auf `vorschau` stellen.
+
+## 60. Lernwortlisten über die Inhaltsübertragung statt Wortauftrag per URL-QR – 30. Oktober 2026
+
+**Beschlossen:** Lernwortlisten für Schüler gehen über die vorhandene verschlüsselte Inhaltsübertragung, wie die Vokabelpakete (Entscheidung 42). Die Lehrkraft legt sie unter „Freigabe an Schüler“ (`/lehrer/material`) an: Titel und höchstens 200 Wörter, lokal gespeichert in `contentPackages` mit `kind: "wordlist"`. Die Freigabe läuft über `publishTransferPayload` (Code oder QR, 24 Stunden, Supabase speichert nur Chiffretext, `schemaVersion` `1.1.0`, keine Datenbankänderung). Das Kind sieht Titel und Wörter und legt sie erst nach Bestätigung als Wortbox an. Die Regeln stehen in `docs/umsetzungsplan-audit-welle-3.md`, Abschnitt D4 (D4-1 bis D4-5).
+
+**Zurückgenommen:** Die erste Fassung von D4 („Auftrags-QR ohne Personendaten (E-002), zuerst Lernwörter“, umgesetzt am 27./28. Oktober 2026) erzeugte im Lehrerbereich einen **Wortauftrag**: Seite `/lehrer/material/wortauftrag`, Link und QR auf `/frei/german?woerter=…&auftrag=…` (`buildWordOrderLink`), höchstens 500 Zeichen, Druck als Kärtchen, keine Speicherung. Am 30. Oktober 2026 hat der Entwickler ihn entfernt (Commit `35e7659`, Plan und Vault in `f8e442a`). Grund laut Plan: Der Wortauftrag per URL-QR „entfällt, weil er neben der Supabase-Übertragung nur irritiert“. Damit entfiel auch die offene Entscheidung zur 500-Zeichen-Grenze und zum Speichern der Aufträge.
+
+**Nicht zurückgenommen:** Der Parameter `?woerter=` (Textbox-Brücke zum Wortspeicher, Entscheidung 55) und `parseWordsParam` bleiben, ebenso die Prüfung der Wörter (`isBridgeWord`). Entfernt ist nur der Lehrer-Weg mit `auftrag=`.
+
+**Nicht wieder einbauen:** Kein zweiter Weg für Lehrkräfte, Lernwörter per Link oder QR mit den Wörtern in der Adresse an Kinder zu geben (Seite `wortauftrag`, Parameter `auftrag=`, `buildWordOrderLink`, Kärtchendruck). Neue Inhaltsarten für Schüler kommen als weitere Nutzlast in die verschlüsselte Inhaltsübertragung.
+
+**Offen (Lücke im Beleg):** Der Plan nennt den Grund nur in einem Satz. Er sagt nicht, wen der doppelte Weg irritiert (Lehrkraft, Kinder oder beide), und nicht, ob es dazu eine Beobachtung im Unterricht gab. Eine eigene Aussage des Entwicklers über den Plantext hinaus liegt nicht vor; die Commits wiederholen nur den Plan. Beim Entwickler nachzufragen.
+
+**Bekannte Grenzen:** Lernwortlisten brauchen jetzt Netz und Supabase; ohne Verbindung gibt es keinen Weg mehr. Ältere App-Versionen kennen `1.1.0` und `wordlist` nicht und lehnen Liste bzw. Ablageeintrag ab, ohne etwas Falsches anzulegen.

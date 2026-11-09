@@ -92,6 +92,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 57  | Tagesportion 20 und Wiederholungsregeln             | gültig                                             | Implementiert              | Stückzahl statt Zeitbudget, Lernwörter ohne Fälligkeitsschutz (D-011, A-004) |
 | 58  | Vorlesen nur in der Aufgabe                         | gültig; nimmt D5-3 für Start- und Einstellungsblätter zurück | Implementiert      | –                                                                            |
 | 59  | Freigaben in der Beta, Google Drive aus             | gültig                                             | Implementiert              | Diagnostik pädagogisch nicht abgestimmt (D2)                                 |
+| 60  | Lernwortlisten über die Übertragung, kein Wortauftrag | gültig; nimmt den Wortauftrag (D4, erste Fassung) zurück | Implementiert | Grund nur knapp belegt, Nachfrage beim Entwickler offen |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 
