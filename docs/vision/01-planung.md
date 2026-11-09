@@ -2760,7 +2760,9 @@ an auch für Jüngere (Klasse 1 und 2) und Ältere (ab Klasse 7)?
   werden länderübergreifend betrachtet (KMK), mit dem bayerischen
   Grundwortschatz als Beispiel.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Bayern, Mittelschule, alle Klassen. Fokus auf die Mittelschule, dazu Grundlagen aus der Grundschule.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Das ersetzt die Annahme „Klasse 3 bis 6“. Zielgruppe ist die bayerische Mittelschule (Jahrgangsstufen 5 bis 9 bzw. 10, LehrplanPLUS Mittelschule) einschließlich Kinder, die Grundschulinhalte nachholen müssen. Die Audit-Empfehlung „Jgst. 3–6“ (Abschnitte E-009, G) ist damit vom Entwickler anders entschieden; Ansprache und Gestaltung für Jugendliche (E-004) werden dadurch wichtig.
 
 ### Frage 2 – Wessen Tablet ist es in der Nachsitz-Szene?
 
@@ -2778,7 +2780,9 @@ Tastaturen dazu?
   Der persönliche Lernstand ist ein Zusatz für Kinder mit eigenem Gerät.
   Stifte sind nicht überall vorhanden.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Beides – eigene Geräte und geteilte Geräte (Klassensätze/Koffer) kommen vor.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Der Prüfstein muss auf beiden funktionieren: auf einem fremden Gerät ohne Lernstand und auf einem eigenen Gerät mit Lernstand. Zu Stiften und Tastaturen gibt es keine Aussage; die Annahme „nicht überall vorhanden“ bleibt.
 
 ### Frage 3 – Was darfst du über einzelne Kinder sehen?
 
@@ -2796,7 +2800,9 @@ ie-Wörter, 12 von 20 sicher“?
   Server, nur auf deinem Gerät und mit Löschfrist. Keine automatische
   Übertragung, keine Klassenübersicht mit Namen.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Ja, grundsätzlich sinnvoll – theoretisch auch über einen Abgleich mit Supabase für eine abgesteckte Sitzung. Mit Blick auf die Häuser-Funktion wäre das ohnehin nötig, damit Punkte gesammelt werden können: Die Schüler würden ihre Punkte in ihr Haus geben oder Ähnliches.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Das geht über die Annahme „ohne Server“ hinaus. Ein zeitlich und auf eine Sitzung begrenzter Server-Abgleich ist für den Entwickler denkbar. Häuser sind gebaut, aber ausgeschaltet; die dazu gültigen Entscheidungen (u. a. 10, 39, Vault 23) und die offene Frage S1 (Frage 4) sind mit abzuwägen. Ein solcher Abgleich muss datensparsam bleiben und zu Frage 4 passen.
 
 ### Frage 4 – Ist der Einsatz mit deiner Schulleitung geklärt?
 
@@ -2810,7 +2816,9 @@ der Kinder?
 - **Annahme ohne Antwort:** Noch nicht geklärt. Das Gremium plant so, dass
   alles ohne Namen und ohne Angaben zu LRS oder Förderbedarf funktioniert.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Noch nicht geklärt, weil Lernraum noch in der Beta ist; das muss rechtlich geprüft werden. Aktuell nutzt es nur eine sehr kleine Gruppe. Schulleitungen finden es bisher ganz gut.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Die Annahme bleibt: Alles muss ohne Namen und ohne Angaben zu LRS oder Förderbedarf funktionieren, bis der Rahmen geklärt ist. Die Vision soll den Weg zur rechtlichen Klärung (Bayern, Mittelschule) als eigenen Baustein enthalten.
 
 ### Frage 5 – Was genau begeistert deine Kolleginnen und Kollegen am Kopfrechnen im Live-Raum?
 
@@ -2825,7 +2833,9 @@ Nutzt ihr die Tempo-Punkte?
   zugleich mitmachen. Tempo-Punkte bleiben ausgeschaltet, Ranglisten einzelner
   Kinder gibt es nicht.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Schnell, spielerisch, motivierend – da kommt vieles zusammen.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Tempo gehört für den Entwickler zum Reiz. Das steht in Spannung zu früheren Festlegungen (kein Tempo-Bonus, keine Ranglisten; Entscheidungen 10, 39, 47, Vault 23). Rolle 24 soll diese Spannung offen abwägen und Varianten zeigen (z. B. Tempo als Spielgefühl ohne Rangliste einzelner Kinder), statt sie in eine Richtung aufzulösen.
 
 ### Frage 6 – Wie viel Zeit hast du in der Woche für Lernraum?
 
@@ -2838,7 +2848,9 @@ davon kannst du Wörter, Texte und Aufgaben fachlich durchsehen?
 - **Annahme ohne Antwort:** Sechs Stunden in der Woche, davon höchstens zwei
   für das Prüfen von Inhalten; in den Ferien mehr. Das Red Team rechnet damit.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Die Entwicklungszeit hängt davon ab, wie viel Zeit da ist; in der Woche kommen schon einige Stunden zusammen. Sie hängt auch davon ab, wie viel Kontingent für KI-gestütztes Programmieren noch übrig ist. Testen geht eigentlich immer, wenn Unterricht ist.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Rechengrundlage für das Red Team: wenige Stunden pro Woche, schwankend; das KI-Kontingent ist ein eigener Engpass. Erprobung im Unterricht ist dagegen reichlich möglich – Bausteine, die sich im Unterricht testen lassen, sind im Vorteil. Die fachliche Prüfzeit für Inhalte bleibt knapp (Annahme höchstens zwei Stunden pro Woche).
 
 ### Frage 7 – Was kommt zuerst, und was darf dafür ruhen?
 
@@ -2853,7 +2865,9 @@ oder der Geräte-Abgleich solange unverändert liegen bleiben?
   dann Lesen, dann Vokabeln Englisch, dann Mathe, dann DaZ; weitere Sprachen
   zuletzt. Die genannten Randbereiche ruhen, nichts wird gelöscht.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Ja, die genannten Bereiche dürfen ruhen. Die vorgeschlagene Reihenfolge passt als Priorität. DaZ heißt immer Deutsch als Zweitsprache und kann auch auf die Warteliste.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Reihenfolge: Rechtschreibung mit Förderung aus Fehlern → Lesen → Vokabeln Englisch → Mathe über Kopfrechnen hinaus → DaZ (Warteliste) → weitere Sprachen. Häuser, Duell, Tastenwelt und Geräte-Abgleich ruhen; nichts wird gelöscht. Beachte Frage 3: Häuser ruhen in der Umsetzung, sollen in der Vision aber als Ziel für den begrenzten Abgleich mitgedacht werden.
 
 ### Frage 8 – Für wen baust du in den nächsten zwölf Monaten?
 
@@ -2867,4 +2881,6 @@ Lernraum findet? Würdest du fremden Schulen bei Fragen helfen?
   bleibt öffentlich erreichbar, aber ohne Zusage von Hilfe. Unterlagen für
   fremde Schulen stehen in „später“.
 
-Antwort des Entwicklers: –
+Antwort des Entwicklers (09.11.2026): Am liebsten jede Schule in den nächsten zwölf Monaten. Realistisch ist eher der eigene Schulamtsbezirk; das muss getestet werden.
+
+Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Ziel für zwölf Monate: Schulen des eigenen Schulamtsbezirks (Bayern, Mittelschule). Unterlagen für Schulleitungen, Hilfetexte und ein Betrieb, der ohne den Entwickler trägt, gehören damit in die Roadmap – in schlanker Form. Die bundesweite Öffnung bleibt ein späteres Ziel.
