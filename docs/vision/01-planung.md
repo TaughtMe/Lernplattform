@@ -2884,3 +2884,28 @@ Lernraum findet? Würdest du fremden Schulen bei Fragen helfen?
 Antwort des Entwicklers (09.11.2026): Am liebsten jede Schule in den nächsten zwölf Monaten. Realistisch ist eher der eigene Schulamtsbezirk; das muss getestet werden.
 
 Hinweis von Claude für das Gremium (keine Aussage des Entwicklers): Ziel für zwölf Monate: Schulen des eigenen Schulamtsbezirks (Bayern, Mittelschule). Unterlagen für Schulleitungen, Hilfetexte und ein Betrieb, der ohne den Entwickler trägt, gehören damit in die Roadmap – in schlanker Form. Die bundesweite Öffnung bleibt ein späteres Ziel.
+
+### Nachtrag nach Phase 1 – Antworten des Entwicklers (10.11.2026)
+
+Grundlage: Berichte 10, 11 und 12. Diese Antworten gelten für alle Rollen ab
+Phase 2 und gehen den Annahmen und Hinweisen oben vor.
+
+1. **Schreiberleichterung / neutrale Übungseinstellung:** Muss nicht sein, weil
+   Lernraum auch ein Rechtschreibtraining ist. Nur umsetzen, wenn der Aufwand
+   gering ist. Hinweis von Claude für das Gremium: Toleranz bei der
+   Schreibprüfung steht im Zielkonflikt mit Rechtschreiblernen; ein Umbau der
+   Schreiberleichterung ist keine Priorität. Die rote Linie aus Bericht 12
+   (kein LRS-Merkmal im Kindprofil) bleibt als rechtlicher Hinweis bestehen und
+   ist bei der Klärung des Einsatzrahmens (S1) zu entscheiden.
+2. **Prüfstein am heutigen Code (Bericht 10, Abschnitt 4):** Das Bild stimmt.
+   Auf fremden Geräten nutzen die Kinder das freie Üben. Bedingte Aufgaben
+   (Tagesportion, Wiederholung aus eigenen Fehlern) sind eine Funktion für
+   Kinder mit festen Geräten. Hinweis von Claude: Der Prüfstein auf fremden
+   Geräten heißt damit „freies Üben, das ohne Vorbereitung sinnvoll und
+   altersgerecht ist“; die bedingte Steuerung gilt für feste Geräte.
+3. **Startpunkt, Tagestraining und Kompetenzprofil nicht verlinkt:** Eine
+   Lücke, keine Absicht. Sie sollen erreichbar sein. Wird außerhalb des
+   Vision-Laufs behoben; die Rollen planen mit erreichbaren Funktionen.
+4. **Haus-Leistungsbrief per QR:** Bleibt ausgeschaltet, weil die Häuser
+   ausgeschaltet sind; er ist derzeit nicht notwendig. Häuser und ein
+   Sitzungs-Abgleich für Hauspunkte gehören in „später“.
