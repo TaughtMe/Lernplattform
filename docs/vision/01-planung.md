@@ -2909,3 +2909,38 @@ Phase 2 und gehen den Annahmen und Hinweisen oben vor.
 4. **Haus-Leistungsbrief per QR:** Bleibt ausgeschaltet, weil die Häuser
    ausgeschaltet sind; er ist derzeit nicht notwendig. Häuser und ein
    Sitzungs-Abgleich für Hauspunkte gehören in „später“.
+
+### Nachtrag nach Phase 2 – Antworten des Entwicklers (10.11.2026)
+
+Grundlage: Berichte 20 bis 25. Der Entwickler hat alle elf gebündelten Fragen
+mit „ja“ beantwortet, also jeweils im Sinne der Empfehlung. Diese Antworten
+gelten für alle Rollen ab Phase 3 und gehen den Annahmen und Hinweisen oben
+vor. Wo eine Antwort von einer früheren Entscheidung abweicht, braucht die
+Umsetzung einen Eintrag im Entscheidungsprotokoll.
+
+1. Mathe wächst auf „Grundrechnen bis Klasse 9“ (Stellenwert,
+   Zehnereinmaleins, Kommazahlen, Größen, Brüche und Prozent im Kopf), ohne
+   Geometrie und Prüfungsstoff (Bericht 22, MD-1; berührt Entscheidung 38).
+2. Eine Rechtschreib-Wortbox darf mit einem Kernbestand von etwa 30 sehr gut
+   ausgezeichneten Wörtern starten (Bericht 20; berührt Entscheidung 30).
+3. Satz- und Lückensatzformate sind erlaubt, im Wortspeicher und in der
+   LernBox (Berichte 20 und 23; berührt Entscheidung 55).
+4. Textbox: 15 Texte werden geprüft, die übrigen vorerst ausgeblendet
+   (Bericht 20; berührt Entscheidung 54).
+5. Lesen: zuerst die Bausteine ohne Prüfzeit (Tandem-Begleiter, Chorlesen,
+   Wort-Blitz, satzweises Vorlesen); eigene Lesetexte (etwa 30, 8 bis 10 h
+   Prüfzeit) später (Bericht 21, E21-1, E21-2).
+6. Tempo darf als gemeinsames Klassenelement kommen (Klasse gegen die Uhr und
+   den eigenen Klassenrekord), ohne Rangliste und ohne Bonus für einzelne
+   Kinder (Bericht 24, E-1; Vault 23 wird entsprechend präzisiert).
+7. Battle: Angriffe laden über Genauigkeit statt Tempo, Störangriffe sind
+   standardmäßig aus (Bericht 24, E-2).
+8. Ein Auftrags-QR, der nur Kennungen mitgelieferter Übungen trägt und keine
+   eigenen Wörter, ist erlaubt (Bericht 25, F2; Ausnahme zur Rücknahme in
+   Welle 3, D4).
+9. Klassengerät-Modus für Koffer-Geräte ohne Gast-QR in jeder Stunde
+   (Bericht 25, F4).
+10. „Erledigt“ ergibt sich aus gezählten Runden statt aus einem Knopf
+    (Bericht 25, F3; berührt Entscheidung 45).
+11. Die Inhalte von Lernraum stehen unter CC BY-SA 4.0 (Berichte 12 und 23).
+    Eine passende Lizenz für den Code schlägt das Red Team vor.
