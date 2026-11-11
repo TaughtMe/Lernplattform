@@ -2978,3 +2978,26 @@ und gehen allen Annahmen vor.
    Pilotschulen, Fehlermuster erst nach Probe, eine Inhaltslinie zur Zeit,
    lokale Sprachausgabe nach Geräteprüfung, E30/O-Empfehlungen), gelten wie
    dort empfohlen.
+
+### Rückmeldung des Entwicklers zum Vault-Kapitel (11.11.2026)
+
+Zu `Anwendung.md` und `Roadmap.md` in `obsidian-export/Lernplattform/25 - Vision/`.
+Claude hat beide Dateien danach überarbeitet.
+
+- Lernraum soll auch im Unterricht genutzt werden: in der Vorviertelstunde,
+  als Übungsbestandteil und mit Spaß durch den Battle-Modus, bei dem die
+  Kinder wie bei Kahoot gegeneinander spielen.
+- Die Grundlagen sind im Laufdiktat erprobt. Lernraum ist die
+  Weiterentwicklung davon, kombiniert mit der LernBox.
+- Die Roadmap schießt über das Ziel hinaus. Wichtig ist, dass die Grundlagen
+  vorhanden sind: Laufdiktat und LernBox auf einer Plattform. Danach kommen die
+  Extras wie Wortarten und Texte; das sind Ideen für das LRS-Training.
+- Die Idee von Lernraum: eine Plattform für Grundlagen in Mathe, Förderung der
+  Rechtschreibung und Merken, in einem ansprechenden Rahmen, der zum
+  selbstständigen Arbeiten motiviert und belohnt. Lehrkräfte sollen Inhalte
+  schnell erstellen und im Unterricht interaktiv einsetzen können, ohne immer
+  nur Kahoot zu spielen.
+- Der Entwickler hat nicht die Kapazität, das allein zu bauen. Der Auftrag an
+  Fable war, eine ansprechende Plattform mit pädagogischem Mehrwert zu bauen,
+  ohne Neues zu erfinden: bekannte Elemente aus Kahoot, Quizlet und Co.
+  aufgreifen und in einer Plattform vereinen.

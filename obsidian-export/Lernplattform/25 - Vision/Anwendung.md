@@ -10,116 +10,104 @@ umsetzungsstand: Vorgeschlagen
 
 # Vision
 
-> **Dieses Kapitel ist ein Vorschlag des Expertengremiums vom 11.11.2026. Nichts davon ist beschlossen.** Maßgeblich bleiben das [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]] und die Berichte im Repository unter `docs/vision/` (Berichte 10 bis 40, Protokoll der Zusammenführung in `docs/vision/50-zusammenfuehrung.md`). Entscheidungen trifft der Entwickler.
-
-## Der Prüfstein
-
-> Tablet in die Hand, ohne Vorbereitung – und das Kind arbeitet 20 Minuten sinnvoll an genau dem, was es braucht.
-
-Daran misst sich jede Zeile dieses Kapitels. Heute trägt der Satz nur im Live-Raum. Am Ende steht, ab wann er wo gilt.
+> **Dieses Kapitel ist ein Vorschlag des Expertengremiums vom 11.11.2026, überarbeitet nach der Rückmeldung des Entwicklers am selben Tag. Nichts davon ist beschlossen.** Maßgeblich bleiben das [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]] und die Berichte im Repository unter `docs/vision/` (Berichte 10 bis 40, Protokoll der Zusammenführung in `docs/vision/50-zusammenfuehrung.md`). Entscheidungen trifft der Entwickler.
 
 ## Leitbild
 
-Lernraum ist der kostenlose Übungsraum für die Grundlagen: Rechtschreibung, Kopfrechnen und Vokabeln für die Mittelschule, auch für Kinder, die Stoff der Grundschule nachholen. Eine Lehrkraft kann ihn einem Kind ohne Konto und ohne Vorbereitung in die Hand geben. Eine Klasse spielt ihn gemeinsam in einer Minute an.
+Lernraum ist die Weiterentwicklung des **Laufdiktats**, das sich im Unterricht bewährt hat, vereint mit der **LernBox** auf einer Plattform. Lernraum übt die Grundlagen:
 
-Lernraum wird nicht die größte Plattform. Es soll die sein, auf die man sich verlassen kann: **schmal, geprüft, im Unterricht erprobt.** Wenige Inhalte, aber jeder von einer Lehrkraft durchgesehen. Wenige Funktionen, aber jede im Klassenzimmer ausprobiert.
+- **Mathe:** Kopfrechnen und Grundrechnen
+- **Rechtschreibung:** Förderung, auch als Training bei LRS
+- **Merken:** Vokabeln, Lernwörter und Wissen, das man auswendig können muss
 
-Chancengerechtigkeit heißt hier ganz praktisch: kein Preis, kein Konto, keine Werbung, keine Daten über das Kind auf einem Server, und es läuft auch auf dem Koffer-Tablet der Schule.
+Lernraum hat zwei Seiten, die zusammengehören:
+
+1. **Im Unterricht:** in der Vorviertelstunde, als Übungsphase oder als Spiel zum Abschluss. Die Lehrkraft erstellt einen Inhalt schnell, die Klasse ist per Code oder QR in einer Minute dabei, und im **Battle** treten die Kinder spielerisch gegeneinander an. Das ist interaktiv und macht Spaß, ohne dass es immer nur der Klassiker Kahoot ist.
+2. **Allein:** Was im Unterricht schwierig war, landet in der eigenen LernBox. Das Kind übt selbstständig weiter. Lernraum soll es dabei motivieren und belohnen, damit es sich gern selbst mit dem Stoff auseinandersetzt.
+
+**Nichts neu erfinden.** Lernraum nimmt bewährte Elemente bekannter Angebote auf und vereint sie auf einer Plattform:
+
+| Vorbild | Was Lernraum davon übernimmt |
+| --- | --- |
+| Kahoot, Blooket | Live-Spiel per Code an der Tafel, Wettkampf, sofortige Rückmeldung für die ganze Klasse |
+| Quizlet | ein Inhalt, viele Lernformen: Karteikarten, Schreiben, Zuordnen, Test |
+| Anton | Belohnung für eigenes Üben, kindgerechte Oberfläche |
+| Leitner-Lernkartei | Wiederholen in wachsenden Abständen, bis es sitzt |
+| Laufdiktat | Bewegung, Merken und Schreiben im Unterricht |
+
+Dazu kommt, was diese Angebote nicht verbinden: kostenlos, ohne Konto, ohne Werbung, keine Lerndaten der Kinder auf einem Server, und die Fehler aus dem Unterricht werden zum persönlichen Üben.
 
 ## Wie es sich anfühlt, wenn es fertig ist
 
-Die Szenen beschreiben den Stand nach den drei Etappen der [[Roadmap]], also frühestens Ende 2027. Heute gibt es davon nur Teile.
+**Vorviertelstunde.** Die Kinder kommen rein, an der Tafel steht ein QR-Code. Wer da ist, scannt und spielt mit: Kopfrechnen-Battle, fünf Minuten. Es wird gelacht, gestöhnt, angefeuert. Wenn es klingelt, sind alle wach und haben gerechnet.
 
-**Nachsitzen.** Du gibst Jonas das Koffer-Tablet und sagst „Rechtschreibung“. Er tippt ein Tier an und dann „20 Minuten üben“. Zwölf kurze Wörter zum Einstieg, die erste ist leicht. Nach drei Minuten läuft eine Übung zu „d oder t am Wortende“. Schreibt er „Hunt“, steht da nicht „falsch“, sondern: „Verlängere: viele Hun-de. Jetzt hörst du das d.“ Nach zehn Minuten wechselt die Form, damit es nicht eintönig wird. Am Ende zeigt er dir: „9 von 12 beim ersten Versuch richtig.“ Das Gerät vergisst ihn danach. Du hast in der Zeit korrigiert.
+**Übungsphase.** Du fügst morgens die zwölf Lernwörter der Woche ein. In der Stunde startest du daraus ein Laufdiktat, später ein Battle. Wer Fehler gemacht hat, findet die Wörter danach in seiner LernBox.
 
-**Vertretung.** Fremde Klasse, keine Unterlagen. Ein Knopf: „Kopfrechnen live“, Jahrgang wählen, Code an die Tafel. Nach einer Minute rechnen alle. An der Tafel wächst ein gemeinsamer Balken, niemand sieht, wer wie viel beiträgt. Danach übt jedes Kind allein weiter. Für die Klassenlehrkraft notierst du die drei häufigsten Fehler.
+**Allein üben.** Mia hat ihr eigenes Gerät. Sie öffnet die LernBox: zuerst ihre Fehler aus dem Laufdiktat, dann das, was heute wieder dran ist. Für jede Runde gibt es Sterne, ihre Wörter wandern Box um Box nach oben. Sie wählt selbst, ob sie Karteikarten macht, schreibt oder zuordnet.
 
-**Förderstunde.** Vier Kinder, vier Geräte. Du stellst an jedem in drei Tipps Fach, Thema und Stufe ein. Drei üben, mit dem vierten arbeitest du mündlich. Wer nicht gut liest, lässt sich die Aufgabe vorlesen. Zum Schluss zeigen dir die Kinder ihren Stand; du notierst auf Papier.
+**Nachsitzen.** Du gibst Jonas das Koffer-Tablet und sagst „Rechtschreibung“. Er tippt ein Tier an und „20 Minuten üben“. Nach ein paar Aufwärmwörtern läuft eine passende Übung. Schreibt er „Hunt“, steht da nicht „falsch“, sondern: „Verlängere: viele Hun-de. Jetzt hörst du das d.“ Du hast in der Zeit korrigiert.
 
-**Hausaufgabe.** Du zeigst einen QR-Code: „Lernwörter Woche 12, drei Runden“. Zu Hause öffnet der Auftrag genau diese Übung. Am nächsten Tag siehst du „3 von 3 Runden“, kein einzelnes Fehlerwort.
-
-**Die Schnelle.** Mia ist früh fertig und hat ihr eigenes Gerät. „Weiterlernen“ bringt zuerst ihre Fehler von gestern und das, was heute wieder dran ist. Reicht das nicht für die Zeit, kommt der nächste Lernschritt dazu.
+**Vertretung.** Fremde Klasse, keine Unterlagen. Ein Knopf: „Kopfrechnen live“, Jahrgang wählen, Code an die Tafel. Nach einer Minute rechnen alle.
 
 ## Das Bild der fertigen Plattform
 
 ### Für das Kind
 
-- **Ein Einstieg.** Tier antippen, „20 Minuten üben“, Fach wählen. Höchstens vier Wahlen vor der ersten Aufgabe.
-- **Fremdes Gerät:** Ein kurzer Startpunkt stellt in etwa drei Minuten eine passende Übung ein. Es gibt keine Aussage über das Kind, und nichts bleibt auf dem Gerät.
-- **Eigenes Gerät:** „Heute“ bringt eigene Fehler, fällige Wiederholungen und den nächsten Lernschritt. Der Stand zählt nach oben: „14 Wörter sicher, 3 neu seit Montag“.
-- **Rückmeldung, die hilft.** Nach einem Fehler steht die Strategie an der Stelle des Fehlers, nie ein Urteil.
-- **Kein Druck.** Keine Uhr gegen das Kind, keine Rangliste, kein sichtbarer Rückstand.
-- **Für Jugendliche gemacht.** Grundlagen heißen „Grundlagen“, nicht „Klasse 2“. Wörter und Beispiele stammen aus der Welt von Zwölf- bis Fünfzehnjährigen.
+- **Spaß im Unterricht:** Live-Spiele und Battle mit der Klasse, mit Spannung und sofortiger Rückmeldung.
+- **Belohnung beim eigenen Üben:** Sterne, Fortschritt, der sichtbar wächst, ein Wochenziel. Es geht darum, besser zu werden.
+- **Ein Inhalt, viele Lernformen:** Karteikarten, Schreiben, Zuordnen, Test, Laufdiktat allein. Abwechslung, ohne neuen Stoff zu brauchen.
+- **Rückmeldung, die hilft:** Nach einem Fehler steht die Strategie an der Stelle des Fehlers, kein bloßes „falsch“.
+- **Einfacher Einstieg:** Tier antippen und loslegen. Kein Konto, kein Passwort.
+- **Für Jugendliche gemacht:** Grundlagen heißen „Grundlagen“, nicht „Klasse 2“.
 
 ### Für die Lehrkraft
 
-- **Live in einer Minute:** Kopfrechnen, später Rechtschreibung und Englisch aus mitgelieferten Inhalten, ohne etwas zu tippen.
-- **Steuern ohne Verwaltung:** Schnellstart, Drei-Tipp-Wahl am Gerät des Kindes, gedruckte Übungskarten, Aufträge, die die Übung direkt öffnen.
-- **Rückmeldung in Stufen:** zuerst zeigt das Kind seinen Stand. Mehr erst, wenn der Einsatz mit Schulleitung und Datenschutz geklärt ist.
-- **Geprüfte Inhalte:** Jedes mitgelieferte Wort trägt „geprüft am, durch“. Ungeprüftes wird nicht ausgeliefert.
-- **Ein sicherer Rahmen:** ehrliches Impressum, eine Seite für die Schulleitung, offene Lizenz. Fällt der Entwickler aus, darf jemand weitermachen.
+- **Schnell erstellt:** Wortliste oder Vokabeln einfügen, daraus entstehen Laufdiktat, Battle und LernBox-Stapel. Mitgelieferte Inhalte gehen ganz ohne Tippen.
+- **Live in einer Minute:** Code oder QR an die Tafel, alle sind dabei.
+- **Interaktiv statt nur Kahoot:** Laufdiktat, Battle, freie Übung und Stationen aus demselben Inhalt.
+- **Wirkt über die Stunde hinaus:** Fehler aus dem Unterricht werden persönliches Üben zu Hause.
+- **Steuern ohne Verwaltung:** Aufträge per QR, die die Übung direkt öffnen.
+- **Ein sicherer Rahmen:** ehrliches Impressum, eine Seite für die Schulleitung, offene Lizenz.
 
-Die vier Lernfelder stehen in der [[Kompetenzlandkarte]], der Ablauf von Fehler zu Übung im [[Förderkreislauf]].
+## Der Kern zuerst, dann die Extras
 
-## Was Lernraum besonders macht
+Die Fachberichte enthalten viele gute Ideen. Sie haben aber zwei Rangstufen:
 
-Kostenlos sind andere auch (Anton in der Basis, Orthografietrainer.net, Levumi). Besonders ist die Verbindung, die das Gremium bei keinem geprüften Angebot gefunden hat (Bericht 11; beweisen lässt sich das nicht):
+1. **Der Kern:** Laufdiktat und LernBox als eine Plattform, Live-Spiele mit Battle, schnelles Erstellen durch die Lehrkraft, Kopfrechnen und Grundrechnen, belohnendes eigenes Üben. Daran entscheidet sich, ob Lernraum im Alltag trägt.
+2. **Die Extras:** Wortarten, Texte, Satzformate, Übung aus Fehlermustern, Kernwörter mit Strategien. Diese Ideen sind besonders wertvoll für ein **LRS-Training**. Sie kommen, wenn der Kern im Unterricht steht.
 
-1. Einstieg ohne Konto, auch auf geteilten Geräten.
-2. Live-Raum per Code oder QR, ohne Vorbereitung.
-3. Fehler aus dem Unterricht werden persönliches Üben.
-4. Keine Werbung, keine Lerndaten auf einem Server.
-5. Grundlagen nachholen in einer Form, die Jugendliche ernst nehmen.
+Lesen mit dem Schwerpunkt Leseverständnis kommt danach.
 
-Punkt 5 ist noch nicht gebaut. Einzelheiten im [[Wettbewerbsvergleich]].
+## Wie es gebaut wird
 
-## Was Lernraum nicht ist
+Lernraum entsteht mit KI-Unterstützung. Die KI programmiert und schreibt Tests. Der Entwickler entscheidet, testet im Unterricht und prüft Inhalte. **Im Unterricht testen geht immer**, und genau das ist der Prüfstein für jeden Schritt: Klappt es mit einer echten Klasse?
 
-- **Keine „Mega-Plattform“.** 300 Kernwörter und 250 Vokabeln sind wenig gegen über 5 000 Übungssätze bei Orthografietrainer.net. Das ist gewollt: Eine Person kann nur prüfen und pflegen, was klein ist.
-- **Keine Diagnose, kein Test.** Lernraum gibt Übungsempfehlungen. Messen kann Levumi; darauf verweist Lernraum.
-- **Kein Versprechen auf Wirkung.** Studien belegen den Bedarf, nicht die Wirkung von Lernraum. Ob es wirkt, zeigt nur eine eigene Probe im Unterricht (Etappe 1).
-- **Kein Ersatz für Unterricht.** Das Gespräch über die Strategie, eigene Texte, das Wörterbuch bleiben Sache der Lehrkraft.
-- **Nicht für alle.** Lernraum ist für Kinder mit Lücken in den Grundlagen, auch mit Förderschwerpunkt Lernen. Es bedient nicht: Förderschwerpunkt geistige Entwicklung, Kinder, die noch nicht lesen und schreiben können, Unterstützte Kommunikation, blinde Kinder, Therapie bei LRS oder Dyskalkulie (Bericht 31).
-- **Nicht gebaut werden:** Handschrifterkennung, Spracherkennung, Buchquiz mit Punktabzug, Ranglisten einzelner Kinder, Geometrie und Prüfungsvorbereitung, weitere Fremdsprachen.
+Daraus folgen drei Regeln:
+
+- **Kleine Schritte, die man im Unterricht ausprobieren kann.** Jeder Schritt ist nach wenigen Tagen in der Klasse testbar.
+- **Der Kern vor den Extras.** Nichts Neues, solange der Kern im Unterricht hakt.
+- **Inhalte nur geprüft ausliefern.** Inhalte schreibt die KI vor, die Lehrkraft prüft sie. Das ist der Teil, der Zeit kostet. Deshalb kommen große Inhaltspakete erst, wenn der Kern trägt.
+
+Wie die Schritte aufeinander folgen, steht in der [[Roadmap]].
 
 ## Was immer gilt
 
-Die harten Rahmenbedingungen des Auftrags, wörtlich:
+- **Kostenlos** für Schulen, Kinder und Eltern. Keine kostenpflichtigen Dienste, keine Lizenzinhalte.
+- **Spontan ohne Login nutzbar.** Der Live-Raum per Code oder QR bleibt so einfach wie heute.
+- **Datenschutz für Kinder:** Local-first, keine Schülerkonten, keine Telemetrie, keine Lerndaten auf einem Server. Angaben zu Förderbedarf oder LRS verlassen das Gerät nicht.
+- **Keine KI zur Laufzeit.** Inhalte entstehen bei der Entwicklung und werden von einer Lehrkraft geprüft.
+- **Bestehende Entscheidungen achten.** Was davon abweicht, kommt als Entscheidungsvorlage ins [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]].
 
-> 1. Kostenlos für Schulen, Kinder und Eltern. Keine Lizenzkosten, keine kostenpflichtigen Dienste oder Inhalte. Laufende Kosten höchstens im Rahmen der kostenlosen Tarife von Cloudflare und Supabase.
-> 2. Keine KI zur Laufzeit. Inhalte entstehen zur Entwicklungszeit und werden von der Lehrkraft fachlich geprüft. Diese Prüfzeit ist der Engpass: Nenne bei jedem Inhaltsvorschlag, wie viel Prüfarbeit er der Lehrkraft macht.
-> 3. Spontan ohne Login nutzbar bleibt unantastbar. Der Live-Raum (Beitritt per Code oder QR) muss so einfach bleiben wie heute. Keine Funktion darf ein Konto, eine Registrierung oder eine Vorbereitung erzwingen. Miss jeden Vorschlag daran.
-> 4. Eine Person entwickelt und pflegt alles, neben dem Beruf als Lehrkraft. Was dauerhaft Pflege braucht, zählt doppelt.
-> 5. Datenschutz für Kinder: Local-first, keine Schülerkonten, keine Telemetrie, keine Lerndaten auf einem Server (Entscheidungen 2, 9, 10, 42). Angaben zu Förderbedarf oder LRS verlassen das Gerät nicht (Entscheidung 50).
-> 6. Nur frei lizenzierte oder selbst erstellte Inhalte. Nenne bei jeder Quelle die Lizenz. Ist sie unklar, schreibe „Lizenz ungeprüft“.
-> 7. Bestehende Entscheidungen achten. Suche vor jeder Empfehlung im Entscheidungsprotokoll (obsidian-export/Lernplattform/19 - Entscheidungsprotokoll/Anwendung.md und Entscheidungsindex.md) nach Festlegungen und Rücknahmen („Zurückgenommen“, „Nicht wieder einbauen“, „Bewusst nicht“). Widerspricht deine Empfehlung einer Entscheidung, nenne die Nummer und formuliere sie als Entscheidungsvorlage für den Entwickler. Setze dich nie stillschweigend darüber hinweg.
+## Was Lernraum nicht ist
 
-## Der Weg dorthin, ehrlich
-
-Die Fachberichte schlagen zusammen 146 Bausteine vor. Das wären drei bis fünf Jahre Arbeit. Knapp ist dabei nicht das Programmieren, sondern deine Aufmerksamkeit: entscheiden, im Unterricht ausprobieren, Inhalte prüfen (Bericht 40).
-
-Die [[Roadmap]] nimmt deshalb rund 65 meist kleine Bausteine für zwölf Monate:
-
-1. **Reparieren, klären, messen** (bis Februar 2027).
-2. **Schnellstart** (bis Pfingsten 2027).
-3. **Englisch-Grundlagen und Auftrag** (bis November 2027).
-
-Davor steht eine kurze Liste „Sofort reparieren“. Lesen kommt nach diesen Etappen, mit dem Schwerpunkt Leseverständnis. Was noch bei dir liegt, steht in [[Offene Entscheidungen]].
-
-## Ab wann der Prüfstein gilt
-
-| Lage | Heute | Nach Etappe 2 | Nach Etappe 3 |
-| --- | --- | --- | --- |
-| Live-Raum | trägt, wenn die Lehrkraft einen Raum öffnet | wie heute, mit Klassenziel | dazu Englisch und Rechtschreibung ohne Vorbereitung |
-| Fremdes Gerät | trägt nicht: vier bis fünf Wahlen, Inhalte enden bei der Grundschule | trägt für Mathe; für Rechtschreibung nur mit deutscher Stimme auf dem Gerät | dazu Englisch |
-| Eigenes Gerät | wiederholt nur, füllt 20 Minuten nicht verlässlich | 20 Minuten gefüllt: Fehler, Fälliges, nächster Schritt | dazu Auftrag der Lehrkraft |
-
-Zwei Einschränkungen bleiben stehen. **„Genau das, was es braucht“** leistet ein fremdes Gerät nie; ehrlich ist „in drei Minuten passend eingestellt“. Und Übung aus den eigenen Fehlermustern gibt es nur auf einem festen Gerät, wenn das Kind an mehreren Tagen übt. Ob das genug Kinder betrifft, klärt erst die Beobachtung in Etappe 1.
-
-> Tablet in die Hand, ohne Vorbereitung – und das Kind arbeitet 20 Minuten sinnvoll an genau dem, was es braucht.
+- **Keine Diagnose, kein Test.** Lernraum gibt Übungsempfehlungen. Messen kann Levumi; darauf verweist Lernraum.
+- **Kein Ersatz für Unterricht.** Das Gespräch über Strategien, eigene Texte und das Wörterbuch bleiben Sache der Lehrkraft.
+- **Nicht für alle.** Lernraum ist für Kinder mit Lücken in den Grundlagen, auch mit Förderschwerpunkt Lernen. Es bedient nicht: Förderschwerpunkt geistige Entwicklung, Kinder, die noch nicht lesen und schreiben können, Unterstützte Kommunikation, blinde Kinder, Therapie bei LRS oder Dyskalkulie (Bericht 31).
+- **Nicht gebaut werden:** Handschrift- und Spracherkennung, Buchquiz mit Punktabzug, Geometrie und Prüfungsvorbereitung.
 
 ## Siehe auch
 
-- [[Kompetenzlandkarte]] · [[Förderkreislauf]] · [[Wettbewerbsvergleich]] · [[Roadmap]] · [[Offene Entscheidungen]]
+- [[Roadmap]] · [[Kompetenzlandkarte]] · [[Förderkreislauf]] · [[Wettbewerbsvergleich]] · [[Offene Entscheidungen]]
+- [[../02 - Laufdiktat und Unterrichtsraum/Anwendung|Laufdiktat und Unterrichtsraum]], [[../03 - Persönliche LernBox/Anwendung|Persönliche LernBox]], [[../09 - Duelle/Anwendung|Duelle]]
 - [[../22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]], [[../23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]], [[../24 - Textbox/Anwendung|Textbox]]
-- [[../13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]], [[../17 - Entwicklungsplan/Anwendung|Entwicklungsplan]], [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]]
+- [[../13 - Datenschutz und Rollen/Anwendung|Datenschutz und Rollen]], [[../19 - Entscheidungsprotokoll/Anwendung|Entscheidungsprotokoll]]
