@@ -57,6 +57,7 @@ audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 | [[22 - Adaptiver Lernkreislauf/Anwendung\|Adaptiver Lernkreislauf]] | Teilweise implementiert | Diagnostik nicht umgesetzt |
 | [[23 - Ramagotchi und nachhaltige Gamification/Anwendung\|Ramagotchi und nachhaltige Gamification]] | Geplant | erst nach stabilem Lernkern |
 | [[24 - Textbox/Anwendung\|Textbox]] | Implementiert | Hauptwert misst Textbehalten |
+| [[25 - Vision/Anwendung\|Vision]] | Vorgeschlagen | Vorschlag des Expertengremiums vom 11.11.2026, nichts beschlossen |
 
 ## Leitidee
 
@@ -108,6 +109,7 @@ Die Lernplattform verbindet Unterricht, selbstständiges Wiederholen und spieler
 22. [[22 - Adaptiver Lernkreislauf/Anwendung|Adaptiver Lernkreislauf]]
 23. [[23 - Ramagotchi und nachhaltige Gamification/Anwendung|Ramagotchi und nachhaltige Gamification]]
 24. [[24 - Textbox/Anwendung|Textbox]]
+25. [[25 - Vision/Anwendung|Vision]]
 
 ## Grundprinzipien
 
