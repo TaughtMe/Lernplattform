@@ -2944,3 +2944,37 @@ Umsetzung einen Eintrag im Entscheidungsprotokoll.
     (Bericht 25, F3; berührt Entscheidung 45).
 11. Die Inhalte von Lernraum stehen unter CC BY-SA 4.0 (Berichte 12 und 23).
     Eine passende Lizenz für den Code schlägt das Red Team vor.
+
+### Nachtrag nach Phase 4 – Antworten des Entwicklers (11.11.2026)
+
+Grundlage: Bericht 40 (Red Team). Der Entwickler stimmt den Empfehlungen des
+Red Teams im Großen und Ganzen zu (Entscheidungen 1 bis 8 in Bericht 40). Die
+folgenden Punkte weichen davon ab oder ergänzen sie. Sie gelten für Rolle 50
+und gehen allen Annahmen vor.
+
+1. **Tierbilder:** Sie stammen von coco-material und sind laut Anbieter frei
+   nutzbar. Hinweis von Claude: Die Nutzungsbedingungen sind im Original
+   festzuhalten und mit der geplanten CC-BY-SA-Lizenz der Inhalte abzugleichen;
+   die Bilder liegen ggf. getrennt unter ihren eigenen Bedingungen.
+2. **Markenfiguren (Star Wars, Marvel, Harry Potter u. a.):** Der Entwickler
+   sieht das Problem. Hinweis von Claude: Auch eine kostenlose Plattform darf
+   geschützte Figuren und Namen nicht ohne Lizenz verwenden; sie werden durch
+   eigene Fantasiefiguren ersetzt, bevor eine offene Lizenz oder eine breitere
+   Verteilung kommt.
+3. **Lesen:** Lesetandem und Chorlesen sind im Unterricht schwer umzusetzen.
+   Lesen rückt deshalb in der Reihenfolge nach hinten. Wenn Lesen kommt, liegt
+   der Schwerpunkt auf **Leseverständnis** („Schüler sollen auf Verständnis
+   lesen“), nicht auf Lautlese-Formaten. Hinweis von Claude: Bericht 21 nennt
+   Leseflüssigkeit als Voraussetzung für Verständnis bei schwachen Lesern; die
+   Zusammenführung soll das als Spannung benennen, die Entscheidung des
+   Entwicklers aber umsetzen (Leseverständnis als spätere Etappe, Lautlese-
+   Formate höchstens als Option).
+4. **Lizenz:** Ausdrücklich ja. Code unter EUPL-1.2, Inhalte unter
+   CC BY-SA 4.0 in eigenen Dateien. Sie soll wirklich eingebaut werden und
+   gehört in die erste Etappe (vorher Markenfiguren ersetzen, Bildrechte und
+   Vorgänger-Repositories klären).
+5. Alle übrigen Empfehlungen aus Bericht 40, Abschnitt „Entscheidungen“
+   (Begrenzung auf etwa 65 Bausteine in drei Etappen, eigene Schule plus 2–3
+   Pilotschulen, Fehlermuster erst nach Probe, eine Inhaltslinie zur Zeit,
+   lokale Sprachausgabe nach Geräteprüfung, E30/O-Empfehlungen), gelten wie
+   dort empfohlen.
