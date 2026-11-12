@@ -3001,3 +3001,22 @@ Claude hat beide Dateien danach überarbeitet.
   Fable war, eine ansprechende Plattform mit pädagogischem Mehrwert zu bauen,
   ohne Neues zu erfinden: bekannte Elemente aus Kahoot, Quizlet und Co.
   aufgreifen und in einer Plattform vereinen.
+
+### Entscheidungen zur Umsetzung der Sofortliste (12.11.2026)
+
+1. **s-Schreibung:** Zwei Schritte statt „summen“. Nach kurzem Vokal ss
+   (Wasser). Nach langem Vokal sind ß und s Merkstellen, Hilfe über die
+   Wortfamilie (Fuß – Füße, Gras – Gräser).
+2. **Textbox:** Die bekannten Fehler (u. a. vier falsche Zielwörter) werden
+   korrigiert. Die Texte bleiben sichtbar und tragen intern den Vermerk
+   „ungeprüft“; der Entwickler prüft nach und nach.
+3. **Markenfiguren:** Für später gemerkt. Der Entwickler klärt selbst, was es
+   bedeutet, dass Coco Material die Zeichnungen auch für kommerzielle Nutzung
+   ohne Namensnennung freigibt (CC0). Bis dahin bleiben die Figuren
+   unverändert. Hinweis von Claude: CC0 deckt die Zeichnung ab, nicht die
+   Marken- und Figurenrechte der Rechteinhaber; das ist die offene Frage.
+4. **Impressum:** Entwurf einarbeiten (Beta-Betrieb an Schulen, Privatperson
+   als Verantwortlicher); der Entwickler prüft den Text vor dem Merge.
+5. **Entscheidungsprotokoll:** Die vorbereiteten Einträge aus
+   `obsidian-export/Lernplattform/25 - Vision/Offene Entscheidungen.md` und die
+   Korrekturen zu den Entscheidungen 53 und 54 werden übernommen.
