@@ -96,6 +96,15 @@ export const CHILD_GLOSSARY: readonly ChildGlossaryEntry[] = [
       "„Stapel“ ist erlaubt (siehe unten), Verwaltungsjargon darum herum nicht.",
   },
   {
+    id: "stimmhaft",
+    forbidden: ["stimmhaft", "stimmlos", "summendes s", "Summt das s?"],
+    pattern: /stimm(?:haft|los)|summ\p{L}* (?:das )?s\b/iu,
+    replacement:
+      "Nach kurzem Vokal ss; nach langem Vokal ß oder s merken, Hilfe über die Wortfamilie",
+    reason:
+      "In süddeutscher Aussprache gibt es kein stimmhaftes s (Bericht 20, F6). Eine Hörprobe, die bayerische Kinder nicht hören, hilft nicht (Entscheidung vom 12.11.2026).",
+  },
+  {
     id: "klassenbeitrag",
     forbidden: ["Klassenbeitrag"],
     pattern: /klassenbeitrag/i,

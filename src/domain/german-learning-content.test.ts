@@ -82,7 +82,12 @@ describe("German learning content", () => {
 
   it("keeps the s, ss and ß rule consistent with its box", () => {
     const box = getLearningWordCollection("s-ss-sz");
-    expect(box?.detail).toContain("Summt das s");
+    // Entscheidung vom 12.11.2026: zwei Schritte, keine Probe „summt das s?“
+    // (in süddeutscher Aussprache gibt es kein stimmhaftes s, Bericht 20, F6).
+    expect(box?.detail).toContain("Schritt 1");
+    expect(box?.detail).toContain("ss (Wasser");
+    expect(box?.detail).toContain("Fuß – Füße, Gras – Gräser");
+    expect(box?.detail).not.toMatch(/summ|stimmhaft/iu);
     expect(box?.strategy).toBe("Verlängern");
     expect(box?.words).not.toContain("das");
     expect(box?.words).not.toContain("dass");
