@@ -40,6 +40,7 @@ import {
 } from "../../src/integrations/laufdiktat/live-room-client";
 import type { DailyPlanItem } from "../../src/domain/daily-plan";
 import { createDailyPlanRepository } from "../../src/storage/daily-plan";
+import { speak } from "../../src/speech/speaker";
 import {
   PersonalLearningDatabase,
   createLearningBoxRepository,
@@ -346,13 +347,10 @@ export function LearningBoxApp({
       : { forward: "Deutsch → Englisch", reverse: "Englisch → Deutsch" };
   }
 
+  // Gemeinsame Sprachausgabe: nur lokale Stimmen, sonst ein Hinweis (B-012).
   function say(text: string, locale: string) {
-    if (!("speechSynthesis" in window) || !text) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text.split("|")[0]?.trim());
-    utterance.lang = locale;
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
+    const spoken = text.split("|")[0]?.trim();
+    if (spoken) void speak(spoken, locale);
   }
 
   function startSession(

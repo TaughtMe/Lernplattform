@@ -22,6 +22,8 @@ export type StartPointScreenProps =
       instruction: string;
       /** Das Gezeigte: Lückenwort, Rechenaufgabe oder der Knopf zum Anhören. */
       prompt: ReactNode;
+      /** Hinweis, warum das Wort nicht gesprochen wird (keine lokale Stimme). */
+      voiceNotice?: string | undefined;
       value: string;
       speaking: boolean;
       /** Nur bei „Hören und schreiben“. */
@@ -88,6 +90,9 @@ export function StartPointScreen(props: StartPointScreenProps) {
             <label className="ui-label" htmlFor="startpunkt-antwort">
               {props.instruction}
             </label>
+            {props.voiceNotice ? (
+              <p className="ui-notice">{props.voiceNotice}</p>
+            ) : null}
             <div className="ui-center">{props.prompt}</div>
             {props.onListen ? (
               <p className="ui-sr-only" role="status">

@@ -17,6 +17,8 @@ import {
   type StartPointTask,
 } from "../../../src/domain/start-point";
 import { createStartPointRepository } from "../../../src/storage/start-point";
+import { NO_SPEECH_MESSAGE } from "../../../src/speech/speaker";
+import { missingVoiceMessage } from "../../../src/speech/voices";
 import { Button } from "../../ui/primitives";
 import { STAGE_COPY } from "../../views/wortspeicher/stage-copy";
 import {
@@ -46,6 +48,8 @@ type SpellingRun = {
   roundId: string;
   /** Wort hören (Stufe 6); sonst als Lückenwort (Stufe 3). */
   listening: boolean;
+  /** Warum nicht gehört wird (keine lokale Stimme); sonst leer. */
+  voiceNotice?: string | undefined;
   tasks: StartPointTask<SpellingTask>[];
   answers: StartPointAnswer[];
 };
@@ -117,6 +121,13 @@ export function StartPointApp({
         subject: "spelling",
         roundId,
         listening: readiness === "ready",
+        // Ohne lokale Stimme wird es ein Lückenwort, aber nicht still (B-012).
+        voiceNotice:
+          readiness === "ready"
+            ? undefined
+            : readiness === "no-voice"
+              ? `${missingVoiceMessage("de-DE")} Darum fehlen Buchstaben.`
+              : `${NO_SPEECH_MESSAGE} Darum fehlen Buchstaben.`,
         tasks: buildSpellingStartPoint(),
         answers: [],
       }),
@@ -221,6 +232,7 @@ export function StartPointApp({
             </p>
           )
         }
+        voiceNotice={spelling.voiceNotice}
         value={value}
         speaking={speech.speaking}
         onListen={spelling.listening ? listen : undefined}

@@ -1,4 +1,16 @@
-import { normalizeSpeechLang, pickVoice } from "./voices";
+import {
+  missingVoiceMessage,
+  normalizeSpeechLang,
+  pickLocalVoice,
+} from "./voices";
+
+/**
+ * Gemeinsame Sprachausgabe aller Stellen (LernBox, Live-Spiel, Station,
+ * Wortspeicher Stufe 6, Startpunkt, Vorlesen). Sie nutzt nur Stimmen, die auf
+ * dem Gerät laufen (Entscheidung 58, Befund B-012). Gibt es keine passende,
+ * spricht sie nicht und meldet das über `SPEECH_NOTICE_EVENT`, damit das Kind
+ * einen Hinweis sieht statt einer stummen Taste.
+ */
 
 /** Gemeinsames Tempo für alle Stellen (Vorlese-Plan 3.1); kalibrierbar. */
 export const SPEECH_RATE = 0.9;
@@ -16,6 +28,25 @@ export const WARMUP_TIMEOUT_MS = 1500;
 const SAFETY_TIMEOUT_MS = 12_000;
 
 export type SpeechReadiness = "ready" | "no-voice" | "unavailable";
+/** Ergebnis von `speak`: gesprochen, keine lokale Stimme, keine Sprachausgabe, abgelöst. */
+export type SpeakOutcome = "spoken" | "no-voice" | "unavailable" | "replaced";
+
+/** Fenster-Ereignis mit dem Hinweistext in `detail.message`. */
+export const SPEECH_NOTICE_EVENT = "lernraum-speech-notice";
+export type SpeechNoticeDetail = { message: string };
+
+/** Meldet einen Hinweis zur Sprachausgabe (z. B. „keine deutsche Stimme“). */
+export function announceSpeechNotice(message: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<SpeechNoticeDetail>(SPEECH_NOTICE_EVENT, {
+      detail: { message },
+    }),
+  );
+}
+
+/** Hinweis, wenn das Gerät gar keine Sprachausgabe hat. */
+export const NO_SPEECH_MESSAGE = "Dieses Gerät kann nicht vorlesen.";
 
 let cachedVoices: SpeechSynthesisVoice[] = [];
 let preloading: Promise<SpeechSynthesisVoice[]> | undefined;
@@ -41,7 +72,7 @@ function synth(): SpeechSynthesis | undefined {
 }
 
 function readVoices(): SpeechSynthesisVoice[] {
-  const list = synth()?.getVoices() ?? [];
+  const list = synth()?.getVoices?.() ?? [];
   if (list.length > 0) cachedVoices = list;
   return cachedVoices;
 }
@@ -83,20 +114,16 @@ export function preloadVoices(): Promise<SpeechSynthesisVoice[]> {
   return preloading;
 }
 
-/** Gibt es auf diesem Gerät (nach `preloadVoices`) eine passende Stimme? */
-export function hasVoiceFor(lang: string): boolean {
-  return pickVoice(readVoices(), lang) !== null;
-}
-
-/** Nur Stimmen, die auf dem Gerät laufen: Der Text verlässt es nicht (B-012). */
-function localVoices(): SpeechSynthesisVoice[] {
-  return readVoices().filter((voice) => voice.localService);
-}
-
-/** Gibt es eine passende Stimme, die auf dem Gerät läuft? */
+/**
+ * Gibt es (nach `preloadVoices`) eine passende Stimme, die auf dem Gerät
+ * läuft? Netzstimmen zählen nicht (B-012).
+ */
 export function hasLocalVoiceFor(lang: string): boolean {
-  return pickVoice(localVoices(), lang) !== null;
+  return pickLocalVoice(readVoices(), lang) !== null;
 }
+
+/** Gleichbedeutend mit `hasLocalVoiceFor`: Es gibt nur lokale Stimmen. */
+export const hasVoiceFor = hasLocalVoiceFor;
 
 /** Spricht eine Äußerung und wartet auf ihr Ende (oder Fehler, oder Sicherheitsgrenze). */
 function utter(
@@ -132,28 +159,31 @@ function utter(
 
 export type SpeakOptions = {
   rate?: number;
-  /** Gespeicherte Wunschstimme (Vorlese-Plan 3.4). */
+  /** Gespeicherte Wunschstimme (Vorlese-Plan 3.4); nur, wenn sie lokal läuft. */
   voiceURI?: string | null;
-  /**
-   * Nur Stimmen, die auf dem Gerät laufen. Gibt es keine, bleibt es stumm,
-   * statt den Text an eine Netzwerkstimme zu schicken (B-012).
-   */
-  localOnly?: boolean;
+  /** Läuft kurz bevor die Stimme spricht (z. B. „Anhören“ mitzählen). */
+  onStart?: () => void;
+  /** Ohne Hinweis bleiben, wenn die Stelle selbst einen zeigt. */
+  silentNotice?: boolean;
 };
 
 /**
  * Liest einen Text mit der besten Stimme des Geräts vor. Ist die Liste noch
- * leer, wartet es höchstens `VOICE_WAIT_MS` und liest dann trotzdem vor, damit
- * sich ein Tippen nie „tot“ anfühlt. Eine laufende Ausgabe wird beendet; das
- * Ergebnis kommt, wenn das Sprechen zu Ende ist.
+ * leer, wartet es höchstens `VOICE_WAIT_MS` (danach auch auf das späte
+ * Nachladen von Safari). Ohne lokale Stimme passender Sprache spricht es
+ * nicht, meldet den Hinweis und liefert `"no-voice"`. Eine laufende Ausgabe
+ * wird beendet; das Ergebnis kommt, wenn das Sprechen zu Ende ist.
  */
 export async function speak(
   text: string,
   lang: string,
   options: SpeakOptions = {},
-): Promise<void> {
+): Promise<SpeakOutcome> {
   const speech = synth();
-  if (!speech) return;
+  if (!speech) {
+    if (!options.silentNotice) announceSpeechNotice(NO_SPEECH_MESSAGE);
+    return "unavailable";
+  }
   const mine = ++generation;
   let voices = readVoices();
   if (voices.length === 0) {
@@ -162,19 +192,29 @@ export async function speak(
       delay(VOICE_WAIT_MS).then(readVoices),
     ]);
   }
-  if (mine !== generation) return;
-  if (options.localOnly) voices = voices.filter((entry) => entry.localService);
-  const voice = pickVoice(voices, lang, options.voiceURI);
-  if (options.localOnly && !voice) return;
+  if (mine !== generation) return "replaced";
+  let voice = pickLocalVoice(voices, lang, options.voiceURI);
+  if (!voice && voices.length === 0) {
+    // Die Liste kam noch nicht: auf das Ende des Ladens warten, statt ohne
+    // Stimme (und damit womöglich mit einer Netzstimme) zu sprechen.
+    voice = pickLocalVoice(await preloadVoices(), lang, options.voiceURI);
+    if (mine !== generation) return "replaced";
+  }
+  if (!voice) {
+    if (!options.silentNotice) announceSpeechNotice(missingVoiceMessage(lang));
+    return "no-voice";
+  }
   speech.cancel();
   await delay(SPEAK_DELAY_MS);
   // Zwischenzeitlich wurde schon etwas Neues angefordert: nur das Neueste zählt.
-  if (mine !== generation) return;
+  if (mine !== generation) return "replaced";
+  options.onStart?.();
   await utter(speech, text, lang, {
     voice,
     rate: options.rate ?? SPEECH_RATE,
     timeoutMs: SAFETY_TIMEOUT_MS,
   });
+  return "spoken";
 }
 
 /** Beendet eine laufende Ausgabe (z. B. beim Verlassen der Übung). */
@@ -183,7 +223,7 @@ export function stopSpeaking() {
   synth()?.cancel();
 }
 
-/** Wartet bis zu `timeoutMs` auf eine passende Stimme. */
+/** Wartet bis zu `timeoutMs` auf eine passende lokale Stimme. */
 async function waitForVoice(
   lang: string,
   timeoutMs: number,
@@ -192,7 +232,7 @@ async function waitForVoice(
   if (!speech) return null;
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const voice = pickVoice(readVoices(), lang);
+    const voice = pickLocalVoice(readVoices(), lang);
     if (voice) return voice;
     const left = deadline - Date.now();
     if (left <= 0) return null;
@@ -228,7 +268,7 @@ export async function prepareSpeech(
   // Schnellweg: Ist die Stimme schon bekannt, beginnt das Aufwärmen ohne Umweg
   // noch in der Nutzergeste.
   const voice =
-    pickVoice(readVoices(), lang) ?? (await waitForVoice(lang, timeoutMs));
+    pickLocalVoice(readVoices(), lang) ?? (await waitForVoice(lang, timeoutMs));
   if (!voice) return "no-voice";
 
   if (speech.speaking || speech.pending) {

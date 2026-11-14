@@ -10,6 +10,7 @@ import { useThemeToggle } from "../../ui/theme";
 import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
 import { useHoldToReveal } from "./use-hold-to-reveal";
 import { DeliveryNotice, GameWarning } from "./game-parts";
+import { speak } from "../../../src/speech/speaker";
 
 type Props = {
   code: string;
@@ -134,12 +135,12 @@ export function LiveStationGame({
 
   const readAloud = () => {
     const current = words[index];
-    if (!current || !("speechSynthesis" in window)) return;
-    const utterance = new SpeechSynthesisUtterance(currentPrompt);
-    utterance.lang = current.promptLang ?? "de-DE";
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    reveal(false);
+    if (!current) return;
+    // Gemeinsame Sprachausgabe: nur lokale Stimmen, sonst ein Hinweis (B-012).
+    // Als Hinsehen zählt nur, was wirklich gesprochen wird.
+    void speak(currentPrompt, current.promptLang ?? "de-DE", {
+      onStart: () => reveal(false),
+    });
   };
   const notices =
     deliveryStatus !== "idle" || connectionWarning ? (

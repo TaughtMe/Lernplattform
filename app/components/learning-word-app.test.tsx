@@ -1189,6 +1189,7 @@ describe("Stufe 6: Hören und schreiben", () => {
       lang: string;
       voiceURI: string;
       default: boolean;
+      localService?: boolean;
     }[],
   ) {
     const spoken: Utter[] = [];
@@ -1220,11 +1221,13 @@ describe("Stufe 6: Hören und schreiben", () => {
     return spoken;
   }
 
+  // Echte Browser melden `localService`; Lernraum nutzt nur lokale Stimmen.
   const anna = {
     name: "Anna (Premium)",
     lang: "de-DE",
     voiceURI: "anna",
     default: true,
+    localService: true,
   };
 
   afterEach(() => {
@@ -1257,7 +1260,7 @@ describe("Stufe 6: Hören und schreiben", () => {
     await waitFor(
       () =>
         expect(card).toHaveTextContent(
-          "Auf diesem Gerät gibt es keine deutsche Stimme.",
+          "Auf diesem Gerät ist keine deutsche Stimme installiert.",
         ),
       SLOW,
     );

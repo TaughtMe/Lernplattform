@@ -54,6 +54,7 @@ import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation
 import { CopyGuide, DeliveryNotice, GameWarning } from "./game-parts";
 import { useHoldToReveal } from "./use-hold-to-reveal";
 import { LiveStationGame } from "./station-game";
+import { speak } from "../../../src/speech/speaker";
 
 type Phase = "idle" | "revealed" | "write" | "correct" | "complete";
 type AttackType = "ink" | "flicker";
@@ -618,8 +619,7 @@ export function LiveRunningDictationGame({
   );
 
   function readPromptAloud() {
-    if (!("speechSynthesis" in window) || !prompt) return;
-    window.speechSynthesis.cancel();
+    if (!prompt) return;
     const spoken =
       kind === "math"
         ? prompt
@@ -628,10 +628,11 @@ export function LiveRunningDictationGame({
             .replace(/[·*×]/g, " mal ")
             .replace(/[:/÷]/g, " geteilt durch ")
         : prompt;
-    const utterance = new SpeechSynthesisUtterance(spoken);
-    utterance.lang = activeWord.promptLang ?? "de-DE";
-    window.speechSynthesis.speak(utterance);
-    setPeeks((value) => value + 1);
+    // Gemeinsame Sprachausgabe: nur lokale Stimmen, sonst ein Hinweis (B-012).
+    // Mitgezählt wird nur, was wirklich gesprochen wird.
+    void speak(spoken, activeWord.promptLang ?? "de-DE", {
+      onStart: () => setPeeks((value) => value + 1),
+    });
   }
 
   async function submit() {

@@ -13,6 +13,7 @@ import { HydrationMark } from "./ui/hydration-mark";
 import { ServiceWorkerRegistration } from "./ui/service-worker-registration";
 import { UpdateToast } from "./ui/update-toast";
 import { SiteFooter } from "./ui/site-footer";
+import { SpeechNoticeHost } from "./ui/speech-notice";
 import "@fontsource-variable/work-sans/wght.css";
 import "@fontsource-variable/fredoka/wght.css";
 import "katex/dist/katex.min.css";
@@ -127,6 +128,7 @@ export default async function RootLayout({
           <HydrationMark />
           <ServiceWorkerRegistration />
           <UpdateToast />
+          <SpeechNoticeHost />
           <GuestModeHost />
           <HardwareKeyboardHost />
         </ReleaseProvider>
