@@ -23,7 +23,7 @@ Diese Punkte hat der Entwickler beantwortet (`docs/vision/01-planung.md`, Abschn
 - Lizenz: Code EUPL-1.2, Inhalte CC BY-SA 4.0, in der ersten Etappe. Markenfiguren werden ersetzt.
 - Elf Ja-Antworten vom 10.11.2026 (Mathe bis Klasse 9, Kernbestand von 30 Wörtern, Satzformate, 15 Texte, Klassentempo, Battle nach Genauigkeit, Auftrags-QR mit Kennungen, Klassengerät-Modus, gezählte Runden).
 
-Mehrere dieser Antworten ändern frühere Entscheidungen. Dafür fehlen noch die Einträge im Protokoll (unten, „Entwürfe“).
+Mehrere dieser Antworten ändern frühere Entscheidungen. Die Einträge dafür stehen seit dem 14.11.2026 im Protokoll (Entscheidungen 60 bis 76, nach der Entscheidung vom 12.11.2026, Nr. 5).
 
 ## Was noch bei dir liegt
 
@@ -49,6 +49,8 @@ Mehrere dieser Antworten ändern frühere Entscheidungen. Dafür fehlen noch die
 Annahmen, mit denen das Gremium gearbeitet hat, weil keine Antwort vorlag: Stifte und Tastaturen sind nicht überall vorhanden; feste Geräte gibt es eher in den höheren Jahrgängen; Schulgeräte haben nicht sicher eine deutsche Stimme. Alle drei klärt das Beobachtungsheft in Etappe 1.
 
 ## Entwürfe für das Entscheidungsprotokoll
+
+> **Übernommen am 14.11.2026** (Entscheidung vom 12.11.2026, Nr. 5): A1 → 61, A2 → 62, A3 → 63, A4 → 64, A5 → 65, A7 → 66, A8 → 67, B1 bis B7 → 68 bis 74, B8 → Nachtrag 53 und Index. **A6 gilt nicht wie entworfen:** Nach der Entscheidung vom 12.11.2026, Nr. 2, bleiben die Texte sichtbar und tragen intern den Vermerk „ungeprüft“ (Entscheidung 76). Die s-Schreibung (Nr. 6 oben) ist Entscheidung 75. Die Entwürfe unten bleiben als Herleitung stehen.
 
 Nach `AGENTS.md` braucht jede zurückgenommene oder umgedrehte Festlegung einen Eintrag mit „Zurückgenommen“ und „Nicht wieder einbauen“. Die Nummern vergibst du. Das Red Team rät, die Änderungen an Entscheidung 57 in **einem** Eintrag zu bündeln; nach seinen Empfehlungen bleibt 57 selbst unverändert.
 
