@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { tokenizeText } from "./text-compare";
-import { TEXTBOX_TEXTS, getTextboxText } from "./textbox-library";
+import {
+  TEXTBOX_TEXTS,
+  getTextboxText,
+  textboxReview,
+} from "./textbox-library";
 import {
   TEXTBOX_PHENOMENA,
   TEXTBOX_WORD_COUNT_RANGES,
@@ -18,7 +22,10 @@ const BEISPIELE: Record<
   (word: string) => boolean
 > = {
   doppelkonsonanten: (w) => /([bdfgklmnprstz])\1/i.test(w),
-  "dehnungs-h": (w) => /[aeiouäöü]h(?!eit|keit|aft)/i.test(w),
+  // Dehnungs-h steht vor l, m, n oder r (Zahn, Uhr). Das h zwischen zwei
+  // Vokalen oder am Wortende (se-hen, sah, Reh, nah) ist silbentrennend und
+  // kein Beispiel (Bericht 20, F11; Korrektur vom 14.11.2026).
+  "dehnungs-h": (w) => /[aeiouäöü]h[lmnr]/i.test(w),
   ie: (w) => /ie/i.test(w) && !/^reptilien/i.test(w),
   "s-ss-sz": (w) => /ß|ss/i.test(w),
   "gross-klein": (w) => /^\p{Lu}/u.test(w),
@@ -107,6 +114,31 @@ describe("Textbibliothek", () => {
       new Set(TEXTBOX_TEXTS.flatMap((t) => t.phenomena)).size,
     ).toBeGreaterThanOrEqual(7);
     expect(new Set(TEXTBOX_TEXTS.map((t) => t.genre)).size).toBe(5);
+  });
+
+  it("trägt je Text einen internen Prüfvermerk, der nicht an die Oberfläche geht", () => {
+    // Entscheidung vom 12.11.2026: Texte bleiben sichtbar, intern „ungeprüft“.
+    for (const text of TEXTBOX_TEXTS) {
+      expect(textboxReview(text.id), text.id).toBe("ungeprüft");
+      expect(Object.keys(text), text.id).not.toContain("review");
+    }
+    expect(textboxReview("TXT-999")).toBeUndefined();
+  });
+
+  it("führt kein silbentrennendes h als Dehnungs-h (Bericht 20, F11)", () => {
+    const korrigiert: Record<string, readonly string[]> = {
+      "TXT-002": ["nah"],
+      "TXT-011": ["sah"],
+      "TXT-024": ["sehen", "Reh", "stehen"],
+      "TXT-034": ["weh", "sah", "ruhig"],
+      "TXT-046": ["sehe", "ruhen"],
+      "TXT-048": ["ruht", "ruhig"],
+    };
+    for (const [id, words] of Object.entries(korrigiert)) {
+      const targets = getTextboxText(id)?.targetWords ?? [];
+      for (const word of words)
+        expect(targets, `${id}: ${word}`).not.toContain(word);
+    }
   });
 
   it("findet Texte über die Id", () => {

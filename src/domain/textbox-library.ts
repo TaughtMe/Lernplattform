@@ -1,10 +1,21 @@
 import { textboxTextSchema, type TextboxText } from "./textbox-text";
 
 /**
- * Welle 1 (TXT-001 bis TXT-015) und Welle 2 (TXT-016 bis TXT-050). Die Texte sind ein Entwurf und
- * werden von der Lehrkraft fachlich geprüft (siehe docs/inhalte/textbox.md).
+ * Prüfvermerk je Text, nur intern (Entscheidung vom 12.11.2026): Die Texte
+ * bleiben sichtbar, die Lehrkraft prüft sie nach und nach. Der Vermerk geht
+ * nicht in `TextboxText` ein und erscheint nicht in der Oberfläche.
  */
-const DRAFT_TEXTS: readonly TextboxText[] = [
+export type TextboxReview = "ungeprüft" | "geprüft";
+
+type LibraryEntry = TextboxText & { review: TextboxReview };
+
+/**
+ * Welle 1 (TXT-001 bis TXT-015) und Welle 2 (TXT-016 bis TXT-050). Die Texte
+ * sind Entwürfe eines KI-Agenten und fachlich **nicht** geprüft (siehe
+ * docs/inhalte/textbox.md). Die bekannten Fehler (TXT-002, 011, 024, 034, 046)
+ * sind am 14.11.2026 korrigiert; geprüft ist damit noch kein Text.
+ */
+const DRAFT_TEXTS: readonly LibraryEntry[] = [
   // ── Leicht ────────────────────────────────────────────────────────────
   {
     id: "TXT-001",
@@ -15,6 +26,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Im Garten wohnt ein kleiner Hund. Er heißt Bello und liebt seinen Ball. Jeden Morgen rennt er über die Wiese. Dann kommt die Katze und will mitspielen. Bello bellt laut vor Freude. Am Abend schläft er müde in seinem Körbchen.",
     targetWords: ["Bello", "Ball", "rennt", "Dann", "kommt", "will", "bellt"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-002",
@@ -23,16 +35,9 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     phenomena: ["dehnungs-h"],
     genre: "schule",
     text: "Ich wohne nah bei der Schule. Jeden Morgen fahre ich mit dem Fahrrad dorthin. Dort wartet schon mein Freund Jan. Um acht Uhr kommt unsere Lehrerin. Sie zählt alle Kinder und lächelt. Dann beginnt der Unterricht.",
-    targetWords: [
-      "wohne",
-      "nah",
-      "fahre",
-      "Fahrrad",
-      "Uhr",
-      "Lehrerin",
-      "zählt",
-    ],
+    targetWords: ["wohne", "fahre", "Fahrrad", "Uhr", "Lehrerin", "zählt"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-003",
@@ -43,6 +48,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Wir spielen am Bach. Das Wasser ist kalt und klar. Mein Bruder fliegt mit dem Drachen über die Wiese. Ich sehe eine Biene und ein kleines Tier im Gras. Es ist ein schöner Tag und wir haben viel Spaß.",
     targetWords: ["spielen", "fliegt", "Wiese", "Biene", "Tier", "viel"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-004",
@@ -53,6 +59,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Heute gehe ich zum Bäcker. Ich muss Brot und süße Brötchen kaufen. Die Straße ist heiß und der Laden ist voll. Die Bäckerin lässt mich ein Stück probieren. Es schmeckt sehr gut. Ich esse es auf und trage die Tüte nach Hause. Dort essen wir alle zusammen.",
     targetWords: ["muss", "süße", "Straße", "heiß", "lässt", "esse", "essen"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-005",
@@ -63,6 +70,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Im Wald lebt ein Hase. Er hat ein weiches Fell und lange Ohren. Am Tag versteckt er sich im Gras. Abends geht er auf Futtersuche. Er läuft über den Weg bis zum Feld am Berg. Ein Hund kann ihn nur schwer finden. Das Kind sieht ihn manchmal von weitem.",
     targetWords: ["Wald", "Tag", "Weg", "Feld", "Berg", "Hund", "Kind"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   // ── Mittel ────────────────────────────────────────────────────────────
   {
@@ -87,6 +95,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "gewinnen",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-007",
@@ -106,6 +115,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "wieder",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-008",
@@ -130,6 +140,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Freitag",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-009",
@@ -150,6 +161,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Blütenstaub",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-010",
@@ -170,6 +182,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Nachmittag",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   // ── Schwer ────────────────────────────────────────────────────────────
   {
@@ -183,7 +196,6 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Fahrt",
       "mehrere",
       "fuhren",
-      "sah",
       "Bahnhof",
       "nahm",
       "Wohnung",
@@ -195,6 +207,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Bett",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-012",
@@ -217,6 +230,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Futter",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-013",
@@ -242,6 +256,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Gemüsegarten",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-014",
@@ -268,6 +283,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "begleiten",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-015",
@@ -300,6 +316,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Verkäufer",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-016",
@@ -319,6 +336,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "gehe",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-017",
@@ -339,6 +357,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "rennt",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-018",
@@ -349,6 +368,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Im Sommer ist es heiß. Wir gehen ins Schwimmbad und springen ins Wasser. Das Wasser ist nass und kalt. Auf der Wiese essen wir ein großes Eis. Papa isst eine Brezel. Ich muss mein Handtuch auswringen, weil es ganz nass ist. Am Abend gehen wir müde nach Hause.",
     targetWords: ["heiß", "Wasser", "nass", "essen", "großes", "isst", "muss"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-019",
@@ -366,6 +386,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "verrate",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-020",
@@ -376,6 +397,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Die Biene ist ein kleines Tier. Sie fliegt von Blume zu Blume und sammelt süßen Nektar. Viele Bienen leben in einem Stock. Im Frühling und im Sommer sind sie sehr fleißig. Ohne die Bienen gäbe es nicht so viel Obst.",
     targetWords: ["Biene", "Tier", "fliegt", "Viele", "Bienen", "viel"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-021",
@@ -394,6 +416,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Kasse",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-022",
@@ -412,6 +435,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Blumen",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-023",
@@ -422,6 +446,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Auf dem Weg zur Schule gehe ich am Wald vorbei. Mein Freund Jan wartet an der Ecke. Er hat ein neues Rad. Wir gehen zusammen, bis wir am Hof ankommen. Im Unterricht malt er ein Bild von einem Berg. Seine Hand ist schnell und sicher.",
     targetWords: ["Weg", "Wald", "Freund", "Rad", "Bild", "Berg", "Hand"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-024",
@@ -429,9 +454,10 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     difficulty: "leicht",
     phenomena: ["dehnungs-h"],
     genre: "erlebnis",
-    text: "Am Sonntag fahren wir mit dem Fahrrad zum See. Papa nimmt eine Karte mit, damit wir den Weg nicht verlieren. Unterwegs sehen wir ein Reh. Es bleibt stehen und wir sehen uns lange an. Mama holt aus der Tasche eine Banane. Ich esse sie ganz langsam, weil ich sehr Hunger habe.",
-    targetWords: ["fahren", "Fahrrad", "sehen", "Reh", "stehen", "sehr"],
+    text: "Am Sonntag fahren wir mit dem Fahrrad zum See. Papa nimmt eine Karte mit, damit wir den Weg nicht verlieren. Unterwegs sehen wir ein Reh. Am See ist das Wasser schon kühl. Mama holt aus der Tasche eine Banane. Ich esse sie ganz langsam, weil ich sehr Hunger habe. Um fünf Uhr fahren wir wieder nach Hause.",
+    targetWords: ["fahren", "Fahrrad", "kühl", "sehr", "Uhr"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-025",
@@ -449,6 +475,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Sandkasten",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-026",
@@ -459,6 +486,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     text: "Im Herbst fallen die Blätter von den Bäumen. Wir ziehen warme Jacken an und gehen in den Wald. Dort sammeln wir Kastanien und Eicheln. Mein Bruder fliegt mit dem Drachen über das Feld. Danach trinken wir zu Hause heißen Tee und essen Kuchen. Am Abend zünden wir eine Kerze an.",
     targetWords: ["fallen", "Blätter", "ziehen", "sammeln", "fliegt", "essen"],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-027",
@@ -482,6 +510,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "liegt",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-028",
@@ -502,6 +531,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "nass",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-029",
@@ -526,6 +556,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Erfahrung",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-030",
@@ -544,6 +575,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "blieben",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-031",
@@ -565,6 +597,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "alle",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-032",
@@ -589,6 +622,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Kakao",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-033",
@@ -611,6 +645,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Abend",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-034",
@@ -618,9 +653,21 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     difficulty: "mittel",
     phenomena: ["dehnungs-h"],
     genre: "alltag",
-    text: "Heute war ich mit Mama beim Arzt. Mein Hals tat weh, und ich hatte etwas Fieber. Der Arzt nahm einen kleinen Stab und sah mir in den Mund. Er sagte, dass ich ruhig noch drei Tage zu Hause bleiben soll. Ich durfte mir ein Bonbon aus der Dose nehmen. Mama hat mir danach einen Tee und Honig gemacht. Ohne Schmerzen fühle ich mich schon wieder besser.",
-    targetWords: ["weh", "nahm", "sah", "ruhig", "nehmen", "Ohne", "fühle"],
+    text: "Heute war ich mit Mama beim Arzt. Mein Hals tat weh, und ich hatte etwas Fieber. Im Wartezimmer saß ich auf einem Stuhl und zählte die Bilder an der Wand. Der Arzt nahm einen kleinen Stab und schaute mir in den Mund und in die Ohren. Er sagte, dass ich noch drei Tage zu Hause bleiben soll. Ich durfte mir ein Bonbon aus der Dose nehmen. Danach fuhren wir mit der Bahn nach Hause. In der Wohnung hat Mama mir einen Tee mit Honig gemacht. Ohne Schmerzen fühle ich mich schon wieder besser.",
+    targetWords: [
+      "Stuhl",
+      "zählte",
+      "nahm",
+      "Ohren",
+      "nehmen",
+      "fuhren",
+      "Bahn",
+      "Wohnung",
+      "Ohne",
+      "fühle",
+    ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-035",
@@ -640,6 +687,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Waldspielplatz",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-036",
@@ -660,6 +708,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "denn",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-037",
@@ -680,6 +729,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Futter",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-038",
@@ -702,6 +752,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Wohnung",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-039",
@@ -726,6 +777,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "viel",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-040",
@@ -751,6 +803,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "vergaß",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-041",
@@ -785,6 +838,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "bekommt",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-042",
@@ -809,6 +863,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "riefen",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-043",
@@ -832,6 +887,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "alle",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-044",
@@ -865,6 +921,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Ästen",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-045",
@@ -886,6 +943,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Bild",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-046",
@@ -893,23 +951,24 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     difficulty: "schwer",
     phenomena: ["dehnungs-h"],
     genre: "alltag",
-    text: "Am Samstagmorgen wollen wir Kuchen backen. Mama holt Mehl, Zucker und Sahne aus dem Schrank. Ich zähle die Eier und rühre den Teig. Dabei sehe ich auf die Uhr, denn der Ofen braucht zehn Minuten zum Heizen. Mein Bruder nimmt die Form und fettet sie ein. Er ist sehr stolz, weil er das Rezept ohne Hilfe liest. Als der Kuchen fertig ist, duftet das ganze Haus. Wir lassen ihn ein wenig ruhen und decken den Tisch. Mein Bruder zählt die Teller noch einmal nach, damit nichts fehlt. Papa kommt hungrig aus dem Garten und fragt, ob er mehr als ein Stück bekommt. Zum Glück ist der Kuchen groß genug, und wir können einen Teil verschenken.",
+    text: "Am Samstagmorgen wollen wir Kuchen backen. Mama holt Mehl, Zucker und Sahne aus dem Schrank. Ich zähle die Eier und rühre den Teig. Dabei schaue ich auf die Uhr, denn der Ofen braucht zehn Minuten zum Heizen. Mein Bruder nimmt die Form und fettet sie ein. Er ist sehr stolz, weil er das Rezept ohne Hilfe liest. Als der Kuchen fertig ist, duftet das ganze Haus. Wir lassen ihn abkühlen, holen die Stühle und decken den Tisch. Mein Bruder zählt die Teller noch einmal nach, damit nichts fehlt. Papa kommt hungrig aus dem Garten und fragt, ob er mehr als ein Stück bekommt. Zum Glück ist der Kuchen groß genug, und wir können einen Teil verschenken.",
     targetWords: [
       "Mehl",
       "Sahne",
       "zähle",
       "rühre",
-      "sehe",
       "Uhr",
       "zehn",
       "sehr",
       "ohne",
-      "ruhen",
+      "abkühlen",
+      "Stühle",
       "mehr",
       "zählt",
       "fehlt",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-047",
@@ -938,6 +997,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "Waldkauz",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-048",
@@ -945,9 +1005,8 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
     difficulty: "schwer",
     phenomena: ["gemischt", "doppelkonsonanten", "ie", "dehnungs-h"],
     genre: "sachtext",
-    text: "Der Rotfuchs lebt in Wäldern, auf Feldern und manchmal sogar in großen Städten. Tagsüber ruht er in seinem Bau, und erst in der Dämmerung geht er auf Nahrungssuche. Er frisst Mäuse, Beeren, Käfer und manchmal auch Abfälle. Mit seinen scharfen Ohren hört er selbst ein leises Rascheln im Gras. Wenn er eine Maus entdeckt, springt er hoch in die Luft und stürzt sich auf sie. Im Frühling bekommt die Füchsin vier bis sechs Junge. Sie spielen vor dem Bau und lernen von ihrer Mutter, wie man jagt. Im Winter, wenn Schnee liegt, hört der Fuchs sogar Mäuse unter der weißen Decke. Füchse sind sehr scheue Tiere. Wer ruhig bleibt und genau hinsieht, kann sie manchmal beim Mäusefangen beobachten.",
+    text: "Der Rotfuchs lebt in Wäldern, auf Feldern und manchmal sogar in großen Städten. Tagsüber schläft er in seinem Bau, und erst in der Dämmerung geht er auf Nahrungssuche. Er frisst Mäuse, Beeren, Käfer und manchmal auch Abfälle. Mit seinen spitzen Zähnen hält er die Beute fest. Mit seinen scharfen Ohren hört er selbst ein leises Rascheln im Gras. Wenn er eine Maus entdeckt, springt er hoch in die Luft und stürzt sich auf sie. Im Frühling bekommt die Füchsin vier bis sechs Junge. Sie spielen vor dem Bau und lernen von ihrer Mutter, wie man jagt. Im Winter, wenn Schnee liegt, hört der Fuchs sogar Mäuse unter der weißen Decke. Füchse sind sehr scheue Tiere. Wer still bleibt und genau hinsieht, kann sie manchmal beim Mäusefangen beobachten.",
     targetWords: [
-      "ruht",
       "Dämmerung",
       "Nahrungssuche",
       "frisst",
@@ -956,12 +1015,14 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "bekommt",
       "vier",
       "Mutter",
+      "liegt",
       "Tiere",
-      "ruhig",
+      "Zähnen",
       "hinsieht",
       "sehr",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-049",
@@ -995,6 +1056,7 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "verabschiedet",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
   {
     id: "TXT-050",
@@ -1019,12 +1081,22 @@ const DRAFT_TEXTS: readonly TextboxText[] = [
       "dass",
     ],
     usage: ["frei", "wortspeicher"],
+    review: "ungeprüft",
   },
 ];
 
-export const TEXTBOX_TEXTS: readonly TextboxText[] = DRAFT_TEXTS.map((text) =>
-  textboxTextSchema.parse(text),
+export const TEXTBOX_TEXTS: readonly TextboxText[] = DRAFT_TEXTS.map(
+  ({ review: _review, ...text }) => textboxTextSchema.parse(text),
 );
+
+const REVIEW_BY_ID: ReadonlyMap<string, TextboxReview> = new Map(
+  DRAFT_TEXTS.map((text) => [text.id, text.review]),
+);
+
+/** Interner Prüfvermerk eines Textes; `undefined` für eine unbekannte Id. */
+export function textboxReview(id: string): TextboxReview | undefined {
+  return REVIEW_BY_ID.get(id);
+}
 
 export function getTextboxText(id: string): TextboxText | undefined {
   return TEXTBOX_TEXTS.find((text) => text.id === id);
