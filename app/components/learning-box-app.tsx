@@ -50,10 +50,12 @@ import {
   openModuleItems,
   wantsDailyPlan,
 } from "../lernen/plan-today";
+import { useAreaVisible } from "../release/release-context";
 import { useRoundGuard } from "../ui/round-guard";
 import { StudentPage } from "../ui/shell/student-page";
 import { useRoundSnapshot } from "../ui/use-round-snapshot";
 import { useThemeToggle } from "../ui/theme";
+import { useLearningBoxForms } from "./learning-box-forms";
 import { ResumeOffer } from "../views/shell/resume-offer";
 import {
   LernBoxScreen,
@@ -235,6 +237,7 @@ export function LearningBoxApp({
     success: null,
   });
   const refreshRevision = useRef(0);
+  const formsVisible = useAreaVisible("lernbox-lernformen");
   /** Zwischenstand der unterbrochenen Runde (C-001): „Weitermachen“ in der Übersicht. */
   const roundSnapshot = useRoundSnapshot("lernbox", learningBoxSnapshotSchema);
 
@@ -307,6 +310,13 @@ export function LearningBoxApp({
     () => new Map(decks.map((deck) => [deck.id, deck])),
     [decks],
   );
+  // Zuordnen und Test (Lernformen eines Stapels); sie schreiben nur nach LF-4.
+  const forms = useLearningBoxForms({
+    cards,
+    deckById,
+    repository,
+    onNotice: setNotice,
+  });
   const now = Date.now();
   // „Heute dran“ sind die offenen Elemente der Portion, nicht alles Fällige.
   const todayQueue = buildPlanQueue(planItems, cards);
@@ -568,13 +578,51 @@ export function LearningBoxApp({
 
   function endSession() {
     setSession(null);
+    forms.close();
     void refresh();
   }
 
+  /** „Diese Karten jetzt üben“ (LF-7): Übungsrunde im Schreibmodus, nichts wird verschoben. */
+  async function practiceMissed(
+    items: { cardId: string; direction: LearningBoxDirection }[],
+  ) {
+    // Alle Testantworten sind geschrieben; die Karten kommen frisch aus der Datenbank.
+    await forms.settle();
+    const queue: QueueItem[] = [];
+    for (const item of items) {
+      const card = await repository.getCard(item.cardId);
+      if (card) queue.push({ card, direction: item.direction });
+    }
+    await refresh();
+    forms.close();
+    if (queue.length === 0) return;
+    setNotice("");
+    setMode("writing");
+    // Eine neue Runde ersetzt den Zwischenstand einer früheren.
+    roundSnapshot.clear();
+    setSession({
+      title: "Fehler aus dem Test (nur üben)",
+      mode: "writing",
+      queue,
+      index: 0,
+      answer: "",
+      revealed: false,
+      feedback: null,
+      stats: { correct: 0, wrong: 0 },
+      practice: true,
+      roundId: crypto.randomUUID(),
+      startedAt: new Date().toISOString(),
+      attempted: [],
+      finished: false,
+    });
+  }
+
   // Logo, Leiste und Zurück-Geste fragen nach; „Beenden“ lässt den Zwischenstand stehen.
+  // Eine Lernform hat keinen Zwischenstand: Sie beginnt beim nächsten Mal neu.
   const requestLeave = useRoundGuard({
-    active: session !== null && !session.finished,
+    active: (session !== null && !session.finished) || forms.running,
     onLeave: endSession,
+    resumable: forms.form === null,
   });
 
   async function run(action: () => Promise<unknown>, message?: string) {
@@ -691,7 +739,9 @@ export function LearningBoxApp({
 
   // ---------- Hauptbereich ----------
   let main: Parameters<typeof LernBoxScreen>[0]["main"] = { kind: "home" };
-  if (session) {
+  if (forms.main && !session) {
+    main = forms.main;
+  } else if (session) {
     const item = session.queue[session.index];
     const deck = item ? deckById.get(item.card.deckId) : undefined;
     const prompt = item
@@ -781,7 +831,7 @@ export function LearningBoxApp({
         todayDecks={todayDecks}
         planScope="heute"
         resumeOffer={
-          !loading && !session && roundSnapshot.snapshot ? (
+          !loading && !session && !forms.form && roundSnapshot.snapshot ? (
             <ResumeOffer
               detail={roundSnapshot.snapshot.state.title}
               done={roundSnapshot.snapshot.done}
@@ -809,6 +859,15 @@ export function LearningBoxApp({
         onStart={({ scope, mode: chosenMode, direction: chosenDirection }) =>
           startSession(scope, { mode: chosenMode, direction: chosenDirection })
         }
+        formsVisible={formsVisible}
+        onStartForm={({ scope, form, direction: chosenDirection }) => {
+          setSheet(null);
+          forms.start({ scope, form, direction: chosenDirection });
+        }}
+        onMatchAgain={forms.matchAgain}
+        onFormFinished={forms.finish}
+        onTestAnswer={forms.answer}
+        onPracticeMissed={(items) => void practiceMissed(items)}
         onEdit={() => {
           setView("edit");
           setQuery("");
@@ -816,7 +875,7 @@ export function LearningBoxApp({
           setNotice("");
         }}
         onBack={() => {
-          if (session) requestLeave();
+          if (session || forms.form) requestLeave();
           else {
             setView("home");
             setNotice("");
