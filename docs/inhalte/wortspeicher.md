@@ -98,6 +98,29 @@ fachlich, bevor der Umbau übernommen wird. Änderungen sind ohne Eingriff in di
 Oberfläche möglich: Wortbox in `german-learning-content.ts`, Gruppen in
 `homophones.ts` (ein Test hält diese Liste und den Code zusammen).
 
+### Fachkorrekturen vom 14.11.2026 (Bericht 20, Abschnitt 2.2)
+
+Jede Wortbox behält ihre Größe (Entscheidung 30, mindestens 100 Wörter).
+Entfernte Wörter sind durch ein häufiges Wort desselben Phänomens ersetzt.
+Gespeicherte Lernstände und Runden mit einem entfernten Wort bleiben lesbar;
+sie zählen nur nicht mehr zum Fortschritt der Wortbox
+(`word-store-progress.test.ts`).
+
+| Wortbox             | alt                                                             | neu                                                                | Grund                                                      |
+| ------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Langes i            | Ferien, Zieltür                                                 | biegen, niedlich                                                   | Fe-ri-en hat kein langes i (F1); Zieltür ist kein Wort     |
+| Langes i            | Strategie „Merken“                                              | Strategie „Silbieren“, Regeltext neu                               | ie ist der Regelfall für langes i (F2)                     |
+| Auslautverhärtung   | Club, Job, Zugweg                                               | Stand, taub, Schulweg                                              | Clubs/Jobs machen kein b hörbar; Zugweg ist kein Wort (F4) |
+| Dehnungs-h          | Fehlwort                                                        | Wohnort                                                            | kein gebräuchliches Wort (F4)                              |
+| ck und tz           | Becker                                                          | Zecke                                                              | Familienname, kein Wort der Alltagssprache                 |
+| ä/e und äu/eu       | Mädchen, Märchen, Käfer, Käfig, Säge, spät, später, zäh, gähnen | Bänke, Väter, Kälte, Schränke, Nächte, Gäste, Wärme, Länge, Wäsche | kein verwandtes Wort mit a (F5)                            |
+| Merkwörter          | –                                                               | Mädchen, Märchen, Käfer, Käfig, Säge, spät, zäh, gähnen            | Merkwörter mit ä (F5)                                      |
+| Startpunkt, Stufe 5 | Bäume, Mädchen                                                  | Bäume, Wälder                                                      | „Ableiten“ mit einem ableitbaren Wort prüfen (F5)          |
+| Gleich klingend     | Weg / weg                                                       | entfällt                                                           | langes gegen kurzes e (F7)                                 |
+
+Bewusst nicht geändert: „Magd“, „Trug“, „Tugend“ (veraltet, aber richtig) und
+die Silbieren-Strategie für Einsilber (F3). Beides liegt bei der Lehrkraft.
+
 ### Wortbox „s, ss und ß“ (`s-ss-sz`)
 
 Strategie „Verlängern“, 133 Wörter, zugeordnet dem Textbox-Schwerpunkt
@@ -140,7 +163,6 @@ Bewertung.
 | ------ | ------------------------------------------------ | ------ | -------------------------------------- |
 | Rad    | zum Fahren                                       | Rat    | ein guter Tipp                         |
 | Meer   | das große Wasser                                 | mehr   | eine größere Menge                     |
-| Weg    | eine Straße oder ein Pfad                        | weg    | nicht mehr da                          |
 | Feld   | ein Acker                                        | fällt  | es stürzt gerade zu Boden              |
 | Lied   | zum Singen                                       | Lid    | am Auge                                |
 | Stadt  | ein großer Ort                                   | statt  | anstelle von                           |
@@ -159,6 +181,5 @@ Bewertung.
 | wahr   | richtig, nicht gelogen                           | war    | von sein                               |
 | das    | kann man durch „dieses“ ersetzen                 | dass   | leitet einen Nebensatz ein             |
 
-Zu klären: „Weg“ und „weg“ unterscheiden sich nur in der Großschreibung. Ein
-Kind, das „weg“ statt „Weg“ schreibt, bekommt die Rückmeldung zur Groß- und
-Kleinschreibung, nicht den Hinweis auf gleich klingende Wörter.
+„Weg“ und „weg“ stehen nicht mehr in der Liste (14.11.2026): „Weg“ hat ein
+langes, „weg“ ein kurzes e. Sie klingen nicht gleich (Bericht 20, F7).
