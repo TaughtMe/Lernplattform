@@ -1085,9 +1085,15 @@ const DRAFT_TEXTS: readonly LibraryEntry[] = [
   },
 ];
 
-export const TEXTBOX_TEXTS: readonly TextboxText[] = DRAFT_TEXTS.map(
-  ({ review: _review, ...text }) => textboxTextSchema.parse(text),
-);
+/** Der Text ohne den internen Vermerk (das Schema ist strikt). */
+function withoutReview(entry: LibraryEntry): TextboxText {
+  const text: Partial<LibraryEntry> = { ...entry };
+  delete text.review;
+  return textboxTextSchema.parse(text);
+}
+
+export const TEXTBOX_TEXTS: readonly TextboxText[] =
+  DRAFT_TEXTS.map(withoutReview);
 
 const REVIEW_BY_ID: ReadonlyMap<string, TextboxReview> = new Map(
   DRAFT_TEXTS.map((text) => [text.id, text.review]),
