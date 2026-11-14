@@ -172,13 +172,15 @@ export function Test(props: LernBoxScreenProps & { test: LbTest }) {
         {finished ? (
           <>
             <p className={styles.resultNext}>
-              {test.counted > 0
-                ? `${
-                    test.counted === 1
-                      ? "1 geschriebene Antwort hat"
-                      : `${test.counted} geschriebene Antworten haben`
-                  } für deine Boxen gezählt.`
-                : "Für deine Boxen hat nichts gezählt. Das war nur Üben."}
+              {test.counted === null
+                ? ""
+                : test.counted > 0
+                  ? `${
+                      test.counted === 1
+                        ? "1 geschriebene Antwort hat"
+                        : `${test.counted} geschriebene Antworten haben`
+                    } für deine Boxen gezählt.`
+                  : "Für deine Boxen hat nichts gezählt. Das war nur Üben."}
             </p>
             {summary.missed.length === 0 ? (
               <p className={styles.resultNext}>Alles richtig</p>

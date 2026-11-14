@@ -37,6 +37,8 @@ type FormState = {
   roundId: string;
   /** Antworten, die für Box und Fälligkeit gezählt haben. */
   counted: number;
+  /** Abgegebene Antworten, die noch nicht geschrieben sind. */
+  pending: number;
   finished: boolean;
 };
 
@@ -96,6 +98,7 @@ export function useLearningBoxForms({
         questions,
         roundId: crypto.randomUUID(),
         counted: 0,
+        pending: 0,
         finished: false,
       });
       return true;
@@ -141,12 +144,29 @@ export function useLearningBoxForms({
       const marker = `${roundId}:${question.id}`;
       if (answered.current.has(marker)) return;
       answered.current.add(marker);
+      const settled = (counted: boolean) =>
+        setForm((current) =>
+          current?.roundId === roundId
+            ? {
+                ...current,
+                counted: current.counted + (counted ? 1 : 0),
+                pending: current.pending - 1,
+              }
+            : current,
+        );
+      setForm((current) =>
+        current?.roundId === roundId
+          ? { ...current, pending: current.pending + 1 }
+          : current,
+      );
       writes.current = writes.current.then(async () => {
         try {
           const card = await repository.getCard(question.cardId);
-          if (!card) return;
           const now = Date.now();
-          if (!learningBoxTestAnswerCounts(question, card, now)) return;
+          if (!card || !learningBoxTestAnswerCounts(question, card, now)) {
+            settled(false);
+            return;
+          }
           const direction: LearningBoxDirection = question.direction;
           const updated = processLearningBoxResult(card, {
             correct,
@@ -161,12 +181,9 @@ export function useLearningBoxForms({
             mode: "writing",
             roundId,
           });
-          setForm((current) =>
-            current?.roundId === roundId
-              ? { ...current, counted: current.counted + 1 }
-              : current,
-          );
+          settled(true);
         } catch {
+          settled(false);
           onNotice(FORM_NOTICE_FAILED);
         }
       });
@@ -187,7 +204,8 @@ export function useLearningBoxForms({
         title: form.title,
         testKey: form.key,
         questions: form.questions,
-        counted: form.counted,
+        // Solange Antworten noch geschrieben werden, steht die Zahl nicht fest.
+        counted: form.pending > 0 ? null : form.counted,
       },
     };
   }

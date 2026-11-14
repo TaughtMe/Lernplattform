@@ -575,3 +575,30 @@ in GitHub. Nach dem Push GitHub Actions nicht abfragen (`AGENTS.md`).
 | V-7 | Name „Test“?                                                                                          | „Test“, wie in der Vision und bei Quizlet. Die Hinweiszeile sagt, dass es um Üben geht.                       | „Probe“ oder „Quiz“, falls „Test“ in der Klasse Druck erzeugt (Vision: „Keine Diagnose, kein Test“).                                                                                              |
 | V-8 | Freigabe                                                                                              | `vorschau`, nach zwei Wochen Erprobung in der eigenen Klasse auf `frei`.                                      | Sofort `frei`.                                                                                                                                                                                    |
 | V-9 | Sterne für Zuordnen und Test?                                                                         | Nein, bis das Belohnungssystem der LernBox insgesamt entschieden ist (Entscheidung 39, Bereich `motivation`). | –                                                                                                                                                                                                 |
+
+## 13. Umgesetzt
+
+Stand: 14.11.2026, Branch `claude/lernbox-lernformen`. Schritte 2 bis 6 sind
+gebaut; Schritt 7 (Entscheidungsprotokoll, Freigabe `frei`) bleibt bis zur
+Bestätigung des Entwicklers offen. Die Vorschläge V-1 bis V-9 sind wie
+empfohlen umgesetzt.
+
+Abweichungen und Unklarheiten, jeweils mit der vorsichtigsten Wahl:
+
+- **Fall 26, Zahl der Kacheln:** Der Plan nennt „12 Kacheln“ bei 8 Vokabeln.
+  Nach Abschnitt 5.2 ergeben 8 Karten 4 + 4 Paare, also 8 Kacheln je Runde. Der
+  Test prüft 8 Kacheln (die Domain ist maßgeblich).
+- **Fall 25, ohne Vorschau:** Der Entwicklungsserver der Browser-Suite zeigt
+  Vorschau-Bereiche immer (`NODE_ENV` ungleich `production`), ein fehlendes
+  Cookie ändert dort nichts. Der Fall steht deshalb als Unit-Test
+  (`start-sheet.test.tsx`, „zeigt ohne Freigabe weder Zuordnen noch Test“).
+- **Hook:** `useLearningBoxForms` hat zusätzlich `settle()` (wartet auf
+  geschriebene Testantworten) und liefert `running`; `close()` schließt eine
+  Lernform. Die Karten für „Diese Karten jetzt üben“ liest die App einzeln mit
+  `repository.getCard` frisch aus der Datenbank, nicht aus `cards`.
+- **Rückfrage beim Verlassen:** `useRoundGuard` bekommt `resumable: false`, wenn
+  eine Lernform läuft („Die Übung fängt dann wieder von vorn an.“), weil dafür
+  kein Zwischenstand gehalten wird.
+- **Ergebnis des Tests:** Die Zeile zur Wirkung (`counted`) bleibt leer
+  (`counted: null`), bis alle Schreibantworten gespeichert sind, damit sie nicht
+  kurz „nichts gezählt“ meldet.

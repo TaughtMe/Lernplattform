@@ -98,8 +98,8 @@ export type LbTest = {
   title: string;
   testKey: string;
   questions: readonly TestQuestion[];
-  /** Antworten, die für Box und Fälligkeit gezählt haben (LF-4). */
-  counted: number;
+  /** Antworten, die für Box und Fälligkeit gezählt haben (LF-4); `null`, solange noch geschrieben wird. */
+  counted: number | null;
 };
 
 export type LbMain =

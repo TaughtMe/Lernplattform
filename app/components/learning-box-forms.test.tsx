@@ -116,10 +116,12 @@ describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
     });
     await view.result.current.settle();
     expect(await events()).toHaveLength(0);
-    expect(view.result.current.main).toMatchObject({
-      kind: "test",
-      test: { counted: 0 },
-    });
+    await waitFor(() =>
+      expect(view.result.current.main).toMatchObject({
+        kind: "test",
+        test: { counted: 0 },
+      }),
+    );
   });
 
   it("hebt eine fällige Karte nach richtiger Schreibantwort um eine Box (LF-4)", async () => {
@@ -183,9 +185,11 @@ describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
     await view.result.current.settle();
     expect(await events()).toHaveLength(0);
     expect(await repository.getCard(card("Haus").id)).toEqual(before);
-    expect(view.result.current.main).toMatchObject({
-      test: { counted: 0 },
-    });
+    await waitFor(() =>
+      expect(view.result.current.main).toMatchObject({
+        test: { counted: 0 },
+      }),
+    );
   });
 
   it("zählt nur wirksame Schreibantworten und wertet jede Frage höchstens einmal (LF-6)", async () => {
