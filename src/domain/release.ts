@@ -123,6 +123,13 @@ export const RELEASE_AREAS = {
     routes: [],
     stage: "frei",
   },
+  "lernbox-lernformen": {
+    label: "LernBox: Zuordnen und Test",
+    // Kein eigener Pfad: schaltet die beiden Lernformen im Start-Fenster
+    // eines Stapels (docs/umsetzungsplan-lernbox-lernformen.md).
+    routes: [],
+    stage: "vorschau",
+  },
   diagnostik: {
     label: "Startpunkt, Tagestraining und Kompetenzprofil",
     // Welle 3, D2. Seit 05.11.2026 frei (Entscheidung 59), obwohl die
