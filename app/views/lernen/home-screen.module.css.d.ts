@@ -20,6 +20,8 @@ declare const styles: {
   readonly headStart: string;
   readonly hint: string;
   readonly layout: string;
+  readonly link: string;
+  readonly links: string;
   readonly main: string;
   readonly name: string;
   readonly notice: string;
