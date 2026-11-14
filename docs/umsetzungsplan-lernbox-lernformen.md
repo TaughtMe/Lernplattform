@@ -602,3 +602,8 @@ Abweichungen und Unklarheiten, jeweils mit der vorsichtigsten Wahl:
 - **Ergebnis des Tests:** Die Zeile zur Wirkung (`counted`) bleibt leer
   (`counted: null`), bis alle Schreibantworten gespeichert sind, damit sie nicht
   kurz „nichts gezählt“ meldet.
+- **Hinweiszeile des Tests:** Der Plan formuliert „zu fälligen Karten“. „fällig“
+  steht als Fachwort in `src/domain/child-glossary.ts` und fällt im Schülertext
+  durch `child-glossary.test.ts`. Der Text lautet deshalb: „Bis zu 10 Fragen.
+  Nur geschriebene Antworten zu Karten, die heute dran sind, zählen für deine
+  Boxen.“ Der Test blieb unverändert.

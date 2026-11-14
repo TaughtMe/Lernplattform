@@ -96,8 +96,8 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
         ) : null}
         {form && mode === "test" ? (
           <p className={styles.hint}>
-            Bis zu 10 Fragen. Nur geschriebene Antworten zu fälligen Karten
-            zählen für deine Boxen.
+            Bis zu 10 Fragen. Nur geschriebene Antworten zu Karten, die heute
+            dran sind, zählen für deine Boxen.
           </p>
         ) : null}
       </div>
