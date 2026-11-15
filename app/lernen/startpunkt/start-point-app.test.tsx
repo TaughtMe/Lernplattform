@@ -123,6 +123,22 @@ describe("Startpunkt: Container", () => {
     expect(pattern).toHaveTextContent("_");
   });
 
+  it("sagt ohne Sprachausgabe, warum statt des Anhörens Buchstaben fehlen", async () => {
+    const user = userEvent.setup();
+    render(<StartPointApp repository={repository()} random={seeded()} />);
+    await user.click(
+      screen.getAllByRole("button", { name: "Startpunkt suchen" })[0]!,
+    );
+    expect(
+      await screen.findByText(
+        "Dieses Gerät kann nicht vorlesen. Darum fehlen Buchstaben.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Anhören" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("lässt sich wiederholen und beginnt dann wieder bei der Auswahl", async () => {
     const user = userEvent.setup();
     render(<StartPointApp repository={repository()} random={seeded()} />);

@@ -120,7 +120,8 @@ describe("buildLiveRoomConfig", () => {
         showTaskAfterErrors: true,
         stationCount: 20,
         stationShuffle: true,
-        battleOptions: { ink: true, flicker: true },
+        // Standard seit Nachtrag nach Phase 2, Nr. 7: Störangriffe aus.
+        battleOptions: { ink: false, flicker: false },
         wordsOverride: WORDS,
         mathPracticeOptions: buildMathPracticeOptions({
           min: 2,

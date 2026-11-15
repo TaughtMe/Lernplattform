@@ -64,10 +64,10 @@ describe("ReadAloudButton", () => {
     await user.click(
       await screen.findByRole("button", { name: "Anleitung vorlesen" }),
     );
+    // `speak` nutzt immer nur lokale Stimmen (B-012).
     expect(speaker.speak).toHaveBeenCalledWith(
       "Schreibe das Wort ab.",
       "de-DE",
-      { localOnly: true },
     );
     expect(
       screen.getByRole("button", { name: "Stopp, Vorlesen beenden" }),

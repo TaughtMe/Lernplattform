@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { StudentPage } from "../../ui/shell/student-page";
 import { CompetenceProfileApp } from "./competence-profile-app";
 
-export const metadata: Metadata = { title: "Mein Lernstand" };
+export const metadata: Metadata = { title: "Mein Stand" };
 
 export default function Page() {
   return (

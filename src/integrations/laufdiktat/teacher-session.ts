@@ -160,7 +160,8 @@ export function buildTeacherRoomConfig(
         options.vocabularyDirection,
       ),
     gameMode: options.gameMode === "STATION" ? "UEBUNG" : options.gameMode,
-    battleOptions: options.battleOptions ?? { ink: true, flicker: true },
+    // Störangriffe standardmäßig aus (Nachtrag nach Phase 2, Nr. 7).
+    battleOptions: options.battleOptions ?? { ink: false, flicker: false },
     stationMode: options.gameMode === "STATION",
     stationCount: options.stationCount ?? 20,
     isTtsEnabled: options.isTtsEnabled ?? false,

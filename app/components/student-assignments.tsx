@@ -22,6 +22,7 @@ import {
 } from "../../src/storage/student-classes";
 import { Button, ButtonLink, EmptyState, Pill } from "../ui/primitives";
 import { QrCodeScanner } from "../ui/qr-scanner";
+import { ReadAloudButton } from "../ui/read-aloud-button";
 
 const SUBJECT_ROUTES: Record<StudentAssignment["subject"], string> = {
   german: "/lernen/faecher/deutsch",
@@ -149,6 +150,13 @@ export function StudentAssignments() {
                     </Pill>
                     <h3 className="ui-h-section">{assignment.title}</h3>
                     <p className="ui-small">{assignment.instructions}</p>
+                    {/* Aufgabenstellung der Lehrkraft (Entscheidung 58). */}
+                    <div>
+                      <ReadAloudButton
+                        text={`${assignment.title}. ${assignment.instructions}`}
+                        label={`Aufgabe „${assignment.title}“ vorlesen`}
+                      />
+                    </div>
                     <p className="ui-tiny ui-muted">
                       {assignment.dueDate
                         ? `Abgabe bis ${new Intl.DateTimeFormat("de-DE").format(new Date(`${assignment.dueDate}T12:00:00`))}`

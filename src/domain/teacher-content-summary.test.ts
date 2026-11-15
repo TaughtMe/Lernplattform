@@ -400,13 +400,21 @@ describe("Vorbereitung und Archiv", () => {
     expect(describePrepared({ gameMode: "STATION", stationCount: 1 })).toBe(
       "Stationen · 1 Station",
     );
+    // Standard seit Nachtrag nach Phase 2, Nr. 7: Störangriffe aus.
     expect(describePrepared({ gameMode: "BATTLE" })).toBe(
-      "Battle · Tinte und Flimmern",
+      "Battle · ohne Störangriffe",
     );
-    expect(describePrepared({ gameMode: "BATTLE", battleFlicker: false })).toBe(
+    expect(
+      describePrepared({
+        gameMode: "BATTLE",
+        battleInk: true,
+        battleFlicker: true,
+      }),
+    ).toBe("Battle · Tinte und Flimmern");
+    expect(describePrepared({ gameMode: "BATTLE", battleInk: true })).toBe(
       "Battle · nur Tinte",
     );
-    expect(describePrepared({ gameMode: "BATTLE", battleInk: false })).toBe(
+    expect(describePrepared({ gameMode: "BATTLE", battleFlicker: true })).toBe(
       "Battle · nur Flimmern",
     );
     expect(

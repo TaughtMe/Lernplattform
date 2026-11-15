@@ -131,7 +131,7 @@ export const RELEASE_AREAS = {
     stage: "vorschau",
   },
   diagnostik: {
-    label: "Startpunkt, Tagestraining und Kompetenzprofil",
+    label: "Startpunkt, Tagestraining und Mein Stand",
     // Welle 3, D2. Seit 05.11.2026 frei (Entscheidung 59), obwohl die
     // pädagogische Abstimmung (Stufenfolgen des Startpunkts, Regel „sicher“)
     // noch aussteht; Beobachtung in der Beta.

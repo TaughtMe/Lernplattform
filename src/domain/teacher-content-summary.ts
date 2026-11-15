@@ -394,8 +394,9 @@ export function describePrepared(prepared?: TeacherPreparedSettings): string {
     parts.push(plural(settings.stationCount, "Station", "Stationen"));
   }
   if (settings.gameMode === "BATTLE") {
-    const ink = settings.battleInk ?? true;
-    const flicker = settings.battleFlicker ?? true;
+    // Ohne Angabe gilt der Standard: Störangriffe aus.
+    const ink = settings.battleInk ?? false;
+    const flicker = settings.battleFlicker ?? false;
     parts.push(
       ink && flicker
         ? "Tinte und Flimmern"

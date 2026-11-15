@@ -50,12 +50,14 @@ const liveSessionConfigSchema = z
     /** Mathe: Aufgabe nach mehreren Fehlern im Antwortfeld wieder zeigen. */
     showTaskAfterErrors: z.boolean().default(false),
     stationShuffle: z.boolean().default(false),
+    // Störangriffe sind standardmäßig aus (Vision, Nachtrag nach Phase 2,
+    // Nr. 7; Audit D-012); die Lehrkraft schaltet sie in Schritt 2 ein.
     battleOptions: z
       .object({
-        ink: z.boolean().default(true),
-        flicker: z.boolean().default(true),
+        ink: z.boolean().default(false),
+        flicker: z.boolean().default(false),
       })
-      .default({ ink: true, flicker: true }),
+      .default({ ink: false, flicker: false }),
   })
   .passthrough();
 

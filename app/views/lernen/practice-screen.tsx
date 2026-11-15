@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { Icon } from "../../ui/icons";
+import { Icon, type IconName } from "../../ui/icons";
 import { HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./practice-screen.module.css";
 
@@ -19,13 +19,24 @@ export type PracticeArea = {
   tone: string;
 };
 
+/** Kleiner Weg unter den Kacheln (Startpunkt, Training, Mein Stand). */
+export type PracticeShortcut = {
+  href: string;
+  title: string;
+  text: string;
+  icon: IconName;
+};
+
 /** Übersicht „Üben“: eine große Kachel je Übungsbereich. */
 export function PracticeScreen({
   areas,
+  shortcuts = [],
   theme,
   onToggleTheme,
 }: {
   areas: readonly PracticeArea[];
+  /** Optional; ohne Eintrag bleibt die Ansicht wie im Design 6c. */
+  shortcuts?: readonly PracticeShortcut[];
   theme: Theme;
   onToggleTheme?: () => void;
 }) {
@@ -72,6 +83,29 @@ export function PracticeScreen({
           </li>
         ))}
       </ul>
+      {shortcuts.length > 0 ? (
+        <nav className={styles.more} aria-labelledby="practice-more">
+          <h2 id="practice-more" className={styles.moreTitle}>
+            Wo stehe ich?
+          </h2>
+          <ul className={styles.shortcuts}>
+            {shortcuts.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className={styles.shortcut}>
+                  <span className={styles.shortcutIcon} aria-hidden="true">
+                    <Icon name={item.icon} size={22} />
+                  </span>
+                  <span className={styles.shortcutText}>
+                    <strong>{item.title}</strong>
+                    <span>{item.text}</span>
+                  </span>
+                  <Icon name="arrow" size={16} strokeWidth={2.2} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
     </section>
   );
 }

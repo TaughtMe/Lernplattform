@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { avatarLabel } from "../../../src/domain/learner-profile";
 import type { TodayTask } from "../../../src/domain/today-tasks";
-import { Icon } from "../../ui/icons";
+import { Icon, type IconName } from "../../ui/icons";
 import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./home-screen.module.css";
 
@@ -44,6 +44,13 @@ export type HomeScreenProps = {
   streakDays?: number | undefined;
   badges?: { count: number; hint: string } | undefined;
   duelHref?: string | undefined;
+  /**
+   * Kleine Wege unter den Kacheln, z. B. Startpunkt, Training und „Mein
+   * Stand“ (Freigabe `diagnostik`). Ohne Eintrag bleibt die Ansicht wie im
+   * Design 3a/3b.
+   */
+  links?:
+    ReadonlyArray<{ href: string; label: string; icon: IconName }> | undefined;
   onToggleTheme?: () => void;
   /** Hinweise zwischen Kopf und Tier (z. B. Speicherschutz); blockiert nichts. */
   notice?: ReactNode;
@@ -224,6 +231,20 @@ export function HomeScreen(props: HomeScreenProps) {
                 </div>
               </div>
             )}
+            {props.links?.length ? (
+              <nav className={styles.links} aria-label="Mehr für dich">
+                {props.links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={styles.link}
+                  >
+                    <Icon name={link.icon} size={18} />
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
           </div>
         </section>
 

@@ -20,6 +20,7 @@ declare const styles: {
   readonly headMain: string;
   readonly helpWord: string;
   readonly hint: string;
+  readonly instruction: string;
   readonly kindNote: string;
   readonly letter: string;
   readonly letterMissing: string;

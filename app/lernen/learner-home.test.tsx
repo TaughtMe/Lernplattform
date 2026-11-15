@@ -414,6 +414,46 @@ describe("LearnerHome", () => {
       screen.queryByRole("list", { name: "Aufgaben für heute" }),
     ).toBeNull();
   });
+
+  it("verlinkt Training und „Mein Stand“ (Freigabe „diagnostik“)", async () => {
+    await seed(async (database) => {
+      await database.learningBoxCards.bulkPut([dueCard(1)]);
+    });
+    render(<LearnerHome />);
+    await screen.findByText("0 von 2 Aufgaben heute");
+    const more = screen.getByRole("navigation", { name: "Mehr für dich" });
+    expect(
+      within(more).getByRole("link", { name: "Training" }),
+    ).toHaveAttribute("href", "/lernen/training");
+    expect(
+      within(more).getByRole("link", { name: "Mein Stand" }),
+    ).toHaveAttribute("href", "/lernen/profil");
+    expect(document.body).not.toHaveTextContent("Kompetenzprofil");
+  });
+
+  it("zeigt beim Erstkontakt nur den Startpunkt und ohne Freigabe keinen Weg", async () => {
+    const first = render(<LearnerHome />);
+    const more = await screen.findByRole("navigation", {
+      name: "Mehr für dich",
+    });
+    expect(within(more).getAllByRole("link")).toHaveLength(1);
+    expect(
+      within(more).getByRole("link", { name: "Startpunkt" }),
+    ).toHaveAttribute("href", "/lernen/startpunkt");
+    first.unmount();
+
+    render(
+      <ReleaseProvider
+        value={resolveVisibility(resolveStages("diagnostik=vorschau"), false)}
+      >
+        <LearnerHome />
+      </ReleaseProvider>,
+    );
+    await screen.findAllByRole("link", { name: "Loslegen" });
+    expect(
+      screen.queryByRole("navigation", { name: "Mehr für dich" }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe("LearnerHome: Schutz vor Speicherverlust", () => {
