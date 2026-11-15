@@ -1,61 +1,70 @@
-# Etappe 1: Übersicht über vier Baupläne
+# Etappe 1: Übersicht über fünf Baupläne
 
-Stand: 15.11.2026. Alle vier Pläne sind am Code des Standes `b79f61e` geprüft
-und für eine Umsetzung ohne Vorwissen geschrieben. Sie enthalten keinen
+Stand: 15.11.2026. Die Pläne 1 bis 4 sind am Code des Standes `b79f61e` geprüft,
+Plan 5 am Stand `80aacfe` und am Diff von PR #57. Alle sind
+für eine Umsetzung ohne Vorwissen geschrieben. Sie enthalten keinen
 Produktionscode. Lernraum hat keine festen Termine (Antwort des Entwicklers
 vom 15.11.2026); die Reihenfolge unten ist eine Empfehlung, kein Zeitplan.
 
 ## 1. Die Pläne
 
-| Nr. | Plan                                                                                                       | In einem Satz                                                                                                                                                                  | Sichtbar für            |
-| --- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
-| 1   | [LernBox: Fragearten](umsetzungsplan-lernbox-fragearten.md)                                                | Eine Runde mischt Schreiben, Mündlich und Auswahl Karte für Karte, jede mit ihrer Box-Regel; der „Test“ geht darin auf, Zuordnen bekommt zwei Spalten.                         | Kinder                  |
-| 2   | [Schnell erstellen und sofort live](umsetzungsplan-schnell-erstellen-live.md)                              | Drei kurze Einstiege auf der Lehrer-Startseite (Liste einfügen, aus einer Wortbox, Kopfrechnen live) führen ohne Assistenten in die Lobby, ohne Änderung an Server und Tokens. | Lehrkraft               |
-| 3   | [Kopfrechnen mit Hürde](umsetzungsplan-kopfrechnen-huerde.md)                                              | Jede Runde hat mindestens zur Hälfte Aufgaben mit Übergang und kaum triviale; Fehlerarten stimmen, die Nachübung trifft den Fehler, „sicher“ gilt erst über den Zehner.        | Kinder, Lehrkraft (CSV) |
-| 4   | [Kernwörter](umsetzungsplan-kernwoerter.md) mit [Muster](inhalte/kernwoerter-muster-auslautverhaertung.md) | Ein Schema für ausgezeichnete Rechtschreibwörter, das über `wordKey` zum Wortspeicher passt, und 30 ungeprüfte Musterwörter zur Auslautverhärtung.                             | noch niemand            |
+| Nr. | Plan                                                                                                       | In einem Satz                                                                                                                                                                           | Sichtbar für            |
+| --- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1   | [LernBox: Fragearten](umsetzungsplan-lernbox-fragearten.md)                                                | Eine Runde mischt Schreiben, Mündlich und Auswahl Karte für Karte, jede mit ihrer Box-Regel; der „Test“ geht darin auf, Zuordnen bekommt zwei Spalten.                                  | Kinder                  |
+| 2   | [Schnell erstellen und sofort live](umsetzungsplan-schnell-erstellen-live.md)                              | Drei kurze Einstiege auf der Lehrer-Startseite (Liste einfügen, aus einer Wortbox, Kopfrechnen live) führen ohne Assistenten in die Lobby, ohne Änderung an Server und Tokens.          | Lehrkraft               |
+| 3   | [Kopfrechnen mit Hürde](umsetzungsplan-kopfrechnen-huerde.md)                                              | Jede Runde hat mindestens zur Hälfte Aufgaben mit Übergang und kaum triviale; Fehlerarten stimmen, die Nachübung trifft den Fehler, „sicher“ gilt erst über den Zehner.                 | Kinder, Lehrkraft (CSV) |
+| 4   | [Kernwörter](umsetzungsplan-kernwoerter.md) mit [Muster](inhalte/kernwoerter-muster-auslautverhaertung.md) | Ein Schema für ausgezeichnete Rechtschreibwörter, das über `wordKey` zum Wortspeicher passt, und 30 ungeprüfte Musterwörter zur Auslautverhärtung.                                      | noch niemand            |
+| 5   | [Belohnung beim eigenen Üben](umsetzungsplan-belohnung.md)                                                 | Ein lokaler Übungszähler (eine Zeile je Runde) trägt drei Sterne mit fester Bedeutung in allen Übungsbereichen, das Wochenziel „X von 5 Schultagen“ und Anzeigen, die nach oben zählen. | Kinder                  |
 
 ## 2. Wichtigster Befund je Plan
 
-| Plan | Befund                                                                                                                                                                                                                                                                                        |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Der Test hat **keinen gespeicherten Zwischenstand**, der abgelöst werden müsste. Die Mischung wird eine Eigenschaft der normalen Runde. Auswahl gibt es **nicht** in „Heute dran“ und „Meine Fehler“, weil eine Auswahlfrage kein Lernereignis erzeugt und die Tagesportion nie fertig würde. |
-| 2    | Ablage und Start-Absicht können fast alles schon. Es fehlen nur Einstiege. Der Plan kommt **ohne Supabase-Änderung** aus; die Start-Absicht trägt weiter nur Kennungen (Entscheidung 60). Eine Wortliste wird beim Kind eine Wortbox, kein LernBox-Stapel.                                    |
-| 3    | „Zehnerübergang mindestens 50 %“ wird **je Runde garantiert**, nicht nur im Mittel. Der Schalter liegt bewusst außerhalb der gespeicherten Übungsoptionen, weil deren Schema streng ist. Familien können nach dem Update von „sicher“ auf „im Aufbau“ zurückfallen.                           |
-| 4    | Kernwörter lassen sich **ohne jede Änderung an gespeicherten Daten** einbauen (Nachschlagen über `wordKey`, wie die Bedeutungshilfen). Offen ist, ob die Hörprobe beim Verlängern in bairischer Aussprache trägt; das ist dieselbe Frage wie beim „summenden“ s.                              |
+| Plan | Befund                                                                                                                                                                                                                                                                                                                                                 |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1    | Der Test hat **keinen gespeicherten Zwischenstand**, der abgelöst werden müsste. Die Mischung wird eine Eigenschaft der normalen Runde. Auswahl gibt es **nicht** in „Heute dran“ und „Meine Fehler“, weil eine Auswahlfrage kein Lernereignis erzeugt und die Tagesportion nie fertig würde.                                                          |
+| 2    | Ablage und Start-Absicht können fast alles schon. Es fehlen nur Einstiege. Der Plan kommt **ohne Supabase-Änderung** aus; die Start-Absicht trägt weiter nur Kennungen (Entscheidung 60). Eine Wortliste wird beim Kind eine Wortbox, kein LernBox-Stapel.                                                                                             |
+| 3    | „Zehnerübergang mindestens 50 %“ wird **je Runde garantiert**, nicht nur im Mittel. Der Schalter liegt bewusst außerhalb der gespeicherten Übungsoptionen, weil deren Schema streng ist. Familien können nach dem Update von „sicher“ auf „im Aufbau“ zurückfallen.                                                                                    |
+| 4    | Kernwörter lassen sich **ohne jede Änderung an gespeicherten Daten** einbauen (Nachschlagen über `wordKey`, wie die Bedeutungshilfen). Offen ist, ob die Hörprobe beim Verlängern in bairischer Aussprache trägt; das ist dieselbe Frage wie beim „summenden“ s.                                                                                       |
+| 5    | Der dritte Stern („Dran geblieben“) hängt an fälligen Aufgaben, die für den Lernstand zählen. Zuordnen und Auswahl bekommen höchstens einen Stern je Stapel und Tag; es lohnt sich nicht, nur leichte Formen zu wählen. Die Belohnung liest nur und ändert keine Box. Die fünf Sterne nach Fehlerquote im Laufdiktat allein würden ersetzt (Frage 35). |
 
 ## 3. Empfohlene Reihenfolge
 
-| Rang | Plan                 | Warum an dieser Stelle                                                                                                                                                       |
-| ---- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Plan 3, Schritte 1–4 | Reine Fachlogik, keine neue Oberfläche, mit Tabellentests abgesichert. Verbessert sofort das freie Üben und jede Kopfrechen-Runde im Live-Raum.                              |
-| 2    | Plan 2, Baustein C   | „Kopfrechnen live“ ist der kleinste Baustein und der Türöffner für Kolleginnen. Er profitiert von Rang 1, hängt aber nicht davon ab.                                         |
-| 3    | Plan 1               | Die jüngste Entscheidung des Entwicklers und der größte Umbau. Er ersetzt den gerade freigegebenen Test; deshalb erst die Fragen 1 bis 3 unten beantworten.                  |
-| 4    | Plan 2, B und A      | Wortbox-Schnellstart, dann „Liste einfügen“ mit den drei Wegen.                                                                                                              |
-| 5    | Plan 3, Schritte 5–7 | Nachübung und „sicher“; sie brauchen nur die Merkmale aus Schritt 1.                                                                                                         |
-| 6    | Plan 4               | Gehört zur Etappe 3 und hat keine sichtbare Wirkung. Er kann jederzeit nebenher laufen; der Engpass ist die Prüfzeit des Entwicklers, nicht der Bau. Frage 26 vorher klären. |
+| Rang | Plan                         | Warum an dieser Stelle                                                                                                                                                                                                                              |
+| ---- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Plan 3, Schritte 1–4         | Reine Fachlogik, keine neue Oberfläche, mit Tabellentests abgesichert. Verbessert sofort das freie Üben und jede Kopfrechen-Runde im Live-Raum.                                                                                                     |
+| 2    | Plan 2, Baustein C           | „Kopfrechnen live“ ist der kleinste Baustein und der Türöffner für Kolleginnen. Er profitiert von Rang 1, hängt aber nicht davon ab.                                                                                                                |
+| 3    | Plan 1                       | Die jüngste Entscheidung des Entwicklers und der größte Umbau. Er ersetzt den gerade freigegebenen Test; deshalb erst die Fragen 1 bis 3 unten beantworten.                                                                                         |
+| 4    | Plan 2, B und A              | Wortbox-Schnellstart, dann „Liste einfügen“ mit den drei Wegen.                                                                                                                                                                                     |
+| 5    | Plan 3, Schritte 5–7         | Nachübung und „sicher“; sie brauchen nur die Merkmale aus Schritt 1.                                                                                                                                                                                |
+| 6    | Plan 4                       | Gehört zur Etappe 3 und hat keine sichtbare Wirkung. Er kann jederzeit nebenher laufen; der Engpass ist die Prüfzeit des Entwicklers, nicht der Bau. Frage 26 vorher klären.                                                                        |
+| 7    | Plan 5, Schritte 1–5 und 7–9 | Zähler, Wortspeicher, Kopfrechnen, Textbox, Laufdiktat allein, Wochenziel und Anzeigen. Braucht eine neue Tabelle (Dexie-Version 9) und die Antworten auf die Fragen 34 bis 36. Nach Plan 3, Schritte 1–4, weil beide `mental-math-app.tsx` ändern. |
+| 8    | Plan 5, Schritt 6            | LernBox anbinden, erst nach Plan 1 (Rang 3).                                                                                                                                                                                                        |
 
 ## 4. Abhängigkeiten
 
-| Von                | Zu                                   | Art                                                                                                                              |
-| ------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| Plan 2, Baustein C | Plan 3, Teil B                       | **weich:** Die Jahrgangsvorgaben bekommen mit Plan 3 von selbst mehr Aufgaben mit Übergang. Reihenfolge beliebig.                |
-| Plan 2, Baustein B | Wortboxen fachlich durchgesehen      | **fachlich:** Befund F3 aus Bericht 20 ist offen (Frage 14).                                                                     |
-| Plan 1 und Plan 2  | `src/domain/release.ts`, `README.md` | **Dateikonflikt:** Beide ändern das Freigaberegister und die erzeugte Tabelle. Nacheinander mergen und die Tabelle neu erzeugen. |
-| Plan 4             | Plan 1 bis 3                         | keine.                                                                                                                           |
-| Alle               | Entscheidungsprotokoll               | Vorlagen stehen in Plan 1 (E-1, mit Rücknahme) und Plan 3 (E-1, Ergänzung). Eintragen erst nach der Bestätigung.                 |
+| Von                | Zu                                   | Art                                                                                                                                                                                                             |
+| ------------------ | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Plan 2, Baustein C | Plan 3, Teil B                       | **weich:** Die Jahrgangsvorgaben bekommen mit Plan 3 von selbst mehr Aufgaben mit Übergang. Reihenfolge beliebig.                                                                                               |
+| Plan 2, Baustein B | Wortboxen fachlich durchgesehen      | **fachlich:** Befund F3 aus Bericht 20 ist offen (Frage 14).                                                                                                                                                    |
+| Plan 1 und Plan 2  | `src/domain/release.ts`, `README.md` | **Dateikonflikt:** Beide ändern das Freigaberegister und die erzeugte Tabelle. Nacheinander mergen und die Tabelle neu erzeugen.                                                                                |
+| Plan 5, Schritt 6  | Plan 1                               | **hart:** Plan 1 baut Runde und Test der LernBox um. Die Sterne der LernBox erst danach anbinden.                                                                                                               |
+| Plan 5             | Plan 1 und Plan 2                    | **Dateikonflikt:** `src/domain/release.ts` und `README.md` (neuer Bereich `belohnung`); Nacheinander mergen und die Tabelle neu erzeugen. Plan 5 braucht außerdem neue Design-Referenzen der Lernen-Startseite. |
+| Plan 5             | Plan 3                               | **Dateikonflikt:** `app/frei/mathematics/mental-math-app.tsx`. Nacheinander mergen.                                                                                                                             |
+| Plan 4             | Plan 1 bis 3, Plan 5                 | keine.                                                                                                                                                                                                          |
+| Alle               | Entscheidungsprotokoll               | Vorlagen stehen in Plan 1 (E-1, mit Rücknahme) und Plan 3 (E-1, Ergänzung). Eintragen erst nach der Bestätigung.                                                                                                |
 
-Die vier Pläne berühren sonst getrennte Verzeichnisse (`app/views/lernbox`,
+Die Pläne 1 bis 4 berühren sonst getrennte Verzeichnisse (`app/views/lernbox`,
 `app/lehrer`, `src/domain/mental-math*`, `src/domain/core-words*`) und lassen
 sich in getrennten Arbeitskopien bauen.
 
 ## 5. Modellempfehlung
 
-| Plan | Modell | Begründung                                                                                                                                                                                             |
-| ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1    | Sonnet | Der Plan nennt jede Datei und jeden Testfall. Heikel sind der Lösungsschutz (FA-7) und der Zwischenstand; beide sind als Domain-Schritte mit Tests vorgezogen. Diese beiden Schritte einzeln reviewen. |
-| 2    | Sonnet | Viele kleine Teile, klare Grenzen („nicht anfassen“). Die Sicherheitsregeln SL-1 bis SL-10 beim Review gezielt prüfen.                                                                                 |
-| 3    | Sonnet | Regeln stehen als Prüftabellen; jeder Schritt hält sich selbst über Tests. Test 10 (altes Verhalten unverändert) zuerst schreiben lassen.                                                              |
-| 4    | Sonnet | Schema und Prüfungen sind ausgeschrieben. Die Übertragung der 30 Wörter ist Fleißarbeit; wichtig ist nur: nichts am Inhalt ändern.                                                                     |
+| Plan | Modell                                           | Begründung                                                                                                                                                                                             |
+| ---- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1    | Sonnet                                           | Der Plan nennt jede Datei und jeden Testfall. Heikel sind der Lösungsschutz (FA-7) und der Zwischenstand; beide sind als Domain-Schritte mit Tests vorgezogen. Diese beiden Schritte einzeln reviewen. |
+| 2    | Sonnet                                           | Viele kleine Teile, klare Grenzen („nicht anfassen“). Die Sicherheitsregeln SL-1 bis SL-10 beim Review gezielt prüfen.                                                                                 |
+| 3    | Sonnet                                           | Regeln stehen als Prüftabellen; jeder Schritt hält sich selbst über Tests. Test 10 (altes Verhalten unverändert) zuerst schreiben lassen.                                                              |
+| 4    | Sonnet                                           | Schema und Prüfungen sind ausgeschrieben. Die Übertragung der 30 Wörter ist Fleißarbeit; wichtig ist nur: nichts am Inhalt ändern.                                                                     |
+| 5    | Sonnet; Schritt 2 mit Opus oder einzeln reviewen | Die Regeln stehen als Tabellen mit Testfällen. Heikel ist nur Schritt 2 (neue Dexie-Version, Sicherung mit strengem Schema); dort entscheidet sich, ob alte Daten lesbar bleiben.                      |
 
 Für alle gilt: einen Schritt je Sitzung (Abschnitt 12 des jeweiligen Plans),
 nach jedem Schritt committen und pushen, und bei einem Widerspruch zwischen
@@ -66,17 +75,17 @@ Test und Code nachfragen statt anpassen (`AGENTS.md`).
 Quelle: `docs/vision/01-planung.md`, „Entscheidungen des Entwicklers nach dem
 Testen (15.11.2026)“, und die Roadmap.
 
-| Entscheidung                                                        | Wirkung auf die Pläne                                                                                                                                            |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Mischbare Fragearten; Zuordnen in zwei Spalten                      | Plan 1 als Ganzes.                                                                                                                                               |
-| Test: Rückmeldung erst am Ende, wie umgesetzt (Nr. 1)               | Steht in Spannung zu Plan 1, FA-10 (sofortige Rückmeldung in der gemischten Runde). Frage 1.                                                                     |
-| `lernbox-lernformen` sofort `frei` (Nr. 2)                          | Plan 1 ändert die Stufe nicht; der Umbau erscheint dann mit dem Merge für alle. Frage 2.                                                                         |
-| Vorerst keine Sterne (Nr. 3)                                        | Plan 1 und Plan 3 bauen keine Belohnung.                                                                                                                         |
-| Störangriffe im Battle wieder standardmäßig an (Nr. 4)              | Plan 2, SL-8: Schnellwege setzen nichts Eigenes und nehmen die Standardwerte des Raums. **Achtung:** Im Stand `b79f61e` stehen die Standardwerte noch auf „aus“. |
-| Keine zweite Prüferin; Erprobung in anderen Klassen (Nr. 9)         | Plan 4: Der Prüfvermerk kennt nur den Entwickler. Die Prüfzeit für Inhalte bleibt der Engpass.                                                                   |
-| Hobby, keine festen Termine (Nr. 11)                                | Kein Plan nennt ein Datum. Erprobungsfristen („eine Woche in der eigenen Klasse“) sind Vorschläge.                                                               |
-| Zweites Jahr: erst Großschreibung und das/dass, dann Lesen (Nr. 12) | Plan 4: Das Schema hat Wortart und Beispielsatz, die beides später braucht.                                                                                      |
-| Schreiberleichterung pausiert (Nr. 13)                              | Kein Plan nutzt sie. Plan 2 startet Räume auch ohne Klasse; der Klassenstempel spielt für die Schnellwege keine Rolle.                                           |
+| Entscheidung                                                        | Wirkung auf die Pläne                                                                                                                                                     |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mischbare Fragearten; Zuordnen in zwei Spalten                      | Plan 1 als Ganzes.                                                                                                                                                        |
+| Test: Rückmeldung erst am Ende, wie umgesetzt (Nr. 1)               | Steht in Spannung zu Plan 1, FA-10 (sofortige Rückmeldung in der gemischten Runde). Frage 1.                                                                              |
+| `lernbox-lernformen` sofort `frei` (Nr. 2)                          | Plan 1 ändert die Stufe nicht; der Umbau erscheint dann mit dem Merge für alle. Frage 2.                                                                                  |
+| Vorerst keine Sterne (Nr. 3)                                        | Plan 1 und Plan 3 bauen keine Belohnung. Plan 5 liefert den Zähler, an dem die Ablehnung hing; Sterne für Zuordnen und Test brauchen trotzdem die Bestätigung (Frage 34). |
+| Störangriffe im Battle wieder standardmäßig an (Nr. 4)              | Plan 2, SL-8: Schnellwege setzen nichts Eigenes und nehmen die Standardwerte des Raums. **Achtung:** Im Stand `b79f61e` stehen die Standardwerte noch auf „aus“.          |
+| Keine zweite Prüferin; Erprobung in anderen Klassen (Nr. 9)         | Plan 4: Der Prüfvermerk kennt nur den Entwickler. Die Prüfzeit für Inhalte bleibt der Engpass.                                                                            |
+| Hobby, keine festen Termine (Nr. 11)                                | Kein Plan nennt ein Datum. Erprobungsfristen („eine Woche in der eigenen Klasse“) sind Vorschläge.                                                                        |
+| Zweites Jahr: erst Großschreibung und das/dass, dann Lesen (Nr. 12) | Plan 4: Das Schema hat Wortart und Beispielsatz, die beides später braucht.                                                                                               |
+| Schreiberleichterung pausiert (Nr. 13)                              | Kein Plan nutzt sie. Plan 2 startet Räume auch ohne Klasse; der Klassenstempel spielt für die Schnellwege keine Rolle.                                                    |
 
 Noch nicht im Entscheidungsprotokoll (nicht Teil dieser Pläne, aber nach
 `AGENTS.md` nötig, weil Festlegungen umgedreht werden): die Umkehr von
@@ -142,9 +151,23 @@ sollte.
 | 32  | Welches Phänomen kommt als zweites Muster? (F-7)                                                                  | Doppelkonsonanten.                                                             |
 | 33  | Ist die geschätzte Häufigkeit nützlich? (F-8)                                                                     | Behalten, als Schätzung gekennzeichnet.                                        |
 
+### Plan 5: Belohnung beim eigenen Üben
+
+| Nr. | Frage                                                                                                                                                       | Empfehlung                                                                                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 34  | **Drei Sterne mit fester Bedeutung („Geübt“, „Aus dem Kopf“, „Dran geblieben“) statt Sterne nach Fehlerquote; Zuordnen und Auswahl höchstens einen?** (B-1) | Ja. Die leichte Form lohnt sich nicht, und ein schwaches Kind bekommt in jeder Runde einen Stern. |
+| 35  | **Dürfen die fünf Sterne nach Fehlerquote im Laufdiktat allein durch die drei einheitlichen ersetzt werden?** (B-2)                                         | Ja, nur im eigenen Üben; mit Eintrag „Zurückgenommen“ im Protokoll.                               |
+| 36  | **Wochenziel: Standard 3 von 5, vom Kind zwischen 2 und 5 wählbar?** (B-3)                                                                                  | Ja.                                                                                               |
+| 37  | Zählen Samstag und Sonntag für „X von 5 Schultagen“? (B-4)                                                                                                  | Ja, als Ausgleich, höchstens 5.                                                                   |
+| 38  | Höchstens 9 gezählte Sterne je Tag? (B-5)                                                                                                                   | Ja; beobachten, ob Kinder den Deckel erreichen.                                                   |
+| 39  | Soll der Zähler schon schreiben, solange `belohnung` auf `vorschau` steht? (B-6)                                                                            | Nein, nur wo der Bereich sichtbar ist.                                                            |
+| 40  | Gehört der Rückblick „Das kannst du jetzt“ (M24-11) in diesen Plan? (B-7)                                                                                   | Nur, wenn er ohne neues gespeichertes Format auskommt.                                            |
+| 41  | Soll eine Rückstufung für das Kind nur noch „kommt morgen wieder“ heißen? (B-8)                                                                             | Ja; die Regel bleibt.                                                                             |
+| 42  | Reicht die Tabelle auf der Fortschrittsseite als Auswertung für die Erprobung? (B-9)                                                                        | Ja.                                                                                               |
+
 ## 8. Was der Entwickler selbst tun muss
 
-- Die fett gesetzten Fragen beantworten (1, 2, 3, 10, 17, 18, 26).
+- Die fett gesetzten Fragen beantworten (1, 2, 3, 10, 17, 18, 26, 34, 35, 36).
 - Die 30 Kernwörter prüfen und dabei die Zeit stoppen
   (`docs/inhalte/kernwoerter-muster-auslautverhaertung.md`, Abschnitt „Was der
   Entwickler bei jedem Wort prüft“).
