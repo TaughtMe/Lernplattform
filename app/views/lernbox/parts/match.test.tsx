@@ -158,4 +158,15 @@ describe("Zuordnen (Ansicht)", () => {
     await userEvent.click(tile("Zur LernBox"));
     expect(onEndSession).toHaveBeenCalledTimes(1);
   });
+
+  it("ändert die Meldung bei jedem Fehlversuch, damit sie neu angesagt wird", async () => {
+    setup();
+    await userEvent.click(tile("Haus"));
+    await userEvent.click(tile("dog"));
+    const first = status().textContent;
+    await userEvent.click(tile("Haus"));
+    await userEvent.click(tile("dog"));
+    expect(status().textContent).not.toBe(first);
+    expect(status()).toHaveTextContent("Das passt nicht zusammen");
+  });
 });

@@ -70,7 +70,13 @@ export function Match(props: LernBoxScreenProps & { match: LbMatch }) {
         const meaning = first?.side === "term" ? second : first;
         setMessage(`Richtig: ${term?.text ?? ""} – ${meaning?.text ?? ""}`);
       } else if (next.mistakes !== state.mistakes) {
-        setMessage("Das passt nicht zusammen. Versuch es noch einmal.");
+        // Jeder Fehlversuch ändert den Text (unsichtbares Zeichen im Wechsel),
+        // sonst sagt ein Screenreader die gleiche Meldung nicht noch einmal an.
+        setMessage(
+          `Das passt nicht zusammen. Versuch es noch einmal.${
+            next.mistakes % 2 === 0 ? "\u200b" : ""
+          }`,
+        );
       }
     }
     dispatch(action);

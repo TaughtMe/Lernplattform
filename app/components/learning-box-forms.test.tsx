@@ -5,7 +5,11 @@ import type {
   LearningBoxCard,
   LearningBoxDeck,
 } from "../../src/domain/learning-box";
-import type { TestQuestion } from "../../src/domain/learning-box-forms";
+import {
+  matchReducer,
+  startMatch,
+  type TestQuestion,
+} from "../../src/domain/learning-box-forms";
 import {
   PersonalLearningDatabase,
   createLearningBoxRepository,
@@ -91,7 +95,8 @@ async function setup(options: { onNotice?: (message: string) => void } = {}) {
 
 describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
   it("schreibt beim Zuordnen nie ein Ereignis und ändert keine Karte (LF-1)", async () => {
-    const { view, deck, database, events } = await setup();
+    const { view, deck, database, repository, events } = await setup();
+    const putCardAndEvent = vi.spyOn(repository, "putCardAndEvent");
     const before = await database.learningBoxCards.toArray();
     act(() =>
       view.result.current.start({
@@ -100,10 +105,35 @@ describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
         direction: "forward",
       }),
     );
-    expect(view.result.current.main?.kind).toBe("match");
+    const main = view.result.current.main;
+    if (main?.kind !== "match") throw new Error("Zuordnen läuft nicht");
+    // Das ganze Spiel durchspielen: alle Paare finden, dazu einen Fehlversuch.
+    let state = startMatch(main.match.rounds);
+    while (!state.finished) {
+      const tiles = main.match.rounds[state.round]!.tiles;
+      const open = tiles.filter((tile) => !state.solved.includes(tile.id));
+      const wrongA = open[0]!;
+      const wrongB = open.find((tile) => tile.cardId !== wrongA.cardId)!;
+      state = matchReducer(state, { type: "pick", tileId: wrongA.id });
+      state = matchReducer(state, { type: "pick", tileId: wrongB.id });
+      state = matchReducer(state, { type: "clear-wrong" });
+      for (const tile of open) {
+        const mate = open.find(
+          (other) => other.cardId === tile.cardId && other.id !== tile.id,
+        )!;
+        if (state.solved.includes(tile.id)) continue;
+        state = matchReducer(state, { type: "pick", tileId: tile.id });
+        state = matchReducer(state, { type: "pick", tileId: mate.id });
+      }
+      if (state.roundDone && !state.finished)
+        state = matchReducer(state, { type: "next-round" });
+    }
+    expect(state.mistakes).toBeGreaterThan(0);
     act(() => view.result.current.finish());
     await view.result.current.settle();
+    expect(putCardAndEvent).not.toHaveBeenCalled();
     expect(await events()).toHaveLength(0);
+    expect(await database.learningEvents.count()).toBe(0);
     expect(await database.learningBoxCards.toArray()).toEqual(before);
   });
 

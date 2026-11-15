@@ -576,15 +576,36 @@ export function LearningBoxApp({
     if (next.finished) void refresh();
   }
 
-  function endSession() {
+  /** Zählt Abbrüche: Ein wartendes „Diese Karten jetzt üben“ prüft, ob inzwischen beendet wurde. */
+  const leaveCount = useRef(0);
+  const practiceBusy = useRef(false);
+
+  async function endSession() {
+    leaveCount.current += 1;
     setSession(null);
+    // Erst alle Testantworten schreiben lassen, sonst liest refresh() noch den alten Kartenstand.
+    await forms.settle();
     forms.close();
-    void refresh();
+    await refresh();
   }
 
   /** „Diese Karten jetzt üben“ (LF-7): Übungsrunde im Schreibmodus, nichts wird verschoben. */
   async function practiceMissed(
     items: { cardId: string; direction: LearningBoxDirection }[],
+  ) {
+    if (practiceBusy.current) return;
+    practiceBusy.current = true;
+    const started = leaveCount.current;
+    try {
+      await startPractice(items, started);
+    } finally {
+      practiceBusy.current = false;
+    }
+  }
+
+  async function startPractice(
+    items: { cardId: string; direction: LearningBoxDirection }[],
+    started: number,
   ) {
     // Alle Testantworten sind geschrieben; die Karten kommen frisch aus der Datenbank.
     await forms.settle();
@@ -594,6 +615,8 @@ export function LearningBoxApp({
       if (card) queue.push({ card, direction: item.direction });
     }
     await refresh();
+    // Wurde die Lernform inzwischen beendet, startet keine Übungsrunde mehr.
+    if (leaveCount.current !== started) return;
     forms.close();
     if (queue.length === 0) return;
     setNotice("");
