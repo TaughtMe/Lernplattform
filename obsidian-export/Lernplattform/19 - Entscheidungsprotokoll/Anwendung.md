@@ -869,3 +869,13 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Begründung:** Der Entwickler hat es getestet: Mit Störangriffen macht Battle mehr Spaß.
 
 **Nicht wieder einbauen:** Störangriffe nicht wieder standardmäßig ausschalten, ohne den Entwickler zu fragen.
+
+## 79. Schreiberleichterung (LRS-Toleranz) pausiert – 15. November 2026
+
+**Beschlossen:** Die Schreiberleichterung wird deaktiviert und pausiert. Die Lehrkraft sieht keine Schalter mehr (Klassenliste „LRS“, Zähler, Hinweis bei der Klassenwahl im Raum). Im Live-Raum wird eine vorhandene Freigabe nicht mehr angewendet: Alle Kinder werden gleich streng bewertet, ohne Toleranz und mit den Standardregeln für die Platzierung. Umgesetzt über den Freigabebereich `schreiberleichterung` mit Stufe `aus` (`src/domain/release.ts`, README-Tabelle); er ist ohne Route, die Wirkung hängt in `app/raum/use-writing-relief.ts`. Gespeicherte Daten bleiben unverändert lesbar: Klassenstempel, Freigaben und QR-Codes mit dem Merkmal werden nur ignoriert, kein Datenformat ist geändert, nichts ist gelöscht. Wieder einschalten: Stufe im Register ändern oder `LERNRAUM_FREIGABE=schreiberleichterung=frei`. Quelle: Entscheidungen des Entwicklers nach dem Testen, Nr. 13 (`docs/vision/01-planung.md`, 15.11.2026). Berührt 50.
+
+**Zurückgenommen:** Entscheidung 50 (Schreiberleichterung über Klassenstempel ohne Lehrerlogin, 2. Oktober 2026), soweit sie die Wirkung im Raum und die Schalter der Lehrkraft betrifft. Die Mechanik (Klassenstempel, Signatur, QR-Format) bleibt als ruhende Funktion erhalten.
+
+**Begründung:** Lernraum ist ein Übungswerkzeug, und LRS verlangt Übung, keine Toleranz (Entwickler).
+
+**Nicht wieder einbauen ohne Rückfrage:** die Schreiberleichterung nicht einschalten und keine Toleranz für einzelne Kinder in Runden anwenden, ohne den Entwickler zu fragen.

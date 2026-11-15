@@ -132,6 +132,17 @@ export const RELEASE_AREAS = {
     routes: [],
     stage: "frei",
   },
+  schreiberleichterung: {
+    label: "Schreiberleichterung (LRS-Toleranz)",
+    // Kein eigener Pfad: schaltet die Schalter der Lehrkraft (Klassenliste,
+    // Klassenwahl im Raum) und die Wirkung im Live-Raum. Pausiert seit
+    // 15.11.2026 (Entscheidung 79): Lernraum ist ein Übungswerkzeug, und LRS
+    // verlangt Übung. Gespeicherte Freigaben, Klassenstempel und QR-Codes
+    // bleiben unverändert lesbar und werden nur ignoriert. Wieder einschalten:
+    // Stufe ändern oder LERNRAUM_FREIGABE=schreiberleichterung=frei.
+    routes: [],
+    stage: "aus",
+  },
   diagnostik: {
     label: "Startpunkt, Tagestraining und Mein Stand",
     // Welle 3, D2. Seit 05.11.2026 frei (Entscheidung 59), obwohl die

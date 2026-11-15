@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useAreaVisible } from "../../../release/release-context";
 import { Icon } from "../../../ui/icons";
 import { cx } from "../../parts/parts";
 import styles from "../dictation-editor.module.css";
@@ -154,6 +155,7 @@ export function OptionRows(
 
 /** Klasse des Raums; nur mit Klasse wirkt die Schreiberleichterung. */
 function ClassField(props: TeacherDictationScreenProps) {
+  const reliefVisible = useAreaVisible("schreiberleichterung");
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const choice = props.classChoice;
@@ -213,9 +215,11 @@ function ClassField(props: TeacherDictationScreenProps) {
           </button>
         </span>
       ) : null}
-      <span className={styles.optionHint}>
-        Nur in Runden für diese Klasse wirkt die Schreiberleichterung.
-      </span>
+      {reliefVisible ? (
+        <span className={styles.optionHint}>
+          Nur in Runden für diese Klasse wirkt die Schreiberleichterung.
+        </span>
+      ) : null}
     </div>
   );
 }

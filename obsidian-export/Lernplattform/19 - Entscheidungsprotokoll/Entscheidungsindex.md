@@ -82,7 +82,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 47  | Design „Lernraum UI“, Freigaberegister, Motivation aus | gültig (Standardstufe durch 48 geändert)        | Implementiert              | –                                                                            |
 | 48  | Oberfläche vom Design aus („Lernraum UI“ v2)        | gültig                                             | Implementiert              | –                                                                            |
 | 49  | Vokabelübernahme aus dem Laufdiktat nach Ergebnis   | gültig                                             | Implementiert              | –                                                                            |
-| 50  | Schreiberleichterung über Klassenstempel            | gültig                                             | Implementiert              | LRS-Status am QR erkennbar (B-008); Toleranz bedeutungsblind (D-016)          |
+| 50  | Schreiberleichterung über Klassenstempel            | pausiert, Wirkung zurückgenommen durch 79          | Implementiert              | LRS-Status am QR erkennbar (B-008); Toleranz bedeutungsblind (D-016)          |
 | 51  | Lehrerbereich: Ablage aller Inhaltsarten            | gültig                                             | Implementiert              | –                                                                            |
 | 52  | Raumcode 90 min, Raum schließt nach 120 min         | gültig                                             | Implementiert              | –                                                                            |
 | 53  | Geräte-Abgleich der Lehrkraft | gültig; am 14.11.2026 ins Protokoll nachgetragen | Implementiert | Umfang im Verhältnis zum Nutzen (A-008); Downgrade (B-014); ruht (Vision, Frage 7) |
@@ -111,6 +111,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 76  | Textbox sichtbar, intern „ungeprüft“ | gültig; berichtigt 54; nimmt Antwort vom 10.11. (Nr. 4) zurück | Implementiert | Alle 50 Texte ungeprüft |
 | 77  | LernBox-Lernformen sofort frei, keine Sterne | gültig | Implementiert | Sterne erst mit Zähler |
 | 78  | Battle: Störangriffe wieder standardmäßig an | gültig; nimmt 66 teilweise zurück | Implementiert | – |
+| 79  | Schreiberleichterung (LRS-Toleranz) pausiert | gültig; nimmt 50 zurück (Wirkung und Schalter) | Implementiert | Daten und Mechanik bleiben erhalten |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 

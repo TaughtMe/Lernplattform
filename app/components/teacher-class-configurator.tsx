@@ -89,6 +89,8 @@ export function TeacherClassConfigurator() {
   const [removalShown, setRemovalShown] = useState(false);
   // Gast-QR (90 Minuten) für geteilte Geräte; nur mit freigegebenem Bereich.
   const guestEnabled = useAreaVisible("gastmodus");
+  // Schreiberleichterung pausiert (Entscheidung 79): keine Schalter, kein Hinweis.
+  const reliefVisible = useAreaVisible("schreiberleichterung");
   const [guestQr, setGuestQr] = useState<{
     classId: string;
     link: string;
@@ -683,7 +685,11 @@ export function TeacherClassConfigurator() {
                 name: member.displayName,
                 writingRelief: member.writingRelief === true,
               }))}
-              hint={relief > 0 ? `${relief} mit Schreiberleichterung` : ""}
+              hint={
+                reliefVisible && relief > 0
+                  ? `${relief} mit Schreiberleichterung`
+                  : ""
+              }
               shownId={shown?.id}
               readOnly={archived}
               qr={
@@ -704,10 +710,14 @@ export function TeacherClassConfigurator() {
                     : members.find((member) => member.id === id),
                 )
               }
-              onRelief={(id) => {
-                const member = members.find((entry) => entry.id === id);
-                if (member) void toggleWritingRelief(member);
-              }}
+              {...(reliefVisible
+                ? {
+                    onRelief: (id: string) => {
+                      const member = members.find((entry) => entry.id === id);
+                      if (member) void toggleWritingRelief(member);
+                    },
+                  }
+                : {})}
               onRemove={(id) => {
                 const member = members.find((entry) => entry.id === id);
                 if (member) void removeStudent(member);
