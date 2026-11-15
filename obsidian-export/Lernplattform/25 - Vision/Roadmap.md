@@ -54,7 +54,7 @@ Unabhängig von jeder Vision. Alles ist klein. Geordnet nach Schaden für Kinder
 | Sofortliste | alle acht Punkte oben |
 | **Schnell erstellen** | Inhalte unabhängig vom Laufdiktat anlegen: Liste einfügen, daraus Laufdiktat, Battle und LernBox-Stapel (Audit K8, neu im Zuschnitt); Wortboxen als Quelle im Live-Raum mit Voreinstellungen in zwei Tipps (M24-6); „Kopfrechnen live“ mit einem Knopf (L25-10); Namensliste einfügen (L25-11, Teil 1) |
 | **Live und Battle** | Battle mit Genauigkeit statt Störangriffen als spaßiger Wettkampf im Kahoot-Stil (M24-4); Klassenziel an der Tafel (M24-1); Fehler an der Tafel erst ab sechs Kindern (I31-9) |
-| **LernBox wie Quizlet** | ein Stapel, mehrere Lernformen: zu Karteikarten und Schreiben kommen **Zuordnen** und **Test** (neu); stapelübergreifendes „Meine Fehler“ sichtbar machen |
+| **LernBox wie Quizlet** | ein Stapel, mehrere Lernformen: zu Karteikarten und Schreiben kommen **Zuordnen** und **Test** (umgesetzt als Vorschau, PR #57). Nächster Schritt (Entscheidung des Entwicklers vom 15.11.2026): **mischbare Fragearten** Schreiben, Mündlich und Auswahl – eine, zwei oder drei wählbar, gemischt Karte für Karte, jede mit ihrer Box-Regel; der bisherige „Test“ geht darin auf. **Zuordnen** bleibt ein eigenes Spiel für ein Kind und wird auf **zwei Spalten** umgestellt (links Vokabeln, rechts Bedeutungen, höchstens 6 Paare je Runde). Stapelübergreifendes „Meine Fehler“ sichtbar machen |
 | **Belohnung beim eigenen Üben** | Wochenziel „von 5 Schultagen“ (M24-10); Anzeigen zählen nach oben statt „3 / 105“ (I31-4); Sterne und Fortschritt je Runde einheitlich in allen Bereichen (neu; im Rahmen von [[../23 - Ramagotchi und nachhaltige Gamification/Anwendung|Kapitel 23]], ohne Rangliste einzelner Kinder) |
 | Mathe | Aufgaben mit Hürde (MA-1), Fehlerarten richtig benennen (MA-2), Nachübung trifft den Fehler (MA-3) |
 | Lehrergerät | Tablet sperrbar, `lehrer-geraet` frei (L25-9) |
@@ -102,6 +102,7 @@ Unabhängig von jeder Vision. Alles ist klein. Geordnet nach Schaden für Kinder
 | Englisch-Ausbau, Hörmodus, Formenreihen | R23-3, R23-5, R23-6, R23-8 bis R23-12 | erst den Grundwortschatz erproben |
 | Brüche und Prozent; Bilder als Hilfe | MA-12, MA-6 bis MA-9 | erst bei belegtem Bedarf |
 | Klasse gegen die Uhr, Teams, weitere Live-Formate | M24-2, M24-3, M24-7, M24-8, R23-20, MA-10 | nach Erprobung von Battle und Klassenziel |
+| **Gruppen-Memory / Zuordnen-Duell im Live-Raum** | neu (Idee des Entwicklers vom 15.11.2026) | Paare finden gegeneinander oder in Gruppen, auf mehreren Geräten im Live-Raum; nach Erprobung von Battle und Zuordnen |
 | Klassengerät-Modus | L25-8 | nach Erprobung des Schnellstarts |
 | Kurzbericht per QR an die Lehrkraft | R12-7, L25-13, F30-11, R20-15, L25-12 | erst nach Klärung mit Schulleitung und Datenschutz (S1) |
 | Häuser und Hauspunkte | R12-8 | ruhen (Antwort des Entwicklers) |
