@@ -54,6 +54,36 @@ Welle 1 (`TXT-001` bis `TXT-015`) und Welle 2 (`TXT-016` bis `TXT-050`) sind
 fachlich geprüft. Aufteilung: je Schwierigkeit mindestens 10 Texte (aktuell 16
 leicht, 17 mittel, 17 schwer), jeder Schwerpunkt in mindestens 2 Texten.
 
+**Prüfvermerk (Entscheidung vom 12.11.2026).** Die Texte bleiben sichtbar.
+Jeder Text trägt in `textbox-library.ts` das interne Feld `review`
+(`"ungeprüft"` oder `"geprüft"`), abrufbar über `textboxReview(id)`. Das Feld
+geht nicht in `TextboxText` ein und erscheint nicht in der Oberfläche. Nach
+der Prüfung eines Textes setzt die Lehrkraft es auf `"geprüft"`. Heute sind
+alle 50 Texte `"ungeprüft"`.
+
+**Korrekturen vom 14.11.2026** (Bericht 10, Abschnitt 2.2; Bericht 20, F11):
+Silbentrennendes h (se-hen, Reh, na-he) war als Dehnungs-h ausgezeichnet. Der
+Test erkennt Dehnungs-h jetzt nur noch vor l, m, n oder r.
+
+| Text    | Zielwort entfernt  | Änderung am Text                                                                              |
+| ------- | ------------------ | --------------------------------------------------------------------------------------------- |
+| TXT-002 | nah                | –                                                                                             |
+| TXT-011 | sah                | –                                                                                             |
+| TXT-024 | sehen, Reh, stehen | zwei Sätze neu mit kühl und Uhr                                                               |
+| TXT-034 | weh, sah, ruhig    | Sätze mit Stuhl, zählte, Ohren, fuhren, Bahn, Wohnung ergänzt; „ruhig“ gestrichen             |
+| TXT-046 | sehe, ruhen        | „schaue“ statt „sehe“; „abkühlen“ und „Stühle“ statt „ruhen“                                  |
+| TXT-048 | ruht, ruhig        | „schläft“ und „still“ statt „ruht“ und „ruhig“; Satz mit Zähnen ergänzt; „liegt“ als Zielwort |
+
+Bekannte Grenze: Eine laufende Einheit eines geänderten Textes (TXT-024, 034,
+046, 048) läuft mit dem neuen Text weiter. Die Kontrolle früherer Durchgänge
+kann dann Wörter an der falschen Stelle markieren; Bestwert und Ergebnisse
+bleiben erhalten.
+
+Noch offen für die Prüfung: TXT-016 und TXT-017 („Lange und kurze Vokale“)
+führen Wörter mit silbentrennendem h (steht, gehe, weht); sie haben einen
+langen Vokal und sind darum nicht falsch, aber kein Beispiel für ein
+Längenzeichen. Ton und Themen sind oft Grundschule (Bericht 20, F11).
+
 Beim Prüfen besonders ansehen: Zielwörter, die nur nach dem Muster als
 Schwerpunktwort erkannt werden (z. B. „Fahrrad“, „sah“, „Mutter“,
 „zusammen“), und Sätze, die nur wegen der Zielwörter da sein könnten.

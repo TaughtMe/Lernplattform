@@ -149,6 +149,8 @@ const STUDENT_SOURCE_FILES = [
   "src/storage/learning-recommendations.ts",
   "src/domain/mental-math-feedback.ts",
   "src/domain/live-game-feedback.ts",
+  // Titel und Regeltexte der festen Wortboxen stehen im Startblatt.
+  "src/domain/german-learning-content.ts",
 ];
 
 /** Ist das eine Quelldatei einer Schüleransicht? Pfad mit `/`, ab Projektwurzel. */

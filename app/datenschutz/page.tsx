@@ -17,6 +17,11 @@ export default function DatenschutzPage() {
         <p>
           Toby Bryson, <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
         </p>
+        <p>
+          Der Lernraum wird von einer Privatperson betrieben und in einer
+          Beta-Phase in einzelnen Schulklassen erprobt (siehe Impressum). Er ist
+          kostenlos und zeigt keine Werbung.
+        </p>
       </section>
 
       <section>
@@ -133,12 +138,13 @@ export default function DatenschutzPage() {
           Lehrkräfte können ihre Daten (Material, Aufgaben, Klassen und
           wahlweise Schülerliste, Ergebnisse und Schlüssel) zwischen ihren
           eigenen Geräten abgleichen. Die Daten liegen dabei in einem
-          Cloud-Speicher, den die Lehrkraft selbst wählt (WebDAV, Microsoft
-          OneDrive oder Google Drive) und der keinen Zugriff durch den
-          Lernraum-Betreiber ermöglicht. Die Lehrkraft entscheidet über Anbieter
-          und Umfang und ist für die Übertragung verantwortlich; wir empfehlen,
-          die Datei mit einem Passwort zu verschlüsseln, sobald Daten von
-          Kindern enthalten sind. Ohne Einrichtung findet kein Abgleich statt.
+          Cloud-Speicher, den die Lehrkraft selbst wählt (WebDAV oder Microsoft
+          OneDrive; Google Drive ist derzeit abgeschaltet) und der keinen
+          Zugriff durch den Lernraum-Betreiber ermöglicht. Die Lehrkraft
+          entscheidet über Anbieter und Umfang und ist für die Übertragung
+          verantwortlich; wir empfehlen, die Datei mit einem Passwort zu
+          verschlüsseln, sobald Daten von Kindern enthalten sind. Ohne
+          Einrichtung findet kein Abgleich statt.
         </p>
       </section>
 
