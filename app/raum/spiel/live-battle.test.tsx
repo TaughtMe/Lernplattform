@@ -6,8 +6,9 @@ import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-sess
 import { revealWithTwoFingers } from "./hold-test-utils";
 import { LiveRunningDictationGame } from "./live-game";
 
-// Battle nach Genauigkeit, Störangriffe standardmäßig aus, Absender ungenannt
-// (Vision, Nachtrag nach Phase 2, Nr. 7; Bericht 24, M24-4; Audit S7).
+// Battle nach Genauigkeit, Absender ungenannt (Vision, Nachtrag nach Phase 2,
+// Nr. 7). Störangriffe sind seit dem 15.11.2026 wieder standardmäßig an
+// (Entscheidung 78); ohne aktivierte Störangriffe gibt es keine Ladeleiste.
 
 function battleSession(battleOptions?: { ink: boolean; flicker: boolean }) {
   return parseLiveSession(
@@ -33,8 +34,7 @@ afterEach(() => {
 
 describe("Battle", () => {
   it("zeigt ohne Störangriffe weder Ladeleiste noch Aktionen", () => {
-    const session = battleSession();
-    expect(session.battleOptions).toEqual({ ink: false, flicker: false });
+    const session = battleSession({ ink: false, flicker: false });
     render(
       <LiveRunningDictationGame
         code="1234"
@@ -52,6 +52,11 @@ describe("Battle", () => {
     expect(screen.queryByRole("button", { name: /Tinte/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Flimmer/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Schild" })).toBeNull();
+  });
+
+  it("hat ohne Einstellung Tinte und Flimmern an", () => {
+    const session = battleSession();
+    expect(session.battleOptions).toEqual({ ink: true, flicker: true });
   });
 
   it("lädt beim ersten Versuch über die Richtig-Serie, nach einem Fehler nicht", async () => {

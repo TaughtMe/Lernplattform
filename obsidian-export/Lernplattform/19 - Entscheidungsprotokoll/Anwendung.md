@@ -859,3 +859,13 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Beschlossen:** „Zuordnen“ und „Test“ in der LernBox sind sofort allgemein freigegeben (`lernbox-lernformen` auf `frei`), ohne zwei Wochen Vorschau (V-8). Die Rückmeldung im Test kommt erst am Ende, wie umgesetzt (V-3). Es gibt vorerst keine Sterne (V-9), weil es noch keinen Zähler zum Auswerten gibt; die Option ist nur als Kommentar in `src/domain/release.ts` vorbereitet, nichts ist gebaut. Quelle: Entscheidungen des Entwicklers nach dem Testen, Nr. 1 bis 3 (`docs/vision/01-planung.md`, 15.11.2026). Plan: `docs/umsetzungsplan-lernbox-lernformen.md`.
 
 **Begründung:** Der Entwickler hat die Lernformen getestet und braucht keine Erprobungszeit in der Vorschau. Für Sterne fehlt der Zähler.
+
+## 78. Battle: Störangriffe wieder standardmäßig an – 15. November 2026
+
+**Beschlossen:** Tinte und Flimmern sind in den Live-Einstellungen der Lehrkraft wieder vorausgewählt (Lehrerwahl, Raumschema, Vorbereitung). Weiterhin gilt: Ladung nur über Richtig-Serien beim ersten Versuch, Meldungen ohne Absender, und ohne aktivierte Störangriffe keine Ladeleiste. Quelle: Entscheidungen des Entwicklers nach dem Testen, Nr. 4 (`docs/vision/01-planung.md`, 15.11.2026). Berührt 66.
+
+**Zurückgenommen:** teilweise die Festlegung vom 10.11.2026 (Nachtrag nach Phase 2, Nr. 7; Entscheidung 66), nach der Tinte und Flimmern standardmäßig aus sind. Unverändert bleiben dort die Ladung über Richtig-Serien und die Meldungen ohne Absender.
+
+**Begründung:** Der Entwickler hat es getestet: Mit Störangriffen macht Battle mehr Spaß.
+
+**Nicht wieder einbauen:** Störangriffe nicht wieder standardmäßig ausschalten, ohne den Entwickler zu fragen.

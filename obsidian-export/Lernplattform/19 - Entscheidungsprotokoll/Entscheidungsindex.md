@@ -98,7 +98,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 63  | Auftrags-QR mit Kennungen | gültig; nimmt 60 für mitgelieferte Übungen zurück | Geplant | – |
 | 64  | Vokabelstapel mündlich nicht „sicher“ | gültig; nimmt Welle 3, D2-3 zurück | Geplant | – |
 | 65  | Fehler an der Tafel erst ab sechs | gültig; nimmt Welle 3, D5-5 zurück | Geplant | – |
-| 66  | Battle: Störangriffe aus, Ladung über Genauigkeit | gültig; ändert Standard aus 37 | Geplant | – |
+| 66  | Battle: Störangriffe aus, Ladung über Genauigkeit | gültig bis auf „Störangriffe aus“ (durch 78 zurückgenommen); ändert Standard aus 37 | Geplant | – |
 | 67  | Lesen: Verständnis vor Lautlesen | gültig; nimmt Antwort vom 10.11. zurück | Geplant (nach den drei Etappen) | – |
 | 68  | Rechtschreib-Kernbestand von etwa 30 Wörtern | gültig; ergänzt 30 | Geplant | – |
 | 69  | Mathe: Grundrechnen bis Klasse 9 | gültig; erweitert 38 | Geplant | – |
@@ -110,6 +110,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 75  | s-Schreibung in zwei Schritten | gültig; nimmt Regeltext „summen“ zurück | Implementiert | – |
 | 76  | Textbox sichtbar, intern „ungeprüft“ | gültig; berichtigt 54; nimmt Antwort vom 10.11. (Nr. 4) zurück | Implementiert | Alle 50 Texte ungeprüft |
 | 77  | LernBox-Lernformen sofort frei, keine Sterne | gültig | Implementiert | Sterne erst mit Zähler |
+| 78  | Battle: Störangriffe wieder standardmäßig an | gültig; nimmt 66 teilweise zurück | Implementiert | – |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 

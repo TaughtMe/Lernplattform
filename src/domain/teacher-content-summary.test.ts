@@ -400,10 +400,17 @@ describe("Vorbereitung und Archiv", () => {
     expect(describePrepared({ gameMode: "STATION", stationCount: 1 })).toBe(
       "Stationen · 1 Station",
     );
-    // Standard seit Nachtrag nach Phase 2, Nr. 7: Störangriffe aus.
+    // Standard seit 15.11.2026 (Entscheidung 78): Störangriffe an.
     expect(describePrepared({ gameMode: "BATTLE" })).toBe(
-      "Battle · ohne Störangriffe",
+      "Battle · Tinte und Flimmern",
     );
+    expect(
+      describePrepared({
+        gameMode: "BATTLE",
+        battleInk: false,
+        battleFlicker: false,
+      }),
+    ).toBe("Battle · ohne Störangriffe");
     expect(
       describePrepared({
         gameMode: "BATTLE",
@@ -411,10 +418,10 @@ describe("Vorbereitung und Archiv", () => {
         battleFlicker: true,
       }),
     ).toBe("Battle · Tinte und Flimmern");
-    expect(describePrepared({ gameMode: "BATTLE", battleInk: true })).toBe(
+    expect(describePrepared({ gameMode: "BATTLE", battleFlicker: false })).toBe(
       "Battle · nur Tinte",
     );
-    expect(describePrepared({ gameMode: "BATTLE", battleFlicker: true })).toBe(
+    expect(describePrepared({ gameMode: "BATTLE", battleInk: false })).toBe(
       "Battle · nur Flimmern",
     );
     expect(
