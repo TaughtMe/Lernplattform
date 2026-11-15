@@ -3020,3 +3020,30 @@ Claude hat beide Dateien danach überarbeitet.
 5. **Entscheidungsprotokoll:** Die vorbereiteten Einträge aus
    `obsidian-export/Lernplattform/25 - Vision/Offene Entscheidungen.md` und die
    Korrekturen zu den Entscheidungen 53 und 54 werden übernommen.
+
+### Entscheidungen des Entwicklers nach dem Testen (15.11.2026)
+
+1. **Test (V-3):** Rückmeldung erst am Ende, wie umgesetzt.
+2. **Freigabe (V-8):** Zuordnen und Test werden sofort allgemein freigegeben
+   (`lernbox-lernformen` auf `frei`), ohne zwei Wochen Vorschau.
+3. **Sterne (V-9):** Vorerst keine Sterne, weil es noch keinen Zähler zum
+   Auswerten gibt. Die Option soll vorbereitet, aber nicht ausgebaut werden.
+4. **Battle:** Mit Störangriffen macht es mehr Spaß. Störangriffe sind wieder
+   standardmäßig an. Ladung über Genauigkeit und Meldungen ohne Absender
+   bleiben.
+5. **Stimmen:** Nur lokale Stimmen sind nicht optimal, aber es gibt keine
+   guten kostenlosen Sprachpakete. Es bleibt bei lokalen Gerätestimmen.
+6. **Einsatzrahmen (S1):** Das Gespräch mit dem Datenschutzbeauftragten findet
+   zeitnah statt.
+7. **Markenfiguren:** Der Entwickler prüft noch.
+8. **Name und Logo:** ohne Juristin. Name und Logo „Lernraum“ werden in den
+   Lizenzdateien ausdrücklich von EUPL und CC BY-SA ausgenommen.
+9. **Zweite Prüferin für Inhalte:** Nein. Lernraum wird stattdessen in anderen
+   Klassen erprobt.
+10. **Zweite Person mit Zugang:** Nein.
+11. **Wochenstunden:** Lernraum ist ein Hobby; gearbeitet wird, wenn Zeit ist.
+    Es gibt keine festen Termine.
+12. **Zweites Jahr:** zuerst Rechtschreibung (Großschreibung, das/dass), danach
+    Lesen.
+13. **Schreiberleichterung (LRS-Toleranz):** wird deaktiviert und pausiert.
+    Lernraum ist ein Übungswerkzeug, und LRS verlangt Übung, keine Toleranz.
