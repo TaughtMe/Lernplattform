@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react";
 import { Button, ButtonLink, Card, PageHeader } from "../../ui/primitives";
+import { ReadAloudButton } from "../../ui/read-aloud-button";
 
 export type StartPointChoice = {
   id: "spelling" | "math";
@@ -20,6 +21,11 @@ export type StartPointScreenProps =
       /** Nummer der Aufgabe, ab 1. Eine Gesamtzahl gibt es bewusst nicht. */
       number: number;
       instruction: string;
+      /**
+       * Text für „Vorlesen“ (Entscheidung 58). Bei Rechtschreibung nur die
+       * Anleitung, nie das Wort; bei Rechenaufgaben auch die Aufgabe.
+       */
+      readAloud?: string | undefined;
       /** Das Gezeigte: Lückenwort, Rechenaufgabe oder der Knopf zum Anhören. */
       prompt: ReactNode;
       /** Hinweis, warum das Wort nicht gesprochen wird (keine lokale Stimme). */
@@ -87,9 +93,17 @@ export function StartPointScreen(props: StartPointScreenProps) {
         />
         <Card look="pop" className="ui-stack">
           <form className="ui-stack" onSubmit={submit}>
-            <label className="ui-label" htmlFor="startpunkt-antwort">
-              {props.instruction}
-            </label>
+            <div className="ui-row ui-wrap">
+              <label className="ui-label ui-grow" htmlFor="startpunkt-antwort">
+                {props.instruction}
+              </label>
+              {props.readAloud ? (
+                <ReadAloudButton
+                  text={props.readAloud}
+                  label="Aufgabe vorlesen"
+                />
+              ) : null}
+            </div>
             {props.voiceNotice ? (
               <p className="ui-notice">{props.voiceNotice}</p>
             ) : null}

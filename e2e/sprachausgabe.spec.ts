@@ -2,6 +2,7 @@ import { expect, test, type Page } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 import { hydrated } from "./hydration-helpers";
 import { fakeSpeech, spokenUtterances } from "./speech-helpers";
+import { createBox, startRound } from "./wortspeicher-helpers";
 
 // Entscheidung 58, Befund B-012: Lernraum spricht nur mit Stimmen, die auf dem
 // Gerät laufen. Fehlt eine, gibt es einen Hinweis statt einer stummen Taste.
@@ -90,4 +91,40 @@ test("LernBox: Vorlesen ohne lokale Stimme zeigt einen Hinweis und nutzt keine N
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
   await notice.getByRole("button", { name: "OK" }).click();
   await expect(notice).toHaveCount(0);
+});
+
+test("Wortspeicher: „Aufgabe vorlesen“ liest nur die Anleitung, nie das Wort", async ({
+  page,
+}) => {
+  await fakeSpeech(page, "local");
+  await createBox(page, "Lesebox", ["Fahrrad"]);
+  await startRound(page, "Lesebox", 3);
+  const button = page.getByRole("button", { name: "Aufgabe vorlesen" });
+  await (await hydrated(button)).click();
+  await expect
+    .poll(async () => (await spokenUtterances(page)).length)
+    .toBeGreaterThan(0);
+  const spoken = (await spokenUtterances(page)).map((entry) => entry.text);
+  expect(spoken).toEqual(["Fülle die Lücken und schreibe das ganze Wort."]);
+  expect(spoken.join(" ")).not.toMatch(/fahrrad/i);
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
+});
+
+test("Kopfrechnen: „Aufgabe vorlesen“ liest die Aufgabe ohne Ergebnis", async ({
+  page,
+}) => {
+  await fakeSpeech(page, "local");
+  await page.goto("/frei/mathematics");
+  await (
+    await hydrated(page.getByRole("button", { name: "Eigene Aufgaben" }))
+  ).click();
+  await page
+    .getByRole("textbox", { name: "Eine Aufgabe pro Zeile" })
+    .fill("7 * 8");
+  await page.getByRole("button", { name: "Runde starten" }).click();
+  await page.getByRole("button", { name: "Aufgabe vorlesen" }).click();
+  await expect
+    .poll(async () => (await spokenUtterances(page)).map((e) => e.text))
+    .toEqual(["7 mal 8"]);
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
 });

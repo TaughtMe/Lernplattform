@@ -10,6 +10,7 @@ import {
   isGapUnique,
   isLatexMathSyntax,
   isLatexMathTask,
+  spokenMathTask,
   spokenMathText,
   stripMathDelimiters,
   mathAnswerMatches,
@@ -236,6 +237,22 @@ describe("isLatexMathTask", () => {
     expect(spokenMathText("$(2 + 3) \\cdot 4$")).toBe(
       "Klammer auf 2 plus 3 Klammer zu mal 4",
     );
+  });
+
+  it("liest Aufgaben mit Lücke vor, ohne die Lösung zu nennen", () => {
+    expect(spokenMathTask("7 + 8")).toBe("7 plus 8");
+    expect(spokenMathTask("_ − 4 = 9")).toBe("Lücke minus 4 gleich 9");
+    expect(spokenMathTask("6 · _ = 42")).toBe("6 mal Lücke gleich 42");
+    for (const task of generateMentalMathTasks({
+      count: 20,
+      operations: ["add", "subtract", "multiply", "divide"],
+      minValue: 0,
+      maxValue: 100,
+      multiplicationTables: [2, 3, 7],
+      gapMode: false,
+    })) {
+      expect(spokenMathTask(task.prompt)).not.toMatch(/gleich/);
+    }
   });
 
   it("entfernt Umrandungen", () => {

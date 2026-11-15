@@ -12,6 +12,7 @@ import {
   MULTIPLICATION_TABLES,
   generateMentalMathTasks,
   isLatexMathTask,
+  spokenMathTask,
   spokenMathText,
   parseMentalMathTask,
   shuffleMathTasks,
@@ -54,6 +55,7 @@ import {
 import { SolutionHelp } from "./solution-help";
 import { describeRound, operationLabels, todaysReviews } from "./round-text";
 import { Icon } from "../../ui/icons";
+import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { useRoundGuard } from "../../ui/round-guard";
 import { useRoundSnapshot } from "../../ui/use-round-snapshot";
 import { ResumeOffer } from "../../views/shell/resume-offer";
@@ -962,7 +964,14 @@ export function MentalMathApp({
         />
       </div>
       <div className="ui-game__card ui-math__card">
-        <p className="ui-eyebrow">Kopfrechnen</p>
+        <div className="ui-row ui-wrap">
+          <p className="ui-eyebrow ui-grow">Kopfrechnen</p>
+          {/* Entscheidung 58: Vorlesen in der Aufgabe; nur die Aufgabe, nie das Ergebnis. */}
+          <ReadAloudButton
+            text={spokenMathTask(current.prompt)}
+            label="Aufgabe vorlesen"
+          />
+        </div>
         <h1
           id="math-task-title"
           className="ui-game__prompt ui-math__task"
