@@ -162,7 +162,7 @@ function SealNote({
     <div className="ui-small">
       <p>
         Auf diesem Gerät vergebene Schreiberleichterungen für {conflict.label}{" "}
-        müssen neu vergeben werden.
+        gehen verloren. Die Schreiberleichterung ist derzeit pausiert.
       </p>
       {ids.length > 0 ? (
         <ul>

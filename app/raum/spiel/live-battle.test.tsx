@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-session";
@@ -78,6 +78,52 @@ describe("Battle", () => {
     await user.type(input, "Haus{Enter}");
     // Richtig erst nach einem Fehler: keine Ladung.
     expect(await screen.findByText("Ladung · 0 %")).toBeInTheDocument();
+  });
+
+  it("wertet den ersten Versuch je Stelle, auch wenn ein Wort doppelt vorkommt", async () => {
+    const user = userEvent.setup();
+    const session = parseLiveSession(
+      {
+        words: [
+          { id: "1", kind: "text", targetWord: "Haus" },
+          { id: "2", kind: "text", targetWord: "Haus" },
+        ],
+        gameMode: "BATTLE",
+        battleOptions: { ink: true, flicker: false },
+      },
+      "session",
+      "seed",
+    );
+    const { container } = render(
+      <LiveRunningDictationGame
+        code="1234"
+        studentName="Mia"
+        session={session}
+        connectionWarning=""
+        initialProgress={null}
+        onProgress={vi.fn()}
+      />,
+    );
+    revealWithTwoFingers(container);
+    const first = screen.getByRole("textbox", { name: "Deine Antwort" });
+    await user.type(first, "Hause{Enter}");
+    await user.clear(first);
+    await user.type(first, "Haus{Enter}");
+    expect(await screen.findByText("Ladung · 0 %")).toBeInTheDocument();
+    // Zweite Stelle mit demselben Wort: der frühere Fehler zählt nicht mit.
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole("textbox", { name: "Deine Antwort" }),
+        ).toBeNull(),
+      { timeout: 3000 },
+    );
+    revealWithTwoFingers(container);
+    await user.type(
+      await screen.findByRole("textbox", { name: "Deine Antwort" }),
+      "Haus{Enter}",
+    );
+    expect(await screen.findByText("Ladung · 20 %")).toBeInTheDocument();
   });
 
   it("lädt 20 % für eine richtige Antwort beim ersten Versuch", async () => {

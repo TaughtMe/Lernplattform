@@ -3047,3 +3047,8 @@ Claude hat beide Dateien danach überarbeitet.
     Lesen.
 13. **Schreiberleichterung (LRS-Toleranz):** wird deaktiviert und pausiert.
     Lernraum ist ein Übungswerkzeug, und LRS verlangt Übung, keine Toleranz.
+14. **Sterne (Bauplan Belohnung, `claude/bauplaene`):** Die drei einheitlichen
+    Sterne („Geübt“, „Aus dem Kopf“, „Dran geblieben“) dürfen die fünf Sterne
+    nach Fehlerquote im Laufdiktat allein ersetzen, weil die Bewertung damit
+    überall einheitlich ist. Beim Umsetzen ist das als Rücknahme ins
+    Entscheidungsprotokoll einzutragen.

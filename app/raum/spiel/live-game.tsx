@@ -167,6 +167,8 @@ export function LiveRunningDictationGame({
   const [charge, setCharge] = useState(0);
   /** Richtig-Serie beim ersten Versuch (Ladung über Genauigkeit, M24-4). */
   const battleStreak = useRef(0);
+  /** Stelle des letzten Fehlversuchs; der erste Versuch gilt je Stelle, nicht je Wort. */
+  const battleMissedAt = useRef<number | null>(null);
   const [shield, setShield] = useState(false);
   const [picker, setPicker] = useState<AttackType | null>(null);
   const [activeAttack, setActiveAttack] = useState<AttackType | null>(null);
@@ -717,12 +719,15 @@ export function LiveRunningDictationGame({
     }
     if (isCorrect) {
       if (session.gameMode === "BATTLE") {
-        // Nur der erste Versuch verlängert die Serie; ein Fehler bei diesem
-        // Wort hat sie schon zurückgesetzt.
-        const streak = nextBattleStreak(
-          battleStreak.current,
-          !wordErrors[errorKey],
-        );
+        // Nur der erste Versuch an dieser Stelle verlängert die Serie. Kommt
+        // dasselbe Wort später noch einmal, zählt ein früherer Fehler nicht
+        // mit. Nach dem Neuladen hilft der gespeicherte Fehler des Worts.
+        const firstTry =
+          battleMissedAt.current !== index &&
+          (index !== restoredIndex ||
+            !initialProgress ||
+            !wordErrors[errorKey]);
+        const streak = nextBattleStreak(battleStreak.current, firstTry);
         battleStreak.current = streak;
         const gain = battleChargeGain(streak);
         if (gain > 0) setCharge((value) => Math.min(100, value + gain));
@@ -739,6 +744,7 @@ export function LiveRunningDictationGame({
     const key = errorKey;
     // Ein Fehler setzt die Richtig-Serie zurück, nie die Ladung.
     battleStreak.current = 0;
+    battleMissedAt.current = index;
     if (kind === "text" && session.wordStoreTransfer !== "none") {
       const missed = misspelledWords(activeWord.targetWord, answer);
       if (missed.length > 0) {
