@@ -5,6 +5,7 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
   battleChargeGain,
+  nextBattleStreak,
   speedPoints,
 } from "../../../src/domain/live-game-feedback";
 import { mathTaskFromPrompt } from "../../../src/domain/math-practice";
@@ -164,6 +165,8 @@ export function LiveRunningDictationGame({
     return () => window.clearTimeout(timer);
   }, [showExitConfirm, exitCountdown]);
   const [charge, setCharge] = useState(0);
+  /** Richtig-Serie beim ersten Versuch (Ladung über Genauigkeit, M24-4). */
+  const battleStreak = useRef(0);
   const [shield, setShield] = useState(false);
   const [picker, setPicker] = useState<AttackType | null>(null);
   const [activeAttack, setActiveAttack] = useState<AttackType | null>(null);
@@ -320,7 +323,8 @@ export function LiveRunningDictationGame({
       if (shieldRef.current) {
         shieldRef.current = false;
         setShield(false);
-        setBattleMessage(`Angriff von ${incomingAttack.from} geblockt.`);
+        // Ohne Absender (Audit S7, Bericht 24, M24-4).
+        setBattleMessage("Ein Angriff wurde geblockt.");
         return;
       }
       if (attackUntil.current > Date.now()) return;
@@ -328,8 +332,8 @@ export function LiveRunningDictationGame({
       setActiveAttack(incomingAttack.type);
       setBattleMessage(
         incomingAttack.type === "ink"
-          ? `Tintenangriff von ${incomingAttack.from}`
-          : `Flimmerangriff von ${incomingAttack.from}`,
+          ? "Ein Angriff! Tinte"
+          : "Ein Angriff! Flimmern",
       );
       attackTimer.current = window.setTimeout(() => {
         setActiveAttack(null);
@@ -713,9 +717,15 @@ export function LiveRunningDictationGame({
     }
     if (isCorrect) {
       if (session.gameMode === "BATTLE") {
-        setCharge((value) =>
-          Math.min(100, value + battleChargeGain(roster, studentName, index)),
+        // Nur der erste Versuch verlängert die Serie; ein Fehler bei diesem
+        // Wort hat sie schon zurückgesetzt.
+        const streak = nextBattleStreak(
+          battleStreak.current,
+          !wordErrors[errorKey],
         );
+        battleStreak.current = streak;
+        const gain = battleChargeGain(streak);
+        if (gain > 0) setCharge((value) => Math.min(100, value + gain));
       }
       if (verdict === "tolerated" && errorKey) {
         // Richtig angenommen, in der LernBox aber nur „üben“ (nicht „sicher“).
@@ -727,6 +737,8 @@ export function LiveRunningDictationGame({
     }
 
     const key = errorKey;
+    // Ein Fehler setzt die Richtig-Serie zurück, nie die Ladung.
+    battleStreak.current = 0;
     if (kind === "text" && session.wordStoreTransfer !== "none") {
       const missed = misspelledWords(activeWord.targetWord, answer);
       if (missed.length > 0) {

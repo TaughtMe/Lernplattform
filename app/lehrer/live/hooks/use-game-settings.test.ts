@@ -16,8 +16,9 @@ describe("gameSettingsReducer", () => {
       strictTyping: false,
       taskHelp: true,
       stationCount: 20,
-      battleInk: true,
-      battleFlicker: true,
+      // Störangriffe standardmäßig aus (Nachtrag nach Phase 2, Nr. 7).
+      battleInk: false,
+      battleFlicker: false,
       mathCount: 10,
       mathMin: 0,
       mathMax: 20,
