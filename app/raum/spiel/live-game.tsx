@@ -783,6 +783,8 @@ export function LiveRunningDictationGame({
     kind === "text" ? undefined : (
       <MathDisplay text={prompt} isLatex={isLatexPrompt} />
     );
+  // Ohne Störangriffe hat die Ladung kein Ziel: Ladeleiste und Aktionen
+  // bleiben dann ganz ausgeblendet (Rückmeldung des Entwicklers, 15.11.2026).
   const battlePowers = (["ink", "flicker"] as const).filter(
     (power) => session.battleOptions[power],
   );
@@ -929,7 +931,7 @@ export function LiveRunningDictationGame({
           setAnswer(next);
         }}
         onCheck={() => void submit()}
-        {...(session.gameMode === "BATTLE"
+        {...(session.gameMode === "BATTLE" && battlePowers.length > 0
           ? {
               battleBar: {
                 powers: battlePowers,

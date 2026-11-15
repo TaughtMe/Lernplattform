@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 describe("Battle", () => {
-  it("hat ohne Einstellung keine Störangriffe und keinen Schild", () => {
+  it("zeigt ohne Störangriffe weder Ladeleiste noch Aktionen", () => {
     const session = battleSession();
     expect(session.battleOptions).toEqual({ ink: false, flicker: false });
     render(
@@ -45,7 +45,10 @@ describe("Battle", () => {
         onProgress={vi.fn()}
       />,
     );
-    expect(screen.getByText("Ladung · 0 %")).toBeInTheDocument();
+    expect(screen.queryByText(/Ladung ·/)).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "Battle-Aktionen" }),
+    ).toBeNull();
     expect(screen.queryByRole("button", { name: /Tinte/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Flimmer/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Schild" })).toBeNull();
