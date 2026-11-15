@@ -28,7 +28,7 @@ const choice: TestQuestion = {
   correctOption: 1,
 };
 
-function setup(questions: TestQuestion[], counted = 0) {
+function setup(questions: TestQuestion[], counted = 0, notice = "") {
   const handlers = {
     onEndSession: vi.fn(),
     onFormFinished: vi.fn(),
@@ -43,6 +43,7 @@ function setup(questions: TestQuestion[], counted = 0) {
   };
   const props = {
     theme: "light",
+    notice,
     ...handlers,
   } as unknown as LernBoxScreenProps;
   render(<Test {...props} test={test} />);
@@ -163,5 +164,17 @@ describe("Test (Ansicht)", () => {
     ).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Zur LernBox" }));
     expect(onEndSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("zeigt einen Speicherfehler auch während des Tests", () => {
+    setup([written], 0, "Die Antwort konnte nicht gespeichert werden.");
+    expect(
+      screen
+        .getAllByRole("status")
+        .some(
+          (node) =>
+            node.textContent === "Die Antwort konnte nicht gespeichert werden.",
+        ),
+    ).toBe(true);
   });
 });

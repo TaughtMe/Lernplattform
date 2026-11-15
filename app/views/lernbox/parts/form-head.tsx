@@ -13,22 +13,31 @@ export function FormHead({
   ...props
 }: LernBoxScreenProps & { title: string; subtitle: ReactNode }) {
   return (
-    <header className={styles.studyHead}>
-      <button
-        type="button"
-        className={styles.backSquare}
-        aria-label="Runde beenden"
-        title="Runde beenden"
-        onClick={props.onEndSession}
-      >
-        <Icon name="back" size={20} strokeWidth={2.2} />
-      </button>
-      <span className={styles.studyTitles}>
-        <h1 className={styles.studyTitle}>{title}</h1>
-        <span className={styles.sheetSubtitle}>{subtitle}</span>
-      </span>
-      <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
-    </header>
+    <>
+      <header className={styles.studyHead}>
+        <button
+          type="button"
+          className={styles.backSquare}
+          aria-label="Runde beenden"
+          title="Runde beenden"
+          onClick={props.onEndSession}
+        >
+          <Icon name="back" size={20} strokeWidth={2.2} />
+        </button>
+        <span className={styles.studyTitles}>
+          <h1 className={styles.studyTitle}>{title}</h1>
+          <span className={styles.sheetSubtitle}>{subtitle}</span>
+        </span>
+        <ThemeSwitch theme={props.theme} onToggle={props.onToggleTheme} />
+      </header>
+      {props.notice ? (
+        // Speicherfehler auch in der Lernform zeigen, damit „nichts gezählt“
+        // nicht mit einer absichtlichen Übungsantwort verwechselt wird.
+        <p className={styles.notice} role="status">
+          {props.notice}
+        </p>
+      ) : null}
+    </>
   );
 }
 

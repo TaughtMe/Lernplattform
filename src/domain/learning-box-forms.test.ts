@@ -111,6 +111,24 @@ describe("Zuordnen: Rundenbildung", () => {
     expect(new Set(texts).size).toBe(texts.length);
   });
 
+  it("lässt Karten weg, deren Kacheln gleich aussehen würden", () => {
+    // „home | house“ und „home / house“ erscheinen beide als „home / house“.
+    const cards = [
+      card("Haus", "home | house"),
+      card("Heim", "home / house"),
+      card("Baum", "tree"),
+      card("Hund", "dog"),
+    ];
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const rounds = buildMatchRounds(cards, seeded(seed));
+      const texts = rounds.flatMap((round) =>
+        round.tiles.map((tile) => tile.text.toLowerCase()),
+      );
+      expect(new Set(texts).size).toBe(texts.length);
+      expect(texts.filter((text) => text === "home / house")).toHaveLength(1);
+    }
+  });
+
   it("zeigt Alternativen lesbar und gibt ohne zwei Paare kein Spiel", () => {
     const rounds = buildMatchRounds(
       [card("Haus", "home | house"), card("Baum", "tree")],

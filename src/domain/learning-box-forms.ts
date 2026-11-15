@@ -85,8 +85,10 @@ function pickMatchCards(
   const picked: LearningBoxCard[] = [];
   for (const card of shuffleLearningBoxItems(cards, random)) {
     if (picked.length >= MATCH_PAIRS_PER_ROUND * MATCH_MAX_ROUNDS) break;
-    const term = key(card.question);
-    const meaning = key(card.answer);
+    // Vergleich über den angezeigten Text: „home | house“ und „home / house“
+    // erscheinen gleich und dürfen nicht zwei Kacheln werden.
+    const term = key(display(card.question));
+    const meaning = key(display(card.answer));
     if (!term || !meaning || terms.has(term) || meanings.has(meaning)) continue;
     terms.add(term);
     meanings.add(meaning);
