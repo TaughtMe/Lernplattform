@@ -126,7 +126,8 @@ die Silbieren-Strategie für Einsilber (F3). Beides liegt bei der Lehrkraft.
 Strategie „Verlängern“, 133 Wörter, zugeordnet dem Textbox-Schwerpunkt
 `s-ss-sz`. Regeltext (Entscheidung des Entwicklers vom 12.11.2026, zwei
 Schritte statt „summen“): „Schritt 1: Ist der Vokal vor dem s-Laut kurz,
-schreibst du ss (Wasser, Nuss – Nüsse). Schritt 2: Ist der Vokal lang oder
+schreibst du meist ss (Wasser, Nuss – Nüsse). Ausnahmen wie bis, das, was und Bus
+merkst du dir. Schritt 2: Ist der Vokal lang oder
 steht ein Zwielaut davor, kann ß oder s kommen (Fuß, Gras, Haus). Das musst du
 dir merken. Hilfe gibt die Wortfamilie: Fuß – Füße, Gras – Gräser.“ Die frühere
 Probe „Summt das s?“ entfällt: In süddeutscher Aussprache gibt es kein

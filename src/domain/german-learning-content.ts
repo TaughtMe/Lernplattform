@@ -180,7 +180,7 @@ export const LEARNING_WORD_COLLECTIONS: readonly LearningWordCollection[] = [
     id: "s-ss-sz",
     title: "s, ss und ß",
     detail:
-      "Schritt 1: Ist der Vokal vor dem s-Laut kurz, schreibst du ss (Wasser, Nuss – Nüsse). Schritt 2: Ist der Vokal lang oder steht ein Zwielaut davor, kann ß oder s kommen (Fuß, Gras, Haus). Das musst du dir merken. Hilfe gibt die Wortfamilie: Fuß – Füße, Gras – Gräser.",
+      "Schritt 1: Ist der Vokal vor dem s-Laut kurz, schreibst du meist ss (Wasser, Nuss – Nüsse). Ausnahmen wie bis, das, was und Bus merkst du dir. Schritt 2: Ist der Vokal lang oder steht ein Zwielaut davor, kann ß oder s kommen (Fuß, Gras, Haus). Das musst du dir merken. Hilfe gibt die Wortfamilie: Fuß – Füße, Gras – Gräser.",
     strategy: "Verlängern",
     words: sSsSz,
   },
