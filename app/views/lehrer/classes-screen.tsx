@@ -396,7 +396,7 @@ export function StudentList({
                     {[...student.name][0]?.toLocaleUpperCase("de")}
                   </span>
                   <span className={styles.studentName}>{student.name}</span>
-                  {readOnly ? null : (
+                  {readOnly || !onRelief ? null : (
                     <label
                       className={cx(styles.relief, "class-relief")}
                       title="Schreiberleichterung (LRS): wirkt nur in Laufdiktaten, die du für diese Klasse startest."
@@ -406,7 +406,7 @@ export function StudentList({
                         className={styles.reliefInput}
                         aria-label={`Schreiberleichterung für ${student.name}`}
                         checked={student.writingRelief}
-                        onChange={() => onRelief?.(student.id)}
+                        onChange={() => onRelief(student.id)}
                       />
                       LRS
                     </label>
@@ -446,9 +446,11 @@ export function StudentList({
                       <strong>Einschreibungs-QR für {student.name}</strong>
                       <span>
                         Das Kind scannt ihn einmal mit seinem Gerät.
-                        {student.writingRelief
-                          ? " Mit Schreiberleichterung (LRS); sie wirkt nur in Laufdiktaten für diese Klasse."
-                          : " „LRS“ setzt die Schreiberleichterung; danach muss das Kind den neuen QR-Code scannen."}
+                        {!onRelief
+                          ? ""
+                          : student.writingRelief
+                            ? " Mit Schreiberleichterung (LRS); sie wirkt nur in Laufdiktaten für diese Klasse."
+                            : " „LRS“ setzt die Schreiberleichterung; danach muss das Kind den neuen QR-Code scannen."}
                       </span>
                     </div>
                   </div>

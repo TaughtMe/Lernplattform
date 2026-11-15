@@ -159,9 +159,7 @@ describe("SyncConflictList", () => {
       { k1: "Fuchs" },
     );
     expect(
-      screen.getByText(
-        /Schreiberleichterungen für Klasse 5b müssen neu vergeben werden/,
-      ),
+      screen.getByText(/Schreiberleichterungen für Klasse 5b gehen verloren/),
     ).toBeVisible();
     expect(screen.getByText("Fuchs")).toBeVisible();
     expect(screen.getByText("Kind")).toBeVisible();

@@ -206,6 +206,8 @@ async function fakeSpeech(page: Page, hasVoice: boolean) {
             lang: "de-DE",
             voiceURI: "anna",
             default: true,
+            // Lernraum nutzt nur Stimmen, die auf dem Gerät laufen (B-012).
+            localService: true,
           },
         ]
       : [];
@@ -298,7 +300,7 @@ test("Stufe 6 ist ohne deutsche Stimme deaktiviert", async ({ page }) => {
     .getByRole("button", { name: /^Stufe 6:/ });
   await expect(stageSix).toBeDisabled({ timeout: 5_000 });
   await expect(stageSix).toContainText(
-    "Auf diesem Gerät gibt es keine deutsche Stimme.",
+    "Auf diesem Gerät ist keine deutsche Stimme installiert.",
   );
   await expectAccessible(page);
 });

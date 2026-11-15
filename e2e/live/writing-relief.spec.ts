@@ -110,6 +110,11 @@ async function typeWrong(page: Page, answer: string) {
 test("a child with writing relief gets a typo accepted in a room for the same class", async ({
   page,
 }) => {
+  // Pausiert (Entscheidung 79): Der Bereich `schreiberleichterung` steht auf
+  // `aus`, die Freigabe wirkt im Raum nicht. Die ruhende Funktion deckt
+  // app/raum/spiel/live-game.test.tsx mit eingeschaltetem Bereich ab. Beim
+  // Wiedereinschalten diese Zeile entfernen.
+  test.skip(true, "Schreiberleichterung pausiert (Entscheidung 79)");
   const seal = await createClassSealKeyPair();
   await enroll(page, seal);
   await mockRoom(page, await classSealFingerprint(seal.publicKey));

@@ -95,6 +95,66 @@
   font-weight: 700;
 }
 
+/* Wege zu Startpunkt, Training und „Mein Stand“ (kein eigener Entwurf). */
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.moreTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.shortcut {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+.shortcut:hover {
+  border-color: var(--accent);
+}
+.shortcutIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--surface2);
+  color: var(--accent);
+}
+.shortcutText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 13.5px;
+  color: var(--ink2);
+}
+.shortcutText > strong {
+  font-size: 15px;
+  color: var(--ink);
+}
+
 @media (min-width: 900px) {
   .screen {
     padding: 34px 34px 30px;

@@ -194,9 +194,46 @@ describe("TeacherClassConfigurator", () => {
     expect(screen.getByText("Sam")).toBeVisible();
   });
 
-  it("gives a student writing relief and puts a signed grant into the new QR code", async () => {
+  it("zeigt keine Schalter für die Schreiberleichterung, solange sie pausiert ist", async () => {
     const user = userEvent.setup();
     render(<TeacherClassConfigurator />);
+    await user.type(
+      await screen.findByRole("textbox", { name: "Klassenname" }),
+      "Klasse 8a",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Lehrkraft" }),
+      "Herr Test",
+    );
+    await user.click(screen.getByRole("button", { name: "Anlegen" }));
+    await user.type(
+      await screen.findByRole("textbox", { name: "Name oder Alias" }),
+      "Alex",
+    );
+    await user.click(screen.getByRole("button", { name: "Hinzufügen" }));
+    expect(await screen.findByText("Alex")).toBeVisible();
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Schreiberleichterung für Alex",
+      }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/mit Schreiberleichterung/)).toBeNull();
+  });
+
+  // Die Funktion ruht (Entscheidung 79) und wird mit eingeschaltetem Bereich
+  // geprüft, damit sie später wieder eingeschaltet werden kann.
+  it("gives a student writing relief and puts a signed grant into the new QR code", async () => {
+    const user = userEvent.setup();
+    render(
+      <ReleaseProvider
+        value={resolveVisibility(
+          resolveStages("schreiberleichterung=frei"),
+          false,
+        )}
+      >
+        <TeacherClassConfigurator />
+      </ReleaseProvider>,
+    );
     await user.type(
       await screen.findByRole("textbox", { name: "Klassenname" }),
       "Klasse 8a",

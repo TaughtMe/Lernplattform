@@ -25,7 +25,6 @@ const groupSchema = z
 const RAW_GROUPS: HomophoneGroup[] = [
   { words: { Rad: "zum Fahren", Rat: "ein guter Tipp" } },
   { words: { Meer: "das große Wasser", mehr: "eine größere Menge" } },
-  { words: { Weg: "eine Straße oder ein Pfad", weg: "nicht mehr da" } },
   { words: { Feld: "ein Acker", fällt: "es stürzt gerade zu Boden" } },
   { words: { Lied: "zum Singen", Lid: "am Auge" } },
   { words: { Stadt: "ein großer Ort", statt: "anstelle von" } },
@@ -96,7 +95,7 @@ export function homophoneHint(word: string): string | undefined {
 
 /**
  * Ist `input` ein anderes Wort derselben Gruppe wie `target`? Reine
- * Groß-/Kleinunterschiede („Weg“/„weg“) zählen nicht, sie bleiben Schreibfehler.
+ * Groß-/Kleinunterschiede („Rad“/„rad“) zählen nicht, sie bleiben Schreibfehler.
  */
 export function isHomophoneOf(target: string, input: string): boolean {
   const group = groupOf(target);

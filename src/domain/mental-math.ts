@@ -502,6 +502,17 @@ export function spokenMathText(input: string) {
     .trim();
 }
 
+/**
+ * Rechenaufgabe zum Vorlesen (Knopf „Vorlesen“): wie `spokenMathText`, dazu
+ * „gleich“ und „Lücke“ für das Feld, das das Kind füllt. Die Lösung kommt
+ * nicht vor, weil die Aufgabe sie nicht enthält.
+ */
+export function spokenMathTask(prompt: string) {
+  return spokenMathText(
+    prompt.replace(/_+/g, " Lücke ").replace(/=/g, " gleich "),
+  );
+}
+
 type MentalMathExpressionValues = Pick<
   MentalMathExpression,
   "left" | "right" | "result"

@@ -15,6 +15,25 @@ Oberfläche: `app/components/learning-box-app.tsx` (Design 4a–4c).
   sofort fällig; „Meine Fehler jetzt üben“ öffnet den Stapel direkt
   (`/lernbox?stapel=<id>`).
 - Sicherung speichern und laden (JSON).
+- **Lernformen „Zuordnen“ und „Test“** für einen Stapel (ab 4 Karten), nur im
+  Start-Fenster eines Stapels, nicht für „Heute dran“, „Meine Fehler“ oder
+  „Box üben“. Bereich `lernbox-lernformen` im Freigaberegister, Stufe
+  `frei` seit 15.11.2026 (`src/domain/release.ts`). Kern in
+  `src/domain/learning-box-forms.ts`, Anbindung in
+  `app/components/learning-box-forms.ts`, Ansichten `parts/match.tsx` und
+  `parts/test.tsx`. Wirkung auf Box und Fälligkeit (Regeln LF-1 bis LF-8):
+  - Zuordnen ändert nichts: keine Box, keine Fälligkeit, kein Lernereignis, keine
+    Uhr, keine Punkte.
+  - Test: Auswahlfragen ändern nichts. Eine Schreibfrage zu einer in der
+    gefragten Richtung fälligen Karte wirkt wie der Schreibmodus (richtig: eine
+    Box höher, falsch: Box 1, Lernereignis mit `mode: "writing"`); zu einer nicht
+    fälligen Karte ändert sie nichts. Jede Karte kommt einmal vor, nur der erste
+    Versuch zählt.
+  - „Diese Karten jetzt üben“ nach dem Test: Übungsrunde im Schreibmodus, nichts
+    wird verschoben oder gespeichert.
+  - Kein neues Ereignisformat, kein „Weitermachen“ für beide Lernformen.
+    Plan und offene Vorschläge V-1 bis V-9:
+    `docs/umsetzungsplan-lernbox-lernformen.md`.
 
 ## Im Design gezeigt, fachlich noch nicht vorhanden
 

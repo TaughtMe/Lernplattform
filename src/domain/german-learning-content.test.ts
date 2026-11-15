@@ -82,7 +82,12 @@ describe("German learning content", () => {
 
   it("keeps the s, ss and ß rule consistent with its box", () => {
     const box = getLearningWordCollection("s-ss-sz");
-    expect(box?.detail).toContain("Summt das s");
+    // Entscheidung vom 12.11.2026: zwei Schritte, keine Probe „summt das s?“
+    // (in süddeutscher Aussprache gibt es kein stimmhaftes s, Bericht 20, F6).
+    expect(box?.detail).toContain("Schritt 1");
+    expect(box?.detail).toContain("ss (Wasser");
+    expect(box?.detail).toContain("Fuß – Füße, Gras – Gräser");
+    expect(box?.detail).not.toMatch(/summ|stimmhaft/iu);
     expect(box?.strategy).toBe("Verlängern");
     expect(box?.words).not.toContain("das");
     expect(box?.words).not.toContain("dass");
@@ -108,5 +113,52 @@ describe("German learning content", () => {
       .filter((variants) => variants.size > 1)
       .map((variants) => [...variants]);
     expect(pairs).toEqual([]);
+  });
+
+  it("führt ie nicht als Merken und hält Ferien aus dem langen i (Bericht 20, F1, F2)", () => {
+    const box = getLearningWordCollection("long-i");
+    expect(box?.strategy).not.toBe("Merken");
+    expect(box?.detail).toContain("ie");
+    expect(box?.words).not.toContain("Ferien");
+    expect(getLearningWordCollection("memory-words")?.words).toContain(
+      "Ferien",
+    );
+  });
+
+  it("enthält keine untauglichen Beispielwörter mehr (Bericht 20, F4)", () => {
+    const removed: Record<string, readonly string[]> = {
+      "final-devoicing": ["Club", "Job", "Zugweg"],
+      "long-i": ["Zieltür"],
+      "silent-h": ["Fehlwort"],
+      "ck-tz": ["Becker"],
+    };
+    for (const [id, words] of Object.entries(removed)) {
+      const box = getLearningWordCollection(id)?.words ?? [];
+      for (const word of words)
+        expect(box, `${id}: ${word}`).not.toContain(word);
+    }
+  });
+
+  it("führt in der Ableiten-Box nur Wörter mit verwandtem a/au (Bericht 20, F5)", () => {
+    const notDerivable = [
+      "Mädchen",
+      "Märchen",
+      "Käfer",
+      "Käfig",
+      "Säge",
+      "spät",
+      "später",
+      "zäh",
+      "gähnen",
+    ];
+    const umlaut = getLearningWordCollection("umlaut")?.words ?? [];
+    const memory = getLearningWordCollection("memory-words")?.words ?? [];
+    for (const word of notDerivable) {
+      expect(umlaut, word).not.toContain(word);
+    }
+    // Sie bleiben als Merkwörter erhalten (ohne „später“, das zu „spät“ gehört).
+    for (const word of notDerivable.filter((entry) => entry !== "später")) {
+      expect(memory, word).toContain(word);
+    }
   });
 });

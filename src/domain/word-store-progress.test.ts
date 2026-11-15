@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { getLearningWordCollection } from "./german-learning-content";
 import type { LearningWordProgress } from "./learning-word-progress";
+import { wordKey } from "./word-box";
 import {
   boxCoverage,
   headlineForBox,
@@ -405,5 +407,40 @@ describe("boxCoverage", () => {
       total: 0,
       percent: 0,
     });
+  });
+});
+
+describe("Wörter, die eine feste Wortbox verloren hat (Korrektur 14.11.2026)", () => {
+  // Gespeicherte Runden und Lernstände nennen Wörter über `wordKey`. Ein aus
+  // einer festen Wortbox entferntes Wort darf beim Lesen nichts kaputt machen.
+  const removed = ["Club", "Job", "Zugweg"];
+  const box = getLearningWordCollection("final-devoicing")!;
+  const oldRound: WordRoundRecord = {
+    ...round("alt", 4, 100, 3, box.id),
+    words: [...removed, "Hund"].map((word) => ({
+      word,
+      firstTry: true,
+      attempts: 1,
+      usedHelp: false,
+      firstResult: "richtig" as const,
+    })),
+  };
+
+  it("liest alte Runden mit entfernten Wörtern weiter ein", () => {
+    for (const word of removed) expect(box.words).not.toContain(word);
+    expect(wordRoundSchema.safeParse(oldRound).success).toBe(true);
+    expect(summarizeWordBox(box.id, [oldRound])[4].rounds).toBe(1);
+  });
+
+  it("zählt im Box-Fortschritt nur Wörter, die noch in der Wortbox stehen", () => {
+    const coverage = boxCoverage(box.words, [oldRound], box.id, 4);
+    expect(coverage.total).toBe(new Set(box.words.map(wordKey)).size);
+    expect(coverage.mastered).toBe(1);
+  });
+
+  it("behält den Lernstand entfernter Wörter, ohne ihn der Wortbox zuzurechnen", () => {
+    const stored = [progress("Club", 5, 4), progress("Hund", 2, 1)];
+    expect(recommendedStage(box.words, stored)).toBe(2);
+    expect(summarizeWordStore(stored, [oldRound]).trainedWords).toBe(2);
   });
 });

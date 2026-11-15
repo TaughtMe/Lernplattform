@@ -60,6 +60,7 @@ Texte, die Kinder sehen oder vorgelesen bekommen, nutzen einfache Wörter und ku
 | Zahlenraum                                    | Zahlen bis … oder „Von“ und „Bis“          |
 | Browserprofil                                 | entfällt (Hinweis für Erwachsene)          |
 | Klassenbeitrag                                | zählt für deine Klasse                     |
+| stimmhaft, stimmlos, „Summt das s?“           | nach kurzem Vokal ss; sonst Wortfamilie    |
 
 Bewusst erlaubt bleiben „Stapel“ (in der LernBox ein bekanntes Wort; kein Verwaltungsjargon wie „Stapelverwaltung“), „Box“ und „Wortbox“, „Stufe“ und „Runde“.
 

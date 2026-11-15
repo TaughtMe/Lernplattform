@@ -120,6 +120,7 @@ describe("buildLiveRoomConfig", () => {
         showTaskAfterErrors: true,
         stationCount: 20,
         stationShuffle: true,
+        // Standard seit 15.11.2026 (Entscheidung 78): Störangriffe an.
         battleOptions: { ink: true, flicker: true },
         wordsOverride: WORDS,
         mathPracticeOptions: buildMathPracticeOptions({

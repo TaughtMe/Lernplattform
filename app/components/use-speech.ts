@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  hasVoiceFor,
+  hasLocalVoiceFor,
   prepareSpeech,
   preloadVoices,
   speak,
@@ -11,8 +11,10 @@ import {
 } from "../../src/speech/speaker";
 
 /**
- * Sprachausgabe für Stufe 6: Bereitschaft, Vorbereiten im Klick und Sprechen.
- * Die Ansicht bekommt nur Zustände und Rückrufe.
+ * Sprachausgabe für Stufe 6 und den Startpunkt: Bereitschaft, Vorbereiten im
+ * Klick und Sprechen. Wie überall nur mit Stimmen des Geräts (B-012):
+ * `hasVoice` ist ohne lokale Stimme `false`. Die Ansicht bekommt nur Zustände
+ * und Rückrufe.
  */
 export function useSpeech(lang = "de-DE") {
   /** `undefined`, solange die Stimmenliste noch nicht geladen ist. */
@@ -23,7 +25,7 @@ export function useSpeech(lang = "de-DE") {
   useEffect(() => {
     let alive = true;
     void preloadVoices().then(() => {
-      if (alive) setHasVoice(hasVoiceFor(lang));
+      if (alive) setHasVoice(hasLocalVoiceFor(lang));
     });
     return () => {
       alive = false;
@@ -36,7 +38,7 @@ export function useSpeech(lang = "de-DE") {
       typeof window === "undefined" ? undefined : window.speechSynthesis;
     if (!speech?.addEventListener) return;
     const onChange = () => {
-      if (hasVoiceFor(lang)) setHasVoice(true);
+      if (hasLocalVoiceFor(lang)) setHasVoice(true);
     };
     speech.addEventListener("voiceschanged", onChange);
     return () => speech.removeEventListener("voiceschanged", onChange);

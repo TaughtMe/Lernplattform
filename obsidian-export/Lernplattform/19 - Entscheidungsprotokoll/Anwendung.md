@@ -6,14 +6,14 @@ tags:
   - klassenranking
   - gamification
 status: beschlossen
-stand: 2026-09-29
+stand: 2026-11-14
 umsetzungsstand: Implementiert
 audit: "[[Lernraum – Gesamtaudit – 2026-10-19]]"
 ---
 
 # Entscheidungsprotokoll
 
-> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Gültigkeit und Umsetzungsstand jeder Entscheidung stehen im neuen [[Entscheidungsindex]]. **Entscheidung 53** (Geräte-Abgleich der Lehrkraft) steht nicht in diesem Protokoll, sondern nur in `docs/cloud-sync.md`. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
+> **Umsetzungsstand laut Gesamtaudit vom 19./20.10.2026: Implementiert.** Gültigkeit und Umsetzungsstand jeder Entscheidung stehen im neuen [[Entscheidungsindex]]. **Entscheidung 53** (Geräte-Abgleich der Lehrkraft) ist am 14.11.2026 aus `docs/cloud-sync.md` nachgetragen. Die Einträge 60 bis 76 stammen aus den Antworten des Entwicklers vom 10. bis 12.11.2026 (`docs/vision/01-planung.md`, Abschnitt 4) und den vorbereiteten Entwürfen in [[../25 - Vision/Offene Entscheidungen|Offene Entscheidungen]]. Details: [[../21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]].
 
 
 ## Klassenmodus, Ranking und QR-Synchronisation – 12. August 2026
@@ -175,6 +175,7 @@ Siehe [[../10 - Häuser, Punkte und Motivation/Anwendung|Häuser, Punkte und Mot
 - genauer Ablauf beim Ersatz- oder Zweitgerät
 - Datenformat und Fragmentierung animierter QR-Codes
 - schulrechtliche und organisatorische Freigabe vor produktivem Einsatz
+- Markenfiguren (`public/figuren/`, `src/domain/figures.ts`): vom Entwickler am 12.11.2026 ausdrücklich zurückgestellt. Er klärt selbst, was die Freigabe der Zeichnungen durch Coco Material (CC0) bedeutet; bis dahin bleiben die Figuren unverändert. Offen ist, ob CC0 neben der Zeichnung auch Marken- und Figurenrechte der Rechteinhaber abdeckt (Hinweis von Claude, `docs/vision/01-planung.md`, Abschnitt 4). Nicht entschieden.
 
 Die daraus abgeleiteten Umsetzungsschritte stehen in [[../18 - Aufgabenübersicht/Anwendung|Aufgabenübersicht]].
 
@@ -608,14 +609,31 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 - Schülergeräte prüfen alle 30 Sekunden, ob der Server den Raum geschlossen hat, und übernehmen die Runde dann wie beim Beenden in die LernBox (Entscheidung 49).
 - Abweichung vom Original-Laufdiktat; in `docs/laufdiktat-parity.md` vermerkt.
 
+## 53. Geräte-Abgleich der Lehrkraft über den eigenen Cloudspeicher – 5. Oktober 2026
+
+> Nachgetragen am 14.11.2026. Bis dahin stand die Entscheidung nur in `docs/cloud-sync.md` (Abschnitt „Geräte-Abgleich der Lehrkraft“) und in `docs/umsetzungsplan-geraete-sync.md` (Stand 05.10.2026, Phase 0). Das Datum ist das des Umsetzungsplans.
+
+**Beschlossen:** Eine Lehrkraft kann ihre Daten automatisch zwischen ihren eigenen Geräten abgleichen, über einen Cloudspeicher, den sie selbst wählt (WebDAV, OneDrive; Google Drive seit Entscheidung 59 aus). Es gibt keinen Lernraum-Server dafür.
+
+- **Optional:** Ohne Einrichtung ändert sich nichts. Bereich `geraete-sync` seit dem 7. Oktober 2026 auf `frei`.
+- **Abgrenzung zu Entscheidung 1:** Der Abgleich läuft zwischen den Geräten **einer** Lehrkraft über **ihren** Speicher. Er ist keine „permanente Echtzeit-Synchronisation aller Schüleraktivitäten mit einem Backend“ (Nicht-Ziel).
+- **Die Lehrkraft entscheidet** über Anbieter, Umfang und Verschlüsselung und bestätigt vor dem Start, dass sie für die Übertragung verantwortlich ist.
+- **Umfang:** Material, Aufgaben, Klassen und Einstellungen an; Schülerliste und Ergebnisse aus; Schlüssel (Klassenstempel, Einschreibe-Schlüssel) aus und nur mit Passwort.
+- **Verschlüsselung** per Passwort optional, bei Daten von Kindern dringend empfohlen (PBKDF2-SHA-256 → AES-GCM-256).
+- **Technik:** Zusammenführen statt Überschreiben, Grabsteine für Löschungen (90 Tage), hybride logische Uhr, Schreiben mit Vorbedingung; Dateiformat `lernraum-lehrkraft-v2.json`. Einzelheiten in `docs/cloud-sync.md`.
+
+**Begründung:** Anwendungsfall laut `docs/cloud-sync.md`: Vorbereitung zu Hause auf Gerät A, Unterricht an der digitalen Tafel auf Gerät B; Änderungen erscheinen ohne Knopfdruck auf dem anderen Gerät.
+
+**Bekannte Grenzen:** WebDAV ist für die Tafel am robustesten; Zugriffstoken von OneDrive laufen ab. Ein Gerät, das länger als 90 Tage aus war, kann Gelöschtes zurückbringen. Nicht Teil des Abgleichs: Schülergeräte, mehrere Lehrkräfte, Fernsteuerung eines Live-Raums. Audit: A-008, B-009, B-011, B-014 (siehe [[Entscheidungsindex]], G7). Der Bereich ruht nach der Antwort auf Frage 7 der Vision (`docs/vision/10-ist-stand.md`).
+
 ## 54. Textbox: Rechtschreibtraining mit Texten – 8. Oktober 2026
 
-**Beschlossen:** Die Textbox ist ein eigener Übungsbereich (`/frei/german/textbox`) für Rechtschreibtraining mit zusammenhängenden Texten. Die fachlichen Festlegungen sind mit der projektverantwortlichen Lehrkraft abgestimmt und stehen verbindlich in `docs/umsetzungsplan-textbox.md` (Abschnitt 1). Die Nummer 53 bleibt dem geräteübergreifenden Abgleich der Lehrerdaten vorbehalten (`docs/cloud-sync.md`).
+**Beschlossen:** Die Textbox ist ein eigener Übungsbereich (`/frei/german/textbox`) für Rechtschreibtraining mit zusammenhängenden Texten. Die fachlichen Festlegungen sind mit der projektverantwortlichen Lehrkraft abgestimmt und stehen verbindlich in `docs/umsetzungsplan-textbox.md` (Abschnitt 1). Die Nummer 53 bleibt dem geräteübergreifenden Abgleich der Lehrerdaten vorbehalten (`docs/cloud-sync.md`; seit 14.11.2026 oben eingetragen).
 
 - **Ablauf:** Vier Durchgänge am selben Text, je Merken → Schreiben → Kontrolle. Ausblendung 20/40/70/100 %, geschachtelt; in Durchgang 1 sind die Zielwörter markiert. Durchgang 1–3 schreibt direkt in die Lücken, Durchgang 4 in ein leeres Feld. Merkzeit 60/90/120 s je Schwierigkeit.
 - **Bewertung:** Durchgang 4 ist der Hauptwert. Zeit ändert den Lernstand nicht. Satzzeichen sind Hinweise ohne Wertung. Zusätzliche Wörter werden abgezogen, nie unter 0 %. „Fast richtig“ (ein Buchstabe Abstand) zählt als Fehler.
 - **Bestwert:** Die Übersicht zeigt immer den Bestwert, nie das letzte Ergebnis; alle Kennzahlen werden aus den abgeschlossenen Einheiten abgeleitet. Laufende Einheiten werden nach jedem Durchgang gespeichert und können fortgesetzt oder verworfen werden.
-- **Texte:** 50 Texte (Welle 1 und 2), von einem KI-Agenten entworfen und von der Lehrkraft fachlich geprüft. Zielwörter machen 10–25 % aus und müssen echte Beispiele für den Schwerpunkt sein.
+- **Texte:** 50 Texte (Welle 1 und 2), von einem KI-Agenten entworfen ~~und von der Lehrkraft fachlich geprüft~~. **Berichtigt am 14.11.2026:** Die Texte sind **nicht** fachlich geprüft (`docs/inhalte/textbox.md`, „Stand“; Bericht 40, Abschnitt 10, Nr. 5). Sie tragen den internen Vermerk „ungeprüft“ (Entscheidung 76). Zielwörter machen 10–25 % aus und müssen echte Beispiele für den Schwerpunkt sein.
 - **Wortspeicher:** Keine zweite Trainingsanwendung. Zwei Zugänge: frei über „Üben“ und nach einer Wortspeicher-Übung (vorbereitete Texte, Variante A). Wörter reisen als Adressparameter, Zod-geprüft, höchstens 50. KI-Texte (Variante B) sind nicht Teil dieser Version.
 - **Daten:** Rein lokal, Dexie-Tabelle `textboxSessions` (Version 5), Teil der persönlichen Sicherung. Eigene Ereignisquelle `textbox` für Serie und Tagesaktivität. Keine Supabase-Migration, kein Server.
 - **Laufzettel:** Dokumentation, kein gesicherter Prüfungsnachweis; das Namensfeld wird nicht gespeichert.
@@ -681,3 +699,183 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Begründung:** Die Plattform läuft als Beta. Die Bereiche sind gebaut und getestet; ihr Nutzen zeigt sich erst im Unterricht. Google Drive funktioniert im Abgleich noch nicht und soll nicht als Wahl erscheinen.
 
 **Bekannte Grenzen:** Die pädagogische Abstimmung der Diagnostik (Stufenfolgen des Startpunkts, Regel „sicher“, Welle 3, D2) steht noch aus und wird in der Beta beobachtet. Für den Gastmodus bleibt das Restrisiko SR-004 akzeptiert. Mit `LERNRAUM_FREIGABE` lässt sich jeder Bereich wieder auf `vorschau` stellen.
+
+## 60. Lernwortlisten statt Wortauftrag per Link-QR – 30. Oktober 2026
+
+> Nachgetragen am 14.11.2026 aus `docs/umsetzungsplan-audit-welle-3.md`, Abschnitt D4 (Stand 27.10.2026, umgesetzt am 30.10.2026).
+
+**Beschlossen:** Lernwortlisten der Lehrkraft (Titel und höchstens 200 Wörter) gehen über die vorhandene verschlüsselte Inhaltsübertragung (Code oder QR, 24 Stunden), wie die Vokabelpakete. Das Kind übernimmt sie nach Bestätigung als eigene Wortbox (D4-1 bis D4-5).
+
+**Zurückgenommen:** der Wortauftrag per URL-QR mit den Wörtern im Link (Seite `/lehrer/material/wortauftrag`, Parameter `auftrag=`, `buildWordOrderLink`), entfernt am 30.10.2026. `?woerter=` (Textbox zum Wortspeicher) und `parseWordsParam` bleiben.
+
+**Begründung:** Entscheidung des Entwicklers laut Welle 3, D4: Der Wortauftrag per URL-QR „irritiert neben der Supabase-Übertragung nur“.
+
+**Nicht wieder einbauen:** eigene Wörter der Lehrkraft im Link oder im QR-Code. Ausnahme seit Entscheidung 63: Kennungen mitgelieferter Übungen.
+
+## 61. Satzformate sind erlaubt – 10. November 2026
+
+**Beschlossen:** Satzdiktat und Lückensatz dürfen im Wortspeicher und in der LernBox kommen. Gebaut werden sie frühestens im zweiten Jahr. Quelle: Antwort des Entwicklers nach Phase 2, Nr. 3 (`docs/vision/01-planung.md`); Entwurf A1.
+
+**Zurückgenommen:** Entscheidung 55, „Das Lückensatz-Design 4e wird nicht umgesetzt“.
+
+**Begründung:** Ohne Satz gibt es keine Großschreibung, kein das/dass, kein Komma (Entwurf A1, Bericht 20).
+
+**Nicht wieder einbauen:** Sätze, die zur Laufzeit erzeugt werden. Nur feste, geprüfte Sätze.
+
+## 62. „Erledigt“ ergibt sich aus gezählten Runden – 10. November 2026
+
+**Beschlossen:** Ein Auftrag nennt Übung und Ziel („3 Runden“). Die Abgabe zählt erledigte Runden. Quelle: Antwort nach Phase 2, Nr. 10; Entwurf A2.
+
+**Zurückgenommen:** Entscheidung 45, „Nach dem bewussten Markieren als erledigt“ als einziger Auslöser.
+
+**Begründung:** Selbstauskunft sagt der Lehrkraft nichts; ein Auftrag, der nur auf die Fachseite führt, ist langsamer als ein Arbeitsblatt (Entwurf A2, Bericht 25, F3).
+
+**Nicht wieder einbauen:** einen Erledigt-Knopf ohne Bezug zur Übung. Weiterhin keine Antworten und keine Fehlerwörter im Nachweis.
+
+## 63. Auftrags-QR mit Kennungen mitgelieferter Übungen – 10. November 2026
+
+**Beschlossen:** Ein QR-Code darf Kennungen mitgelieferter Übungen tragen (Wortbox, Stufe, Rechenvorgabe), keine eigenen Wörter. Quelle: Antwort nach Phase 2, Nr. 8; Entwurf A3.
+
+**Zurückgenommen:** die Rücknahme des Auftrags per QR aus Welle 3, D4 (Entscheidung 60), soweit sie mitgelieferte Übungen betrifft.
+
+**Begründung:** Gedruckte Übungskarten lassen sich jedes Jahr wieder nutzen und brauchen kein Lehrergerät (Entwurf A3, Bericht 25, F2).
+
+**Nicht wieder einbauen:** eigene Wörter der Lehrkraft im Link. Dafür bleiben die Lernwortlisten (Entscheidung 60).
+
+## 64. Vokabelstapel werden mündlich nicht „sicher“ – 11. November 2026
+
+**Beschlossen:** Selbsteinschätzung zählt als Üben und hebt bis Box 3. Ein so geübter Stapel heißt „mündlich gewusst“. Quelle: Bericht 40, E30-2, vom Entwickler am 11.11.2026 mit den übrigen Empfehlungen angenommen (Nachtrag nach Phase 4, Nr. 5); Entwurf A4.
+
+**Zurückgenommen:** die Festlegung vom 27.10.2026 (Welle 3, D2-3), nach der ein Stapel mündlich „sicher“ werden kann.
+
+**Begründung:** Kinder überschätzen „Hab ich gewusst“. In der Rechtschreibung gilt die strengere Regel schon (Entwurf A4).
+
+**Nicht wieder einbauen:** „sicher“ aus Selbsteinschätzung, in keinem Fach.
+
+## 65. Fehler an der Tafel erst ab sechs Teilnehmenden – 11. November 2026
+
+**Beschlossen:** „Häufigste Fehler“ und Fehlerzahlen erscheinen in der Projektion erst ab sechs Kindern. Die Ansicht „Braucht Hilfe“ wird nie projiziert. Quelle: Bericht 40, O5, angenommen am 11.11.2026 (Nachtrag nach Phase 4, Nr. 5); Entwurf A5.
+
+**Zurückgenommen:** die Projektion mit Fehlerzahlen ohne Mindestgröße (Welle 3, D5-5, 27.10.2026).
+
+**Begründung:** In einer Förderstunde mit vier Kindern ist sonst erkennbar, wessen Fehler es ist (Entwurf A5).
+
+**Nicht wieder einbauen:** Fehleranzeigen an der Tafel für Kleingruppen.
+
+## 66. Battle: Störangriffe standardmäßig aus, Ladung über Genauigkeit – 10. November 2026
+
+**Beschlossen:** Tinte und Flimmern sind aus, bis die Lehrkraft sie einschaltet. Angriffe laden über richtige Antworten in Folge, nicht über Tempo. Quelle: Antwort nach Phase 2, Nr. 7; Entwurf A7.
+
+**Zurückgenommen:** der Standard „an“ für Störangriffe (Entscheidung 37 übernahm Battle aus dem Original; `src/integrations/laufdiktat/teacher-session.ts`).
+
+**Begründung:** Im Entwurf nicht angegeben. Das Audit nennt als Befund, dass Tempo-Punkte und Tempo-Wettbewerb Vault 10 und 23 widersprechen („Genauigkeit vor Geschwindigkeit“, D-012).
+
+**Nicht wieder einbauen:** Störungen als Voreinstellung; Ladung, die Schnelligkeit belohnt.
+
+## 67. Lesen: Verständnis vor Lautlesen – 11. November 2026
+
+**Beschlossen:** Lesen kommt nach den drei Etappen, mit Schwerpunkt Leseverständnis. Quelle: Antwort nach Phase 4, Nr. 3; Entwurf A8.
+
+**Zurückgenommen:** die Antwort vom 10.11.2026 (nach Phase 2, Nr. 5), zuerst Tandem-Begleiter, Chorlesen und Wort-Blitz zu bauen.
+
+**Begründung:** Lesetandem und Chorlesen sind im Unterricht schwer umzusetzen (Entwickler, 11.11.2026).
+
+**Nicht wieder einbauen:** Lautlese-Formate als erster Schritt. Als Zusatz bleiben sie möglich.
+
+**Bekannte Grenzen:** Für schwache Leser ist begleitetes Lautlesen besser belegt als Aufgaben am Gerät (Bericht 21).
+
+## 68. Rechtschreib-Wortbox mit Kernbestand – 10. November 2026
+
+**Beschlossen:** Eine Rechtschreib-Wortbox darf mit etwa 30 sehr gut ausgezeichneten Kernwörtern starten. Die großen Boxen bleiben als Wortbank. Quelle: Antwort nach Phase 2, Nr. 2; Entwurf B1. Ergänzt Entscheidung 30 (mindestens 100 Wörter je fester Sammlung); die bestehenden Boxen behalten ihre Größe.
+
+**Begründung:** im Protokoll nicht dokumentiert; die Herleitung steht in Bericht 20 (`docs/vision/20-rechtschreibung-handschrift.md`, Abschnitt 4.2).
+
+## 69. Mathe: Grundrechnen bis Klasse 9 – 10. November 2026
+
+**Beschlossen:** Grundrechnen bis Klasse 9: Stellenwert, Zehnereinmaleins, Kommazahlen, Größen; Brüche und Prozent im Kopf später. Ohne Geometrie und Prüfungsstoff. Quelle: Antwort nach Phase 2, Nr. 1; Entwurf B2. Erweitert Entscheidung 38.
+
+**Begründung:** im Protokoll nicht dokumentiert; die Herleitung steht in Bericht 22 (MD-1).
+
+## 70. Klassentempo ohne Rangliste – 10. November 2026
+
+**Beschlossen:** „Schnelle Antwort: kein eigener Bonus“ meint das einzelne Kind. Die Klasse darf gemeinsam gegen die Uhr und den eigenen Klassenrekord spielen, ohne Rangliste und ohne Bonus für einzelne Kinder. Gebaut wird erst nach der Erprobung. Quelle: Antwort nach Phase 2, Nr. 6; Entwurf B3. Präzisiert Vault 23; berührt 7, 10, 39.
+
+**Begründung:** im Protokoll nicht dokumentiert; die Herleitung steht in Bericht 24 (E-1).
+
+**Bekannte Grenzen:** Auch gemeinsames Tempo kann Druck machen (Bericht 31). Ob „Klasse gegen die Uhr“ kommt, ist offen ([[../25 - Vision/Offene Entscheidungen|Offene Entscheidungen]], Nr. 11).
+
+## 71. Vorlesen in Aufgaben, nur Stimmen des Geräts – 11. November 2026
+
+**Beschlossen:** Der Knopf „Vorlesen“ wird in Aufgaben eingebaut. „Nur lokale Stimmen“ gilt für jede Sprachausgabe, nach einer Prüfung an drei Gerätearten und mit sichtbarem Hinweis. Quelle: Bericht 40, Abschnitt 13, Nr. 7, angenommen am 11.11.2026 (Nachtrag nach Phase 4, Nr. 5); Entwurf B4. Ergänzt Entscheidung 58.
+
+**Begründung:** Entscheidung 58 sagt „nur lokale Stimmen“; der Code hielt das an vier Stellen nicht ein, und der Knopf war nirgends eingebunden (Bericht 40, Abschnitt 10, Nr. 3 und 4).
+
+## 72. Lizenz: Code EUPL-1.2, Inhalte CC BY-SA 4.0 – 11. November 2026
+
+**Beschlossen:** Code unter EUPL-1.2, Inhalte unter CC BY-SA 4.0 in eigenen Dateien. Die Lizenz wird wirklich eingebaut und gehört in die erste Etappe. Vorher: Markenfiguren klären, Bildrechte und Vorgänger-Repositorys prüfen. Quelle: Antwort nach Phase 2, Nr. 11 und nach Phase 4, Nr. 4; Entwurf B5. Berührt 41.
+
+**Begründung:** im Protokoll nicht dokumentiert; die Herleitung steht in Bericht 40, Abschnitt 12.
+
+**Offen:** Ob Name und Logo „Lernraum“ ausgenommen werden (Entwurf B5 schlägt es vor), wer Ersatzfiguren erstellt und ob eine Juristin gefragt wird ([[../25 - Vision/Offene Entscheidungen|Offene Entscheidungen]], Nr. 3). Die Markenfiguren sind am 12.11.2026 zurückgestellt (Abschnitt 11, „Noch offen“).
+
+## 73. „Mein Stand“ statt „Kompetenzprofil“ – 11. November 2026
+
+**Beschlossen:** Kinder lesen „Mein Stand“ statt „Kompetenzprofil“; Wortliste aus [[../25 - Vision/Förderkreislauf|Förderkreislauf]]. Die interne Kennung `diagnostik` bleibt. Quelle: Bericht 40, E30-7, angenommen am 11.11.2026; Entwurf B6. Berührt 31, 59.
+
+**Begründung:** Die Umbenennung der internen Kennung kostet nur (Bericht 40, E30-7). Für die neue Bezeichnung: im Protokoll nicht dokumentiert; Herleitung in Bericht 30.
+
+## 74. Zuschnitt für zwölf Monate – 11. November 2026
+
+**Beschlossen:** Rund 65 Bausteine in drei Etappen; eigene Schule und zwei bis drei Pilotschulen statt „Schulamtsbezirk“; eine Inhaltslinie zur Zeit. Quelle: Bericht 40, Abschnitt 13, Nr. 1, 2 und 4, angenommen am 11.11.2026; Entwurf B7. Berührt 39; Audit I.6.
+
+**Begründung:** im Protokoll nicht dokumentiert; die Kapazitätsrechnung steht in Bericht 40, Abschnitte 4 und 8.
+
+## 75. s-Schreibung in zwei Schritten statt „summen“ – 12. November 2026
+
+**Beschlossen:** Die Wortbox „s, ss und ß“ erklärt die s-Schreibung in zwei Schritten. Erstens: Nach kurzem Vokal schreibt man ss (Wasser). Zweitens: Nach langem Vokal sind ß und s Merkstellen; Hilfe gibt die Wortfamilie (Fuß – Füße, Gras – Gräser). Quelle: Entscheidungen zur Umsetzung der Sofortliste, Nr. 1 (`docs/vision/01-planung.md`). Umgesetzt in `src/domain/german-learning-content.ts`; das Kinder-Glossar (`src/domain/child-glossary.ts`) verbietet „stimmhaft“ und die Probe „Summt das s?“ in Schülertexten.
+
+**Zurückgenommen:** der Regeltext „Verlängere das Wort und hör genau: Summt das s (Haus, Häuser; Hase), schreibst du s …“ (Version 0.9.3, Wortbox aus Entscheidung 55).
+
+**Begründung:** In süddeutscher Aussprache gibt es kein stimmhaftes s; für bayerische Kinder ist die Probe unbrauchbar (Bericht 20, F6 und Frage 7.5).
+
+**Nicht wieder einbauen:** eine Hörprobe für die s-Schreibung, die ein stimmhaftes („summendes“) s voraussetzt.
+
+## 76. Textbox: Texte bleiben sichtbar, intern „ungeprüft“ – 12. November 2026
+
+**Beschlossen:** Die bekannten Fehler der Textbox werden korrigiert (u. a. vier Texte mit falschen Zielwörtern). Die Texte bleiben sichtbar und tragen intern den Vermerk „ungeprüft“; der Entwickler prüft nach und nach. Quelle: Entscheidungen zur Umsetzung der Sofortliste, Nr. 2. Umgesetzt als Feld `review` je Text in `src/domain/textbox-library.ts` (`textboxReview(id)`); es erscheint nicht in der Oberfläche. Korrigiert sind TXT-002, 011, 024, 034, 046 und 048 (`docs/inhalte/textbox.md`).
+
+**Berichtigt:** Entscheidung 54 nannte die Texte „von der Lehrkraft fachlich geprüft“. Das stimmte nicht (`docs/inhalte/textbox.md`, „Stand“).
+
+**Zurückgenommen:** die Antwort vom 10.11.2026 (nach Phase 2, Nr. 4) und Entwurf A6, nach denen 15 Texte geprüft und die übrigen bis zur Prüfung ausgeblendet werden.
+
+**Begründung:** nicht dokumentiert. Belegt ist nur, dass der Entwickler die Texte nach und nach selbst prüft.
+
+**Nicht wieder einbauen:** den Vermerk „ungeprüft“ in der Oberfläche, und das Ausblenden ungeprüfter Texte, solange der Entwickler es nicht neu entscheidet.
+
+**Bekannte Grenzen:** Alle 50 Texte sind weiter ungeprüft. Ton und Themen sind oft Grundschule (Bericht 20, F11).
+
+## 77. LernBox-Lernformen sofort frei, keine Sterne – 15. November 2026
+
+**Beschlossen:** „Zuordnen“ und „Test“ in der LernBox sind sofort allgemein freigegeben (`lernbox-lernformen` auf `frei`), ohne zwei Wochen Vorschau (V-8). Die Rückmeldung im Test kommt erst am Ende, wie umgesetzt (V-3). Es gibt vorerst keine Sterne (V-9), weil es noch keinen Zähler zum Auswerten gibt; die Option ist nur als Kommentar in `src/domain/release.ts` vorbereitet, nichts ist gebaut. Quelle: Entscheidungen des Entwicklers nach dem Testen, Nr. 1 bis 3 (`docs/vision/01-planung.md`, 15.11.2026). Plan: `docs/umsetzungsplan-lernbox-lernformen.md`.
+
+**Begründung:** Der Entwickler hat die Lernformen getestet und braucht keine Erprobungszeit in der Vorschau. Für Sterne fehlt der Zähler.
+
+## 78. Battle: Störangriffe wieder standardmäßig an – 15. November 2026
+
+**Beschlossen:** Tinte und Flimmern sind in den Live-Einstellungen der Lehrkraft wieder vorausgewählt (Lehrerwahl, Raumschema, Vorbereitung). Weiterhin gilt: Ladung nur über Richtig-Serien beim ersten Versuch, Meldungen ohne Absender, und ohne aktivierte Störangriffe keine Ladeleiste. Quelle: Entscheidungen des Entwicklers nach dem Testen, Nr. 4 (`docs/vision/01-planung.md`, 15.11.2026). Berührt 66.
+
+**Zurückgenommen:** teilweise die Festlegung vom 10.11.2026 (Nachtrag nach Phase 2, Nr. 7; Entscheidung 66), nach der Tinte und Flimmern standardmäßig aus sind. Unverändert bleiben dort die Ladung über Richtig-Serien und die Meldungen ohne Absender.
+
+**Begründung:** Der Entwickler hat es getestet: Mit Störangriffen macht Battle mehr Spaß.
+
+**Nicht wieder einbauen:** Störangriffe nicht wieder standardmäßig ausschalten, ohne den Entwickler zu fragen.
+
+## 79. Schreiberleichterung (LRS-Toleranz) pausiert – 15. November 2026
+
+**Beschlossen:** Die Schreiberleichterung wird deaktiviert und pausiert. Die Lehrkraft sieht keine Schalter mehr (Klassenliste „LRS“, Zähler, Hinweis bei der Klassenwahl im Raum). Im Live-Raum wird eine vorhandene Freigabe nicht mehr angewendet: Alle Kinder werden gleich streng bewertet, ohne Toleranz und mit den Standardregeln für die Platzierung. Umgesetzt über den Freigabebereich `schreiberleichterung` mit Stufe `aus` (`src/domain/release.ts`, README-Tabelle); er ist ohne Route, die Wirkung hängt in `app/raum/use-writing-relief.ts`. Gespeicherte Daten bleiben unverändert lesbar: Klassenstempel, Freigaben und QR-Codes mit dem Merkmal werden nur ignoriert, kein Datenformat ist geändert, nichts ist gelöscht. Wieder einschalten: Stufe im Register ändern oder `LERNRAUM_FREIGABE=schreiberleichterung=frei`. Quelle: Entscheidungen des Entwicklers nach dem Testen, Nr. 13 (`docs/vision/01-planung.md`, 15.11.2026). Berührt 50.
+
+**Zurückgenommen:** Entscheidung 50 (Schreiberleichterung über Klassenstempel ohne Lehrerlogin, 2. Oktober 2026), soweit sie die Wirkung im Raum und die Schalter der Lehrkraft betrifft. Die Mechanik (Klassenstempel, Signatur, QR-Format) bleibt als ruhende Funktion erhalten.
+
+**Begründung:** Lernraum ist ein Übungswerkzeug, und LRS verlangt Übung, keine Toleranz (Entwickler).
+
+**Nicht wieder einbauen ohne Rückfrage:** die Schreiberleichterung nicht einschalten und keine Toleranz für einzelne Kinder in Runden anwenden, ohne den Entwickler zu fragen.

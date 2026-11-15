@@ -36,7 +36,6 @@ describe("homophone groups", () => {
       "Feld",
       "fällt",
       "Lied",
-      "Weg",
       "wieder",
       "Wahl",
       "Mahl",
@@ -63,10 +62,14 @@ describe("homophoneHint", () => {
     expect(homophoneHint("Rat")).toBe("ein guter Tipp");
   });
 
-  it("tells Weg and weg apart but still answers for other capitalisation", () => {
-    expect(homophoneHint("Weg")).toBe("eine Straße oder ein Pfad");
-    expect(homophoneHint("weg")).toBe("nicht mehr da");
+  it("answers for other capitalisation", () => {
     expect(homophoneHint("RAD")).toBe("zum Fahren");
+  });
+
+  it("führt „Weg“ und „weg“ nicht als gleich klingend (langes gegen kurzes e)", () => {
+    expect(homophoneHint("Weg")).toBeUndefined();
+    expect(homophoneHint("weg")).toBeUndefined();
+    expect(isHomophoneOf("Weg", "weg")).toBe(false);
   });
 
   it("has no hint for ordinary words", () => {
@@ -88,7 +91,7 @@ describe("isHomophoneOf", () => {
 
   it("does not treat the same word or a case slip as a homophone", () => {
     expect(isHomophoneOf("Rad", "Rad")).toBe(false);
-    expect(isHomophoneOf("Weg", "weg")).toBe(false);
+    expect(isHomophoneOf("Rad", "rad")).toBe(false);
   });
 
   it("rejects unrelated and unknown words", () => {

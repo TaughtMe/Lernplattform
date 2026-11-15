@@ -139,7 +139,7 @@ describe("ProfileScreen", () => {
   it("zeigt je Teilbereich Stand, Satz und Link zum Üben", () => {
     render(<ProfileScreen status="ready" groups={groups} />);
     expect(
-      screen.getByRole("heading", { level: 1, name: "Mein Lernstand" }),
+      screen.getByRole("heading", { level: 1, name: "Mein Stand" }),
     ).toBeInTheDocument();
     const section = screen.getByRole("region", { name: "Rechtschreibung" });
     const rows = within(section).getAllByRole("listitem");

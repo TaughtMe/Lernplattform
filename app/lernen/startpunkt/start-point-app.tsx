@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useSpeech } from "../../components/use-speech";
 import { buildLearningWordPattern } from "../../../src/domain/learning-word";
+import { spokenMathTask } from "../../../src/domain/mental-math";
 import {
   buildMathStartPoint,
   buildSpellingStartPoint,
@@ -17,6 +18,8 @@ import {
   type StartPointTask,
 } from "../../../src/domain/start-point";
 import { createStartPointRepository } from "../../../src/storage/start-point";
+import { NO_SPEECH_MESSAGE } from "../../../src/speech/speaker";
+import { missingVoiceMessage } from "../../../src/speech/voices";
 import { Button } from "../../ui/primitives";
 import { STAGE_COPY } from "../../views/wortspeicher/stage-copy";
 import {
@@ -41,11 +44,15 @@ const CHOICES: readonly StartPointChoice[] = [
 const SAVE_ISSUE =
   "Deine Antwort konnte gerade nicht gespeichert werden. Du kannst trotzdem weitermachen.";
 
+const MATH_INSTRUCTION = "Rechne im Kopf und schreibe das Ergebnis auf.";
+
 type SpellingRun = {
   subject: "spelling";
   roundId: string;
   /** Wort hören (Stufe 6); sonst als Lückenwort (Stufe 3). */
   listening: boolean;
+  /** Warum nicht gehört wird (keine lokale Stimme); sonst leer. */
+  voiceNotice?: string | undefined;
   tasks: StartPointTask<SpellingTask>[];
   answers: StartPointAnswer[];
 };
@@ -117,6 +124,13 @@ export function StartPointApp({
         subject: "spelling",
         roundId,
         listening: readiness === "ready",
+        // Ohne lokale Stimme wird es ein Lückenwort, aber nicht still (B-012).
+        voiceNotice:
+          readiness === "ready"
+            ? undefined
+            : readiness === "no-voice"
+              ? `${missingVoiceMessage("de-DE")} Darum fehlen Buchstaben.`
+              : `${NO_SPEECH_MESSAGE} Darum fehlen Buchstaben.`,
         tasks: buildSpellingStartPoint(),
         answers: [],
       }),
@@ -201,15 +215,16 @@ export function StartPointApp({
     const { word } = progress.next.payload;
     const pattern = buildLearningWordPattern(word, 3);
     const listen = () => void speech.say(word);
+    const instruction = spelling.listening
+      ? "Höre das Wort und schreibe es auf."
+      : "Welches Wort fehlt? Schreibe das ganze Wort auf.";
     return (
       <StartPointScreen
         phase="task"
         number={progress.answered + 1}
-        instruction={
-          spelling.listening
-            ? "Höre das Wort und schreibe es auf."
-            : "Welches Wort fehlt? Schreibe das ganze Wort auf."
-        }
+        instruction={instruction}
+        // Nur die Anleitung, nie das Wort oder sein Lückenmuster.
+        readAloud={instruction}
         prompt={
           spelling.listening ? (
             <Button variant="gold" size="lg" onClick={listen}>
@@ -221,6 +236,7 @@ export function StartPointApp({
             </p>
           )
         }
+        voiceNotice={spelling.voiceNotice}
         value={value}
         speaking={speech.speaking}
         onListen={spelling.listening ? listen : undefined}
@@ -253,7 +269,8 @@ export function StartPointApp({
       <StartPointScreen
         phase="task"
         number={progress.answered + 1}
-        instruction="Rechne im Kopf und schreibe das Ergebnis auf."
+        instruction={MATH_INSTRUCTION}
+        readAloud={`${MATH_INSTRUCTION} ${spokenMathTask(progress.next.payload.task.prompt)}`}
         prompt={
           <p className="ui-big-num">{progress.next.payload.task.prompt}</p>
         }

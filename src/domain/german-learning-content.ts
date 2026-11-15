@@ -28,7 +28,7 @@ const doubleConsonants = wordList(`
 `);
 
 const ckAndTz = wordList(`
-  Jacke Ecke Decke Schnecke Strecke Brücke Rücken Zucker Wecker Becker
+  Jacke Ecke Decke Schnecke Strecke Brücke Rücken Zucker Wecker Zecke
   Acker packen backen hacken knacken stecken wecken decken lecken schmecken
   drücken pflücken schicken blicken klicken stricken erschrecken entdecken
   verstecken Glück Stück Blick Trick Fleck Stock Block Rock Sack Rucksack
@@ -49,24 +49,24 @@ const finalDevoicing = wordList(`
   Zweig Steg Bund Sieg Flug Schlag Vertrag Betrag Auftrag Vorschlag Ausflug
   Eintrag Hemd Mond Brand Gold Rind Strand Schuld Lob Trab Zeug Krug Pflug
   Montag Sonntag Zwerg König Korb Anzug Staub Urlaub Laub Kalb halb gelb
-  grob lieb Betrieb Trieb Sieb Umzug Stab Club Job Mondlicht Laubwald
+  grob lieb Betrieb Trieb Sieb Umzug Stab Stand taub Mondlicht Laubwald
   Brotkorb Sandburg Wegesrand Waldrand Sandstrand Handstand Burg Hundekorb
   Kinderlied Geldbetrag Bergpfad Flugzeug Lieblingslied Tagesausflug
-  Waldweg Feldweg Zugweg Magd Leib Trug Ausweg Heimweg Gehweg Rückweg
+  Waldweg Feldweg Schulweg Magd Leib Trug Ausweg Heimweg Gehweg Rückweg
 `);
 
 const umlautDerivation = wordList(`
   Häuser Bäume Räume Zäune Mäuse Läuse Bäuche Sträucher Kräuter Häute
   Bräute Träume Schäume Säume Käufer Läufer Bälle häufig gläubig äußerlich
   räumlich säubern träumen läuten häuslich bäuerlich käuflich Gärten älter
-  kälter wärmer stärker länger härter näher später schärfer kräftig mächtig
+  kälter wärmer stärker länger härter näher Kälte schärfer kräftig mächtig
   ängstlich ärgerlich täglich jährlich gefährlich wählen zählen erzählen
-  Wälder schälen nähren Säcke gähnen spät zäh Hände Bänder Wände Länder
+  Wälder schälen nähren Säcke Bänke Väter Hände Bänder Wände Länder
   Ränder Kämme Lämmer Männer Blätter Räder Gläser Gräser Täler Dächer
   Fächer Nägel Zähne Gänse Kälber fällt hält trägt schläft fährt lädt gräbt
   bläst rät wäscht wächst läuft bäckt fängt hängt lässt hätte wäre käme
-  gäbe nähme Äpfel Ärzte Bäcker Jäger Käfer Mädchen Märchen Käfig Säge
-  Träger
+  gäbe nähme Äpfel Ärzte Bäcker Jäger Schränke Nächte Gäste Wärme Länge
+  Wäsche Träger
 `);
 
 const longI = wordList(`
@@ -77,10 +77,10 @@ const longI = wordList(`
   riechen schieben schießen schließen spielen verlieren wiegen ziehen
   ziemlich schwierig friedlich riesig niedrig Briefpapier Friedenslied
   Briefkasten Briefmarke Liebesbrief Tiergarten Spielplatz Spielzeug
-  Spiegelbild Wiesenblume Zieltür Schiebetür Fliegengitter Bienenstock
+  Spiegelbild Wiesenblume niedlich Schiebetür Fliegengitter Bienenstock
   Bienenwabe Tierliebe Wiege Lieblingsfach Lieblingsessen Lieblingsbuch
   Lieblingsfarbe Kniekehle Mietwohnung Schiedsrichter Fliese Tierheim
-  Tierarzt Tierfutter Zwiebelkuchen Riesenrad Ferien Melodie Industrie
+  Tierarzt Tierfutter Zwiebelkuchen Riesenrad biegen Melodie Industrie
   Energie Kies Kiefer Kiemen Ziegel Riegel Stier Trieb Betrieb Antrieb
   Vertrieb schmierig neugierig begierig rieseln sprießen schief tief
   friedvoll Spieltrieb
@@ -96,7 +96,7 @@ const silentH = wordList(`
   kühl fühlen führen rühren berühren Bühne Mühle Höhle Föhn Sohle Kohle
   Rahmen Sahne Fahne zehn Nahrung Wahrheit Zahnrad Zahnarzt Zahncreme
   Zahnbürste Wahlfach Fahrbahn Fahrrad Fahrkarte Fahrzeug Jahrgang
-  Jahreszeit Mehrzahl Lehrerin Lehrbuch Fehlwort Fehlersuche Wohnhaus
+  Jahreszeit Mehrzahl Lehrerin Lehrbuch Wohnort Fehlersuche Wohnhaus
   Wohnzimmer Ohrwurm Bohrmaschine ehrlich Stuhllehne Fahrstuhl Wohnraum
 `);
 
@@ -122,13 +122,13 @@ const memoryAndLoanWords = wordList(`
   Direktor Diskussion Doktor E-Mail Energie Englisch Etage Familie Fan
   Fantasie Februar Ferien Firma Foto Garage Genie Gitarre Hobby Hotel
   Idee Information Internet Interview Jeans Joghurt Kabine Kalender Kamera
-  Känguru Karate Karton Kino Kiwi Klima Konzert Kristall Labor Laptop
-  Maschine Material Mathematik Medizin Melodie Million Minute Museum Musik
+  Käfer Käfig Känguru Karate Karton Kino Kiwi Klima Konzert Kristall Labor Laptop
+  Mädchen Märchen Maschine Material Mathematik Medizin Melodie Million Minute Museum Musik
   Niveau Notiz November Orange Orchester Paket Papier Park Party Pizza
   Polizei Pony Portemonnaie Praktikum Problem Programm Projekt Pullover
-  Quiz Radio Restaurant Rhythmus Roboter Saison Salat Sandwich Service
+  Quiz Radio Restaurant Rhythmus Roboter Saison Säge Salat Sandwich Service
   Skizze Sofa Spaghetti Sport Station Taxi Team Technik Telefon Theater
-  Training Universität Video Vitamin Vulkan Zirkus Zoo
+  Training Universität Video Vitamin Vulkan gähnen spät zäh Zirkus Zoo
 `);
 
 export const LEARNING_WORD_COLLECTIONS: readonly LearningWordCollection[] = [
@@ -163,8 +163,9 @@ export const LEARNING_WORD_COLLECTIONS: readonly LearningWordCollection[] = [
   {
     id: "long-i",
     title: "Langes i",
-    detail: "Wörter mit ie als feste Wortbilder sichern.",
-    strategy: "Merken",
+    detail:
+      "Sprich das Wort in Silben. Klingt das i lang (Bie-ne, Wie-se), schreibst du meistens ie. Kurze Wörter verlängerst du zuerst (Tier – Tie-re). Ausnahmen wie Kino, Tiger oder wir sind Merkwörter.",
+    strategy: "Silbieren",
     words: longI,
   },
   {
@@ -179,7 +180,7 @@ export const LEARNING_WORD_COLLECTIONS: readonly LearningWordCollection[] = [
     id: "s-ss-sz",
     title: "s, ss und ß",
     detail:
-      "Verlängere das Wort und hör genau: Summt das s (Haus, Häuser; Hase), schreibst du s. Zischt es nach langem Vokal oder Zwielaut (Fuß, Füße; Soße), schreibst du ß. Zischt es nach kurzem Vokal (Tasse, Nuss, Nüsse), schreibst du ss.",
+      "Schritt 1: Ist der Vokal vor dem s-Laut kurz, schreibst du meist ss (Wasser, Nuss – Nüsse). Ausnahmen wie bis, das, was und Bus merkst du dir. Schritt 2: Ist der Vokal lang oder steht ein Zwielaut davor, kann ß oder s kommen (Fuß, Gras, Haus). Das musst du dir merken. Hilfe gibt die Wortfamilie: Fuß – Füße, Gras – Gräser.",
     strategy: "Verlängern",
     words: sSsSz,
   },

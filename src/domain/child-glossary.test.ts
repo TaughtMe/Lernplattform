@@ -64,9 +64,18 @@ describe("Kinder-Glossar", () => {
       "Heute dran: 5 Karten",
       "Runde 2 von 4 · Stufe 3",
       "Dein Stapel hat 12 Karten.",
+      "Die Biene summt.",
+      "Stimmt das?",
     ]) {
       expect(idsIn(text), text).toEqual([]);
     }
+  });
+
+  it("fängt die alte s-Regel „Summt das s?“ ab (Entscheidung vom 12.11.2026)", () => {
+    expect(
+      idsIn("Verlängere das Wort und hör genau: Summt das s (Haus, Häuser)"),
+    ).toEqual(["stimmhaft"]);
+    expect(idsIn("Das stimmhafte s klingt weich.")).toEqual(["stimmhaft"]);
   });
 
   it("lässt „Stapel“ ausdrücklich zu, nicht aber Verwaltungsjargon", () => {
@@ -144,6 +153,7 @@ describe("Dateien der Schüleransichten", () => {
       "app/ueben/practice-overview.tsx",
       "app/gast/guest-entry.tsx",
       "src/storage/learning-recommendations.ts",
+      "src/domain/german-learning-content.ts",
     ]) {
       expect(isStudentViewFile(file), file).toBe(true);
     }

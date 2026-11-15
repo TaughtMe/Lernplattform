@@ -5,7 +5,7 @@ tags:
   - entscheidungsindex
   - audit
 status: index
-stand: 2026-10-20
+stand: 2026-11-14
 audit: "[[21 - Qualitätsgrundlage und Freigabe/Lernraum – Gesamtaudit – 2026-10-19|Gesamtaudit 2026-10-19]]"
 ---
 
@@ -33,7 +33,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 
 | Nr. | Thema                                               | Gültigkeit                                         | Umsetzung                  | Audit-Hinweis (Befund-ID im Auditbericht)                                    |
 | --- | --------------------------------------------------- | -------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
-| 1   | Gemeinsame App und Rollen                           | gültig; Authentifizierung durch 43 ersetzt        | Implementiert              | „Lehrer-Login“ auf der Startseite widerspricht 43 (B-009)                     |
+| 1   | Gemeinsame App und Rollen | gültig; Authentifizierung durch 43 ersetzt | Implementiert | „Lehrer-Login“ steht nicht mehr auf der Startseite (Stand 14.11.2026; vorher B-009) |
 | 2   | Local-first, drei getrennte Datenflüsse             | gültig                                             | Teilweise                  | Ranking-Klassenbeitrag fehlt; Speicherlöschung iPadOS unbehandelt (B-002)     |
 | 3   | Individuelle Klasseneinschreibung                   | gültig                                             | Teilweise                  | Gerätebindung und Ersatzgerät-Freigabe nicht umgesetzt; LRS im QR (B-008)     |
 | 4   | QR-Leistungsbrief (verschlüsselt, signiert)         | gültig                                             | Teilweise                  | nur Aufgaben-Abgabenachweis und Haus-Brief (aus); fälschbar (B-018)           |
@@ -55,43 +55,63 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 20  | Leitner-Fälligkeiten aus Ereignissen                | gültig (präzisiert durch 24, 57)                   | Teilweise                  | Zustände nur teilweise aus Ereignissen ableitbar (A-003); Lernwörter abweichend (A-004) |
 | 21  | Sichtbare Lernbox und Theme                         | teilweise überholt (Farben durch 47)               | Teilweise                  | getrennte Fächerreihen Bedeutung/Schreiben fehlen im Kartenmodell (D-010)     |
 | 22  | Dunkelmodus warmes Anthrazit                        | überholt durch 47                                  | –                          | –                                                                            |
-| 23  | LernBox-Sitzung statt Ein-Karten-Demo               | gültig (präzisiert durch 24, 26)                   | Teilweise                  | Aufdecken hebt entgegen 23 bis Box 5 (D-010)                                  |
+| 23  | LernBox-Sitzung statt Ein-Karten-Demo | gültig (präzisiert durch 24, 26, 57, 64) | Teilweise | Selbsteinschätzung hebt seit 0.9.4 höchstens bis Box 3 (Ergänzung zu 57; vorher D-010) |
 | 24  | Integrieren statt nachbauen                         | gültig (präzisiert durch 26)                       | Teilweise                  | mehrere parallele Wiederholungslogiken (A-004)                               |
 | 25  | LernBoxV2 als isoliertes Quellmodul                 | ersetzt durch 26                                   | –                          | –                                                                            |
 | 26  | LernBox und Laufdiktat als native Bestandteile      | gültig                                             | Implementiert              | –                                                                            |
 | 27  | Laufdiktat als persönlicher Vertikalschnitt         | historisch abgeschlossen                           | Implementiert              | Textrunden allein erzeugen kein Lernsignal (D-011)                           |
 | 28  | Fachfunktionen vor Rollen- und Plattformbetrieb     | historisch abgeschlossen                           | –                          | –                                                                            |
 | 29  | Tastaturfluss und direkte Lernworteingabe           | gültig                                             | Implementiert              | Längenstriche verraten die Entscheidung (D-002)                              |
-| 30  | Große Wortbanken, kleine Runden, Merkwörter         | gültig                                             | Implementiert              | fachliche Zuordnungsfehler (D-006)                                           |
+| 30  | Große Wortbanken, kleine Runden, Merkwörter | gültig (ergänzt durch 68) | Implementiert | Zuordnungsfehler (D-006; Bericht 20, F1, F2, F4, F5) am 14.11.2026 korrigiert; F3 offen |
 | 31  | Adaptiver Lernkreislauf als Produktkern             | gültig                                             | Teilweise                  | kein geschlossener Kreislauf, keine Diagnostik (D-003, D-011)                |
 | 32  | Direkter Fachzugang, separater Laufdiktat-Raum      | gültig (Navigation durch 48 neu)                   | Implementiert              | –                                                                            |
 | 33  | QR-Scanner an allen Code-Einstiegen                 | gültig                                             | Implementiert              | –                                                                            |
 | 34  | Nativer Laufdiktat-Raumbeitritt                     | gültig                                             | Implementiert              | –                                                                            |
 | 35  | Autorisierte Live-Sitzung                           | gültig                                             | Teilweise                  | Weckruf ohne Inhalte korrekt; Realtime-Kanäle selbst unautorisiert (B-003)    |
 | 36  | Nativer Lehrkraft-Raum                              | gültig                                             | Implementiert              | Lösungen für jeden mit Code lesbar (B-004)                                   |
-| 37  | Dashboard, Stationen, Battle                        | gültig                                             | Implementiert              | Battle nach Tempo, Tempo-Punkte (D-012)                                      |
-| 38  | Kopfrechnen als gemeinsamer Mathematikkern          | gültig                                             | Implementiert              | Aufgabenverteilung und Familien zu grob (D-009)                              |
+| 37  | Dashboard, Stationen, Battle | gültig (Battle-Standard durch 66 geändert) | Implementiert | Battle nach Tempo, Tempo-Punkte (D-012) |
+| 38  | Kopfrechnen als gemeinsamer Mathematikkern | gültig (erweitert durch 69) | Implementiert | Aufgabenverteilung und Familien zu grob (D-009) |
 | 39  | Ramagotchi erst nach stabilem Lernkern              | gültig                                             | Geplant                    | –                                                                            |
 | 40  | Ein persönlicher Lernraum                           | gültig                                             | Teilweise                  | „Alles fällige“ in Fachblöcken, „Meine Inhalte“ nicht wie beschrieben         |
-| 41  | Freie Grundfunktionen, konkrete Lehrkraftinhalte    | gültig                                             | Teilweise                  | Freigabe an Schüler nur für Vokabeln                                          |
+| 41  | Freie Grundfunktionen, konkrete Lehrkraftinhalte | gültig (Lizenz durch 72) | Teilweise | Freigabe an Schüler für Vokabeln und Lernwortlisten (60) |
 | 42  | Supabase als verschlüsselter 24-h-Übergaberaum      | gültig                                             | Implementiert              | Geheimnisse serverseitig erzeugt, kein Rate-Limit beim Anlegen (B-006, B-017) |
 | 43  | Lokaler Lehrerbereich ohne Login                    | gültig                                             | Implementiert              | auf geteilten Geräten/Tafeln ungeschützt (B-009)                             |
-| 44  | Lehrerarbeitsplatz und strukturierte Aufgaben       | gültig                                             | Implementiert (`vorschau`) | –                                                                            |
-| 45  | Aufgabenrückweg mit signiertem Abgabenachweis       | gültig                                             | Implementiert              | Schlüssel steht im gedruckten QR (B-018)                                     |
+| 44  | Lehrerarbeitsplatz und strukturierte Aufgaben | gültig | Implementiert (`frei` seit 59) | – |
+| 45  | Aufgabenrückweg mit signiertem Abgabenachweis | gültig; Auslöser „erledigt“ durch 62 ersetzt | Implementiert | Schlüssel steht im gedruckten QR (B-018) |
 | 46  | Stufenweiser Produkteeinstieg                       | überholt durch 47/48                               | –                          | –                                                                            |
 | 47  | Design „Lernraum UI“, Freigaberegister, Motivation aus | gültig (Standardstufe durch 48 geändert)        | Implementiert              | –                                                                            |
 | 48  | Oberfläche vom Design aus („Lernraum UI“ v2)        | gültig                                             | Implementiert              | –                                                                            |
 | 49  | Vokabelübernahme aus dem Laufdiktat nach Ergebnis   | gültig                                             | Implementiert              | –                                                                            |
-| 50  | Schreiberleichterung über Klassenstempel            | gültig                                             | Implementiert              | LRS-Status am QR erkennbar (B-008); Toleranz bedeutungsblind (D-016)          |
+| 50  | Schreiberleichterung über Klassenstempel            | pausiert, Wirkung zurückgenommen durch 79          | Implementiert              | LRS-Status am QR erkennbar (B-008); Toleranz bedeutungsblind (D-016)          |
 | 51  | Lehrerbereich: Ablage aller Inhaltsarten            | gültig                                             | Implementiert              | –                                                                            |
 | 52  | Raumcode 90 min, Raum schließt nach 120 min         | gültig                                             | Implementiert              | –                                                                            |
-| 53  | Geräte-Abgleich der Lehrkraft                       | gültig; **nur in `docs/cloud-sync.md` dokumentiert** | Implementiert            | Umfang im Verhältnis zum Nutzen (A-008); Downgrade (B-014)                   |
-| 54  | Textbox                                             | gültig                                             | Implementiert              | Hauptwert misst Textbehalten (D-005)                                         |
-| 55  | Wortspeicher                                        | gültig                                             | Teilweise                  | Wiederholungsregeln widersprechen Vault 06 (A-004, D-001)                    |
+| 53  | Geräte-Abgleich der Lehrkraft | gültig; am 14.11.2026 ins Protokoll nachgetragen | Implementiert | Umfang im Verhältnis zum Nutzen (A-008); Downgrade (B-014); ruht (Vision, Frage 7) |
+| 54  | Textbox | gültig; „fachlich geprüft“ berichtigt, Texte ungeprüft (76) | Implementiert | Hauptwert misst Textbehalten (D-005) |
+| 55  | Wortspeicher | gültig; Lückensatz durch 61, s-Regel durch 75 geändert | Teilweise | Wiederholungsregeln widersprechen Vault 06 (A-004, D-001) |
 | 56  | Textbox-Heft-Layout                                 | gültig                                             | Implementiert              | –                                                                            |
 | 57  | Tagesportion 20 und Wiederholungsregeln             | gültig                                             | Implementiert              | Stückzahl statt Zeitbudget, Lernwörter ohne Fälligkeitsschutz (D-011, A-004) |
-| 58  | Vorlesen nur in der Aufgabe                         | gültig; nimmt D5-3 für Start- und Einstellungsblätter zurück | Implementiert      | –                                                                            |
+| 58  | Vorlesen nur in der Aufgabe | gültig; nimmt D5-3 für Start- und Einstellungsblätter zurück; ergänzt durch 71 | Implementiert | Knopf am 11.11.2026 in keiner Aufgabe eingebaut (Bericht 40, Abschnitt 10, Nr. 4) |
 | 59  | Freigaben in der Beta, Google Drive aus             | gültig                                             | Implementiert              | Diagnostik pädagogisch nicht abgestimmt (D2)                                 |
+| 60  | Lernwortlisten statt Wortauftrag per Link-QR | gültig; Ausnahme durch 63 | Implementiert | nachgetragen am 14.11.2026 (Welle 3, D4) |
+| 61  | Satzformate erlaubt | gültig; nimmt Teil von 55 zurück | Geplant (frühestens zweites Jahr) | – |
+| 62  | „Erledigt“ aus gezählten Runden | gültig; nimmt Teil von 45 zurück | Geplant | – |
+| 63  | Auftrags-QR mit Kennungen | gültig; nimmt 60 für mitgelieferte Übungen zurück | Geplant | – |
+| 64  | Vokabelstapel mündlich nicht „sicher“ | gültig; nimmt Welle 3, D2-3 zurück | Geplant | – |
+| 65  | Fehler an der Tafel erst ab sechs | gültig; nimmt Welle 3, D5-5 zurück | Geplant | – |
+| 66  | Battle: Störangriffe aus, Ladung über Genauigkeit | gültig bis auf „Störangriffe aus“ (durch 78 zurückgenommen); ändert Standard aus 37 | Geplant | – |
+| 67  | Lesen: Verständnis vor Lautlesen | gültig; nimmt Antwort vom 10.11. zurück | Geplant (nach den drei Etappen) | – |
+| 68  | Rechtschreib-Kernbestand von etwa 30 Wörtern | gültig; ergänzt 30 | Geplant | – |
+| 69  | Mathe: Grundrechnen bis Klasse 9 | gültig; erweitert 38 | Geplant | – |
+| 70  | Klassentempo ohne Rangliste | gültig | Geplant (nach Erprobung) | Ob gebaut wird, ist offen (Offene Entscheidungen, Nr. 11) |
+| 71  | Vorlesen in Aufgaben, nur Gerätestimmen | gültig; ergänzt 58 | Geplant | – |
+| 72  | Lizenz EUPL-1.2 und CC BY-SA 4.0 | gültig | Geplant (Etappe 1) | Name/Logo und Markenfiguren offen |
+| 73  | „Mein Stand“ statt „Kompetenzprofil“ | gültig | Geplant | – |
+| 74  | Zuschnitt: 65 Bausteine, drei Etappen | gültig | – | – |
+| 75  | s-Schreibung in zwei Schritten | gültig; nimmt Regeltext „summen“ zurück | Implementiert | – |
+| 76  | Textbox sichtbar, intern „ungeprüft“ | gültig; berichtigt 54; nimmt Antwort vom 10.11. (Nr. 4) zurück | Implementiert | Alle 50 Texte ungeprüft |
+| 77  | LernBox-Lernformen sofort frei, keine Sterne | gültig | Implementiert | Sterne erst mit Zähler |
+| 78  | Battle: Störangriffe wieder standardmäßig an | gültig; nimmt 66 teilweise zurück | Implementiert | – |
+| 79  | Schreiberleichterung (LRS-Toleranz) pausiert | gültig; nimmt 50 zurück (Wirkung und Schalter) | Implementiert | Daten und Mechanik bleiben erhalten |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 
@@ -177,8 +197,10 @@ sie gesondert gekennzeichnet.
 - **Ursprüngliche Begründung:** keine scheinbar sichere Prototyp-PIN, kein
   Betriebsaufwand; Neubewertung, „sobald Schüler dasselbe Geräteprofil
   verwenden“.
-- **Umsetzungsstand:** Teilweise. Die Startseite verlinkt weiterhin
-  „Lehrer-Login“ (Abweichung von der Entscheidung).
+- **Umsetzungsstand:** Teilweise. Die Startseite verlinkte „Lehrer-Login“
+  (Abweichung von der Entscheidung); am 14.11.2026 steht der Begriff nicht
+  mehr in der Oberfläche. Tafelmodus und lokale Sperre sind mit Welle 3, D3,
+  gebaut.
 - **Vorteile:** keine Konten, keine Kosten.
 - **Nachteile:** Die in der Entscheidung genannte Bedingung für eine
   Neubewertung ist eingetreten: Das Pilotszenario „Tafel in der Schule“
@@ -283,5 +305,14 @@ Neue Entscheidungen werden weiterhin im Entscheidungsprotokoll eingetragen und
 hier mit einer Zeile ergänzt. Eine zurückgenommene oder umgedrehte Festlegung
 bekommt ebenfalls einen Eintrag: mit „Zurückgenommen“ (was vorher galt, wann
 und warum es endete) und „Nicht wieder einbauen“, damit eine spätere Sitzung
-sie nicht erneut umsetzt. Entscheidung 53 sollte zusätzlich in das
-Entscheidungsprotokoll übernommen werden (Vorschlag zur Prüfung).
+sie nicht erneut umsetzt. Entscheidung 53 steht seit dem 14.11.2026 im
+Entscheidungsprotokoll.
+
+## Offene Punkte (nicht entschieden)
+
+- **Markenfiguren** (`public/figuren/`): vom Entwickler am 12.11.2026
+  ausdrücklich zurückgestellt; bis zu seiner Klärung bleiben die Figuren
+  unverändert. Offen ist, ob die CC0-Freigabe von Coco Material neben der
+  Zeichnung auch Marken- und Figurenrechte abdeckt. Siehe
+  Entscheidungsprotokoll, Abschnitt 11, und Entscheidung 72.
+- Weitere offene Fragen: [[../25 - Vision/Offene Entscheidungen|Offene Entscheidungen]].

@@ -25,6 +25,7 @@ export function LearnerHome() {
   // Serie, Abzeichen und Duell nur mit Freigabe (Entscheidung 47).
   const motivation = useAreaVisible("motivation");
   const duel = useAreaVisible("duell");
+  const diagnostics = useAreaVisible("diagnostik");
   const visibility = useRelease();
 
   // „Weiterlernen“ führt in das Modul des ersten offenen Portionselements (bei
@@ -87,6 +88,19 @@ export function LearnerHome() {
         motivation && snapshot.streak > 0 ? snapshot.streak : undefined
       }
       duelHref={duel ? "/duell" : undefined}
+      // Startpunkt, Training und „Mein Stand“ (Entscheidung 59, Vision
+      // Nachtrag 1, Nr. 3). Beim Erstkontakt hilft nur der Startpunkt; bis der
+      // Lernstand geladen ist, steht noch kein Weg da.
+      links={
+        diagnostics && snapshot.loaded
+          ? firstContact
+            ? [{ href: "/lernen/startpunkt", label: "Startpunkt", icon: "pin" }]
+            : [
+                { href: "/lernen/training", label: "Training", icon: "run" },
+                { href: "/lernen/profil", label: "Mein Stand", icon: "chart" },
+              ]
+          : undefined
+      }
       notice={
         <StorageProtectionNotice hasLearningState={snapshot.hasLearningState} />
       }

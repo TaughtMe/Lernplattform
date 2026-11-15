@@ -70,7 +70,7 @@ export function ReadAloudButton({
     active.current = mine;
     setSpeaking(true);
     try {
-      await speak(text, lang, { localOnly: true });
+      await speak(text, lang);
     } finally {
       if (active.current === mine) {
         active.current = 0;

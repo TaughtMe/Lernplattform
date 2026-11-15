@@ -10,6 +10,8 @@ import {
   signWritingReliefGrant,
 } from "../../../src/domain/class-seal";
 import { createStudentClassesRepository } from "../../../src/storage/student-classes";
+import { resolveStages, resolveVisibility } from "../../../src/domain/release";
+import { ReleaseProvider } from "../../release/release-context";
 import { revealWithTwoFingers } from "./hold-test-utils";
 import { LiveRunningDictationGame } from "./live-game";
 
@@ -467,24 +469,40 @@ describe("LiveRunningDictationGame", () => {
       });
     }
 
-    function renderRound(id: string, extra: Partial<LiveSession> = {}) {
+    /**
+     * Die Schreiberleichterung ist pausiert (Bereich `schreiberleichterung`
+     * auf `aus`, Entscheidung 79). Die ruhende Funktion wird mit
+     * eingeschaltetem Bereich geprüft, die Pause in einem eigenen Test.
+     */
+    const reliefOn = resolveVisibility(
+      resolveStages("schreiberleichterung=frei"),
+      false,
+    );
+
+    function renderRound(
+      id: string,
+      extra: Partial<LiveSession> = {},
+      visibility = reliefOn,
+    ) {
       ingestBundle.mockClear();
       const onProgress = vi.fn();
       const view = render(
-        <LiveRunningDictationGame
-          code="4829"
-          studentName="Mia"
-          session={{
-            ...session,
-            sessionId: id,
-            words: [houseWord],
-            vocabularyTransfer: "all",
-            ...extra,
-          }}
-          connectionWarning=""
-          initialProgress={null}
-          onProgress={onProgress}
-        />,
+        <ReleaseProvider value={visibility}>
+          <LiveRunningDictationGame
+            code="4829"
+            studentName="Mia"
+            session={{
+              ...session,
+              sessionId: id,
+              words: [houseWord],
+              vocabularyTransfer: "all",
+              ...extra,
+            }}
+            connectionWarning=""
+            initialProgress={null}
+            onProgress={onProgress}
+          />
+        </ReleaseProvider>,
       );
       revealWithTwoFingers(view.container);
       return { ...view, onProgress };
@@ -526,6 +544,26 @@ describe("LiveRunningDictationGame", () => {
       expect(ingestBundle.mock.calls[0]?.[0].placements).toEqual({
         "live-relief-ok-house": "practice",
       });
+    });
+
+    it("wendet eine vorhandene Freigabe nicht an, solange die Schreiberleichterung pausiert ist", async () => {
+      window.sessionStorage.clear();
+      const seal = await createClassSealKeyPair();
+      await storeMembership(seal);
+      const user = userEvent.setup();
+      renderRound(
+        "relief-paused",
+        { classSeal: await classSealFingerprint(seal.publicKey) },
+        resolveVisibility(resolveStages(undefined), false),
+      );
+      await user.type(
+        screen.getByRole("textbox", { name: "Deine Antwort" }),
+        "Hous{Enter}",
+      );
+      expect(
+        await screen.findByText("Noch nicht richtig. Versuche es erneut."),
+      ).toBeVisible();
+      expect(screen.queryByText(/So schreibt man es/)).not.toBeInTheDocument();
     });
 
     it("nimmt denselben Tippfehler in einem Raum ohne Klasse nicht an", async () => {
