@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { supportsLearningBoxForms } from "../../../../src/domain/learning-box-forms";
+import { cx } from "../../parts/parts";
 import { plural } from "./format";
 import { Modal } from "./modal";
-import type { LbDirection, LbMode, LernBoxScreenProps } from "./types";
+import type { LbDirection, LbForm, LbMode, LernBoxScreenProps } from "./types";
 import styles from "../lernbox-screen.module.css";
 
 export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
   const { scope } = props;
-  const [mode, setMode] = useState<LbMode>(props.mode);
+  const [mode, setMode] = useState<LbMode | LbForm>(props.mode);
   const [direction, setDirection] = useState<LbDirection>(props.direction);
   const labels = props.directionLabelsFor(scope);
   const deck = props.decks.find((entry) => entry.id === scope);
@@ -22,6 +24,23 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
     (sum, entry) => sum + (entry.boxes[box - 1] ?? 0),
     0,
   );
+  // Zuordnen und Test gibt es nur für einen Stapel mit genug Karten (LF-8).
+  const formsOffered =
+    props.formsVisible === true &&
+    deck !== undefined &&
+    !box &&
+    supportsLearningBoxForms(deck.total);
+  const form = formsOffered && (mode === "match" || mode === "test");
+  const modes: ReadonlyArray<readonly [LbMode | LbForm, string]> = [
+    ["writing", "Schreiben"],
+    ["oral", "Mündlich"],
+    ...(formsOffered
+      ? ([
+          ["match", "Zuordnen"],
+          ["test", "Test"],
+        ] as const)
+      : []),
+  ];
   const title =
     scope === "heute"
       ? "Heute dran"
@@ -46,16 +65,14 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
           Wie willst du üben?
         </span>
         <div
-          className={styles.segmentSheet}
+          className={cx(
+            styles.segmentSheet,
+            modes.length > 2 && styles.segmentWide,
+          )}
           role="group"
           aria-labelledby="lb-mode-label"
         >
-          {(
-            [
-              ["writing", "Schreiben"],
-              ["oral", "Mündlich"],
-            ] as const
-          ).map(([value, label]) => (
+          {modes.map(([value, label]) => (
             <button
               key={value}
               type="button"
@@ -72,8 +89,19 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
             Mündlich zählt bis Box 3. Danach musst du schreiben.
           </p>
         ) : null}
+        {form && mode === "match" ? (
+          <p className={styles.hint}>
+            Finde die Paare. Nur üben, nichts wird verschoben.
+          </p>
+        ) : null}
+        {form && mode === "test" ? (
+          <p className={styles.hint}>
+            Bis zu 10 Fragen. Nur geschriebene Antworten zu Karten, die heute
+            dran sind, zählen für deine Boxen.
+          </p>
+        ) : null}
       </div>
-      {directionFromPlan ? null : (
+      {directionFromPlan || (form && mode === "match") ? null : (
         <div className={styles.field}>
           <span className={styles.fieldLabel} id="lb-direction-label">
             Richtung
@@ -106,7 +134,15 @@ export function StartSheet(props: LernBoxScreenProps & { scope: string }) {
       <button
         type="button"
         className={styles.cta}
-        onClick={() => props.onStart?.({ scope, mode, direction })}
+        onClick={() =>
+          form && (mode === "match" || mode === "test")
+            ? props.onStartForm?.({ scope, form: mode, direction })
+            : props.onStart?.({
+                scope,
+                mode: mode === "oral" ? "oral" : "writing",
+                direction,
+              })
+        }
       >
         Los geht&apos;s
       </button>
