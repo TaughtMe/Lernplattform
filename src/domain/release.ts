@@ -126,9 +126,11 @@ export const RELEASE_AREAS = {
   "lernbox-lernformen": {
     label: "LernBox: Zuordnen und Test",
     // Kein eigener Pfad: schaltet die beiden Lernformen im Start-Fenster
-    // eines Stapels (docs/umsetzungsplan-lernbox-lernformen.md).
+    // eines Stapels (docs/umsetzungsplan-lernbox-lernformen.md). Seit
+    // 15.11.2026 sofort frei (V-8). Sterne gibt es vorerst nicht (V-9): Sobald
+    // es einen Zähler zum Auswerten gibt, wäre das die Stelle für eine Option.
     routes: [],
-    stage: "vorschau",
+    stage: "frei",
   },
   diagnostik: {
     label: "Startpunkt, Tagestraining und Mein Stand",

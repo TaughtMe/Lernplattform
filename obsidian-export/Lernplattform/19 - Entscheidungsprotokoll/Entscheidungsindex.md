@@ -109,6 +109,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 74  | Zuschnitt: 65 Bausteine, drei Etappen | gültig | – | – |
 | 75  | s-Schreibung in zwei Schritten | gültig; nimmt Regeltext „summen“ zurück | Implementiert | – |
 | 76  | Textbox sichtbar, intern „ungeprüft“ | gültig; berichtigt 54; nimmt Antwort vom 10.11. (Nr. 4) zurück | Implementiert | Alle 50 Texte ungeprüft |
+| 77  | LernBox-Lernformen sofort frei, keine Sterne | gültig | Implementiert | Sterne erst mit Zähler |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 

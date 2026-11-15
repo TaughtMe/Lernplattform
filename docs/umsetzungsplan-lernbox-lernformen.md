@@ -305,7 +305,7 @@ von `spiegelschrift` und `lehrer-geraet`:
 },
 ```
 
-Begründung für `vorschau`: Die LernBox selbst ist `frei` und wird im
+Stand 15.11.2026: Die Stufe ist inzwischen `frei` (V-8). Ursprüngliche Begründung für `vorschau`: Die LernBox selbst ist `frei` und wird im
 Schulbetrieb genutzt. Neue Teile kamen im Projekt bisher zuerst als Vorschau
 und wurden nach der Erprobung durch die Lehrkraft freigegeben (Textbox,
 Entscheidung 54; Aufgaben, Diagnostik, Spiegelschrift, Entscheidung 59). Die
@@ -559,7 +559,7 @@ in GitHub. Nach dem Push GitHub Actions nicht abfragen (`AGENTS.md`).
   `@playwright/test`.
 - **Nicht committen:** `public/sw.js`, `public/version.json` (erzeugt der
   Build).
-- **Freigabe bleibt `vorschau`**, bis der Entwickler sie ändert.
+- **Freigabe:** `frei` seit 15.11.2026 (V-8, entschieden).
 - **Branch:** nie auf `claude/nifty-ramanujan-pzpa90` pushen.
 
 ## 12. Vorschläge zur Bestätigung durch den Entwickler
@@ -568,20 +568,23 @@ in GitHub. Nach dem Push GitHub Actions nicht abfragen (`AGENTS.md`).
 | --- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | V-1 | Soll ein Fehler beim Zuordnen die Karte früher fällig machen?                                         | Nein (LF-2). Zuordnen ist reines Üben.                                                                        | Ja, „spätestens morgen fällig“, Box bleibt. Braucht ein Lernereignis mit einem neuen optionalen Feld, damit das Nachspielen stimmt; ältere Software ignoriert es (S-1). Mehraufwand etwa ein Tag. |
 | V-2 | Dürfen Schreibfragen im Test fällige Karten bewegen, auch nach unten?                                 | Ja (LF-4), genau wie der Schreibmodus.                                                                        | Der ganze Test ist nur Üben. Einfacher zu erklären, aber fällige Karten müssen danach noch einmal geschrieben werden.                                                                             |
-| V-3 | Rückmeldung im Test erst am Ende?                                                                     | Ja. Das unterscheidet den Test vom Schreibmodus und entspricht Quizlet.                                       | Sofort nach jeder Frage. Für jüngere Kinder evtl. freundlicher; der Test wird dann zu einem zweiten Schreibmodus mit Auswahlfragen.                                                               |
+| V-3 | Rückmeldung im Test erst am Ende? **Entschieden 15.11.2026: ja.**                                     | Ja. Das unterscheidet den Test vom Schreibmodus und entspricht Quizlet.                                       | Sofort nach jeder Frage. Für jüngere Kinder evtl. freundlicher; der Test wird dann zu einem zweiten Schreibmodus mit Auswahlfragen.                                                               |
 | V-4 | Größen: 6 Paare je Runde, höchstens 3 Runden; Test höchstens 10 Fragen, halb Schreiben, halb Auswahl. | So übernehmen und im Unterricht beobachten.                                                                   | Andere Zahlen sind eine Zeile in `learning-box-forms.ts`.                                                                                                                                         |
 | V-5 | Lernformen auch für „Meine Fehler“ und „Heute dran“?                                                  | Vorerst nur für Stapel. „Heute dran“ soll Leitner-wirksam bleiben.                                            | Zuordnen für „Meine Fehler“ wäre ein kleiner Folgeschritt.                                                                                                                                        |
 | V-6 | Soll später auswertbar sein, dass eine Antwort aus einem Test stammt?                                 | Nein, vorerst kein neues Ereignisfeld.                                                                        | Optionales Feld am Ereignis (tolerant, S-1).                                                                                                                                                      |
 | V-7 | Name „Test“?                                                                                          | „Test“, wie in der Vision und bei Quizlet. Die Hinweiszeile sagt, dass es um Üben geht.                       | „Probe“ oder „Quiz“, falls „Test“ in der Klasse Druck erzeugt (Vision: „Keine Diagnose, kein Test“).                                                                                              |
-| V-8 | Freigabe                                                                                              | `vorschau`, nach zwei Wochen Erprobung in der eigenen Klasse auf `frei`.                                      | Sofort `frei`.                                                                                                                                                                                    |
-| V-9 | Sterne für Zuordnen und Test?                                                                         | Nein, bis das Belohnungssystem der LernBox insgesamt entschieden ist (Entscheidung 39, Bereich `motivation`). | –                                                                                                                                                                                                 |
+| V-8 | Freigabe **(entschieden 15.11.2026: sofort `frei`)**                                                  | `vorschau`, nach zwei Wochen Erprobung in der eigenen Klasse auf `frei`.                                      | Sofort `frei`.                                                                                                                                                                                    |
+| V-9 | Sterne für Zuordnen und Test? **Entschieden 15.11.2026: keine Sterne.**                               | Nein, bis das Belohnungssystem der LernBox insgesamt entschieden ist (Entscheidung 39, Bereich `motivation`). | –                                                                                                                                                                                                 |
 
 ## 13. Umgesetzt
 
 Stand: 14.11.2026, Branch `claude/lernbox-lernformen`. Schritte 2 bis 6 sind
-gebaut; Schritt 7 (Entscheidungsprotokoll, Freigabe `frei`) bleibt bis zur
-Bestätigung des Entwicklers offen. Die Vorschläge V-1 bis V-9 sind wie
-empfohlen umgesetzt.
+gebaut. Am 15.11.2026 hat der Entwickler entschieden: **V-3** Rückmeldung im
+Test erst am Ende, wie umgesetzt; **V-8** sofort `frei`, ohne zwei Wochen
+Vorschau (`lernbox-lernformen` steht auf `frei`); **V-9** vorerst keine Sterne,
+weil es noch keinen Zähler zum Auswerten gibt (Erweiterungsstelle als Kommentar
+in `src/domain/release.ts`, nichts ausgebaut). Die übrigen Vorschläge V-1 bis
+V-9 sind wie empfohlen umgesetzt.
 
 Abweichungen und Unklarheiten, jeweils mit der vorsichtigsten Wahl:
 

@@ -18,7 +18,7 @@ Oberfläche: `app/components/learning-box-app.tsx` (Design 4a–4c).
 - **Lernformen „Zuordnen“ und „Test“** für einen Stapel (ab 4 Karten), nur im
   Start-Fenster eines Stapels, nicht für „Heute dran“, „Meine Fehler“ oder
   „Box üben“. Bereich `lernbox-lernformen` im Freigaberegister, Stufe
-  `vorschau` (`src/domain/release.ts`). Kern in
+  `frei` seit 15.11.2026 (`src/domain/release.ts`). Kern in
   `src/domain/learning-box-forms.ts`, Anbindung in
   `app/components/learning-box-forms.ts`, Ansichten `parts/match.tsx` und
   `parts/test.tsx`. Wirkung auf Box und Fälligkeit (Regeln LF-1 bis LF-8):

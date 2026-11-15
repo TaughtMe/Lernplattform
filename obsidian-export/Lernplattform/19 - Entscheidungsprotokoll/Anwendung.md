@@ -853,3 +853,9 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Nicht wieder einbauen:** den Vermerk „ungeprüft“ in der Oberfläche, und das Ausblenden ungeprüfter Texte, solange der Entwickler es nicht neu entscheidet.
 
 **Bekannte Grenzen:** Alle 50 Texte sind weiter ungeprüft. Ton und Themen sind oft Grundschule (Bericht 20, F11).
+
+## 77. LernBox-Lernformen sofort frei, keine Sterne – 15. November 2026
+
+**Beschlossen:** „Zuordnen“ und „Test“ in der LernBox sind sofort allgemein freigegeben (`lernbox-lernformen` auf `frei`), ohne zwei Wochen Vorschau (V-8). Die Rückmeldung im Test kommt erst am Ende, wie umgesetzt (V-3). Es gibt vorerst keine Sterne (V-9), weil es noch keinen Zähler zum Auswerten gibt; die Option ist nur als Kommentar in `src/domain/release.ts` vorbereitet, nichts ist gebaut. Quelle: Entscheidungen des Entwicklers nach dem Testen, Nr. 1 bis 3 (`docs/vision/01-planung.md`, 15.11.2026). Plan: `docs/umsetzungsplan-lernbox-lernformen.md`.
+
+**Begründung:** Der Entwickler hat die Lernformen getestet und braucht keine Erprobungszeit in der Vorschau. Für Sterne fehlt der Zähler.
