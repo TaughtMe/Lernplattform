@@ -113,6 +113,19 @@ test("Stufe 6 liest mit dem Sprachmodell vor, ohne Gerätestimme", async ({
   page,
 }) => {
   test.setTimeout(120_000);
+  // Fehler aus Seite und Worker erscheinen in der Meldung, falls nichts spielt.
+  const problems: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" || message.type() === "warning") {
+      problems.push(`${message.type()}: ${message.text()}`);
+    }
+  });
+  page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
+  page.on("worker", (worker) =>
+    worker.on("console", (message) =>
+      problems.push(`worker ${message.type()}: ${message.text()}`),
+    ),
+  );
   await recordSpeech(page);
   await serveTestModel(page);
   await createBox(page, "Modellbox", ["Rad"]);
@@ -129,15 +142,22 @@ test("Stufe 6 liest mit dem Sprachmodell vor, ohne Gerätestimme", async ({
     timeout: 60_000,
   });
 
-  await expect
-    .poll(
-      () =>
-        page.evaluate(
-          () => (window as unknown as { __played: number[][] }).__played.length,
-        ),
-      { timeout: 30_000 },
-    )
-    .toBeGreaterThan(0);
+  try {
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              (window as unknown as { __played: number[][] }).__played.length,
+          ),
+        { timeout: 30_000 },
+      )
+      .toBeGreaterThan(0);
+  } catch (error) {
+    throw new Error(
+      `Kein Modell-Audio abgespielt.\n${problems.join("\n")}\n${String(error)}`,
+    );
+  }
   const [played] = await page.evaluate(
     () => (window as unknown as { __played: number[][] }).__played,
   );

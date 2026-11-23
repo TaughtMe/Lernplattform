@@ -51,7 +51,20 @@ export function stopAudio() {
   current.finish();
 }
 
-/** Spielt Samples ab; das Ergebnis kommt am Ende oder beim Stoppen. */
+/** So lange wartet die Wiedergabe höchstens auf `resume()`. */
+export const RESUME_TIMEOUT_MS = 1000;
+/** Bleibt `onended` aus (z. B. ohne Audiogerät), endet es nach Dauer + Puffer. */
+const END_GRACE_MS = 1500;
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Spielt Samples ab; das Ergebnis kommt am Ende oder beim Stoppen. Ein
+ * angehaltener `AudioContext` (kein Audiogerät, keine Freigabe) darf das
+ * Vorlesen nicht für immer blockieren.
+ */
 export async function playSamples(
   samples: Float32Array,
   sampleRate: number,
@@ -59,17 +72,28 @@ export async function playSamples(
   const audio = context ?? unlockAudio();
   if (!audio || samples.length === 0) return;
   stopAudio();
-  if (audio.state === "suspended") await audio.resume().catch(() => {});
   const buffer = audio.createBuffer(1, samples.length, sampleRate);
   buffer.copyToChannel(new Float32Array(samples), 0);
+  if (audio.state !== "running") {
+    await Promise.race([
+      audio.resume().catch(() => {}),
+      delay(RESUME_TIMEOUT_MS),
+    ]);
+  }
   const source = audio.createBufferSource();
   source.buffer = buffer;
   source.connect(audio.destination);
+  const durationMs = (samples.length / sampleRate) * 1000;
   await new Promise<void>((resolve) => {
+    let done = false;
     const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
       if (playing?.source === source) playing = undefined;
       resolve();
     };
+    const timer = setTimeout(finish, durationMs + END_GRACE_MS);
     playing = { source, finish };
     source.onended = finish;
     source.start();
