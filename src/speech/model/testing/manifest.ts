@@ -6,7 +6,13 @@ export const asset = (path: string) => ({
 });
 
 export const testManifest = {
-  version: 1,
+  version: 2,
+  model: {
+    name: "Kitten TTS 2 Nano",
+    revision: "test",
+    sampleRate: 24000,
+    vocab: asset("/speech/kitten2/vocab.json"),
+  },
   ort: {
     version: "1.31.1",
     wasm: asset("/speech/ort/1.31.1/ort-wasm-simd-threaded.wasm"),
@@ -19,11 +25,15 @@ export const testManifest = {
   },
   languages: {
     de: {
+      label: "Deutsch",
       espeak: "de",
-      model: asset("/speech/kitten/de/model.onnx"),
-      voices: asset("/speech/kitten/de/voices.npz"),
-      defaultVoice: "v1",
-      voiceList: [{ id: "v1", label: "Eins" }],
+      model: asset("/speech/kitten2/de/model.onnx"),
+      voices: asset("/speech/kitten2/de/voices.npz"),
+      defaultVoice: "anna",
+      voiceList: [
+        { id: "anna", label: "Anna", description: "weiblich" },
+        { id: "paul", label: "Paul", description: "männlich" },
+      ],
     },
   },
 };

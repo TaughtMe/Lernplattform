@@ -8,6 +8,7 @@ import { ReleaseProvider } from "./release/release-context";
 import { AreaFrame } from "./ui/shell/area-frame";
 import { GuestModeHost } from "./ui/guest-mode-host";
 import { HardwareKeyboardHost } from "./ui/hardware-keyboard-host";
+import { SpeechModelAutoInstall } from "./components/speech-voice-settings";
 import { hydrationBootScript } from "./ui/hydration-boot";
 import { HydrationMark } from "./ui/hydration-mark";
 import { ServiceWorkerRegistration } from "./ui/service-worker-registration";
@@ -129,6 +130,7 @@ export default async function RootLayout({
           <UpdateToast />
           <GuestModeHost />
           <HardwareKeyboardHost />
+          <SpeechModelAutoInstall />
         </ReleaseProvider>
       </body>
     </html>

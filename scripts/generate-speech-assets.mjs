@@ -1,17 +1,12 @@
 // Erzeugt die Dateien für das Vorlesen mit dem Sprachmodell
 // (docs/umsetzungsplan-sprachmodell.md, 3.2):
-// - kopiert die WASM-Datei von onnxruntime-web nach public/speech/ort/<version>/
+// - kopiert Lade-Code und WASM von onnxruntime-web nach public/speech/ort/<version>/
+// - prüft die Modelldateien unter public/speech/kitten2/ gegen die SHA-256-Werte
+//   aus src/speech/model/sources.json (Revision von Hugging Face)
 // - schreibt public/speech/manifest.json mit Größe und SHA-256 jeder Datei
-// Beide Ergebnisse sind erzeugt und nicht eingecheckt (.gitignore).
+// ONNX-Kopie und Manifest sind erzeugt und nicht eingecheckt (.gitignore).
 import { createHash } from "node:crypto";
-import {
-  copyFile,
-  mkdir,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,16 +34,19 @@ for (const name of ortFiles) {
   );
 }
 
-async function asset(path) {
+/** Größe und Prüfsumme einer Datei unter public/; mit `expected` wird verglichen. */
+async function asset(path, expected) {
   const file = join(publicDir, path);
   const bytes = await readFile(file).catch(() => {
     throw new Error(`Sprachmodell-Datei fehlt: public${path}`);
   });
-  return {
-    path,
-    sha256: createHash("sha256").update(bytes).digest("hex"),
-    size: (await stat(file)).size,
-  };
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  if (expected && sha256 !== expected) {
+    throw new Error(
+      `Prüfsumme weicht ab: public${path} (${sha256}, erwartet ${expected})`,
+    );
+  }
+  return { path, sha256, size: (await stat(file)).size };
 }
 
 const sources = JSON.parse(
@@ -61,12 +59,12 @@ const sources = JSON.parse(
 const languages = {};
 for (const [code, entry] of Object.entries(sources.languages)) {
   languages[code] = {
+    label: entry.label,
     espeak: entry.espeak,
-    model: await asset(entry.model),
-    voices: await asset(entry.voices),
-    ...(entry.sampleRate ? { sampleRate: entry.sampleRate } : {}),
-    ...(entry.trimSamples !== undefined
-      ? { trimSamples: entry.trimSamples }
+    model: await asset(entry.model.path, entry.model.sha256),
+    voices: await asset(entry.voices.path, entry.voices.sha256),
+    ...(entry.lexicon
+      ? { lexicon: await asset(entry.lexicon.path, entry.lexicon.sha256) }
       : {}),
     defaultVoice: entry.defaultVoice,
     voiceList: entry.voiceList,
@@ -74,7 +72,13 @@ for (const [code, entry] of Object.entries(sources.languages)) {
 }
 
 const manifest = {
-  version: 1,
+  version: 2,
+  model: {
+    name: sources.model.name,
+    revision: sources.model.revision,
+    sampleRate: sources.model.sampleRate,
+    vocab: await asset(sources.model.vocab.path, sources.model.vocab.sha256),
+  },
   ort: {
     version: ortVersion,
     wasm: await asset(`/speech/ort/${ortVersion}/${ortFiles[0]}`),

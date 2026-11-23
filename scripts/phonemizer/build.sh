@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Baut den Lernraum-Phonemizer (eSpeak NG → WebAssembly, nur Deutsch und
-# US-Englisch) aus festgelegten Quellen. Plan: docs/umsetzungsplan-sprachmodell.md, 3.1.
+# US-Englisch) aus festgelegten Quellen (Ubuntu-Quellpaket, siehe sources.sha256). Plan: docs/umsetzungsplan-sprachmodell.md, 3.1.
 #
 # Voraussetzung (Ubuntu 24.04):
 #   sudo apt-get install -y emscripten=3.1.6~dfsg-7 build-essential autoconf \
@@ -37,8 +37,8 @@ while read -r _ file; do
   curl -fsSL --retry 3 -o "$work/quellen/$file" "$pool/$file"
 done < "$here/sources.sha256"
 (cd "$work/quellen" && sha256sum --check --strict "$here/sources.sha256")
-dpkg-source --no-check -x "$work/quellen/espeak-ng_1.51+dfsg-12build1.dsc" \
-  "$work/src" > /dev/null
+dsc="$(awk '$2 ~ /\.dsc$/ {print $2}' "$here/sources.sha256")"
+dpkg-source --no-check -x "$work/quellen/$dsc" "$work/src" > /dev/null
 
 configure_flags=(
   --without-mbrola --without-sonic --without-pcaudiolib --without-async
@@ -88,7 +88,7 @@ common=(
   -O3 "$here/phonemize.c" "$work/wasm/src/.libs/libespeak-ng.a"
   -I"$work/wasm/src/include"
   -s MODULARIZE=1 -s EXPORT_NAME=createPhonemizer -s ALLOW_MEMORY_GROWTH=1
-  -s "EXPORTED_FUNCTIONS=[_lr_init,_lr_set_voice,_lr_phonemize]"
+  -s "EXPORTED_FUNCTIONS=[_lr_init,_lr_set_voice,_lr_phonemize,_lr_phonemize_tie]"
   -s "EXPORTED_RUNTIME_METHODS=[ccall]"
 )
 
@@ -114,6 +114,11 @@ grep -q "\"package_uuid\":\"$uuid\"" "$work/web/lernraum-phonemizer.js"
 
 echo "== Lautschrift prüfen"
 node "$here/check.mjs" "$work/node/p.cjs"
+# Für den Abgleich mit der KittenTTS-Pipeline (parity.mjs) die Node-Variante behalten.
+if [ -n "${LERNRAUM_PHONEMIZER_NODE_OUT:-}" ]; then
+  mkdir -p "$LERNRAUM_PHONEMIZER_NODE_OUT"
+  cp "$work/node/p.cjs" "$work/node/p.wasm" "$LERNRAUM_PHONEMIZER_NODE_OUT/"
+fi
 
 echo "== Ergebnis schreiben nach $out"
 mkdir -p "$out/quellen"

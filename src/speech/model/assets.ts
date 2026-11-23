@@ -56,8 +56,39 @@ async function verified(asset: SpeechAsset, buffer: ArrayBuffer) {
   );
 }
 
-/** Liefert die Bytes einer Datei: aus dem Cache oder geprüft aus dem Netz. */
-export async function loadAsset(asset: SpeechAsset): Promise<ArrayBuffer> {
+/** Liest eine Antwort und meldet dabei die geladenen Bytes. */
+async function readWithProgress(
+  response: Response,
+  onBytes: ((bytes: number) => void) | undefined,
+): Promise<ArrayBuffer> {
+  if (!onBytes || !response.body) return response.arrayBuffer();
+  const reader = response.body.getReader();
+  const parts: Uint8Array[] = [];
+  let length = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parts.push(value);
+    length += value.length;
+    onBytes(value.length);
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    bytes.set(part, offset);
+    offset += part.length;
+  }
+  return bytes.buffer;
+}
+
+/**
+ * Liefert die Bytes einer Datei: aus dem Cache oder geprüft aus dem Netz.
+ * `onBytes` meldet beim Laden aus dem Netz die neu geladenen Bytes.
+ */
+export async function loadAsset(
+  asset: SpeechAsset,
+  onBytes?: (bytes: number) => void,
+): Promise<ArrayBuffer> {
   const cache = await openCache();
   const key = cacheKey(asset, origin());
   const cached = await cache?.match(key);
@@ -68,7 +99,7 @@ export async function loadAsset(asset: SpeechAsset): Promise<ArrayBuffer> {
   }
   const response = await fetch(asset.path, { cache: "no-cache" });
   if (!response.ok) throw new Error(`Laden fehlgeschlagen: ${asset.path}`);
-  const buffer = await response.arrayBuffer();
+  const buffer = await readWithProgress(response, onBytes);
   if (!(await verified(asset, buffer))) throw new AssetIntegrityError(asset);
   try {
     await cache?.put(
@@ -122,6 +153,13 @@ export async function fetchManifestJson(
   }
   const cached = await cache?.match(key);
   return cached ? ((await cached.json()) as unknown) : null;
+}
+
+/** Entfernt einzelne Dateien aus dem Cache (z. B. eine Sprache). */
+export async function removeAssets(assets: SpeechAsset[]): Promise<void> {
+  const cache = await openCache();
+  if (!cache) return;
+  for (const asset of assets) await cache.delete(cacheKey(asset, origin()));
 }
 
 /** Entfernt Einträge, die das aktuelle Manifest nicht mehr nennt. */

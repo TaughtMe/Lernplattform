@@ -2,10 +2,20 @@
  * Sprachmodell im Hauptthread (Plan 3.3/3.4): Manifest, Worker, Audio-Cache
  * und Wiedergabe. Die Erzeugung läuft im Worker.
  */
-import { fetchManifestJson, pruneSpeechCache } from "./assets";
 import {
+  fetchManifestJson,
+  isAssetCached,
+  pruneSpeechCache,
+  removeAssets,
+} from "./assets";
+import {
+  assetsFor,
+  baseLanguage,
+  languageAssets,
   languageEntry,
   parseSpeechManifest,
+  resolveVoice,
+  type SpeechLanguage,
   type SpeechManifest,
 } from "./manifest";
 import {
@@ -15,6 +25,7 @@ import {
   unlockAudio,
 } from "./player";
 import type { WorkerRequest, WorkerResponse } from "./protocol";
+import { preferredVoice } from "./voice-preferences";
 
 /** Erstes Laden (bis 40 MB) dauert; danach kommt es aus dem Cache. */
 export const MODEL_PREPARE_TIMEOUT_MS = 30_000;
@@ -23,6 +34,7 @@ const AUDIO_CACHE_SIZE = 40;
 
 type Pending = {
   resolve: (response: WorkerResponse) => void;
+  onProgress?: ((loaded: number, total: number) => void) | undefined;
 };
 
 let manifest: Promise<SpeechManifest | null> | undefined;
@@ -91,9 +103,14 @@ function getWorker(): Worker {
     worker.addEventListener(
       "message",
       (event: MessageEvent<WorkerResponse>) => {
-        const waiting = pending.get(event.data.id);
-        pending.delete(event.data.id);
-        waiting?.resolve(event.data);
+        const message = event.data;
+        const waiting = pending.get(message.id);
+        if (message.type === "progress") {
+          waiting?.onProgress?.(message.loaded, message.total);
+          return;
+        }
+        pending.delete(message.id);
+        waiting?.resolve(message);
       },
     );
     worker.addEventListener("error", () => {
@@ -114,10 +131,13 @@ type RequestBody =
   | Omit<Extract<WorkerRequest, { type: "load" }>, "id">
   | Omit<Extract<WorkerRequest, { type: "synthesize" }>, "id">;
 
-function send(request: RequestBody): Promise<WorkerResponse> {
+function send(
+  request: RequestBody,
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<WorkerResponse> {
   const id = nextId++;
   return new Promise<WorkerResponse>((resolve) => {
-    pending.set(id, { resolve });
+    pending.set(id, { resolve, onProgress });
     getWorker().postMessage({ ...request, id } as WorkerRequest);
   });
 }
@@ -140,16 +160,19 @@ function withTimeout<T>(
  * Lädt Modell und Stimmen für eine Sprache (im Hintergrund, ohne Geste).
  * `true`, wenn das Modell danach bereit ist.
  */
-export function preloadModel(lang: string): Promise<boolean> {
+export function preloadModel(
+  lang: string,
+  onProgress?: (fraction: number) => void,
+): Promise<boolean> {
   return loadModelManifest().then((current) => {
     const entry = languageEntry(current, lang);
     if (!current || !entry) return false;
     const key = entry.espeak;
     let promise = loaded.get(key);
     if (!promise) {
-      promise = send({ type: "load", manifest: current, lang }).then(
-        (response) => response.type === "loaded",
-      );
+      promise = send({ type: "load", manifest: current, lang }, (done, total) =>
+        onProgress?.(total > 0 ? Math.min(1, done / total) : 1),
+      ).then((response) => response.type === "loaded");
       loaded.set(key, promise);
       void promise.then((ok) => {
         if (!ok) loaded.delete(key);
@@ -237,7 +260,7 @@ export async function speakWithModel(
     text,
     lang,
     options.speed ?? 1,
-    options.voice,
+    options.voice ?? preferredVoice(baseLanguage(lang)) ?? undefined,
   ).catch(() => null);
   if (!audio) return false;
   // Inzwischen wurde etwas Neues angefordert oder gestoppt.
@@ -250,4 +273,78 @@ export async function speakWithModel(
 export function stopModel() {
   generation += 1;
   stopAudio();
+}
+
+export type LanguageStatus = "installed" | "missing" | "unavailable";
+
+/** Sprachen mit Modell, z. B. für die Einstellungen. */
+export async function modelLanguages(): Promise<
+  { code: string; entry: SpeechLanguage }[]
+> {
+  const current = await loadModelManifest();
+  return Object.entries(current?.languages ?? {}).map(([code, entry]) => ({
+    code,
+    entry,
+  }));
+}
+
+/** Ist eine Sprache vollständig auf dem Gerät (also auch offline nutzbar)? */
+export async function languageStatus(lang: string): Promise<LanguageStatus> {
+  const current = await loadModelManifest();
+  const entry = languageEntry(current, lang);
+  if (!current || !entry) return "unavailable";
+  for (const asset of assetsFor(current, entry)) {
+    if (!(await isAssetCached(asset))) return "missing";
+  }
+  return "installed";
+}
+
+/**
+ * Installiert eine Sprache (lädt und prüft alle Dateien in den eigenen Cache).
+ * `onProgress` meldet den Anteil von 0 bis 1.
+ */
+export function installLanguage(
+  lang: string,
+  onProgress?: (fraction: number) => void,
+): Promise<boolean> {
+  return preloadModel(lang, onProgress);
+}
+
+/** Entfernt Modell und Stimmen einer Sprache vom Gerät. */
+export async function removeLanguage(lang: string): Promise<void> {
+  const current = await loadModelManifest();
+  const entry = languageEntry(current, lang);
+  if (!entry) return;
+  loaded.delete(entry.espeak);
+  audioCache.clear();
+  await removeAssets(languageAssets(entry));
+}
+
+/** Kurze Hörprobe einer Stimme in ihrer Sprache. */
+export async function speakSample(
+  lang: string,
+  voice: string,
+): Promise<boolean> {
+  unlockAudio();
+  const current = await loadModelManifest();
+  const entry = languageEntry(current, lang);
+  if (!entry) return false;
+  const chosen = resolveVoice(entry, voice);
+  const text =
+    baseLanguage(lang) === "de"
+      ? `Hallo, ich bin ${chosen.label}. So klinge ich beim Vorlesen.`
+      : `Hello, I am ${chosen.label}. This is how I sound when I read aloud.`;
+  return speakWithModel(text, lang, { voice: chosen.id });
+}
+
+/** Bytes, die für eine Sprache noch geladen werden müssen. */
+export async function missingBytes(lang: string): Promise<number> {
+  const current = await loadModelManifest();
+  const entry = languageEntry(current, lang);
+  if (!current || !entry) return 0;
+  let bytes = 0;
+  for (const asset of assetsFor(current, entry)) {
+    if (!(await isAssetCached(asset))) bytes += asset.size;
+  }
+  return bytes;
 }

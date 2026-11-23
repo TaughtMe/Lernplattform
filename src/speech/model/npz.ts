@@ -111,18 +111,3 @@ export async function parseNpz(
   }
   return table;
 }
-
-/**
- * Stilvektor einer Stimme: Bei einer Tabelle `[N, D]` die Zeile
- * `min(Tokenzahl, N − 1)` wie in KittenTTS, sonst der ganze Vektor.
- */
-export function styleFor(
-  voice: { data: Float32Array; shape: number[] },
-  tokenCount: number,
-): Float32Array {
-  if (voice.shape.length < 2) return voice.data;
-  const rows = voice.shape[0] ?? 1;
-  const width = voice.data.length / rows;
-  const row = Math.min(tokenCount, rows - 1);
-  return voice.data.slice(row * width, (row + 1) * width);
-}

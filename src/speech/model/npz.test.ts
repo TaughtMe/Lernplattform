@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseNpy, parseNpz, styleFor } from "./npz";
+import { parseNpy, parseNpz } from "./npz";
 
 const noInflate = () => Promise.reject(new Error("nicht erwartet"));
 
@@ -16,17 +16,17 @@ function npy(header: string, values: Float32Array) {
 }
 
 describe("Stimmen-Datei (voices.npz)", () => {
-  it("liest die Test-Stimme aus e2e/speech-fixtures", async () => {
+  it("liest die mitgelieferte deutsche Stimmen-Datei", async () => {
     const file = await readFile(
-      join(process.cwd(), "e2e/speech-fixtures/voices.npz"),
+      join(process.cwd(), "public/speech/kitten2/de/voices.npz"),
     );
     const table = await parseNpz(
       file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength),
       noInflate,
     );
-    const voice = table["test-voice"];
-    expect(voice?.shape).toEqual([3, 256]);
-    expect(voice?.data[256]).toBeCloseTo(1 / 256);
+    expect(Object.keys(table)).toEqual(["anna", "mia", "lukas", "paul"]);
+    expect(table["anna"]?.shape).toEqual([510, 256]);
+    expect(table["anna"]?.data).toHaveLength(510 * 256);
   });
 
   it("liest ein Float32-Array mit Form", () => {
@@ -57,14 +57,5 @@ describe("Stimmen-Datei (voices.npz)", () => {
         ),
       ),
     ).toThrow(/Fortran/);
-  });
-
-  it("wählt die Stilzeile min(Tokenzahl, N − 1)", () => {
-    const voice = { data: Float32Array.of(0, 0, 1, 1, 2, 2), shape: [3, 2] };
-    expect(Array.from(styleFor(voice, 1))).toEqual([1, 1]);
-    expect(Array.from(styleFor(voice, 40))).toEqual([2, 2]);
-    expect(styleFor({ data: Float32Array.of(5, 6), shape: [2] }, 9)).toEqual(
-      Float32Array.of(5, 6),
-    );
   });
 });

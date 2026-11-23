@@ -1,60 +1,20 @@
-import { readFile } from "node:fs/promises";
-import { SYMBOLS } from "../src/speech/model/symbols";
+import { analyzeAccessibility } from "./accessibility-helpers";
 import { expect, test, type Page } from "./fixtures";
 import { createBox } from "./wortspeicher-helpers";
 
 /**
- * Vorlesen mit dem Sprachmodell (docs/umsetzungsplan-sprachmodell.md, 5).
- * Ein winziges Test-Modell (e2e/speech-fixtures) gibt die Token-IDs als Audio
- * zurück. So prüft der Test die ganze Kette im Browser: Manifest, Cache mit
- * Prüfsumme, Phonemizer (eSpeak NG), Tokenizer, Stilzeile, ONNX Runtime im
- * Worker und Wiedergabe. Die Gerätestimme hat keine deutsche Stimme.
+ * Vorlesen mit dem Sprachmodell (docs/umsetzungsplan-sprachmodell.md, 5) mit
+ * dem echten KittenTTS 2 Nano aus public/speech/kitten2. Geprüft wird die
+ * ganze Kette im Browser: Manifest, Cache mit Prüfsumme, eSpeak NG,
+ * Frontend, ONNX Runtime im Worker und Wiedergabe. Die Gerätestimme hat keine
+ * deutsche Stimme. Das Modell rauscht (RandomNormalLike), die Länge ist aber
+ * fest: „Rad“ mit Anna und Tempo 0,9 ergibt 34 800 Samples, gemessen mit der
+ * Original-Pipeline (Python, ONNX Runtime, kittenml `_chunk`).
  */
-const fixtures = new URL("./speech-fixtures/", import.meta.url);
-const SPEED = 0.9; // SPEECH_RATE × speedPrior 1
-const STYLE_ROW = 2; // min(Tokenzahl, 3 − 1); Zeile r summiert sich zu r
+const EXPECTED_SAMPLES = 34_800;
 
-async function sha256(bytes: Buffer) {
-  const { createHash } = await import("node:crypto");
-  return createHash("sha256").update(bytes).digest("hex");
-}
-
-async function serveTestModel(page: Page) {
-  const manifest = JSON.parse(
-    await readFile(
-      new URL("../public/speech/manifest.json", import.meta.url),
-      "utf8",
-    ),
-  ) as { languages: Record<string, unknown> };
-  const model = await readFile(new URL("model.onnx", fixtures));
-  const voices = await readFile(new URL("voices.npz", fixtures));
-  manifest.languages = {
-    de: {
-      espeak: "de",
-      model: {
-        path: "/speech/test/model.onnx",
-        sha256: await sha256(model),
-        size: model.length,
-      },
-      voices: {
-        path: "/speech/test/voices.npz",
-        sha256: await sha256(voices),
-        size: voices.length,
-      },
-      trimSamples: 0,
-      defaultVoice: "test-voice",
-      voiceList: [{ id: "test-voice", label: "Test" }],
-    },
-  };
-  await page.route("**/speech/manifest.json", (route) =>
-    route.fulfill({ json: manifest }),
-  );
-  await page.route("**/speech/test/model.onnx", (route) =>
-    route.fulfill({ body: model, contentType: "application/octet-stream" }),
-  );
-  await page.route("**/speech/test/voices.npz", (route) =>
-    route.fulfill({ body: voices, contentType: "application/octet-stream" }),
-  );
+async function expectAccessible(page: Page) {
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
 }
 
 /** Gerätestimme ohne Stimmen; Wiedergabe des Modells wird mitgeschrieben. */
@@ -104,15 +64,10 @@ async function recordSpeech(page: Page) {
   });
 }
 
-function expectedTokens(phonemes: string) {
-  const ids = [...phonemes].map((symbol) => SYMBOLS.lastIndexOf(symbol));
-  return [0, ...ids, 10, 0];
-}
-
 test("Stufe 6 liest mit dem Sprachmodell vor, ohne Gerätestimme", async ({
   page,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   // Fehler aus Seite und Worker erscheinen in der Meldung, falls nichts spielt.
   const problems: string[] = [];
   page.on("console", (message) => {
@@ -127,7 +82,6 @@ test("Stufe 6 liest mit dem Sprachmodell vor, ohne Gerätestimme", async ({
     ),
   );
   await recordSpeech(page);
-  await serveTestModel(page);
   await createBox(page, "Modellbox", ["Rad"]);
 
   await page.getByRole("button", { name: /^Modellbox/ }).click();
@@ -161,14 +115,50 @@ test("Stufe 6 liest mit dem Sprachmodell vor, ohne Gerätestimme", async ({
   const [played] = await page.evaluate(
     () => (window as unknown as { __played: number[][] }).__played,
   );
-  const decoded = (played ?? []).map((value) =>
-    Math.round((value - STYLE_ROW) / SPEED),
+  expect(played).toHaveLength(EXPECTED_SAMPLES);
+  const rms = Math.sqrt(
+    (played ?? []).reduce((sum, value) => sum + value * value, 0) /
+      Math.max(1, played?.length ?? 1),
   );
-  // „Rad“ → eSpeak „rˈɑːt“, Satzende „,“ (KittenTTS) als eigenes Token.
-  expect(decoded).toEqual(expectedTokens("rˈɑːt ,"));
+  // Hörbarer Ton, keine Stille.
+  expect(rms).toBeGreaterThan(0.03);
   expect(
     await page.evaluate(
       () => (window as unknown as { __spoken: string[] }).__spoken,
     ),
   ).toEqual([]);
+});
+
+test("Einstellungen: Stimme wählen, Englisch installieren, Probe hören", async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await recordSpeech(page);
+  await page.goto("/lernen/einstellungen");
+  const card = page.locator("section", {
+    has: page.getByRole("heading", { name: "Vorlesen" }),
+  });
+  await expect(card.getByLabel("Stimme für Englisch")).toBeVisible({
+    timeout: 30_000,
+  });
+  await card.getByLabel("Stimme für Englisch").selectOption("max");
+  await card.getByRole("button", { name: "Englisch installieren" }).click();
+  await expect(
+    card.getByRole("button", { name: "Englisch vom Gerät entfernen" }),
+  ).toBeVisible({ timeout: 120_000 });
+  expect(
+    await page.evaluate(() => localStorage.getItem("lernraum:vorlesestimme")),
+  ).toBe('{"en":"max"}');
+
+  await card.getByRole("button", { name: "Probe hören: Englisch" }).click();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () => (window as unknown as { __played: number[][] }).__played.length,
+        ),
+      { timeout: 60_000 },
+    )
+    .toBeGreaterThan(0);
+  await expectAccessible(page);
 });
