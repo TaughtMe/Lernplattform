@@ -19,7 +19,9 @@ emscripten_version="3.1.6"
 # Gleiche Eingaben, gleiche Ausgabe: feste Zeit, Sprache und Arbeitsordner.
 export SOURCE_DATE_EPOCH=1651276800
 export LC_ALL=C TZ=UTC
-work="/tmp/lernraum-phonemizer-build"
+# Der Arbeitsordner ist fest; LERNRAUM_PHONEMIZER_WORK nur zum Gegenprüfen
+# auf einem anderen Dateisystem.
+work="${LERNRAUM_PHONEMIZER_WORK:-/tmp/lernraum-phonemizer-build}"
 rm -rf "$work"
 mkdir -p "$work/quellen"
 trap 'rm -rf "$work"' EXIT
@@ -65,14 +67,21 @@ cp -a "$work/src" "$work/wasm"
 )
 
 echo "== Sprachdaten auswählen (de, en-US)"
+# Feste Reihenfolge: file_packager liest Ordner ungeordnet (os.walk), die
+# Reihenfolge hinge sonst vom Dateisystem ab. Darum jede Datei einzeln.
+data_files=(
+  de_dict en_dict intonations phondata phondata-manifest phonindex phontab
+  lang/gmw/de lang/gmw/en-US
+)
 data="$work/data/espeak-ng-data"
 mkdir -p "$data/lang/gmw"
-for file in de_dict en_dict intonations phondata phondata-manifest phonindex \
-  phontab; do
-  cp "$work/native/espeak-ng-data/$file" "$data/"
+preload=()
+embed=()
+for file in "${data_files[@]}"; do
+  cp "$work/native/espeak-ng-data/$file" "$data/$file"
+  preload+=(--preload-file "data/espeak-ng-data/$file@/espeak-ng-data/$file")
+  embed+=(--embed-file "data/espeak-ng-data/$file@/espeak-ng-data/$file")
 done
-cp "$work/native/espeak-ng-data/lang/gmw/de" \
-  "$work/native/espeak-ng-data/lang/gmw/en-US" "$data/lang/gmw/"
 find "$work/data" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
 
 common=(
@@ -88,10 +97,10 @@ mkdir -p "$work/web" "$work/node"
 (
   cd "$work"
   emcc "${common[@]}" -s EXPORT_ES6=1 -s ENVIRONMENT=web,worker \
-    --preload-file data/espeak-ng-data@/espeak-ng-data \
+    "${preload[@]}" \
     -o web/lernraum-phonemizer.js 2> /dev/null
   emcc "${common[@]}" -s ENVIRONMENT=node \
-    --embed-file data/espeak-ng-data@/espeak-ng-data -o node/p.cjs 2> /dev/null
+    "${embed[@]}" -o node/p.cjs 2> /dev/null
 )
 
 # Emscripten schreibt eine zufällige package_uuid in den Lade-Code. Sie wird

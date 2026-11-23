@@ -265,12 +265,13 @@ unterscheiden. Der Hörtest (7.2) deckt das ab.
 
 **Befunde aus der Umsetzung:**
 
-| Nr. | Befund                                                                                                                    | Folge                                                                          |
-| --- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| P11 | `onnxruntime-web/wasm` verweist statisch auf die 15-MB-WASM. Vite kopierte sie zusätzlich in Client- und Server-Bundle.   | Alias auf die Variante ohne Verweise (`ort.wasm.min.mjs`) in `vite.config.ts`. |
-| P12 | Der Dev-Server entdeckte ONNX Runtime erst beim ersten Worker und lud die Seite neu.                                      | `optimizeDeps.include` in `vite.config.ts`.                                    |
-| P13 | Im Dev-Modus ist die Vorschau immer an, also auch in allen Browser-Tests.                                                 | Ohne Modell für die Sprache bleibt alles wie vorher (2.2, 3.4).                |
-| P14 | `ReadAloudButton` ist derzeit nirgends eingebaut. Die eigentlichen Vorlese-Stellen sind LernBox, Live- und Stationsspiel. | Diese drei bekommen den Weg über das Modell nur in der Vorschau (3.4).         |
+| Nr. | Befund                                                                                                                      | Folge                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| P11 | `onnxruntime-web/wasm` verweist statisch auf die 15-MB-WASM. Vite kopierte sie zusätzlich in Client- und Server-Bundle.     | Alias auf die Variante ohne Verweise (`ort.wasm.min.mjs`) in `vite.config.ts`. |
+| P12 | Der Dev-Server entdeckte ONNX Runtime erst beim ersten Worker und lud die Seite neu.                                        | `optimizeDeps.include` in `vite.config.ts`.                                    |
+| P13 | Im Dev-Modus ist die Vorschau immer an, also auch in allen Browser-Tests.                                                   | Ohne Modell für die Sprache bleibt alles wie vorher (2.2, 3.4).                |
+| P14 | `ReadAloudButton` ist derzeit nirgends eingebaut. Die eigentlichen Vorlese-Stellen sind LernBox, Live- und Stationsspiel.   | Diese drei bekommen den Weg über das Modell nur in der Vorschau (3.4).         |
+| P15 | `file_packager` von Emscripten liest Ordner ungeordnet (`os.walk`). Auf dem CI-Runner entstand dadurch eine andere `.data`. | Jede Datei einzeln in fester Reihenfolge; ext4 und tmpfs geprüft.              |
 
 **Offen und blockiert:** Die Modell- und Stimmdateien (3.2) liegen nur im Prototyp. Ohne sie
 meldet die Engine „nicht verfügbar“, und das Vorlesen bleibt wie heute.
