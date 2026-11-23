@@ -19,6 +19,9 @@ const eslintConfig = defineConfig([
     "test-results/**",
     "next-env.d.ts",
     "docs/design/**",
+    // Erzeugter Fremdcode für das Vorlesen: Emscripten (eSpeak NG) und
+    // ONNX Runtime (docs/umsetzungsplan-sprachmodell.md).
+    "public/speech/**",
   ]),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

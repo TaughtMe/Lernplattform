@@ -52,6 +52,27 @@ export default function ImpressumPage() {
       </section>
 
       <section>
+        <h2>Software für das Vorlesen</h2>
+        <p>
+          In der Vorschau kann der Lernraum Texte mit einem Sprachmodell
+          (KittenTTS, Apache-2.0) auf dem Gerät vorlesen. Die Lautschrift
+          erzeugt eSpeak NG unter der GNU General Public License, Version 3. Der
+          Text verlässt dabei das Gerät nicht.
+        </p>
+        <p>
+          <a href="/speech/phonemizer/HINWEISE.md">Herkunft und Lizenzen</a>
+          {" · "}
+          <a href="/speech/phonemizer/LIZENZ-GPL-3.0.txt">GPL-3.0</a>
+          {" · "}
+          <a href="/speech/phonemizer/quellen/espeak-ng_1.51+dfsg.orig.tar.gz">
+            Quellen von eSpeak NG
+          </a>
+          {" · "}
+          <a href="/speech/phonemizer/quellen/build.sh">Build-Skript</a>
+        </p>
+      </section>
+
+      <section>
         <h2>Hinweis zum Angebot</h2>
         <p>
           Der Lernraum ist ein Bildungsprojekt in Entwicklung. Trotz

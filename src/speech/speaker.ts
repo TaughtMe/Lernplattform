@@ -1,3 +1,13 @@
+import {
+  isModelAvailable,
+  loadModelManifest,
+  prepareModel,
+  preloadModel,
+  speakWithModel,
+  stopModel,
+} from "./model/model-speaker";
+import { unlockAudio } from "./model/player";
+import { speechRoutes } from "./model/route";
 import { normalizeSpeechLang, pickVoice } from "./voices";
 
 /** Gemeinsames Tempo für alle Stellen (Vorlese-Plan 3.1); kalibrierbar. */
@@ -83,9 +93,43 @@ export function preloadVoices(): Promise<SpeechSynthesisVoice[]> {
   return preloading;
 }
 
+/**
+ * Sprachmodell im Browser (Plan `docs/umsetzungsplan-sprachmodell.md`): nur
+ * mit der Vorschau-Freigabe „sprachmodell“. Ohne diese Option bleibt alles wie
+ * vor dem Plan.
+ */
+export type ModelOption = {
+  /** Freigabe `sprachmodell` ist sichtbar. */
+  model?: boolean;
+};
+
+/**
+ * Lädt das Manifest des Sprachmodells und danach im Hintergrund das Modell
+ * selbst. Das Ergebnis kommt, sobald bekannt ist, ob es ein Modell gibt.
+ */
+export async function preloadModelSpeech(lang: string): Promise<boolean> {
+  const manifest = await loadModelManifest();
+  const available = manifest !== null && isModelAvailable(lang);
+  if (available) void preloadModel(lang);
+  return available;
+}
+
 /** Gibt es auf diesem Gerät (nach `preloadVoices`) eine passende Stimme? */
-export function hasVoiceFor(lang: string): boolean {
+export function hasVoiceFor(lang: string, options: ModelOption = {}): boolean {
+  if (options.model && isModelAvailable(lang)) return true;
   return pickVoice(readVoices(), lang) !== null;
+}
+
+/** Die Optionen ohne `model`, für den Weg über die Gerätestimme. */
+function systemOptions(
+  options: SpeakOptions,
+  localOnly: boolean,
+): SpeakOptions {
+  const result: SpeakOptions = {};
+  if (localOnly) result.localOnly = true;
+  if (options.rate !== undefined) result.rate = options.rate;
+  if (options.voiceURI !== undefined) result.voiceURI = options.voiceURI;
+  return result;
 }
 
 /** Nur Stimmen, die auf dem Gerät laufen: Der Text verlässt es nicht (B-012). */
@@ -93,8 +137,12 @@ function localVoices(): SpeechSynthesisVoice[] {
   return readVoices().filter((voice) => voice.localService);
 }
 
-/** Gibt es eine passende Stimme, die auf dem Gerät läuft? */
-export function hasLocalVoiceFor(lang: string): boolean {
+/** Gibt es eine passende Stimme, die auf dem Gerät läuft (auch das Modell)? */
+export function hasLocalVoiceFor(
+  lang: string,
+  options: ModelOption = {},
+): boolean {
+  if (options.model && isModelAvailable(lang)) return true;
   return pickVoice(localVoices(), lang) !== null;
 }
 
@@ -130,7 +178,7 @@ function utter(
   });
 }
 
-export type SpeakOptions = {
+export type SpeakOptions = ModelOption & {
   rate?: number;
   /** Gespeicherte Wunschstimme (Vorlese-Plan 3.4). */
   voiceURI?: string | null;
@@ -152,9 +200,11 @@ export async function speak(
   lang: string,
   options: SpeakOptions = {},
 ): Promise<void> {
+  if (options.model) return speakPreferringModel(text, lang, options);
   const speech = synth();
   if (!speech) return;
   const mine = ++generation;
+  stopModel();
   let voices = readVoices();
   if (voices.length === 0) {
     voices = await Promise.race([
@@ -177,10 +227,56 @@ export async function speak(
   });
 }
 
+/**
+ * Vorschau „sprachmodell“ (Plan 2.2): Gibt es ein Modell für die Sprache,
+ * spricht es; fällt es aus, nur eine Stimme, die auf dem Gerät läuft. Ohne
+ * Modell bleibt alles wie vor dem Plan.
+ */
+async function speakPreferringModel(
+  text: string,
+  lang: string,
+  options: SpeakOptions,
+): Promise<void> {
+  const mine = ++generation;
+  // Ton noch in der Geste freigeben, vor dem ersten `await` (iOS): LernBox
+  // und Laufdiktat rufen `speak` direkt im Klick auf.
+  unlockAudio();
+  await loadModelManifest();
+  if (mine !== generation) return;
+  if (!isModelAvailable(lang)) {
+    return speak(
+      text,
+      lang,
+      systemOptions(options, options.localOnly === true),
+    );
+  }
+  synth()?.cancel();
+  const routes = speechRoutes({
+    modelAllowed: true,
+    modelAvailable: true,
+    localSystemVoice: hasLocalVoiceFor(lang),
+    anySystemVoice: hasVoiceFor(lang),
+    localOnly: true,
+  });
+  for (const route of routes) {
+    if (mine !== generation) return;
+    if (route === "model") {
+      const spoken = await speakWithModel(text, lang, {
+        speed: options.rate ?? SPEECH_RATE,
+      });
+      if (spoken) return;
+    } else {
+      await speak(text, lang, systemOptions(options, true));
+      return;
+    }
+  }
+}
+
 /** Beendet eine laufende Ausgabe (z. B. beim Verlassen der Übung). */
 export function stopSpeaking() {
   generation += 1;
   synth()?.cancel();
+  stopModel();
 }
 
 /** Wartet bis zu `timeoutMs` auf eine passende Stimme. */
@@ -218,8 +314,22 @@ async function waitForVoice(
  */
 export async function prepareSpeech(
   lang: string,
-  options: { timeoutMs?: number; warmupMs?: number } = {},
+  options: ModelOption & { timeoutMs?: number; warmupMs?: number } = {},
 ): Promise<SpeechReadiness> {
+  let localOnly = false;
+  if (options.model) {
+    // Ton noch in der Geste freigeben, vor dem ersten `await` (iOS).
+    unlockAudio();
+    await loadModelManifest();
+    if (isModelAvailable(lang)) {
+      if (await prepareModel(lang)) return "ready";
+      // Rückfall: nur Stimmen, die auf dem Gerät laufen (B-012).
+      localOnly = true;
+      if (!synth()) return "unavailable";
+      await preloadVoices();
+      if (!hasLocalVoiceFor(lang)) return "no-voice";
+    }
+  }
   const speech = synth();
   if (!speech) return "unavailable";
   const timeoutMs = options.timeoutMs ?? PREPARE_TIMEOUT_MS;
@@ -227,8 +337,9 @@ export async function prepareSpeech(
 
   // Schnellweg: Ist die Stimme schon bekannt, beginnt das Aufwärmen ohne Umweg
   // noch in der Nutzergeste.
-  const voice =
-    pickVoice(readVoices(), lang) ?? (await waitForVoice(lang, timeoutMs));
+  const voice = localOnly
+    ? pickVoice(localVoices(), lang)
+    : (pickVoice(readVoices(), lang) ?? (await waitForVoice(lang, timeoutMs)));
   if (!voice) return "no-voice";
 
   if (speech.speaking || speech.pending) {

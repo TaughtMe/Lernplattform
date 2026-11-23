@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   hasLocalVoiceFor,
+  preloadModelSpeech,
   preloadVoices,
   speak,
   stopSpeaking,
 } from "../../src/speech/speaker";
+import { useAreaVisible } from "../release/release-context";
 import { Icon } from "./icons";
 import { Button } from "./primitives";
 
@@ -14,7 +16,9 @@ import { Button } from "./primitives";
  * Knopf „Vorlesen“ für Anleitungen (Audit C-007): Kinder, die noch nicht
  * flüssig lesen, hören den Text. Es spricht nur eine Stimme, die auf dem Gerät
  * läuft (B-012); gibt es keine, bleibt der Knopf weg und die Seite sieht aus
- * wie vorher. Ein zweiter Klick beendet das Vorlesen.
+ * wie vorher. Ein zweiter Klick beendet das Vorlesen. Mit der Vorschau
+ * „sprachmodell“ spricht zuerst das Sprachmodell im Browser
+ * (docs/umsetzungsplan-sprachmodell.md).
  */
 export function ReadAloudButton({
   text,
@@ -29,6 +33,7 @@ export function ReadAloudButton({
   label?: string;
   className?: string;
 }) {
+  const model = useAreaVisible("sprachmodell");
   const [hasVoice, setHasVoice] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   /** Nummer des laufenden Vorlesens, 0 wenn keines läuft. */
@@ -38,9 +43,14 @@ export function ReadAloudButton({
   useEffect(() => {
     let alive = true;
     const check = () => {
-      if (alive) setHasVoice(hasLocalVoiceFor(lang));
+      if (!alive) return;
+      // Ohne Vorschau dieselben Aufrufe wie vor dem Sprachmodell.
+      setHasVoice(
+        model ? hasLocalVoiceFor(lang, { model }) : hasLocalVoiceFor(lang),
+      );
     };
     void preloadVoices().then(check);
+    if (model) void preloadModelSpeech(lang).then(check);
     // Eine Stimme, die erst später geladen wird, schaltet den Knopf frei.
     const synth =
       typeof window === "undefined" ? undefined : window.speechSynthesis;
@@ -49,7 +59,7 @@ export function ReadAloudButton({
       alive = false;
       synth?.removeEventListener?.("voiceschanged", check);
     };
-  }, [lang]);
+  }, [lang, model]);
 
   // Wer die Seite verlässt, während der Knopf spricht, stoppt die Ausgabe.
   useEffect(
@@ -70,14 +80,18 @@ export function ReadAloudButton({
     active.current = mine;
     setSpeaking(true);
     try {
-      await speak(text, lang, { localOnly: true });
+      await speak(
+        text,
+        lang,
+        model ? { localOnly: true, model } : { localOnly: true },
+      );
     } finally {
       if (active.current === mine) {
         active.current = 0;
         setSpeaking(false);
       }
     }
-  }, [lang, speaking, text]);
+  }, [lang, model, speaking, text]);
 
   if (!hasVoice) return null;
 

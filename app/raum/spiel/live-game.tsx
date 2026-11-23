@@ -8,6 +8,7 @@ import {
   speedPoints,
 } from "../../../src/domain/live-game-feedback";
 import { mathTaskFromPrompt } from "../../../src/domain/math-practice";
+import { speak } from "../../../src/speech/speaker";
 import {
   buildRunningDictationHint,
   computeRunningDictationStars,
@@ -183,6 +184,8 @@ export function LiveRunningDictationGame({
   const { result: wordStore, transfer: transferWordStore } =
     useLiveWordStoreTransfer();
   const wordStoreVisible = useAreaVisible("wortspeicher");
+  // Vorschau: Vorlesen mit dem Sprachmodell (docs/umsetzungsplan-sprachmodell.md).
+  const modelSpeech = useAreaVisible("sprachmodell");
   const startedAt = useRef(0);
   const lastAttackId = useRef(0);
   const mathSaving = useRef(false);
@@ -617,17 +620,27 @@ export function LiveRunningDictationGame({
     index,
   );
 
+  function spokenPrompt(text: string) {
+    return kind === "math"
+      ? text
+          .replace(/\+/g, " plus ")
+          .replace(/[−-]/g, " minus ")
+          .replace(/[·*×]/g, " mal ")
+          .replace(/[:/÷]/g, " geteilt durch ")
+      : text;
+  }
+
   function readPromptAloud() {
+    if (modelSpeech && prompt) {
+      void speak(spokenPrompt(prompt), activeWord.promptLang ?? "de-DE", {
+        model: true,
+      });
+      setPeeks((value) => value + 1);
+      return;
+    }
     if (!("speechSynthesis" in window) || !prompt) return;
     window.speechSynthesis.cancel();
-    const spoken =
-      kind === "math"
-        ? prompt
-            .replace(/\+/g, " plus ")
-            .replace(/[−-]/g, " minus ")
-            .replace(/[·*×]/g, " mal ")
-            .replace(/[:/÷]/g, " geteilt durch ")
-        : prompt;
+    const spoken = spokenPrompt(prompt);
     const utterance = new SpeechSynthesisUtterance(spoken);
     utterance.lang = activeWord.promptLang ?? "de-DE";
     window.speechSynthesis.speak(utterance);

@@ -250,7 +250,29 @@ test("ships the update-aware service worker", async () => {
     worker,
     /if \(response\.ok\) await cache\.put\(request, response\.clone\(\)\)/,
   );
+  // Sprachmodell-Dateien liegen in einem eigenen Cache (sprachmodell-v1).
+  assert.match(worker, /url\.pathname\.startsWith\("\/speech\/"\)/);
   assert.deepEqual(JSON.parse(version).version, APP_VERSION);
+});
+
+test("ships a valid speech manifest with checked phonemizer files", async () => {
+  const manifest = JSON.parse(
+    await readFile(
+      new URL("../public/speech/manifest.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.equal(manifest.version, 1);
+  for (const asset of [
+    manifest.ort.wasm,
+    manifest.ort.mjs,
+    manifest.phonemizer.js,
+    manifest.phonemizer.wasm,
+    manifest.phonemizer.data,
+  ]) {
+    assert.match(asset.path, /^\/speech\//);
+    assert.match(asset.sha256, /^[0-9a-f]{64}$/);
+  }
 });
 
 test("keeps the versioned learning contract framework-independent", async () => {
