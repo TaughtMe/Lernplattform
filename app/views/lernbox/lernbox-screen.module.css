@@ -1818,7 +1818,8 @@
   font-size: 34px;
   font-weight: 600;
 }
-.result .cta {
+.result .cta,
+.studyBody > .cta {
   flex: none;
   align-self: stretch;
 }
