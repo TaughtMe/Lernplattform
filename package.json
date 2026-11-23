@@ -7,9 +7,9 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "predev": "node scripts/generate-service-worker.mjs",
+    "predev": "node scripts/generate-service-worker.mjs && node scripts/generate-speech-assets.mjs",
     "dev": "vinext dev",
-    "prebuild": "node scripts/generate-service-worker.mjs",
+    "prebuild": "node scripts/generate-service-worker.mjs && node scripts/generate-speech-assets.mjs",
     "build": "vinext build",
     "start": "vinext start",
     "format": "prettier --write app src e2e tests docs *.json *.ts *.mjs",
@@ -37,6 +37,7 @@
     "@supabase/supabase-js": "2.117.2",
     "dexie": "4.4.6",
     "katex": "^0.19.0",
+    "onnxruntime-web": "1.31.1",
     "qr-scanner": "1.4.2",
     "qrcode.react": "4.2.0",
     "react": "19.3.0",

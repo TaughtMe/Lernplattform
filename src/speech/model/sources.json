@@ -1,0 +1,4 @@
+{
+  "hinweis": "Herkunft der Sprachmodelle (docs/umsetzungsplan-sprachmodell.md, 3.2). Jede Sprache braucht model und voices unter public/speech/kitten/. scripts/generate-speech-assets.mjs schreibt daraus public/speech/manifest.json.",
+  "languages": {}
+}

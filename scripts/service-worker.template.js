@@ -53,7 +53,10 @@ self.addEventListener("fetch", (event) => {
     url.pathname === "/sw.js" ||
     url.pathname === "/version.json" ||
     url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/callback")
+    url.pathname.startsWith("/callback") ||
+    // Sprachmodell-Dateien verwaltet src/speech/model/assets.ts in einem
+    // eigenen Cache, der Updates übersteht (docs/umsetzungsplan-sprachmodell.md).
+    url.pathname.startsWith("/speech/")
   ) {
     return;
   }

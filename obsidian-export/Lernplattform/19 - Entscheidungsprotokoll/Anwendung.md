@@ -681,3 +681,15 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Begründung:** Die Plattform läuft als Beta. Die Bereiche sind gebaut und getestet; ihr Nutzen zeigt sich erst im Unterricht. Google Drive funktioniert im Abgleich noch nicht und soll nicht als Wahl erscheinen.
 
 **Bekannte Grenzen:** Die pädagogische Abstimmung der Diagnostik (Stufenfolgen des Startpunkts, Regel „sicher“, Welle 3, D2) steht noch aus und wird in der Beta beobachtet. Für den Gastmodus bleibt das Restrisiko SR-004 akzeptiert. Mit `LERNRAUM_FREIGABE` lässt sich jeder Bereich wieder auf `vorschau` stellen.
+
+## 60. Vorlesen mit Sprachmodell im Browser (Vorschau) – 23. November 2026
+
+**Beschlossen:** Auf Wunsch der projektverantwortlichen Lehrkraft wird „Weg 2“ gebaut: Das Sprachmodell KittenTTS 2 Nano liest auf dem Gerät vor, zunächst nur mit Vorschau (Freigabebereich `sprachmodell`, Plan `docs/umsetzungsplan-sprachmodell.md`). Gibt es ein Modell für die Sprache, spricht zuerst das Modell, danach nur eine Stimme, die auf dem Gerät läuft. Ohne Modell bleibt das Vorlesen wie bisher. Die Lautschrift kommt aus einem eigenen Build von eSpeak NG 1.51 (Ubuntu-Quellpaket, Emscripten 3.1.6, nur Deutsch und US-Englisch). Der Build ist reproduzierbar und liegt mit GPL-Text, Quellen und Prüfsummen unter `public/speech/phonemizer/`. Die Dateien landen in einem eigenen Cache (`sprachmodell-v1`), der App-Updates übersteht.
+
+**Zurückgenommen:** `docs/umsetzungsplan-vorlesen.md`, Abschnitt 2: „Keine Cloud-Sprachausgabe, keine Sprachmodelle im Browser“. Der Teil „keine Cloud-Sprachausgabe“ gilt weiter.
+
+**Begründung:** Wegen B-012 fallen in Edge und Chrome am Desktop die guten Netzwerkstimmen weg. Ohne lokale deutsche Stimme gibt es dann keinen Vorlese-Knopf und keine Stufe 6. Der Prototyp der Lehrkraft hat Deutsch und Englisch im Browser gezeigt, auch offline und auf iPad und Android.
+
+**Nicht wieder einbauen:** Kein Phonemizer-Paket ohne festgelegte Quellen und ohne Lizenzdatei, wie `@diffusionstudio/piper-wasm` (nennt MIT, enthält GPL-3-Code, Quellen mit `git clone --depth 1`). Keine Netzwerkstimme als Rückfall, wenn das Modell ausfällt. Keine Sprachmodell-Dateien im App-Vorabcache oder in Caches mit dem Präfix `lernraum-`, denn die löscht der Service Worker bei jedem Update.
+
+**Bekannte Grenzen:** Modell- und Stimmdateien fehlen im Repository noch (`src/speech/model/sources.json` ist leer), bis sie aus dem Prototyp übernommen sind. Bis dahin ändert die Vorschau nichts. Freigabe für alle erst nach Lizenzklärung, Hörtest mit echten Wortlisten, Offline-Test auf dem iPad und Messung auf dem ältesten Schulgerät (Plan, Abschnitt 7). Das erste Laden umfasst etwa 15 MB ONNX Runtime, 1,3 MB Phonemizer und das Modell.

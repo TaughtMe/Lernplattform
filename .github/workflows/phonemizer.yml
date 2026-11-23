@@ -1,0 +1,44 @@
+name: Phonemizer
+
+# Baut den Phonemizer für das Vorlesen aus den festgelegten Quellen neu und
+# prüft, dass er byte-gleich zu den eingecheckten Dateien ist
+# (docs/umsetzungsplan-sprachmodell.md, 3.1).
+on:
+  pull_request:
+    paths:
+      - "scripts/phonemizer/**"
+      - "public/speech/phonemizer/**"
+      - ".github/workflows/phonemizer.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/phonemizer/**"
+      - "public/speech/phonemizer/**"
+
+permissions:
+  contents: read
+
+jobs:
+  reproduzieren:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Werkzeuge installieren
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y emscripten=3.1.6~dfsg-7 build-essential \
+            autoconf automake libtool pkg-config dpkg-dev curl
+      - name: Neu bauen
+        run: bash scripts/phonemizer/build.sh "$RUNNER_TEMP/phonemizer"
+      - name: Mit eingecheckten Dateien vergleichen
+        run: |
+          diff public/speech/phonemizer/SHA256SUMS "$RUNNER_TEMP/phonemizer/SHA256SUMS"
+          (cd public/speech/phonemizer && sha256sum --check --strict SHA256SUMS)
+          for file in scripts/phonemizer/build.sh scripts/phonemizer/phonemize.c \
+            scripts/phonemizer/check.mjs scripts/phonemizer/sources.sha256; do
+            cmp "$file" "public/speech/phonemizer/quellen/$(basename "$file")"
+          done

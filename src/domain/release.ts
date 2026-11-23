@@ -131,6 +131,14 @@ export const RELEASE_AREAS = {
     routes: ["/lernen/startpunkt", "/lernen/training", "/lernen/profil"],
     stage: "frei",
   },
+  sprachmodell: {
+    label: "Vorlesen mit dem Sprachmodell im Browser",
+    // Kein eigener Pfad: schaltet das Sprachmodell (KittenTTS) für „Vorlesen“
+    // und Stufe 6 (docs/umsetzungsplan-sprachmodell.md, Entscheidung 60).
+    // Ohne Freigabe nur Stimmen des Geräts wie bisher.
+    routes: [],
+    stage: "vorschau",
+  },
   gastmodus: {
     label: "Gastmodus (geteilte Geräte)",
     // Schaltet die Einstiegsseite /gast und den Knopf „Gast-QR“ der Lehrkraft.

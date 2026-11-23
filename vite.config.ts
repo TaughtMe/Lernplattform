@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json" with { type: "json" };
@@ -67,6 +68,26 @@ process.env["MINIFLARE_REGISTRY_PATH"] ??= ".wrangler/registry";
 const { cloudflare } = await import("@cloudflare/vite-plugin");
 
 export default defineConfig({
+  // Der Sprachmodell-Worker lädt ONNX Runtime erst bei Bedarf. Ohne Eintrag
+  // entdeckt der Dev-Server das Paket dann und lädt die Seite neu.
+  optimizeDeps: { include: ["onnxruntime-web/wasm"] },
+  resolve: {
+    alias: [
+      {
+        // Sprachmodell-Worker: ONNX Runtime ohne eingebettete WASM-Verweise.
+        // Lade-Code und WASM kommen geprüft aus dem eigenen Cache
+        // (scripts/generate-speech-assets.mjs, docs/umsetzungsplan-sprachmodell.md).
+        // Sonst kopiert Vite die 15-MB-Datei zusätzlich in Client- und Server-Bundle.
+        find: /^onnxruntime-web\/wasm$/,
+        replacement: fileURLToPath(
+          new URL(
+            "./node_modules/onnxruntime-web/dist/ort.wasm.min.mjs",
+            import.meta.url,
+          ),
+        ),
+      },
+    ],
+  },
   // vinext 1.0 nutzt sonst den Vite-Standardport 5173; Tests, Dokumentation
   // und Playwright erwarten 3000. `--port` auf der Kommandozeile gilt weiter.
   server: {

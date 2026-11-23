@@ -4,17 +4,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   hasVoiceFor,
   prepareSpeech,
+  preloadModelSpeech,
   preloadVoices,
   speak,
   stopSpeaking,
   type SpeechReadiness,
 } from "../../src/speech/speaker";
+import { useAreaVisible } from "../release/release-context";
+
+/** Ohne Vorschau dieselben Aufrufe wie vor dem Sprachmodell. */
+function voiceFor(lang: string, model: boolean) {
+  return model ? hasVoiceFor(lang, { model }) : hasVoiceFor(lang);
+}
 
 /**
  * Sprachausgabe für Stufe 6: Bereitschaft, Vorbereiten im Klick und Sprechen.
- * Die Ansicht bekommt nur Zustände und Rückrufe.
+ * Die Ansicht bekommt nur Zustände und Rückrufe. Mit der Vorschau
+ * „sprachmodell“ und einem Modell für die Sprache spricht das Sprachmodell im
+ * Browser (docs/umsetzungsplan-sprachmodell.md, 3.4); sonst wie bisher.
  */
 export function useSpeech(lang = "de-DE") {
+  const model = useAreaVisible("sprachmodell");
   /** `undefined`, solange die Stimmenliste noch nicht geladen ist. */
   const [hasVoice, setHasVoice] = useState<boolean | undefined>();
   const [speaking, setSpeaking] = useState(false);
@@ -22,13 +32,15 @@ export function useSpeech(lang = "de-DE") {
 
   useEffect(() => {
     let alive = true;
-    void preloadVoices().then(() => {
-      if (alive) setHasVoice(hasVoiceFor(lang));
-    });
+    const check = () => {
+      if (alive) setHasVoice(voiceFor(lang, model));
+    };
+    void preloadVoices().then(check);
+    if (model) void preloadModelSpeech(lang).then(check);
     return () => {
       alive = false;
     };
-  }, [lang]);
+  }, [lang, model]);
 
   // Eine Stimme, die erst nach dem ersten Warten geladen wird, schaltet Stufe 6 frei.
   useEffect(() => {
@@ -36,19 +48,20 @@ export function useSpeech(lang = "de-DE") {
       typeof window === "undefined" ? undefined : window.speechSynthesis;
     if (!speech?.addEventListener) return;
     const onChange = () => {
-      if (hasVoiceFor(lang)) setHasVoice(true);
+      if (voiceFor(lang, model)) setHasVoice(true);
     };
     speech.addEventListener("voiceschanged", onChange);
     return () => speech.removeEventListener("voiceschanged", onChange);
-  }, [lang]);
+  }, [lang, model]);
 
   // Beim Verlassen der Seite verstummt eine laufende Ausgabe.
   useEffect(() => stopSpeaking, []);
 
   /** Muss direkt im Klick-Handler von „Starten“ aufgerufen werden. */
   const prepare = useCallback(
-    (): Promise<SpeechReadiness> => prepareSpeech(lang),
-    [lang],
+    (): Promise<SpeechReadiness> =>
+      model ? prepareSpeech(lang, { model }) : prepareSpeech(lang),
+    [lang, model],
   );
 
   const say = useCallback(
@@ -56,13 +69,13 @@ export function useSpeech(lang = "de-DE") {
       active.current += 1;
       setSpeaking(true);
       try {
-        await speak(word, lang);
+        await (model ? speak(word, lang, { model }) : speak(word, lang));
       } finally {
         active.current -= 1;
         if (active.current === 0) setSpeaking(false);
       }
     },
-    [lang],
+    [lang, model],
   );
 
   return { hasVoice, speaking, prepare, say, stop: stopSpeaking };

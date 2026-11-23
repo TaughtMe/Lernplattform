@@ -49,3 +49,5 @@ yarn-error.log*
 # Von scripts/generate-service-worker.mjs bei predev/prebuild erzeugt (A-014).
 /public/sw.js
 /public/version.json
+/public/speech/manifest.json
+/public/speech/ort/
