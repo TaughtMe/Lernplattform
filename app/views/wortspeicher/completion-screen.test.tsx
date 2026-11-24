@@ -61,18 +61,14 @@ describe("CompletionScreen", () => {
     setup({ coverage: { mastered: 20, total: 100, percent: 20 }, stage: 3 });
     expect(screen.getByText("67 %")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Wortbox: 20 von 100 Wörtern auf Stufe 3 auf Anhieb richtig (20 %)",
-      ),
+      screen.getByText("Wortbox: 20 Wörter auf Stufe 3 auf Anhieb richtig"),
     ).toBeInTheDocument();
   });
 
   it("benennt eine Wortbox mit einem Wort im Singular", () => {
     setup({ coverage: { mastered: 1, total: 1, percent: 100 } });
     expect(
-      screen.getByText(
-        "Wortbox: 1 von 1 Wort auf Stufe 1 auf Anhieb richtig (100 %)",
-      ),
+      screen.getByText("Wortbox: 1 Wort auf Stufe 1 auf Anhieb richtig"),
     ).toBeInTheDocument();
   });
 

@@ -919,3 +919,29 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Nicht wieder einbauen:** Keine Lernraum-Stimme ohne Schalter in den Einstellungen. Kein ungefragtes Vorladen nicht installierter Sprachen beim Öffnen einer Seite.
 
 **Bekannte Grenzen:** Beim allerersten Vorlesen kann noch die Gerätestimme sprechen, danach die Lernraum-Stimme. Ohne Gerätestimme dauert das erste Vorlesen so lange wie die Installation (etwa 34 MB). Englisch weiter ohne BART-G2P. Notbremse: `LERNRAUM_FREIGABE=sprachmodell=aus`.
+
+## 83. Wortspeicher: Anzeigen zählen nach oben – 24. November 2026
+
+**Beschlossen:** Die Karten der Wortboxen zählen, was das Kind kann, statt den Rest zu zeigen (I31-4, Bericht 31; E30-1, Zählung in Wörtern). Statt „12 / 105 sicher“ steht „12 Wörter sicher“, statt „Stufe 3 · 25 % der Box (1 von 4 Wörtern)“ steht „Stufe 3 · 1 Wort geschafft“, und im Startblatt nennt die Stufe „N Wörter geschafft“ statt „% der Box“. Der Fortschrittsbalken bleibt. Plan: `docs/umsetzungsplan-vision-etappe-1.md`.
+
+**Zurückgenommen:** `docs/umsetzungsplan-lernraum-ui-v2.md`, Wortspeicher-Karten vom 05.11.2026: „Stufe 3 · 25 % der Box (1 von 4 Wörtern)“.
+
+**Begründung:** „3 / 105“ und Prozent der Box zeigen einem schwachen Kind vor allem, wie viel fehlt (Bericht 31, I31-4). Die Regel „Fehler setzt auf Box 1“ bleibt (O6); nur die Anzeige ändert sich.
+
+**Nicht wieder einbauen:** Keine Gesamtzahl der Box und keine Prozentangabe „der Box“ in Schüleransichten des Wortspeichers.
+
+## 84. LernBox: mischbare Fragearten statt „Test“ – 24. November 2026
+
+**Beschlossen:** Im Start-Fenster eines Stapels wählt das Kind eine, zwei oder drei Fragearten: Schreiben, Mündlich und Auswahl. Die Runde wechselt Karte für Karte zwischen ihnen. Die Rückmeldung kommt nach jeder Karte. Jede Art behält ihre Box-Regel: Schreiben wie der Schreibmodus, Mündlich wie bisher (64), Auswahl ändert nichts (LF-1/LF-3). „Zuordnen“ bleibt eine eigene Lernform, jetzt in zwei Spalten. Quelle: Entscheidung des Entwicklers vom 15.11.2026 (Roadmap), Rückmeldung je Karte bestätigt am 24.11.2026. Plan: `docs/umsetzungsplan-lernbox-lernformen.md`.
+
+**Zurückgenommen:** Entscheidung 77, Teil „Test“ als eigene Lernform mit Rückmeldung erst am Ende (V-3).
+
+**Begründung:** Ein Stapel, mehrere Fragearten wie bei Quizlet; Rückmeldung je Karte wie in den übrigen Lernformen der LernBox.
+
+**Nicht wieder einbauen:** Kein eigener „Test“ mit Auswertung erst am Ende neben den mischbaren Fragearten. Keine Box-Änderung durch Auswahlfragen.
+
+## 85. Gerätetyp und Sperre im Lehrerbereich frei – 24. November 2026
+
+**Beschlossen:** Der Freigabebereich `lehrer-geraet` (Wahl „Mein Gerät“ / „Tafel“, Sperre der Personenbereiche auf der Tafel, PIN-Sperre) steht auf `frei` (L25-9, Bericht 25, F6). Quelle: Entscheidung des Entwicklers vom 24.11.2026.
+
+**Begründung:** Nachsitzen und Üben am Lehrertablet, ohne dass ein Kind die Namensliste erreicht.

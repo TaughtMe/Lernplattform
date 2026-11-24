@@ -43,8 +43,8 @@ import { ReleaseProvider } from "../../release/release-context";
 import { TeacherShell } from "./teacher-shell";
 
 // Gerätetyp, Sperrblock der Tafel und PIN-Sperre im Lehrerrahmen (B-009,
-// Regeln D3-1 bis D3-5). Der Bereich `lehrer-geraet` steht auf `vorschau`;
-// die Tests schalten ihn über die Sichtbarkeit ein.
+// Regeln D3-1 bis D3-5). Der Bereich `lehrer-geraet` ist seit 24.11.2026
+// frei; die Tests schalten ihn über die Sichtbarkeit ein oder aus.
 
 const CLASS_ID = "123e4567-e89b-42d3-a456-426614174001";
 const KID_ID = "123e4567-e89b-42d3-a456-426614174002";

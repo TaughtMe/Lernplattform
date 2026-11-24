@@ -1044,12 +1044,12 @@ export function LearningWordApp({
                     ? { words: last.lastWords ?? 0 }
                     : hasBoxCoverage(sheetView)
                       ? {
-                          coverage: boxCoverage(
+                          mastered: boxCoverage(
                             sheetView.words,
                             store.rounds,
                             sheetView.id,
                             stage,
-                          ).percent,
+                          ).mastered,
                         }
                       : { percent: last.lastPercent },
               recommended: recommended === stage && !locked,

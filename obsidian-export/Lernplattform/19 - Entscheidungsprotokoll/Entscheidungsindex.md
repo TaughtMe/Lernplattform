@@ -115,6 +115,9 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 80  | Vorlesen mit Sprachmodell im Browser (Vorschau)     | gültig; nimmt „keine Sprachmodelle im Browser“ aus dem Vorlese-Plan zurück | Teilweise | Modelldateien fehlen noch; Lizenzklärung offen                               |
 | 81  | KittenTTS 2 Nano fest in Lernraum, Stimmenwahl    | gültig; nimmt eSpeak 1.51 aus 80 zurück             | Teilweise                  | Englisch ohne BART-G2P; Freigabe für alle offen                              |
 | 82  | Lernraum-Stimme für alle, je Gerät abschaltbar    | gültig; nimmt „nur Vorschau“ aus 80/81 zurück; ergänzt 71 und Entscheidung 5 vom 15.11.     | Implementiert              | Erstes Vorlesen evtl. mit Gerätestimme                                       |
+| 83  | Wortspeicher: Anzeigen zählen nach oben | gültig; nimmt Karten-Text aus Plan v2 (05.11.) zurück | Implementiert | Fortschrittsbalken bleibt |
+| 84  | LernBox: mischbare Fragearten statt „Test“ | gültig; nimmt „Test“ aus 77 zurück | In Arbeit | – |
+| 85  | `lehrer-geraet` frei | gültig | Implementiert | – |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 

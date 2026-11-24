@@ -28,15 +28,15 @@ function setup(headline: WordBoxTile["headline"]) {
 }
 
 describe("OverviewScreen", () => {
-  it("zeigt Stufe und Box-Fortschritt der zuletzt geübten Stufe", () => {
+  it("zählt auf der Kachel die geschafften Wörter, ohne Gesamtzahl (Entscheidung 83)", () => {
     const tile = setup({
       stage: 3,
       practicedWords: 10,
       coverage: { mastered: 10, total: 100, percent: 10 },
     });
-    expect(tile).toHaveTextContent(
-      "Stufe 3 · 10 % der Box (10 von 100 Wörtern)",
-    );
+    expect(tile).toHaveTextContent("Stufe 3 · 10 Wörter geschafft");
+    expect(tile).not.toHaveTextContent("% der Box");
+    expect(tile).not.toHaveTextContent("100");
     expect(tile).not.toHaveTextContent("Zuletzt");
   });
 
@@ -46,7 +46,7 @@ describe("OverviewScreen", () => {
       practicedWords: 1,
       coverage: { mastered: 1, total: 1, percent: 100 },
     });
-    expect(tile).toHaveTextContent("Stufe 1 · 100 % der Box (1 von 1 Wort)");
+    expect(tile).toHaveTextContent("Stufe 1 · 1 Wort geschafft");
   });
 
   it("zeigt ohne Box-Fortschritt „n Wörter geübt“", () => {

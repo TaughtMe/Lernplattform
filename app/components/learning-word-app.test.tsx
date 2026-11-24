@@ -211,8 +211,9 @@ describe("Übersicht", () => {
     });
     const tile = await screen.findByRole("button", { name: /^Meine Tiere/ });
     expect(tile).toHaveTextContent("Hund, Katze, Maus");
-    expect(tile).toHaveTextContent("2 / 4 sicher");
-    expect(tile).toHaveTextContent("Stufe 3 · 25 % der Box (1 von 4 Wörtern)");
+    // Entscheidung 83: Anzeigen zählen nach oben, ohne Gesamtzahl der Box.
+    expect(tile).toHaveTextContent("2 Wörter sicher");
+    expect(tile).toHaveTextContent("Stufe 3 · 1 Wort geschafft");
     expect(tile).not.toHaveTextContent("Bestwert");
     expect(
       screen.getByRole("button", { name: /^Doppelkonsonanten/ }),
@@ -366,7 +367,7 @@ describe("Startblatt", () => {
     await openBox(user, "Tiere");
     const sheet = await screen.findByRole("dialog");
     expect(
-      within(sheet).getByRole("button", { name: /Stufe 2:.*100 % der Box/ }),
+      within(sheet).getByRole("button", { name: /Stufe 2:.*geschafft/ }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(
       within(sheet).getByRole("button", { name: /Stufe 1:.*Zuletzt –/ }),
@@ -601,9 +602,7 @@ describe("Runden", () => {
     expect(screen.getByText("Heute 1 Wort geübt")).toBeInTheDocument();
     // Box-Fortschritt inklusive der gerade beendeten Runde (W-10).
     expect(
-      screen.getByText(
-        "Wortbox: 0 von 1 Wort auf Stufe 1 auf Anhieb richtig (0 %)",
-      ),
+      screen.getByText("Wortbox: 0 Wörter auf Stufe 1 auf Anhieb richtig"),
     ).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(1));
 
@@ -614,9 +613,7 @@ describe("Runden", () => {
     // Die Übungsmenge des Tages zählt beide Runden.
     expect(screen.getByText("Heute 2 Wörter geübt")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Wortbox: 1 von 1 Wort auf Stufe 1 auf Anhieb richtig (100 %)",
-      ),
+      screen.getByText("Wortbox: 1 Wort auf Stufe 1 auf Anhieb richtig"),
     ).toBeInTheDocument();
     await waitFor(async () => expect(await rounds.list()).toHaveLength(2));
 
@@ -627,7 +624,7 @@ describe("Runden", () => {
     const sheet = await screen.findByRole("dialog");
     expect(
       await within(sheet).findByRole("button", {
-        name: /Stufe 1:.*100 % der Box/,
+        name: /Stufe 1:.*geschafft/,
       }),
     ).toBeInTheDocument();
   });

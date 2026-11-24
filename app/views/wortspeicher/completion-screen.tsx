@@ -111,9 +111,9 @@ export function CompletionScreen({
         ) : null}
         {coverage ? (
           <p className="ui-small ui-muted">
-            Wortbox: {coverage.mastered} von {coverage.total}{" "}
-            {coverage.total === 1 ? "Wort" : "Wörtern"} auf Stufe {stage} auf
-            Anhieb richtig ({coverage.percent} %)
+            Wortbox: {coverage.mastered}{" "}
+            {coverage.mastered === 1 ? "Wort" : "Wörter"} auf Stufe {stage} auf
+            Anhieb richtig
           </p>
         ) : null}
         <p className="ui-small ui-muted">

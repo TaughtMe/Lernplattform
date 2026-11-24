@@ -74,9 +74,7 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Box-Fortschritt seh
   ).toBeVisible();
   // Box-Fortschritt: alle drei Wörter der Wortbox waren in der Runde, ein Wort falsch.
   await expect(
-    page.getByText(
-      "Wortbox: 2 von 3 Wörtern auf Stufe 1 auf Anhieb richtig (67 %)",
-    ),
+    page.getByText("Wortbox: 2 Wörter auf Stufe 1 auf Anhieb richtig"),
   ).toBeVisible();
   // Alle Wörter der Wortbox waren in der Runde: keine Stichprobe, kein Rekord.
   await expect(page.getByText(/Runde aus \d+ von \d+ Wörtern/)).toHaveCount(0);
@@ -96,9 +94,7 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Box-Fortschritt seh
     timeout: 3_000,
   });
   await expect(
-    page.getByText(
-      "Wortbox: 3 von 3 Wörtern auf Stufe 1 auf Anhieb richtig (100 %)",
-    ),
+    page.getByText("Wortbox: 3 Wörter auf Stufe 1 auf Anhieb richtig"),
   ).toBeVisible();
   await expect(page.getByText("Heute 6 Wörter geübt")).toBeVisible();
   await expect(page.getByText(/Bestwert/)).toHaveCount(0);
@@ -108,12 +104,12 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Box-Fortschritt seh
   await expect(
     page
       .getByRole("dialog", { name: "Meine Wörter" })
-      .getByRole("button", { name: /^Stufe 1:.*100 % der Box/ }),
+      .getByRole("button", { name: /^Stufe 1:.*3 Wörter geschafft/ }),
   ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: /^Meine Wörter/ }),
-  ).toContainText("Stufe 1 · 100 % der Box (3 von 3 Wörtern)");
+  ).toContainText("Stufe 1 · 3 Wörter geschafft");
 });
 
 test("Trainingswörter heute: Stufen 1 bis 3 sind gesperrt, Stufe 4 ist vorgewählt", async ({

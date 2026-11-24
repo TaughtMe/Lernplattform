@@ -1,8 +1,8 @@
 /**
  * Grundzustand aller Browser-Läufe: Das Gerät ist als „Mein Gerät“ markiert
- * (Schlüssel und Form wie `src/storage/teacher-device.ts`). Mit eingeschalteter
- * Vorschau (Bereich `lehrer-geraet`) fragt der Lehrerbereich sonst beim ersten
- * Öffnen nach dem Gerätetyp. Nur `lehrer-tafelmodus.spec.ts` beginnt leer.
+ * (Schlüssel und Form wie `src/storage/teacher-device.ts`). Da der Bereich
+ * `lehrer-geraet` frei ist (Entscheidung 85), fragt der Lehrerbereich sonst
+ * beim ersten Öffnen nach dem Gerätetyp. Nur `lehrer-tafelmodus.spec.ts` beginnt leer.
  */
 export function ownTeacherDeviceState(origin: string) {
   return {
