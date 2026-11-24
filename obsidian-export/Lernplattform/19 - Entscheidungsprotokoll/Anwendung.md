@@ -934,7 +934,7 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 
 **Beschlossen:** Im Start-Fenster eines Stapels wählt das Kind eine, zwei oder drei Fragearten: Schreiben, Mündlich und Auswahl. Die Runde wechselt Karte für Karte zwischen ihnen. Die Rückmeldung kommt nach jeder Karte. Jede Art behält ihre Box-Regel: Schreiben wie der Schreibmodus, Mündlich wie bisher (64), Auswahl ändert nichts (LF-1/LF-3). „Zuordnen“ bleibt eine eigene Lernform, jetzt in zwei Spalten. Quelle: Entscheidung des Entwicklers vom 15.11.2026 (Roadmap), Rückmeldung je Karte bestätigt am 24.11.2026. Plan: `docs/umsetzungsplan-lernbox-lernformen.md`.
 
-**Zurückgenommen:** Entscheidung 77, Teil „Test“ als eigene Lernform mit Rückmeldung erst am Ende (V-3).
+**Zurückgenommen:** Entscheidung 77, Teil „Test“ als eigene Lernform mit Rückmeldung erst am Ende (V-3). Lernformen-Plan LF-5 („eine Schreibfrage zu einer nicht fälligen Karte ändert nichts“): In der Mischung gilt für Schreiben die Regel des Schreibmodus.
 
 **Begründung:** Ein Stapel, mehrere Fragearten wie bei Quizlet; Rückmeldung je Karte wie in den übrigen Lernformen der LernBox.
 

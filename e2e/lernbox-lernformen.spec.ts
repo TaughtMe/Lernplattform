@@ -2,7 +2,9 @@ import { expect, test, type Page } from "./fixtures";
 import { analyzeAccessibility } from "./accessibility-helpers";
 
 /**
- * LernBox-Lernformen „Zuordnen“ und „Test“ (docs/umsetzungsplan-lernbox-lernformen.md).
+ * LernBox-Lernformen „Zuordnen“ und mischbare Fragearten mit „Auswahl“
+ * (docs/umsetzungsplan-lernbox-lernformen.md, LF-3; Entscheidung 84: „Test“
+ * ist darin aufgegangen).
  * Die Reihenfolge der Kacheln und Fragen ist zufällig: Die Tests lesen, was auf
  * dem Bildschirm steht, und schlagen die Lösung in ihrer Vokabelliste nach.
  */
@@ -76,9 +78,26 @@ async function openStart(page: Page) {
   return page.getByRole("dialog", { name: DECK });
 }
 
-async function startForm(page: Page, form: "Zuordnen" | "Test") {
+async function startForm(page: Page, form: "Zuordnen") {
   const sheet = await openStart(page);
   await sheet.getByRole("button", { name: form, exact: true }).click();
+  await sheet.getByRole("button", { name: "Los geht's" }).click();
+}
+
+/**
+ * Startet eine Runde mit den gewählten Fragearten. Der erste Tipp ersetzt die
+ * Vorgabe, jeder weitere nimmt eine Art dazu.
+ */
+async function startKinds(page: Page, kinds: readonly string[]) {
+  const sheet = await openStart(page);
+  for (const kind of kinds) {
+    await sheet.getByRole("button", { name: kind, exact: true }).click();
+  }
+  for (const kind of kinds) {
+    await expect(
+      sheet.getByRole("button", { name: kind, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+  }
   await sheet.getByRole("button", { name: "Los geht's" }).click();
 }
 
@@ -97,7 +116,7 @@ async function solveRound(page: Page) {
   }
 }
 
-/** Test: Frage lesen und Lösung nachschlagen. */
+/** Frage lesen und Lösung nachschlagen. */
 async function currentQuestion(page: Page) {
   const prompt = (
     await page.getByRole("heading", { level: 2 }).innerText()
@@ -105,41 +124,39 @@ async function currentQuestion(page: Page) {
   return { prompt, solution: english(prompt) };
 }
 
-/** Vier Schreibfragen (richtig, richtig, falsch, „Weiß ich nicht“), dann vier Auswahlfragen (3 richtig, 1 falsch). */
-async function playTest(page: Page) {
-  await expect(page.getByText("Test · Frage 1 von 8")).toBeVisible();
-  const field = page.getByRole("textbox", { name: "Deine Antwort" });
-  const next = page.getByRole("button", { name: "Weiter" });
-  for (const how of ["right", "right", "wrong", "skip"]) {
+const choiceGroup = (page: Page) =>
+  page.getByRole("group", { name: /Wähle die passende/ });
+const boxes = (page: Page) => page.getByRole("img", { name: /Boxverteilung/ });
+const done = (page: Page) =>
+  page.getByRole("heading", { name: "Gut gearbeitet" });
+
+/**
+ * Beantwortet jede Karte richtig, bis die Runde endet. Zählt, wie viele Karten
+ * als Auswahl und wie viele als Schreibfrage kamen.
+ */
+async function playRound(page: Page) {
+  const counted = { choice: 0, writing: 0 };
+  for (let step = 0; step < 20; step += 1) {
+    const field = page.getByRole("textbox", { name: "Deine Antwort" });
+    await expect(done(page).or(choiceGroup(page)).or(field)).toBeVisible();
+    if (await done(page).isVisible()) return counted;
     const { solution } = await currentQuestion(page);
-    if (how === "skip") {
-      await page.getByRole("button", { name: "Weiß ich nicht" }).click();
+    if (await choiceGroup(page).isVisible()) {
+      counted.choice += 1;
+      await page.getByRole("radio", { name: solution, exact: true }).check();
+      await page.getByRole("button", { name: /^Prüfen/ }).click();
+      // Rückmeldung nach jeder Karte; Auswahl verschiebt nichts (LF-3).
+      await expect(page.getByText(/Box 1 bleibt · nur geübt/)).toBeVisible();
     } else {
-      await field.fill(how === "right" ? solution : "falsch");
+      counted.writing += 1;
+      await field.fill(solution);
       await field.press("Enter");
     }
+    await expect(page.getByRole("heading", { name: "Gewusst" })).toBeVisible();
+    await page.getByRole("button", { name: /^Weiter/ }).click();
   }
-  for (const how of ["right", "right", "right", "wrong"]) {
-    await expect(
-      page.getByRole("group", { name: /Wähle die passende/ }),
-    ).toBeVisible();
-    const { solution } = await currentQuestion(page);
-    const options = page.getByRole("radio");
-    const labels = await page
-      .locator("label", { has: options })
-      .allInnerTexts();
-    const pick =
-      how === "right"
-        ? solution
-        : labels.find((text) => text.trim() !== solution)!;
-    await page.getByRole("radio", { name: pick.trim(), exact: true }).check();
-    await next.click();
-  }
+  throw new Error("Die Runde endet nicht.");
 }
-
-const result = (page: Page) =>
-  page.getByRole("heading", { name: "Test geschafft" });
-const boxes = (page: Page) => page.getByRole("img", { name: /Boxverteilung/ });
 
 test("Zuordnen: ganzer Durchlauf mit einem Fehlversuch, ohne Barrierefehler", async ({
   page,
@@ -150,12 +167,17 @@ test("Zuordnen: ganzer Durchlauf mit einem Fehlversuch, ohne Barrierefehler", as
   await expect(tiles(page)).toHaveCount(8);
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
 
-  // Absichtlich ein falsches Paar: zwei Kacheln verschiedener Karten.
-  const texts = (await tiles(page).allInnerTexts()).map((text) => text.trim());
-  const first = texts[0]!;
-  const other = texts.find(
-    (text) => text !== first && text !== partner(first),
-  )!;
+  // Zwei Spalten (LF-2): links Begriffe, rechts Bedeutungen.
+  const column = (name: string) =>
+    page.getByRole("group", { name, exact: true }).getByRole("button");
+  await expect(column("Begriffe")).toHaveCount(4);
+  await expect(column("Bedeutungen")).toHaveCount(4);
+  // Absichtlich ein falsches Paar: ein Begriff mit einer fremden Bedeutung.
+  const first = (await column("Begriffe").first().innerText()).trim();
+  const meanings = (await column("Bedeutungen").allInnerTexts()).map((text) =>
+    text.trim(),
+  );
+  const other = meanings.find((text) => text !== partner(first))!;
   await tiles(page).getByText(first, { exact: true }).click();
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
   await tiles(page).getByText(other, { exact: true }).click();
@@ -224,69 +246,47 @@ test("Zuordnen nur mit der Tastatur", async ({ page }) => {
   await expect(page.locator(":focus")).toBeVisible();
 });
 
-test("Test: ganzer Durchlauf mit Ergebnis, ohne Barrierefehler", async ({
+test("Auswahl: Rückmeldung nach jeder Karte, ohne Barrierefehler, keine Box ändert sich", async ({
   page,
 }) => {
   await createDeck(page);
-  await startForm(page, "Test");
-  await expect(page.getByText("Test · Frage 1 von 8")).toBeVisible();
+  await startKinds(page, ["Auswahl"]);
+  await expect(choiceGroup(page)).toBeVisible();
+  await expect(page.getByRole("radio")).toHaveCount(4);
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
-  const field = page.getByRole("textbox", { name: "Deine Antwort" });
-  await field.fill("Haus");
-  // Dazwischen gibt es keine Rückmeldung zu richtig oder falsch.
-  await field.press("Enter");
-  await expect(page.getByText("Test · Frage 2 von 8")).toBeVisible();
-  await expect(page.getByText(/Nicht gewusst|Gewusst/)).toHaveCount(0);
-  await page.getByRole("button", { name: "Weiß ich nicht" }).click();
-  await page.getByRole("button", { name: "Weiß ich nicht" }).click();
-  await page.getByRole("button", { name: "Weiß ich nicht" }).click();
-  await expect(
-    page.getByRole("group", { name: /Wähle die passende/ }),
-  ).toBeVisible();
-  expect((await analyzeAccessibility(page)).violations).toEqual([]);
-});
-
-test("Test: Ergebnis, Wirkung nur über Schreibfragen und Übungsrunde", async ({
-  page,
-}) => {
-  await createDeck(page);
-  await startForm(page, "Test");
-  await playTest(page);
-
-  await expect(result(page)).toBeVisible();
-  await expect(page.getByRole("status")).toHaveText("5 von 8 richtig");
-  await expect(page.getByRole("list").getByRole("listitem")).toHaveCount(3);
-  await expect(page.getByText("Das üben wir noch")).toBeVisible();
-  await expect(
-    page.getByText("4 geschriebene Antworten haben für deine Boxen gezählt."),
-  ).toBeVisible();
-  expect((await analyzeAccessibility(page)).violations).toEqual([]);
-
-  // „Diese Karten jetzt üben“: Übungsrunde, nichts wird verschoben.
-  await page.getByRole("button", { name: "Diese Karten jetzt üben" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Fehler aus dem Test (nur üben)" }),
-  ).toBeVisible();
-  await expect(page.getByText(/3 übrig/)).toBeVisible();
+  // Eine falsche Wahl: „Nicht gewusst“, die Box bleibt trotzdem.
   const { solution } = await currentQuestion(page);
-  const field = page.getByRole("textbox", { name: "Deine Antwort" });
-  await field.fill(solution);
-  await field.press("Enter");
-  await expect(page.getByText(/Box 1 bleibt/)).toBeVisible();
-});
-
-test("Test: nur die zwei richtig geschriebenen Karten steigen auf", async ({
-  page,
-}) => {
-  await createDeck(page);
-  await startForm(page, "Test");
-  await playTest(page);
+  const labels = await page
+    .locator("label", { has: page.getByRole("radio") })
+    .allInnerTexts();
+  const wrong = labels.map((text) => text.trim()).find((t) => t !== solution)!;
+  await page.getByRole("radio", { name: wrong, exact: true }).check();
+  await page.getByRole("button", { name: /^Prüfen/ }).click();
   await expect(
-    page.getByText("4 geschriebene Antworten haben für deine Boxen gezählt."),
+    page.getByRole("heading", { name: "Nicht gewusst" }),
   ).toBeVisible();
+  await expect(page.getByText(/Box 1 bleibt · nur geübt/)).toBeVisible();
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
+  await page.getByRole("button", { name: /^Weiter/ }).click();
+  const counted = await playRound(page);
+  expect(counted.writing).toBe(0);
   await page.getByRole("button", { name: "Zur LernBox" }).click();
   await expect(boxes(page)).toHaveAccessibleName(
-    "Boxverteilung: Box 1: 6, Box 2: 2, Box 3: 0, Box 4: 0, Box 5: 0",
+    "Boxverteilung: Box 1: 8, Box 2: 0, Box 3: 0, Box 4: 0, Box 5: 0",
+  );
+});
+
+test("Gemischt: Schreiben und Auswahl wechseln, nur geschriebene Karten steigen auf", async ({
+  page,
+}) => {
+  await createDeck(page);
+  await startKinds(page, ["Auswahl", "Schreiben"]);
+  const counted = await playRound(page);
+  expect(counted.choice).toBeGreaterThan(0);
+  expect(counted.writing).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Zur LernBox" }).click();
+  await expect(boxes(page)).toHaveAccessibleName(
+    `Boxverteilung: Box 1: ${8 - counted.writing}, Box 2: ${counted.writing}, Box 3: 0, Box 4: 0, Box 5: 0`,
   );
 });
 
@@ -312,13 +312,13 @@ test("Touch-Ziele der Kacheln und Antworten sind groß genug", async ({
 
   await page.getByRole("button", { name: "Runde beenden" }).click();
   await page.getByRole("button", { name: "Beenden", exact: true }).click();
-  await startForm(page, "Test");
-  const field = page.getByRole("textbox", { name: "Deine Antwort" });
-  for (let step = 0; step < 4; step += 1) {
-    await field.fill("x");
-    await field.press("Enter");
-  }
-  for (const radio of await page.getByRole("radio").all()) {
+  await startKinds(page, ["Auswahl"]);
+  await expect(choiceGroup(page)).toBeVisible();
+  for (const radio of await page
+    .locator("label", {
+      has: page.getByRole("radio"),
+    })
+    .all()) {
     const box = (await radio.boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(44);
     expect(box.height).toBeGreaterThanOrEqual(44);
@@ -330,8 +330,10 @@ test("Abbruch: „Runde beenden“ fragt nach und lässt nichts zum Weitermachen
   page,
 }) => {
   await createDeck(page);
-  await startForm(page, "Test");
-  await expect(page.getByText("Test · Frage 1 von 8")).toBeVisible();
+  await startKinds(page, ["Auswahl", "Schreiben"]);
+  await expect(
+    choiceGroup(page).or(page.getByRole("textbox", { name: "Deine Antwort" })),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Runde beenden" }).click();
   const dialog = page.getByRole("alertdialog");
   await expect(dialog).toBeVisible();
