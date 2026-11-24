@@ -1923,8 +1923,14 @@
 }
 @container lernbox (min-width: 760px) {
   .matchGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
   }
+}
+.matchColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 .matchTile {
   display: flex;

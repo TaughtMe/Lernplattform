@@ -17,9 +17,10 @@ import styles from "../lernbox-screen.module.css";
 const WRONG_MS = 1200;
 
 /**
- * Zuordnen: Begriffe und Bedeutungen liegen gemischt als Kacheln da, zwei
- * antippen. Es gibt keine Uhr, keine Punkte und nichts wird gespeichert (LF-1).
- * Der Elternteil setzt `key={match.gameKey}`.
+ * Zuordnen in zwei Spalten: links die Begriffe, rechts die Bedeutungen, je
+ * Seite gemischt; je eine Kachel links und rechts antippen. Es gibt keine Uhr,
+ * keine Punkte und nichts wird gespeichert (LF-1). Der Elternteil setzt
+ * `key={match.gameKey}`.
  */
 export function Match(props: LernBoxScreenProps & { match: LbMatch }) {
   const { match } = props;
@@ -121,37 +122,48 @@ export function Match(props: LernBoxScreenProps & { match: LbMatch }) {
             role="group"
             aria-label="Kacheln: Finde die Paare"
           >
-            {tiles.map((tile) => {
-              if (state.solved.includes(tile.id)) {
-                return (
-                  <div
-                    key={tile.id}
-                    className={styles.matchGap}
-                    aria-hidden="true"
-                  />
-                );
-              }
-              const chosen = state.selected === tile.id;
-              const wrong = state.wrong?.includes(tile.id) ?? false;
-              return (
-                <button
-                  key={tile.id}
-                  type="button"
-                  className={cx(
-                    styles.matchTile,
-                    chosen && styles.matchTileOn,
-                    wrong && styles.matchTileWrong,
-                  )}
-                  aria-pressed={chosen}
-                  onClick={() => act({ type: "pick", tileId: tile.id })}
-                >
-                  {wrong ? (
-                    <Icon name="close" size={18} strokeWidth={2.6} />
-                  ) : null}
-                  <span>{tile.text}</span>
-                </button>
-              );
-            })}
+            {(["term", "meaning"] as const).map((side) => (
+              <div
+                key={side}
+                className={styles.matchColumn}
+                role="group"
+                aria-label={side === "term" ? "Begriffe" : "Bedeutungen"}
+              >
+                {tiles
+                  .filter((tile) => tile.side === side)
+                  .map((tile) => {
+                    if (state.solved.includes(tile.id)) {
+                      return (
+                        <div
+                          key={tile.id}
+                          className={styles.matchGap}
+                          aria-hidden="true"
+                        />
+                      );
+                    }
+                    const chosen = state.selected === tile.id;
+                    const wrong = state.wrong?.includes(tile.id) ?? false;
+                    return (
+                      <button
+                        key={tile.id}
+                        type="button"
+                        className={cx(
+                          styles.matchTile,
+                          chosen && styles.matchTileOn,
+                          wrong && styles.matchTileWrong,
+                        )}
+                        aria-pressed={chosen}
+                        onClick={() => act({ type: "pick", tileId: tile.id })}
+                      >
+                        {wrong ? (
+                          <Icon name="close" size={18} strokeWidth={2.6} />
+                        ) : null}
+                        <span>{tile.text}</span>
+                      </button>
+                    );
+                  })}
+              </div>
+            ))}
           </div>
         )}
         <p className={styles.matchStatus} role="status">

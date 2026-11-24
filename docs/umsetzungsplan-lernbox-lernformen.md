@@ -13,7 +13,7 @@ Festlegungen mit dem Vermerk **Vorschlag** soll der Entwickler bestätigen
 Die LernBox bekommt zu „Schreiben“ und „Mündlich“ (Karteikarten) zwei weitere
 Lernformen für **einen Stapel**:
 
-- **Zuordnen:** Begriffe und Bedeutungen liegen gemischt als Kacheln da. Das
+- **Zuordnen:** Begriffe (links) und Bedeutungen (rechts) liegen gemischt als Kacheln da. Das
   Kind tippt zwei Kacheln an. Ein richtiges Paar verschwindet, ein falsches
   bekommt kurz Rückmeldung. Runden von etwa 6 Paaren, ohne Uhr.
 - **Test:** kurze Prüfung aus höchstens 10 Karten mit Schreib- und
@@ -142,14 +142,17 @@ Domain: `buildMatchRounds`, `startMatch`, `matchReducer` in
    Spiel; die App zeigt dann die Meldung „Dafür sind zu wenige verschiedene
    Karten im Stapel.“ und bleibt in der Übersicht.
 3. **Kacheln:** je Karte zwei Kacheln (`term` = Vorderseite, `meaning` =
-   Rückseite), alle Kacheln der Runde gemeinsam gemischt. Alternativen
+   Rückseite). Seit 24.11.2026 (Entscheidung des Entwicklers vom 15.11.)
+   in **zwei Spalten**: links die Begriffe, rechts die Bedeutungen, jede
+   Spalte für sich gemischt, höchstens 6 Paare je Runde. Alternativen
    („home | house“) stehen als „home / house“ auf der Kachel.
 4. **Spielzug:** Erste Kachel antippen: sie ist gewählt (`aria-pressed`,
    dicker Rahmen). Dieselbe Kachel noch einmal: Wahl aufgehoben. Zweite
    Kachel:
    - gleiche Karte: Paar gefunden, beide Kacheln verschwinden. Ihr Platz im
      Raster bleibt leer, damit nichts springt.
-   - sonst (auch zwei Kacheln derselben Seite): Fehlversuch. Beide Kacheln
+   - Kachel derselben Spalte: Die Wahl wechselt auf sie, kein Fehlversuch.
+   - sonst: Fehlversuch. Beide Kacheln
      zeigen etwa 1,2 Sekunden die Rückmeldung „passt nicht“ (Kreuz-Symbol
      und gestrichelter Rahmen, nicht nur Farbe), bleiben liegen und sind
      danach wieder normal. Ein Antippen während der Rückmeldung beendet sie
@@ -272,8 +275,8 @@ Anforderungen:
   und `outline-offset: 2px` an Kacheln und Radio-Kacheln (bei den Radios
   über `:has(input:focus-visible)` oder `:focus-within`).
 - **Touch-Ziele:** mindestens 44 × 44 px, Kacheln `min-height: 56px`.
-  Raster beim Zuordnen: 2 Spalten unter 760 px, 3 Spalten ab 760 px (bei
-  12 Kacheln also 6 bzw. 4 Reihen). Lange Texte umbrechen
+  Raster beim Zuordnen: immer 2 Spalten (Begriffe und Bedeutungen), ab
+  760 px mit breiterem Abstand; bei 6 Paaren also 6 Reihen. Lange Texte umbrechen
   (`overflow-wrap: anywhere`), nichts wird abgeschnitten. Prüfen bei 320 px
   Breite (Projekt `minimum-width`).
 - **Nicht nur Farbe:** gewählt = dicker Rahmen und `aria-pressed="true"`;

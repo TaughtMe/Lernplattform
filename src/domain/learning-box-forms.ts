@@ -65,7 +65,11 @@ export type MatchTile = {
 };
 
 export type MatchRound = {
-  /** Kacheln beider Seiten, gemischt. */
+  /**
+   * Kacheln beider Seiten: zuerst alle Begriffe, dann alle Bedeutungen, jede
+   * Seite für sich gemischt. Die Ansicht zeigt sie in zwei Spalten (links
+   * Begriffe, rechts Bedeutungen; Entscheidung des Entwicklers vom 15.11.2026).
+   */
   tiles: MatchTile[];
   pairs: number;
 };
@@ -115,25 +119,24 @@ export function buildMatchRounds(
     const size = Math.ceil((picked.length - start) / (roundCount - round));
     const inside = picked.slice(start, start + size);
     start += size;
+    const terms = inside.map((card): MatchTile => ({
+      id: `${card.id}:term`,
+      cardId: card.id,
+      side: "term",
+      text: display(card.question),
+    }));
+    const meanings = inside.map((card): MatchTile => ({
+      id: `${card.id}:meaning`,
+      cardId: card.id,
+      side: "meaning",
+      text: display(card.answer),
+    }));
     rounds.push({
       pairs: inside.length,
-      tiles: shuffleLearningBoxItems(
-        inside.flatMap((card): MatchTile[] => [
-          {
-            id: `${card.id}:term`,
-            cardId: card.id,
-            side: "term",
-            text: display(card.question),
-          },
-          {
-            id: `${card.id}:meaning`,
-            cardId: card.id,
-            side: "meaning",
-            text: display(card.answer),
-          },
-        ]),
-        random,
-      ),
+      tiles: [
+        ...shuffleLearningBoxItems(terms, random),
+        ...shuffleLearningBoxItems(meanings, random),
+      ],
     });
   }
   return rounds;
@@ -186,8 +189,10 @@ export function startMatch(rounds: readonly MatchRound[]): MatchState {
 
 /**
  * Spielzug beim Zuordnen. Zwei Kacheln derselben Karte sind ein Paar und
- * verschwinden; alles andere ist ein Fehlversuch (die Kacheln bleiben). Die
- * gewählte Kachel erneut anzutippen, hebt die Wahl auf. Es gibt keine Uhr.
+ * verschwinden; ein Begriff mit einer fremden Bedeutung ist ein Fehlversuch
+ * (die Kacheln bleiben). Eine zweite Kachel derselben Spalte wechselt nur die
+ * Wahl. Die gewählte Kachel erneut anzutippen, hebt die Wahl auf. Es gibt
+ * keine Uhr.
  */
 export function matchReducer(
   state: MatchState,
@@ -216,7 +221,9 @@ export function matchReducer(
   }
   if (state.selected === tile.id) return { ...state, selected: null };
   const first = tiles.find((entry) => entry.id === state.selected);
-  if (!first) return { ...state, selected: tile.id, wrong: null };
+  if (!first || first.side === tile.side) {
+    return { ...state, selected: tile.id, wrong: null };
+  }
   if (first.cardId !== tile.cardId) {
     return {
       ...state,

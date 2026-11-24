@@ -114,6 +114,7 @@ declare const styles: {
   readonly manageItem: string;
   readonly manageList: string;
   readonly manageName: string;
+  readonly matchColumn: string;
   readonly matchGap: string;
   readonly matchGrid: string;
   readonly matchRoundDone: string;

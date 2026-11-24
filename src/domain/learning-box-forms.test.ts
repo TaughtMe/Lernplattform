@@ -170,13 +170,29 @@ describe("Zuordnen: Spielzüge", () => {
     expect(matchReducer(next, { type: "clear-wrong" }).wrong).toBeNull();
   });
 
-  it("wertet zwei Kacheln derselben Seite als Fehlversuch", () => {
+  it("wechselt bei einer Kachel derselben Spalte nur die Wahl", () => {
+    // Zwei Spalten (Entscheidung des Entwicklers vom 15.11.2026): Ein zweiter
+    // Begriff ist kein Fehlversuch, sondern eine neue Wahl.
     const { cards, state } = game();
     const next = pick(
       pick(state, `${cards[0]!.id}:term`),
       `${cards[1]!.id}:term`,
     );
-    expect(next.mistakes).toBe(1);
+    expect(next.mistakes).toBe(0);
+    expect(next.wrong).toBeNull();
+    expect(next.selected).toBe(`${cards[1]!.id}:term`);
+  });
+
+  it("legt je Runde zuerst die Begriffe, dann die Bedeutungen ab", () => {
+    const rounds = buildMatchRounds(deck(12), seeded());
+    for (const round of rounds) {
+      const sides = round.tiles.map((tile) => tile.side);
+      expect(sides).toEqual([
+        ...Array<string>(round.pairs).fill("term"),
+        ...Array<string>(round.pairs).fill("meaning"),
+      ]);
+      expect(round.pairs).toBeLessThanOrEqual(6);
+    }
   });
 
   it("hebt die Wahl auf, wenn dieselbe Kachel noch einmal angetippt wird", () => {
