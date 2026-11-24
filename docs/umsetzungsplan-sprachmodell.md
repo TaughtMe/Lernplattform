@@ -1,6 +1,6 @@
 # Umsetzungsplan: Vorlesen mit einem Sprachmodell im Browser (KittenTTS)
 
-Stand: 23.11.2026 · Ausgangsstand `claude/laughing-mendel-chvwke` @ `56439ba`
+Stand: 23.11.2026, fortgeschrieben in Abschnitt 10 · Ausgangsstand `claude/laughing-mendel-chvwke` @ `56439ba`
 
 Dieser Plan setzt „Weg 2“ aus `docs/umsetzungsplan-vorlesen.md` (Abschnitt 2 und 7.3) um. Er
 baut auf dem Prototyp der Lehrkraft auf (eigenständige Testanwendung „kitten-nano-de-en-test“,
@@ -51,10 +51,10 @@ nicht Teil dieses Repos).
    (iPad) trotzdem das Modell, und Hörtests sind auf allen Geräten möglich. Die Reihenfolge für
    die spätere Freigabe wird nach dem Hörtest entschieden.
 3. **Eigener Phonemizer statt `piper-wasm`:**
-   - Quelle ist eSpeak NG 1.51 aus dem Ubuntu-24.04-Quellpaket `espeak-ng_1.51+dfsg-12build1`
-     (feste Version, Prüfsummen in der `.dsc`).
+   - Quelle ist eSpeak NG 1.52 aus dem Ubuntu-Quellpaket `espeak-ng_1.52.0+dfsg-5build1`
+     (feste Version, Prüfsummen in der `.dsc`). Zuerst war es 1.51; siehe 10.3.
    - Werkzeug ist Emscripten `3.1.6~dfsg-7` aus Ubuntu 24.04.
-   - Ein kleiner eigener C-Wrapper (`lr_phonemize`) ersetzt `piper-phonemize`.
+   - Ein kleiner eigener C-Wrapper (`lr_phonemize`, `lr_phonemize_tie`) ersetzt `piper-phonemize`.
    - Der Build enthält nur Deutsch und US-Englisch, ohne Klatt, speechPlayer, MBROLA und Sonic.
    - Ergebnis: drei Dateien, etwa 1,3 MB statt 18,8 MB.
 4. **Lizenzpflichten:** Neben dem Binary liegen der GPL-Text, ein Hinweis auf die
@@ -91,13 +91,16 @@ nicht Teil dieses Repos).
 - CI: Ein Job in `quality.yml` baut den Phonemizer auf `ubuntu-24.04` neu und vergleicht die
   Prüfsummen. Weichen sie ab, schlägt der Job fehl.
 
-### 3.2 Sprachmodell-Dateien (`public/speech/kitten/`) und Manifest
+### 3.2 Sprachmodell-Dateien (`public/speech/kitten2/`) und Manifest
 
-- Modell (`.onnx`) und Stimmen für Deutsch und Englisch stammen aus dem Prototyp. Ihre Herkunft
-  (Hugging-Face-Repo und Revision) und Lizenz (Apache-2.0 laut Modellkarte) stehen in der
-  eingecheckten Datei `src/speech/model/sources.json`.
+- KittenTTS 2 Nano (int8) für Deutsch und Englisch liegt fest im Repository und wird mit
+  Lernraum ausgeliefert (10.1). Herkunft (Hugging-Face-Repo und Revision), Lizenz (Apache-2.0)
+  und SHA-256 jeder Datei stehen in `src/speech/model/sources.json`. Zur Laufzeit lädt Lernraum
+  nichts von Hugging Face.
 - `scripts/generate-speech-assets.mjs` läuft in `predev` und `prebuild`, wie der Service Worker:
-  - Kopiert die WASM-Datei von `onnxruntime-web` nach `public/speech/ort/<version>/`.
+  - Kopiert Lade-Code und WASM von `onnxruntime-web` nach `public/speech/ort/<version>/`.
+  - Prüft die Modelldateien gegen die SHA-256-Werte aus `sources.json` und bricht bei
+    Abweichung ab.
   - Schreibt `public/speech/manifest.json` mit Pfad, Größe und SHA-256 jeder Datei.
   - Beide Ergebnisse sind erzeugt und stehen in `.gitignore`, wie `public/sw.js`.
 - Grenze: Cloudflare Workers liefern statische Dateien bis 25 MiB je Datei aus.
@@ -213,8 +216,7 @@ Diese Teile laufen im Browser:
 3. Reine Engine-Teile mit Tests (3.3, rein).
 4. Worker, Laden, Wiedergabe, Anbindung (3.3 Browser, 3.4, 3.5).
 5. Impressum-Hinweis (3.6), Doku.
-6. **Braucht Material der Lehrkraft:** Modell- und Stimmdateien eintragen (3.2), Browser-Test
-   mit echter Inferenz.
+6. Modell- und Stimmdateien eintragen (3.2), Browser-Test mit echter Inferenz. Erledigt, siehe 10.
 
 ## 7. Freigabekriterien (Vorschau → frei)
 
@@ -260,8 +262,8 @@ Die Ausgabe gleicht der nativen eSpeak-Ausgabe, zum Beispiel:
 - „Hello, how are you?“ (en-us) → `həlˈoʊ hˈaʊ ɑːɹ juː`
 
 **Bekannte Abweichung zum Prototyp:** Der Prototyp nutzt die eSpeak-Fassung von rhasspy über
-`piper-phonemize`. Hier läuft das offizielle eSpeak NG 1.51. Einzelne Lautschriften können sich
-unterscheiden. Der Hörtest (7.2) deckt das ab.
+`piper-phonemize`. Hier läuft das offizielle eSpeak NG (inzwischen 1.52). Der Abgleich mit der
+Original-Pipeline von KittenTTS 2 steht in 10.3.
 
 **Befunde aus der Umsetzung:**
 
@@ -273,5 +275,95 @@ unterscheiden. Der Hörtest (7.2) deckt das ab.
 | P14 | `ReadAloudButton` ist derzeit nirgends eingebaut. Die eigentlichen Vorlese-Stellen sind LernBox, Live- und Stationsspiel.   | Diese drei bekommen den Weg über das Modell nur in der Vorschau (3.4).         |
 | P15 | `file_packager` von Emscripten liest Ordner ungeordnet (`os.walk`). Auf dem CI-Runner entstand dadurch eine andere `.data`. | Jede Datei einzeln in fester Reihenfolge; ext4 und tmpfs geprüft.              |
 
-**Offen und blockiert:** Die Modell- und Stimmdateien (3.2) liegen nur im Prototyp. Ohne sie
-meldet die Engine „nicht verfügbar“, und das Vorlesen bleibt wie heute.
+**Offen und blockiert:** Die Modell- und Stimmdateien (3.2) lagen nur im Prototyp. Erledigt,
+siehe 10.
+
+## 10. Fortschreibung: KittenTTS 2 Nano fest in Lernraum, Stimmenwahl (23.11.2026)
+
+Wunsch der Lehrkraft: KittenTTS 2 Nano gehört fest zu Lernraum, wird mit der App installiert und
+läuft als lokale KI. In den Einstellungen wählt man die Stimme je Sprache; die Sprache selbst
+folgt dem Inhalt (z. B. der Sprache einer LernBox).
+
+### 10.1 Modell im Repository
+
+- Quelle: `KittenML/kitten-tts-2-nano`, Revision `0843ae614780b04e4260c91b601e374c4b81250d`,
+  Apache-2.0 (Modelle, Stimmen und G2P-Dateien). Einmal heruntergeladen, Prüfsummen mit den
+  LFS-Angaben von Hugging Face verglichen.
+- `public/speech/kitten2/`: `de/model.onnx` und `en/model.onnx` (je 17,4 MB, int8),
+  `de/voices.npz` (2,1 MB, 4 Stimmen), `en/voices.npz` (5,2 MB, 10 Stimmen), `vocab.json`,
+  `g2p/cmu_misaki_us.json` (3,4 MB, englisches Aussprachewörterbuch) und die Modellkarte.
+- Erstes Laden einer Sprache: etwa 34 MB für Deutsch (davon 15 MB ONNX Runtime und 1 MB
+  Phonemizer, die alle Sprachen teilen), danach etwa 23 MB für Englisch.
+
+### 10.2 Engine für KittenTTS 2
+
+KittenTTS 2 rechnet anders als KittenTTS 0.8. Nachgebaut nach `kittenml` 0.9.8
+(`kittentts2_tiny/model.py` und `frontend/`):
+
+- Tokens aus `vocab.json` (114 Symbole), `[0] + Laute + [10, 0]`.
+- Stilzeile `min(Tokenzahl − 1, 509)` aus einer Tabelle von 510 × 256 je Stimme.
+- Ausgaben `waveform` und `durations`: Ende-Token und (außer beim ersten Stück) die
+  Anfangspause werden nach den Dauern abgeschnitten, 5-ms-Blenden, 0,15 s Pause zwischen
+  Stücken, Stücke bis 350 Laute an Satzenden.
+- Deutsch: eSpeak mit Verbindungszeichen (`lr_phonemize_tie`, Modus wie `phonemizer` mit
+  `tie=True`), Zusammenziehen wie misaki `EspeakG2P` (`t^s` → `ʦ`, `a^ɪ` → `I`, …), dann `FOLD`.
+- Englisch: `cmu_misaki_us.json`, für unbekannte Wörter eSpeak mit der Umschreibung von misakis
+  `EspeakFallback`. **Abweichung:** Das Original nutzt vorher misakis eigenes Wörterbuch und für
+  unbekannte Wörter ein kleines BART-Modell. Beides fehlt im Browser; die Aussprache seltener
+  englischer Wörter kann deshalb abweichen. Der Hörtest (7.2) prüft das.
+- Code: `src/speech/model/frontend.ts`, `synthesis.ts`, `kitten.worker.ts`. Die alten Teile für
+  KittenTTS 0.8 (`symbols.ts`, `text.ts`) sind entfernt.
+
+### 10.3 Abgleich mit der Original-Pipeline
+
+- `scripts/phonemizer/parity.mjs` vergleicht die Lautschrift von Lernraum mit Referenzen aus der
+  Original-Pipeline (`reference-de.json`: 41 Sätze und Diktatwörter, `reference-en.json`:
+  englischer Rückfall). Der CI-Job „Phonemizer“ führt ihn nach jedem Neubau aus.
+- Mit eSpeak NG 1.51 wich „Flüsse“ ab (`y` statt `ʏ`): Das kurze ü kennt eSpeak erst ab 1.52, und
+  KittenTTS 2 wurde mit `ʏ` trainiert. Darum baut Lernraum jetzt aus
+  `espeak-ng_1.52.0+dfsg-5build1`. Ergebnis: 0 Abweichungen.
+- Audio: „Rad“ mit Anna und Tempo 0,9 ergibt in Python (ONNX Runtime, `_chunk`) und im Browser
+  dieselbe Länge von 34 800 Samples. Das Modell rauscht (`RandomNormalLike`), die Werte selbst
+  unterscheiden sich darum bei jedem Lauf. `e2e/sprachmodell.spec.ts` prüft die Länge.
+
+### 10.4 Einstellungen „Vorlesen“
+
+- Schüler-Einstellungen (`/lernen/einstellungen`) und Lehrer-Einstellungen
+  (`/lehrer/einstellungen`): je Sprache eine Auswahl „Stimme für Deutsch/Englisch“,
+  „Probe hören“, Stand („Noch nicht auf diesem Gerät (etwa 34 MB)“, „Wird installiert … 42 %“,
+  „Auf diesem Gerät installiert. Funktioniert auch ohne Internet.“) und „Installieren“ bzw.
+  „Entfernen“.
+- Die Wahl gilt je Gerät (`localStorage`, `lernraum:vorlesestimme`). Ansicht
+  `app/views/parts/voice-settings.tsx` (rein), Hook `app/ui/use-speech-voice-settings.ts`,
+  Rahmen `app/components/speech-voice-settings.tsx`.
+- Die Sprache kommt weiter vom Inhalt: LernBox nutzt die Sprache der Kartenseite, Laufdiktat
+  `promptLang`, Wortspeicher Deutsch. Das Modell nimmt dazu die gewählte Stimme dieser Sprache.
+
+### 10.5 Installieren mit der App
+
+- Läuft Lernraum als installierte App (`display-mode: standalone`), lädt `SpeechModelAutoInstall`
+  acht Sekunden nach dem Start Deutsch im Hintergrund, außer im Datensparmodus. Im Browser-Tab
+  lädt eine Sprache beim ersten Vorlesen oder über „Installieren“. So belastet es weder normale
+  Tabs noch die Browser-Tests.
+- Ursprünglich blieb alles hinter der Freigabe `sprachmodell` (Vorschau); siehe 10.6.
+
+### 10.6 Freigabe für alle und Schalter je Gerät (24.11.2026)
+
+- Die Lehrkraft gibt die Lernraum-Stimme für alle frei (`sprachmodell` → `frei`, Entscheidung 62).
+  Die Kriterien aus Abschnitt 7 sind damit keine Voraussetzung mehr; Hörtest, iPad-Offline-Test,
+  Messung und Lizenzklärung laufen im Betrieb weiter.
+- Einstellungen „Vorlesen“: Schalter „Lernraum-Stimme verwenden“ (je Gerät, Vorgabe an,
+  `localStorage` `lernraum:vorlesen-modell`). Aus: Stimmenwahl und Installation sind
+  ausgeblendet, es lesen die Stimmen des Geräts wie vor dem Plan. `app/ui/use-model-speech.ts`
+  verbindet Freigabe und Schalter für alle Vorlese-Stellen.
+- Erstes Vorlesen ohne installierte Sprache: Gibt es eine Gerätestimme, liest sie sofort, und
+  Lernraum installiert die Sprache im Hintergrund; ab dann spricht die Lernraum-Stimme. Ohne
+  Gerätestimme wartet das Vorlesen auf die Installation. Stufe 6 wartet beim „Starten“ wie
+  bisher bis zu 30 s auf das Modell.
+- Vorgeladen (im Speicher bereitgelegt) wird nur eine Sprache, die schon installiert ist. Eine
+  Seite zu öffnen lädt also keine 34 MB.
+- Notbremse: `LERNRAUM_FREIGABE=sprachmodell=aus` schaltet die Lernraum-Stimme überall ab.
+- Tests, die den Weg über die Gerätestimme prüfen (Stufe 6 in `e2e/wortspeicher.spec.ts`,
+  `app/ui/read-aloud-button.test.tsx`, Vorlesen in `app/raum/spiel/live-parity.test.tsx`),
+  schalten die Lernraum-Stimme aus bzw. laufen ohne Manifest. Ihre Erwartungen sind
+  unverändert; von der Lehrkraft bestätigt.

@@ -8,6 +8,8 @@ on:
     paths:
       - "scripts/phonemizer/**"
       - "public/speech/phonemizer/**"
+      - "public/speech/kitten2/vocab.json"
+      - "src/speech/model/frontend.ts"
       - ".github/workflows/phonemizer.yml"
   push:
     branches: [main]
@@ -34,6 +36,10 @@ jobs:
             autoconf automake libtool pkg-config dpkg-dev curl
       - name: Neu bauen
         run: bash scripts/phonemizer/build.sh "$RUNNER_TEMP/phonemizer"
+        env:
+          LERNRAUM_PHONEMIZER_NODE_OUT: ${{ runner.temp }}/phonemizer-node
+      - name: Lautschrift wie die KittenTTS-Pipeline
+        run: node scripts/phonemizer/parity.mjs "$RUNNER_TEMP/phonemizer-node"
       - name: Mit eingecheckten Dateien vergleichen
         run: |
           diff public/speech/phonemizer/SHA256SUMS "$RUNNER_TEMP/phonemizer/SHA256SUMS"

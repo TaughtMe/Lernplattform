@@ -56,14 +56,26 @@ EMSCRIPTEN_KEEPALIVE int lr_set_voice(const char *name) {
  * fallen weg; der Aufrufer setzt sie wieder ein. Das Ergebnis gilt bis zum
  * nächsten Aufruf.
  */
-EMSCRIPTEN_KEEPALIVE const char *lr_phonemize(const char *text) {
+static const char *phonemize_mode(const char *text, int mode) {
   if (result) result[0] = '\0';
   const void *cursor = text;
   while (cursor) {
-    const char *clause =
-        espeak_TextToPhonemes(&cursor, espeakCHARS_UTF8, espeakPHONEMES_IPA);
+    const char *clause = espeak_TextToPhonemes(&cursor, espeakCHARS_UTF8, mode);
     if (clause && clause[0] && !append(clause)) return NULL;
   }
   if (!result && !append("")) return NULL;
   return result;
+}
+
+EMSCRIPTEN_KEEPALIVE const char *lr_phonemize(const char *text) {
+  return phonemize_mode(text, espeakPHONEMES_IPA);
+}
+
+/*
+ * Wie lr_phonemize, aber mehrteilige Laute mit dem Verbindungszeichen U+0361
+ * (z. B. "t͡s"), wie `phonemizer` mit `tie=True` (Modus 0x02 | 0x80 | 0x361 << 8).
+ * KittenTTS 2 zieht solche Folgen zu eigenen Symbolen zusammen.
+ */
+EMSCRIPTEN_KEEPALIVE const char *lr_phonemize_tie(const char *text) {
+  return phonemize_mode(text, espeakPHONEMES_IPA | 0x80 | (0x0361 << 8));
 }

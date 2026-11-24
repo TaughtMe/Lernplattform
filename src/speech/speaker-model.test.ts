@@ -9,6 +9,11 @@ const model = vi.hoisted(() => ({
   preloadModel: vi.fn(async () => true),
   speakWithModel: vi.fn(async () => true),
   stopModel: vi.fn(),
+  installed: true,
+  languageStatus: vi.fn(async () =>
+    model.installed ? "installed" : "missing",
+  ),
+  installLanguage: vi.fn(async () => true),
 }));
 vi.mock("./model/model-speaker", () => model);
 const player = vi.hoisted(() => ({ unlockAudio: vi.fn() }));
@@ -36,6 +41,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   resetSpeechState();
   model.available = false;
+  model.installed = true;
   voices = [];
   spoken = [];
   class Utterance {
@@ -155,5 +161,34 @@ describe("Ton-Freigabe in der Geste", () => {
     model.available = true;
     void speak("Rad", "de-DE", { model: true });
     expect(player.unlockAudio).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Sprache noch nicht installiert", () => {
+  it("liest mit der Gerätestimme und installiert im Hintergrund", async () => {
+    model.available = true;
+    model.installed = false;
+    voices = [network];
+    await run(speak("Rad", "de-DE", { model: true }));
+    expect(model.installLanguage).toHaveBeenCalledWith("de-DE");
+    expect(model.speakWithModel).not.toHaveBeenCalled();
+    expect(spoken.map((entry) => entry.text)).toEqual(["Rad"]);
+  });
+
+  it("wartet ohne Gerätestimme auf das Modell", async () => {
+    model.available = true;
+    model.installed = false;
+    await run(speak("Rad", "de-DE", { model: true }));
+    expect(model.installLanguage).toHaveBeenCalled();
+    expect(model.speakWithModel).toHaveBeenCalled();
+  });
+
+  it("nimmt mit localOnly keine Netzwerkstimme, sondern wartet auf das Modell", async () => {
+    model.available = true;
+    model.installed = false;
+    voices = [network];
+    await run(speak("Rad", "de-DE", { model: true, localOnly: true }));
+    expect(spoken).toEqual([]);
+    expect(model.speakWithModel).toHaveBeenCalled();
   });
 });

@@ -32,5 +32,17 @@ create({
     if (!ok) failed += 1;
     console.log(`${ok ? "ok  " : "FEHL"} ${voice} ${text} -> ${got}`);
   }
+  // Verbindungszeichen wie phonemizer mit tie=True (KittenTTS 2).
+  const tied = [
+    ["de", "Zeit", "t͡sˈa͡ɪt"],
+    ["de", "Haus", "hˈa͡ʊs"],
+  ];
+  for (const [voice, text, want] of tied) {
+    phonemizer.ccall("lr_set_voice", "number", ["string"], [voice]);
+    const got = phonemizer.ccall("lr_phonemize_tie", "string", ["string"], [text]);
+    const ok = got === want;
+    if (!ok) failed += 1;
+    console.log(`${ok ? "ok  " : "FEHL"} tie ${voice} ${text} -> ${got}`);
+  }
   if (failed > 0) process.exit(1);
 });

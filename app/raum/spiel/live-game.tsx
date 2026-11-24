@@ -1,6 +1,7 @@
 "use client";
 
 import { useAreaVisible } from "../../release/release-context";
+import { useModelSpeech } from "../../ui/use-model-speech";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
@@ -185,7 +186,7 @@ export function LiveRunningDictationGame({
     useLiveWordStoreTransfer();
   const wordStoreVisible = useAreaVisible("wortspeicher");
   // Vorschau: Vorlesen mit dem Sprachmodell (docs/umsetzungsplan-sprachmodell.md).
-  const modelSpeech = useAreaVisible("sprachmodell");
+  const modelSpeech = useModelSpeech();
   const startedAt = useRef(0);
   const lastAttackId = useRef(0);
   const mathSaving = useRef(false);

@@ -693,3 +693,27 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Nicht wieder einbauen:** Kein Phonemizer-Paket ohne festgelegte Quellen und ohne Lizenzdatei, wie `@diffusionstudio/piper-wasm` (nennt MIT, enthält GPL-3-Code, Quellen mit `git clone --depth 1`). Keine Netzwerkstimme als Rückfall, wenn das Modell ausfällt. Keine Sprachmodell-Dateien im App-Vorabcache oder in Caches mit dem Präfix `lernraum-`, denn die löscht der Service Worker bei jedem Update.
 
 **Bekannte Grenzen:** Modell- und Stimmdateien fehlen im Repository noch (`src/speech/model/sources.json` ist leer), bis sie aus dem Prototyp übernommen sind. Bis dahin ändert die Vorschau nichts. Freigabe für alle erst nach Lizenzklärung, Hörtest mit echten Wortlisten, Offline-Test auf dem iPad und Messung auf dem ältesten Schulgerät (Plan, Abschnitt 7). Das erste Laden umfasst etwa 15 MB ONNX Runtime, 1,3 MB Phonemizer und das Modell.
+
+## 61. KittenTTS 2 Nano fest in Lernraum, Stimmenwahl in den Einstellungen – 23. November 2026
+
+**Beschlossen:** Auf Wunsch der projektverantwortlichen Lehrkraft gehört KittenTTS 2 Nano (int8, Deutsch und Englisch, Revision `0843ae6…` von `KittenML/kitten-tts-2-nano`, Apache-2.0) fest zu Lernraum. Die Dateien liegen im Repository unter `public/speech/kitten2/` und werden mit der App ausgeliefert; zur Laufzeit lädt Lernraum nichts von Hugging Face. In den Einstellungen (Schüler und Lehrkraft) gibt es „Vorlesen“: Stimme je Sprache wählen, Probe hören, Sprache installieren oder entfernen. Die Sprache folgt dem Inhalt (z. B. der Sprache einer LernBox). Als installierte App lädt Lernraum Deutsch nach dem Start im Hintergrund. Der Phonemizer wird aus eSpeak NG 1.52 gebaut. Die Textaufbereitung bildet `kittenml` 0.9.8 nach und stimmt bei 41 deutschen Referenzsätzen mit der Original-Pipeline überein (`scripts/phonemizer/parity.mjs`). Plan: `docs/umsetzungsplan-sprachmodell.md`, Abschnitt 10.
+
+**Zurückgenommen:** Entscheidung 60, Punkt „Phonemizer aus eSpeak NG 1.51“. 1.51 kennt das kurze ü (`ʏ`) nicht, mit dem KittenTTS 2 trainiert wurde („Flüsse“ klang wie „Flüüse“).
+
+**Begründung:** Bessere und auf allen Geräten gleiche Sprachausgabe, ohne dass Text das Gerät verlässt (B-012). Die Stimme ist eine Geschmacks- und Hörfrage und gehört deshalb in die Einstellungen; die Sprache ergibt sich aus der Übung.
+
+**Nicht wieder einbauen:** Keine Modelldateien zur Laufzeit von Hugging Face oder einem anderen fremden Server. Kein eSpeak NG älter als 1.52 für KittenTTS 2. Kein automatisches Laden im normalen Browser-Tab (nur in der installierten App oder auf Knopfdruck).
+
+**Bekannte Grenzen:** Englisch ohne misakis Hauptwörterbuch und ohne das BART-Modell des Originals: seltene Wörter können anders klingen. Erstes Laden etwa 34 MB (Deutsch), Englisch etwa 23 MB dazu. Das Repository wächst um etwa 45 MB. Weiter nur in der Vorschau, bis Hörtest, iPad-Offline-Test, Messung und Lizenzklärung erledigt sind.
+
+## 62. Lernraum-Stimme für alle, je Gerät abschaltbar – 24. November 2026
+
+**Beschlossen:** Die projektverantwortliche Lehrkraft gibt die Lernraum-Stimme (KittenTTS 2 Nano) für alle frei: Freigabebereich `sprachmodell` steht auf `frei`. Sie ist fester Bestandteil von Lernraum und lässt sich in den Einstellungen „Vorlesen“ je Gerät mit „Lernraum-Stimme verwenden“ ein- und ausschalten (Vorgabe: an). Ist eine Sprache noch nicht installiert, liest beim ersten Mal die Gerätestimme, während Lernraum die Sprache im Hintergrund installiert. Plan: `docs/umsetzungsplan-sprachmodell.md`, 10.6.
+
+**Zurückgenommen:** Entscheidung 60 und 61, „nur in der Vorschau, Freigabe für alle erst nach Hörtest, iPad-Offline-Test, Messung und Lizenzklärung“. Diese Punkte bleiben als Aufgaben im Betrieb, sind aber keine Voraussetzung für die Freigabe mehr.
+
+**Begründung:** Die Sprachausgabe soll für alle besser werden. Wer die Gerätestimme vorzieht oder Probleme hat, schaltet die Lernraum-Stimme auf seinem Gerät aus.
+
+**Nicht wieder einbauen:** Keine Lernraum-Stimme ohne Schalter in den Einstellungen. Kein ungefragtes Vorladen nicht installierter Sprachen beim Öffnen einer Seite.
+
+**Bekannte Grenzen:** Beim allerersten Vorlesen kann noch die Gerätestimme sprechen, danach die Lernraum-Stimme. Ohne Gerätestimme dauert das erste Vorlesen so lange wie die Installation (etwa 34 MB). Englisch weiter ohne BART-G2P. Notbremse: `LERNRAUM_FREIGABE=sprachmodell=aus`.

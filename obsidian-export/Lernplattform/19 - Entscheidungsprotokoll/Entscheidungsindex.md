@@ -93,6 +93,8 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 58  | Vorlesen nur in der Aufgabe                         | gültig; nimmt D5-3 für Start- und Einstellungsblätter zurück | Implementiert      | –                                                                            |
 | 59  | Freigaben in der Beta, Google Drive aus             | gültig                                             | Implementiert              | Diagnostik pädagogisch nicht abgestimmt (D2)                                 |
 | 60  | Vorlesen mit Sprachmodell im Browser (Vorschau)     | gültig; nimmt „keine Sprachmodelle im Browser“ aus dem Vorlese-Plan zurück | Teilweise | Modelldateien fehlen noch; Lizenzklärung offen                               |
+| 61  | KittenTTS 2 Nano fest in Lernraum, Stimmenwahl    | gültig; nimmt eSpeak 1.51 aus 60 zurück             | Teilweise                  | Englisch ohne BART-G2P; Freigabe für alle offen                              |
+| 62  | Lernraum-Stimme für alle, je Gerät abschaltbar    | gültig; nimmt „nur Vorschau“ aus 60/61 zurück     | Implementiert              | Erstes Vorlesen evtl. mit Gerätestimme                                       |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 

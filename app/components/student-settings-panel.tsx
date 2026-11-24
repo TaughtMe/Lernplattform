@@ -23,6 +23,7 @@ import { PersonalLearningDatabase } from "../../src/storage/personal-learning-ev
 import { countUnreadableRecords } from "../../src/storage/unreadable-records";
 import { AnimalImage } from "../ui/animal";
 import { CloudSyncPanel } from "./cloud-sync-panel";
+import { StudentVoiceSettings } from "./speech-voice-settings";
 import { InstallStorageHint } from "./storage-protection";
 import { AnimalPicker } from "../ui/animal-picker";
 import { Segmented, Toggle } from "../ui/primitives";
@@ -150,6 +151,8 @@ export function StudentSettingsPanel() {
             </div>
           ) : null}
         </section>
+
+        <StudentVoiceSettings />
 
         <BackupCard />
 

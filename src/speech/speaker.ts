@@ -1,5 +1,7 @@
 import {
+  installLanguage,
   isModelAvailable,
+  languageStatus,
   loadModelManifest,
   prepareModel,
   preloadModel,
@@ -110,7 +112,10 @@ export type ModelOption = {
 export async function preloadModelSpeech(lang: string): Promise<boolean> {
   const manifest = await loadModelManifest();
   const available = manifest !== null && isModelAvailable(lang);
-  if (available) void preloadModel(lang);
+  // Nur Installiertes vorwärmen: Eine Seite zu öffnen lädt keine 34 MB.
+  if (available && (await languageStatus(lang)) === "installed") {
+    void preloadModel(lang);
+  }
   return available;
 }
 
@@ -250,6 +255,28 @@ async function speakPreferringModel(
       systemOptions(options, options.localOnly === true),
     );
   }
+  // Sprache noch nicht installiert: Mit Gerätestimme gleich vorlesen und die
+  // Sprache im Hintergrund installieren; ohne Gerätestimme auf das Modell warten.
+  if ((await languageStatus(lang)) !== "installed") {
+    if (mine !== generation) return;
+    void installLanguage(lang);
+    if (readVoices().length === 0) {
+      await Promise.race([preloadVoices(), delay(VOICE_WAIT_MS)]);
+    }
+    if (mine !== generation) return;
+    // Mit localOnly (Knopf „Vorlesen“, B-012) zählt nur eine lokale Stimme;
+    // sonst bliebe es stumm, weil speak() Netzwerkstimmen herausfiltert.
+    const systemVoice =
+      options.localOnly === true ? hasLocalVoiceFor(lang) : hasVoiceFor(lang);
+    if (systemVoice) {
+      return speak(
+        text,
+        lang,
+        systemOptions(options, options.localOnly === true),
+      );
+    }
+  }
+  if (mine !== generation) return;
   synth()?.cancel();
   const routes = speechRoutes({
     modelAllowed: true,

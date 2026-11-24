@@ -9,11 +9,12 @@ export type WorkerRequest =
       manifest: SpeechManifest;
       lang: string;
       text: string;
-      voice?: string | undefined;
+      voice?: string | null | undefined;
       speed: number;
     };
 
 export type WorkerResponse =
   | { type: "loaded"; id: number }
+  | { type: "progress"; id: number; loaded: number; total: number }
   | { type: "audio"; id: number; samples: Float32Array; sampleRate: number }
   | { type: "error"; id: number; message: string };

@@ -51,7 +51,7 @@ import {
   wantsDailyPlan,
 } from "../lernen/plan-today";
 import { speak } from "../../src/speech/speaker";
-import { useAreaVisible } from "../release/release-context";
+import { useModelSpeech } from "../ui/use-model-speech";
 import { useRoundGuard } from "../ui/round-guard";
 import { StudentPage } from "../ui/shell/student-page";
 import { useRoundSnapshot } from "../ui/use-round-snapshot";
@@ -213,7 +213,7 @@ export function LearningBoxApp({
   );
   const { theme, toggleTheme } = useThemeToggle();
   // Vorschau: Vorlesen mit dem Sprachmodell (docs/umsetzungsplan-sprachmodell.md).
-  const modelSpeech = useAreaVisible("sprachmodell");
+  const modelSpeech = useModelSpeech();
   const [decks, setDecks] = useState<LearningBoxDeck[]>([]);
   const [folders, setFolders] = useState<LearningBoxFolder[]>([]);
   const [cards, setCards] = useState<LearningBoxCard[]>([]);

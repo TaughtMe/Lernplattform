@@ -64,7 +64,7 @@ export default function ImpressumPage() {
           {" · "}
           <a href="/speech/phonemizer/LIZENZ-GPL-3.0.txt">GPL-3.0</a>
           {" · "}
-          <a href="/speech/phonemizer/quellen/espeak-ng_1.51+dfsg.orig.tar.gz">
+          <a href="/speech/phonemizer/quellen/espeak-ng_1.52.0+dfsg.orig.tar.gz">
             Quellen von eSpeak NG
           </a>
           {" · "}

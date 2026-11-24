@@ -1,0 +1,37 @@
+{
+ "quelle": "misaki EspeakFallback (kittenml 0.9.8 espeak.py), phonemizer 3.6, eSpeak NG 1.52",
+ "en_fallback": [
+  [
+   "hello",
+   "həlˈO"
+  ],
+  [
+   "Kevin",
+   "kˈɛvɪn"
+  ],
+  [
+   "schoolbag",
+   "skˈulbæɡ"
+  ],
+  [
+   "twelve",
+   "twˈɛlv"
+  ],
+  [
+   "Lernraum",
+   "lˈɜɹnɹWm"
+  ],
+  [
+   "beautiful",
+   "bjˈuTifᵊl"
+  ],
+  [
+   "the",
+   "ðə"
+  ],
+  [
+   "cat",
+   "kˈæt"
+  ]
+ ]
+}

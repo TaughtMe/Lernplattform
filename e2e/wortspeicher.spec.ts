@@ -196,8 +196,17 @@ test("Stufe 5 wertet je Wort und zeigt den Merkblock", async ({ page }) => {
   await expectAccessible(page);
 });
 
-/** Baut `speechSynthesis` nach; `voices` bestimmt, ob es eine deutsche Stimme gibt. */
+/**
+ * Baut `speechSynthesis` nach; `voices` bestimmt, ob es eine deutsche Stimme gibt.
+ * Diese Tests prüfen den Weg über die Gerätestimme. Im Dev-Modus ist die
+ * Vorschau `sprachmodell` immer an; ohne Manifest gibt es kein Modell, und
+ * Stufe 6 verhält sich wie vor dem Sprachmodell (Plan 3.4, Entscheidung 61).
+ * Den Weg über das Modell prüft e2e/sprachmodell.spec.ts.
+ */
 async function fakeSpeech(page: Page, hasVoice: boolean) {
+  await page.route("**/speech/manifest.json", (route) =>
+    route.fulfill({ status: 404, body: "" }),
+  );
   await page.addInitScript((withVoice: boolean) => {
     const voices = withVoice
       ? [

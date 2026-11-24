@@ -133,11 +133,13 @@ export const RELEASE_AREAS = {
   },
   sprachmodell: {
     label: "Vorlesen mit dem Sprachmodell im Browser",
-    // Kein eigener Pfad: schaltet das Sprachmodell (KittenTTS) für „Vorlesen“
-    // und Stufe 6 (docs/umsetzungsplan-sprachmodell.md, Entscheidung 60).
-    // Ohne Freigabe nur Stimmen des Geräts wie bisher.
+    // Kein eigener Pfad: schaltet die Lernraum-Stimme (KittenTTS 2 Nano) für
+    // das Vorlesen und Stufe 6 (docs/umsetzungsplan-sprachmodell.md). Seit
+    // 24.11.2026 für alle frei (Entscheidung 62); je Gerät in den
+    // Einstellungen „Vorlesen“ abschaltbar. Mit LERNRAUM_FREIGABE=
+    // sprachmodell=aus lesen überall wieder nur die Stimmen des Geräts.
     routes: [],
-    stage: "vorschau",
+    stage: "frei",
   },
   gastmodus: {
     label: "Gastmodus (geteilte Geräte)",

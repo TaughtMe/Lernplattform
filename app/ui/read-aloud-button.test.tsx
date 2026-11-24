@@ -16,6 +16,9 @@ import { ReadAloudButton } from "./read-aloud-button";
 const voiceListeners = new Set<() => void>();
 
 beforeEach(() => {
+  // Geprüft wird der Weg über die Gerätestimme: Lernraum-Stimme auf diesem
+  // Gerät aus (Einstellungen „Vorlesen“, Entscheidung 62).
+  window.localStorage.setItem("lernraum:vorlesen-modell", "0");
   voiceListeners.clear();
   speaker.hasLocalVoiceFor.mockReturnValue(true);
   speaker.preloadVoices.mockResolvedValue([]);
@@ -29,6 +32,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  window.localStorage.removeItem("lernraum:vorlesen-modell");
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });

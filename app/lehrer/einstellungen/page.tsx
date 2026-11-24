@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CloudSyncSetup } from "../../components/cloud-sync-setup";
+import { TeacherVoiceSettings } from "../../components/speech-voice-settings";
 import { TeacherDeviceSettings } from "../../components/teacher-device-settings";
 import {
   TeacherDataPanel,
@@ -20,6 +21,7 @@ export default function Page() {
       <SettingsGroups>
         <TeacherProfilePanel />
         <TeacherDeviceSettings />
+        <TeacherVoiceSettings />
         <CloudSyncSetup />
         <TeacherDataPanel />
       </SettingsGroups>

@@ -255,20 +255,28 @@ test("ships the update-aware service worker", async () => {
   assert.deepEqual(JSON.parse(version).version, APP_VERSION);
 });
 
-test("ships a valid speech manifest with checked phonemizer files", async () => {
+test("ships a valid speech manifest with the bundled KittenTTS 2 model", async () => {
   const manifest = JSON.parse(
     await readFile(
       new URL("../public/speech/manifest.json", import.meta.url),
       "utf8",
     ),
   );
-  assert.equal(manifest.version, 1);
+  assert.equal(manifest.version, 2);
+  // KittenTTS 2 Nano wird mit Lernraum ausgeliefert (Entscheidung 61).
+  assert.deepEqual(Object.keys(manifest.languages).sort(), ["de", "en"]);
   for (const asset of [
     manifest.ort.wasm,
     manifest.ort.mjs,
     manifest.phonemizer.js,
     manifest.phonemizer.wasm,
     manifest.phonemizer.data,
+    manifest.model.vocab,
+    manifest.languages.de.model,
+    manifest.languages.de.voices,
+    manifest.languages.en.model,
+    manifest.languages.en.voices,
+    manifest.languages.en.lexicon,
   ]) {
     assert.match(asset.path, /^\/speech\//);
     assert.match(asset.sha256, /^[0-9a-f]{64}$/);

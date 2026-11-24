@@ -1,4 +1,87 @@
 {
-  "hinweis": "Herkunft der Sprachmodelle (docs/umsetzungsplan-sprachmodell.md, 3.2). Jede Sprache braucht model und voices unter public/speech/kitten/. scripts/generate-speech-assets.mjs schreibt daraus public/speech/manifest.json.",
-  "languages": {}
+  "hinweis": "Herkunft des Sprachmodells (docs/umsetzungsplan-sprachmodell.md, 3.2). Die Dateien liegen fest im Repository unter public/speech/kitten2/ und werden mit Lernraum ausgeliefert; zur Laufzeit wird nichts von Hugging Face geladen. scripts/generate-speech-assets.mjs prüft jede Datei gegen sha256 und schreibt public/speech/manifest.json.",
+  "model": {
+    "name": "Kitten TTS 2 Nano",
+    "repo": "https://huggingface.co/KittenML/kitten-tts-2-nano",
+    "revision": "0843ae614780b04e4260c91b601e374c4b81250d",
+    "license": "Apache-2.0",
+    "weights": "int8",
+    "sampleRate": 24000,
+    "vocab": {
+      "path": "/speech/kitten2/vocab.json",
+      "from": "vocab.json",
+      "sha256": "f96ba7baac25095152c28d9d23bca33685cd7411aad802f9fb1c9a3d2b06d046"
+    }
+  },
+  "languages": {
+    "de": {
+      "label": "Deutsch",
+      "espeak": "de",
+      "model": {
+        "path": "/speech/kitten2/de/model.onnx",
+        "from": "kitten_tts_2_nano_de.onnx",
+        "sha256": "ca09996f77955c3c50ac7713f4660fb1c4aa7c691a2db97ad4161942fd1127f6"
+      },
+      "voices": {
+        "path": "/speech/kitten2/de/voices.npz",
+        "from": "voices_de.npz",
+        "sha256": "6e2d792497a0097ce8deec3ec1ead649653dcaf7c1819faadc2789e89ac31827"
+      },
+      "defaultVoice": "anna",
+      "voiceList": [
+        { "id": "anna", "label": "Anna", "description": "weiblich" },
+        { "id": "mia", "label": "Mia", "description": "weiblich" },
+        { "id": "lukas", "label": "Lukas", "description": "männlich" },
+        { "id": "paul", "label": "Paul", "description": "männlich" }
+      ]
+    },
+    "en": {
+      "label": "Englisch",
+      "espeak": "en-us",
+      "model": {
+        "path": "/speech/kitten2/en/model.onnx",
+        "from": "kitten_tts_2_nano_en.onnx",
+        "sha256": "3a63a18b3f5cb1dbd99d7f53cb60fdb995e23a21e98d21f9f32d378668dab98e"
+      },
+      "voices": {
+        "path": "/speech/kitten2/en/voices.npz",
+        "from": "voices_en.npz",
+        "sha256": "8dd673489b0130f23dd32d8c8b7cd49cf454cad029eaa6f0cd8c0f386c374e3e"
+      },
+      "lexicon": {
+        "path": "/speech/kitten2/g2p/cmu_misaki_us.json",
+        "from": "g2p/cmu_misaki_us.json",
+        "sha256": "ae564e1a76df3501058a5ec99d135d016759c9475042fb6c3811374daee1ef04"
+      },
+      "defaultVoice": "eleanor",
+      "voiceList": [
+        {
+          "id": "eleanor",
+          "label": "Eleanor",
+          "description": "weiblich, ruhig"
+        },
+        {
+          "id": "martha",
+          "label": "Martha",
+          "description": "weiblich, Radiostimme"
+        },
+        { "id": "serena", "label": "Serena", "description": "weiblich, sanft" },
+        { "id": "iris", "label": "Iris", "description": "weiblich, leise" },
+        {
+          "id": "grace",
+          "label": "Grace",
+          "description": "weiblich, beruhigend"
+        },
+        { "id": "edith", "label": "Edith", "description": "weiblich, älter" },
+        { "id": "otis", "label": "Otis", "description": "männlich, tief" },
+        {
+          "id": "vincent",
+          "label": "Vincent",
+          "description": "männlich, leise"
+        },
+        { "id": "max", "label": "Max", "description": "männlich, lebhaft" },
+        { "id": "danny", "label": "Danny", "description": "männlich, fröhlich" }
+      ]
+    }
+  }
 }
