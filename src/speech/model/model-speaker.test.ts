@@ -119,4 +119,37 @@ describe("Warteschlange der Lernraum-Stimme", () => {
     await next;
     expect(texts()).toEqual(["alt1", "neu"]);
   });
+
+  it("lässt verschiedene Aufrufer ihre Vorab-Aufträge nicht gegenseitig verwerfen", async () => {
+    hold = true;
+    void pregenerate(["alt"], "de-DE", 0.9, "frage");
+    await vi.waitFor(() => expect(requests).toHaveLength(1));
+    // Neue Karte: Frage und Antwort kommen von zwei Aufrufern.
+    const question = pregenerate(["Frage"], "de-DE", 0.9, "frage");
+    // Die Frage steht schon in der Warteschlange, bevor die Antwort kommt.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const answer = pregenerate(["Antwort"], "de-DE", 0.9, "antwort");
+    release?.();
+    await Promise.all([question, answer]);
+    expect(texts()).toEqual(["alt", "Frage", "Antwort"]);
+  });
+
+  it("verwirft einen Text nicht, den ein anderer Aufrufer auch will", async () => {
+    hold = true;
+    void pregenerate(["läuft"], "de-DE", 0.9, "a");
+    await vi.waitFor(() => expect(requests).toHaveLength(1));
+    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+    void pregenerate(["geteilt"], "de-DE", 0.9, "a");
+    await tick();
+    const other = pregenerate(["geteilt"], "de-DE", 0.9, "b");
+    await tick();
+    // "a" springt weiter; "geteilt" bleibt, weil "b" es auch braucht.
+    void pregenerate(["anders"], "de-DE", 0.9, "a");
+    await tick();
+    release?.();
+    expect(await other).toEqual([
+      expect.objectContaining({ sampleRate: 24000 }),
+    ]);
+    expect(texts()).toContain("geteilt");
+  });
 });

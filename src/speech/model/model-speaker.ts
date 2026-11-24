@@ -228,6 +228,8 @@ type Job = {
   voice: string;
   /** Ein Vorlesen wartet darauf; darf nicht verworfen werden. */
   urgent: boolean;
+  /** Wer den Vorab-Auftrag gestellt hat; `null`: geteilt, nie verworfen. */
+  owner: string | null;
   resolve: (audio: Audio | null) => void;
 };
 
@@ -287,6 +289,7 @@ async function synthesize(
   speed: number,
   voice: string | undefined,
   urgent: boolean,
+  owner: string | null = null,
 ): Promise<Audio | null> {
   // Erst das Manifest: Der Schlüssel braucht die aufgelöste Stimme.
   await loadModelManifest();
@@ -302,19 +305,29 @@ async function synthesize(
   const running = inFlight.get(key);
   if (running) {
     // Vorlesen holt einen wartenden Vorab-Auftrag nach vorn.
-    if (urgent) {
-      const index = queue.findIndex((job) => job.key === key);
-      const job = queue[index];
-      if (job) {
-        job.urgent = true;
-        queue.splice(index, 1);
-        queue.unshift(job);
-      }
+    const index = queue.findIndex((job) => job.key === key);
+    const job = queue[index];
+    if (job && urgent) {
+      job.urgent = true;
+      queue.splice(index, 1);
+      queue.unshift(job);
+    } else if (job && job.owner !== owner) {
+      // Mehrere Aufrufer wollen denselben Text: keiner darf ihn verwerfen.
+      job.owner = null;
     }
     return running;
   }
   const promise = new Promise<Audio | null>((resolve) => {
-    const job: Job = { key, text, lang, speed, voice: chosen, urgent, resolve };
+    const job: Job = {
+      key,
+      text,
+      lang,
+      speed,
+      voice: chosen,
+      urgent,
+      owner: urgent ? null : owner,
+      resolve,
+    };
     if (urgent) queue.unshift(job);
     else queue.push(job);
   });
@@ -328,10 +341,16 @@ const MAX_AHEAD = 6;
 
 /**
  * Erzeugt Audio vorab (z. B. die nächsten Wörter), ohne abzuspielen. Läuft
- * hinter jedem Vorlesen. Noch nicht begonnene Vorab-Aufträge für andere Texte
- * (die vorige Karte) fallen weg.
+ * hinter jedem Vorlesen. Noch nicht begonnene Vorab-Aufträge desselben
+ * Aufrufers (`owner`) für andere Texte (die vorige Karte) fallen weg;
+ * Aufträge anderer Aufrufer bleiben.
  */
-export async function pregenerate(texts: string[], lang: string, speed = 1) {
+export async function pregenerate(
+  texts: string[],
+  lang: string,
+  speed = 1,
+  owner = "vorab",
+) {
   await loadModelManifest();
   const wanted = texts
     .map((text) => text.trim())
@@ -342,14 +361,16 @@ export async function pregenerate(texts: string[], lang: string, speed = 1) {
   );
   for (let index = queue.length - 1; index >= 0; index -= 1) {
     const job = queue[index];
-    if (job && !job.urgent && !keep.has(job.key)) {
+    if (job && !job.urgent && job.owner === owner && !keep.has(job.key)) {
       queue.splice(index, 1);
       inFlight.delete(job.key);
       job.resolve(null);
     }
   }
   return Promise.all(
-    wanted.map((text) => synthesize(text, lang, speed, undefined, false)),
+    wanted.map((text) =>
+      synthesize(text, lang, speed, undefined, false, owner),
+    ),
   );
 }
 

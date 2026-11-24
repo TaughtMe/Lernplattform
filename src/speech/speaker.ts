@@ -128,12 +128,14 @@ export async function preloadModelSpeech(lang: string): Promise<boolean> {
 export async function prepareSpeechAhead(
   texts: readonly string[],
   lang: string,
+  /** Kennung des Aufrufers: Er verwirft nur seine eigenen alten Aufträge. */
+  owner = "vorab",
 ): Promise<void> {
   const manifest = await loadModelManifest();
   if (!manifest || !isModelAvailable(lang)) return;
   if ((await languageStatus(lang)) !== "installed") return;
   void preloadModel(lang);
-  await pregenerate([...texts], lang, SPEECH_RATE);
+  await pregenerate([...texts], lang, SPEECH_RATE, owner);
 }
 
 /** Gibt es auf diesem Gerät (nach `preloadVoices`) eine passende Stimme? */
