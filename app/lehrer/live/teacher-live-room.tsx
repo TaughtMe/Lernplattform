@@ -1,7 +1,7 @@
 "use client";
 
 import { QRCodeCanvas } from "qrcode.react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MULTIPLICATION_TABLES } from "../../../src/domain/mental-math";
 import { VOCABULARY_LANGUAGES } from "../../../src/domain/running-dictation";
 import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
@@ -66,6 +66,14 @@ export function TeacherLiveRoom({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [projection, setProjection] = useProjectionMode();
   const stationMode = t.gameMode === "STATION";
+  // Start der Runde auf diesem Gerät: Die Tafel zählt dann „3, 2, 1“ (M24-1).
+  const [startedAt, setStartedAt] = useState<number | undefined>();
+  const previousStage = useRef(t.stage);
+  useEffect(() => {
+    if (previousStage.current === "lobby" && t.stage === "live")
+      setStartedAt(Date.now());
+    previousStage.current = t.stage;
+  }, [t.stage]);
   // Fehlerstand je Schüler beim Wechsel der Aufgabe: daraus folgt, wer gerade hängt.
   const [errorBase, setErrorBase] = useState<ErrorBase>({});
   const currentBase = nextErrorBase(errorBase, t.students);
@@ -186,7 +194,11 @@ export function TeacherLiveRoom({
           }),
         )}
         {...(roomTimes ? { roomTimes } : {})}
-        projection={{ active: projection, onChange: setProjection }}
+        projection={{
+          active: projection,
+          onChange: setProjection,
+          ...(startedAt !== undefined ? { startedAt } : {}),
+        }}
         title={t.title}
         stored={t.contentId !== null}
         onTitle={t.setTitle}

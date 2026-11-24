@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { summarizeLiveProjection } from "./live-projection";
+import {
+  LIVE_PROJECTION_MIN_PARTICIPANTS_FOR_MISTAKES,
+  summarizeLiveProjection,
+} from "./live-projection";
 
 describe("summarizeLiveProjection", () => {
   it("nennt nur Zahlen für den ganzen Raum", () => {
@@ -14,20 +17,32 @@ describe("summarizeLiveProjection", () => {
       overall: 63,
       label: "12 von 24 fertig",
       mistakes: [],
+      participants: 24,
+      mistakesAllowed: true,
+      goal: { solved: 0, target: 0, percent: 0 },
+      roundDone: false,
+      correctShare: null,
+      topMistake: null,
     });
     // Keine Namen, Fehlerzahlen je Kind oder Hilfe-Hinweise im Ergebnis.
     expect(Object.keys(summary).sort()).toEqual([
+      "correctShare",
       "finished",
+      "goal",
       "label",
       "mistakes",
+      "mistakesAllowed",
       "overall",
+      "participants",
+      "roundDone",
+      "topMistake",
       "total",
     ]);
   });
 
   it("nennt die häufigsten Fehlerwörter der Klasse, höchstens fünf, ohne Namen", () => {
     const summary = summarizeLiveProjection({
-      active: 5,
+      active: 6,
       finished: 0,
       overall: 20,
       mistakes: [
@@ -80,5 +95,102 @@ describe("summarizeLiveProjection", () => {
     expect(
       summarizeLiveProjection({ active: 0, finished: 5, overall: -4 }),
     ).toMatchObject({ total: 5, overall: 0, label: "5 von 5 fertig" });
+  });
+
+  describe("Kleingruppen-Schutz (Entscheidung 65)", () => {
+    const mistakes = [{ word: "Pilze", count: 4 }];
+
+    it("zeigt Fehler erst ab sechs Kindern", () => {
+      expect(LIVE_PROJECTION_MIN_PARTICIPANTS_FOR_MISTAKES).toBe(6);
+      const few = summarizeLiveProjection({
+        active: 3,
+        finished: 2,
+        overall: 50,
+        mistakes,
+      });
+      expect(few).toMatchObject({
+        participants: 5,
+        mistakesAllowed: false,
+        mistakes: [],
+        topMistake: null,
+      });
+      const enough = summarizeLiveProjection({
+        active: 3,
+        finished: 3,
+        overall: 50,
+        mistakes,
+      });
+      expect(enough).toMatchObject({
+        mistakesAllowed: true,
+        mistakes,
+        topMistake: { word: "Pilze", count: 4 },
+      });
+    });
+
+    it("zählt die Kinder der Liste, wenn sie angegeben ist", () => {
+      const students = Array.from({ length: 4 }, () => ({
+        progress: 1,
+        total: 8,
+        mistakes: 1,
+      }));
+      expect(
+        summarizeLiveProjection({
+          active: 8,
+          finished: 0,
+          overall: 10,
+          mistakes,
+          students,
+        }),
+      ).toMatchObject({ participants: 4, mistakes: [] });
+    });
+  });
+
+  describe("Klassenziel und Rundenende (M24-1)", () => {
+    const students = [
+      { progress: 8, total: 8, mistakes: 2 },
+      { progress: 4, total: 8, mistakes: 0 },
+      { progress: 99, total: 8, mistakes: 2 },
+    ];
+
+    it("summiert richtige Antworten aller, ohne ein Kind zu nennen", () => {
+      const summary = summarizeLiveProjection({
+        active: 1,
+        finished: 2,
+        overall: 80,
+        students,
+      });
+      expect(summary.goal).toEqual({ solved: 20, target: 24, percent: 83 });
+      expect(summary.roundDone).toBe(false);
+      expect(summary.correctShare).toBe(83);
+    });
+
+    it("meldet das Rundenende, wenn alle fertig sind oder der Raum endet", () => {
+      expect(
+        summarizeLiveProjection({
+          active: 0,
+          finished: 3,
+          overall: 100,
+          students,
+        }).roundDone,
+      ).toBe(true);
+      expect(
+        summarizeLiveProjection({
+          active: 1,
+          finished: 2,
+          overall: 80,
+          students,
+          ended: true,
+        }).roundDone,
+      ).toBe(true);
+      expect(
+        summarizeLiveProjection({
+          active: 0,
+          finished: 0,
+          overall: 0,
+          students: [],
+          ended: true,
+        }).roundDone,
+      ).toBe(false);
+    });
   });
 });

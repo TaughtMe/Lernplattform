@@ -338,6 +338,74 @@
   border-radius: 999px;
   background: var(--green);
 }
+/* Klassenziel: ein gemeinsamer Balken, nie einzelne Kinder. */
+.projectionGoal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 520px);
+}
+.projectionGoalText {
+  margin: 0;
+  font-size: clamp(18px, 3dvh, 30px);
+  font-weight: 800;
+}
+.projectionGoalTrack {
+  height: 20px;
+}
+.projectionCelebration {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(100%, 520px);
+  padding: 18px 16px;
+  border: 2px solid var(--green);
+  border-radius: 24px;
+  background: var(--surface2);
+}
+.projectionCelebrationTitle {
+  margin: 0;
+  font-size: clamp(28px, 6dvh, 56px);
+  font-weight: 900;
+}
+.projectionCelebrationLine {
+  margin: 0;
+  font-size: clamp(18px, 3dvh, 30px);
+  font-weight: 700;
+}
+/* Countdown „3, 2, 1“ beim Start: füllt die Tafel, nimmt nichts weg. */
+.countdown {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg, #fff) 92%, transparent);
+  font-size: clamp(120px, 40dvh, 360px);
+  font-weight: 900;
+  line-height: 1;
+}
+.countdownNumber {
+  animation: countdownPop 0.9s ease-out;
+}
+@keyframes countdownPop {
+  from {
+    transform: scale(1.4);
+    opacity: 0.2;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .countdownNumber {
+    animation: none;
+  }
+}
 /* Häufigste Fehler auf der Tafel: größer als in der Lehrerliste, weil man sie aus der Ferne liest. */
 .projectionMistakes {
   box-sizing: border-box;
