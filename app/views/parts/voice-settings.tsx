@@ -121,7 +121,9 @@ function VoiceLanguage({
           aria-label={`Installation ${language.label}`}
         />
       ) : null}
-      <p className="ui-small ui-muted" role="status">
+      {/* Live-Region ohne Rolle „status“: Der Stand ist meist ruhiger Text,
+          Änderungen (Installation) werden trotzdem angesagt. */}
+      <p className="ui-small ui-muted" aria-live="polite" aria-atomic="true">
         {statusText(language)}
       </p>
     </div>

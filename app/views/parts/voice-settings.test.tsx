@@ -51,9 +51,11 @@ describe("Einstellung Vorlesen", () => {
         onRemove={onRemove}
       />,
     );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Noch nicht auf diesem Gerät (etwa 34 MB).",
-    );
+    expect(
+      screen.getByText("Noch nicht auf diesem Gerät (etwa 34 MB)."),
+    ).toHaveAttribute("aria-live", "polite");
+    // Keine zusätzliche Rolle „status“ auf Einstellungsseiten.
+    expect(screen.queryByRole("status")).toBeNull();
     await user.click(
       screen.getByRole("button", { name: "Deutsch installieren" }),
     );
@@ -68,7 +70,7 @@ describe("Einstellung Vorlesen", () => {
     expect(
       screen.getByRole("progressbar", { name: "Installation Deutsch" }),
     ).toHaveAttribute("value", "0.42");
-    expect(screen.getByRole("status")).toHaveTextContent("42 %");
+    expect(screen.getByText("Wird installiert … 42 %")).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Deutsch installieren" }),
     ).toBeDisabled();
@@ -79,9 +81,7 @@ describe("Einstellung Vorlesen", () => {
         onRemove={onRemove}
       />,
     );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Funktioniert auch ohne Internet.",
-    );
+    expect(screen.getByText(/Funktioniert auch ohne Internet\./)).toBeVisible();
     await user.click(
       screen.getByRole("button", { name: "Deutsch vom Gerät entfernen" }),
     );
