@@ -27,12 +27,20 @@ import {
 } from "../../src/storage/teacher-class-settings";
 import type {
   StartKind,
+  StartQuick,
   StartOtherRow,
   StartRow,
   StartScreenProps,
   StartTab,
 } from "../views/lehrer/start-screen";
 import { writeLiveIntent } from "./live-intent";
+import {
+  DEFAULT_QUICK_GRADE,
+  gradePresetId,
+  quickGradeHint,
+  quickPresets,
+  QUICK_GRADES,
+} from "./quick-start";
 import { TEACHER_DATA_EVENT } from "./prepared-settings";
 import { useRunningRoom } from "./running-room";
 
@@ -87,6 +95,7 @@ export function useTeacherStart(): {
   const [tab, setTab] = useState<StartTab>("prepared");
   const [source, setSource] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [quickGrade, setQuickGrade] = useState<number>(DEFAULT_QUICK_GRADE);
   // Gerade geholte Einträge bleiben in ihrer Quelle stehen („✓ Bei 7b“).
   const [justAdded, setJustAdded] = useState<Readonly<Record<string, string>>>(
     {},
@@ -276,6 +285,30 @@ export function useTeacherStart(): {
     );
   }
 
+  // Schnellstart: Absicht schreiben und in den Live-Raum wechseln. Geht der
+  // Sitzungsspeicher nicht, bleibt der Weg über „Mathe“ (Inhaltsschritt).
+  function startQuick(id: string) {
+    const written = writeLiveIntent({
+      quick: id,
+      mode: "LAUFDIKTAT",
+      classId: selectedClass ? selection : "",
+    });
+    router.push(
+      written
+        ? "/lehrer/live"
+        : `/lehrer/live?neu=${id.startsWith("wortbox-") ? "text" : "math"}${classParam ? `&${classParam}` : ""}`,
+    );
+  }
+  const quick: StartQuick = {
+    grades: QUICK_GRADES,
+    grade: quickGrade,
+    gradeHint: quickGradeHint(quickGrade),
+    onGrade: setQuickGrade,
+    onLive: () => startQuick(gradePresetId(quickGrade)),
+    presets: quickPresets(),
+    onPreset: startQuick,
+  };
+
   const loading = !loaded;
   const emptyPrepared = loading
     ? "Wird geladen …"
@@ -304,6 +337,7 @@ export function useTeacherStart(): {
           `/lehrer/live?neu=${kind}${classParam ? `&${classParam}` : ""}`,
         ]),
       ) as Record<StartKind, string>,
+      quick,
       tab,
       onTab: setTab,
       prepared: prepared.map((entry) =>

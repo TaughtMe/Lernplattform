@@ -19,7 +19,10 @@ import {
   type SetStateAction,
 } from "react";
 import { defaultMathGapIndex } from "../../../src/domain/mental-math";
-import { tokenizeMarkerText } from "../../../src/domain/running-dictation-sections";
+import {
+  DEFAULT_TEXT_SPLIT_CONFIG,
+  tokenizeMarkerText,
+} from "../../../src/domain/running-dictation-sections";
 import type { LiveRoomConfig } from "../../../src/integrations/laufdiktat/live-room-client";
 import {
   buildTeacherWords,
@@ -27,6 +30,7 @@ import {
 } from "../../../src/integrations/laufdiktat/teacher-session";
 import { useHydrated } from "../../ui/use-hydrated";
 import { preparedSettingsOf } from "../prepared-settings";
+import type { QuickStart } from "../quick-start";
 import { useContentLibrary } from "./hooks/use-content-library";
 import { useContentRestore } from "./hooks/use-content-restore";
 import { useGameSettings } from "./hooks/use-game-settings";
@@ -253,6 +257,20 @@ export function useTeacherLiveRoom(
       ),
   });
   const { room, connectedNames, openLobby, startSession, endRoom } = session;
+  // Schnellstart: Aufgaben oder Wörter und Optionen, ohne Inhaltsschritt.
+  function applyQuickStart(quick: QuickStart) {
+    setLoadedContentId(null);
+    setContentMode(quick.contentMode);
+    setSources((current) => ({
+      ...current,
+      [quick.contentMode]: quick.source,
+    }));
+    library.setTitle(quick.title);
+    if (quick.contentMode === "text") {
+      text.resetTextLayout(DEFAULT_TEXT_SPLIT_CONFIG);
+    }
+    patchSettings(quick.settings);
+  }
   useLaunchRequest({
     hydrated,
     liveRoomConfig,
@@ -274,6 +292,7 @@ export function useTeacherLiveRoom(
     setShuffleWords,
     setGameMode,
     applyPreparedSettings,
+    applyQuickStart,
     chooseContentMode,
     setClassChoice: classes.setClassChoice,
     openLobby,

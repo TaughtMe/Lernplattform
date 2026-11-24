@@ -37,6 +37,7 @@ function setup(
     setShuffleWords: vi.fn(),
     setGameMode: vi.fn(),
     applyPreparedSettings: vi.fn(),
+    applyQuickStart: vi.fn(),
     chooseContentMode: vi.fn(),
     setClassChoice: vi.fn().mockResolvedValue(undefined),
     openLobby: vi.fn().mockResolvedValue(undefined),
@@ -226,6 +227,46 @@ describe("useLaunchRequest: Start-Absicht", () => {
       type: "jumpToStage",
       stage: "settings",
       hasRoom: false,
+    });
+  });
+
+  it("übernimmt einen Schnellstart, ohne die Ablage zu lesen, und startet", async () => {
+    mocks.takeLiveIntent.mockReturnValue({
+      quick: "kopfrechnen-2",
+      mode: "LAUFDIKTAT",
+      classId: "",
+    });
+    const { calls } = setup();
+    await waitFor(() =>
+      expect(calls.dispatchFlow).toHaveBeenCalledWith({
+        type: "startRequested",
+      }),
+    );
+    expect(calls.applyQuickStart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Kopfrechnen Jahrgang 2",
+        contentMode: "math",
+      }),
+    );
+    expect(mocks.get).not.toHaveBeenCalled();
+    expect(calls.setGameMode).toHaveBeenCalledWith("LAUFDIKTAT");
+  });
+
+  it("meldet eine unbekannte Vorgabe und öffnet keinen Raum", async () => {
+    mocks.takeLiveIntent.mockReturnValue({
+      quick: "gibt-es-nicht",
+      mode: "LAUFDIKTAT",
+      classId: "",
+    });
+    const { calls } = setup();
+    await waitFor(() =>
+      expect(calls.setError).toHaveBeenCalledWith(
+        "Diese Vorgabe gibt es nicht mehr.",
+      ),
+    );
+    expect(calls.applyQuickStart).not.toHaveBeenCalled();
+    expect(calls.dispatchFlow).not.toHaveBeenCalledWith({
+      type: "startRequested",
     });
   });
 
