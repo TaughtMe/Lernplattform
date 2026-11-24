@@ -444,7 +444,7 @@ export function StudentList({
             >
               {parsed.names.length > 0
                 ? `${parsed.names.length} hinzufügen`
-                : "Hinzufügen"}
+                : "Liste übernehmen"}
             </button>
           </form>
         </details>

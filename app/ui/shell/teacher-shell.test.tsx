@@ -1,7 +1,7 @@
 import "fake-indexeddb/auto";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   resolveStages,
   resolveVisibility,
@@ -13,6 +13,10 @@ import {
   createTeacherContentLibraryRepository,
   createTeacherProfileRepository,
 } from "../../../src/storage/teacher-class-settings";
+import {
+  saveTeacherDevice,
+  TEACHER_DEVICE_KEY,
+} from "../../../src/storage/teacher-device";
 import { ReleaseProvider } from "../../release/release-context";
 import { initialsOf, teacherAreaOf, teacherAreaTitle } from "./teacher-nav";
 import { TeacherShell } from "./teacher-shell";
@@ -60,7 +64,14 @@ function renderShell(
   );
 }
 
+// `lehrer-geraet` ist frei (Entscheidung 85): Diese Tests prüfen den Rahmen auf
+// einem eigenen Gerät, wie die Browser-Tests (`e2e/teacher-device-state.ts`).
+beforeEach(() => {
+  saveTeacherDevice("own", new Date("2026-01-01T00:00:00.000Z"));
+});
+
 afterEach(async () => {
+  window.localStorage.removeItem(TEACHER_DEVICE_KEY);
   await new Promise<void>((resolve) => {
     const request = indexedDB.deleteDatabase(LOCAL_DATA_AREAS.teacher);
     request.onsuccess = () => resolve();
