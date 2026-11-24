@@ -131,3 +131,46 @@ describe("HomeScreen: Aufgabenkarten", () => {
     }
   });
 });
+
+describe("HomeScreen: Wochenziel (M24-10)", () => {
+  const day = (
+    short: string,
+    label: string,
+    state: "active" | "past" | "upcoming",
+  ) => ({ short, label, state, today: false });
+
+  it("zählt von 5 Schultagen und nennt vergangene Tage nicht „nicht geübt“", () => {
+    render(
+      <HomeScreen
+        {...base}
+        week={[
+          day("Mo", "Montag", "active"),
+          day("Di", "Dienstag", "past"),
+          day("Mi", "Mittwoch", "active"),
+          day("Do", "Donnerstag", "upcoming"),
+        ]}
+      />,
+    );
+    expect(screen.getByText("2 von 5 Schultagen")).toBeVisible();
+    expect(screen.getByLabelText("Dienstag")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/nicht geübt/)).toBeNull();
+  });
+
+  it("zählt höchstens 5 Tage, auch wenn am Wochenende geübt wurde", () => {
+    const names = [
+      ["Mo", "Montag"],
+      ["Di", "Dienstag"],
+      ["Mi", "Mittwoch"],
+      ["Do", "Donnerstag"],
+      ["Fr", "Freitag"],
+      ["Sa", "Samstag"],
+    ] as const;
+    render(
+      <HomeScreen
+        {...base}
+        week={names.map(([short, label]) => day(short, label, "active"))}
+      />,
+    );
+    expect(screen.getByText("5 von 5 Schultagen")).toBeVisible();
+  });
+});

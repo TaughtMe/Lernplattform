@@ -13,7 +13,7 @@ const FIRST_CONTACT_INTRO =
 export type WeekDay = {
   short: string;
   label: string;
-  state: "active" | "missed" | "upcoming";
+  state: "active" | "past" | "upcoming";
   today: boolean;
 };
 
@@ -104,7 +104,11 @@ export function HomeScreen(props: HomeScreenProps) {
   // Ohne Portion ist der Tag erledigt (Ring voll, wenn geübt wurde).
   const ratio = target > 0 ? Math.min(1, done / target) : done > 0 ? 1 : 0;
   const open = Math.max(0, due.total - due.done);
-  const activeDays = week.filter((day) => day.state === "active").length;
+  // Wochenziel in Schultagen (M24-10); Wochenendtage zählen mit, höchstens 5.
+  const activeDays = Math.min(
+    week.filter((day) => day.state === "active").length,
+    5,
+  );
   return (
     <div className={styles.screen}>
       <div className={styles.layout}>
@@ -258,7 +262,9 @@ export function HomeScreen(props: HomeScreenProps) {
               <h2 id="home-week" className={styles.panelTitle}>
                 Diese Woche
               </h2>
-              <span className={styles.panelMeta}>{activeDays} von 7 Tagen</span>
+              <span className={styles.panelMeta}>
+                {activeDays} von 5 Schultagen
+              </span>
             </div>
             <ol className={styles.week}>
               {week.map((day) => (
@@ -270,13 +276,13 @@ export function HomeScreen(props: HomeScreenProps) {
                     day.state === "upcoming" && styles.upcoming,
                     day.today && styles.today,
                   )}
-                  aria-label={`${day.label}: ${
+                  aria-label={
                     day.state === "active"
-                      ? "geübt"
+                      ? `${day.label}: geübt`
                       : day.state === "upcoming"
-                        ? "kommt noch"
-                        : "nicht geübt"
-                  }`}
+                        ? `${day.label}: kommt noch`
+                        : day.label
+                  }
                 >
                   {day.short}
                 </li>
