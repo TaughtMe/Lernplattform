@@ -101,3 +101,32 @@ describe("Schnellstart: Kennungen", () => {
     }
   });
 });
+
+describe("Schnellstart Zehnerübergang (M24-6 mit MA-1)", () => {
+  it("liefert zehn Aufgaben mit Übergang, je zur Hälfte Plus und Minus", () => {
+    const start = resolveQuickStart("zehneruebergang")!;
+    const tasks = start.source.split("\n").filter(Boolean);
+    expect(tasks).toHaveLength(10);
+    const values = tasks.map((line) => {
+      const match = /^(\d+)\s*([+−-])\s*(\d+)$/.exec(line.trim());
+      expect(match, line).not.toBeNull();
+      return {
+        left: Number(match![1]),
+        op: match![2] === "+" ? "+" : "-",
+        right: Number(match![3]),
+      };
+    });
+    expect(values.filter((task) => task.op === "+")).toHaveLength(5);
+    for (const { left, op, right } of values) {
+      expect(left).toBeGreaterThanOrEqual(10);
+      expect(right).toBeLessThan(10);
+      const ones = left % 10;
+      expect(
+        op === "+" ? ones + right >= 10 : ones < right,
+        `${left}${op}${right}`,
+      ).toBe(true);
+    }
+    expect(start.settings.mathOps).toEqual(["+", "-"]);
+    expect(isQuickStartId("zehneruebergang")).toBe(true);
+  });
+});

@@ -107,6 +107,7 @@ export function quickPresets(): QuickPreset[] {
   });
   return [
     { id: "einmaleins", label: "Einmaleins", group: "math" },
+    { id: "zehneruebergang", label: "Zehnerübergang", group: "math" },
     { id: "plus-minus-1000", label: "Plus/Minus bis 1000", group: "math" },
     ...words,
   ];
@@ -119,7 +120,12 @@ export function gradePresetId(grade: number): string {
 
 /** Ist das eine bekannte Vorgabe? Prüft die Absicht beim Lesen. */
 export function isQuickStartId(id: string): boolean {
-  if (id === "einmaleins" || id === "plus-minus-1000") return true;
+  if (
+    id === "einmaleins" ||
+    id === "zehneruebergang" ||
+    id === "plus-minus-1000"
+  )
+    return true;
   if (id.startsWith(GRADE_PREFIX)) {
     return isQuickGrade(Number(id.slice(GRADE_PREFIX.length)));
   }
@@ -182,6 +188,35 @@ function mathStart(title: string, rule: MathStartRule): QuickStart {
   };
 }
 
+/**
+ * Zehnerübergang bis 100 (M24-6 mit MA-1): je zur Hälfte Plus und Minus mit
+ * Übergang, Zweistellig mit Einer (z. B. 38 + 5, 42 − 7). Die Einstellungen
+ * sind „Plus/Minus bis 100“; im Inhaltsschritt lässt sich alles ändern.
+ */
+function bridgeStart(): QuickStart {
+  const base = mathStart("Zehnerübergang", { max: 100, ops: ["+", "-"] });
+  const half = Math.ceil(TASK_COUNT / 2);
+  const part = (op: MathOperation, placeValue: string, count: number) =>
+    generateMentalMathSource({
+      count,
+      min: 0,
+      max: 100,
+      operations: [op],
+      allowNegativeResults: false,
+      excludeZeroOperand: false,
+      excludeZeroResult: false,
+      multiplicationTables: [],
+      focus: { bridge: true, placeValue },
+    });
+  return {
+    ...base,
+    source: [
+      part("+", "ZE+E", half),
+      part("-", "ZE-E", TASK_COUNT - half),
+    ].join("\n"),
+  };
+}
+
 /** Zufällige Auswahl ohne Wiederholung; die Reihenfolge bleibt zufällig. */
 function sample<T>(items: readonly T[], count: number, random: () => number) {
   const pool = [...items];
@@ -208,6 +243,7 @@ export function resolveQuickStart(
       tables: [2, 3, 4, 5, 6, 7, 8, 9, 10],
     });
   }
+  if (id === "zehneruebergang") return bridgeStart();
   if (id === "plus-minus-1000") {
     return mathStart("Plus/Minus bis 1000", { max: 1000, ops: ["+", "-"] });
   }
