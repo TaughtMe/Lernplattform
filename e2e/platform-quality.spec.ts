@@ -383,7 +383,10 @@ test("many imported words give a portion of at most 20 and 'Weiterlernen' starts
   await sheet.getByRole("button", { name: "Los geht's" }).click();
   await expect(page.getByText(/10 übrig/)).toBeVisible();
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
-  await page.getByRole("button", { name: "Antwort zeigen" }).click();
+  // Der Knopf bleibt kompakt und füllt nicht die freie Höhe der Lernrunde.
+  const reveal = page.getByRole("button", { name: "Antwort zeigen" });
+  expect((await reveal.boundingBox())?.height ?? 0).toBeLessThan(80);
+  await reveal.click();
   await page.getByRole("button", { name: "Gewusst", exact: true }).click();
   await expect(page.getByText(/9 übrig/)).toBeVisible();
 
