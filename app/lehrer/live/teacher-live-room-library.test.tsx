@@ -534,6 +534,48 @@ describe("Start-Absicht", () => {
     );
   });
 
+  it("öffnet „Kopfrechnen live“ ohne Inhaltsschritt mit den Regeln des Jahrgangs", async () => {
+    window.sessionStorage.setItem(
+      LIVE_INTENT_KEY,
+      JSON.stringify({
+        quick: "kopfrechnen-1",
+        mode: "LAUFDIKTAT",
+        classId: "",
+      }),
+    );
+    renderRoom();
+    await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
+    expect(window.sessionStorage.getItem(LIVE_INTENT_KEY)).toBeNull();
+    const config = mocks.openLiveRoom.mock.calls[0]![1] as {
+      words: { kind: string }[];
+      classSeal?: string;
+    };
+    expect(config.words).toHaveLength(10);
+    expect(config.words.every(({ kind }) => kind === "math")).toBe(true);
+    expect(config).not.toHaveProperty("classSeal");
+    expect(
+      await screen.findByRole("img", { name: "Raumcode 4829" }),
+    ).toBeDefined();
+  });
+
+  it("öffnet eine Wortbox als Laufdiktat mit zehn Wörtern", async () => {
+    window.sessionStorage.setItem(
+      LIVE_INTENT_KEY,
+      JSON.stringify({
+        quick: "wortbox-double-consonants",
+        mode: "LAUFDIKTAT",
+        classId: "",
+      }),
+    );
+    renderRoom();
+    await waitFor(() => expect(mocks.openLiveRoom).toHaveBeenCalledTimes(1));
+    const config = mocks.openLiveRoom.mock.calls[0]![1] as {
+      words: { kind: string; targetWord: string }[];
+    };
+    expect(config.words).toHaveLength(10);
+    expect(config.words.every(({ kind }) => kind === "text")).toBe(true);
+  });
+
   it("ignoriert eine kaputte Absicht", async () => {
     window.sessionStorage.setItem(LIVE_INTENT_KEY, "{kaputt");
     renderRoom();

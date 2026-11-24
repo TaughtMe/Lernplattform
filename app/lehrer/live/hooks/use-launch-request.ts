@@ -24,6 +24,7 @@ import type {
 import { createTeacherContentLibraryRepository } from "../../../../src/storage/teacher-class-settings";
 import { packageToLiveContent } from "../../content-adapter";
 import { takeLiveIntent } from "../../live-intent";
+import { resolveQuickStart, type QuickStart } from "../../quick-start";
 import { ALL_MODES } from "../lib/modes";
 import type { LiveFlowAction, Stage } from "../teacher-live-flow";
 
@@ -50,6 +51,8 @@ type LaunchRequestInput = {
   setGameMode: Dispatch<SetStateAction<TeacherGameMode>>;
   /** Modus und Optionen eines vorbereiteten Inhalts übernehmen. */
   applyPreparedSettings: (prepared: TeacherPreparedSettings) => void;
+  /** Inhalt und Optionen eines Schnellstarts übernehmen. */
+  applyQuickStart: (quick: QuickStart) => void;
   chooseContentMode: (mode: TeacherContentMode) => void;
   setClassChoice: (id: string) => Promise<void>;
   openLobby: () => Promise<void>;
@@ -80,6 +83,7 @@ export function useLaunchRequest({
   setShuffleWords,
   setGameMode,
   applyPreparedSettings,
+  applyQuickStart,
   chooseContentMode,
   setClassChoice,
   openLobby,
@@ -144,8 +148,15 @@ export function useLaunchRequest({
       return;
     }
     void (async () => {
-      const id = intent?.contentId ?? contentParam;
-      if (id) {
+      const id = intent?.quick ? null : (intent?.contentId ?? contentParam);
+      if (intent?.quick) {
+        const quick = resolveQuickStart(intent.quick);
+        if (!quick) {
+          setError("Diese Vorgabe gibt es nicht mehr.");
+          return;
+        }
+        applyQuickStart(quick);
+      } else if (id) {
         const entry = await createTeacherContentLibraryRepository().get(id);
         if (!entry || !isRoomContent(entry)) {
           setError("Dieser Inhalt ist nicht mehr in der Ablage.");

@@ -64,6 +64,26 @@ export type StartRoom = {
   href: string;
 };
 
+export type StartQuickPreset = {
+  id: string;
+  label: string;
+  group: "math" | "words";
+};
+
+/** Schnellstart: ein Raum ohne Vorbereitung (Kopfrechnen live, Wortbox). */
+export type StartQuick = {
+  /** Wählbare Jahrgänge für „Kopfrechnen live“. */
+  grades: readonly number[];
+  grade: number;
+  /** Was der gewählte Jahrgang übt, z. B. „Plus und Minus bis 100“. */
+  gradeHint: string;
+  onGrade?: (grade: number) => void;
+  /** „Raum öffnen“ für den gewählten Jahrgang. */
+  onLive?: () => void;
+  presets: readonly StartQuickPreset[];
+  onPreset?: (id: string) => void;
+};
+
 export type StartScreenProps = {
   /** Zeile über dem Titel, z. B. „Klasse 7b · Start“. */
   eyebrow: string;
@@ -87,6 +107,8 @@ export type StartScreenProps = {
   onPrepareAgain?: (id: string) => void;
   /** „Aus anderen Klassen holen“; ohne Angabe fehlt der Abschnitt. */
   other?: StartOther;
+  /** Schnellstart über der Liste; ohne Angabe fehlt der Abschnitt. */
+  quick?: StartQuick;
   /** Hinweis am Ende der Seite, z. B. zum Schutz der lokalen Daten. */
   notice?: string;
 };
@@ -200,6 +222,7 @@ export function StartScreen(props: StartScreenProps) {
       </section>
 
       <div className={styles.lower}>
+        {props.quick ? <QuickSection quick={props.quick} /> : null}
         <section className={styles.listSection} aria-label="Laufdiktate">
           <div
             className={styles.tabBar}
@@ -514,6 +537,76 @@ function OtherSection({ other, own }: { other: StartOther; own: string }) {
           </ul>
         )}
       </div>
+    </section>
+  );
+}
+
+function QuickSection({ quick }: { quick: StartQuick }) {
+  const groups: ReadonlyArray<{
+    id: StartQuickPreset["group"];
+    label: string;
+  }> = [
+    { id: "math", label: "Rechnen" },
+    { id: "words", label: "Wörter üben (Wortbox)" },
+  ];
+  return (
+    <section className={styles.quick} aria-labelledby="quick-title">
+      <h2 id="quick-title" className={styles.quickTitle}>
+        Schnellstart
+      </h2>
+      <p className={styles.quickText}>
+        Raum sofort öffnen, ohne etwas vorzubereiten.
+      </p>
+      <div className={styles.quickLive}>
+        <label className={styles.quickField}>
+          <span className={styles.quickLabel}>Jahrgang</span>
+          <select
+            className={styles.quickSelect}
+            value={quick.grade}
+            onChange={(event) => quick.onGrade?.(Number(event.target.value))}
+          >
+            {quick.grades.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className={styles.quickGo}
+          onClick={() => quick.onLive?.()}
+        >
+          Kopfrechnen live
+        </button>
+        <p className={styles.quickHint}>{quick.gradeHint}</p>
+      </div>
+      {groups.map((group) => {
+        const presets = quick.presets.filter(({ group: g }) => g === group.id);
+        if (presets.length === 0) return null;
+        return (
+          <div
+            key={group.id}
+            className={styles.quickGroup}
+            role="group"
+            aria-label={group.label}
+          >
+            <span className={styles.quickLabel}>{group.label}</span>
+            <span className={styles.quickChips}>
+              {presets.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={styles.quickChip}
+                  onClick={() => quick.onPreset?.(preset.id)}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </span>
+          </div>
+        );
+      })}
     </section>
   );
 }
