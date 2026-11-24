@@ -36,6 +36,7 @@ declare const styles: {
   readonly chipOn: string;
   readonly chips: string;
   readonly choice: string;
+  readonly choiceForm: string;
   readonly choiceInput: string;
   readonly choiceList: string;
   readonly choiceOn: string;
@@ -68,6 +69,7 @@ declare const styles: {
   readonly fileInput: string;
   readonly folder: string;
   readonly folderTitle: string;
+  readonly formActions: string;
   readonly formBody: string;
   readonly formResult: string;
   readonly found: string;
@@ -126,11 +128,6 @@ declare const styles: {
   readonly menuIcon: string;
   readonly menuItem: string;
   readonly menuText: string;
-  readonly missed: string;
-  readonly missedAnswer: string;
-  readonly missedItem: string;
-  readonly missedList: string;
-  readonly missedTitle: string;
   readonly muted: string;
   readonly narrowOnly: string;
   readonly newCard: string;
@@ -194,9 +191,6 @@ declare const styles: {
   readonly tag: string;
   readonly tagInput: string;
   readonly tagRemove: string;
-  readonly testActions: string;
-  readonly testForm: string;
-  readonly testSkip: string;
   readonly textarea: string;
   readonly tools: string;
   readonly twoCols: string;

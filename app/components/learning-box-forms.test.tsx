@@ -1,22 +1,14 @@
 import "fake-indexeddb/auto";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type {
-  LearningBoxCard,
-  LearningBoxDeck,
-} from "../../src/domain/learning-box";
-import {
-  matchReducer,
-  startMatch,
-  type TestQuestion,
-} from "../../src/domain/learning-box-forms";
+import type { LearningBoxDeck } from "../../src/domain/learning-box";
+import { matchReducer, startMatch } from "../../src/domain/learning-box-forms";
 import {
   PersonalLearningDatabase,
   createLearningBoxRepository,
 } from "../../src/storage/personal-learning-events";
 import { useLearningBoxForms } from "./learning-box-forms";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 const databases: PersonalLearningDatabase[] = [];
 
 afterEach(async () => {
@@ -51,43 +43,19 @@ async function setup(options: { onNotice?: (message: string) => void } = {}) {
   );
   const onNotice = options.onNotice ?? vi.fn();
   const view = renderHook(() =>
-    useLearningBoxForms({ cards, deckById, repository, onNotice }),
+    useLearningBoxForms({ cards, deckById, onNotice }),
   );
   const card = (question: string) => {
     const found = cards.find((entry) => entry.question === question);
     if (!found) throw new Error(`Karte fehlt: ${question}`);
     return found;
   };
-  const question = (
-    entry: LearningBoxCard,
-    kind: TestQuestion["kind"],
-  ): TestQuestion => ({
-    id: `${entry.id}:forward`,
-    kind,
-    cardId: entry.id,
-    direction: "forward",
-    prompt: entry.question,
-    expected: entry.answer,
-    expectedLabel: entry.answer,
-    options: kind === "choice" ? [entry.answer, "x"] : [],
-    correctOption: kind === "choice" ? 0 : -1,
-  });
-  const startTest = () =>
-    act(() =>
-      view.result.current.start({
-        scope: deck.id,
-        form: "test",
-        direction: "forward",
-      }),
-    );
   const events = () => database.learningEvents.toArray();
   return {
     database,
     repository,
     view,
     card,
-    question,
-    startTest,
     events,
     deck,
   };
@@ -98,13 +66,7 @@ describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
     const { view, deck, database, repository, events } = await setup();
     const putCardAndEvent = vi.spyOn(repository, "putCardAndEvent");
     const before = await database.learningBoxCards.toArray();
-    act(() =>
-      view.result.current.start({
-        scope: deck.id,
-        form: "match",
-        direction: "forward",
-      }),
-    );
+    act(() => view.result.current.start({ scope: deck.id, form: "match" }));
     const main = view.result.current.main;
     if (main?.kind !== "match") throw new Error("Zuordnen läuft nicht");
     // Das ganze Spiel durchspielen: alle Paare finden, dazu einen Fehlversuch.
@@ -113,7 +75,9 @@ describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
       const tiles = main.match.rounds[state.round]!.tiles;
       const open = tiles.filter((tile) => !state.solved.includes(tile.id));
       const wrongA = open[0]!;
-      const wrongB = open.find((tile) => tile.cardId !== wrongA.cardId)!;
+      const wrongB = open.find(
+        (tile) => tile.cardId !== wrongA.cardId && tile.side !== wrongA.side,
+      )!;
       state = matchReducer(state, { type: "pick", tileId: wrongA.id });
       state = matchReducer(state, { type: "pick", tileId: wrongB.id });
       state = matchReducer(state, { type: "clear-wrong" });
@@ -130,115 +94,10 @@ describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
     }
     expect(state.mistakes).toBeGreaterThan(0);
     act(() => view.result.current.finish());
-    await view.result.current.settle();
     expect(putCardAndEvent).not.toHaveBeenCalled();
     expect(await events()).toHaveLength(0);
     expect(await database.learningEvents.count()).toBe(0);
     expect(await database.learningBoxCards.toArray()).toEqual(before);
-  });
-
-  it("ändert bei Auswahlfragen weder richtig noch falsch etwas (LF-3)", async () => {
-    const { view, card, question, startTest, events } = await setup();
-    await startTest();
-    act(() => {
-      view.result.current.answer(question(card("Haus"), "choice"), true);
-      view.result.current.answer(question(card("Hund"), "choice"), false);
-    });
-    await view.result.current.settle();
-    expect(await events()).toHaveLength(0);
-    await waitFor(() =>
-      expect(view.result.current.main).toMatchObject({
-        kind: "test",
-        test: { counted: 0 },
-      }),
-    );
-  });
-
-  it("hebt eine fällige Karte nach richtiger Schreibantwort um eine Box (LF-4)", async () => {
-    const { view, card, question, startTest, events, repository } =
-      await setup();
-    await startTest();
-    const roundId = view.result.current.form?.roundId;
-    const entry = card("Haus");
-    act(() => view.result.current.answer(question(entry, "written"), true));
-    await view.result.current.settle();
-    const [event] = await events();
-    expect(await events()).toHaveLength(1);
-    expect(event).toMatchObject({ roundId, learningObjectId: entry.id });
-    const saved = await repository.getCard(entry.id);
-    expect(saved?.box).toBe(entry.box + 1);
-    await waitFor(() =>
-      expect(view.result.current.main).toMatchObject({
-        test: { counted: 1 },
-      }),
-    );
-  });
-
-  it("setzt eine fällige Karte nach falscher Schreibantwort auf Box 1 (LF-4)", async () => {
-    const { view, card, question, startTest, events, repository, database } =
-      await setup();
-    const entry = card("Hund");
-    await database.learningBoxCards.put({
-      ...entry,
-      box: 3,
-      level: 3,
-      interval: 7,
-      nextReview: Date.now() - 2 * DAY_MS,
-      lastReviewed: Date.now() - 9 * DAY_MS,
-    });
-    await startTest();
-    act(() => view.result.current.answer(question(entry, "written"), false));
-    await view.result.current.settle();
-    expect(await events()).toHaveLength(1);
-    expect((await repository.getCard(entry.id))?.box).toBe(1);
-  });
-
-  it("ändert eine nicht fällige Karte weder bei richtiger noch bei falscher Schreibantwort (LF-5)", async () => {
-    const { view, card, question, startTest, events, repository, database } =
-      await setup();
-    for (const name of ["Haus", "Hund"]) {
-      await database.learningBoxCards.put({
-        ...card(name),
-        box: 3,
-        level: 3,
-        interval: 7,
-        nextReview: Date.now() + 10 * DAY_MS,
-        lastReviewed: Date.now() - DAY_MS,
-      });
-    }
-    const before = await repository.getCard(card("Haus").id);
-    await startTest();
-    act(() => {
-      view.result.current.answer(question(card("Haus"), "written"), true);
-      view.result.current.answer(question(card("Hund"), "written"), false);
-    });
-    await view.result.current.settle();
-    expect(await events()).toHaveLength(0);
-    expect(await repository.getCard(card("Haus").id)).toEqual(before);
-    await waitFor(() =>
-      expect(view.result.current.main).toMatchObject({
-        test: { counted: 0 },
-      }),
-    );
-  });
-
-  it("zählt nur wirksame Schreibantworten und wertet jede Frage höchstens einmal (LF-6)", async () => {
-    const { view, card, question, startTest, events } = await setup();
-    await startTest();
-    const written = question(card("Haus"), "written");
-    act(() => {
-      view.result.current.answer(written, true);
-      view.result.current.answer(written, true);
-      view.result.current.answer(question(card("Hund"), "choice"), true);
-      view.result.current.answer(question(card("Baum"), "written"), false);
-    });
-    await view.result.current.settle();
-    expect(await events()).toHaveLength(2);
-    await waitFor(() =>
-      expect(view.result.current.main).toMatchObject({
-        test: { counted: 2 },
-      }),
-    );
   });
 
   it("meldet bei zu wenigen verschiedenen Karten und bleibt in der Übersicht", async () => {
@@ -258,17 +117,10 @@ describe("LernBox-Lernformen: Wirkung auf Karten und Ereignisse", () => {
       useLearningBoxForms({
         cards,
         deckById: new Map(decks.map((entry) => [entry.id, entry])),
-        repository,
         onNotice,
       }),
     );
-    act(() =>
-      again.result.current.start({
-        scope: deck.id,
-        form: "match",
-        direction: "forward",
-      }),
-    );
+    act(() => again.result.current.start({ scope: deck.id, form: "match" }));
     expect(again.result.current.main).toBeNull();
     expect(onNotice).toHaveBeenCalledWith(
       "Dafür sind zu wenige verschiedene Karten im Stapel.",

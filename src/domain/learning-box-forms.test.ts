@@ -1,29 +1,21 @@
 import { describe, expect, it } from "vitest";
-import {
-  createLearningBoxCard,
-  evaluateLearningBoxAnswer,
-  processLearningBoxResult,
-  type LearningBoxCard,
-} from "./learning-box";
+import { createLearningBoxCard, type LearningBoxCard } from "./learning-box";
 import {
   MATCH_MAX_ROUNDS,
   MATCH_PAIRS_PER_ROUND,
-  TEST_CHOICES,
-  TEST_MAX_QUESTIONS,
-  buildLearningBoxTest,
+  CHOICE_OPTIONS,
+  assignLearningBoxKinds,
+  buildLearningBoxChoice,
   buildMatchRounds,
-  gradeLearningBoxTestAnswer,
-  learningBoxTestAnswerCounts,
+  gradeLearningBoxChoice,
   matchReducer,
   shuffleLearningBoxItems,
   startMatch,
-  summarizeLearningBoxTest,
   supportsLearningBoxForms,
   type MatchState,
 } from "./learning-box-forms";
 
 const NOW = Date.UTC(2026, 10, 14, 9);
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Fester Zufall, damit die Tests wiederholbar sind. */
 function seeded(seed = 1) {
@@ -236,38 +228,20 @@ describe("Zuordnen: Spielzüge", () => {
   });
 });
 
-describe("Test: Zusammenstellung", () => {
-  it("fragt jede Karte einmal, erst schriftlich, dann als Auswahl", () => {
-    const cards = deck(8);
-    const questions = buildLearningBoxTest(cards, {
-      direction: "forward",
-      random: seeded(),
-    });
-    expect(questions).toHaveLength(8);
-    expect(new Set(questions.map((q) => q.cardId)).size).toBe(8);
-    expect(questions.map((q) => q.kind)).toEqual([
-      ...Array<string>(4).fill("written"),
-      ...Array<string>(4).fill("choice"),
-    ]);
-  });
-
-  it("begrenzt den Test auf zehn Fragen", () => {
-    const questions = buildLearningBoxTest(deck(30), {
-      direction: "forward",
-      random: seeded(),
-    });
-    expect(questions).toHaveLength(TEST_MAX_QUESTIONS);
-  });
-
+describe("Auswahl: Zusammenstellung", () => {
   it("bietet vier verschiedene Antworten aus dem Stapel, eine ist richtig", () => {
     const cards = deck(8);
     const answers = new Set(cards.map((entry) => entry.answer));
-    for (const question of buildLearningBoxTest(cards, {
-      direction: "forward",
-      random: seeded(3),
-    }).filter((q) => q.kind === "choice")) {
-      expect(question.options).toHaveLength(TEST_CHOICES);
-      expect(new Set(question.options).size).toBe(TEST_CHOICES);
+    for (const source of cards) {
+      const question = buildLearningBoxChoice(
+        source,
+        "forward",
+        cards,
+        seeded(3),
+      )!;
+      expect(question.cardId).toBe(source.id);
+      expect(question.options).toHaveLength(CHOICE_OPTIONS);
+      expect(new Set(question.options).size).toBe(CHOICE_OPTIONS);
       expect(question.options.every((option) => answers.has(option))).toBe(
         true,
       );
@@ -285,119 +259,128 @@ describe("Test: Zusammenstellung", () => {
       card("Baum", "tree"),
       card("Hund", "dog"),
     ];
-    let checked = 0;
     for (let seed = 1; seed <= 40; seed += 1) {
-      const question = buildLearningBoxTest(cards, {
-        direction: "forward",
-        random: seeded(seed),
-      }).find((q) => q.cardId === cards[0]!.id && q.kind === "choice");
-      if (!question) continue;
-      checked += 1;
+      const question = buildLearningBoxChoice(
+        cards[0]!,
+        "forward",
+        cards,
+        seeded(seed),
+      )!;
       const wrong = question.options.filter(
         (_, index) => index !== question.correctOption,
       );
       expect(wrong).not.toContain("home");
       expect(wrong).not.toContain("House");
     }
-    expect(checked).toBeGreaterThan(0);
   });
 
-  it("fragt rückwärts nach dem Begriff und wechselt gemischt ab", () => {
+  it("fragt rückwärts nach dem Begriff", () => {
     const cards = deck(4);
-    const reverse = buildLearningBoxTest(cards, {
-      direction: "reverse",
-      random: seeded(),
-    });
-    for (const question of reverse) {
-      const source = cards.find((entry) => entry.id === question.cardId)!;
-      expect(question.prompt).toBe(source.answer);
-      expect(question.expected).toBe(source.question);
-    }
-    const mixed = buildLearningBoxTest(cards, {
-      direction: "mixed",
-      random: seeded(),
-    });
-    expect(mixed.map((q) => q.direction)).toEqual([
-      "forward",
+    const question = buildLearningBoxChoice(
+      cards[0]!,
       "reverse",
-      "forward",
-      "reverse",
-    ]);
+      cards,
+      seeded(),
+    )!;
+    expect(question.prompt).toBe(cards[0]!.answer);
+    expect(question.expected).toBe(cards[0]!.question);
+    expect(question.direction).toBe("reverse");
   });
 
-  it("macht aus einer Auswahlfrage ohne falsche Antwort eine Schreibfrage", () => {
+  it("gibt ohne falsche Antwort keine Auswahlfrage", () => {
     const cards = [card("Haus", "house"), card("Heim", "house")];
-    const questions = buildLearningBoxTest(cards, {
-      direction: "forward",
-      random: seeded(),
-    });
-    expect(questions.every((q) => q.kind === "written")).toBe(true);
+    expect(
+      buildLearningBoxChoice(cards[0]!, "forward", cards, seeded()),
+    ).toBeNull();
+  });
+
+  it("bewertet nach der gewählten Antwort; keine Wahl ist falsch", () => {
+    const cards = deck(8);
+    const choice = buildLearningBoxChoice(
+      cards[0]!,
+      "forward",
+      cards,
+      seeded(),
+    )!;
+    const right = choice.options[choice.correctOption]!;
+    const wrong = choice.options.find((option) => option !== right)!;
+    expect(gradeLearningBoxChoice(choice, right)).toBe(true);
+    expect(gradeLearningBoxChoice(choice, wrong)).toBe(false);
+    expect(gradeLearningBoxChoice(choice, "")).toBe(false);
   });
 });
 
-describe("Test: Auswertung", () => {
-  const cards = deck(8);
-  const questions = buildLearningBoxTest(cards, {
-    direction: "forward",
-    random: seeded(),
-  });
-  const written = questions.find((q) => q.kind === "written")!;
-  const choice = questions.find((q) => q.kind === "choice")!;
+describe("Gemischte Fragearten", () => {
+  const items = (cards: LearningBoxCard[]) =>
+    cards.map((entry) => ({ card: entry, direction: "forward" as const }));
 
-  it("bewertet Schreibfragen wie der Schreibmodus", () => {
-    const source = card("Haus", "home | house (building)");
-    const [question] = buildLearningBoxTest([source], {
-      direction: "forward",
-      random: seeded(),
-    });
-    for (const input of ["House", " home ", "house building", "hause", ""]) {
-      expect(gradeLearningBoxTestAnswer(question!, input)).toBe(
-        evaluateLearningBoxAnswer(source, input, "forward").accepted,
-      );
-    }
-    expect(gradeLearningBoxTestAnswer(question!, "ＨＯＭＥ")).toBe(true);
-    expect(gradeLearningBoxTestAnswer(question!, "hause")).toBe(false);
-  });
-
-  it("bewertet Auswahlfragen nach der gewählten Antwort", () => {
-    const right = choice.options[choice.correctOption]!;
-    const wrong = choice.options.find((option) => option !== right)!;
-    expect(gradeLearningBoxTestAnswer(choice, right)).toBe(true);
-    expect(gradeLearningBoxTestAnswer(choice, wrong)).toBe(false);
-    expect(gradeLearningBoxTestAnswer(choice, "")).toBe(false);
-  });
-
-  it("nennt die falsch und die nicht beantworteten Fragen", () => {
-    const summary = summarizeLearningBoxTest(questions, {
-      ...Object.fromEntries(
-        questions.map((q) => [q.id, { given: q.expected, correct: true }]),
-      ),
-      [written.id]: { given: "falsch", correct: false },
-    });
-    expect(summary.total).toBe(8);
-    expect(summary.correct).toBe(7);
-    expect(summary.missed).toEqual([{ question: written, given: "falsch" }]);
-    expect(summarizeLearningBoxTest(questions, {}).missed).toHaveLength(8);
-  });
-
-  it("lässt nur Schreibfragen fälliger Karten auf die Box wirken", () => {
-    const fresh = cards.find((entry) => entry.id === written.cardId)!;
-    // Neue Karte: fällig wie im Schreibmodus.
-    expect(learningBoxTestAnswerCounts(written, fresh, NOW)).toBe(true);
-    const practised = processLearningBoxResult(fresh, {
-      correct: true,
-      direction: "forward",
-      mode: "writing",
-      now: NOW,
-    });
-    // Gerade aufgestiegen (Box 2): erst in drei Tagen wieder fällig.
-    expect(learningBoxTestAnswerCounts(written, practised, NOW + 1000)).toBe(
-      false,
+  it("verteilt die gewählten Arten gleichmäßig auf die Karten", () => {
+    const cards = deck(9);
+    const mixed = assignLearningBoxKinds(
+      items(cards),
+      ["writing", "oral", "choice"],
+      cards,
+      seeded(),
     );
+    for (const kind of ["writing", "oral", "choice"]) {
+      expect(mixed.filter((entry) => entry.kind === kind)).toHaveLength(3);
+    }
+    expect(mixed.map((entry) => entry.card.id)).toEqual(
+      cards.map((entry) => entry.id),
+    );
+  });
+
+  it("wechselt reproduzierbar, wenn der Zufall fest ist", () => {
+    const cards = deck(8);
+    const kinds = (seed: number) =>
+      assignLearningBoxKinds(
+        items(cards),
+        ["writing", "oral"],
+        cards,
+        seeded(seed),
+      ).map((entry) => entry.kind);
+    expect(kinds(5)).toEqual(kinds(5));
+    expect(new Set(kinds(5))).toEqual(new Set(["writing", "oral"]));
+  });
+
+  it("hängt an jede Auswahlfrage ihre Antworten und nur dort", () => {
+    const cards = deck(6);
+    for (const entry of assignLearningBoxKinds(
+      items(cards),
+      ["writing", "choice"],
+      cards,
+      seeded(2),
+    )) {
+      if (entry.kind === "choice") {
+        expect(entry.choice?.cardId).toBe(entry.card.id);
+      } else {
+        expect(entry.choice).toBeUndefined();
+      }
+    }
+  });
+
+  it("macht eine Auswahlfrage ohne falsche Antwort zu Schreiben, sonst zu Mündlich", () => {
+    const cards = [card("Haus", "house"), card("Heim", "house")];
     expect(
-      learningBoxTestAnswerCounts(written, practised, NOW + 4 * DAY_MS),
+      assignLearningBoxKinds(
+        items(cards),
+        ["choice", "oral"],
+        cards,
+        seeded(),
+      ).map((entry) => entry.kind),
+    ).toEqual(["oral", "oral"]);
+    expect(
+      assignLearningBoxKinds(items(cards), ["choice"], cards, seeded()).every(
+        (entry) => entry.kind === "writing",
+      ),
     ).toBe(true);
-    // Auswahlfragen zählen nie, auch nicht bei fälligen Karten.
-    expect(learningBoxTestAnswerCounts(choice, fresh, NOW)).toBe(false);
+    expect(
+      assignLearningBoxKinds(
+        items(cards),
+        ["choice", "oral", "writing"],
+        cards,
+        seeded(),
+      ).every((entry) => entry.kind !== "choice"),
+    ).toBe(true);
   });
 });

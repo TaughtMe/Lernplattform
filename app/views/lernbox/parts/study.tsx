@@ -10,9 +10,12 @@ export function Study(props: LernBoxScreenProps & { study: LbStudy }) {
   const { study } = props;
   const input = useRef<HTMLInputElement>(null);
   const nextButton = useRef<HTMLButtonElement>(null);
+  const questionHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     if (study.feedback) nextButton.current?.focus();
     else if (study.mode === "writing") input.current?.focus();
+    // Bei einer Auswahlfrage steht der Fokus auf der Frage, nicht auf einer Antwort.
+    else if (study.mode === "choice") questionHeading.current?.focus();
   }, [study.feedback, study.mode, study.question]);
 
   const head = (
@@ -112,7 +115,13 @@ export function Study(props: LernBoxScreenProps & { study: LbStudy }) {
                 <span className={styles.boxPill}>Box {study.box}</span>
               </span>
             </div>
-            <h2 className={styles.question}>{study.question}</h2>
+            <h2
+              ref={questionHeading}
+              tabIndex={study.mode === "choice" ? -1 : undefined}
+              className={styles.question}
+            >
+              {study.question}
+            </h2>
             {study.mode === "oral" && study.revealed ? (
               <p className={styles.revealed}>
                 {study.revealedAnswer}
@@ -130,7 +139,50 @@ export function Study(props: LernBoxScreenProps & { study: LbStudy }) {
             ) : null}
           </article>
 
-          {study.mode === "writing" ? (
+          {study.mode === "choice" ? (
+            <form
+              className={styles.choiceForm}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (study.answer) props.onCheck?.();
+              }}
+            >
+              <fieldset className={styles.choiceList}>
+                <legend className={styles.fieldLabel}>
+                  Wähle die passende Antwort
+                </legend>
+                {study.choices.map((option) => (
+                  <label
+                    key={option}
+                    className={cx(
+                      styles.choice,
+                      study.answer === option && styles.choiceOn,
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      className={styles.choiceInput}
+                      name="lb-choice"
+                      value={option}
+                      checked={study.answer === option}
+                      onChange={() => props.onAnswer?.(option)}
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))}
+              </fieldset>
+              <button
+                type="submit"
+                className={styles.check}
+                disabled={!study.answer}
+              >
+                Prüfen{" "}
+                <span className={styles.enterKey} aria-hidden="true">
+                  ↵
+                </span>
+              </button>
+            </form>
+          ) : study.mode === "writing" ? (
             <form
               className={styles.answerRow}
               onSubmit={(event) => {

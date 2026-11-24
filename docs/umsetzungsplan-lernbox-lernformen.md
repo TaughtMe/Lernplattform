@@ -1,7 +1,14 @@
 # Umsetzungsplan LernBox: Lernformen „Zuordnen“ und „Test“
 
-Stand: 14.11.2026. Grundlage: Vision, Etappe 1 „LernBox wie Quizlet“
+Stand: 14.11.2026, Nachtrag 24.11.2026 (Abschnitt 14). Grundlage: Vision, Etappe 1 „LernBox wie Quizlet“
 (`obsidian-export/Lernplattform/25 - Vision/Roadmap.md`, `Anwendung.md`).
+
+> **Seit 24.11.2026 aufgegangen:** Die Lernform „Test“ gibt es nicht mehr. Ihre
+> Auswahlfragen sind die Frageart „Auswahl“, die das Kind im Start-Fenster mit
+> Schreiben und Mündlich mischen kann (Abschnitt 14, Entscheidung des
+> Entwicklers vom 15.11.2026). Die Abschnitte 1, 3 (LF-3 bis LF-7), 4, 5.3, 9
+> und 13 beschreiben den früheren Stand und bleiben als Verlauf stehen;
+> maßgeblich ist Abschnitt 14. „Zuordnen“ bleibt eine eigene Lernform.
 
 Dieser Plan ist ein Bauplan für eine Person ohne Vorwissen. Der Domain-Kern
 (Abschnitt 8, Schritt 1) liegt schon im Branch; alles andere ist offen.
@@ -613,3 +620,77 @@ Abweichungen und Unklarheiten, jeweils mit der vorsichtigsten Wahl:
   durch `child-glossary.test.ts`. Der Text lautet deshalb: „Bis zu 10 Fragen.
   Nur geschriebene Antworten zu Karten, die heute dran sind, zählen für deine
   Boxen.“ Der Test blieb unverändert.
+
+## 14. LF-3 mischbare Fragearten
+
+Entscheidung des Entwicklers vom 15.11.2026, Rückmeldung bestätigt am
+24.11.2026. Gebaut am 24.11.2026.
+
+**Was das Kind sieht.** Im Start-Fenster eines Stapels wählt es unter „Wie
+willst du üben?“ eine, zwei oder drei Fragearten: **Schreiben**, **Mündlich**
+(aufdecken und selbst bewerten) und **Auswahl** (vier Antworten, eine stimmt).
+Mindestens eine bleibt gewählt. Der erste Tipp ersetzt die Vorgabe (die zuletzt
+geübte Art), jeder weitere Tipp fügt eine Art hinzu oder nimmt sie wieder weg;
+wer nur eine Art antippt, startet damit wie bisher. „Zuordnen“ steht in
+derselben Reihe, ist aber eine eigene Lernform: Es schließt die Fragearten aus,
+und umgekehrt. Hinweis im Fenster: „Du kannst mehrere wählen. Sie wechseln sich
+ab.“
+
+**Wann Auswahl wählbar ist.** Nur dort, wo es Lernformen gibt: Stapel mit
+mindestens `LEARNING_BOX_FORM_MIN_CARDS` (4) Karten und Bereich
+`lernbox-lernformen` sichtbar (LF-8). In „Heute dran“, „Meine Fehler“ und „Box
+üben“ gibt es nur Schreiben und Mündlich, weil Auswahl an der Portion nichts
+ändert.
+
+**Ablauf der Runde.** Die Karten sind dieselben wie bei Schreiben und Mündlich
+(fällige Karten des Stapels, sonst alle). `assignLearningBoxKinds`
+(`src/domain/learning-box-forms.ts`) verteilt die gewählten Arten gleichmäßig
+und in zufälliger Reihenfolge auf die Karten (der Zufall ist injizierbar, in
+Tests fest). Die Runde wechselt Karte für Karte; nach **jeder** Karte kommt die
+Rückmeldung („Gewusst“ oder „Nicht gewusst“, mit Lösung), wie bisher beim
+Schreiben und Mündlich. Die falschen Antworten einer Auswahlfrage stammen aus
+den anderen Karten desselben Stapels in derselben Richtung (Regeln wie im
+früheren Test, Abschnitt 5.3 Punkt 4); gibt es keine, wird die Frage zu
+Schreiben (oder zu Mündlich, wenn nur Mündlich und Auswahl gewählt sind).
+Der Fokus liegt bei einer Auswahlfrage auf der Frage, nicht auf einer Antwort;
+die Antworten sind echte Radioknöpfe in einer beschrifteten Gruppe, die Wahl
+zeigt Rahmen und Markierung, nicht nur Farbe.
+
+**Box-Regeln je Art.**
+
+| Art       | Wirkung                                                                                                                                            |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Schreiben | Wie der Schreibmodus: `processLearningBoxResult` mit `mode: "writing"`, `putCardAndEvent`, einschließlich der Regel für Fehler vor der Fälligkeit. |
+| Mündlich  | Wie `oral` (Entscheidung 64): mündlich wird nicht „sicher“, Aufstieg nur bis Box 3, Lernereignis mit `mode: "oral"`.                               |
+| Auswahl   | Ändert keine Box und keine Fälligkeit und erzeugt kein Lernereignis (LF-1/LF-3). In der Rückmeldung steht „Box n bleibt · nur geübt“.              |
+
+Nur der erste Versuch je Karte und Richtung zählt (Regel K-3/C3-1), wie bisher.
+
+**Was aus dem „Test“ wurde.** Die Lernform „Test“ ist weg: kein Knopf im
+Start-Fenster, keine Ergebnisseite mit „Das üben wir noch“, kein „Diese Karten
+jetzt üben“, keine Zeile „… haben für deine Boxen gezählt“. Entfernt wurden
+`parts/test.tsx`, `buildLearningBoxTest`, `learningBoxTestAnswerCounts`,
+`summarizeLearningBoxTest` und der Test-Teil des Hooks
+`app/components/learning-box-forms.ts` (Schreibantworten laufen jetzt wie im
+Schreibmodus über `assess` in `learning-box-app.tsx`). Wiederverwendet ist die
+Logik der Auswahlfragen: `buildLearningBoxChoice` und
+`gradeLearningBoxChoice` (vorher in `buildLearningBoxTest` und
+`gradeLearningBoxTestAnswer`; Konstante `TEST_CHOICES` heißt jetzt
+`CHOICE_OPTIONS`). Die Fehlerkarten aus einer Runde bleiben in „Meine Fehler“
+erreichbar (Schreiben und Mündlich legen falsche Karten in Box 1).
+
+**Speicher.** Kein neues Ereignisformat, keine Dexie-Migration, kein geändertes
+Format des Zwischenstands (`src/domain/learning-box-snapshot.ts`). Eine Runde
+mit mehreren Arten oder mit Auswahl hat kein „Weitermachen“ (wie früher der
+Test): Sie schreibt keinen Zwischenstand und lässt den Zwischenstand einer
+älteren Runde stehen; beim Verlassen fragt die Rückfrage entsprechend „Die
+Übung fängt dann wieder von vorn an.“ Eine Runde mit nur Schreiben oder nur
+Mündlich verhält sich genau wie vorher, auch beim „Weitermachen“.
+
+**Tests.** Domain: `src/domain/learning-box-forms.test.ts` (Auswahlfragen,
+Verteilung der Arten, Rückfall). Ansicht: `start-sheet.test.tsx` (Wahl,
+Mindestens-eine, Aufruf von `onStart`, `onStartMixed`, `onStartForm`),
+`study.test.tsx` (Auswahlfrage). Anbindung: `learning-box-forms-flow.test.tsx`
+(gemischte Runde: fünf Schreibantworten wirken, fünf Auswahlantworten nicht).
+Browser: `e2e/lernbox-lernformen.spec.ts` muss auf Auswahl statt „Test“
+umgestellt werden (Abschnitt 9, Fälle 29 bis 33).

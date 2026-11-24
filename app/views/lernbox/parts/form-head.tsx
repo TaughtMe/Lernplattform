@@ -6,7 +6,7 @@ import { ThemeSwitch } from "../../parts/parts";
 import type { LernBoxScreenProps } from "./types";
 import styles from "../lernbox-screen.module.css";
 
-/** Kopf einer Lernform (Zuordnen, Test): Zurück, Titel, Unterzeile, Hell/Dunkel. */
+/** Kopf einer Lernform (Zuordnen): Zurück, Titel, Unterzeile, Hell/Dunkel. */
 export function FormHead({
   title,
   subtitle,
