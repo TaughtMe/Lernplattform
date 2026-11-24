@@ -180,7 +180,7 @@ export function Match(props: LernBoxScreenProps & { match: LbMatch }) {
           </button>
         ) : null}
         {state.finished ? (
-          <div className={styles.testActions}>
+          <div className={styles.formActions}>
             <button
               type="button"
               className={styles.cta}

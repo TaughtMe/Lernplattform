@@ -1908,14 +1908,6 @@
   max-width: 600px;
   margin: 0 auto;
 }
-.testForm {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-  max-width: 620px;
-  margin: 0 auto;
-}
 .matchGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1991,6 +1983,19 @@
   font-weight: 600;
   text-align: center;
 }
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.formActions > * {
+  flex: 1 1 200px;
+}
+.choiceForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 .choiceList {
   display: flex;
   flex-direction: column;
@@ -2031,57 +2036,4 @@
   margin: 0;
   opacity: 0;
   cursor: pointer;
-}
-.testActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.testActions > * {
-  flex: 1 1 200px;
-}
-.testSkip {
-  min-height: 54px;
-  padding: 0 20px;
-  border: 1.5px solid var(--line2);
-  border-radius: 16px;
-  background: var(--surface);
-  color: var(--ink);
-  font-family: var(--font);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.testSkip:hover {
-  border-color: var(--accent);
-}
-.missed {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  text-align: left;
-}
-.missedTitle {
-  font-size: 16px;
-  font-weight: 800;
-}
-.missedList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.missedItem {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface);
-  overflow-wrap: anywhere;
-}
-.missedAnswer {
-  font-size: 20px;
-  font-weight: 800;
 }

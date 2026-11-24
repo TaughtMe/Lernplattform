@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
 import type { LearningBoxDeckState } from "../../../../src/domain/learning-box";
-import type {
-  MatchRound,
-  TestQuestion,
-} from "../../../../src/domain/learning-box-forms";
+import type { MatchRound } from "../../../../src/domain/learning-box-forms";
 import { type Theme } from "../../parts/parts";
 
 export type LbMode = "writing" | "oral";
-/** Neue Lernformen eines Stapels (docs/umsetzungsplan-lernbox-lernformen.md). */
-export type LbForm = "match" | "test";
+/**
+ * Fragearten einer Runde: Schreiben, Mündlich und Auswahl. Mehrere wechseln
+ * sich Karte für Karte ab (docs/umsetzungsplan-lernbox-lernformen.md, LF-3).
+ */
+export type LbKind = LbMode | "choice";
+/** Eigene Lernform eines Stapels: Zuordnen (docs/umsetzungsplan-lernbox-lernformen.md). */
+export type LbForm = "match";
 export type LbDirection = "forward" | "reverse" | "mixed";
 export type LbSortKey = "question" | "answer" | "deck" | "tag" | "box";
 
@@ -75,7 +77,10 @@ export type LbStudy = {
   eyebrow: string;
   box: number;
   question: string;
-  mode: LbMode;
+  /** Frageart der aktuellen Karte. */
+  mode: LbKind;
+  /** Antworten einer Auswahlfrage (sonst leer); die Wahl steht in `answer`. */
+  choices: readonly string[];
   answer: string;
   revealed: boolean;
   /** Lösung, die im mündlichen Modus nach „Antwort zeigen“ erscheint. */
@@ -93,21 +98,11 @@ export type LbMatch = {
   rounds: readonly MatchRound[];
 };
 
-/** Test: Fragen stehen fest; Antworten und Ergebnis führt die Ansicht. */
-export type LbTest = {
-  title: string;
-  testKey: string;
-  questions: readonly TestQuestion[];
-  /** Antworten, die für Box und Fälligkeit gezählt haben (LF-4); `null`, solange noch geschrieben wird. */
-  counted: number | null;
-};
-
 export type LbMain =
   | { kind: "home" }
   | { kind: "edit"; edit: LbEdit }
   | { kind: "study"; study: LbStudy }
-  | { kind: "match"; match: LbMatch }
-  | { kind: "test"; test: LbTest };
+  | { kind: "match"; match: LbMatch };
 
 export type LbEdit = {
   cards: readonly LbCard[];
@@ -172,7 +167,7 @@ export type LernBoxScreenProps = {
   /** „Weitermachen“ für eine unterbrochene Runde (C-001); steht oben in der Übersicht. */
   resumeOffer?: ReactNode;
   main: LbMain;
-  /** Bereich `lernbox-lernformen` ist sichtbar: Zuordnen und Test im Start-Fenster. */
+  /** Bereich `lernbox-lernformen` ist sichtbar: Auswahl und Zuordnen im Start-Fenster. */
   formsVisible?: boolean;
   sheet: LbSheet | null;
   transfer: LbTransfer;
@@ -184,7 +179,16 @@ export type LernBoxScreenProps = {
     mode: LbMode;
     direction: LbDirection;
   }) => void;
-  /** Start einer neuen Lernform für einen Stapel (nicht für „Heute dran“, Fehler, Boxen). */
+  /**
+   * Start einer Runde mit mehreren Fragearten oder mit Auswahl (nur für einen
+   * Stapel, nicht für „Heute dran“, Fehler, Boxen).
+   */
+  onStartMixed?: (input: {
+    scope: string;
+    kinds: readonly LbKind[];
+    direction: LbDirection;
+  }) => void;
+  /** Start von Zuordnen für einen Stapel. */
   onStartForm?: (input: {
     scope: string;
     form: LbForm;
@@ -234,12 +238,6 @@ export type LernBoxScreenProps = {
   // Lernformen
   /** Zuordnen: neues Spiel mit neu gemischten Karten. */
   onMatchAgain?: () => void;
-  /** Spiel oder Test ist zu Ende (einmal gemeldet). */
+  /** Das Spiel ist zu Ende (einmal gemeldet). */
   onFormFinished?: () => void;
-  /** Eine Testantwort ist abgegeben; die Wirkung auf Box und Fälligkeit entscheidet die Anbindung. */
-  onTestAnswer?: (question: TestQuestion, correct: boolean) => void;
-  /** „Diese Karten jetzt üben“: die falsch beantworteten Karten mit ihrer Richtung. */
-  onPracticeMissed?: (
-    items: { cardId: string; direction: "forward" | "reverse" }[],
-  ) => void;
 };

@@ -1,16 +1,13 @@
-import { answerKey, answerKeys, answerMatches } from "./answer-normalization";
+import { answerKey, answerKeys } from "./answer-normalization";
 import {
   getLearningBoxPrompt,
-  isLearningBoxCardDue,
   learningBoxAlternatives,
-  learningBoxDirectionAt,
   type LearningBoxCard,
   type LearningBoxDirection,
-  type LearningBoxSessionDirection,
 } from "./learning-box";
 
 /**
- * Lernformen „Zuordnen“ und „Test“ der LernBox (Vision, Etappe 1: „ein
+ * Lernform „Zuordnen“ und Fragearten der LernBox (Auswahl) (Vision, Etappe 1: „ein
  * Inhalt, viele Lernformen“). Rundenbildung, Mischen und Auswertung sind rein;
  * der Zufall kommt von außen. Die Wirkung auf Box und Fälligkeit steht in
  * `docs/umsetzungsplan-lernbox-lernformen.md` (Regeln LF-1 bis LF-8).
@@ -19,16 +16,14 @@ import {
 /** Zufallszahl in [0, 1), wie `Math.random`. */
 export type LearningBoxRandom = () => number;
 
-/** Ab so vielen Karten bietet ein Stapel Zuordnen und Test an. */
+/** Ab so vielen Karten bietet ein Stapel Zuordnen und Auswahl an. */
 export const LEARNING_BOX_FORM_MIN_CARDS = 4;
 /** Paare je Runde beim Zuordnen. */
 export const MATCH_PAIRS_PER_ROUND = 6;
 /** Runden je Spiel; ein Spiel bleibt damit kurz (höchstens 18 Paare). */
 export const MATCH_MAX_ROUNDS = 3;
-/** Fragen je Test. */
-export const TEST_MAX_QUESTIONS = 10;
 /** Antworten je Auswahlfrage (eine richtige, sonst falsche aus dem Stapel). */
-export const TEST_CHOICES = 4;
+export const CHOICE_OPTIONS = 4;
 
 /** Mischt, ohne die Vorlage zu ändern (Fisher-Yates). */
 export function shuffleLearningBoxItems<T>(
@@ -248,11 +243,10 @@ export function matchReducer(
   };
 }
 
-// --- Test -------------------------------------------------------------------
+// --- Auswahl ----------------------------------------------------------------
 
-export type TestQuestion = {
+export type ChoiceQuestion = {
   id: string;
-  kind: "choice" | "written";
   cardId: string;
   direction: LearningBoxDirection;
   /** Frage in Anzeigeform. */
@@ -261,9 +255,9 @@ export type TestQuestion = {
   expected: string;
   /** Lösung in Anzeigeform. */
   expectedLabel: string;
-  /** Nur Auswahlfragen: Antworten in Anzeigeform, gemischt. */
+  /** Antworten in Anzeigeform, gemischt. */
   options: readonly string[];
-  /** Nur Auswahlfragen: Index der richtigen Antwort in `options`. */
+  /** Index der richtigen Antwort in `options`. */
   correctOption: number;
 };
 
@@ -283,7 +277,7 @@ function pickDistractors(
   const question = key(own.question);
   const distractors: string[] = [];
   for (const other of shuffleLearningBoxItems(pool, random)) {
-    if (distractors.length >= TEST_CHOICES - 1) break;
+    if (distractors.length >= CHOICE_OPTIONS - 1) break;
     if (other.id === card.id) continue;
     const prompt = getLearningBoxPrompt(other, direction);
     const keys = answerKeys(prompt.answer, { compatibility: true });
@@ -296,111 +290,88 @@ function pickDistractors(
 }
 
 /**
- * Stellt einen Test aus einem Stapel zusammen: höchstens `TEST_MAX_QUESTIONS`
- * zufällige Karten, jede Karte einmal. Die erste Hälfte sind Schreibfragen,
- * dann folgen die Auswahlfragen; so steht die Lösung einer Schreibfrage nicht
- * vorher als Auswahlantwort auf dem Bildschirm. Findet eine Auswahlfrage keine
- * falsche Antwort im Stapel, wird sie zur Schreibfrage.
+ * Stellt die Auswahlfrage zu einer Karte zusammen: die richtige Lösung und bis
+ * zu drei falsche aus dem Stapel (`pool`), gemischt. Findet sich keine falsche
+ * Antwort, gibt es keine Auswahlfrage (`null`).
  */
-export function buildLearningBoxTest(
-  cards: readonly LearningBoxCard[],
-  options: {
-    direction: LearningBoxSessionDirection;
-    random?: LearningBoxRandom;
-    maxQuestions?: number;
-  },
-): TestQuestion[] {
-  const random = options.random ?? Math.random;
-  const picked = shuffleLearningBoxItems(cards, random).slice(
-    0,
-    options.maxQuestions ?? TEST_MAX_QUESTIONS,
+export function buildLearningBoxChoice(
+  card: LearningBoxCard,
+  direction: LearningBoxDirection,
+  pool: readonly LearningBoxCard[],
+  random: LearningBoxRandom = Math.random,
+): ChoiceQuestion | null {
+  const prompt = getLearningBoxPrompt(card, direction);
+  const distractors = pickDistractors(card, direction, pool, random);
+  if (distractors.length === 0) return null;
+  const expectedLabel = display(prompt.answer);
+  const options = shuffleLearningBoxItems(
+    [expectedLabel, ...distractors],
+    random,
   );
-  const written = Math.floor(picked.length / 2);
-  return picked.map((card, index): TestQuestion => {
-    const direction = learningBoxDirectionAt(options.direction, index);
-    const prompt = getLearningBoxPrompt(card, direction);
-    const base = {
-      id: `${card.id}:${direction}`,
-      cardId: card.id,
-      direction,
-      prompt: display(prompt.question),
-      expected: prompt.answer,
-      expectedLabel: display(prompt.answer),
-    };
-    const distractors =
-      index < written ? [] : pickDistractors(card, direction, cards, random);
-    if (distractors.length === 0) {
-      return { ...base, kind: "written", options: [], correctOption: -1 };
-    }
-    const choices = shuffleLearningBoxItems(
-      [base.expectedLabel, ...distractors],
-      random,
-    );
-    return {
-      ...base,
-      kind: "choice",
-      options: choices,
-      correctOption: choices.indexOf(base.expectedLabel),
-    };
-  });
+  return {
+    id: `${card.id}:${direction}`,
+    cardId: card.id,
+    direction,
+    prompt: display(prompt.question),
+    expected: prompt.answer,
+    expectedLabel,
+    options,
+    correctOption: options.indexOf(expectedLabel),
+  };
 }
 
-/**
- * Bewertet eine Testantwort. Schreibfragen vergleicht dieselbe Normalisierung
- * wie der Schreibmodus (`evaluateLearningBoxAnswer`); bei Auswahlfragen ist
- * `given` der Text der gewählten Antwort. Leer („Weiß ich nicht“) ist falsch.
- */
-export function gradeLearningBoxTestAnswer(
-  question: TestQuestion,
+/** Bewertet die gewählte Antwort (ihr Text); keine Wahl ist falsch. */
+export function gradeLearningBoxChoice(
+  question: ChoiceQuestion,
   given: string,
 ) {
-  if (question.kind === "choice") {
-    return (
-      given !== "" && question.options.indexOf(given) === question.correctOption
-    );
-  }
-  return answerMatches(question.expected, given, { compatibility: true });
-}
-
-/**
- * Wirkt eine Testantwort auf Box und Fälligkeit? Nur die Schreibfrage einer
- * fälligen Karte (LF-4); Auswahlfragen sind Wiedererkennen und zählen nie
- * (LF-3), eine Schreibfrage vor der Fälligkeit ist nur Üben (LF-5).
- */
-export function learningBoxTestAnswerCounts(
-  question: Pick<TestQuestion, "kind" | "direction">,
-  card: LearningBoxCard,
-  now: number,
-) {
   return (
-    question.kind === "written" &&
-    isLearningBoxCardDue(card, question.direction, now)
+    given !== "" && question.options.indexOf(given) === question.correctOption
   );
 }
 
-export type TestAnswer = { given: string; correct: boolean };
+// --- Gemischte Fragearten ---------------------------------------------------
 
-export type TestSummary = {
-  total: number;
-  correct: number;
-  /** Falsch beantwortete Fragen in der Reihenfolge des Tests. */
-  missed: { question: TestQuestion; given: string }[];
-};
+/** Fragearten einer Runde: Schreiben, Mündlich, Auswahl (LF-3). */
+export type LearningBoxQuestionKind = "writing" | "oral" | "choice";
 
-/** Ergebnis eines Tests; unbeantwortete Fragen zählen als falsch. */
-export function summarizeLearningBoxTest(
-  questions: readonly TestQuestion[],
-  answers: Readonly<Record<string, TestAnswer>>,
-): TestSummary {
-  const missed = questions
-    .filter((question) => !answers[question.id]?.correct)
-    .map((question) => ({
-      question,
-      given: answers[question.id]?.given ?? "",
-    }));
-  return {
-    total: questions.length,
-    correct: questions.length - missed.length,
-    missed,
-  };
+/**
+ * Verteilt die gewählten Fragearten auf die Karten einer Runde: gleichmäßig
+ * und in zufälliger Reihenfolge (bei drei Arten und neun Karten je dreimal).
+ * Eine Auswahlfrage ohne falsche Antwort wird zu Schreiben, sonst zu Mündlich,
+ * je nachdem, was gewählt ist. Jede Art behält ihre Box-Regel: Auswahl ändert
+ * nichts (LF-3), die übrigen laufen über `processLearningBoxResult`.
+ */
+export function assignLearningBoxKinds<
+  T extends { card: LearningBoxCard; direction: LearningBoxDirection },
+>(
+  items: readonly T[],
+  kinds: readonly LearningBoxQuestionKind[],
+  pool: readonly LearningBoxCard[],
+  random: LearningBoxRandom = Math.random,
+): (T & { kind: LearningBoxQuestionKind; choice?: ChoiceQuestion })[] {
+  const chosen = [...new Set(kinds)];
+  if (chosen.length === 0) chosen.push("writing");
+  const order = shuffleLearningBoxItems(
+    items.map((_, index) => chosen[index % chosen.length]!),
+    random,
+  );
+  return items.map((item, index) => {
+    const kind = order[index]!;
+    if (kind !== "choice") return { ...item, kind };
+    const choice = buildLearningBoxChoice(
+      item.card,
+      item.direction,
+      pool,
+      random,
+    );
+    if (choice) return { ...item, kind, choice };
+    return {
+      ...item,
+      kind:
+        chosen.includes("oral") && !chosen.includes("writing")
+          ? "oral"
+          : "writing",
+    };
+  });
 }
