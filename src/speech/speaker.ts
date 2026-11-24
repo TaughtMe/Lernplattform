@@ -3,6 +3,7 @@ import {
   isModelAvailable,
   languageStatus,
   loadModelManifest,
+  pregenerate,
   prepareModel,
   preloadModel,
   speakWithModel,
@@ -117,6 +118,24 @@ export async function preloadModelSpeech(lang: string): Promise<boolean> {
     void preloadModel(lang);
   }
   return available;
+}
+
+/**
+ * Lädt das Modell und erzeugt die Texte vorab, damit Vorlesen sofort klingt
+ * (z. B. die aktuelle Karte, das nächste Wort). Nur für installierte
+ * Sprachen: Vorab-Arbeit lädt nie ungefragt 34 MB.
+ */
+export async function prepareSpeechAhead(
+  texts: readonly string[],
+  lang: string,
+  /** Kennung des Aufrufers: Er verwirft nur seine eigenen alten Aufträge. */
+  owner = "vorab",
+): Promise<void> {
+  const manifest = await loadModelManifest();
+  if (!manifest || !isModelAvailable(lang)) return;
+  if ((await languageStatus(lang)) !== "installed") return;
+  void preloadModel(lang);
+  await pregenerate([...texts], lang, SPEECH_RATE, owner);
 }
 
 /** Gibt es auf diesem Gerät (nach `preloadVoices`) eine passende Stimme? */
