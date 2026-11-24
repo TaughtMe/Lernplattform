@@ -35,12 +35,14 @@ Oberfläche: `app/components/learning-box-app.tsx` (Design 4a–4c).
     Plan und offene Vorschläge V-1 bis V-9:
     `docs/umsetzungsplan-lernbox-lernformen.md`.
 
+- **„Meine Fehler üben“ mit Zähler** (Design 4c): stapelübergreifend über alle
+  Karten, die nach einem Abruf in Box 1 liegen (`isMistake` in
+  `app/components/learning-box-app.tsx`, Bereich `errors`). Freies Üben, zählt
+  nicht zur Tagesportion. (Stand vom 24.11.2026 nachgetragen; die Vision
+  bemerkte den veralteten Eintrag, Bericht 23, Abschnitt 2.)
+
 ## Im Design gezeigt, fachlich noch nicht vorhanden
 
-- **„Meine Fehler üben“ im Panel mit Zähler** (Design 4c): Eine stapelübergreifende
-  Fehlerrunde gibt es noch nicht. Grundlage wären Lernereignisse mit
-  `assessment.knowledge = "incorrect"` der letzten Runden. Bis dahin führt der
-  Weg über den Stapel „Fehler aus Laufdiktat“.
 - **Mündlich mit Spracheingabe**: Das Design nennt den Modus „Mündlich“.
   Umgesetzt ist „Karteikarten“ (aufdecken und selbst bewerten), ohne
   Spracherkennung.
