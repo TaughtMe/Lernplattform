@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type FormEvent, type ReactNode } from "react";
+import { parseNameList } from "../../../src/domain/class-name-list";
 import { cx } from "../parts/parts";
 import { ManageIcon, manageStyles as m } from "./manage-parts";
 import styles from "./classes-screen.module.css";
@@ -309,6 +310,29 @@ export function ClassAreas({
   );
 }
 
+/** Kurzer Stand unter dem Feld „Namensliste einfügen“. */
+function nameListInfo(parsed: ReturnType<typeof parseNameList>) {
+  const parts: string[] = [];
+  if (parsed.names.length > 0) {
+    parts.push(
+      parsed.names.length === 1
+        ? "1 neuer Name"
+        : `${parsed.names.length} neue Namen`,
+    );
+  }
+  if (parsed.duplicates > 0) {
+    parts.push(
+      parsed.duplicates === 1
+        ? "1 Name ist schon da"
+        : `${parsed.duplicates} Namen sind schon da`,
+    );
+  }
+  if (parsed.overflow > 0) {
+    parts.push(`${parsed.overflow} mehr als erlaubt, bitte später einfügen`);
+  }
+  return parts.join(" · ");
+}
+
 export type StudentItem = {
   id: string;
   name: string;
@@ -323,6 +347,7 @@ export function StudentList({
   readOnly = false,
   qr,
   onAdd,
+  onAddMany,
   onToggleQr,
   onRelief,
   onRemove,
@@ -337,11 +362,19 @@ export function StudentList({
   /** QR-Code des offenen Kindes. */
   qr?: ReactNode;
   onAdd?: (name: string) => void;
+  /** Namensliste einfügen (L25-11): mehrere neue Namen auf einmal. */
+  onAddMany?: (names: string[]) => void;
   onToggleQr?: (id: string) => void;
   onRelief?: (id: string) => void;
   onRemove?: (id: string) => void;
 }) {
   const [draft, setDraft] = useState("");
+  const [listDraft, setListDraft] = useState("");
+  const listId = useId();
+  const parsed = parseNameList(
+    listDraft,
+    students.map((student) => student.name),
+  );
   const titleId = useId();
   return (
     <div className={styles.students}>
@@ -376,6 +409,45 @@ export function StudentList({
             Hinzufügen
           </button>
         </form>
+      )}
+      {readOnly || !onAddMany ? null : (
+        <details className={styles.nameList}>
+          <summary className={styles.nameListSummary}>
+            Namensliste einfügen
+          </summary>
+          <form
+            className={styles.nameListForm}
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (parsed.names.length === 0) return;
+              onAddMany(parsed.names);
+              setListDraft("");
+            }}
+          >
+            <label htmlFor={listId} className={styles.nameListLabel}>
+              Ein Name pro Zeile, z. B. aus einer Tabelle kopiert.
+            </label>
+            <textarea
+              id={listId}
+              className={cx(m.input, styles.nameListInput)}
+              rows={5}
+              value={listDraft}
+              onChange={(event) => setListDraft(event.target.value)}
+            />
+            <p className={styles.nameListInfo} aria-live="polite">
+              {nameListInfo(parsed)}
+            </p>
+            <button
+              type="submit"
+              className={m.soft}
+              disabled={parsed.names.length === 0}
+            >
+              {parsed.names.length > 0
+                ? `${parsed.names.length} hinzufügen`
+                : "Hinzufügen"}
+            </button>
+          </form>
+        </details>
       )}
       {students.length === 0 ? (
         <div className={styles.empty}>

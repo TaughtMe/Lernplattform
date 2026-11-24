@@ -290,6 +290,40 @@ export function TeacherClassConfigurator() {
     }
   }
 
+  async function addStudents(names: readonly string[]) {
+    if (!selected || names.length === 0) return;
+    const created: ClassMember[] = [];
+    try {
+      for (const name of names) {
+        const member: ClassMember = {
+          id: crypto.randomUUID(),
+          classId: selected.id,
+          displayName: name,
+          enrollmentToken: token(),
+          createdAt: new Date().toISOString(),
+        };
+        await repository.putMember(member);
+        created.push(member);
+      }
+    } catch {
+      // Bereits Gespeichertes bleibt sichtbar; der Rest fehlt.
+    }
+    if (created.length > 0) {
+      setMembers((current) => [...current, ...created]);
+      setCounts((current) => ({
+        ...current,
+        [selected.id]: (current[selected.id] ?? 0) + created.length,
+      }));
+      setShown(undefined);
+      changed();
+    }
+    setMessage(
+      created.length === names.length
+        ? `${created.length} Schüler wurden lokal angelegt.`
+        : `Nur ${created.length} von ${names.length} Schülern konnten gespeichert werden.`,
+    );
+  }
+
   async function removeStudent(member: ClassMember) {
     await repository.removeMember(member.id);
     setMembers((current) => current.filter(({ id }) => id !== member.id));
@@ -703,6 +737,7 @@ export function TeacherClassConfigurator() {
                 ) : null
               }
               onAdd={(name) => void addStudent(name)}
+              onAddMany={(names) => void addStudents(names)}
               onToggleQr={(id) =>
                 setShown((current) =>
                   current?.id === id
