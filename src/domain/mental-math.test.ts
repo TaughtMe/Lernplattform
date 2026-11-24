@@ -554,8 +554,11 @@ describe("eindeutige Lücken (G-009, M-3)", () => {
     );
     for (const task of tasks) {
       const expression = parseMentalMathExpression(task.source)!;
-      if (expression.left === 0) expect(task.gap).not.toBe("left");
-      if (expression.right === 0) expect(task.gap).not.toBe("right");
+      // Eine Null verschluckt die Lücke des anderen Faktors („0 · _ = 0“),
+      // nicht die eigene („1 · _ = 0“ hat genau eine Lösung).
+      if (expression.left === 0) expect(task.gap).not.toBe("right");
+      if (expression.right === 0) expect(task.gap).not.toBe("left");
+      expect(isGapUnique("*", expression, task.gap!)).toBe(true);
     }
   });
 

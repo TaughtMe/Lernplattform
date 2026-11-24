@@ -2,6 +2,18 @@ export type MentalMathOperation = "add" | "subtract" | "multiply" | "divide";
 export type MathOperator = "+" | "-" | "*" | "/";
 export type MathGapSlot = "left" | "right" | "result";
 
+import {
+  isTrivialMathTask,
+  matchesMathFeature,
+  matchesMathKind,
+  MATH_TRIVIAL_SHARE,
+  pickMathKind,
+  randomOfPlaceValueKind,
+  splitPlaceValue,
+  type MathTaskFeature,
+  type MathTaskKind,
+} from "./mental-math-features";
+
 export type MentalMathExpression = {
   left: number;
   operator: MathOperator;
@@ -30,6 +42,19 @@ export type MentalMathOptions = {
   multiplicationTables?: readonly number[] | undefined;
   gapMode?: boolean | undefined;
   gapSlots?: readonly MathGapSlot[] | undefined;
+  /**
+   * Aufgaben nach Art gewichten (MA-1): Zehnerübergang, Verdoppeln,
+   * Fast-Verdoppeln, Kern- und Nachbaraufgaben; Aufgaben mit 0, 1 und · 10
+   * höchstens 5 %. Vorgabe `true`; `false` zieht rein gleichverteilt.
+   * Nur eine Erzeugungsoption, sie wird nicht gespeichert.
+   */
+  weighted?: boolean | undefined;
+  /**
+   * Nur Plus und Minus (MA-3): Alle Aufgaben tragen dieses Merkmal (Übergang
+   * ja/nein, Stellenwertart), soweit der Zahlenraum es hergibt; sonst wird
+   * ohne Merkmal gezogen. Ersetzt die Gewichtung. Wird nicht gespeichert.
+   */
+  focus?: MathTaskFeature | undefined;
 };
 
 export const MULTIPLICATION_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -524,17 +549,30 @@ function randomInteger(random: () => number, min: number, max: number) {
   return low + Math.floor(random() * (high - low + 1));
 }
 
+/** Wunsch an die Aufgabe, den die Suche zuerst zu erfüllen versucht (MA-1, MA-3). */
+type OperandPlan = {
+  /** Gewünschte Art (Gewichtung); nur ohne `focus`. */
+  kind?: MathTaskKind | undefined;
+  /** Gewünschtes Merkmal der Nachübung; ersetzt die Art. */
+  focus?: MathTaskFeature | undefined;
+  /** Keine Aufgabe mit 0, 1 oder · 10, solange es auch anders geht. */
+  blockTrivial?: boolean | undefined;
+};
+
 function generateOperands(
   operation: MentalMathOperation,
   options: {
-    [K in keyof Omit<MentalMathOptions, "operations" | "gapSlots">]-?: Exclude<
-      MentalMathOptions[K],
-      undefined
-    >;
+    [
+      K in keyof Omit<
+        MentalMathOptions,
+        "operations" | "gapSlots" | "weighted" | "focus"
+      >
+    ]-?: Exclude<MentalMathOptions[K], undefined>;
   },
   random: () => number,
   /** Zusätzliche Bedingung an die Operanden, z. B. eine eindeutige Lücke. */
   accept: (values: MentalMathExpressionValues) => boolean = () => true,
+  plan: OperandPlan = {},
 ) {
   const tables = options.multiplicationTables.length
     ? options.multiplicationTables
@@ -542,7 +580,18 @@ function generateOperands(
   const minimumResult = options.allowNegativeResults
     ? Math.min(options.minValue, -options.maxValue)
     : Math.max(0, options.minValue);
-  function candidate(left: number, right: number) {
+  const multiplicative = operation === "multiply" || operation === "divide";
+  const split = plan.focus ? splitPlaceValue(plan.focus.placeValue) : null;
+  // Ein Merkmal gilt nur für Plus und Minus mit der passenden Rechenart.
+  const focus =
+    plan.focus &&
+    split &&
+    split.operator === (operation === "add" ? "+" : "-") &&
+    !multiplicative
+      ? plan.focus
+      : undefined;
+  const kind = focus || plan.kind === "other" ? undefined : plan.kind;
+  function candidate(left: number, right: number, blockTrivial: boolean) {
     const result = compute(left, operationToOperator[operation], right);
     if (
       result === null ||
@@ -553,37 +602,92 @@ function generateOperands(
       result < minimumResult ||
       result > options.maxValue ||
       (options.excludeZeroOperand && (left === 0 || right === 0)) ||
-      (options.excludeZeroResult && result === 0)
+      (options.excludeZeroResult && result === 0) ||
+      (blockTrivial && isTrivialMathTask(operation, left, right))
     )
       return null;
     const values = { left, right, result };
     return accept(values) ? values : null;
   }
-  for (let attempt = 0; attempt < 200; attempt += 1) {
-    let left: number;
-    let right: number;
-    if (operation === "multiply" || operation === "divide") {
+  function draw(wanted: boolean): [number, number] {
+    if (multiplicative) {
       const table = tables[randomInteger(random, 0, tables.length - 1)]!;
       const factor = randomInteger(random, 0, 10);
-      left = operation === "divide" ? table * factor : table;
-      right = operation === "divide" ? table : factor;
-      if (operation === "multiply" && random() < 0.5)
-        [left, right] = [right, left];
-    } else {
-      left = randomInteger(random, options.minValue, options.maxValue);
-      right = randomInteger(random, options.minValue, options.maxValue);
+      if (operation === "divide") return [table * factor, table];
+      return random() < 0.5 ? [factor, table] : [table, factor];
     }
-    const valid = candidate(left, right);
-    if (valid) return valid;
+    if (wanted && focus && split) {
+      const left = randomOfPlaceValueKind(
+        split.left,
+        options.minValue,
+        options.maxValue,
+        random,
+      );
+      const right = randomOfPlaceValueKind(
+        split.right,
+        options.minValue,
+        options.maxValue,
+        random,
+      );
+      if (left !== null && right !== null) return [left, right];
+    }
+    if (wanted && kind === "double") {
+      const half = randomInteger(
+        random,
+        options.minValue,
+        Math.max(options.minValue, Math.floor(options.maxValue / 2)),
+      );
+      return operation === "add" ? [half, half] : [2 * half, half];
+    }
+    if (wanted && kind === "near-double") {
+      const base = randomInteger(random, options.minValue, options.maxValue);
+      return [base, base + (random() < 0.5 ? 1 : -1)];
+    }
+    return [
+      randomInteger(random, options.minValue, options.maxValue),
+      randomInteger(random, options.minValue, options.maxValue),
+    ];
   }
+  function matches(values: MentalMathExpressionValues) {
+    if (focus)
+      return matchesMathFeature(
+        values.left,
+        operationToOperator[operation],
+        values.right,
+        focus,
+      );
+    return kind
+      ? matchesMathKind(
+          kind,
+          operation,
+          values.left,
+          values.right,
+          values.result,
+        )
+      : true;
+  }
+  function search(wanted: boolean, blockTrivial: boolean, attempts: number) {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      const [left, right] = draw(wanted);
+      const valid = candidate(left, right, blockTrivial);
+      if (valid && (!wanted || matches(valid))) return valid;
+    }
+    return null;
+  }
+  const blockTrivial = Boolean(plan.blockTrivial);
+  const found =
+    (focus || kind ? search(true, blockTrivial, 120) : null) ??
+    search(false, blockTrivial, 200) ??
+    (blockTrivial ? search(false, false, 200) : null);
+  if (found) return found;
   // Bounded fallback also honors narrow ranges, selected rows and zero rules.
-  if (operation === "multiply" || operation === "divide") {
+  if (multiplicative) {
     for (const table of tables)
       for (let factor = 0; factor <= 10; factor += 1) {
         const valid =
           operation === "multiply"
-            ? candidate(table, factor)
-            : candidate(table * factor, table);
+            ? candidate(table, factor, false)
+            : candidate(table * factor, table, false);
         if (valid) return valid;
       }
   } else {
@@ -598,7 +702,7 @@ function generateOperands(
     ];
     for (const left of values)
       for (const right of values) {
-        const valid = candidate(left, right);
+        const valid = candidate(left, right, false);
         if (valid) return valid;
       }
   }
@@ -724,11 +828,23 @@ export function generateMentalMathTasks(
     multiplicationTables: [...(options.multiplicationTables ?? [])],
     gapMode: options.gapMode ?? false,
   };
+  const weighted = options.weighted ?? true;
+  // Höchstens 5 % der Runde mit 0, 1 oder · 10 (MA-1).
+  let trivialLeft = Math.floor(normalized.count * MATH_TRIVIAL_SHARE);
   return Array.from({ length: normalized.count }, (_, index) => {
     const operation =
       operations[randomInteger(random, 0, operations.length - 1)] ?? "add";
     const operator = operationToOperator[operation];
     const forced = normalized.gapMode ? options.gapSlots?.[index] : undefined;
+    // Ohne Gewichtung bleibt der Zufall unberührt (gleichverteilt wie zuvor).
+    const plan: OperandPlan = weighted
+      ? {
+          ...(options.focus
+            ? { focus: options.focus }
+            : { kind: pickMathKind(operation, random) }),
+          blockTrivial: !(trivialLeft > 0 && random() < MATH_TRIVIAL_SHARE),
+        }
+      : {};
     // Eine vorgegebene Lückenposition bleibt; dann ziehen wir die Operanden neu,
     // bis die Lücke eindeutig ist. Sonst weichen wir auf die nächste Position aus.
     const values = generateOperands(
@@ -738,7 +854,10 @@ export function generateMentalMathTasks(
       forced
         ? (candidate) => isGapUnique(operator, candidate, forced)
         : undefined,
+      plan,
     );
+    if (weighted && isTrivialMathTask(operation, values.left, values.right))
+      trivialLeft -= 1;
     let gap: MathGapSlot | undefined = forced;
     if (normalized.gapMode && !forced) {
       const start = randomInteger(random, 0, GAP_SLOTS.length - 1);

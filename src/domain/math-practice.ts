@@ -8,6 +8,7 @@ import {
   parseMentalMathTask,
   type MentalMathTask,
 } from "./mental-math";
+import { mathTaskFeature, type MathTaskFeature } from "./mental-math-features";
 import type { LearningEventV1 } from "./learning-bundle";
 import { REPETITION_RULES, reviewRepetition } from "./spaced-repetition";
 
@@ -287,11 +288,52 @@ export function mathRoundReviews(
 }
 
 /**
+ * Merkmal einer Aufgabe: Übergang ja/nein und Stellenwertart (z. B. `ZE+E`).
+ * Nur Plus und Minus mit ganzen Zahlen; sonst `null`. Wird aus dem Aufgabentext
+ * berechnet, nicht gespeichert.
+ */
+export function mathFeatureOfTask(
+  task: Pick<MentalMathTask, "source" | "operation">,
+): MathTaskFeature | null {
+  if (task.operation !== "add" && task.operation !== "subtract") return null;
+  const expression = parseMentalMathExpression(task.source);
+  return expression
+    ? mathTaskFeature(expression.left, expression.operator, expression.right)
+    : null;
+}
+
+/**
  * Aufgabenfamilie eines Postens: Rechenart, Lückenposition und bei ×/÷ die
  * Einmaleinsreihe, sonst die Zahlenraum-Stufe (≤20, ≤100, ≤1000, größer).
  * Gemischte Ausdrücke bilden eine eigene Familie.
+ *
+ * Mit Merkmal siehe `mathFamilyKeyWithFeature`. Dieser Schlüssel bleibt wie
+ * bisher, denn Tagesplan und Profil gruppieren danach.
  */
 export function mathFamilyKey(
+  review: Pick<MathReview, "task" | "options">,
+): string {
+  return baseMathFamilyKey(review);
+}
+
+/**
+ * Familie mit Merkmal (MA-1): bei Plus und Minus kommt „mit Übergang“ oder
+ * „ohne Übergang“ und die Stellenwertart dazu, z. B.
+ * `add:normal:bis-100:uebergang:ZE+E`. Sonst derselbe Schlüssel wie
+ * `mathFamilyKey`. Für die Regel „sicher“ je Merkmal (MA-5); Tagesplan und
+ * Profil benutzen sie noch nicht.
+ */
+export function mathFamilyKeyWithFeature(
+  review: Pick<MathReview, "task" | "options">,
+): string {
+  const key = baseMathFamilyKey(review);
+  const feature = mathFeatureOfTask(review.task);
+  return feature
+    ? `${key}:${feature.bridge ? "uebergang" : "ohne-uebergang"}:${feature.placeValue}`
+    : key;
+}
+
+function baseMathFamilyKey(
   review: Pick<MathReview, "task" | "options">,
 ): string {
   const { task, options } = review;
@@ -346,6 +388,9 @@ export function buildMathReviewRound(
     )
       return [original];
     const inferred = optionsForMathTask(review.task);
+    // MA-3: Ein Fehler mit Übergang bringt Aufgaben mit Übergang in derselben
+    // Stellenwertart (und ohne Übergang entsprechend ohne).
+    const focus = mathFeatureOfTask(review.task);
     const matchingTables = review.options.multiplicationTables?.filter(
       (table) =>
         review.task.operation === "divide"
@@ -378,6 +423,7 @@ export function buildMathReviewRound(
           ...(review.task.gap
             ? { gapSlots: Array(10).fill(review.task.gap) }
             : {}),
+          ...(focus ? { focus } : {}),
         },
         random,
       );

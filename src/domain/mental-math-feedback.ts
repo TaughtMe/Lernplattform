@@ -8,6 +8,11 @@ import {
   type MentalMathTask,
 } from "./mental-math";
 import { expressionSteps } from "./mental-math-expression-steps";
+import {
+  digitwiseSubtraction,
+  hasHundredsBridge,
+  mathTaskFeature,
+} from "./mental-math-features";
 
 /**
  * Hinweise und Lösungsweg bei falschen Kopfrechen-Antworten (Audit D-008).
@@ -29,6 +34,9 @@ export type MentalMathErrorKind =
   | "tens-bridge"
   | "off-by-one"
   | "neighbor-fact"
+  | "zero-rule"
+  | "smaller-from-larger"
+  | "hundreds-bridge"
   | "unknown";
 
 /**
@@ -47,6 +55,9 @@ export const MENTAL_MATH_ERROR_LABELS: Readonly<
   "tens-bridge": "Zehnerübergang",
   "off-by-one": "um eins daneben",
   "neighbor-fact": "Nachbaraufgabe",
+  "zero-rule": "Null-Regel",
+  "smaller-from-larger": "stellenweise kleiner von größer",
+  "hundreds-bridge": "Übertrag bei Hundertern",
 };
 
 /** Toleranz für Vergleiche von Dezimalzahlen (Aufgaben rechnen mit 1e-9). */
@@ -86,6 +97,17 @@ function otherResults(first: number, second: number) {
   return values;
 }
 
+/** Null-Regel: Mal oder Geteilt mit 0, die Antwort ist die andere Zahl (6 · 0 = 6). */
+function isZeroRule(parts: MentalMathExpression, given: number) {
+  const { left, operator, right } = parts;
+  if (operator === "*")
+    return (
+      (right === 0 && left !== 0 && same(given, left)) ||
+      (left === 0 && right !== 0 && same(given, right))
+    );
+  return operator === "/" && left === 0 && right !== 0 && same(given, right);
+}
+
 function swappedAdjacentDigits(expected: number, given: number) {
   if (!Number.isInteger(expected) || !Number.isInteger(given)) return false;
   if (expected < 0 !== given < 0) return false;
@@ -108,15 +130,24 @@ function swappedAdjacentDigits(expected: number, given: number) {
  * 2. `digit-swap`: zwei benachbarte Ziffern vertauscht (54 statt 45).
  * 3. `place-value` / `decimal-point`: Faktor 10 oder 100 daneben, ohne bzw.
  *    mit Komma in der Aufgabe oder Antwort.
- * 4. `operation-mix`: Ergebnis einer anderen Rechenart mit denselben Zahlen
+ * 4. `zero-rule` (Null-Regel): Mal oder Geteilt mit einer 0 in der Aufgabe,
+ *    die Antwort ist die andere Zahl (6 · 0 = 6, 0 : 6 = 6); nicht bei
+ *    Lücken vor dem Ergebnis. Steht vor `operation-mix`, weil 6 + 0 = 6 dort passt.
+ * 5. `smaller-from-larger`: Minus mit Zehnerübergang, in jeder Stelle die
+ *    kleinere Ziffer von der größeren abgezogen (53 − 27 = 34 statt 26); nicht
+ *    bei Lücken vor dem Ergebnis.
+ * 6. `operation-mix`: Ergebnis einer anderen Rechenart mit denselben Zahlen
  *    (Summe statt Differenz, Produkt statt Summe, Umkehrung bei Lücken); nur
  *    bei mehr als 1 Abstand zum richtigen Ergebnis.
- * 5. `tens-bridge`: bei Plus und Minus um genau 10 daneben (Übertrag
- *    vergessen oder doppelt gezählt).
- * 6. `off-by-one`: um genau 1 daneben (typisch beim Zählen).
- * 7. `neighbor-fact`: beim Einmaleins das Ergebnis einer Nachbaraufgabe
+ * 7. `tens-bridge`: bei Plus und Minus um genau 10 daneben, **nur wenn die
+ *    Aufgabe einen echten Zehnerübergang hat** (Übertrag vergessen oder doppelt
+ *    gezählt; 38 + 5 ja, 53 + 24 nein). Ohne Übergang bleibt es `unknown`.
+ * 8. `hundreds-bridge`: bei Plus und Minus um genau 100 daneben, nur bei
+ *    echtem Übertrag über die Hunderter (±100; 270 + 60 ja, 210 + 60 nein).
+ * 9. `off-by-one`: um genau 1 daneben (typisch beim Zählen).
+ * 10. `neighbor-fact`: beim Einmaleins das Ergebnis einer Nachbaraufgabe
  *    (7 · 8 statt 56 die 49 oder 63).
- * 8. sonst `unknown`; ebenso bei nicht lesbarer oder richtiger Antwort.
+ * 11. sonst `unknown`; ebenso bei nicht lesbarer oder richtiger Antwort.
  */
 export function classifyMentalMathError(
   task: MentalMathTask,
@@ -143,6 +174,15 @@ export function classifyMentalMathError(
       }
   }
 
+  if (parts && (!task.gap || task.gap === "result")) {
+    if (isZeroRule(parts, given)) return "zero-rule";
+    if (
+      parts.operator === "-" &&
+      digitwiseSubtraction(parts.left, parts.right) === given
+    )
+      return "smaller-from-larger";
+  }
+
   if (
     parts &&
     Math.abs(difference) > 1 + EPSILON &&
@@ -153,7 +193,20 @@ export function classifyMentalMathError(
     return "operation-mix";
 
   const additive = task.operation === "add" || task.operation === "subtract";
-  if (additive && same(Math.abs(difference), 10)) return "tens-bridge";
+  if (
+    additive &&
+    parts &&
+    same(Math.abs(difference), 10) &&
+    mathTaskFeature(parts.left, parts.operator, parts.right)?.bridge
+  )
+    return "tens-bridge";
+  if (
+    additive &&
+    parts &&
+    same(Math.abs(difference), 100) &&
+    hasHundredsBridge(parts.left, parts.operator, parts.right)
+  )
+    return "hundreds-bridge";
   if (same(Math.abs(difference), 1)) return "off-by-one";
 
   if (parts && task.operation === "multiply" && !task.gap) {
@@ -252,6 +305,14 @@ export function mentalMathHint(
       return "Mach die Probe mit der Umkehraufgabe: Rechne rückwärts und schau, ob du wieder bei der ersten Zahl landest.";
     case "neighbor-fact":
       return neighborHint(parts);
+    case "zero-rule":
+      return parts.operator === "/"
+        ? "Denke an die Null: Was bekommt jeder, wenn nichts da ist, das du verteilen kannst?"
+        : "Denke an die Null: Was bleibt übrig, wenn du etwas null Mal nimmst?";
+    case "smaller-from-larger":
+      return `Du darfst in jeder Stelle nicht einfach die kleinere Zahl von der größeren abziehen. ${bridgeHint(parts) ?? "Rechne in Schritten über den vollen Zehner."}`;
+    case "hundreds-bridge":
+      return "Achte auf den Übertrag bei den Hundertern: Rechne zuerst bis zum vollen Hunderter und dann den Rest.";
   }
 }
 
