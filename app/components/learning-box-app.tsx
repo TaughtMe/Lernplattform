@@ -52,6 +52,7 @@ import {
 } from "../lernen/plan-today";
 import { speak } from "../../src/speech/speaker";
 import { useModelSpeech } from "../ui/use-model-speech";
+import { useSpeechAhead } from "../ui/use-speech-ahead";
 import { useRoundGuard } from "../ui/round-guard";
 import { StudentPage } from "../ui/shell/student-page";
 import { useRoundSnapshot } from "../ui/use-round-snapshot";
@@ -363,6 +364,33 @@ export function LearningBoxApp({
     utterance.rate = 0.9;
     window.speechSynthesis.speak(utterance);
   }
+
+  // Frage und Antwort der aktuellen Karte im Hintergrund vorab erzeugen:
+  // „Vorlesen“ klingt dann sofort (je in der Sprache ihrer Kartenseite).
+  const aheadItem = session?.queue[session.index];
+  const aheadDeck = aheadItem ? deckById.get(aheadItem.card.deckId) : undefined;
+  const aheadPrompt =
+    aheadItem && aheadDeck
+      ? getLearningBoxPrompt(aheadItem.card, aheadItem.direction)
+      : null;
+  const aheadForward = aheadItem?.direction === "forward";
+  const firstAlternative = (text: string) => text.split("|")[0]?.trim() ?? "";
+  useSpeechAhead(
+    aheadPrompt ? [firstAlternative(aheadPrompt.question)] : [],
+    aheadDeck
+      ? aheadForward
+        ? aheadDeck.frontLocale
+        : aheadDeck.backLocale
+      : "",
+  );
+  useSpeechAhead(
+    aheadPrompt ? [firstAlternative(aheadPrompt.answer)] : [],
+    aheadDeck
+      ? aheadForward
+        ? aheadDeck.backLocale
+        : aheadDeck.frontLocale
+      : "",
+  );
 
   function startSession(
     scope: string,

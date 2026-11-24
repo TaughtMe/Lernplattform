@@ -367,3 +367,20 @@ KittenTTS 2 rechnet anders als KittenTTS 0.8. Nachgebaut nach `kittenml` 0.9.8
   `app/ui/read-aloud-button.test.tsx`, Vorlesen in `app/raum/spiel/live-parity.test.tsx`),
   schalten die Lernraum-Stimme aus bzw. laufen ohne Manifest. Ihre Erwartungen sind
   unverändert; von der Lehrkraft bestätigt.
+
+### 10.7 Vorab erzeugen gegen Wartezeit (24.11.2026)
+
+Gemessen (Browser, ein Rechenkern): Lautschrift 0,15 ms je Satz, Modell laden 2,6 s einmal je
+Seite, Ton für ein Wort etwa 0,6 s, für einen Satz etwa 1 s. Die Wartezeit liegt also beim
+Modell, nicht bei der Lautschrift.
+
+- `useSpeechAhead` (`app/ui/use-speech-ahead.ts`) lädt das Modell beim Öffnen der Übung und
+  erzeugt den Ton im Hintergrund vorab: LernBox (Frage und Antwort der aktuellen Karte, je in
+  der Sprache ihrer Kartenseite), Laufdiktat live und Stationen (aktuelles Wort, Mathe als
+  „plus/minus/mal/geteilt durch“ über `src/speech/spoken.ts`), Stufe 6 (aktuelles und die
+  nächsten zwei Wörter).
+- Nur für installierte Sprachen; Vorab-Arbeit lädt nie ungefragt Modelldateien.
+- `model-speaker.ts` erzeugt eins nach dem anderen: Vorlesen geht vor, ein Text in Arbeit wird
+  nicht doppelt erzeugt, veraltete Vorab-Aufträge (vorige Karte) fallen weg. Der Schlüssel des
+  Audio-Speichers nutzt Grundsprache und aufgelöste Stimme (`de` = `de-DE`).
+- Gemessen: Tippen bis Ton ohne Vorab 0,75 s (Modell geladen), mit Vorab sofort.

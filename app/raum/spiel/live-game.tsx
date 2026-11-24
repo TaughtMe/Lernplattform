@@ -2,6 +2,7 @@
 
 import { useAreaVisible } from "../../release/release-context";
 import { useModelSpeech } from "../../ui/use-model-speech";
+import { useSpeechAhead } from "../../ui/use-speech-ahead";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { LearningEventV1 } from "../../../src/domain/learning-bundle";
 import {
@@ -10,6 +11,7 @@ import {
 } from "../../../src/domain/live-game-feedback";
 import { mathTaskFromPrompt } from "../../../src/domain/math-practice";
 import { speak } from "../../../src/speech/speaker";
+import { spokenMath } from "../../../src/speech/spoken";
 import {
   buildRunningDictationHint,
   computeRunningDictationStars,
@@ -205,6 +207,11 @@ export function LiveRunningDictationGame({
 
   const kind = current ? liveWordKind(current) : "text";
   const prompt = current ? (current.prompt ?? current.targetWord) : "";
+  // Das Wort im Hintergrund vorab erzeugen: „Vorlesen“ klingt dann sofort.
+  useSpeechAhead(
+    prompt ? [kind === "math" ? spokenMath(prompt) : prompt] : [],
+    current?.promptLang ?? "de-DE",
+  );
   const isLatexPrompt = current?.isLatex ?? false;
   const errorKey = current ? liveWordErrorKey(current) : "";
   const copyMode =
@@ -622,13 +629,7 @@ export function LiveRunningDictationGame({
   );
 
   function spokenPrompt(text: string) {
-    return kind === "math"
-      ? text
-          .replace(/\+/g, " plus ")
-          .replace(/[−-]/g, " minus ")
-          .replace(/[·*×]/g, " mal ")
-          .replace(/[:/÷]/g, " geteilt durch ")
-      : text;
+    return kind === "math" ? spokenMath(text) : text;
   }
 
   function readPromptAloud() {

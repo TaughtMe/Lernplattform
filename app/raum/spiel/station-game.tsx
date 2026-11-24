@@ -9,6 +9,7 @@ import { MathDisplay } from "../../components/math-display";
 import { useThemeToggle } from "../../ui/theme";
 import { speak } from "../../../src/speech/speaker";
 import { useModelSpeech } from "../../ui/use-model-speech";
+import { useSpeechAhead } from "../../ui/use-speech-ahead";
 import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
 import { useHoldToReveal } from "./use-hold-to-reveal";
 import { DeliveryNotice, GameWarning } from "./game-parts";
@@ -64,6 +65,11 @@ export function LiveStationGame({
 
   const seenKey = stationNumber + ":" + index;
   const currentPrompt = words[index]?.prompt ?? words[index]?.targetWord ?? "";
+  // Das Wort im Hintergrund vorab erzeugen: „Vorlesen“ klingt dann sofort.
+  useSpeechAhead(
+    currentPrompt ? [currentPrompt] : [],
+    words[index]?.promptLang ?? "de-DE",
+  );
   useEffect(() => {
     if (stationNumber === null || loading || revealed || loadError) return;
     const timer = window.setTimeout(() => {

@@ -83,6 +83,7 @@ import {
 import { WORD_STORE_WORKSHEET_PATH } from "./word-store-progress-section";
 import { useHydrated } from "../ui/use-hydrated";
 import { useSpeech } from "./use-speech";
+import { useSpeechAhead } from "../ui/use-speech-ahead";
 import { useWordStore, type WordStoreRepositories } from "./use-word-store";
 
 const SAVE_ISSUE =
@@ -548,6 +549,14 @@ export function LearningWordApp({
       ? (currentBlock(run.state)[0] ?? "")
       : "";
   const roundKey = run?.state.roundId;
+  // Das aktuelle und die nächsten zwei Wörter vorab erzeugen.
+  const aheadWords =
+    run && runStage === 6
+      ? run.state.blocks
+          .slice(run.state.index, run.state.index + 3)
+          .map((block) => block[0] ?? "")
+      : [];
+  useSpeechAhead(aheadWords, "de-DE");
   const { say, stop } = speech;
   useEffect(() => {
     if (listenWord) void say(listenWord);

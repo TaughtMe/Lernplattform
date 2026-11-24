@@ -55,9 +55,17 @@ export function resetModelSpeaker() {
   knownManifest = undefined;
   worker?.terminate();
   worker = undefined;
+  // Offene Aufträge beenden, damit die Warteschlange nicht hängen bleibt.
+  for (const [id, waiting] of pending) {
+    waiting.resolve({ type: "error", id, message: "zurückgesetzt" });
+  }
   pending.clear();
   loaded.clear();
   audioCache.clear();
+  installed.clear();
+  for (const job of queue.splice(0)) job.resolve(null);
+  inFlight.clear();
+  pumping = false;
   generation += 1;
 }
 
@@ -194,22 +202,96 @@ export function prepareModel(
   return withTimeout(preloadModel(lang), timeoutMs, false);
 }
 
-function audioKey(
+/** Die Stimme, die für eine Sprache spricht: Wunsch, sonst gewählte, sonst Vorgabe. */
+function voiceFor(lang: string, voice?: string | undefined): string {
+  const entry = languageEntry(knownManifest ?? null, lang);
+  const wanted = voice ?? preferredVoice(baseLanguage(lang));
+  return entry ? resolveVoice(entry, wanted).id : (wanted ?? "");
+}
+
+/** Schlüssel für den Audio-Speicher: Grundsprache, Stimme, Tempo, Text. */
+export function audioKey(
   text: string,
   lang: string,
   speed: number,
-  voice?: string | undefined,
+  voice: string,
 ) {
-  return JSON.stringify([lang, voice ?? "", speed, text]);
+  return JSON.stringify([baseLanguage(lang), voice, speed, text]);
+}
+
+type Audio = { samples: Float32Array; sampleRate: number };
+type Job = {
+  key: string;
+  text: string;
+  lang: string;
+  speed: number;
+  voice: string;
+  /** Ein Vorlesen wartet darauf; darf nicht verworfen werden. */
+  urgent: boolean;
+  resolve: (audio: Audio | null) => void;
+};
+
+/**
+ * Eine Erzeugung nach der anderen (eine ONNX-Sitzung im Worker). Vorlesen
+ * geht vor Vorab-Erzeugen; ein Text, der schon in Arbeit ist, wird nicht
+ * doppelt erzeugt.
+ */
+const queue: Job[] = [];
+const inFlight = new Map<string, Promise<Audio | null>>();
+let pumping = false;
+
+function remember(key: string, audio: Audio) {
+  audioCache.set(key, audio);
+  while (audioCache.size > AUDIO_CACHE_SIZE) {
+    const oldest = audioCache.keys().next().value;
+    if (oldest === undefined) break;
+    audioCache.delete(oldest);
+  }
+}
+
+async function pump() {
+  if (pumping) return;
+  pumping = true;
+  try {
+    for (let job = queue.shift(); job; job = queue.shift()) {
+      const current = await loadModelManifest();
+      let audio: Audio | null = null;
+      if (current && languageEntry(current, job.lang)) {
+        const response = await send({
+          type: "synthesize",
+          manifest: current,
+          lang: job.lang,
+          text: job.text,
+          voice: job.voice,
+          speed: job.speed,
+        }).catch(() => null);
+        if (response?.type === "audio") {
+          audio = {
+            samples: response.samples,
+            sampleRate: response.sampleRate,
+          };
+          remember(job.key, audio);
+        }
+      }
+      inFlight.delete(job.key);
+      job.resolve(audio);
+    }
+  } finally {
+    pumping = false;
+  }
 }
 
 async function synthesize(
   text: string,
   lang: string,
   speed: number,
-  voice?: string | undefined,
-): Promise<{ samples: Float32Array; sampleRate: number } | null> {
-  const key = audioKey(text, lang, speed, voice);
+  voice: string | undefined,
+  urgent: boolean,
+): Promise<Audio | null> {
+  // Erst das Manifest: Der Schlüssel braucht die aufgelöste Stimme.
+  await loadModelManifest();
+  const chosen = voiceFor(lang, voice);
+  const key = audioKey(text, lang, speed, chosen);
   const hit = audioCache.get(key);
   if (hit) {
     // Zuletzt benutzt nach hinten.
@@ -217,32 +299,58 @@ async function synthesize(
     audioCache.set(key, hit);
     return hit;
   }
-  const current = await loadModelManifest();
-  if (!current || !languageEntry(current, lang)) return null;
-  const response = await send({
-    type: "synthesize",
-    manifest: current,
-    lang,
-    text,
-    voice,
-    speed,
-  });
-  if (response.type !== "audio") return null;
-  const result = { samples: response.samples, sampleRate: response.sampleRate };
-  audioCache.set(key, result);
-  while (audioCache.size > AUDIO_CACHE_SIZE) {
-    const oldest = audioCache.keys().next().value;
-    if (oldest === undefined) break;
-    audioCache.delete(oldest);
+  const running = inFlight.get(key);
+  if (running) {
+    // Vorlesen holt einen wartenden Vorab-Auftrag nach vorn.
+    if (urgent) {
+      const index = queue.findIndex((job) => job.key === key);
+      const job = queue[index];
+      if (job) {
+        job.urgent = true;
+        queue.splice(index, 1);
+        queue.unshift(job);
+      }
+    }
+    return running;
   }
-  return result;
+  const promise = new Promise<Audio | null>((resolve) => {
+    const job: Job = { key, text, lang, speed, voice: chosen, urgent, resolve };
+    if (urgent) queue.unshift(job);
+    else queue.push(job);
+  });
+  inFlight.set(key, promise);
+  void pump();
+  return promise;
 }
 
-/** Erzeugt Audio vorab (z. B. die Wörter einer Runde), ohne abzuspielen. */
+/** Höchstens so viele Texte werden auf einmal vorab erzeugt. */
+const MAX_AHEAD = 6;
+
+/**
+ * Erzeugt Audio vorab (z. B. die nächsten Wörter), ohne abzuspielen. Läuft
+ * hinter jedem Vorlesen. Noch nicht begonnene Vorab-Aufträge für andere Texte
+ * (die vorige Karte) fallen weg.
+ */
 export async function pregenerate(texts: string[], lang: string, speed = 1) {
-  for (const text of texts) {
-    if (text.trim()) await synthesize(text, lang, speed);
+  await loadModelManifest();
+  const wanted = texts
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .slice(0, MAX_AHEAD);
+  const keep = new Set(
+    wanted.map((text) => audioKey(text, lang, speed, voiceFor(lang))),
+  );
+  for (let index = queue.length - 1; index >= 0; index -= 1) {
+    const job = queue[index];
+    if (job && !job.urgent && !keep.has(job.key)) {
+      queue.splice(index, 1);
+      inFlight.delete(job.key);
+      job.resolve(null);
+    }
   }
+  return Promise.all(
+    wanted.map((text) => synthesize(text, lang, speed, undefined, false)),
+  );
 }
 
 /**
@@ -260,7 +368,8 @@ export async function speakWithModel(
     text,
     lang,
     options.speed ?? 1,
-    options.voice ?? preferredVoice(baseLanguage(lang)) ?? undefined,
+    options.voice,
+    true,
   ).catch(() => null);
   if (!audio) return false;
   // Inzwischen wurde etwas Neues angefordert oder gestoppt.
@@ -289,13 +398,18 @@ export async function modelLanguages(): Promise<
 }
 
 /** Ist eine Sprache vollständig auf dem Gerät (also auch offline nutzbar)? */
+/** Sprachen, die in dieser Sitzung als installiert gelten (spart Cache-Abfragen). */
+const installed = new Set<string>();
+
 export async function languageStatus(lang: string): Promise<LanguageStatus> {
   const current = await loadModelManifest();
   const entry = languageEntry(current, lang);
   if (!current || !entry) return "unavailable";
+  if (installed.has(entry.espeak)) return "installed";
   for (const asset of assetsFor(current, entry)) {
     if (!(await isAssetCached(asset))) return "missing";
   }
+  installed.add(entry.espeak);
   return "installed";
 }
 
@@ -316,6 +430,7 @@ export async function removeLanguage(lang: string): Promise<void> {
   const entry = languageEntry(current, lang);
   if (!entry) return;
   loaded.delete(entry.espeak);
+  installed.delete(entry.espeak);
   audioCache.clear();
   await removeAssets(languageAssets(entry));
 }
