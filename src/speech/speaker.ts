@@ -264,7 +264,11 @@ async function speakPreferringModel(
       await Promise.race([preloadVoices(), delay(VOICE_WAIT_MS)]);
     }
     if (mine !== generation) return;
-    if (hasVoiceFor(lang)) {
+    // Mit localOnly (Knopf „Vorlesen“, B-012) zählt nur eine lokale Stimme;
+    // sonst bliebe es stumm, weil speak() Netzwerkstimmen herausfiltert.
+    const systemVoice =
+      options.localOnly === true ? hasLocalVoiceFor(lang) : hasVoiceFor(lang);
+    if (systemVoice) {
       return speak(
         text,
         lang,

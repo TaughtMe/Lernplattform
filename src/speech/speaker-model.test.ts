@@ -182,4 +182,13 @@ describe("Sprache noch nicht installiert", () => {
     expect(model.installLanguage).toHaveBeenCalled();
     expect(model.speakWithModel).toHaveBeenCalled();
   });
+
+  it("nimmt mit localOnly keine Netzwerkstimme, sondern wartet auf das Modell", async () => {
+    model.available = true;
+    model.installed = false;
+    voices = [network];
+    await run(speak("Rad", "de-DE", { model: true, localOnly: true }));
+    expect(spoken).toEqual([]);
+    expect(model.speakWithModel).toHaveBeenCalled();
+  });
 });

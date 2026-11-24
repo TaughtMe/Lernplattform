@@ -162,6 +162,23 @@ test("Einstellungen: Stimme wählen, Englisch installieren, Probe hören", async
     .toBeGreaterThan(0);
   await expectAccessible(page);
 
+  // Entfernen und wieder installieren legt die Dateien erneut in den Cache.
+  await card
+    .getByRole("button", { name: "Englisch vom Gerät entfernen" })
+    .click();
+  await card.getByRole("button", { name: "Englisch installieren" }).click();
+  await expect(
+    card.getByRole("button", { name: "Englisch vom Gerät entfernen" }),
+  ).toBeVisible({ timeout: 120_000 });
+  expect(
+    await page.evaluate(async () => {
+      const cache = await caches.open("sprachmodell-v1");
+      return (await cache.keys()).some((request) =>
+        request.url.includes("/speech/kitten2/en/model.onnx"),
+      );
+    }),
+  ).toBe(true);
+
   // Lernraum-Stimme je Gerät abschalten: Stimmenwahl verschwindet.
   await card
     .getByRole("checkbox", { name: "Lernraum-Stimme verwenden" })

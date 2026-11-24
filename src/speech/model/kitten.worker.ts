@@ -271,11 +271,19 @@ self.addEventListener("message", (event: MessageEvent<WorkerRequest>) => {
   const run = async () => {
     try {
       if (request.type === "load") {
-        await loadLanguage(
-          request.manifest,
-          request.lang,
-          await progressFor(request),
-        );
+        const progress = await progressFor(request);
+        await loadLanguage(request.manifest, request.lang, progress);
+        // Installieren heißt: alle Dateien liegen geprüft im Cache. Eine schon
+        // geladene Sprache (z. B. nach „Entfernen“) holt fehlende Dateien so
+        // wieder; vorhandene kommen ohne Netz aus dem Cache.
+        const entry = languageEntry(request.manifest, request.lang);
+        if (entry) {
+          await Promise.all(
+            assetsFor(request.manifest, entry).map((asset) =>
+              loadAsset(asset, progress),
+            ),
+          );
+        }
         reply({ type: "loaded", id: request.id });
       } else {
         const samples = await synthesize(request);
