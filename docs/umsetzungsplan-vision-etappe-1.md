@@ -36,26 +36,26 @@ Wer einen Baustein beginnt, trägt sich hier ein (siehe `CLAUDE.md`).
 
 ### 1.2 Etappe 1: der Kern
 
-| Baustein      | Was                                                                                        | Stand     | Wie / Commit                                                      |
-| ------------- | ------------------------------------------------------------------------------------------ | --------- | ----------------------------------------------------------------- |
-| LF (PR #57)   | LernBox: Zuordnen und Test                                                                 | umgesetzt | `4896e41` ff., frei (E 77)                                        |
-| I31-9 / E 65  | Fehler an der Tafel erst ab sechs Teilnehmenden; „Braucht Hilfe“ nie in der Projektion     | offen     |                                                                   |
-| M24-1         | Klassenziel an der Tafel: Countdown, Klassenbalken, Rundenende mit Showmoment (nur Summen) | offen     |                                                                   |
-| MA-1          | Kopfrechnen-Generator nach Aufgabentypen gewichten (Übergang, Verdoppeln …)                | offen     |                                                                   |
-| MA-2          | Fehlerklassifikation schärfen (echter Übergang, Null-Regel, „kleiner von größer“, ±100)    | offen     |                                                                   |
-| MA-3          | Nachübung nach Merkmal (Übergang, Stellenwertart)                                          | offen     |                                                                   |
-| M24-10        | Wochenziel „X von 5 Schultagen“, ohne „nicht geübt“ für vergangene Tage                    | offen     |                                                                   |
-| I31-4         | Anzeigen zählen nach oben („12 Wörter sicher“ statt „12 / 105“)                            | offen     |                                                                   |
-| L25-10        | „Kopfrechnen live“ mit einem Knopf (Raum mit Jahrgangsvorgabe ohne Inhaltsschritt)         | offen     |                                                                   |
-| LF-2          | Zuordnen in zwei Spalten, höchstens 6 Paare je Runde                                       | offen     |                                                                   |
-| LF-3          | Mischbare Fragearten Schreiben, Mündlich, Auswahl; „Test“ geht darin auf                   | offen     |                                                                   |
-| K8            | Inhalte unabhängig vom Laufdiktat anlegen: Liste → Laufdiktat, Battle, LernBox-Stapel      | offen     |                                                                   |
-| M24-6         | Wortboxen als Live-Quelle, Voreinstellungen in zwei Tipps                                  | offen     |                                                                   |
-| L25-11        | Namensliste einfügen (Teil 1)                                                              | offen     |                                                                   |
-| L25-9         | `lehrer-geraet` auf `frei`                                                                 | offen     | **Freigabe: Entwickler entscheidet**                              |
-| R12-12 / E 72 | Lizenz: Code EUPL-1.2, Inhalte CC BY-SA 4.0, Name und Logo ausgenommen                     | blockiert | Erst Markenfiguren (Sofortliste 7) und Inhalte als eigene Dateien |
-| Sterne (V-9)  | Sterne je Runde                                                                            | entfällt  | Vorerst nicht (Entscheidung vom 15.11.); nur vorbereiten          |
-| R12-1, R12-14 | Gespräch Datenschutz; zweite Person mit Zugang                                             | entfällt  | Kein Code. R12-14: Nein (15.11.)                                  |
+| Baustein      | Was                                                                                        | Stand                   | Wie / Commit                                                      |
+| ------------- | ------------------------------------------------------------------------------------------ | ----------------------- | ----------------------------------------------------------------- |
+| LF (PR #57)   | LernBox: Zuordnen und Test                                                                 | umgesetzt               | `4896e41` ff., frei (E 77)                                        |
+| I31-9 / E 65  | Fehler an der Tafel erst ab sechs Teilnehmenden; „Braucht Hilfe“ nie in der Projektion     | in Arbeit (Agent Tafel) |                                                                   |
+| M24-1         | Klassenziel an der Tafel: Countdown, Klassenbalken, Rundenende mit Showmoment (nur Summen) | in Arbeit (Agent Tafel) |                                                                   |
+| MA-1          | Kopfrechnen-Generator nach Aufgabentypen gewichten (Übergang, Verdoppeln …)                | in Arbeit (Agent Mathe) |                                                                   |
+| MA-2          | Fehlerklassifikation schärfen (echter Übergang, Null-Regel, „kleiner von größer“, ±100)    | in Arbeit (Agent Mathe) |                                                                   |
+| MA-3          | Nachübung nach Merkmal (Übergang, Stellenwertart)                                          | in Arbeit (Agent Mathe) |                                                                   |
+| M24-10        | Wochenziel „X von 5 Schultagen“, ohne „nicht geübt“ für vergangene Tage                    | offen                   |                                                                   |
+| I31-4         | Anzeigen zählen nach oben („12 Wörter sicher“ statt „12 / 105“)                            | offen                   |                                                                   |
+| L25-10        | „Kopfrechnen live“ mit einem Knopf (Raum mit Jahrgangsvorgabe ohne Inhaltsschritt)         | offen                   |                                                                   |
+| LF-2          | Zuordnen in zwei Spalten, höchstens 6 Paare je Runde                                       | offen                   |                                                                   |
+| LF-3          | Mischbare Fragearten Schreiben, Mündlich, Auswahl; „Test“ geht darin auf                   | offen                   |                                                                   |
+| K8            | Inhalte unabhängig vom Laufdiktat anlegen: Liste → Laufdiktat, Battle, LernBox-Stapel      | offen                   |                                                                   |
+| M24-6         | Wortboxen als Live-Quelle, Voreinstellungen in zwei Tipps                                  | offen                   |                                                                   |
+| L25-11        | Namensliste einfügen (Teil 1)                                                              | offen                   |                                                                   |
+| L25-9         | `lehrer-geraet` auf `frei`                                                                 | offen                   | **Freigabe: Entwickler entscheidet**                              |
+| R12-12 / E 72 | Lizenz: Code EUPL-1.2, Inhalte CC BY-SA 4.0, Name und Logo ausgenommen                     | blockiert               | Erst Markenfiguren (Sofortliste 7) und Inhalte als eigene Dateien |
+| Sterne (V-9)  | Sterne je Runde                                                                            | entfällt                | Vorerst nicht (Entscheidung vom 15.11.); nur vorbereiten          |
+| R12-1, R12-14 | Gespräch Datenschutz; zweite Person mit Zugang                                             | entfällt                | Kein Code. R12-14: Nein (15.11.)                                  |
 
 ## 2. Reihenfolge
 
