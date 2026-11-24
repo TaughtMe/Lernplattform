@@ -8,7 +8,7 @@ import {
   speak,
   stopSpeaking,
 } from "../../src/speech/speaker";
-import { useAreaVisible } from "../release/release-context";
+import { useModelSpeech } from "./use-model-speech";
 import { Icon } from "./icons";
 import { Button } from "./primitives";
 
@@ -33,7 +33,7 @@ export function ReadAloudButton({
   label?: string;
   className?: string;
 }) {
-  const model = useAreaVisible("sprachmodell");
+  const model = useModelSpeech();
   const [hasVoice, setHasVoice] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   /** Nummer des laufenden Vorlesens, 0 wenn keines läuft. */

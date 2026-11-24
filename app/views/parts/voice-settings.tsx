@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { Button } from "../../ui/primitives";
+import { Button, Toggle } from "../../ui/primitives";
 
 /**
  * Einstellung „Vorlesen“: Stimme je Sprache wählen, Probe hören, Sprache auf
@@ -28,6 +28,8 @@ export type VoiceLanguageView = {
 };
 
 export type VoiceSettingsActions = {
+  /** Lernraum-Stimme an oder aus (je Gerät). */
+  onToggle?: (enabled: boolean) => void;
   onSelect?: (code: string, voice: string) => void;
   onSample?: (code: string) => void;
   onInstall?: (code: string) => void;
@@ -128,23 +130,37 @@ function VoiceLanguage({
 
 /** Inhalt der Einstellung; der Rahmen (Karte, Gruppe) kommt vom Aufrufer. */
 export function VoiceSettingsBody({
+  enabled = true,
   languages,
   ...actions
-}: { languages: readonly VoiceLanguageView[] } & VoiceSettingsActions) {
+}: {
+  /** Lernraum-Stimme ist auf diesem Gerät an. */
+  enabled?: boolean;
+  languages: readonly VoiceLanguageView[];
+} & VoiceSettingsActions) {
   return (
     <div className="ui-stack">
-      <p className="ui-small ui-muted">
-        Lernraum liest mit einer Stimme vor, die auf diesem Gerät läuft. Die
-        Sprache folgt der Übung, zum Beispiel der Sprache einer LernBox. Die
-        Wahl gilt nur auf diesem Gerät.
-      </p>
-      {languages.map((language) => (
-        <VoiceLanguage
-          key={language.code}
-          language={language}
-          actions={actions}
-        />
-      ))}
+      <Toggle
+        label="Lernraum-Stimme verwenden"
+        hint="Liest mit einer Stimme vor, die in Lernraum steckt und auf diesem Gerät läuft. Ausgeschaltet lesen die Stimmen des Geräts vor."
+        checked={enabled}
+        onChange={(on) => actions.onToggle?.(on)}
+      />
+      {enabled ? (
+        <>
+          <p className="ui-small ui-muted">
+            Die Sprache folgt der Übung, zum Beispiel der Sprache einer LernBox.
+            Stimme und Installation gelten nur auf diesem Gerät.
+          </p>
+          {languages.map((language) => (
+            <VoiceLanguage
+              key={language.code}
+              language={language}
+              actions={actions}
+            />
+          ))}
+        </>
+      ) : null}
     </div>
   );
 }

@@ -345,5 +345,25 @@ KittenTTS 2 rechnet anders als KittenTTS 0.8. Nachgebaut nach `kittenml` 0.9.8
   acht Sekunden nach dem Start Deutsch im Hintergrund, außer im Datensparmodus. Im Browser-Tab
   lädt eine Sprache beim ersten Vorlesen oder über „Installieren“. So belastet es weder normale
   Tabs noch die Browser-Tests.
-- Alles bleibt hinter der Freigabe `sprachmodell` (Vorschau). Die Freigabe für alle folgt den
-  Kriterien in Abschnitt 7.
+- Ursprünglich blieb alles hinter der Freigabe `sprachmodell` (Vorschau); siehe 10.6.
+
+### 10.6 Freigabe für alle und Schalter je Gerät (24.11.2026)
+
+- Die Lehrkraft gibt die Lernraum-Stimme für alle frei (`sprachmodell` → `frei`, Entscheidung 62).
+  Die Kriterien aus Abschnitt 7 sind damit keine Voraussetzung mehr; Hörtest, iPad-Offline-Test,
+  Messung und Lizenzklärung laufen im Betrieb weiter.
+- Einstellungen „Vorlesen“: Schalter „Lernraum-Stimme verwenden“ (je Gerät, Vorgabe an,
+  `localStorage` `lernraum:vorlesen-modell`). Aus: Stimmenwahl und Installation sind
+  ausgeblendet, es lesen die Stimmen des Geräts wie vor dem Plan. `app/ui/use-model-speech.ts`
+  verbindet Freigabe und Schalter für alle Vorlese-Stellen.
+- Erstes Vorlesen ohne installierte Sprache: Gibt es eine Gerätestimme, liest sie sofort, und
+  Lernraum installiert die Sprache im Hintergrund; ab dann spricht die Lernraum-Stimme. Ohne
+  Gerätestimme wartet das Vorlesen auf die Installation. Stufe 6 wartet beim „Starten“ wie
+  bisher bis zu 30 s auf das Modell.
+- Vorgeladen (im Speicher bereitgelegt) wird nur eine Sprache, die schon installiert ist. Eine
+  Seite zu öffnen lädt also keine 34 MB.
+- Notbremse: `LERNRAUM_FREIGABE=sprachmodell=aus` schaltet die Lernraum-Stimme überall ab.
+- Tests, die den Weg über die Gerätestimme prüfen (Stufe 6 in `e2e/wortspeicher.spec.ts`,
+  `app/ui/read-aloud-button.test.tsx`, Vorlesen in `app/raum/spiel/live-parity.test.tsx`),
+  schalten die Lernraum-Stimme aus bzw. laufen ohne Manifest. Ihre Erwartungen sind
+  unverändert; von der Lehrkraft bestätigt.

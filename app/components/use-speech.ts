@@ -10,7 +10,7 @@ import {
   stopSpeaking,
   type SpeechReadiness,
 } from "../../src/speech/speaker";
-import { useAreaVisible } from "../release/release-context";
+import { useModelSpeech } from "../ui/use-model-speech";
 
 /** Ohne Vorschau dieselben Aufrufe wie vor dem Sprachmodell. */
 function voiceFor(lang: string, model: boolean) {
@@ -24,7 +24,7 @@ function voiceFor(lang: string, model: boolean) {
  * Browser (docs/umsetzungsplan-sprachmodell.md, 3.4); sonst wie bisher.
  */
 export function useSpeech(lang = "de-DE") {
-  const model = useAreaVisible("sprachmodell");
+  const model = useModelSpeech();
   /** `undefined`, solange die Stimmenliste noch nicht geladen ist. */
   const [hasVoice, setHasVoice] = useState<boolean | undefined>();
   const [speaking, setSpeaking] = useState(false);

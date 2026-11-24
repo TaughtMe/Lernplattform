@@ -6,6 +6,7 @@ import {
   languageStatus,
 } from "../../src/speech/model/model-speaker";
 import { useAreaVisible } from "../release/release-context";
+import { useModelSpeech } from "../ui/use-model-speech";
 import { useSpeechVoiceSettings } from "../ui/use-speech-voice-settings";
 import { VoiceSettingsBody } from "../views/parts/voice-settings";
 import { SettingsGroup } from "../views/lehrer/settings-screen";
@@ -24,6 +25,8 @@ function Body({
 }) {
   return (
     <VoiceSettingsBody
+      enabled={settings.enabled}
+      onToggle={settings.toggle}
       languages={settings.languages}
       onSelect={settings.select}
       onSample={(code) => void settings.sample(code)}
@@ -57,7 +60,7 @@ export function TeacherVoiceSettings() {
   return (
     <SettingsGroup
       title="Vorlesen"
-      hint="Stimme je Sprache und Installation auf diesem Gerät."
+      hint="Lernraum-Stimme an oder aus, Stimme je Sprache und Installation auf diesem Gerät."
     >
       <div className={m.card}>
         <Body settings={settings} />
@@ -75,7 +78,7 @@ const AUTO_INSTALL_DELAY_MS = 8000;
  * lädt eine Sprache beim ersten Vorlesen oder über „Installieren“.
  */
 export function SpeechModelAutoInstall() {
-  const visible = useAreaVisible("sprachmodell");
+  const visible = useModelSpeech();
   useEffect(() => {
     if (!visible || typeof window === "undefined") return;
     const standalone =

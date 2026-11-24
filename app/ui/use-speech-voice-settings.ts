@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   installLanguage,
   languageStatus,
@@ -11,7 +11,9 @@ import {
 } from "../../src/speech/model/model-speaker";
 import { resolveVoice } from "../../src/speech/model/manifest";
 import {
+  isModelSpeechEnabled,
   readVoicePreferences,
+  setModelSpeechEnabled,
   setPreferredVoice,
   subscribeVoicePreferences,
 } from "../../src/speech/model/voice-preferences";
@@ -64,6 +66,11 @@ function merge(
  */
 export function useSpeechVoiceSettings(enabled: boolean) {
   const [languages, setLanguages] = useState<VoiceLanguageView[]>([]);
+  const modelEnabled = useSyncExternalStore(
+    subscribeVoicePreferences,
+    isModelSpeechEnabled,
+    () => true,
+  );
 
   const patch = useCallback(
     (code: string, change: Partial<VoiceLanguageView>) =>
@@ -140,5 +147,15 @@ export function useSpeechVoiceSettings(enabled: boolean) {
     [languages, patch, refresh],
   );
 
-  return { languages, select, install, remove, sample };
+  const toggle = useCallback((on: boolean) => setModelSpeechEnabled(on), []);
+
+  return {
+    enabled: modelEnabled,
+    languages,
+    select,
+    install,
+    remove,
+    sample,
+    toggle,
+  };
 }

@@ -8,7 +8,7 @@ import type { LiveProgress } from "../../../src/integrations/laufdiktat/room-api
 import { MathDisplay } from "../../components/math-display";
 import { useThemeToggle } from "../../ui/theme";
 import { speak } from "../../../src/speech/speaker";
-import { useAreaVisible } from "../../release/release-context";
+import { useModelSpeech } from "../../ui/use-model-speech";
 import { StudentDictationScreen } from "../../views/laufdiktat/student-dictation-screen";
 import { useHoldToReveal } from "./use-hold-to-reveal";
 import { DeliveryNotice, GameWarning } from "./game-parts";
@@ -35,7 +35,7 @@ export function LiveStationGame({
   onRetryProgress,
 }: Props) {
   // Vorschau: Vorlesen mit dem Sprachmodell (docs/umsetzungsplan-sprachmodell.md).
-  const modelSpeech = useAreaVisible("sprachmodell");
+  const modelSpeech = useModelSpeech();
   const [stationNumber, setStationNumber] = useState<number | null>(null);
   const [index, setIndex] = useState(0);
   const [peeks, setPeeks] = useState(0);

@@ -161,4 +161,13 @@ test("Einstellungen: Stimme wählen, Englisch installieren, Probe hören", async
     )
     .toBeGreaterThan(0);
   await expectAccessible(page);
+
+  // Lernraum-Stimme je Gerät abschalten: Stimmenwahl verschwindet.
+  await card
+    .getByRole("checkbox", { name: "Lernraum-Stimme verwenden" })
+    .uncheck();
+  await expect(card.getByLabel("Stimme für Englisch")).toHaveCount(0);
+  expect(
+    await page.evaluate(() => localStorage.getItem("lernraum:vorlesen-modell")),
+  ).toBe("0");
 });

@@ -87,4 +87,26 @@ describe("Einstellung Vorlesen", () => {
     );
     expect(onRemove).toHaveBeenCalledWith("de");
   });
+
+  it("schaltet die Lernraum-Stimme aus und blendet die Stimmenwahl aus", async () => {
+    const onToggle = vi.fn();
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <VoiceSettingsBody languages={[german]} onToggle={onToggle} />,
+    );
+    const toggle = screen.getByRole("checkbox", {
+      name: /Lernraum-Stimme verwenden/,
+    });
+    expect(toggle).toBeChecked();
+    await user.click(toggle);
+    expect(onToggle).toHaveBeenCalledWith(false);
+    rerender(
+      <VoiceSettingsBody
+        enabled={false}
+        languages={[german]}
+        onToggle={onToggle}
+      />,
+    );
+    expect(screen.queryByLabelText("Stimme für Deutsch")).toBeNull();
+  });
 });

@@ -31,6 +31,7 @@ const session = parseLiveSession(
   "seed",
 );
 afterEach(() => {
+  window.localStorage.removeItem("lernraum:vorlesen-modell");
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -94,6 +95,8 @@ describe("original Laufdiktat workflows", () => {
   });
 
   it("returns stations after three seconds, retains seen words, and supports reading aloud", async () => {
+    // Vorlesen über die Gerätestimme: Lernraum-Stimme aus (Entscheidung 62).
+    window.localStorage.setItem("lernraum:vorlesen-modell", "0");
     vi.useFakeTimers();
     const speak = vi.fn();
     vi.stubGlobal(

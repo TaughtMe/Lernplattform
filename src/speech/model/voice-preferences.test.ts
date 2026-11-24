@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  isModelSpeechEnabled,
   preferredVoice,
   readVoicePreferences,
+  setModelSpeechEnabled,
   setPreferredVoice,
   subscribeVoicePreferences,
 } from "./voice-preferences";
@@ -45,5 +47,19 @@ describe("Vorlesestimme je Sprache", () => {
       throw new Error("voll");
     });
     expect(() => setPreferredVoice("de", "anna")).not.toThrow();
+  });
+});
+
+describe("Lernraum-Stimme an oder aus", () => {
+  it("ist ohne Wahl an und lässt sich je Gerät ausschalten", () => {
+    expect(isModelSpeechEnabled()).toBe(true);
+    const listener = vi.fn();
+    const unsubscribe = subscribeVoicePreferences(listener);
+    setModelSpeechEnabled(false);
+    expect(isModelSpeechEnabled()).toBe(false);
+    expect(listener).toHaveBeenCalledTimes(1);
+    setModelSpeechEnabled(true);
+    expect(isModelSpeechEnabled()).toBe(true);
+    unsubscribe();
   });
 });
