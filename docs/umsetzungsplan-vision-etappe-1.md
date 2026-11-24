@@ -75,3 +75,14 @@ Rückfragen an den Entwickler stehen hier.
   Nr. 5 („nur Gerätestimmen“) gegen 82 („Lernraum-Stimme für alle“) aufgelöst: Lernraum-Stimme
   zuerst, Gerätestimmen nur lokal. `CLAUDE.md` und die erweiterte `AGENTS.md` aus `210f80c`
   übernommen; sie lagen nur auf `claude/loving-meitner-rt4tn0`.
+- 24.11.2026, gesammelter Prüflauf nach allen Bausteinen: `npm run check` grün (290 Dateien,
+  3252 Unit-Tests, Coverage, Datenbankverträge, Build, Render). Browser-Tests in Chromium
+  (Desktop, Mobil, Mindestbreite): Lernformen, Wortspeicher, Live-Raum, Lehrerinhalte,
+  Tafelmodus, Fortsetzen, Sprachausgabe, Sprachmodell, Pilot, Gastmodus, Plattform,
+  Profil, Hydration – alle grün; Produktionslauf (29) grün. Nicht lokal: Firefox, WebKit,
+  Designtests (laufen in GitHub). Erwartet rot in `design-quality`: `/lehrer` (neuer
+  Abschnitt „Schnellstart“), bis die Vorlage angepasst ist.
+- Offen für den Entwickler: K8 (Inhalte unabhängig vom Laufdiktat) braucht Plan und
+  Designvorlage; Jahrgangsvorgaben im Schnellstart prüfen; Wortbox „s, ss und ß“ prüfen;
+  Impressum-Entwurf prüfen; Markenfiguren; Countdown auf Schülergeräten braucht eine
+  Startzeit im Raumprotokoll; LF-3: soll „Auswahl“ allein immer den ganzen Stapel nehmen?
