@@ -11,8 +11,21 @@ import {
 } from "./model/model-speaker";
 import { unlockAudio } from "./model/player";
 import { speechRoutes } from "./model/route";
-import { normalizeSpeechLang, pickVoice } from "./voices";
+import {
+  missingVoiceMessage,
+  normalizeSpeechLang,
+  pickLocalVoice,
+} from "./voices";
 
+/**
+ * Gemeinsame Sprachausgabe aller Stellen (LernBox, Live-Spiel, Station,
+ * Wortspeicher Stufe 6, Startpunkt, Vorlesen). Mit `model: true` spricht
+ * zuerst die Lernraum-Stimme (Entscheidung 82). Von den Stimmen des Geräts
+ * nutzt sie nur solche, die auf dem Gerät laufen (Entscheidung 58, Befund
+ * B-012). Gibt es keine passende, spricht sie nicht und meldet das über
+ * `SPEECH_NOTICE_EVENT`, damit das Kind einen Hinweis sieht statt einer
+ * stummen Taste.
+ */
 /** Gemeinsames Tempo für alle Stellen (Vorlese-Plan 3.1); kalibrierbar. */
 export const SPEECH_RATE = 0.9;
 /** Manche Browser verwerfen ein `speak()` direkt nach `cancel()`. */
@@ -29,6 +42,25 @@ export const WARMUP_TIMEOUT_MS = 1500;
 const SAFETY_TIMEOUT_MS = 12_000;
 
 export type SpeechReadiness = "ready" | "no-voice" | "unavailable";
+/** Ergebnis von `speak`: gesprochen, keine lokale Stimme, keine Sprachausgabe, abgelöst. */
+export type SpeakOutcome = "spoken" | "no-voice" | "unavailable" | "replaced";
+
+/** Fenster-Ereignis mit dem Hinweistext in `detail.message`. */
+export const SPEECH_NOTICE_EVENT = "lernraum-speech-notice";
+export type SpeechNoticeDetail = { message: string };
+
+/** Meldet einen Hinweis zur Sprachausgabe (z. B. „keine deutsche Stimme“). */
+export function announceSpeechNotice(message: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<SpeechNoticeDetail>(SPEECH_NOTICE_EVENT, {
+      detail: { message },
+    }),
+  );
+}
+
+/** Hinweis, wenn das Gerät gar keine Sprachausgabe hat. */
+export const NO_SPEECH_MESSAGE = "Dieses Gerät kann nicht vorlesen.";
 
 let cachedVoices: SpeechSynthesisVoice[] = [];
 let preloading: Promise<SpeechSynthesisVoice[]> | undefined;
@@ -54,7 +86,7 @@ function synth(): SpeechSynthesis | undefined {
 }
 
 function readVoices(): SpeechSynthesisVoice[] {
-  const list = synth()?.getVoices() ?? [];
+  const list = synth()?.getVoices?.() ?? [];
   if (list.length > 0) cachedVoices = list;
   return cachedVoices;
 }
@@ -97,12 +129,12 @@ export function preloadVoices(): Promise<SpeechSynthesisVoice[]> {
 }
 
 /**
- * Sprachmodell im Browser (Plan `docs/umsetzungsplan-sprachmodell.md`): nur
- * mit der Vorschau-Freigabe „sprachmodell“. Ohne diese Option bleibt alles wie
- * vor dem Plan.
+ * Lernraum-Stimme (Plan `docs/umsetzungsplan-sprachmodell.md`): Die Aufrufer
+ * geben `model` mit, wenn Freigabe und Schalter je Gerät sie erlauben
+ * (`useModelSpeech`). Ohne diese Option sprechen nur lokale Gerätestimmen.
  */
 export type ModelOption = {
-  /** Freigabe `sprachmodell` ist sichtbar. */
+  /** Lernraum-Stimme erlaubt (Freigabe `sprachmodell` und Geräteschalter). */
   model?: boolean;
 };
 
@@ -138,36 +170,27 @@ export async function prepareSpeechAhead(
   await pregenerate([...texts], lang, SPEECH_RATE, owner);
 }
 
-/** Gibt es auf diesem Gerät (nach `preloadVoices`) eine passende Stimme? */
-export function hasVoiceFor(lang: string, options: ModelOption = {}): boolean {
-  if (options.model && isModelAvailable(lang)) return true;
-  return pickVoice(readVoices(), lang) !== null;
-}
-
-/** Die Optionen ohne `model`, für den Weg über die Gerätestimme. */
-function systemOptions(
-  options: SpeakOptions,
-  localOnly: boolean,
-): SpeakOptions {
-  const result: SpeakOptions = {};
-  if (localOnly) result.localOnly = true;
-  if (options.rate !== undefined) result.rate = options.rate;
-  if (options.voiceURI !== undefined) result.voiceURI = options.voiceURI;
-  return result;
-}
-
-/** Nur Stimmen, die auf dem Gerät laufen: Der Text verlässt es nicht (B-012). */
-function localVoices(): SpeechSynthesisVoice[] {
-  return readVoices().filter((voice) => voice.localService);
-}
-
-/** Gibt es eine passende Stimme, die auf dem Gerät läuft (auch das Modell)? */
+/**
+ * Gibt es (nach `preloadVoices`) eine passende Stimme, die auf dem Gerät
+ * läuft? Netzstimmen zählen nie (B-012). Mit `model` zählt auch die
+ * Lernraum-Stimme, wenn es für die Sprache ein Modell gibt.
+ */
 export function hasLocalVoiceFor(
   lang: string,
   options: ModelOption = {},
 ): boolean {
   if (options.model && isModelAvailable(lang)) return true;
-  return pickVoice(localVoices(), lang) !== null;
+  return pickLocalVoice(readVoices(), lang) !== null;
+}
+
+/** Gleichbedeutend mit `hasLocalVoiceFor`: Es gibt nur lokale Stimmen. */
+export const hasVoiceFor = hasLocalVoiceFor;
+
+/** Die Optionen ohne `model`, für den Weg über die Gerätestimme. */
+function systemOptions(options: SpeakOptions): SpeakOptions {
+  const rest = { ...options };
+  delete rest.model;
+  return rest;
 }
 
 /** Spricht eine Äußerung und wartet auf ihr Ende (oder Fehler, oder Sicherheitsgrenze). */
@@ -204,29 +227,32 @@ function utter(
 
 export type SpeakOptions = ModelOption & {
   rate?: number;
-  /** Gespeicherte Wunschstimme (Vorlese-Plan 3.4). */
+  /** Gespeicherte Wunschstimme (Vorlese-Plan 3.4); nur, wenn sie lokal läuft. */
   voiceURI?: string | null;
-  /**
-   * Nur Stimmen, die auf dem Gerät laufen. Gibt es keine, bleibt es stumm,
-   * statt den Text an eine Netzwerkstimme zu schicken (B-012).
-   */
-  localOnly?: boolean;
+  /** Läuft kurz bevor die Stimme spricht (z. B. „Anhören“ mitzählen). */
+  onStart?: () => void;
+  /** Ohne Hinweis bleiben, wenn die Stelle selbst einen zeigt. */
+  silentNotice?: boolean;
 };
 
 /**
  * Liest einen Text mit der besten Stimme des Geräts vor. Ist die Liste noch
- * leer, wartet es höchstens `VOICE_WAIT_MS` und liest dann trotzdem vor, damit
- * sich ein Tippen nie „tot“ anfühlt. Eine laufende Ausgabe wird beendet; das
- * Ergebnis kommt, wenn das Sprechen zu Ende ist.
+ * leer, wartet es höchstens `VOICE_WAIT_MS` (danach auch auf das späte
+ * Nachladen von Safari). Ohne lokale Stimme passender Sprache spricht es
+ * nicht, meldet den Hinweis und liefert `"no-voice"`. Eine laufende Ausgabe
+ * wird beendet; das Ergebnis kommt, wenn das Sprechen zu Ende ist.
  */
 export async function speak(
   text: string,
   lang: string,
   options: SpeakOptions = {},
-): Promise<void> {
+): Promise<SpeakOutcome> {
   if (options.model) return speakPreferringModel(text, lang, options);
   const speech = synth();
-  if (!speech) return;
+  if (!speech) {
+    if (!options.silentNotice) announceSpeechNotice(NO_SPEECH_MESSAGE);
+    return "unavailable";
+  }
   const mine = ++generation;
   stopModel();
   let voices = readVoices();
@@ -236,86 +262,82 @@ export async function speak(
       delay(VOICE_WAIT_MS).then(readVoices),
     ]);
   }
-  if (mine !== generation) return;
-  if (options.localOnly) voices = voices.filter((entry) => entry.localService);
-  const voice = pickVoice(voices, lang, options.voiceURI);
-  if (options.localOnly && !voice) return;
+  if (mine !== generation) return "replaced";
+  let voice = pickLocalVoice(voices, lang, options.voiceURI);
+  if (!voice && voices.length === 0) {
+    // Die Liste kam noch nicht: auf das Ende des Ladens warten, statt ohne
+    // Stimme (und damit womöglich mit einer Netzstimme) zu sprechen.
+    voice = pickLocalVoice(await preloadVoices(), lang, options.voiceURI);
+    if (mine !== generation) return "replaced";
+  }
+  if (!voice) {
+    if (!options.silentNotice) announceSpeechNotice(missingVoiceMessage(lang));
+    return "no-voice";
+  }
   speech.cancel();
   await delay(SPEAK_DELAY_MS);
   // Zwischenzeitlich wurde schon etwas Neues angefordert: nur das Neueste zählt.
-  if (mine !== generation) return;
+  if (mine !== generation) return "replaced";
+  options.onStart?.();
   await utter(speech, text, lang, {
     voice,
     rate: options.rate ?? SPEECH_RATE,
     timeoutMs: SAFETY_TIMEOUT_MS,
   });
+  return "spoken";
 }
 
 /**
- * Vorschau „sprachmodell“ (Plan 2.2): Gibt es ein Modell für die Sprache,
+ * Lernraum-Stimme (Entscheidung 82): Gibt es ein Modell für die Sprache,
  * spricht es; fällt es aus, nur eine Stimme, die auf dem Gerät läuft. Ohne
- * Modell bleibt alles wie vor dem Plan.
+ * Modell für die Sprache geht der Aufruf an die Gerätestimme.
  */
 async function speakPreferringModel(
   text: string,
   lang: string,
   options: SpeakOptions,
-): Promise<void> {
+): Promise<SpeakOutcome> {
   const mine = ++generation;
   // Ton noch in der Geste freigeben, vor dem ersten `await` (iOS): LernBox
   // und Laufdiktat rufen `speak` direkt im Klick auf.
   unlockAudio();
   await loadModelManifest();
-  if (mine !== generation) return;
-  if (!isModelAvailable(lang)) {
-    return speak(
-      text,
-      lang,
-      systemOptions(options, options.localOnly === true),
-    );
-  }
+  if (mine !== generation) return "replaced";
+  if (!isModelAvailable(lang)) return speak(text, lang, systemOptions(options));
   // Sprache noch nicht installiert: Mit Gerätestimme gleich vorlesen und die
   // Sprache im Hintergrund installieren; ohne Gerätestimme auf das Modell warten.
   if ((await languageStatus(lang)) !== "installed") {
-    if (mine !== generation) return;
+    if (mine !== generation) return "replaced";
     void installLanguage(lang);
     if (readVoices().length === 0) {
       await Promise.race([preloadVoices(), delay(VOICE_WAIT_MS)]);
     }
-    if (mine !== generation) return;
-    // Mit localOnly (Knopf „Vorlesen“, B-012) zählt nur eine lokale Stimme;
-    // sonst bliebe es stumm, weil speak() Netzwerkstimmen herausfiltert.
-    const systemVoice =
-      options.localOnly === true ? hasLocalVoiceFor(lang) : hasVoiceFor(lang);
-    if (systemVoice) {
-      return speak(
-        text,
-        lang,
-        systemOptions(options, options.localOnly === true),
-      );
+    if (mine !== generation) return "replaced";
+    if (hasLocalVoiceFor(lang)) {
+      return speak(text, lang, systemOptions(options));
     }
   }
-  if (mine !== generation) return;
+  if (mine !== generation) return "replaced";
   synth()?.cancel();
   const routes = speechRoutes({
     modelAllowed: true,
     modelAvailable: true,
     localSystemVoice: hasLocalVoiceFor(lang),
-    anySystemVoice: hasVoiceFor(lang),
-    localOnly: true,
   });
   for (const route of routes) {
-    if (mine !== generation) return;
+    if (mine !== generation) return "replaced";
     if (route === "model") {
       const spoken = await speakWithModel(text, lang, {
         speed: options.rate ?? SPEECH_RATE,
+        ...(options.onStart ? { onStart: options.onStart } : {}),
       });
-      if (spoken) return;
+      if (spoken) return mine === generation ? "spoken" : "replaced";
     } else {
-      await speak(text, lang, systemOptions(options, true));
-      return;
+      return speak(text, lang, systemOptions(options));
     }
   }
+  if (!options.silentNotice) announceSpeechNotice(missingVoiceMessage(lang));
+  return "no-voice";
 }
 
 /** Beendet eine laufende Ausgabe (z. B. beim Verlassen der Übung). */
@@ -325,7 +347,7 @@ export function stopSpeaking() {
   stopModel();
 }
 
-/** Wartet bis zu `timeoutMs` auf eine passende Stimme. */
+/** Wartet bis zu `timeoutMs` auf eine passende lokale Stimme. */
 async function waitForVoice(
   lang: string,
   timeoutMs: number,
@@ -334,7 +356,7 @@ async function waitForVoice(
   if (!speech) return null;
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const voice = pickVoice(readVoices(), lang);
+    const voice = pickLocalVoice(readVoices(), lang);
     if (voice) return voice;
     const left = deadline - Date.now();
     if (left <= 0) return null;
@@ -362,7 +384,7 @@ export async function prepareSpeech(
   lang: string,
   options: ModelOption & { timeoutMs?: number; warmupMs?: number } = {},
 ): Promise<SpeechReadiness> {
-  let localOnly = false;
+  let modelFailed = false;
   if (options.model) {
     // Ton noch in der Geste freigeben, vor dem ersten `await` (iOS).
     unlockAudio();
@@ -370,7 +392,7 @@ export async function prepareSpeech(
     if (isModelAvailable(lang)) {
       if (await prepareModel(lang)) return "ready";
       // Rückfall: nur Stimmen, die auf dem Gerät laufen (B-012).
-      localOnly = true;
+      modelFailed = true;
       if (!synth()) return "unavailable";
       await preloadVoices();
       if (!hasLocalVoiceFor(lang)) return "no-voice";
@@ -383,9 +405,10 @@ export async function prepareSpeech(
 
   // Schnellweg: Ist die Stimme schon bekannt, beginnt das Aufwärmen ohne Umweg
   // noch in der Nutzergeste.
-  const voice = localOnly
-    ? pickVoice(localVoices(), lang)
-    : (pickVoice(readVoices(), lang) ?? (await waitForVoice(lang, timeoutMs)));
+  const voice = modelFailed
+    ? pickLocalVoice(readVoices(), lang)
+    : (pickLocalVoice(readVoices(), lang) ??
+      (await waitForVoice(lang, timeoutMs)));
   if (!voice) return "no-voice";
 
   if (speech.speaking || speech.pending) {

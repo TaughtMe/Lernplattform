@@ -160,7 +160,7 @@ export const SPELLING_LEVELS: readonly SpellingLevel[] = [
   { collectionId: "double-consonants", words: ["Sonne", "Mutter"] },
   { collectionId: "ck-tz", words: ["Jacke", "Katze"] },
   { collectionId: "final-devoicing", words: ["Hund", "Berg"] },
-  { collectionId: "umlaut", words: ["Bäume", "Mädchen"] },
+  { collectionId: "umlaut", words: ["Bäume", "Wälder"] },
   { collectionId: "s-ss-sz", words: ["Straße", "Fluss"] },
 ];
 

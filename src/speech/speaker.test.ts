@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PREPARE_TIMEOUT_MS,
   SPEAK_DELAY_MS,
+  SPEECH_NOTICE_EVENT,
   SPEECH_RATE,
-  VOICE_WAIT_MS,
   hasLocalVoiceFor,
   hasVoiceFor,
   isSpeechAvailable,
@@ -34,17 +34,20 @@ type FakeVoice = {
   default: boolean;
   localService?: boolean;
 };
+// Echte Browser melden `localService`; Lernraum nutzt nur lokale Stimmen.
 const anna: FakeVoice = {
   name: "Anna (Premium)",
   lang: "de-DE",
   voiceURI: "anna",
   default: false,
+  localService: true,
 };
 const simple: FakeVoice = {
   name: "Anna",
   lang: "de-DE",
   voiceURI: "simple",
   default: true,
+  localService: true,
 };
 
 function installSynth(
@@ -173,14 +176,14 @@ describe("speak", () => {
     expect(env.log).toEqual(["cancel", "speak:Rad"]);
   });
 
-  it("waits at most 300 ms for an empty list and then speaks with the language only", async () => {
+  // Früher sprach `speak` nach 300 ms ohne Stimme, nur mit der Sprache. Dann
+  // wählt der Browser selbst, womöglich eine Netzstimme; das verbietet B-012.
+  it("does not speak without a known local voice, even when the list stays empty", async () => {
     const env = installSynth([]);
-    void speak("Rad", "de-DE");
-    await vi.advanceTimersByTimeAsync(VOICE_WAIT_MS);
+    const done = speak("Rad", "de-DE");
+    await vi.advanceTimersByTimeAsync(3000);
+    await expect(done).resolves.toBe("no-voice");
     expect(env.spoken).toHaveLength(0);
-    await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
-    expect(env.spoken).toHaveLength(1);
-    expect(env.spoken[0]).toMatchObject({ lang: "de-DE", voice: null });
   });
 
   it("uses a voice that arrives while waiting", async () => {
@@ -212,18 +215,18 @@ describe("speak", () => {
     const done = speak("Rad", "de-DE");
     await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
     env.spoken[0]!.onerror?.();
-    await expect(done).resolves.toBeUndefined();
+    await expect(done).resolves.toBe("spoken");
   });
 
   it("resolves after the safety limit when no end event comes", async () => {
     installSynth([anna], { endsSpeaking: false });
     const done = speak("Rad", "de-DE");
     await vi.advanceTimersByTimeAsync(20_000);
-    await expect(done).resolves.toBeUndefined();
+    await expect(done).resolves.toBe("spoken");
   });
 
   it("does nothing without speech synthesis", async () => {
-    await expect(speak("Rad", "de-DE")).resolves.toBeUndefined();
+    await expect(speak("Rad", "de-DE")).resolves.toBe("unavailable");
   });
 
   it("stopSpeaking cancels and drops a pending request", async () => {
@@ -339,7 +342,6 @@ describe("local voices only (B-012)", () => {
   it("hasLocalVoiceFor ignores network voices", async () => {
     installSynth([cloud]);
     await preloadVoices();
-    expect(hasVoiceFor("de-DE")).toBe(true);
     expect(hasLocalVoiceFor("de-DE")).toBe(false);
   });
 
@@ -352,7 +354,7 @@ describe("local voices only (B-012)", () => {
 
   it("speaks with the local voice even if a network voice ranks higher", async () => {
     const env = installSynth([cloud, onDevice]);
-    const done = speak("Rad", "de-DE", { localOnly: true });
+    const done = speak("Rad", "de-DE");
     await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
     expect(env.spoken).toHaveLength(1);
     expect(env.spoken[0]).toMatchObject({ voice: onDevice });
@@ -360,11 +362,73 @@ describe("local voices only (B-012)", () => {
     await done;
   });
 
-  it("stays silent instead of falling back to a network voice", async () => {
+  it("stays silent instead of falling back to a network voice and says why", async () => {
     const env = installSynth([cloud]);
-    await speak("Rad", "de-DE", { localOnly: true });
+    const notices: string[] = [];
+    const listener = (event: Event) =>
+      notices.push((event as CustomEvent<{ message: string }>).detail.message);
+    window.addEventListener(SPEECH_NOTICE_EVENT, listener);
+    await expect(speak("Rad", "de-DE")).resolves.toBe("no-voice");
     await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
+    window.removeEventListener(SPEECH_NOTICE_EVENT, listener);
     expect(env.spoken).toHaveLength(0);
     expect(env.log).toEqual([]);
+    expect(notices).toEqual([
+      "Auf diesem Gerät ist keine deutsche Stimme installiert.",
+    ]);
+  });
+
+  it("names the language in the notice and can leave it out", async () => {
+    installSynth([onDevice]);
+    const notices: string[] = [];
+    const listener = (event: Event) =>
+      notices.push((event as CustomEvent<{ message: string }>).detail.message);
+    window.addEventListener(SPEECH_NOTICE_EVENT, listener);
+    await expect(speak("cat", "en-GB")).resolves.toBe("no-voice");
+    await expect(speak("cat", "en-GB", { silentNotice: true })).resolves.toBe(
+      "no-voice",
+    );
+    window.removeEventListener(SPEECH_NOTICE_EVENT, listener);
+    expect(notices).toEqual([
+      "Auf diesem Gerät ist keine englische Stimme installiert.",
+    ]);
+  });
+
+  it("ignores a saved network voice and uses the local one", async () => {
+    const env = installSynth([cloud, onDevice]);
+    void speak("Rad", "de-DE", { voiceURI: "cloud" });
+    await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
+    expect(env.spoken[0]).toMatchObject({ voice: onDevice });
+  });
+
+  it("calls onStart only when it really speaks and reports spoken", async () => {
+    const env = installSynth([onDevice]);
+    const onStart = vi.fn();
+    const done = speak("Rad", "de-DE", { onStart });
+    await vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS);
+    expect(onStart).toHaveBeenCalledOnce();
+    expect(env.spoken).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(50);
+    await expect(done).resolves.toBe("spoken");
+
+    env.loadVoices([cloud]);
+    const silent = vi.fn();
+    await expect(speak("Rad", "de-DE", { onStart: silent })).resolves.toBe(
+      "no-voice",
+    );
+    expect(silent).not.toHaveBeenCalled();
+  });
+
+  it("hasVoiceFor counts only local voices", async () => {
+    installSynth([cloud]);
+    await preloadVoices();
+    expect(hasVoiceFor("de-DE")).toBe(false);
+  });
+
+  it("prepareSpeech reports no-voice with only a network voice", async () => {
+    installSynth([cloud]);
+    const ready = prepareSpeech("de-DE", { timeoutMs: 200 });
+    await vi.advanceTimersByTimeAsync(300);
+    await expect(ready).resolves.toBe("no-voice");
   });
 });

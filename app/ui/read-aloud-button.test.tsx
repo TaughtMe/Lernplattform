@@ -17,7 +17,7 @@ const voiceListeners = new Set<() => void>();
 
 beforeEach(() => {
   // Geprüft wird der Weg über die Gerätestimme: Lernraum-Stimme auf diesem
-  // Gerät aus (Einstellungen „Vorlesen“, Entscheidung 62).
+  // Gerät aus (Einstellungen „Vorlesen“, Entscheidung 82).
   window.localStorage.setItem("lernraum:vorlesen-modell", "0");
   voiceListeners.clear();
   speaker.hasLocalVoiceFor.mockReturnValue(true);
@@ -68,10 +68,10 @@ describe("ReadAloudButton", () => {
     await user.click(
       await screen.findByRole("button", { name: "Anleitung vorlesen" }),
     );
+    // `speak` nutzt immer nur lokale Stimmen (B-012).
     expect(speaker.speak).toHaveBeenCalledWith(
       "Schreibe das Wort ab.",
       "de-DE",
-      { localOnly: true },
     );
     expect(
       screen.getByRole("button", { name: "Stopp, Vorlesen beenden" }),

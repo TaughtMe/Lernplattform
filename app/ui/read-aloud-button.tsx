@@ -80,11 +80,7 @@ export function ReadAloudButton({
     active.current = mine;
     setSpeaking(true);
     try {
-      await speak(
-        text,
-        lang,
-        model ? { localOnly: true, model } : { localOnly: true },
-      );
+      await (model ? speak(text, lang, { model }) : speak(text, lang));
     } finally {
       if (active.current === mine) {
         active.current = 0;

@@ -510,3 +510,12 @@
     transition: none;
   }
 }
+
+/* Anleitung mit Knopf „Vorlesen“ (Entscheidung 58). */
+.instruction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

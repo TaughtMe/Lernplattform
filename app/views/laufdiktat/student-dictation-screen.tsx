@@ -509,29 +509,32 @@ function PowerRings({
             <span className={styles.powerLabel}>{power.label}</span>
           </div>
         ))}
-        <div className={styles.power}>
-          <button
-            type="button"
-            aria-label="Schild"
-            aria-pressed={battle.shieldActive}
-            className={cx(
-              styles.ring,
-              (ready || battle.shieldActive) && styles.ready,
-            )}
-            style={shieldFill}
-            onClick={onShield}
-          >
-            <span className={styles.ringEmpty}>
-              <ShieldIcon />
+        {/* Ohne Störangriffe (Standard) gibt es nichts abzuwehren. */}
+        {powers.length > 0 ? (
+          <div className={styles.power}>
+            <button
+              type="button"
+              aria-label="Schild"
+              aria-pressed={battle.shieldActive}
+              className={cx(
+                styles.ring,
+                (ready || battle.shieldActive) && styles.ready,
+              )}
+              style={shieldFill}
+              onClick={onShield}
+            >
+              <span className={styles.ringEmpty}>
+                <ShieldIcon />
+              </span>
+              <span className={styles.ringFill}>
+                <ShieldIcon />
+              </span>
+            </button>
+            <span className={styles.powerLabel}>
+              {battle.shieldActive ? "aktiv" : "Schild"}
             </span>
-            <span className={styles.ringFill}>
-              <ShieldIcon />
-            </span>
-          </button>
-          <span className={styles.powerLabel}>
-            {battle.shieldActive ? "aktiv" : "Schild"}
-          </span>
-        </div>
+          </div>
+        ) : null}
       </div>
       <div className={styles.charge}>
         <span className={styles.chargeLabel}>

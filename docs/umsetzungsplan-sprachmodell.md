@@ -250,7 +250,7 @@ sind oben eingearbeitet.
 | P6  | Ohne `crossOriginIsolated` gibt es keine Threads in ONNX Runtime.                                                    | `numThreads = 1`, Messung in 7.4.                                 |
 | P7  | Zwei Modelle gleichzeitig belasten den Speicher auf dem iPad.                                                        | Nur eine Sprache geladen (3.3).                                   |
 | P8  | Das Quellpaket enthält neben GPL-3 weitere Lizenzen (`COPYING.APACHE`, `COPYING.BSD2`, `COPYING.UCD`).               | Vollständige Liste in `HINWEISE.md` (3.6).                        |
-| P9  | `AGENTS.md`: Eine zurückgenommene Festlegung braucht einen Eintrag mit „Zurückgenommen“ und „Nicht wieder einbauen“. | Entscheidung 60.                                                  |
+| P9  | `AGENTS.md`: Eine zurückgenommene Festlegung braucht einen Eintrag mit „Zurückgenommen“ und „Nicht wieder einbauen“. | Entscheidung 80.                                                  |
 | P10 | Das Manifest muss offline verfügbar sein, bei schlechtem WLAN darf es nicht hängen (B-013).                          | Netz zuerst mit 3 s Zeitlimit, dann Cache (3.3).                  |
 
 **Probebau (Machbarkeit):** eSpeak NG 1.51 und Emscripten 3.1.6 aus Ubuntu 24.04, Wrapper
@@ -349,7 +349,7 @@ KittenTTS 2 rechnet anders als KittenTTS 0.8. Nachgebaut nach `kittenml` 0.9.8
 
 ### 10.6 Freigabe für alle und Schalter je Gerät (24.11.2026)
 
-- Die Lehrkraft gibt die Lernraum-Stimme für alle frei (`sprachmodell` → `frei`, Entscheidung 62).
+- Die Lehrkraft gibt die Lernraum-Stimme für alle frei (`sprachmodell` → `frei`, Entscheidung 82).
   Die Kriterien aus Abschnitt 7 sind damit keine Voraussetzung mehr; Hörtest, iPad-Offline-Test,
   Messung und Lizenzklärung laufen im Betrieb weiter.
 - Einstellungen „Vorlesen“: Schalter „Lernraum-Stimme verwenden“ (je Gerät, Vorgabe an,

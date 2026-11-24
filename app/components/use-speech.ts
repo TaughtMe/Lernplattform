@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  hasVoiceFor,
+  hasLocalVoiceFor,
   prepareSpeech,
   preloadModelSpeech,
   preloadVoices,
@@ -12,16 +12,19 @@ import {
 } from "../../src/speech/speaker";
 import { useModelSpeech } from "../ui/use-model-speech";
 
-/** Ohne Vorschau dieselben Aufrufe wie vor dem Sprachmodell. */
+/** Ohne Lernraum-Stimme dieselben Aufrufe wie vor dem Sprachmodell. */
 function voiceFor(lang: string, model: boolean) {
-  return model ? hasVoiceFor(lang, { model }) : hasVoiceFor(lang);
+  return model ? hasLocalVoiceFor(lang, { model }) : hasLocalVoiceFor(lang);
 }
 
 /**
- * Sprachausgabe für Stufe 6: Bereitschaft, Vorbereiten im Klick und Sprechen.
- * Die Ansicht bekommt nur Zustände und Rückrufe. Mit der Vorschau
- * „sprachmodell“ und einem Modell für die Sprache spricht das Sprachmodell im
- * Browser (docs/umsetzungsplan-sprachmodell.md, 3.4); sonst wie bisher.
+/**
+ * Sprachausgabe für Stufe 6 und den Startpunkt: Bereitschaft, Vorbereiten im
+ * Klick und Sprechen. Mit erlaubter Lernraum-Stimme und einem Modell für die
+ * Sprache spricht das Sprachmodell (docs/umsetzungsplan-sprachmodell.md, 3.4).
+ * Von den Gerätestimmen zählen nur lokale (B-012): `hasVoice` ist ohne
+ * Modell und ohne lokale Stimme `false`. Die Ansicht bekommt nur Zustände und
+ * Rückrufe.
  */
 export function useSpeech(lang = "de-DE") {
   const model = useModelSpeech();

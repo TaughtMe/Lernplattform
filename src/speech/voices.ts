@@ -7,6 +7,11 @@ export type SpeechVoiceLike = {
   lang: string;
   voiceURI: string;
   default?: boolean;
+  /**
+   * `true`, wenn die Stimme auf dem Gerät läuft. Nur solche Stimmen nutzt
+   * Lernraum (Entscheidung 58, Befund B-012): Der Text verlässt das Gerät nicht.
+   */
+  localService?: boolean;
 };
 
 const SHORT_CODES: Record<string, string> = {
@@ -106,4 +111,49 @@ export function pickVoice<T extends SpeechVoiceLike>(
     }
   }
   return best;
+}
+
+/** Nur Stimmen, die sicher auf dem Gerät laufen (`localService === true`). */
+export function localVoicesOnly<T extends SpeechVoiceLike>(
+  voices: readonly T[],
+): T[] {
+  return voices.filter((voice) => voice.localService === true);
+}
+
+/**
+ * Stimmenwahl für alle Stellen der App: wie `pickVoice`, aber nur unter den
+ * Stimmen des Geräts. Gibt es keine passende, ist das Ergebnis `null`; eine
+ * Netzstimme wird nie gewählt, auch nicht als Wunschstimme.
+ */
+export function pickLocalVoice<T extends SpeechVoiceLike>(
+  voices: readonly T[],
+  lang: string,
+  preferredVoiceURI?: string | null,
+): T | null {
+  return pickVoice(localVoicesOnly(voices), lang, preferredVoiceURI);
+}
+
+const LANGUAGE_ADJECTIVES: Record<string, string> = {
+  de: "deutsche",
+  en: "englische",
+  fr: "französische",
+  es: "spanische",
+  it: "italienische",
+  tr: "türkische",
+  pl: "polnische",
+  uk: "ukrainische",
+  ru: "russische",
+  ar: "arabische",
+  la: "lateinische",
+};
+
+/**
+ * Hinweis, wenn es auf dem Gerät keine passende Stimme gibt. Die Funktion
+ * entfällt nicht still; das Kind erfährt, warum nichts zu hören ist.
+ */
+export function missingVoiceMessage(lang: string): string {
+  const adjective = LANGUAGE_ADJECTIVES[languageOf(lang)];
+  return adjective
+    ? `Auf diesem Gerät ist keine ${adjective} Stimme installiert.`
+    : "Auf diesem Gerät ist keine passende Stimme installiert.";
 }

@@ -77,7 +77,7 @@ const AREA_TEXT: Record<
   },
   students: {
     label: "Schülerliste",
-    hint: "Namen, Tiere und Schreiberleichterung der Kinder",
+    hint: "Namen und Tiere der Kinder",
     personal: true,
   },
   results: {
@@ -578,7 +578,7 @@ function SetupWizard({ controller }: { controller: SyncController }) {
               <p className="ui-small ui-muted">
                 Hell/Dunkel, laufende Live-Räume und Zugangsdaten bleiben auf
                 dem Gerät. Ohne Schlüssel kann das andere Gerät keine
-                Leistungsbriefe prüfen und keine Schreiberleichterung vergeben.
+                Leistungsbriefe prüfen.
               </p>
               {nav(
                 "connect",

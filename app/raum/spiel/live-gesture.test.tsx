@@ -100,7 +100,7 @@ describe("hold to reveal in the running dictation", () => {
   });
 
   it("a tap on read aloud does not reveal", async () => {
-    // Vorlesen über die Gerätestimme: Lernraum-Stimme aus (Entscheidung 62).
+    // Vorlesen über die Gerätestimme: Lernraum-Stimme aus (Entscheidung 82).
     window.localStorage.setItem("lernraum:vorlesen-modell", "0");
     const user = userEvent.setup();
     vi.stubGlobal("speechSynthesis", { speak: vi.fn(), cancel: vi.fn() });

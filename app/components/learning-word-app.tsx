@@ -27,6 +27,7 @@ import {
   parseWordsParam,
 } from "../../src/domain/practice-bridge";
 import type { WordBoxView } from "../../src/domain/word-box";
+import { missingVoiceMessage } from "../../src/speech/voices";
 import {
   buildWordRoundSnapshot,
   wordRoundProgress,
@@ -153,7 +154,7 @@ function messageOf(error: unknown, fallback: string) {
     : fallback;
 }
 
-const NO_VOICE = "Auf diesem Gerät gibt es keine deutsche Stimme.";
+const NO_VOICE = missingVoiceMessage("de-DE");
 const VOICE_FAILED =
   "Die Stimme konnte nicht vorbereitet werden. Wähle eine andere Stufe oder versuche es noch einmal.";
 

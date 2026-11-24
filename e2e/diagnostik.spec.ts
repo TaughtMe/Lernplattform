@@ -105,7 +105,7 @@ test("Fehler aus dem Startpunkt erscheinen im Profil und im Tagestraining", asyn
   // Kompetenzprofil: Die feste Wortbox ist neu, das Kopfrechnen ist begonnen.
   await page.goto("/lernen/profil");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Mein Lernstand" }),
+    page.getByRole("heading", { level: 1, name: "Mein Stand" }),
   ).toBeVisible();
   const math = page.getByRole("region", { name: "Kopfrechnen" });
   await expect(math).toBeVisible();
@@ -178,4 +178,40 @@ test("Kompetenzprofil und Training sind ohne Lernstand leer und erreichbar", asy
     page.getByText("Hier hast du noch nichts geübt.").first(),
   ).toBeVisible();
   expect((await analyzeAccessibility(page)).violations).toEqual([]);
+});
+
+test("Üben und Mein Lernraum führen zu Startpunkt, Training und „Mein Stand“", async ({
+  page,
+}) => {
+  await page.goto("/lernen");
+  const home = page.getByRole("navigation", { name: "Mehr für dich" });
+  // Erstkontakt: nur der Startpunkt.
+  await expect(home.getByRole("link", { name: "Startpunkt" })).toHaveAttribute(
+    "href",
+    "/lernen/startpunkt",
+  );
+  expect((await analyzeAccessibility(page)).violations).toEqual([]);
+  await expectNoHorizontalScroll(page);
+
+  await page.goto("/ueben");
+  const more = page.getByRole("navigation", { name: "Wo stehe ich?" });
+  await expect(more.getByRole("link")).toHaveCount(3);
+  for (const theme of ["light", "dark"] as const) {
+    if (theme === "dark") {
+      await (
+        await hydrated(page.getByRole("button", { name: "Hell oder dunkel" }))
+      ).click();
+    }
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    expect((await analyzeAccessibility(page)).violations).toEqual([]);
+    await expectNoHorizontalScroll(page);
+  }
+  await (
+    await hydrated(more.getByRole("link", { name: /^Mein Stand/ }))
+  ).click();
+  await expect(page).toHaveURL(/\/lernen\/profil$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Mein Stand" }),
+  ).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("Kompetenzprofil");
 });

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  localVoicesOnly,
+  missingVoiceMessage,
   normalizeSpeechLang,
+  pickLocalVoice,
   pickVoice,
   rankVoice,
   type SpeechVoiceLike,
@@ -133,5 +136,54 @@ describe("pickVoice", () => {
   it("keeps the first of equally ranked voices", () => {
     const voices = [voice("A", "de-DE"), voice("B", "de-DE")];
     expect(pickVoice(voices, "de-DE")?.name).toBe("A");
+  });
+});
+
+describe("pickLocalVoice (Entscheidung 58, B-012)", () => {
+  const network = voice("Google Deutsch", "de-DE", { localService: false });
+  const device = voice("Anna", "de-DE", { localService: true });
+  const deviceAt = voice("Hedda", "de-AT", { localService: true });
+  const unknown = voice("Alt", "de-DE");
+
+  it("keeps only voices that report localService true", () => {
+    expect(localVoicesOnly([network, device, unknown])).toEqual([device]);
+  });
+
+  it("prefers a local voice even if a network voice ranks higher", () => {
+    expect(pickVoice([network, device], "de-DE")).toBe(network);
+    expect(pickLocalVoice([network, device], "de-DE")).toBe(device);
+  });
+
+  it("returns null when only network voices fit the language", () => {
+    expect(pickLocalVoice([network, unknown], "de-DE")).toBeNull();
+    expect(pickLocalVoice([], "de-DE")).toBeNull();
+  });
+
+  it("does not take a local voice of another language", () => {
+    expect(pickLocalVoice([device], "en-GB")).toBeNull();
+  });
+
+  it("uses a local voice of the same language in another region", () => {
+    expect(pickLocalVoice([network, deviceAt], "de-DE")).toBe(deviceAt);
+  });
+
+  it("honours a saved voice only when it runs on the device", () => {
+    const second = voice("Petra", "de-DE", { localService: true });
+    expect(pickLocalVoice([device, second], "de-DE", "Petra")).toBe(second);
+    expect(pickLocalVoice([network, device], "de-DE", network.voiceURI)).toBe(
+      device,
+    );
+  });
+});
+
+describe("missingVoiceMessage", () => {
+  it.each([
+    ["de-DE", "Auf diesem Gerät ist keine deutsche Stimme installiert."],
+    ["de", "Auf diesem Gerät ist keine deutsche Stimme installiert."],
+    ["en-GB", "Auf diesem Gerät ist keine englische Stimme installiert."],
+    ["fr", "Auf diesem Gerät ist keine französische Stimme installiert."],
+    ["xx-YY", "Auf diesem Gerät ist keine passende Stimme installiert."],
+  ])("%s → %s", (lang, message) => {
+    expect(missingVoiceMessage(lang)).toBe(message);
   });
 });

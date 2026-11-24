@@ -13,17 +13,20 @@ export default function ImpressumPage() {
       intro="Angaben zum verantwortlichen Anbieter des Lernraums."
     >
       <aside className="ui-legal__beta" aria-labelledby="impressum-beta-title">
-        <h2 id="impressum-beta-title">Beta-Test im geschlossenen Rahmen</h2>
+        <h2 id="impressum-beta-title">
+          Beta-Betrieb in einzelnen Schulklassen
+        </h2>
         <p>
-          Der Lernraum befindet sich in einer Beta-Testphase und wird
-          ausschließlich in einem geschlossenen Rahmen mit ausgewählten
-          Testpersonen erprobt. Er ist nicht öffentlich zugänglich.
+          Der Lernraum ist in einer Beta-Phase. Er wird in einzelnen
+          Schulklassen im Unterricht erprobt. Verantwortlich ist eine
+          Privatperson, keine Schule, kein Schulträger und kein Unternehmen.
         </p>
         <p>
-          Derzeit liegen weder eine Auftragsverarbeitungsvereinbarung (AVV) noch
-          eine abschließende Datenschutzerklärung vor. Bitte gib daher keine
-          echten personenbezogenen Daten von Schülerinnen und Schülern ein und
-          setze den Lernraum nicht im regulären Schulbetrieb ein.
+          Der Lernraum ist kostenlos und zeigt keine Werbung. Er ist nicht von
+          einer Schulbehörde geprüft oder freigegeben. Eine
+          Auftragsverarbeitungsvereinbarung (AVV) liegt nicht vor. Bitte gib
+          deshalb keine echten Namen von Schülerinnen und Schülern und keine
+          Angaben zu Förderbedarf oder LRS ein.
         </p>
       </aside>
 

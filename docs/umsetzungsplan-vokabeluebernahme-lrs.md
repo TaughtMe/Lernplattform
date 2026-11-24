@@ -7,6 +7,10 @@ Stand: 02.10.2026 · Ausgangsstand `claude/lernraum-ui-v2` @ `e23f96d`
 > baut auf diesem Stand auf. Teil 2 ist umgesetzt (Branch `ccr-42344396-8lmioe`, abgezweigt von
 > `ccr-9abaa942-i94ooe`). Der Probedurchlauf (Teil 3) steht für beide Teile noch aus.
 
+> **Pausiert seit 15.11.2026 (Entscheidung 79):** Die Schreiberleichterung (Teil 2) ist
+> über den Freigabebereich `schreiberleichterung` auf `aus` gestellt. Daten und Mechanik
+> bleiben erhalten; Wirkung und Schalter ruhen.
+
 Dieser Plan ist die Arbeitsgrundlage für einen KI-Agenten. Die fachlichen Entscheidungen
 in Abschnitt 1 sind mit der projektverantwortlichen Lehrkraft abgestimmt und **verbindlich**.
 Wo der Code etwas anderes nahelegt, gilt dieser Plan. Bei echten Widersprüchen erst nachfragen und

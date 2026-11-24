@@ -263,7 +263,7 @@ test("ships a valid speech manifest with the bundled KittenTTS 2 model", async (
     ),
   );
   assert.equal(manifest.version, 2);
-  // KittenTTS 2 Nano wird mit Lernraum ausgeliefert (Entscheidung 61).
+  // KittenTTS 2 Nano wird mit Lernraum ausgeliefert (Entscheidung 81).
   assert.deepEqual(Object.keys(manifest.languages).sort(), ["de", "en"]);
   for (const asset of [
     manifest.ort.wasm,

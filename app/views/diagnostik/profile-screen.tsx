@@ -17,7 +17,7 @@ function tone(level: ProfileRow["level"]) {
 }
 
 /**
- * „Mein Lernstand“ (D2-3): je Teilbereich neu, im Aufbau oder sicher. Keine
+ * „Mein Stand“ (D2-3): je Teilbereich neu, im Aufbau oder sicher. Keine
  * Prozentzahl, kein Vergleich mit anderen. Die Ansicht zeigt nur die Zeilen,
  * die sie bekommt.
  */
@@ -30,7 +30,7 @@ export function ProfileScreen({
 }) {
   return (
     <div className="ui-page">
-      <PageHeader eyebrow="Deine Entwicklung" title="Mein Lernstand">
+      <PageHeader eyebrow="Deine Entwicklung" title="Mein Stand">
         So weit bist du in jedem Bereich. „Sicher“ heißt: Du hast es an
         mindestens zwei Tagen ohne Hilfe richtig gemacht.
       </PageHeader>
