@@ -7,8 +7,15 @@ export type SpokenUtterance = { text: string; lang: string; voice: string };
  * Ersetzt die Sprachausgabe des Browsers: eine deutsche Stimme auf dem Gerät
  * („local“), nur eine deutsche Netzstimme („network“) oder keine Stimme.
  * Gesprochenes landet in `window.__spoken`.
+ *
+ * Geprüft wird der Weg über die Gerätestimme: Ohne Manifest gibt es keine
+ * Lernraum-Stimme (Entscheidung 82; im Dev-Modus ist sie sonst an). Den Weg
+ * über das Modell prüft e2e/sprachmodell.spec.ts.
  */
 export async function fakeSpeech(page: Page, kind: FakeVoiceKind) {
+  await page.route("**/speech/manifest.json", (route) =>
+    route.fulfill({ status: 404, body: "" }),
+  );
   await page.addInitScript((voiceKind: FakeVoiceKind) => {
     const voices =
       voiceKind === "none"
