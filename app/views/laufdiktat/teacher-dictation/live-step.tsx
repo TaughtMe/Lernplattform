@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { summarizeLiveProjection } from "../../../../src/domain/live-projection";
 import { Animal, cx, Eyebrow } from "../../parts/parts";
 import styles from "../teacher-dictation-screen.module.css";
@@ -53,7 +53,11 @@ export function LiveStep({
         <ProjectionPanel
           roomCode={roomCode}
           qr={roomTimes && !roomTimes.joinOpen ? null : qrLarge}
-          summary={summarizeLiveProjection(live)}
+          summary={summarizeLiveProjection({
+            ...live,
+            ended: roomTimes?.closed === true,
+          })}
+          startedAt={projection.startedAt}
         />
       ) : (
         <>
@@ -197,7 +201,9 @@ function ProjectionPanel({
   roomCode,
   qr,
   summary,
+  startedAt,
 }: {
+  startedAt?: number | undefined;
   roomCode: string;
   qr: TeacherDictationScreenProps["qrLarge"];
   summary: ReturnType<
@@ -208,6 +214,7 @@ function ProjectionPanel({
 }) {
   return (
     <section className={styles.projection} aria-label="Ansicht für die Tafel">
+      <StartCountdown startedAt={startedAt} />
       {qr && roomCode ? <div className={styles.projectionQr}>{qr}</div> : null}
       {roomCode ? (
         <span
@@ -233,6 +240,47 @@ function ProjectionPanel({
       >
         <span style={{ width: `${summary.overall}%` }} />
       </span>
+      {summary.goal.target > 0 ? (
+        <div className={styles.projectionGoal}>
+          <p className={styles.projectionGoalText}>
+            {`Klasse: ${summary.goal.solved} von ${summary.goal.target} Aufgaben geschafft`}
+          </p>
+          <span
+            className={cx(styles.projectionTrack, styles.projectionGoalTrack)}
+            role="progressbar"
+            aria-label="Klassenziel"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={summary.goal.percent}
+          >
+            <span style={{ width: `${summary.goal.percent}%` }} />
+          </span>
+        </div>
+      ) : null}
+      {summary.roundDone ? (
+        <section
+          className={styles.projectionCelebration}
+          aria-label="Runde geschafft"
+        >
+          <p className={styles.projectionCelebrationTitle}>Geschafft!</p>
+          <p className={styles.projectionCelebrationLine}>
+            {`Die Klasse hat ${summary.goal.solved} Aufgaben gelöst.`}
+          </p>
+          {summary.correctShare !== null ? (
+            <p className={styles.projectionCelebrationLine}>
+              {`${summary.correctShare} % der Antworten waren richtig.`}
+            </p>
+          ) : null}
+          {summary.topMistake ? (
+            <p className={styles.projectionCelebrationLine}>
+              {"Zum Üben: "}
+              <strong>
+                {summary.topMistake.display ?? summary.topMistake.word}
+              </strong>
+            </p>
+          ) : null}
+        </section>
+      ) : null}
       {summary.mistakes.length > 0 ? (
         <section
           className={cx(styles.mistakes, styles.projectionMistakes)}
@@ -258,6 +306,45 @@ function ProjectionPanel({
       ) : null}
     </section>
   );
+}
+
+/** Dauer des Countdowns beim Start: „3“, „2“, „1“, je eine Sekunde. */
+const COUNTDOWN_SECONDS = 3;
+
+/**
+ * „3, 2, 1“ über der Tafel, wenn die Lehrkraft die Runde gerade gestartet hat.
+ * Rein zur Ansicht; blendet sich nach drei Sekunden selbst aus. Die Zahlen
+ * werden nicht vorgelesen, damit kein Screenreader mitzählt.
+ */
+function StartCountdown({ startedAt }: { startedAt: number | undefined }) {
+  const [left, setLeft] = useState<number>(() =>
+    countdownLeft(startedAt, Date.now()),
+  );
+  useEffect(() => {
+    if (startedAt === undefined) return;
+    const tick = () => setLeft(countdownLeft(startedAt, Date.now()));
+    tick();
+    const timer = window.setInterval(tick, 200);
+    return () => window.clearInterval(timer);
+  }, [startedAt]);
+  if (startedAt === undefined || left <= 0) return null;
+  return (
+    <div
+      className={styles.countdown}
+      aria-hidden="true"
+      data-testid="countdown"
+    >
+      <span key={left} className={styles.countdownNumber}>
+        {left}
+      </span>
+    </div>
+  );
+}
+
+function countdownLeft(startedAt: number | undefined, now: number) {
+  if (startedAt === undefined) return 0;
+  const left = COUNTDOWN_SECONDS - Math.floor((now - startedAt) / 1000);
+  return left > COUNTDOWN_SECONDS ? COUNTDOWN_SECONDS : Math.max(0, left);
 }
 
 /** Wie viele Fehlerwörter je Tier ausgeschrieben werden; der Rest bleibt in der Zahl. */

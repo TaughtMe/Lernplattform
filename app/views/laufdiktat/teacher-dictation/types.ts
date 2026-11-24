@@ -135,11 +135,18 @@ export type TeacherDictationScreenProps = {
   /**
    * Projektionsmodus „Für die Tafel“ im Live-Schritt: Raumcode, QR,
    * Gesamtfortschritt und die häufigsten Fehlerwörter der Klasse, keine Namen
-   * mit Fehlerzahlen (Befund D-012). Ohne Angabe fehlt der Umschalter.
+   * mit Fehlerzahlen (Befund D-012). Fehlerwörter erst ab sechs Kindern
+   * (Entscheidung 65). Dazu Klassenbalken und Rundenende (M24-1).
+   * Ohne Angabe fehlt der Umschalter.
    */
   projection?: {
     active: boolean;
     onChange: (active: boolean) => void;
+    /**
+     * Zeitpunkt (ms), zu dem die Lehrkraft die Runde auf diesem Gerät gestartet
+     * hat. Solange er jünger als drei Sekunden ist, zählt die Tafel „3, 2, 1“.
+     */
+    startedAt?: number;
   };
   /** Titel des Inhalts (Schritt „Inhalt“, Zeile über dem Titel in „Modus“). */
   title?: string;
