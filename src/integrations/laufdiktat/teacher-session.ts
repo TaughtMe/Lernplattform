@@ -25,6 +25,11 @@ import {
   type MentalMathOperation,
 } from "../../domain/mental-math";
 import type { MathTaskFeature } from "../../domain/mental-math-features";
+import {
+  MATH_LINE_KINDS,
+  generateMathKindTasks,
+  type MathKindId,
+} from "../../domain/mental-math-kinds";
 import { LIVE_APP_VERSION } from "../../app-version";
 
 export type TeacherContentMode = "text" | "vocabulary" | "math";
@@ -217,7 +222,20 @@ export function generateMentalMathSource(options: {
   gapMode?: boolean;
   /** Nur Aufgaben mit diesem Merkmal, z. B. Zehnerübergang `ZE+E` (MA-1). */
   focus?: MathTaskFeature;
+  /**
+   * Aufgabenarten der Mittelschule (MA-11), ausdrücklich gewählt. Mit Arten
+   * entstehen nur deren Zeilen; Rechenarten und Zahlenraum gelten dann nicht.
+   * Nur Arten, die eine Rechenzeile sind (`MATH_LINE_KINDS`), zählen.
+   */
+  kinds?: readonly MathKindId[];
 }) {
+  const lineKinds = (options.kinds ?? []).filter((kind) =>
+    MATH_LINE_KINDS.includes(kind),
+  );
+  if (lineKinds.length)
+    return generateMathKindTasks({ kinds: lineKinds, count: options.count })
+      .map((task) => normalizeMathChainInput(task.source) ?? task.source)
+      .join("\n");
   const operationMap: Record<MathOperation, MentalMathOperation> = {
     "+": "add",
     "-": "subtract",
@@ -276,6 +294,8 @@ export type TeacherMathSettings = {
   excludeZeroResult: boolean;
   tables: number[];
   gap: boolean;
+  /** Gewählte Aufgabenarten der Mittelschule (MA-11); leer = normale Rechenaufgaben. */
+  kinds?: MathKindId[];
 };
 
 /** Übungsoptionen, die der Raum für Kopfrechnen an die Schüler weitergibt. */
@@ -290,6 +310,7 @@ export function buildMathPracticeOptions(settings: TeacherMathSettings) {
     excludeZeroResult: settings.excludeZeroResult,
     multiplicationTables: settings.tables,
     gapMode: settings.gap,
+    ...(settings.kinds?.length ? { kinds: settings.kinds } : {}),
   };
 }
 
@@ -304,6 +325,7 @@ export function generateSingleMathLine(settings: TeacherMathSettings) {
     excludeZeroOperand: settings.excludeZeroOperand,
     excludeZeroResult: settings.excludeZeroResult,
     multiplicationTables: settings.tables,
+    ...(settings.kinds?.length ? { kinds: settings.kinds } : {}),
   }).trim();
 }
 

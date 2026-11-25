@@ -266,9 +266,20 @@ const RANGE_LABEL: Record<string, string> = {
   darueber: "über 1000",
 };
 
+const MATH_KIND_FAMILY_LABEL: Record<string, string> = {
+  zehner: "Mal mit Zehnern",
+  gross: "Große Zahlen",
+  runden: "Runden",
+  komma: "Geld und Komma",
+  groessen: "Größen umrechnen",
+};
+
 /** Lesbarer Name einer Aufgabenfamilie (`mathFamilyKey`), z. B. „Mal: Reihe 7“. */
 export function mathFamilyLabel(familyKey: string): string {
   if (familyKey === "mixed-expression") return "Gemischte Aufgaben";
+  // Aufgabenarten der Mittelschule (MA-11), Schlüssel aus `mathFamilyKey`.
+  const kindLabel = MATH_KIND_FAMILY_LABEL[familyKey];
+  if (kindLabel) return kindLabel;
   const [operation = "", gap = "normal", range = ""] = familyKey.split(":");
   const name = OPERATION_LABEL[operation] ?? "Rechnen";
   const withGap = gap === "normal" ? "" : " mit Lücke";

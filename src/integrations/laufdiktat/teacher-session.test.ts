@@ -247,6 +247,37 @@ describe("teacher live session builder", () => {
     expect(buildTeacherWords("math", source, "left-to-right")).toHaveLength(12);
   });
 
+  it("erzeugt gewählte Aufgabenarten als Rechenzeilen (MA-11)", () => {
+    const source = generateMentalMathSource({
+      count: 9,
+      min: 0,
+      max: 20,
+      operations: ["+"],
+      kinds: ["tens", "big", "decimal"],
+    });
+    const lines = source.split("\n");
+    expect(lines).toHaveLength(9);
+    const words = buildTeacherWords("math", source, "left-to-right");
+    expect(words).toHaveLength(9);
+    // Zehnereinmaleins, große Zahlen und Kommazahlen kommen alle vor.
+    expect(lines.some((line) => /[·:]/.test(line))).toBe(true);
+    expect(lines.some((line) => /\d{4,}/.test(line))).toBe(true);
+    expect(lines.some((line) => line.includes(","))).toBe(true);
+  });
+
+  it("lässt Arten ohne Rechenzeile (Runden, Größen) in der Rechenzeile weg", () => {
+    const source = generateMentalMathSource({
+      count: 4,
+      min: 0,
+      max: 20,
+      operations: ["+"],
+      kinds: ["round", "units"],
+    });
+    // Ohne Zeilenart bleibt es bei den normalen Aufgaben des Zahlenraums.
+    expect(source.split("\n")).toHaveLength(4);
+    expect(source).not.toContain("Runde");
+  });
+
   it("carries generated gap tasks into the live room", () => {
     const source = generateMentalMathSource({
       count: 8,
@@ -283,6 +314,13 @@ describe("Kopfrechnen der Lehrkraft", () => {
       "divide",
     ]);
     expect(mathPracticeOperations([])).toEqual(["add"]);
+  });
+
+  it("gibt gewählte Aufgabenarten an die Übungsoptionen weiter", () => {
+    expect(
+      buildMathPracticeOptions({ ...settings, kinds: ["tens", "decimal"] }),
+    ).toMatchObject({ kinds: ["tens", "decimal"] });
+    expect(buildMathPracticeOptions(settings)).not.toHaveProperty("kinds");
   });
 
   it("baut die Übungsoptionen mit fester Anzahl 10", () => {

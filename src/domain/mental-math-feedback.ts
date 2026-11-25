@@ -2,12 +2,14 @@ import {
   displayMathNumber,
   mathOperatorSymbol,
   parseMathAnswer,
+  stripAnswerUnit,
   parseMentalMathExpression,
   type MathOperator,
   type MentalMathExpression,
   type MentalMathTask,
 } from "./mental-math";
 import { expressionSteps } from "./mental-math-expression-steps";
+import { mathKindHint, mathKindSolutionSteps } from "./mental-math-kinds";
 import {
   digitwiseSubtraction,
   hasHundredsBridge,
@@ -153,7 +155,7 @@ export function classifyMentalMathError(
   task: MentalMathTask,
   givenAnswer: string,
 ): MentalMathErrorKind {
-  const given = parseMathAnswer(givenAnswer);
+  const given = parseMathAnswer(stripAnswerUnit(task, givenAnswer));
   const expected = task.answer;
   if (given === null || same(given, expected)) return "unknown";
   const parts = partsOf(task);
@@ -283,7 +285,10 @@ export function mentalMathHint(
   if (errorKind === "unknown") return null;
   const parts = partsOf(task);
   if (!parts)
-    return "Rechne Schritt für Schritt: Klammern zuerst, Punkt vor Strich.";
+    return (
+      mathKindHint(task) ??
+      "Rechne Schritt für Schritt: Klammern zuerst, Punkt vor Strich."
+    );
   if (task.gap && errorKind !== "digit-swap")
     return "Setze deine Zahl in die Lücke und rechne zur Probe nach.";
   switch (errorKind) {
@@ -508,6 +513,8 @@ function divideSteps(parts: MentalMathExpression) {
  * Strategie. Text in `$…$` ist LaTeX (`MathText`).
  */
 export function mentalMathSolutionSteps(task: MentalMathTask): string[] {
+  const kindSteps = mathKindSolutionSteps(task, finish);
+  if (kindSteps) return kindSteps;
   const parts = partsOf(task);
   if (!parts) {
     const { steps, rest } = expressionSteps(task.source, task.answer);
