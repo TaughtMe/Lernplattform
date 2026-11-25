@@ -119,7 +119,7 @@ mit ihrer heutigen Gültigkeit und ihrem Umsetzungsstand. Angelegt im
 | 84  | LernBox: mischbare Fragearten statt „Test“ | gültig; nimmt „Test“ aus 77 und LF-5 zurück | Implementiert | Gemischte Runden ohne „Weitermachen“ |
 | 85  | `lehrer-geraet` frei | gültig | Implementiert | – |
 | 86  | Schnellstart im Lehrerbereich aus | gültig; nimmt L25-10 und M24-6 (Startseite) zurück | Implementiert | Wortboxen als Live-Quelle später neu überdenken |
-| 87  | Inhalte zuerst: Startseite bleibt, ein Editor, Reiter „Für die Kinder“ | gültig | In Arbeit | K8-3 und K8-5 |
+| 87  | Inhalte zuerst: Startseite bleibt, ein Editor, Reiter „Für die Kinder“ | gültig | Implementiert | Aufgaben erst mit L25-5 |
 
 ## Grundsatzentscheidungen mit Audit-Erkenntnissen
 
