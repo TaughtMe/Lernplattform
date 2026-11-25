@@ -56,6 +56,7 @@ export function LiveStep({
           summary={summarizeLiveProjection({
             ...live,
             ended: roomTimes?.closed === true,
+            answersChecked: mode !== "STATION",
           })}
           startedAt={projection.startedAt}
         />

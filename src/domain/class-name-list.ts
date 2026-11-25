@@ -23,6 +23,8 @@ export type NameListResult = {
   duplicates: number;
   /** Über `NAME_LIST_MAX` hinaus, nicht übernommen. */
   overflow: number;
+  /** Die Namen über der Grenze; sie bleiben für das nächste Einfügen stehen. */
+  rest: string[];
 };
 
 function compareKey(name: string) {
@@ -35,8 +37,8 @@ export function parseNameList(
 ): NameListResult {
   const seen = new Set(existing.map(compareKey));
   const names: string[] = [];
+  const rest: string[] = [];
   let duplicates = 0;
-  let overflow = 0;
   for (const raw of text.split(/[\r\n;]+/)) {
     const name = raw
       .split("\t")
@@ -55,10 +57,10 @@ export function parseNameList(
     }
     seen.add(key);
     if (names.length >= NAME_LIST_MAX) {
-      overflow += 1;
+      rest.push(name);
       continue;
     }
     names.push(name);
   }
-  return { names, duplicates, overflow };
+  return { names, duplicates, overflow: rest.length, rest };
 }

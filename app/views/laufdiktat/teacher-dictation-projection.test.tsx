@@ -208,7 +208,7 @@ describe("TeacherDictationScreen, Projektionsmodus „Für die Tafel“", () => 
       expect(within(show).queryByText(/Kind \d/)).not.toBeInTheDocument();
     });
 
-    it("lässt den häufigsten Fehler unter sechs Kindern weg", () => {
+    it("lässt häufigsten Fehler und Anteil richtig unter sechs Kindern weg", () => {
       render(
         <TeacherDictationScreen
           {...DEMO_TEACHER}
@@ -221,6 +221,26 @@ describe("TeacherDictationScreen, Projektionsmodus „Für die Tafel“", () => 
       expect(within(show).getByText("Geschafft!")).toBeInTheDocument();
       expect(within(show).queryByText(/Zum Üben/)).not.toBeInTheDocument();
       expect(screen.queryByText("Pilze")).not.toBeInTheDocument();
+      // Entscheidung 65: Auch der Anteil richtiger Antworten ist eine Fehlerzahl.
+      expect(
+        within(show).queryByText(/% der Antworten/),
+      ).not.toBeInTheDocument();
+    });
+
+    it("nennt im Stationsspiel keinen Anteil richtiger Antworten", () => {
+      render(
+        <TeacherDictationScreen
+          {...DEMO_TEACHER}
+          step="live"
+          mode="STATION"
+          live={done(6)}
+          projection={{ active: true, onChange: vi.fn() }}
+        />,
+      );
+      const show = screen.getByRole("region", { name: "Runde geschafft" });
+      expect(
+        within(show).queryByText(/% der Antworten/),
+      ).not.toBeInTheDocument();
     });
   });
 

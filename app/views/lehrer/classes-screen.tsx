@@ -362,8 +362,11 @@ export function StudentList({
   /** QR-Code des offenen Kindes. */
   qr?: ReactNode;
   onAdd?: (name: string) => void;
-  /** Namensliste einfügen (L25-11): mehrere neue Namen auf einmal. */
-  onAddMany?: (names: string[]) => void;
+  /**
+   * Namensliste einfügen (L25-11): mehrere neue Namen auf einmal. Liefert, wie
+   * viele davon (von vorn) gespeichert sind; der Rest bleibt im Feld stehen.
+   */
+  onAddMany?: (names: string[]) => Promise<number> | number;
   onToggleQr?: (id: string) => void;
   onRelief?: (id: string) => void;
   onRemove?: (id: string) => void;
@@ -420,8 +423,11 @@ export function StudentList({
             onSubmit={(event) => {
               event.preventDefault();
               if (parsed.names.length === 0) return;
-              onAddMany(parsed.names);
-              setListDraft("");
+              const { names, rest } = parsed;
+              void Promise.resolve(onAddMany(names)).then((saved) => {
+                // Nicht Gespeichertes und Namen über der Grenze bleiben stehen.
+                setListDraft([...names.slice(saved), ...rest].join("\n"));
+              });
             }}
           >
             <label htmlFor={listId} className={styles.nameListLabel}>

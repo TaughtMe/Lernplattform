@@ -44,7 +44,7 @@ export type LiveProjectionSummary<M extends LiveProjectionMistake> = {
   goal: { solved: number; target: number; percent: number };
   /** Rundenende: die Runde ist fertig und es gibt etwas zu feiern. */
   roundDone: boolean;
-  /** Anteil richtiger Antworten in Prozent; null, solange nichts beantwortet ist. */
+  /** Anteil richtiger Antworten in Prozent; null unter sechs Kindern, ohne geprüfte Antworten oder solange nichts beantwortet ist. */
   correctShare: number | null;
   /** Häufigster Fehler der Klasse; nur ab sechs Kindern, sonst null. */
   topMistake: M | null;
@@ -72,6 +72,11 @@ export function summarizeLiveProjection<
   students?: readonly LiveProjectionStudentCounts[];
   /** Der Raum ist beendet; die letzten Ergebnisse gelten als Rundenende. */
   ended?: boolean;
+  /**
+   * Antworten werden geprüft. Im Stationsspiel nicht: Dort zählt nur das
+   * Aufdecken, einen Anteil richtiger Antworten gibt es dann nicht.
+   */
+  answersChecked?: boolean;
 }): LiveProjectionSummary<M> {
   const active = wholeBetween(overview.active, Number.MAX_SAFE_INTEGER);
   const finished = wholeBetween(overview.finished, Number.MAX_SAFE_INTEGER);
@@ -120,8 +125,10 @@ export function summarizeLiveProjection<
     },
     roundDone:
       solved > 0 && (overview.ended === true || (finished > 0 && active === 0)),
+    // Der Anteil richtiger Antworten ist eine Fehlerzahl: erst ab sechs
+    // Kindern an der Tafel (Entscheidung 65), nie ohne geprüfte Antworten.
     correctShare:
-      solved + wrong > 0
+      mistakesAllowed && overview.answersChecked !== false && solved + wrong > 0
         ? wholeBetween((solved / (solved + wrong)) * 100, 100)
         : null,
     topMistake: mistakes[0] ?? null,

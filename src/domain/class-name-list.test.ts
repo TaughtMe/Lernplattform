@@ -35,6 +35,11 @@ describe("Namensliste einfügen", () => {
     const result = parseNameList(many.join("\n"));
     expect(result.names).toHaveLength(NAME_LIST_MAX);
     expect(result.overflow).toBe(3);
+    expect(result.rest).toEqual([
+      `K${NAME_LIST_MAX}`,
+      `K${NAME_LIST_MAX + 1}`,
+      `K${NAME_LIST_MAX + 2}`,
+    ]);
   });
 
   it("liefert für leeren Text nichts", () => {
@@ -42,6 +47,7 @@ describe("Namensliste einfügen", () => {
       names: [],
       duplicates: 0,
       overflow: 0,
+      rest: [],
     });
   });
 });

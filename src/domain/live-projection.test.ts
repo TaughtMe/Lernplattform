@@ -161,7 +161,22 @@ describe("summarizeLiveProjection", () => {
       });
       expect(summary.goal).toEqual({ solved: 20, target: 24, percent: 83 });
       expect(summary.roundDone).toBe(false);
-      expect(summary.correctShare).toBe(83);
+      // Unter sechs Kindern kein Anteil richtig (Entscheidung 65).
+      expect(summary.correctShare).toBeNull();
+    });
+
+    it("nennt den Anteil richtig erst ab sechs Kindern und nur mit geprüften Antworten", () => {
+      const six = Array.from({ length: 6 }, () => ({
+        progress: 8,
+        total: 8,
+        mistakes: 2,
+      }));
+      const base = { active: 0, finished: 6, overall: 100, students: six };
+      expect(summarizeLiveProjection(base).correctShare).toBe(80);
+      expect(
+        summarizeLiveProjection({ ...base, answersChecked: false })
+          .correctShare,
+      ).toBeNull();
     });
 
     it("meldet das Rundenende, wenn alle fertig sind oder der Raum endet", () => {

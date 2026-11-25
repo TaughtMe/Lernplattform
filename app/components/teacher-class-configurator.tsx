@@ -290,8 +290,9 @@ export function TeacherClassConfigurator() {
     }
   }
 
-  async function addStudents(names: readonly string[]) {
-    if (!selected || names.length === 0) return;
+  /** Liefert, wie viele Namen (von vorn) gespeichert sind. */
+  async function addStudents(names: readonly string[]): Promise<number> {
+    if (!selected || names.length === 0) return 0;
     const created: ClassMember[] = [];
     try {
       for (const name of names) {
@@ -320,8 +321,9 @@ export function TeacherClassConfigurator() {
     setMessage(
       created.length === names.length
         ? `${created.length} Schüler wurden lokal angelegt.`
-        : `Nur ${created.length} von ${names.length} Schülern konnten gespeichert werden.`,
+        : `Nur ${created.length} von ${names.length} Schülern konnten gespeichert werden. Die übrigen Namen stehen noch im Feld.`,
     );
+    return created.length;
   }
 
   async function removeStudent(member: ClassMember) {
@@ -737,7 +739,7 @@ export function TeacherClassConfigurator() {
                 ) : null
               }
               onAdd={(name) => void addStudent(name)}
-              onAddMany={(names) => void addStudents(names)}
+              onAddMany={(names) => addStudents(names)}
               onToggleQr={(id) =>
                 setShown((current) =>
                   current?.id === id
