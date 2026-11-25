@@ -56,6 +56,12 @@ type Loaded = {
 };
 
 /** „Klasse 7b“ → „7b“ für Chips, Reiter und Knöpfe. */
+
+/** Freigabe-Seite mit vorgewähltem Paket (K8-2). */
+export function transferHrefFor(id: string): string {
+  return `/lehrer/material?paket=${encodeURIComponent(id)}`;
+}
+
 export function classShortName(name: string) {
   return name.replace(/^Klasse\s+/i, "").trim() || name;
 }
@@ -200,6 +206,10 @@ export function useTeacherStart(): {
         own: id === selection,
       })),
       shared: selectedClass !== undefined && ids.length > 1,
+      // K8-2: Vokabelpakete direkt an die Kinder geben (Freigabe, LernBox).
+      ...(contentKindOf(entry) === "vocabulary"
+        ? { transferHref: transferHrefFor(entry.id) }
+        : {}),
     };
   };
 

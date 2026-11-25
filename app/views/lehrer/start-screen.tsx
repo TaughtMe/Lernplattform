@@ -28,6 +28,11 @@ export type StartRow = {
    * an, weil es ein Eintrag für alle Klassen ist, keine Kopie.
    */
   shared?: boolean;
+  /**
+   * „An die Kinder geben“ (K8-2): Verweis auf die Freigabe mit diesem Inhalt.
+   * Nur für Vokabelpakete; sie werden zum Stapel in der LernBox der Kinder.
+   */
+  transferHref?: string;
 };
 
 export type StartSource = { id: string; label: string; count: number };
@@ -359,6 +364,27 @@ export function StartScreen(props: StartScreenProps) {
                             </span>
                           </button>
                         )}
+                        {row.transferHref ? (
+                          <Link
+                            href={row.transferHref}
+                            className={cx(styles.toolButton, styles.transfer)}
+                            aria-label={`${row.title} an die Kinder geben`}
+                            title="An die Kinder geben"
+                          >
+                            <svg
+                              className={styles.editIcon}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2v2" />
+                            </svg>
+                          </Link>
+                        ) : null}
                         <button
                           type="button"
                           className={cx(styles.toolButton, styles.edit)}

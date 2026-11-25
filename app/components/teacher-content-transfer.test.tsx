@@ -97,6 +97,24 @@ describe("TeacherContentTransfer", () => {
     expect(screen.getByText("Lokal gespeichert")).toBeVisible();
   });
 
+  it("öffnet das Paket aus „An die Kinder geben“ (?paket=)", async () => {
+    window.history.replaceState(null, "", "/lehrer/material?paket=v-alt");
+    libraryRepository.list.mockResolvedValue([
+      {
+        ...entry("v-neu", "Neues Paket"),
+        updatedAt: "2026-09-05T10:00:00.000Z",
+      },
+      entry("v-alt", "Altes Vokabelpaket"),
+    ]);
+    render(<TeacherContentTransfer transferConfig={null} />);
+    await waitFor(() =>
+      expect(screen.getByLabelText("Titel des Pakets")).toHaveValue(
+        "Altes Vokabelpaket",
+      ),
+    );
+    window.history.replaceState(null, "", "/");
+  });
+
   it("saves a new package while typing, with a new row after the last", async () => {
     const user = userEvent.setup();
     render(<TeacherContentTransfer transferConfig={null} />);

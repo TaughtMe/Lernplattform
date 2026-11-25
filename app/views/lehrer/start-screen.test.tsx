@@ -177,3 +177,27 @@ describe("RoomBarPill", () => {
     expect(link).toHaveTextContent("Raum läuft");
   });
 });
+
+describe("StartScreen: An die Kinder geben (K8-2)", () => {
+  it("verlinkt ein Vokabelpaket auf die Freigabe, andere Inhalte nicht", () => {
+    const [first, second] = START_DEMO_PREPARED;
+    render(
+      <StartScreen
+        {...props({
+          prepared: [
+            { ...first!, transferHref: "/lehrer/material?paket=p1" },
+            second!,
+          ],
+        })}
+      />,
+    );
+    const links = screen.getAllByRole("link", {
+      name: /an die Kinder geben$/,
+    });
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAccessibleName(
+      `${first!.title} an die Kinder geben`,
+    );
+    expect(links[0]).toHaveAttribute("href", "/lehrer/material?paket=p1");
+  });
+});

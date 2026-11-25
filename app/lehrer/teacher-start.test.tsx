@@ -110,6 +110,25 @@ describe("Startseite: Vorbereitet und Archiv", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("gibt Vokabelpakete an die Kinder weiter, Texte nicht (K8-2)", async () => {
+    await library().putMany([
+      entry("Vokabeln", { classIds: [CLASS_A] }),
+      entry("Ein Text", {
+        classIds: [CLASS_A],
+        kind: "text",
+        source: "Der Hund bellt.",
+      }),
+    ]);
+    renderAt(`?klasse=${CLASS_A}`);
+    await screen.findByRole("button", { name: "Vokabeln starten" });
+    expect(
+      screen.getByRole("link", { name: "Vokabeln an die Kinder geben" }),
+    ).toHaveAttribute("href", "/lehrer/material?paket=Vokabeln");
+    expect(
+      screen.queryByRole("link", { name: "Ein Text an die Kinder geben" }),
+    ).toBeNull();
+  });
+
   it("holt einen Eintrag mit „Wieder vorbereiten“ aus dem Archiv", async () => {
     await library().put(
       entry("x", {

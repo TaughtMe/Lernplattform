@@ -45,11 +45,12 @@ Reihenfolge: K8-1 bis K8-3 sofort, K8-4 nach Entscheidung und Designvorlage, K8-
 
 ## 4. Entscheidungen für den Entwickler
 
-| Nr.    | Frage                                                                                              | Vorschlag                                                                                                                                     |
-| ------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| E-K8-1 | Heißt die Startseite „Neuer Inhalt“ und endet das Anlegen mit „Speichern“ statt mit „Raum öffnen“? | Ja. „Starten“ bleibt in der Zeile der Ablage und im Schnellstart, so bleibt ein Laufdiktat zwei Tipps entfernt.                               |
-| E-K8-2 | Welcher Editor bleibt für Vokabeln?                                                                | Der Inhaltsschritt des Live-Raums (Sprachen, Richtung, Übernahme in die LernBox). Die Freigabe-Seite zeigt dann nur Auswahl, QR und Laufzeit. |
-| E-K8-3 | Gehören „Aufgaben“ (`/lehrer/aufgaben`) als dritte Verwendung dazu („Als Aufgabe stellen“)?        | Erst mit L25-5 (Etappe 2).                                                                                                                    |
+| Nr.    | Frage                                                                                                                                     | Vorschlag                                                                                                                                     |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| E-K8-1 | Heißt die Startseite „Neuer Inhalt“ und endet das Anlegen mit „Speichern“ statt mit „Raum öffnen“?                                        | Ja. „Starten“ bleibt in der Zeile der Ablage und im Schnellstart, so bleibt ein Laufdiktat zwei Tipps entfernt.                               |
+| E-K8-2 | Welcher Editor bleibt für Vokabeln?                                                                                                       | Der Inhaltsschritt des Live-Raums (Sprachen, Richtung, Übernahme in die LernBox). Die Freigabe-Seite zeigt dann nur Auswahl, QR und Laufzeit. |
+| E-K8-4 | Wo stehen Lernwortlisten in der Ablage: eigener Reiter „Für die Kinder“, oder in „Vorbereitet“ mit „An die Kinder geben“ statt „Starten“? | Eigener Reiter „Für die Kinder“ für alles, was als QR an die Geräte geht (Vokabelpakete und Lernwortlisten). Das ist auch der Ort für K8-4.   |
+| E-K8-3 | Gehören „Aufgaben“ (`/lehrer/aufgaben`) als dritte Verwendung dazu („Als Aufgabe stellen“)?                                               | Erst mit L25-5 (Etappe 2).                                                                                                                    |
 
 ## 5. Nicht Teil dieses Plans
 
@@ -65,10 +66,10 @@ Reihenfolge: K8-1 bis K8-3 sofort, K8-4 nach Entscheidung und Designvorlage, K8-
 
 ## 7. Stand
 
-| Schritt | Stand     | Wie / Commit |
-| ------- | --------- | ------------ |
-| K8-1    | offen     |              |
-| K8-2    | offen     |              |
-| K8-3    | offen     |              |
-| K8-4    | Rückfrage | E-K8-1       |
-| K8-5    | Rückfrage | E-K8-2       |
+| Schritt | Stand     | Wie / Commit                                                                                                                                      |
+| ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| K8-1    | umgesetzt | Meldung ohne URL und Publishable Key, auch beim Beitritt der Kinder (`6b4304e`)                                                                   |
+| K8-2    | umgesetzt | Zeilenaktion „An die Kinder geben“ für Vokabelpakete (Desktop und Tablet), Freigabe wählt `?paket=` vor; Demo-Daten der Designvorlage unverändert |
+| K8-3    | Rückfrage | E-K8-4: Die Reiter „Vorbereitet“ und „Archiv“ passen nicht zu Lernwortlisten (sie starten keinen Raum)                                            |
+| K8-4    | Rückfrage | E-K8-1                                                                                                                                            |
+| K8-5    | Rückfrage | E-K8-2                                                                                                                                            |
