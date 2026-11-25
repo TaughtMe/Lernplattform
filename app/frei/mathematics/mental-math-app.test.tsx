@@ -88,6 +88,33 @@ describe("MentalMathApp", () => {
     expect(screen.getByRole("button", { name: "7" })).toBeVisible();
   });
 
+  it("bietet die Aufgabenarten der Mittelschule ohne Vorauswahl an (MA-11, Entscheidung 86)", async () => {
+    const user = userEvent.setup();
+    render(<MentalMathApp />);
+    const group = screen.getByRole("group", { name: /Aufgabenarten/ });
+    const buttons = within(group).getAllByRole("button");
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      expect.stringContaining("Zehnereinmaleins"),
+      expect.stringContaining("Große Zahlen"),
+      expect.stringContaining("Runden"),
+      expect.stringContaining("Komma und Geld"),
+      expect.stringContaining("Größen umrechnen"),
+    ]);
+    // Nichts ist vorgewählt, auch nicht nach Jahrgang.
+    for (const button of buttons)
+      expect(button).toHaveAttribute("aria-pressed", "false");
+    await user.click(within(group).getByRole("button", { name: /Runden/ }));
+    expect(
+      within(group).getByRole("button", { name: /Runden/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Aufgaben erzeugen" }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "10 Aufgaben · Runden",
+    );
+    await user.click(screen.getByRole("button", { name: "Runde starten" }));
+    expect(await screen.findByText(/^Runde .+ auf /)).toBeVisible();
+  });
+
   it("accepts safe custom expressions and starts a keyboard-first round", async () => {
     const user = userEvent.setup();
     render(<MentalMathApp />);
