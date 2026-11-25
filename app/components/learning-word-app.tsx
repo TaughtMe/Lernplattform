@@ -27,6 +27,7 @@ import {
   parseWordsParam,
 } from "../../src/domain/practice-bridge";
 import type { WordBoxView } from "../../src/domain/word-box";
+import { missingVoiceMessage } from "../../src/speech/voices";
 import {
   buildWordRoundSnapshot,
   wordRoundProgress,
@@ -153,7 +154,7 @@ function messageOf(error: unknown, fallback: string) {
     : fallback;
 }
 
-const NO_VOICE = "Auf diesem Gerät gibt es keine deutsche Stimme.";
+const NO_VOICE = missingVoiceMessage("de-DE");
 const VOICE_FAILED =
   "Die Stimme konnte nicht vorbereitet werden. Wähle eine andere Stufe oder versuche es noch einmal.";
 
@@ -1043,12 +1044,12 @@ export function LearningWordApp({
                     ? { words: last.lastWords ?? 0 }
                     : hasBoxCoverage(sheetView)
                       ? {
-                          coverage: boxCoverage(
+                          mastered: boxCoverage(
                             sheetView.words,
                             store.rounds,
                             sheetView.id,
                             stage,
-                          ).percent,
+                          ).mastered,
                         }
                       : { percent: last.lastPercent },
               recommended: recommended === stage && !locked,

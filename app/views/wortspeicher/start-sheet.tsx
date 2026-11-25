@@ -20,7 +20,7 @@ export type StartSheetStage = {
    * das Ergebnis der letzten Runde, die Fehlerwörter die Zahl der Wörter (W-12).
    */
   last?:
-    { coverage: number } | { percent: number } | { words: number } | undefined;
+    { mastered: number } | { percent: number } | { words: number } | undefined;
   recommended: boolean;
   /** Grund, warum die Stufe nicht wählbar ist (z. B. keine deutsche Stimme). */
   disabledHint?: string | undefined;
@@ -108,8 +108,10 @@ export function StartSheet({
                 <span className={styles.stageBest}>
                   {entry.last === undefined
                     ? "Zuletzt –"
-                    : "coverage" in entry.last
-                      ? `${entry.last.coverage} % der Box`
+                    : "mastered" in entry.last
+                      ? `${entry.last.mastered} ${
+                          entry.last.mastered === 1 ? "Wort" : "Wörter"
+                        } geschafft`
                       : "percent" in entry.last
                         ? `Zuletzt ${entry.last.percent} %`
                         : practicedWordsLabel(entry.last.words)}

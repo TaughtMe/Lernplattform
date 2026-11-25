@@ -74,9 +74,7 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Box-Fortschritt seh
   ).toBeVisible();
   // Box-Fortschritt: alle drei Wörter der Wortbox waren in der Runde, ein Wort falsch.
   await expect(
-    page.getByText(
-      "Wortbox: 2 von 3 Wörtern auf Stufe 1 auf Anhieb richtig (67 %)",
-    ),
+    page.getByText("Wortbox: 2 Wörter auf Stufe 1 auf Anhieb richtig"),
   ).toBeVisible();
   // Alle Wörter der Wortbox waren in der Runde: keine Stichprobe, kein Rekord.
   await expect(page.getByText(/Runde aus \d+ von \d+ Wörtern/)).toHaveCount(0);
@@ -96,9 +94,7 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Box-Fortschritt seh
     timeout: 3_000,
   });
   await expect(
-    page.getByText(
-      "Wortbox: 3 von 3 Wörtern auf Stufe 1 auf Anhieb richtig (100 %)",
-    ),
+    page.getByText("Wortbox: 3 Wörter auf Stufe 1 auf Anhieb richtig"),
   ).toBeVisible();
   await expect(page.getByText("Heute 6 Wörter geübt")).toBeVisible();
   await expect(page.getByText(/Bestwert/)).toHaveCount(0);
@@ -108,12 +104,12 @@ test("Wortbox anlegen, mit Fehler üben, wiederholen und den Box-Fortschritt seh
   await expect(
     page
       .getByRole("dialog", { name: "Meine Wörter" })
-      .getByRole("button", { name: /^Stufe 1:.*100 % der Box/ }),
+      .getByRole("button", { name: /^Stufe 1:.*3 Wörter geschafft/ }),
   ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: /^Meine Wörter/ }),
-  ).toContainText("Stufe 1 · 100 % der Box (3 von 3 Wörtern)");
+  ).toContainText("Stufe 1 · 3 Wörter geschafft");
 });
 
 test("Trainingswörter heute: Stufen 1 bis 3 sind gesperrt, Stufe 4 ist vorgewählt", async ({
@@ -200,7 +196,7 @@ test("Stufe 5 wertet je Wort und zeigt den Merkblock", async ({ page }) => {
  * Baut `speechSynthesis` nach; `voices` bestimmt, ob es eine deutsche Stimme gibt.
  * Diese Tests prüfen den Weg über die Gerätestimme. Im Dev-Modus ist die
  * Vorschau `sprachmodell` immer an; ohne Manifest gibt es kein Modell, und
- * Stufe 6 verhält sich wie vor dem Sprachmodell (Plan 3.4, Entscheidung 61).
+ * Stufe 6 verhält sich wie vor dem Sprachmodell (Plan 3.4, Entscheidung 81).
  * Den Weg über das Modell prüft e2e/sprachmodell.spec.ts.
  */
 async function fakeSpeech(page: Page, hasVoice: boolean) {
@@ -215,6 +211,8 @@ async function fakeSpeech(page: Page, hasVoice: boolean) {
             lang: "de-DE",
             voiceURI: "anna",
             default: true,
+            // Lernraum nutzt nur Stimmen, die auf dem Gerät laufen (B-012).
+            localService: true,
           },
         ]
       : [];
@@ -307,7 +305,7 @@ test("Stufe 6 ist ohne deutsche Stimme deaktiviert", async ({ page }) => {
     .getByRole("button", { name: /^Stufe 6:/ });
   await expect(stageSix).toBeDisabled({ timeout: 5_000 });
   await expect(stageSix).toContainText(
-    "Auf diesem Gerät gibt es keine deutsche Stimme.",
+    "Auf diesem Gerät ist keine deutsche Stimme installiert.",
   );
   await expectAccessible(page);
 });

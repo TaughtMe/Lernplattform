@@ -9,6 +9,8 @@ import {
 } from "../../src/domain/class-seal";
 import { createStudentClassesRepository } from "../../src/storage/student-classes";
 import { LiveRoomJoin } from "./live-room-join";
+import { resolveStages, resolveVisibility } from "../../src/domain/release";
+import { ReleaseProvider } from "../release/release-context";
 
 const mocks = vi.hoisted(() => ({
   channel: vi.fn(),
@@ -158,11 +160,20 @@ describe("LiveRoomJoin", () => {
           config: { ...liveState.config, classSeal: options.classSeal },
         });
       }
+      // Schreiberleichterung ist pausiert (Entscheidung 79); der Test prüft die
+      // ruhende Funktion mit eingeschaltetem Bereich.
       render(
-        <LiveRoomJoin
-          initialCode="4829"
-          liveRoomConfig={{ url: "https://x.test", publishableKey: "key" }}
-        />,
+        <ReleaseProvider
+          value={resolveVisibility(
+            resolveStages("schreiberleichterung=frei"),
+            false,
+          )}
+        >
+          <LiveRoomJoin
+            initialCode="4829"
+            liveRoomConfig={{ url: "https://x.test", publishableKey: "key" }}
+          />
+        </ReleaseProvider>,
       );
       expect(await screen.findByText(/1 \/ 3/)).toBeVisible();
       await waitFor(() => expect(mocks.getLiveRoomActivity).toHaveBeenCalled());

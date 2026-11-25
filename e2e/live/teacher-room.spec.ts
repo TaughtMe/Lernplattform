@@ -206,12 +206,12 @@ test("Für die Tafel zeigt Raumcode, Gesamtfortschritt und häufigste Fehler ohn
   await expect(
     panel.getByRole("img", { name: "QR-Code zum Raum 4829" }),
   ).toBeVisible();
-  // Die Fehler der Klasse hängen am Wort, nicht am Kind.
+  // Kleingruppen-Schutz (Entscheidung 65): Der Testraum hat weniger als sechs
+  // Kinder, also stehen keine Fehlerwörter an der Tafel. Ab sechs Kindern
+  // prüfen das die Unit-Tests der Projektion.
   await expect(
-    panel
-      .getByRole("region", { name: "Häufigste Fehler" })
-      .getByText("Hof", { exact: true }),
-  ).toBeVisible();
+    panel.getByRole("region", { name: "Häufigste Fehler" }),
+  ).toHaveCount(0);
   await expect(page.getByText("Koala 2", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Braucht Hilfe")).toHaveCount(0);
   await expect(page.getByText(/^Fehlerwörter/)).toHaveCount(0);

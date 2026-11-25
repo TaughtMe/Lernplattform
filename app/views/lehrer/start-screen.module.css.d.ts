@@ -55,6 +55,18 @@ declare const styles: {
   readonly otherTitle: string;
   readonly placeholder: string;
   readonly playIcon: string;
+  readonly quick: string;
+  readonly quickChip: string;
+  readonly quickChips: string;
+  readonly quickField: string;
+  readonly quickGo: string;
+  readonly quickGroup: string;
+  readonly quickHint: string;
+  readonly quickLabel: string;
+  readonly quickLive: string;
+  readonly quickSelect: string;
+  readonly quickText: string;
+  readonly quickTitle: string;
   readonly remove: string;
   readonly roomLink: string;
   readonly roomPill: string;

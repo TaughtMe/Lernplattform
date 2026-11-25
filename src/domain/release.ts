@@ -112,9 +112,10 @@ export const RELEASE_AREAS = {
     label: "Gerätetyp und Sperre im Lehrerbereich",
     // Kein eigener Pfad: schaltet die Wahl „Mein Gerät“ / „Tafel“ beim ersten
     // Öffnen des Lehrerbereichs, die Sperre der Personenbereiche auf der Tafel
-    // und die PIN-Sperre in den Lehrer-Einstellungen (Befund B-009).
+    // und die PIN-Sperre in den Lehrer-Einstellungen (Befund B-009). Seit
+    // 24.11.2026 für alle frei (L25-9, Entscheidung 85).
     routes: [],
-    stage: "vorschau",
+    stage: "frei",
   },
   spiegelschrift: {
     label: "Spiegelschrift im Lesetext",
@@ -123,8 +124,28 @@ export const RELEASE_AREAS = {
     routes: [],
     stage: "frei",
   },
+  "lernbox-lernformen": {
+    label: "LernBox: Zuordnen und Test",
+    // Kein eigener Pfad: schaltet die beiden Lernformen im Start-Fenster
+    // eines Stapels (docs/umsetzungsplan-lernbox-lernformen.md). Seit
+    // 15.11.2026 sofort frei (V-8). Sterne gibt es vorerst nicht (V-9): Sobald
+    // es einen Zähler zum Auswerten gibt, wäre das die Stelle für eine Option.
+    routes: [],
+    stage: "frei",
+  },
+  schreiberleichterung: {
+    label: "Schreiberleichterung (LRS-Toleranz)",
+    // Kein eigener Pfad: schaltet die Schalter der Lehrkraft (Klassenliste,
+    // Klassenwahl im Raum) und die Wirkung im Live-Raum. Pausiert seit
+    // 15.11.2026 (Entscheidung 79): Lernraum ist ein Übungswerkzeug, und LRS
+    // verlangt Übung. Gespeicherte Freigaben, Klassenstempel und QR-Codes
+    // bleiben unverändert lesbar und werden nur ignoriert. Wieder einschalten:
+    // Stufe ändern oder LERNRAUM_FREIGABE=schreiberleichterung=frei.
+    routes: [],
+    stage: "aus",
+  },
   diagnostik: {
-    label: "Startpunkt, Tagestraining und Kompetenzprofil",
+    label: "Startpunkt, Tagestraining und Mein Stand",
     // Welle 3, D2. Seit 05.11.2026 frei (Entscheidung 59), obwohl die
     // pädagogische Abstimmung (Stufenfolgen des Startpunkts, Regel „sicher“)
     // noch aussteht; Beobachtung in der Beta.
@@ -135,7 +156,7 @@ export const RELEASE_AREAS = {
     label: "Vorlesen mit dem Sprachmodell im Browser",
     // Kein eigener Pfad: schaltet die Lernraum-Stimme (KittenTTS 2 Nano) für
     // das Vorlesen und Stufe 6 (docs/umsetzungsplan-sprachmodell.md). Seit
-    // 24.11.2026 für alle frei (Entscheidung 62); je Gerät in den
+    // 24.11.2026 für alle frei (Entscheidung 82); je Gerät in den
     // Einstellungen „Vorlesen“ abschaltbar. Mit LERNRAUM_FREIGABE=
     // sprachmodell=aus lesen überall wieder nur die Stimmen des Geräts.
     routes: [],

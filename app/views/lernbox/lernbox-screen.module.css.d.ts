@@ -35,6 +35,11 @@ declare const styles: {
   readonly chipNew: string;
   readonly chipOn: string;
   readonly chips: string;
+  readonly choice: string;
+  readonly choiceForm: string;
+  readonly choiceInput: string;
+  readonly choiceList: string;
+  readonly choiceOn: string;
   readonly codeBox: string;
   readonly codeError: string;
   readonly codeInput: string;
@@ -64,6 +69,9 @@ declare const styles: {
   readonly fileInput: string;
   readonly folder: string;
   readonly folderTitle: string;
+  readonly formActions: string;
+  readonly formBody: string;
+  readonly formResult: string;
   readonly found: string;
   readonly ghostButton: string;
   readonly goodButton: string;
@@ -108,6 +116,14 @@ declare const styles: {
   readonly manageItem: string;
   readonly manageList: string;
   readonly manageName: string;
+  readonly matchColumn: string;
+  readonly matchGap: string;
+  readonly matchGrid: string;
+  readonly matchRoundDone: string;
+  readonly matchStatus: string;
+  readonly matchTile: string;
+  readonly matchTileOn: string;
+  readonly matchTileWrong: string;
   readonly menu: string;
   readonly menuIcon: string;
   readonly menuItem: string;
@@ -148,6 +164,7 @@ declare const styles: {
   readonly segOff: string;
   readonly segOn: string;
   readonly segmentSheet: string;
+  readonly segmentWide: string;
   readonly select: string;
   readonly sheet: string;
   readonly sheetClose: string;

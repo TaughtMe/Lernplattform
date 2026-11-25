@@ -53,6 +53,7 @@ export function initialGameSettings(): GameSettings {
     strictTyping: false,
     taskHelp: true,
     stationCount: 20,
+    // Störangriffe standardmäßig an (Entscheidung 78, 15.11.2026).
     battleInk: true,
     battleFlicker: true,
     mathCount: 10,

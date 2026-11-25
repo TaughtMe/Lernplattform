@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
+import { ownTeacherDeviceState } from "./e2e/teacher-device-state";
 
 const isCI = Boolean(process.env["CI"]);
 const port = 3200;
@@ -46,6 +47,9 @@ export default defineConfig({
     serviceWorkers: "allow",
     locale: "de-DE",
     timezoneId: "Europe/Berlin",
+    // `lehrer-geraet` ist frei (Entscheidung 85): Ohne diesen Grundzustand
+    // fragt der Lehrerbereich beim ersten Öffnen nach dem Gerätetyp.
+    storageState: ownTeacherDeviceState(baseURL),
   },
   webServer: {
     command: `npx wrangler dev --config dist/server/wrangler.json --local --ip 127.0.0.1 --port ${port}`,

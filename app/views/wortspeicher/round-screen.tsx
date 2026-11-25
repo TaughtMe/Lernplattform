@@ -15,6 +15,7 @@ import {
 import type { WordRoundFeedback } from "../../../src/domain/word-round";
 import { Icon } from "../../ui/icons";
 import { Button, IconButton, ProgressBar } from "../../ui/primitives";
+import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { CoverAnswer } from "./cover-answer";
 import { FeedbackPanel } from "./feedback-panel";
 import { strictInputProps } from "./input-guards";
@@ -22,6 +23,26 @@ import { MemoryBlock } from "./memory-block";
 import { StagePrompt } from "./stage-prompt";
 import { STAGE_COPY } from "./stage-copy";
 import styles from "./wortspeicher.module.css";
+
+/**
+ * Anleitung beim Schreiben je Stufe. Sie enthält nie das Wort: „Vorlesen“
+ * liest nur sie (Entscheidung 58; Vorlage und Eingabe nie gleichzeitig).
+ */
+export const RECALL_INSTRUCTIONS: Record<LearningWordStage, string> = {
+  1: "Schreibe das Wort ab.",
+  2: "Fülle die Lücken und schreibe das ganze Wort.",
+  3: "Fülle die Lücken und schreibe das ganze Wort.",
+  4: "Schreibe das Wort aus dem Kopf.",
+  5: "Schreibe alle Wörter aus dem Merkblock.",
+  6: "Höre das Wort und schreibe es auf.",
+};
+
+/** Anleitung beim Merken (Stufe 4 und 5), ebenfalls ohne Wort. */
+export function memorizeInstruction(isBlock: boolean) {
+  return isBlock
+    ? "Merke dir alle Wörter. Beim Eingeben ist die Reihenfolge egal."
+    : "Präge dir das Wort ein. Danach bleibt nur seine Länge sichtbar.";
+}
 
 /**
  * Eine Runde: Kopfzeile mit Fortschritt und je nach Stufe Merken, Schreiben
@@ -122,11 +143,12 @@ export function RoundScreen({
                 <strong key={entry}>{entry}</strong>
               ))}
             </div>
-            <p className="ui-small ui-muted">
-              {isBlock
-                ? "Merke dir alle Wörter. Beim Eingeben ist die Reihenfolge egal."
-                : "Präge dir das Wort ein. Danach bleibt nur seine Länge sichtbar."}
-            </p>
+            <div className={styles.instruction}>
+              <p className="ui-small ui-muted">
+                {memorizeInstruction(isBlock)}
+              </p>
+              <ReadAloudButton text={memorizeInstruction(isBlock)} />
+            </div>
             <div className={styles.actions}>
               <button
                 ref={memorizeAction}
@@ -143,6 +165,13 @@ export function RoundScreen({
         {phase === "recall" ? (
           <form className="ui-stack" onSubmit={submit}>
             <p className="ui-eyebrow">Jetzt schreibst du</p>
+            <div className={styles.instruction}>
+              <p className="ui-small ui-muted">{RECALL_INSTRUCTIONS[stage]}</p>
+              <ReadAloudButton
+                text={RECALL_INSTRUCTIONS[stage]}
+                label="Aufgabe vorlesen"
+              />
+            </div>
             {stage <= 3 ? (
               <StagePrompt word={word} stage={stage as 1 | 2 | 3} />
             ) : null}

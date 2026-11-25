@@ -25,6 +25,12 @@ declare const styles: {
   readonly layout: string;
   readonly list: string;
   readonly listEmpty: string;
+  readonly nameList: string;
+  readonly nameListForm: string;
+  readonly nameListInfo: string;
+  readonly nameListInput: string;
+  readonly nameListLabel: string;
+  readonly nameListSummary: string;
   readonly newGrid: string;
   readonly newRow: string;
   readonly qrBox: string;

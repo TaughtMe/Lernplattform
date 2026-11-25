@@ -2,6 +2,7 @@
 
 import { Edit } from "./parts/edit";
 import { Home } from "./parts/home";
+import { Match } from "./parts/match";
 import { Sheets } from "./parts/sheets";
 import { Study } from "./parts/study";
 import type { LernBoxScreenProps } from "./parts/types";
@@ -14,7 +15,9 @@ export function LernBoxScreen(props: LernBoxScreenProps) {
   const { main } = props;
   return (
     <div className={styles.screen}>
-      {main.kind === "study" ? (
+      {main.kind === "match" ? (
+        <Match key={main.match.gameKey} {...props} match={main.match} />
+      ) : main.kind === "study" ? (
         <Study {...props} study={main.study} />
       ) : main.kind === "edit" ? (
         <Edit {...props} edit={main.edit} />

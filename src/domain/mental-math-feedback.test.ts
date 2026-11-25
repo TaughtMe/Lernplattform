@@ -60,6 +60,21 @@ const catalogue: Record<
     ["12 - 20", "8"],
     ["6 - 9", "3"],
   ],
+  "zero-rule": [
+    ["6 * 0", "6"],
+    ["0 * 9", "9"],
+    ["0 : 7", "7"],
+  ],
+  "smaller-from-larger": [
+    ["53 - 27", "34"],
+    ["62 - 38", "36"],
+    ["81 - 45", "44"],
+  ],
+  "hundreds-bridge": [
+    ["270 + 60", "230"],
+    ["340 - 70", "370"],
+    ["85 + 47", "32"],
+  ],
   unknown: [
     ["7 * 8", "100"],
     ["34 + 19", "abc"],
@@ -79,6 +94,40 @@ describe("classifyMentalMathError", () => {
     expect(classifyMentalMathError(task("7 + 5", "left"), "17")).toBe(
       "operation-mix",
     );
+  });
+
+  it("nennt „Zehnerübergang“ nur bei echtem Übergang (MA-2)", () => {
+    // 53 + 24 und 62 - 21 haben keinen Übergang, 10 daneben ist keine Übertragsregel.
+    expect(classifyMentalMathError(task("53 + 24"), "67")).toBe("unknown");
+    expect(classifyMentalMathError(task("62 - 21"), "51")).toBe("unknown");
+    // Ganze Zehner (56 + 70) haben auch keinen.
+    expect(classifyMentalMathError(task("20 + 30"), "40")).toBe("unknown");
+    expect(classifyMentalMathError(task("38 + 5"), "53")).toBe("tens-bridge");
+  });
+
+  it("nennt „Übertrag bei Hundertern“ nur bei echtem Übertrag (MA-2)", () => {
+    expect(classifyMentalMathError(task("210 + 60"), "170")).toBe("unknown");
+    expect(classifyMentalMathError(task("350 - 20"), "230")).toBe("unknown");
+  });
+
+  it("erkennt die Null-Regel nur bei Mal und Geteilt, nicht bei Lücken", () => {
+    expect(classifyMentalMathError(task("0 * 6"), "6")).toBe("zero-rule");
+    expect(classifyMentalMathError(task("6 * 0"), "0")).toBe("unknown");
+    expect(classifyMentalMathError(task("6 * 0"), "7")).toBe("unknown");
+    expect(classifyMentalMathError(task("6 * 0", "result"), "6")).toBe(
+      "zero-rule",
+    );
+    expect(classifyMentalMathError(task("6 * 0", "right"), "6")).not.toBe(
+      "zero-rule",
+    );
+    expect(classifyMentalMathError(task("6 + 0"), "5")).toBe("off-by-one");
+  });
+
+  it("erkennt „stellenweise kleiner von größer“ nur bei Übergang", () => {
+    // 58 - 23: Die Stellen gehen auf, die Rechnung ist richtig.
+    expect(classifyMentalMathError(task("58 - 23"), "35")).toBe("unknown");
+    expect(classifyMentalMathError(task("53 - 27"), "26")).toBe("unknown");
+    expect(classifyMentalMathError(task("53 + 27"), "34")).toBe("unknown");
   });
 
   it("lässt richtige Antworten und Antwort null ohne Faktorfehler", () => {
@@ -521,6 +570,9 @@ describe("Bezeichnungen für Lehrkräfte", () => {
       "tens-bridge": "Zehnerübergang",
       "off-by-one": "um eins daneben",
       "neighbor-fact": "Nachbaraufgabe",
+      "zero-rule": "Null-Regel",
+      "smaller-from-larger": "stellenweise kleiner von größer",
+      "hundreds-bridge": "Übertrag bei Hundertern",
     });
   });
 });

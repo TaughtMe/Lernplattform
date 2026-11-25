@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { avatarLabel } from "../../../src/domain/learner-profile";
 import type { TodayTask } from "../../../src/domain/today-tasks";
-import { Icon } from "../../ui/icons";
+import { Icon, type IconName } from "../../ui/icons";
 import { Animal, cx, HomeLink, ThemeSwitch, type Theme } from "../parts/parts";
 import styles from "./home-screen.module.css";
 
@@ -13,7 +13,7 @@ const FIRST_CONTACT_INTRO =
 export type WeekDay = {
   short: string;
   label: string;
-  state: "active" | "missed" | "upcoming";
+  state: "active" | "past" | "upcoming";
   today: boolean;
 };
 
@@ -44,6 +44,13 @@ export type HomeScreenProps = {
   streakDays?: number | undefined;
   badges?: { count: number; hint: string } | undefined;
   duelHref?: string | undefined;
+  /**
+   * Kleine Wege unter den Kacheln, z. B. Startpunkt, Training und „Mein
+   * Stand“ (Freigabe `diagnostik`). Ohne Eintrag bleibt die Ansicht wie im
+   * Design 3a/3b.
+   */
+  links?:
+    ReadonlyArray<{ href: string; label: string; icon: IconName }> | undefined;
   onToggleTheme?: () => void;
   /** Hinweise zwischen Kopf und Tier (z. B. Speicherschutz); blockiert nichts. */
   notice?: ReactNode;
@@ -97,7 +104,11 @@ export function HomeScreen(props: HomeScreenProps) {
   // Ohne Portion ist der Tag erledigt (Ring voll, wenn geübt wurde).
   const ratio = target > 0 ? Math.min(1, done / target) : done > 0 ? 1 : 0;
   const open = Math.max(0, due.total - due.done);
-  const activeDays = week.filter((day) => day.state === "active").length;
+  // Wochenziel in Schultagen (M24-10); Wochenendtage zählen mit, höchstens 5.
+  const activeDays = Math.min(
+    week.filter((day) => day.state === "active").length,
+    5,
+  );
   return (
     <div className={styles.screen}>
       <div className={styles.layout}>
@@ -224,6 +235,20 @@ export function HomeScreen(props: HomeScreenProps) {
                 </div>
               </div>
             )}
+            {props.links?.length ? (
+              <nav className={styles.links} aria-label="Mehr für dich">
+                {props.links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={styles.link}
+                  >
+                    <Icon name={link.icon} size={18} />
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
           </div>
         </section>
 
@@ -237,7 +262,9 @@ export function HomeScreen(props: HomeScreenProps) {
               <h2 id="home-week" className={styles.panelTitle}>
                 Diese Woche
               </h2>
-              <span className={styles.panelMeta}>{activeDays} von 7 Tagen</span>
+              <span className={styles.panelMeta}>
+                {activeDays} von 5 Schultagen
+              </span>
             </div>
             <ol className={styles.week}>
               {week.map((day) => (
@@ -249,13 +276,13 @@ export function HomeScreen(props: HomeScreenProps) {
                     day.state === "upcoming" && styles.upcoming,
                     day.today && styles.today,
                   )}
-                  aria-label={`${day.label}: ${
+                  aria-label={
                     day.state === "active"
-                      ? "geübt"
+                      ? `${day.label}: geübt`
                       : day.state === "upcoming"
-                        ? "kommt noch"
-                        : "nicht geübt"
-                  }`}
+                        ? `${day.label}: kommt noch`
+                        : day.label
+                  }
                 >
                   {day.short}
                 </li>

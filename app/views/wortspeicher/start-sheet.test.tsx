@@ -31,15 +31,16 @@ function setup(
 }
 
 describe("StartSheet", () => {
-  it("zeigt je Stufe den Box-Fortschritt statt „Zuletzt“", () => {
-    const sheet = setup({ 2: { coverage: 20 } });
+  it("zählt je Stufe die geschafften Wörter statt „Zuletzt“ (Entscheidung 83)", () => {
+    const sheet = setup({ 2: { mastered: 4 } });
     const stage = within(sheet).getByRole("button", { name: /^Stufe 2:/ });
-    expect(stage).toHaveTextContent("20 % der Box");
+    expect(stage).toHaveTextContent("4 Wörter geschafft");
+    expect(stage).not.toHaveTextContent("% der Box");
     expect(stage).not.toHaveTextContent("Zuletzt");
   });
 
   it("zeigt ohne Runde auf der Stufe den Leertext", () => {
-    const sheet = setup({ 2: { coverage: 20 } });
+    const sheet = setup({ 2: { mastered: 4 } });
     expect(
       within(sheet).getByRole("button", { name: /^Stufe 1:/ }),
     ).toHaveTextContent("Zuletzt –");

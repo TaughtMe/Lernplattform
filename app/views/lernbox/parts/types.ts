@@ -1,8 +1,16 @@
 import type { ReactNode } from "react";
 import type { LearningBoxDeckState } from "../../../../src/domain/learning-box";
+import type { MatchRound } from "../../../../src/domain/learning-box-forms";
 import { type Theme } from "../../parts/parts";
 
 export type LbMode = "writing" | "oral";
+/**
+ * Fragearten einer Runde: Schreiben, Mündlich und Auswahl. Mehrere wechseln
+ * sich Karte für Karte ab (docs/umsetzungsplan-lernbox-lernformen.md, LF-3).
+ */
+export type LbKind = LbMode | "choice";
+/** Eigene Lernform eines Stapels: Zuordnen (docs/umsetzungsplan-lernbox-lernformen.md). */
+export type LbForm = "match";
 export type LbDirection = "forward" | "reverse" | "mixed";
 export type LbSortKey = "question" | "answer" | "deck" | "tag" | "box";
 
@@ -69,7 +77,10 @@ export type LbStudy = {
   eyebrow: string;
   box: number;
   question: string;
-  mode: LbMode;
+  /** Frageart der aktuellen Karte. */
+  mode: LbKind;
+  /** Antworten einer Auswahlfrage (sonst leer); die Wahl steht in `answer`. */
+  choices: readonly string[];
   answer: string;
   revealed: boolean;
   /** Lösung, die im mündlichen Modus nach „Antwort zeigen“ erscheint. */
@@ -78,6 +89,20 @@ export type LbStudy = {
   done: { correct: number; wrong: number } | null;
   canSpeak: boolean;
 };
+
+/** Zuordnen: Runden und Kacheln stehen fest; der Spielstand liegt in der Ansicht. */
+export type LbMatch = {
+  title: string;
+  /** Neue Kennung je Spiel: „Noch einmal“ baut den Zustand neu auf. */
+  gameKey: string;
+  rounds: readonly MatchRound[];
+};
+
+export type LbMain =
+  | { kind: "home" }
+  | { kind: "edit"; edit: LbEdit }
+  | { kind: "study"; study: LbStudy }
+  | { kind: "match"; match: LbMatch };
 
 export type LbEdit = {
   cards: readonly LbCard[];
@@ -141,10 +166,9 @@ export type LernBoxScreenProps = {
   planScope?: string;
   /** „Weitermachen“ für eine unterbrochene Runde (C-001); steht oben in der Übersicht. */
   resumeOffer?: ReactNode;
-  main:
-    | { kind: "home" }
-    | { kind: "edit"; edit: LbEdit }
-    | { kind: "study"; study: LbStudy };
+  main: LbMain;
+  /** Bereich `lernbox-lernformen` ist sichtbar: Auswahl und Zuordnen im Start-Fenster. */
+  formsVisible?: boolean;
   sheet: LbSheet | null;
   transfer: LbTransfer;
   onToggleTheme?: () => void;
@@ -153,6 +177,21 @@ export type LernBoxScreenProps = {
   onStart?: (input: {
     scope: string;
     mode: LbMode;
+    direction: LbDirection;
+  }) => void;
+  /**
+   * Start einer Runde mit mehreren Fragearten oder mit Auswahl (nur für einen
+   * Stapel, nicht für „Heute dran“, Fehler, Boxen).
+   */
+  onStartMixed?: (input: {
+    scope: string;
+    kinds: readonly LbKind[];
+    direction: LbDirection;
+  }) => void;
+  /** Start von Zuordnen für einen Stapel. */
+  onStartForm?: (input: {
+    scope: string;
+    form: LbForm;
     direction: LbDirection;
   }) => void;
   onEdit?: () => void;
@@ -196,4 +235,9 @@ export type LernBoxScreenProps = {
   onNext?: () => void;
   onSpeak?: (side: "question" | "answer") => void;
   onEndSession?: () => void;
+  // Lernformen
+  /** Zuordnen: neues Spiel mit neu gemischten Karten. */
+  onMatchAgain?: () => void;
+  /** Das Spiel ist zu Ende (einmal gemeldet). */
+  onFormFinished?: () => void;
 };

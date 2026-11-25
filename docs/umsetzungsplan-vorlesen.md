@@ -57,7 +57,7 @@ Weitere Schwächen:
 - Spätere Optionen (Sprachmodell im Browser, Cloud-Dienst) werden erst geprüft, wenn Weg 1 auf
   den echten Geräten nicht reicht.
 - **Nachtrag 23.11.2026:** Weg 2 (Sprachmodell im Browser) wird in der Vorschau gebaut, siehe
-  `docs/umsetzungsplan-sprachmodell.md` und Entscheidung 60. „Keine Cloud-Sprachausgabe“ gilt
+  `docs/umsetzungsplan-sprachmodell.md` und Entscheidung 80. „Keine Cloud-Sprachausgabe“ gilt
   weiter.
 
 ## 3. Umsetzung

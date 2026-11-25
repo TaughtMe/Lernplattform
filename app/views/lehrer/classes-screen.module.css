@@ -260,6 +260,38 @@
 .addInput {
   flex: 1;
 }
+.nameList {
+  margin: 0;
+}
+.nameListSummary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+}
+.nameListForm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.nameListLabel {
+  font-size: 13px;
+  color: var(--ink2);
+}
+.nameListInput {
+  width: 100%;
+  resize: vertical;
+}
+.nameListInfo {
+  min-height: 1.3em;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink2);
+}
 .list {
   display: flex;
   flex-direction: column;

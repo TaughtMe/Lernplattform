@@ -1,38 +1,30 @@
 /**
  * Welche Stimme spricht? (Plan 2.2 und 3.4). Rein.
  *
- * - `model`: das Sprachmodell im Browser (nur mit Vorschau „sprachmodell“)
- * - `system`: eine Stimme des Geräts
- * - `none`: keine passende Stimme, es bleibt stumm
+ * - `model`: die Lernraum-Stimme (Sprachmodell im Browser)
+ * - `system`: eine Stimme, die auf dem Gerät läuft (nie eine Netzstimme, B-012)
+ * - `none`: keine passende Stimme; die Stelle zeigt einen Hinweis
  */
 export type SpeechRoute = "model" | "system" | "none";
 
 export type RouteInput = {
-  /** Freigabe `sprachmodell` sichtbar (Vorschau). */
+  /** Lernraum-Stimme erlaubt (Freigabe und Schalter je Gerät). */
   modelAllowed: boolean;
   /** Das Manifest enthält diese Sprache. */
   modelAvailable: boolean;
   /** Gibt es eine Gerätestimme, die auf dem Gerät läuft (`localService`)? */
   localSystemVoice: boolean;
-  /** Gibt es überhaupt eine Gerätestimme (auch Netzwerkstimmen)? */
-  anySystemVoice: boolean;
-  /** Aufrufer verlangt Stimmen, die auf dem Gerät laufen (B-012). */
-  localOnly: boolean;
 };
 
 /** Reihenfolge der Wege, beste zuerst. Leer heißt: keine Stimme. */
 export function speechRoutes(
   input: RouteInput,
 ): Exclude<SpeechRoute, "none">[] {
-  // Ohne Freigabe oder ohne Modell für die Sprache: wie vor dem Plan (3.2).
+  // Ohne Lernraum-Stimme oder ohne Modell für die Sprache: Gerätestimme.
   if (!input.modelAllowed || !input.modelAvailable) {
-    const system = input.localOnly
-      ? input.localSystemVoice
-      : input.anySystemVoice;
-    return system ? ["system"] : [];
+    return input.localSystemVoice ? ["system"] : [];
   }
-  // Vorschau mit Modell: Modell zuerst, dann nur Stimmen, die auf dem Gerät
-  // laufen. Eine Netzwerkstimme kommt nie (B-012).
+  // Modell zuerst, dann nur Stimmen, die auf dem Gerät laufen.
   return input.localSystemVoice ? ["model", "system"] : ["model"];
 }
 

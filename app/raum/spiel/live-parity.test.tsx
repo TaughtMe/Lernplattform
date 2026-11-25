@@ -8,6 +8,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseLiveSession } from "../../../src/integrations/laufdiktat/live-session";
+import { resetSpeechState, SPEAK_DELAY_MS } from "../../../src/speech/speaker";
 import {
   revealWithTwoFingers,
   twoFingersDown,
@@ -34,6 +35,7 @@ afterEach(() => {
   window.localStorage.removeItem("lernraum:vorlesen-modell");
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  resetSpeechState();
 });
 const touch = revealWithTwoFingers;
 
@@ -95,7 +97,7 @@ describe("original Laufdiktat workflows", () => {
   });
 
   it("returns stations after three seconds, retains seen words, and supports reading aloud", async () => {
-    // Vorlesen über die Gerätestimme: Lernraum-Stimme aus (Entscheidung 62).
+    // Vorlesen über die Gerätestimme: Lernraum-Stimme aus (Entscheidung 82).
     window.localStorage.setItem("lernraum:vorlesen-modell", "0");
     vi.useFakeTimers();
     const speak = vi.fn();
@@ -106,7 +108,20 @@ describe("original Laufdiktat workflows", () => {
         lang = "";
       },
     );
-    vi.stubGlobal("speechSynthesis", { speak, cancel: vi.fn() });
+    // Gesprochen wird nur mit einer Stimme des Geräts (B-012).
+    vi.stubGlobal("speechSynthesis", {
+      speak,
+      cancel: vi.fn(),
+      getVoices: () => [
+        {
+          name: "Anna",
+          lang: "de-DE",
+          voiceURI: "anna",
+          default: true,
+          localService: true,
+        },
+      ],
+    });
     const progress = vi.fn();
     const { container } = render(
       <LiveStationGame
@@ -133,9 +148,56 @@ describe("original Laufdiktat workflows", () => {
       fireEvent.click(screen.getByRole("button", { name: "1" })),
     );
     fireEvent.click(screen.getByRole("button", { name: "Vorlesen" }));
+    await act(async () => vi.advanceTimersByTimeAsync(SPEAK_DELAY_MS));
     expect(speak).toHaveBeenCalledOnce();
     expect(progress).toHaveBeenLastCalledWith(
       expect.objectContaining({ stationNumber: 1, peeks: 1 }),
+    );
+  });
+
+  it("reads nothing aloud with only a network voice, says why and counts no peek", async () => {
+    vi.useFakeTimers();
+    const speak = vi.fn();
+    vi.stubGlobal("SpeechSynthesisUtterance", class {});
+    vi.stubGlobal("speechSynthesis", {
+      speak,
+      cancel: vi.fn(),
+      getVoices: () => [
+        {
+          name: "Google Deutsch",
+          lang: "de-DE",
+          voiceURI: "cloud",
+          default: true,
+          localService: false,
+        },
+      ],
+    });
+    const notices: string[] = [];
+    const listener = (event: Event) =>
+      notices.push((event as CustomEvent<{ message: string }>).detail.message);
+    window.addEventListener("lernraum-speech-notice", listener);
+    const progress = vi.fn();
+    render(
+      <LiveStationGame
+        code="1234"
+        session={session}
+        connectionWarning=""
+        onProgress={progress}
+        onLoadProgress={async () => null}
+      />,
+    );
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "1" })),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Vorlesen" }));
+    await act(async () => vi.advanceTimersByTimeAsync(2000));
+    window.removeEventListener("lernraum-speech-notice", listener);
+    expect(speak).not.toHaveBeenCalled();
+    expect(notices).toEqual([
+      "Auf diesem Gerät ist keine deutsche Stimme installiert.",
+    ]);
+    expect(progress).not.toHaveBeenCalledWith(
+      expect.objectContaining({ peeks: 1 }),
     );
   });
 

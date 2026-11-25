@@ -144,17 +144,13 @@ export function LiveStationGame({
 
   const readAloud = () => {
     const current = words[index];
-    if (current && modelSpeech) {
-      void speak(currentPrompt, current.promptLang ?? "de-DE", { model: true });
-      reveal(false);
-      return;
-    }
-    if (!current || !("speechSynthesis" in window)) return;
-    const utterance = new SpeechSynthesisUtterance(currentPrompt);
-    utterance.lang = current.promptLang ?? "de-DE";
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    reveal(false);
+    if (!current) return;
+    // Gemeinsame Sprachausgabe: Lernraum-Stimme oder nur lokale Stimmen, sonst
+    // ein Hinweis (B-012). Als Hinsehen zählt nur, was wirklich gesprochen wird.
+    void speak(currentPrompt, current.promptLang ?? "de-DE", {
+      ...(modelSpeech ? { model: true } : {}),
+      onStart: () => reveal(false),
+    });
   };
   const notices =
     deliveryStatus !== "idle" || connectionWarning ? (

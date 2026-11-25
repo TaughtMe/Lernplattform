@@ -400,9 +400,24 @@ describe("Vorbereitung und Archiv", () => {
     expect(describePrepared({ gameMode: "STATION", stationCount: 1 })).toBe(
       "Stationen · 1 Station",
     );
+    // Standard seit 15.11.2026 (Entscheidung 78): Störangriffe an.
     expect(describePrepared({ gameMode: "BATTLE" })).toBe(
       "Battle · Tinte und Flimmern",
     );
+    expect(
+      describePrepared({
+        gameMode: "BATTLE",
+        battleInk: false,
+        battleFlicker: false,
+      }),
+    ).toBe("Battle · ohne Störangriffe");
+    expect(
+      describePrepared({
+        gameMode: "BATTLE",
+        battleInk: true,
+        battleFlicker: true,
+      }),
+    ).toBe("Battle · Tinte und Flimmern");
     expect(describePrepared({ gameMode: "BATTLE", battleFlicker: false })).toBe(
       "Battle · nur Tinte",
     );

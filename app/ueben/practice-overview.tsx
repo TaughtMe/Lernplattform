@@ -6,6 +6,7 @@ import { useThemeToggle } from "../ui/theme";
 import {
   PracticeScreen,
   type PracticeArea,
+  type PracticeShortcut,
 } from "../views/lernen/practice-screen";
 
 /** Übungsbereiche mit Symbol und Farbe der Tastenwelt-Stationen. */
@@ -60,12 +61,39 @@ const AREAS: ReadonlyArray<PracticeArea & { area: ReleaseAreaId }> = [
   },
 ];
 
+/**
+ * Wege zu Startpunkt, Training und „Mein Stand“ (Freigabe `diagnostik`,
+ * Entscheidung 59; Vision, Nachtrag 1, Nr. 3). Der Name „Mein Stand“ ersetzt
+ * „Kompetenzprofil“ in der Oberfläche (E30-7).
+ */
+export const DIAGNOSTIC_SHORTCUTS: readonly PracticeShortcut[] = [
+  {
+    href: "/lernen/startpunkt",
+    title: "Startpunkt",
+    text: "Ein paar kurze Aufgaben zeigen, wo du anfangen kannst.",
+    icon: "pin",
+  },
+  {
+    href: "/lernen/training",
+    title: "Training",
+    text: "10 oder 20 Minuten üben, was heute dran ist.",
+    icon: "run",
+  },
+  {
+    href: "/lernen/profil",
+    title: "Mein Stand",
+    text: "Sieh dir an, was du schon gut kannst.",
+    icon: "chart",
+  },
+];
+
 export function PracticeOverview() {
   const visibility = useRelease();
   const { theme, toggleTheme } = useThemeToggle();
   return (
     <PracticeScreen
       areas={AREAS.filter((area) => visibility[area.area])}
+      shortcuts={visibility.diagnostik ? DIAGNOSTIC_SHORTCUTS : []}
       theme={theme}
       onToggleTheme={toggleTheme}
     />

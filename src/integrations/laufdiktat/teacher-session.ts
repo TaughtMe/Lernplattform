@@ -24,6 +24,7 @@ import {
   tokenizeMathChain,
   type MentalMathOperation,
 } from "../../domain/mental-math";
+import type { MathTaskFeature } from "../../domain/mental-math-features";
 import { LIVE_APP_VERSION } from "../../app-version";
 
 export type TeacherContentMode = "text" | "vocabulary" | "math";
@@ -160,6 +161,7 @@ export function buildTeacherRoomConfig(
         options.vocabularyDirection,
       ),
     gameMode: options.gameMode === "STATION" ? "UEBUNG" : options.gameMode,
+    // Störangriffe standardmäßig an (Entscheidung 78, 15.11.2026).
     battleOptions: options.battleOptions ?? { ink: true, flicker: true },
     stationMode: options.gameMode === "STATION",
     stationCount: options.stationCount ?? 20,
@@ -213,6 +215,8 @@ export function generateMentalMathSource(options: {
   excludeZeroResult?: boolean;
   multiplicationTables?: number[];
   gapMode?: boolean;
+  /** Nur Aufgaben mit diesem Merkmal, z. B. Zehnerübergang `ZE+E` (MA-1). */
+  focus?: MathTaskFeature;
 }) {
   const operationMap: Record<MathOperation, MentalMathOperation> = {
     "+": "add",
@@ -238,6 +242,7 @@ export function generateMentalMathSource(options: {
       ? {}
       : { multiplicationTables: options.multiplicationTables }),
     ...(options.gapMode === undefined ? {} : { gapMode: options.gapMode }),
+    ...(options.focus === undefined ? {} : { focus: options.focus }),
   })
     .map((task) =>
       task.gap

@@ -85,7 +85,10 @@ export function currentWeek(today = new Date()) {
   });
 }
 
-/** Woche für die Ansicht: geübt, verpasst oder noch offen. */
+/**
+ * Woche für die Ansicht: geübt, vorbei oder noch offen. Vergangene Tage ohne
+ * Übung heißen nicht „verpasst“ (M24-10): Sie bleiben neutral.
+ */
 export function weekStates(
   activeDays: readonly string[],
   today = new Date(),
@@ -100,6 +103,6 @@ export function weekStates(
       ? "active"
       : day.key >= todayKey
         ? "upcoming"
-        : "missed",
+        : "past",
   }));
 }

@@ -156,6 +156,31 @@
 .duel:hover {
   border-color: var(--accent);
 }
+/* Wege zu Startpunkt, Training und „Mein Stand“ (kein eigener Entwurf). */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.link:hover {
+  border-color: var(--accent);
+}
 .cards {
   display: grid;
   grid-template-columns: 1fr 1fr;

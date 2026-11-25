@@ -50,6 +50,7 @@ const liveSessionConfigSchema = z
     /** Mathe: Aufgabe nach mehreren Fehlern im Antwortfeld wieder zeigen. */
     showTaskAfterErrors: z.boolean().default(false),
     stationShuffle: z.boolean().default(false),
+    // Störangriffe sind standardmäßig an (Entscheidung 78, 15.11.2026).
     battleOptions: z
       .object({
         ink: z.boolean().default(true),

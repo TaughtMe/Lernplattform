@@ -8,6 +8,8 @@ declare const styles: {
   readonly codeTilesLarge: string;
   readonly column: string;
   readonly count: string;
+  readonly countdown: string;
+  readonly countdownNumber: string;
   readonly csv: string;
   readonly csvNarrow: string;
   readonly done: string;
@@ -46,6 +48,12 @@ declare const styles: {
   readonly practice: string;
   readonly previous: string;
   readonly projection: string;
+  readonly projectionCelebration: string;
+  readonly projectionCelebrationLine: string;
+  readonly projectionCelebrationTitle: string;
+  readonly projectionGoal: string;
+  readonly projectionGoalText: string;
+  readonly projectionGoalTrack: string;
   readonly projectionLabel: string;
   readonly projectionMistakes: string;
   readonly projectionQr: string;

@@ -58,12 +58,12 @@ describe("currentWeek", () => {
 });
 
 describe("weekStates", () => {
-  it("markiert geübte, verpasste und kommende Tage", () => {
+  it("markiert geübte, vergangene und kommende Tage", () => {
     const today = new Date(2026, 8, 30); // Mittwoch
     const week = weekStates(["2026-09-28", "2026-09-30"], today);
     expect(week.map((day) => day.state)).toEqual([
       "active",
-      "missed",
+      "past",
       "active",
       "upcoming",
       "upcoming",

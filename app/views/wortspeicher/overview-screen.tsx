@@ -38,14 +38,21 @@ export type WordBoxTile = {
     | undefined;
 };
 
-/** „Stufe 3 · 25 % der Box (1 von 4 Wörtern)“ bzw. „Stufe 3 · 8 Wörter geübt“. */
+/** Zählt Wörter, nie den Rest der Box (Entscheidung 83, I31-4). */
+function wordCount(count: number) {
+  return `${count} ${count === 1 ? "Wort" : "Wörter"}`;
+}
+
+/**
+ * „Stufe 3 · 1 Wort geschafft“ bzw. „Stufe 3 · 8 Wörter geübt“. Ohne
+ * Gesamtzahl und ohne „% der Box“ (Entscheidung 83).
+ */
 function headlineText(headline: NonNullable<WordBoxTile["headline"]>) {
   const { coverage } = headline;
-  if (coverage === undefined) {
+  if (coverage === undefined || coverage.mastered === 0) {
     return `Stufe ${headline.stage} · ${practicedWordsLabel(headline.practicedWords)}`;
   }
-  const words = coverage.total === 1 ? "Wort" : "Wörtern";
-  return `Stufe ${headline.stage} · ${coverage.percent} % der Box (${coverage.mastered} von ${coverage.total} ${words})`;
+  return `Stufe ${headline.stage} · ${wordCount(coverage.mastered)} geschafft`;
 }
 
 /** Übersicht der Wortboxen (Design 4d und 4f). */
@@ -162,11 +169,11 @@ export function OverviewScreen({
                 <ProgressBar
                   value={tile.secure}
                   max={Math.max(1, tile.total)}
-                  label={`${tile.title}: ${tile.secure} von ${tile.total} sicher`}
+                  label={`${tile.title}: ${wordCount(tile.secure)} sicher`}
                   tone="green"
                 />
                 <span className={styles.tileCount}>
-                  {tile.secure} / {tile.total} sicher
+                  {wordCount(tile.secure)} sicher
                 </span>
               </span>
               <span className={styles.tileBest}>

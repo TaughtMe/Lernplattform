@@ -23,6 +23,12 @@ import {
   type LearningBoxSessionDirection,
 } from "../../src/domain/learning-box";
 import {
+  assignLearningBoxKinds,
+  gradeLearningBoxChoice,
+  type ChoiceQuestion,
+  type LearningBoxQuestionKind,
+} from "../../src/domain/learning-box-forms";
+import {
   buildLearningBoxSnapshot,
   learningBoxSnapshotSchema,
   restoreLearningBoxQueue,
@@ -40,6 +46,7 @@ import {
 } from "../../src/integrations/laufdiktat/live-room-client";
 import type { DailyPlanItem } from "../../src/domain/daily-plan";
 import { createDailyPlanRepository } from "../../src/storage/daily-plan";
+import { speak } from "../../src/speech/speaker";
 import {
   PersonalLearningDatabase,
   createLearningBoxRepository,
@@ -50,13 +57,14 @@ import {
   openModuleItems,
   wantsDailyPlan,
 } from "../lernen/plan-today";
-import { speak } from "../../src/speech/speaker";
+import { useAreaVisible } from "../release/release-context";
 import { useModelSpeech } from "../ui/use-model-speech";
 import { useSpeechAhead } from "../ui/use-speech-ahead";
 import { useRoundGuard } from "../ui/round-guard";
 import { StudentPage } from "../ui/shell/student-page";
 import { useRoundSnapshot } from "../ui/use-round-snapshot";
 import { useThemeToggle } from "../ui/theme";
+import { useLearningBoxForms } from "./learning-box-forms";
 import { ResumeOffer } from "../views/shell/resume-offer";
 import {
   LernBoxScreen,
@@ -79,9 +87,10 @@ const LANGUAGE_CHOICES = VOCABULARY_LANGUAGES.map(({ locale, label }) => ({
   locale,
   label,
 }));
-const MODE_LABEL: Record<LearningBoxMode, string> = {
+const MODE_LABEL: Record<LearningBoxQuestionKind, string> = {
   writing: "Schreiben",
   oral: "Mündlich",
+  choice: "Auswahl",
 };
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -119,7 +128,14 @@ function isMistake(card: LearningBoxCard) {
   );
 }
 
-type QueueItem = { card: LearningBoxCard; direction: LearningBoxDirection };
+type QueueItem = {
+  card: LearningBoxCard;
+  direction: LearningBoxDirection;
+  /** Frageart dieser Karte in einer gemischten Runde (LF-3); sonst die der Runde. */
+  kind?: LearningBoxQuestionKind;
+  /** Antworten, wenn die Karte als Auswahlfrage kommt. */
+  choice?: ChoiceQuestion;
+};
 
 type Session = {
   title: string;
@@ -145,6 +161,11 @@ type Session = {
   /** Schon bewertete Karte+Richtung dieser Runde: nur der erste Versuch zählt (C3-1). */
   attempted: string[];
   finished: boolean;
+  /**
+   * Gemischte Fragearten oder Auswahl (LF-3): kein „Weitermachen“, der
+   * Zwischenstand kennt dafür kein Format.
+   */
+  mixed: boolean;
 };
 
 type View = "home" | "edit";
@@ -181,6 +202,11 @@ function buildPlanQueue(
     const card = byId.get(item.objectIds[0] ?? "");
     return card && item.direction ? [{ card, direction: item.direction }] : [];
   });
+}
+
+/** Frageart der aktuellen Karte: ihre eigene in einer gemischten Runde, sonst die der Runde. */
+function kindOf(session: Session, item: QueueItem): LearningBoxQuestionKind {
+  return item.kind ?? session.mode;
 }
 
 function nextLabel(card: LearningBoxCard, direction: LearningBoxDirection) {
@@ -240,6 +266,7 @@ export function LearningBoxApp({
     success: null,
   });
   const refreshRevision = useRef(0);
+  const formsVisible = useAreaVisible("lernbox-lernformen");
   /** Zwischenstand der unterbrochenen Runde (C-001): „Weitermachen“ in der Übersicht. */
   const roundSnapshot = useRoundSnapshot("lernbox", learningBoxSnapshotSchema);
 
@@ -312,6 +339,12 @@ export function LearningBoxApp({
     () => new Map(decks.map((deck) => [deck.id, deck])),
     [decks],
   );
+  // Zuordnen (Lernform eines Stapels); schreibt nichts (LF-1).
+  const forms = useLearningBoxForms({
+    cards,
+    deckById,
+    onNotice: setNotice,
+  });
   const now = Date.now();
   // „Heute dran“ sind die offenen Elemente der Portion, nicht alles Fällige.
   const todayQueue = buildPlanQueue(planItems, cards);
@@ -351,18 +384,10 @@ export function LearningBoxApp({
       : { forward: "Deutsch → Englisch", reverse: "Englisch → Deutsch" };
   }
 
+  // Gemeinsame Sprachausgabe: nur lokale Stimmen, sonst ein Hinweis (B-012).
   function say(text: string, locale: string) {
-    if (modelSpeech) {
-      const spoken = text.split("|")[0]?.trim();
-      if (spoken) void speak(spoken, locale, { model: true });
-      return;
-    }
-    if (!("speechSynthesis" in window) || !text) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text.split("|")[0]?.trim());
-    utterance.lang = locale;
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
+    const spoken = text.split("|")[0]?.trim();
+    if (spoken) void speak(spoken, locale, modelSpeech ? { model: true } : {});
   }
 
   // Frage und Antwort der aktuellen Karte im Hintergrund vorab erzeugen:
@@ -397,6 +422,8 @@ export function LearningBoxApp({
     choice: {
       mode: LearningBoxMode;
       direction: LearningBoxSessionDirection;
+      /** Mehrere Fragearten oder Auswahl (nur für einen Stapel, LF-3). */
+      kinds?: readonly LearningBoxQuestionKind[];
     },
   ) {
     const deck = deckById.get(scope);
@@ -405,6 +432,8 @@ export function LearningBoxApp({
     let onlyDue = false;
     // Tagesportion: Karte und Richtung stehen je Element im Plan.
     let planQueue: QueueItem[] | null = null;
+    // Falsche Antworten für Auswahlfragen kommen aus dem ganzen Stapel.
+    let deckCards: LearningBoxCard[] = [];
     const box = scope.startsWith("box:") ? Number(scope.slice(4)) : 0;
     if (box) {
       title = `Box ${box} (nur üben)`;
@@ -426,6 +455,7 @@ export function LearningBoxApp({
       );
       pool = due.length ? due : all;
       onlyDue = due.length > 0;
+      deckCards = all;
     }
     setMode(choice.mode);
     // Die Richtungswahl gilt nicht für die Portion; die Vorgabe bleibt, wie sie war.
@@ -436,12 +466,18 @@ export function LearningBoxApp({
       return;
     }
     setNotice("");
-    // Eine neue Runde ersetzt den Zwischenstand einer früheren.
-    roundSnapshot.clear();
+    // Eine neue Runde ersetzt den Zwischenstand einer früheren; eine gemischte
+    // Runde hat keinen eigenen und lässt ihn deshalb stehen (wie Zuordnen).
+    const mixed = choice.kinds !== undefined && deck !== undefined;
+    if (!mixed) roundSnapshot.clear();
+    const queue = planQueue ?? buildQueue(pool, choice.direction, onlyDue);
     setSession({
       title,
       mode: choice.mode,
-      queue: planQueue ?? buildQueue(pool, choice.direction, onlyDue),
+      queue:
+        mixed && choice.kinds
+          ? assignLearningBoxKinds(queue, choice.kinds, deckCards)
+          : queue,
       index: 0,
       answer: "",
       revealed: false,
@@ -452,6 +488,7 @@ export function LearningBoxApp({
       startedAt: new Date().toISOString(),
       attempted: [],
       finished: false,
+      mixed,
     });
   }
 
@@ -461,6 +498,8 @@ export function LearningBoxApp({
    * Ende der Runde oder nichts mehr zu tun räumt den Zwischenstand ab.
    */
   function persist(next: Session) {
+    // Gemischte Runden haben kein „Weitermachen“ (LF-3).
+    if (next.mixed) return;
     const content = buildLearningBoxSnapshot({
       title: next.title,
       mode: next.mode,
@@ -508,6 +547,7 @@ export function LearningBoxApp({
       startedAt: saved.startedAt,
       attempted: saved.state.attempted,
       finished: false,
+      mixed: false,
     });
   }
 
@@ -532,12 +572,13 @@ export function LearningBoxApp({
       learningBoxAttemptKey(item.card.id, item.direction),
     ];
     const answeredAt = Date.now();
+    const mode = kindOf(session, item) === "oral" ? "oral" : "writing";
     const updated = session.practice
       ? item.card
       : processLearningBoxResult(item.card, {
           correct,
           direction: item.direction,
-          mode: session.mode,
+          mode,
           now: answeredAt,
         });
     if (!session.practice) {
@@ -545,7 +586,7 @@ export function LearningBoxApp({
         card: updated,
         correct,
         direction: item.direction,
-        mode: session.mode,
+        mode,
         roundId: session.roundId,
       });
     }
@@ -559,7 +600,7 @@ export function LearningBoxApp({
       correct: session.stats.correct + (correct ? 1 : 0),
       wrong: session.stats.wrong + (correct ? 0 : 1),
     };
-    if (session.mode === "writing") {
+    if (mode === "writing") {
       const next: Session = {
         ...session,
         queue,
@@ -603,15 +644,41 @@ export function LearningBoxApp({
     if (next.finished) void refresh();
   }
 
+  /** Auswahlfrage (LF-3): wird bewertet und gezählt, ändert aber keine Box und schreibt nichts. */
+  function answerChoice(current: Session, item: QueueItem) {
+    if (!item.choice || current.feedback) return;
+    const correct = gradeLearningBoxChoice(item.choice, current.answer);
+    const box = effectiveLearningBoxLevel(item.card, item.direction, now);
+    setSession({
+      ...current,
+      stats: {
+        correct: current.stats.correct + (correct ? 1 : 0),
+        wrong: current.stats.wrong + (correct ? 0 : 1),
+      },
+      feedback: {
+        correct,
+        expected: item.choice.expectedLabel,
+        given: current.answer.trim(),
+        boxFrom: box,
+        boxTo: box,
+        practice: true,
+        nextLabel: "nur geübt",
+      },
+    });
+  }
+
   function endSession() {
     setSession(null);
+    forms.close();
     void refresh();
   }
 
   // Logo, Leiste und Zurück-Geste fragen nach; „Beenden“ lässt den Zwischenstand stehen.
+  // Zuordnen und gemischte Runden haben keinen Zwischenstand: Sie beginnen beim nächsten Mal neu.
   const requestLeave = useRoundGuard({
-    active: session !== null && !session.finished,
+    active: (session !== null && !session.finished) || forms.running,
     onLeave: endSession,
+    resumable: forms.form === null && !session?.mixed,
   });
 
   async function run(action: () => Promise<unknown>, message?: string) {
@@ -728,7 +795,9 @@ export function LearningBoxApp({
 
   // ---------- Hauptbereich ----------
   let main: Parameters<typeof LernBoxScreen>[0]["main"] = { kind: "home" };
-  if (session) {
+  if (forms.main && !session) {
+    main = forms.main;
+  } else if (session) {
     const item = session.queue[session.index];
     const deck = item ? deckById.get(item.card.deckId) : undefined;
     const prompt = item
@@ -742,17 +811,19 @@ export function LearningBoxApp({
     const labels = directionLabelsFor(deck?.id ?? "");
     const total = session.queue.length;
     const answered = session.index + (session.feedback ? 1 : 0);
+    const kind = item ? kindOf(session, item) : session.mode;
     const study: LbStudy = {
       title: session.title,
       remaining: Math.max(0, total - answered),
-      modeLabel: MODE_LABEL[session.mode],
+      modeLabel: MODE_LABEL[kind],
       directionLabel:
         item?.direction === "reverse" ? labels.reverse : labels.forward,
       progress: total ? answered / total : 1,
       eyebrow: LANGUAGES[answerLocale]?.into ?? "Antwort",
       box: item ? effectiveLearningBoxLevel(item.card, item.direction, now) : 1,
       question: showAlternatives(prompt?.question ?? ""),
-      mode: session.mode,
+      mode: kind,
+      choices: item?.choice?.options ?? [],
       answer: session.answer,
       revealed: session.revealed,
       revealedAnswer: showAlternatives(prompt?.answer ?? ""),
@@ -818,7 +889,7 @@ export function LearningBoxApp({
         todayDecks={todayDecks}
         planScope="heute"
         resumeOffer={
-          !loading && !session && roundSnapshot.snapshot ? (
+          !loading && !session && !forms.form && roundSnapshot.snapshot ? (
             <ResumeOffer
               detail={roundSnapshot.snapshot.state.title}
               done={roundSnapshot.snapshot.done}
@@ -846,6 +917,23 @@ export function LearningBoxApp({
         onStart={({ scope, mode: chosenMode, direction: chosenDirection }) =>
           startSession(scope, { mode: chosenMode, direction: chosenDirection })
         }
+        formsVisible={formsVisible}
+        onStartMixed={({ scope, kinds, direction: chosenDirection }) =>
+          startSession(scope, {
+            mode:
+              kinds.find(
+                (kind): kind is LearningBoxMode => kind !== "choice",
+              ) ?? "writing",
+            direction: chosenDirection,
+            kinds,
+          })
+        }
+        onStartForm={({ scope, form }) => {
+          setSheet(null);
+          forms.start({ scope, form });
+        }}
+        onMatchAgain={forms.matchAgain}
+        onFormFinished={forms.finish}
         onEdit={() => {
           setView("edit");
           setQuery("");
@@ -853,7 +941,7 @@ export function LearningBoxApp({
           setNotice("");
         }}
         onBack={() => {
-          if (session) requestLeave();
+          if (session || forms.form) requestLeave();
           else {
             setView("home");
             setNotice("");
@@ -972,6 +1060,7 @@ export function LearningBoxApp({
         onCheck={() => {
           const item = session?.queue[session.index];
           if (!session || !item || !session.answer.trim()) return;
+          if (item.choice) return answerChoice(session, item);
           const result = evaluateLearningBoxAnswer(
             item.card,
             session.answer,

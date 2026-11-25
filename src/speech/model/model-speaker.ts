@@ -381,7 +381,7 @@ export async function pregenerate(
 export async function speakWithModel(
   text: string,
   lang: string,
-  options: { speed?: number; voice?: string } = {},
+  options: { speed?: number; voice?: string; onStart?: () => void } = {},
 ): Promise<boolean> {
   const mine = ++generation;
   stopAudio();
@@ -395,6 +395,7 @@ export async function speakWithModel(
   if (!audio) return false;
   // Inzwischen wurde etwas Neues angefordert oder gestoppt.
   if (mine !== generation) return true;
+  options.onStart?.();
   await playSamples(audio.samples, audio.sampleRate);
   return true;
 }

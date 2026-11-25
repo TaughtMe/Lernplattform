@@ -9,7 +9,7 @@ import { ProfileScreen } from "../../views/diagnostik/profile-screen";
 type Load = () => Promise<CompetenceProfile>;
 
 /**
- * Container für „Mein Lernstand“: lädt den Lernstand einmal und zeigt das
+ * Container für „Mein Stand“: lädt den Lernstand einmal und zeigt das
  * Profil. Gespeichert wird nichts. `load` ist für Tests einspeisbar.
  */
 export function CompetenceProfileApp({ load }: { load?: Load | undefined }) {

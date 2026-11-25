@@ -119,13 +119,18 @@ describe("Sprachmodell in der Vorschau", () => {
     expect(spoken.map((entry) => entry.voice?.voiceURI)).toEqual(["a"]);
   });
 
-  it("bleibt ohne Modell für die Sprache wie vor dem Plan", async () => {
+  it("nimmt ohne Modell für die Sprache nur eine lokale Gerätestimme", async () => {
+    // Entscheidung 58/71: nie eine Netzwerkstimme, auch ohne Modell.
     voices = [network];
-    await run(speak("Rad", "de-DE", { model: true }));
+    await run(speak("Rad", "de-DE", { model: true, silentNotice: true }));
     expect(model.speakWithModel).not.toHaveBeenCalled();
-    expect(spoken.map((entry) => entry.voice?.voiceURI)).toEqual(["g"]);
-    expect(hasVoiceFor("de-DE", { model: true })).toBe(true);
-    expect(hasLocalVoiceFor("de-DE", { model: true })).toBe(false);
+    expect(spoken).toEqual([]);
+    expect(hasVoiceFor("de-DE", { model: true })).toBe(false);
+    voices = [network, local];
+    await run(speak("Rad", "de-DE", { model: true }));
+    expect(spoken.map((entry) => entry.voice?.voiceURI)).toEqual([
+      local.voiceURI,
+    ]);
   });
 
   it("zählt das Modell als Stimme, die auf dem Gerät läuft", () => {
@@ -168,7 +173,7 @@ describe("Sprache noch nicht installiert", () => {
   it("liest mit der Gerätestimme und installiert im Hintergrund", async () => {
     model.available = true;
     model.installed = false;
-    voices = [network];
+    voices = [network, local];
     await run(speak("Rad", "de-DE", { model: true }));
     expect(model.installLanguage).toHaveBeenCalledWith("de-DE");
     expect(model.speakWithModel).not.toHaveBeenCalled();
@@ -183,11 +188,11 @@ describe("Sprache noch nicht installiert", () => {
     expect(model.speakWithModel).toHaveBeenCalled();
   });
 
-  it("nimmt mit localOnly keine Netzwerkstimme, sondern wartet auf das Modell", async () => {
+  it("nimmt nie eine Netzwerkstimme, sondern wartet auf das Modell", async () => {
     model.available = true;
     model.installed = false;
     voices = [network];
-    await run(speak("Rad", "de-DE", { model: true, localOnly: true }));
+    await run(speak("Rad", "de-DE", { model: true }));
     expect(spoken).toEqual([]);
     expect(model.speakWithModel).toHaveBeenCalled();
   });

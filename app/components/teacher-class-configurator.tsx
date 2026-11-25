@@ -89,6 +89,8 @@ export function TeacherClassConfigurator() {
   const [removalShown, setRemovalShown] = useState(false);
   // Gast-QR (90 Minuten) für geteilte Geräte; nur mit freigegebenem Bereich.
   const guestEnabled = useAreaVisible("gastmodus");
+  // Schreiberleichterung pausiert (Entscheidung 79): keine Schalter, kein Hinweis.
+  const reliefVisible = useAreaVisible("schreiberleichterung");
   const [guestQr, setGuestQr] = useState<{
     classId: string;
     link: string;
@@ -286,6 +288,42 @@ export function TeacherClassConfigurator() {
     } catch {
       setMessage("Der Schüler konnte nicht gespeichert werden.");
     }
+  }
+
+  /** Liefert, wie viele Namen (von vorn) gespeichert sind. */
+  async function addStudents(names: readonly string[]): Promise<number> {
+    if (!selected || names.length === 0) return 0;
+    const created: ClassMember[] = [];
+    try {
+      for (const name of names) {
+        const member: ClassMember = {
+          id: crypto.randomUUID(),
+          classId: selected.id,
+          displayName: name,
+          enrollmentToken: token(),
+          createdAt: new Date().toISOString(),
+        };
+        await repository.putMember(member);
+        created.push(member);
+      }
+    } catch {
+      // Bereits Gespeichertes bleibt sichtbar; der Rest fehlt.
+    }
+    if (created.length > 0) {
+      setMembers((current) => [...current, ...created]);
+      setCounts((current) => ({
+        ...current,
+        [selected.id]: (current[selected.id] ?? 0) + created.length,
+      }));
+      setShown(undefined);
+      changed();
+    }
+    setMessage(
+      created.length === names.length
+        ? `${created.length} Schüler wurden lokal angelegt.`
+        : `Nur ${created.length} von ${names.length} Schülern konnten gespeichert werden. Die übrigen Namen stehen noch im Feld.`,
+    );
+    return created.length;
   }
 
   async function removeStudent(member: ClassMember) {
@@ -683,7 +721,11 @@ export function TeacherClassConfigurator() {
                 name: member.displayName,
                 writingRelief: member.writingRelief === true,
               }))}
-              hint={relief > 0 ? `${relief} mit Schreiberleichterung` : ""}
+              hint={
+                reliefVisible && relief > 0
+                  ? `${relief} mit Schreiberleichterung`
+                  : ""
+              }
               shownId={shown?.id}
               readOnly={archived}
               qr={
@@ -697,6 +739,7 @@ export function TeacherClassConfigurator() {
                 ) : null
               }
               onAdd={(name) => void addStudent(name)}
+              onAddMany={(names) => addStudents(names)}
               onToggleQr={(id) =>
                 setShown((current) =>
                   current?.id === id
@@ -704,10 +747,14 @@ export function TeacherClassConfigurator() {
                     : members.find((member) => member.id === id),
                 )
               }
-              onRelief={(id) => {
-                const member = members.find((entry) => entry.id === id);
-                if (member) void toggleWritingRelief(member);
-              }}
+              {...(reliefVisible
+                ? {
+                    onRelief: (id: string) => {
+                      const member = members.find((entry) => entry.id === id);
+                      if (member) void toggleWritingRelief(member);
+                    },
+                  }
+                : {})}
               onRemove={(id) => {
                 const member = members.find((entry) => entry.id === id);
                 if (member) void removeStudent(member);

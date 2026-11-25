@@ -161,6 +161,37 @@ describe("Startseite: Wege", () => {
     ).toEqual({ contentId: "x", mode: "BATTLE", classId: CLASS_A });
   });
 
+  it("öffnet „Kopfrechnen live“ mit dem gewählten Jahrgang ohne Inhaltsschritt", async () => {
+    renderAt(`?klasse=${CLASS_A}`);
+    const user = userEvent.setup();
+    const grade = await screen.findByRole("combobox", { name: "Jahrgang" });
+    expect(grade).toHaveValue("3");
+    await user.selectOptions(grade, "1");
+    expect(screen.getByText("Plus und Minus bis 20")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Kopfrechnen live" }));
+    expect(window.location.pathname).toBe("/lehrer/live");
+    expect(
+      JSON.parse(window.sessionStorage.getItem(LIVE_INTENT_KEY) ?? "null"),
+    ).toEqual({ quick: "kopfrechnen-1", mode: "LAUFDIKTAT", classId: CLASS_A });
+  });
+
+  it("startet eine Vorgabe oder Wortbox mit einem Tipp, auch ohne Klasse", async () => {
+    renderAt("?klasse=ohne");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Einmaleins" }));
+    expect(
+      JSON.parse(window.sessionStorage.getItem(LIVE_INTENT_KEY) ?? "null"),
+    ).toEqual({ quick: "einmaleins", mode: "LAUFDIKTAT", classId: "" });
+    window.history.replaceState(null, "", "/lehrer");
+    await user.click(screen.getByRole("button", { name: "Doppelkonsonanten" }));
+    expect(
+      JSON.parse(window.sessionStorage.getItem(LIVE_INTENT_KEY) ?? "null"),
+    ).toMatchObject({ quick: "wortbox-double-consonants" });
+    expect(
+      screen.queryByRole("button", { name: "s, ss und ß" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("führt Bearbeiten und die Kacheln in den Editor", async () => {
     await library().put(entry("x", { classIds: [CLASS_A] }));
     renderAt(`?klasse=${CLASS_A}`);
