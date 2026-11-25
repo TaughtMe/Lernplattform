@@ -48,19 +48,27 @@ export default function ImpressumPage() {
       <section>
         <h2>Urheberrecht</h2>
         <p>
-          © 2026 Toby Bryson. Konzept, Quellcode und eigens erstellte Inhalte
-          sind urheberrechtlich geschützt. Eingesetzte Open-Source-Software
-          unterliegt den Lizenzbedingungen der jeweiligen Projekte.
+          © 2026 Toby Bryson. Der Lernraum soll frei bleiben: Geplant ist, den
+          Quellcode unter der EUPL-1.2 und die eigens erstellten Inhalte unter
+          CC BY-SA 4.0 zu veröffentlichen. Name und Logo „Lernraum“ sind davon
+          ausgenommen. Bis die Lizenzdateien veröffentlicht sind, gilt das
+          Urheberrecht.
+        </p>
+        <p>
+          Eingesetzte Open-Source-Software unterliegt den Lizenzbedingungen der
+          jeweiligen Projekte. Bilder und Figuren Dritter unterliegen den
+          Rechten ihrer Inhaber.
         </p>
       </section>
 
       <section>
         <h2>Software für das Vorlesen</h2>
         <p>
-          In der Vorschau kann der Lernraum Texte mit einem Sprachmodell
-          (KittenTTS, Apache-2.0) auf dem Gerät vorlesen. Die Lautschrift
-          erzeugt eSpeak NG unter der GNU General Public License, Version 3. Der
-          Text verlässt dabei das Gerät nicht.
+          Der Lernraum liest Texte mit einem Sprachmodell (KittenTTS 2 Nano,
+          Apache-2.0) auf dem Gerät vor. Die Lautschrift erzeugt eSpeak NG unter
+          der GNU General Public License, Version 3. Der Text verlässt dabei das
+          Gerät nicht. In den Einstellungen lässt sich die Lernraum-Stimme je
+          Gerät ausschalten; dann lesen nur Stimmen, die auf dem Gerät laufen.
         </p>
         <p>
           <a href="/speech/phonemizer/HINWEISE.md">Herkunft und Lizenzen</a>
