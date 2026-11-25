@@ -108,6 +108,17 @@ export const RELEASE_AREAS = {
     // erscheint wieder der Handabgleich.
     stage: "frei",
   },
+  schnellstart: {
+    label: "Schnellstart im Lehrerbereich",
+    // Kein eigener Pfad: der Abschnitt „Schnellstart“ auf /lehrer (L25-10,
+    // M24-6: Kopfrechnen nach Jahrgang, Vorgaben, Wortboxen als Live-Quelle).
+    // Seit 25.11.2026 aus (Entscheidung 86): Vorauswahl nach Jahrgang ist
+    // nicht gewünscht, der Start springt ohne Einstellungen in die Lobby, die
+    // Platzierung passt nicht. Der Code bleibt; Wortboxen als Live-Quelle
+    // werden später neu überdacht.
+    routes: [],
+    stage: "aus",
+  },
   "lehrer-geraet": {
     label: "Gerätetyp und Sperre im Lehrerbereich",
     // Kein eigener Pfad: schaltet die Wahl „Mein Gerät“ / „Tafel“ beim ersten

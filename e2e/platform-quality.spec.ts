@@ -809,9 +809,11 @@ test("teacher material and assignment tools share a consistent grid", async ({
   await expect(
     page.getByRole("region", { name: "Vokabelpakete" }),
   ).toBeVisible();
+  // Vokabelpakete bearbeitet nur noch der Live-Raum (Entscheidung 87); die
+  // Freigabe verweist dorthin.
   await expect(
-    page.getByRole("button", { name: "Datei importieren" }),
-  ).toBeVisible();
+    page.getByRole("link", { name: "Neues Vokabelpaket anlegen" }),
+  ).toHaveAttribute("href", "/lehrer/live?neu=vocabulary");
 
   // Aufgaben sind noch in der Vorschau.
   await page.goto("/lehrer/aufgaben?vorschau=an");

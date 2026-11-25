@@ -52,6 +52,8 @@ Reihenfolge: K8-1 bis K8-3 sofort, K8-4 nach Entscheidung und Designvorlage, K8-
 | E-K8-4 | Wo stehen Lernwortlisten in der Ablage: eigener Reiter „Für die Kinder“, oder in „Vorbereitet“ mit „An die Kinder geben“ statt „Starten“? | Eigener Reiter „Für die Kinder“ für alles, was als QR an die Geräte geht (Vokabelpakete und Lernwortlisten). Das ist auch der Ort für K8-4.   |
 | E-K8-3 | Gehören „Aufgaben“ (`/lehrer/aufgaben`) als dritte Verwendung dazu („Als Aufgabe stellen“)?                                               | Erst mit L25-5 (Etappe 2).                                                                                                                    |
 
+Entschieden am 25.11.2026 (Entscheidung 87): E-K8-1 nein, E-K8-2 ja, E-K8-3 ja (mit L25-5), E-K8-4 ja.
+
 ## 5. Nicht Teil dieses Plans
 
 - Geführte Ersteinrichtung „Klasse in 5 Minuten“ (C-010, Nr. 5).
@@ -66,10 +68,10 @@ Reihenfolge: K8-1 bis K8-3 sofort, K8-4 nach Entscheidung und Designvorlage, K8-
 
 ## 7. Stand
 
-| Schritt | Stand     | Wie / Commit                                                                                                                                      |
-| ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| K8-1    | umgesetzt | Meldung ohne URL und Publishable Key, auch beim Beitritt der Kinder (`6b4304e`)                                                                   |
-| K8-2    | umgesetzt | Zeilenaktion „An die Kinder geben“ für Vokabelpakete (Desktop und Tablet), Freigabe wählt `?paket=` vor; Demo-Daten der Designvorlage unverändert |
-| K8-3    | Rückfrage | E-K8-4: Die Reiter „Vorbereitet“ und „Archiv“ passen nicht zu Lernwortlisten (sie starten keinen Raum)                                            |
-| K8-4    | Rückfrage | E-K8-1                                                                                                                                            |
-| K8-5    | Rückfrage | E-K8-2                                                                                                                                            |
+| Schritt | Stand     | Wie / Commit                                                                                                                                                                                                                                                             |
+| ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| K8-1    | umgesetzt | Meldung ohne URL und Publishable Key, auch beim Beitritt der Kinder (`6b4304e`)                                                                                                                                                                                          |
+| K8-2    | umgesetzt | Zeilenaktion „An die Kinder geben“ für Vokabelpakete (Desktop und Tablet), Freigabe wählt `?paket=` vor; Demo-Daten der Designvorlage unverändert                                                                                                                        |
+| K8-3    | umgesetzt | Reiter „Für die Kinder“: Vokabelpakete und Lernwortlisten der Klasse, neueste zuerst, mit „An die Kinder geben“; Lernwortlisten öffnen beim Bearbeiten die Freigabe; ohne Daten fehlt der Reiter nicht, nur in der Designvorlage (kein `kids`)                           |
+| K8-4    | entfällt  | E 87: Startseite bleibt „Neues Laufdiktat“                                                                                                                                                                                                                               |
+| K8-5    | umgesetzt | Freigabe zeigt für Vokabelpakete Liste, Vorschau (erste 8 Paare), „Bearbeiten“ und „+ Neu“ in den Live-Raum, Freigeben und Löschen wie bisher; `?paket=` öffnet auch Lernwortlisten; Freigeben zählt nur `revision` hoch, `updatedAt` bleibt (`b74c325`, Agent Freigabe) |
