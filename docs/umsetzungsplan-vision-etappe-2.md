@@ -25,7 +25,7 @@ Stände: `offen` · `in Arbeit (<Agent>)` · `umgesetzt` · `Rückfrage` · `ent
 | MA-5                      | Regel „sicher“ für Mathe: unter 5 sicheren Aufgaben mindestens 3 mit dem Familienmerkmal            | nein           | Rückfrage               | E2-4: Die Regel „sicher“ ist eine offene Entscheidung aus Welle 3                                                                                                                                                            |
 | MA-13                     | Mathe in „Mein Stand“ und „Mein Fortschritt“, je Familie in Kinderworten (prüfen, was schon da ist) | nein           | umgesetzt               | Abschnitt „Kopfrechnen“ in „Mein Fortschritt“: je Familie „12 Aufgaben richtig gerechnet · an 3 Tagen ohne Hilfe richtig“, Stand und „Üben“; keine Gesamtzahl, kein Prozent (`0405b3f`, Agent Fortschritt)                   |
 | L25-7                     | „Meinen Stand zeigen“: ruhige Ansicht für die Lehrkraft, ohne Fehlerwörter                          | nein           | umgesetzt               | „Mein Stand“: „Meinen Stand zeigen“ öffnet eine große, ruhige Ansicht nur mit Bereichen und Stand, ohne Erklärungen mit Zahlen und ohne Üben; nichts wird übermittelt (`017bfce`)                                            |
-| MA-11                     | Mittelschul-Paket 1: Zehnereinmaleins, große Zahlen und Runden, Komma und Geld, Größen umrechnen    | ja (Regeln)    | umgesetzt (freies Üben) | Arten Zehnereinmaleins, große Zahlen, Runden, Geld und Komma, Größen umrechnen; im freien Üben ausdrücklich wählbar, nichts vorgewählt; Live-Raum nur in der Domäne (`a0a49f6`, Agent Mathe). Fachliche Prüfung: Abschnitt 6 |
+| MA-11                     | Mittelschul-Paket 1: Zehnereinmaleins, große Zahlen und Runden, Komma und Geld, Größen umrechnen    | ja (Regeln)    | umgesetzt (freies Üben) | Arten Zehnereinmaleins, große Zahlen, Runden, Geld und Komma, Größen umrechnen; im freien Üben ausdrücklich wählbar, nichts vorgewählt; Live-Raum nur in der Domäne (`a0a49f6`, Agent Mathe). Fachliche Prüfung: Abschnitt 5 |
 | L25-5                     | Auftrag öffnet die Übung, „erledigt“ aus gezählten Runden (Entscheidungen 62, 63)                   | nein           | offen                   | nach L25-4                                                                                                                                                                                                                   |
 | L25-4                     | Übungskarten-QR mit Kennungen mitgelieferter Übungen, druckbarer Bogen                              | nein           | offen                   |                                                                                                                                                                                                                              |
 | F30-9, L25-14             | Verweisseite (Levumi u. a.), Kurzanleitung, Seite für die Schulleitung                              | ja (Texte)     | offen                   |                                                                                                                                                                                                                              |
@@ -53,7 +53,7 @@ Stände: `offen` · `in Arbeit (<Agent>)` · `umgesetzt` · `Rückfrage` · `ent
 | E2-2 | Soll der Startpunkt die Übung selbst einstellen (L25-2), oder nur vorschlagen?                      | Nur vorschlagen, mit „So üben“ und „Anders einstellen“.                                 |
 | E2-3 | „Lehrkraft wählt“ am Kindgerät mit einer Themenliste nach Jahrgang?                                 | Ohne Jahrgang: Fach, Thema, Niveau (leicht, mittel, schwer).                            |
 
-## 6. Fachliche Prüfung MA-11 (für den Entwickler)
+## 5. Fachliche Prüfung MA-11 (für den Entwickler)
 
 1. Runden: ab 5 auf; Zehner nur bei dreistelligen, Hunderter bei vierstelligen, Tausender bei fünfstelligen Zahlen.
 2. Zehnereinmaleins: nur ein Faktor ist ein Vielfaches von 10 oder 100 (30 · 4, 560 : 8); 30 · 40 fehlt.
@@ -65,6 +65,6 @@ Stände: `offen` · `in Arbeit (<Agent>)` · `umgesetzt` · `Rückfrage` · `ent
 8. Gewählte Arten ersetzen die Rechenarten; „Plus bis 100“ und „Große Zahlen“ lassen sich nicht mischen.
 9. Live-Raum: Die Arten wären dort ein neues gespeichertes Feld der Vorbereitung; Runden und Größen passen nicht ins Zeilenformat. Erst nach Entscheidung.
 
-## 5. Protokoll
+## 6. Protokoll
 
 - 25.11.2026: Plan angelegt.
