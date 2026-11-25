@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useAreaVisible } from "../release/release-context";
 import type { TeacherClass } from "../../src/domain/class-enrollment";
 import {
   activeClassIdsOf,
@@ -102,6 +103,8 @@ export function useTeacherStart(): {
   const [source, setSource] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [quickGrade, setQuickGrade] = useState<number>(DEFAULT_QUICK_GRADE);
+  // Schnellstart ist aus (Entscheidung 86); der Code bleibt für später.
+  const quickVisible = useAreaVisible("schnellstart");
   // Gerade geholte Einträge bleiben in ihrer Quelle stehen („✓ Bei 7b“).
   const [justAdded, setJustAdded] = useState<Readonly<Record<string, string>>>(
     {},
@@ -347,7 +350,7 @@ export function useTeacherStart(): {
           `/lehrer/live?neu=${kind}${classParam ? `&${classParam}` : ""}`,
         ]),
       ) as Record<StartKind, string>,
-      quick,
+      ...(quickVisible ? { quick } : {}),
       tab,
       onTab: setTab,
       prepared: prepared.map((entry) =>

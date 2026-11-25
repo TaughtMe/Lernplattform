@@ -10,6 +10,8 @@ import {
   createTeacherContentLibraryRepository,
   createTeacherProfileRepository,
 } from "../../src/storage/teacher-class-settings";
+import { resolveStages, resolveVisibility } from "../../src/domain/release";
+import { ReleaseProvider } from "../release/release-context";
 import { LIVE_INTENT_KEY } from "./live-intent";
 import { TeacherStart } from "./teacher-start";
 import { PROTECTION_NOTICE } from "./use-teacher-start";
@@ -44,9 +46,13 @@ const entry = (
 
 const library = () => createTeacherContentLibraryRepository();
 
-function renderAt(search = "") {
+function renderAt(search = "", stages?: string) {
   window.history.replaceState(null, "", `/lehrer${search}`);
-  return render(<TeacherStart />);
+  return render(
+    <ReleaseProvider value={resolveVisibility(resolveStages(stages), false)}>
+      <TeacherStart />
+    </ReleaseProvider>,
+  );
 }
 
 /** Titel der Zeilen im offenen Reiter, in Reihenfolge. */
@@ -180,8 +186,18 @@ describe("Startseite: Wege", () => {
     ).toEqual({ contentId: "x", mode: "BATTLE", classId: CLASS_A });
   });
 
-  it("öffnet „Kopfrechnen live“ mit dem gewählten Jahrgang ohne Inhaltsschritt", async () => {
+  it("zeigt den Schnellstart nicht, solange er aus ist (Entscheidung 86)", async () => {
     renderAt(`?klasse=${CLASS_A}`);
+    await screen.findByRole("heading", { level: 1, name: "Neues Laufdiktat" });
+    expect(screen.queryByRole("heading", { name: "Schnellstart" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Kopfrechnen live" }),
+    ).toBeNull();
+  });
+
+  // Der Schnellstart ist aus (Entscheidung 86); der Code bleibt geprüft.
+  it("öffnet „Kopfrechnen live“ mit dem gewählten Jahrgang ohne Inhaltsschritt", async () => {
+    renderAt(`?klasse=${CLASS_A}`, "schnellstart=frei");
     const user = userEvent.setup();
     const grade = await screen.findByRole("combobox", { name: "Jahrgang" });
     expect(grade).toHaveValue("3");
@@ -195,7 +211,7 @@ describe("Startseite: Wege", () => {
   });
 
   it("startet eine Vorgabe oder Wortbox mit einem Tipp, auch ohne Klasse", async () => {
-    renderAt("?klasse=ohne");
+    renderAt("?klasse=ohne", "schnellstart=frei");
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Einmaleins" }));
     expect(

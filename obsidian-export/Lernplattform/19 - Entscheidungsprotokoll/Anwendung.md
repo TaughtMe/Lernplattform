@@ -945,3 +945,26 @@ Die Lehrkraft sieht ein tolerant angenommenes Wort in der Live-Übersicht als ri
 **Beschlossen:** Der Freigabebereich `lehrer-geraet` (Wahl „Mein Gerät“ / „Tafel“, Sperre der Personenbereiche auf der Tafel, PIN-Sperre) steht auf `frei` (L25-9, Bericht 25, F6). Quelle: Entscheidung des Entwicklers vom 24.11.2026.
 
 **Begründung:** Nachsitzen und Üben am Lehrertablet, ohne dass ein Kind die Namensliste erreicht.
+
+## 86. Schnellstart im Lehrerbereich aus – 25. November 2026
+
+**Beschlossen:** Der Abschnitt „Schnellstart“ auf der Lehrer-Startseite ist aus (Freigabebereich `schnellstart`, Stufe `aus`). Das betrifft „Kopfrechnen live“ nach Jahrgang (L25-10), die Vorgaben Einmaleins, Zehnerübergang und Plus/Minus bis 1000 sowie die Wortboxen als Live-Quelle (M24-6). Der Code bleibt erhalten. Quelle: Rückmeldung des Entwicklers nach dem Ausprobieren am 25.11.2026.
+
+**Zurückgenommen:** Statustafel Etappe 1, L25-10 und M24-6 „umgesetzt“ (#62), soweit es den Einstieg auf der Startseite betrifft.
+
+**Begründung:** Eine Vorauswahl nach Jahrgang und feste Vorgaben passen nicht; die Lehrkraft will den Inhalt selbst einstellen. Der Start sprang ohne Einstellungsschritt direkt zum QR-Code. Die Platzierung über den Reitern gefällt nicht.
+
+**Nicht wieder einbauen:** Keinen Raumstart, der den Einstellungsschritt überspringt. Keine Vorauswahl nach Jahrgang oder Klassenstufe.
+
+**Später überdenken:** Wortboxen als Quelle für ein Laufdiktat. Die Idee bleibt, Ort und Ablauf sind neu zu klären.
+
+## 87. Inhalte zuerst (K8): Startseite bleibt, ein Editor, Reiter „Für die Kinder“ – 25. November 2026
+
+**Beschlossen:** Entscheidungen des Entwicklers zu `docs/umsetzungsplan-inhalte-zuerst.md`, Abschnitt 4:
+
+1. **E-K8-1, nein:** Die Startseite heißt weiter „Neues Laufdiktat“. K8-4 entfällt.
+2. **E-K8-2, ja:** Für Vokabelpakete bleibt ein Editor, der Inhaltsschritt des Live-Raums. Die Freigabe-Seite zeigt nur noch Auswahl, QR-Code und Laufzeit (K8-5).
+3. **E-K8-3, ja:** „Als Aufgabe stellen“ kommt erst mit L25-5 (Etappe 2).
+4. **E-K8-4, ja:** Ein eigener Reiter „Für die Kinder“ auf der Startseite sammelt, was per QR-Code auf die Geräte geht: Vokabelpakete und Lernwortlisten (K8-3).
+
+**Begründung:** Zwei Formulare für dasselbe Vokabelpaket verwirren (Audit C-010). Lernwortlisten starten keinen Raum und passen nicht in „Vorbereitet“ und „Archiv“.
