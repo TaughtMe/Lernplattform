@@ -135,6 +135,37 @@ describe("Startseite: Vorbereitet und Archiv", () => {
     ).toBeNull();
   });
 
+  it("sammelt Vokabelpakete und Lernwortlisten unter „Für die Kinder“ (K8-3)", async () => {
+    await library().putMany([
+      entry("Vokabeln", { classIds: [CLASS_A] }),
+      entry("Woche 12", {
+        classIds: [CLASS_A],
+        kind: "wordlist",
+        source: "Fahrrad\nSchmetterling",
+        updatedAt: "2026-09-04T10:00:00.000Z",
+      }),
+      entry("Ein Text", {
+        classIds: [CLASS_A],
+        kind: "text",
+        source: "Der Hund bellt.",
+      }),
+    ]);
+    renderAt(`?klasse=${CLASS_A}`);
+    const user = userEvent.setup();
+    // Lernwortlisten stehen nicht unter „Vorbereitet“.
+    await screen.findByRole("button", { name: "Vokabeln starten" });
+    expect(rowTitles()).not.toContain("Woche 12");
+    await user.click(screen.getByRole("tab", { name: /Für die Kinder/ }));
+    expect(rowTitles()).toEqual(["Woche 12", "Vokabeln"]);
+    expect(screen.getByText("2 Lernwörter")).toBeInTheDocument();
+    // Bearbeiten einer Lernwortliste öffnet die Freigabe.
+    await user.click(
+      screen.getByRole("button", { name: "Woche 12 bearbeiten" }),
+    );
+    expect(window.location.pathname).toBe("/lehrer/material");
+    expect(window.location.search).toBe("?paket=Woche%2012");
+  });
+
   it("holt einen Eintrag mit „Wieder vorbereiten“ aus dem Archiv", async () => {
     await library().put(
       entry("x", {

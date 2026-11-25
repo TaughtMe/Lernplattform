@@ -7,7 +7,8 @@ import styles from "./start-screen.module.css";
 
 export type StartKind = "text" | "vocabulary" | "math";
 
-export type StartTab = "prepared" | "archive";
+/** `kids`: „Für die Kinder“ (K8-3, Entscheidung 87). */
+export type StartTab = "prepared" | "archive" | "kids";
 
 export type StartClassChip = {
   /** Kurzname, z. B. „7b“. */
@@ -16,10 +17,13 @@ export type StartClassChip = {
   own: boolean;
 };
 
+/** Art einer Zeile: wie die Kacheln, dazu Lernwortlisten im Reiter „Für die Kinder“. */
+export type StartRowKind = StartKind | "wordlist";
+
 export type StartRow = {
   id: string;
   title: string;
-  kind: StartKind;
+  kind: StartRowKind;
   /** Modus · Optionen (vorbereitet) bzw. Modus · durchgeführt-Datum (Archiv). */
   meta: string;
   classes: readonly StartClassChip[];
@@ -102,8 +106,13 @@ export type StartScreenProps = {
   onTab?: (tab: StartTab) => void;
   prepared: readonly StartRow[];
   archived: readonly StartRow[];
+  /**
+   * Reiter „Für die Kinder“: Vokabelpakete und Lernwortlisten, die per
+   * QR-Code auf die Geräte gehen. Ohne Angabe fehlt der Reiter.
+   */
+  kids?: readonly StartRow[];
   /** Text für einen leeren Reiter. */
-  emptyText: Record<StartTab, string>;
+  emptyText: Record<"prepared" | "archive", string> & { kids?: string };
   onStart?: (id: string) => void;
   onEdit?: (id: string) => void;
   /** `class`: nur aus der gewählten Klasse nehmen, `all`: ganz löschen. */
@@ -126,6 +135,10 @@ const KINDS: Record<StartKind, { label: string; glyph: string; cta: string }> =
   };
 const KIND_ORDER: readonly StartKind[] = ["text", "vocabulary", "math"];
 
+function kindLabel(kind: StartRowKind) {
+  return kind === "wordlist" ? "Lernwörter" : KINDS[kind].label;
+}
+
 /** So viele Zeilen zeigt das Handy, bevor „Alle N anzeigen“ erscheint. */
 const PHONE_ROWS = 4;
 
@@ -140,13 +153,21 @@ export function StartScreen(props: StartScreenProps) {
   const { tab, classShort, other } = props;
   const [expanded, setExpanded] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const rows = tab === "prepared" ? props.prepared : props.archived;
+  const rows =
+    tab === "kids"
+      ? (props.kids ?? [])
+      : tab === "prepared"
+        ? props.prepared
+        : props.archived;
   const own = classShort ?? "";
 
   function tabKey(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const next: StartTab = tab === "prepared" ? "archive" : "prepared";
+    const ids = tabs.map((item) => item.id);
+    const step = event.key === "ArrowRight" ? 1 : -1;
+    const next =
+      ids[(ids.indexOf(tab) + step + ids.length) % ids.length] ?? "prepared";
     props.onTab?.(next);
     document.getElementById(`start-tab-${next}`)?.focus();
   }
@@ -169,6 +190,16 @@ export function StartScreen(props: StartScreenProps) {
       short: "Archiv",
       count: props.archived.length,
     },
+    ...(props.kids
+      ? [
+          {
+            id: "kids" as const,
+            long: "Für die Kinder",
+            short: "Für Kinder",
+            count: props.kids.length,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -264,9 +295,11 @@ export function StartScreen(props: StartScreenProps) {
               );
             })}
             <span className={styles.tabHint}>
-              {tab === "prepared"
-                ? "Nach dem Durchführen wandert es ins Archiv"
-                : "Wieder vorbereiten holt es zurück"}
+              {tab === "kids"
+                ? "Per QR-Code auf die Geräte der Kinder"
+                : tab === "prepared"
+                  ? "Nach dem Durchführen wandert es ins Archiv"
+                  : "Wieder vorbereiten holt es zurück"}
             </span>
           </div>
           <div
@@ -276,19 +309,23 @@ export function StartScreen(props: StartScreenProps) {
             className={cx(styles.listBox, !expanded && styles.collapsed)}
           >
             {rows.length === 0 ? (
-              <p className={styles.empty}>{props.emptyText[tab]}</p>
+              <p className={styles.empty}>
+                {tab === "kids"
+                  ? (props.emptyText.kids ?? "")
+                  : props.emptyText[tab]}
+              </p>
             ) : (
               <ul className={styles.rows}>
                 {rows.map((row, index) => (
                   <li key={row.id} className={styles.row}>
                     <span className={styles.kindCol}>
-                      {KINDS[row.kind].label}
+                      {kindLabel(row.kind)}
                     </span>
                     <span className={styles.main}>
                       <span className={styles.rowTitle}>{row.title}</span>
                       <span className={styles.rowLine}>
                         <span className={styles.kindInline}>
-                          {KINDS[row.kind].label}
+                          {kindLabel(row.kind)}
                         </span>
                         <span className={styles.meta}>{row.meta}</span>
                         <span className={styles.chipsInline}>
@@ -339,7 +376,7 @@ export function StartScreen(props: StartScreenProps) {
                       </span>
                     ) : (
                       <span className={styles.actions}>
-                        {tab === "prepared" ? (
+                        {tab === "kids" ? null : tab === "prepared" ? (
                           <button
                             type="button"
                             className={cx(

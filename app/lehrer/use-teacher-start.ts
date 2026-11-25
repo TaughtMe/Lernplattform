@@ -20,6 +20,7 @@ import {
   UNASSIGNED,
   type RoomContentPackage,
 } from "../../src/domain/teacher-content-summary";
+import type { TeacherContentPackage } from "../../src/domain/teacher-content-library";
 import type { TeacherProfile } from "../../src/domain/teacher-workspace";
 import {
   createTeacherClassRepository,
@@ -53,10 +54,18 @@ const KINDS: readonly StartKind[] = ["text", "vocabulary", "math"];
 type Loaded = {
   classes: TeacherClass[];
   packages: RoomContentPackage[];
+  /** Alle Inhalte der Ablage, auch Lernwortlisten (Reiter „Für die Kinder“). */
+  all: TeacherContentPackage[];
   profile: TeacherProfile | undefined;
 };
 
 /** „Klasse 7b“ → „7b“ für Chips, Reiter und Knöpfe. */
+
+/** Geht per QR-Code an die Geräte: Vokabelpakete und Lernwortlisten. */
+function isForKids(entry: TeacherContentPackage) {
+  const kind = contentKindOf(entry);
+  return kind === "vocabulary" || kind === "wordlist";
+}
 
 /** Freigabe-Seite mit vorgewähltem Paket (K8-2). */
 export function transferHrefFor(id: string): string {
@@ -124,6 +133,7 @@ export function useTeacherStart(): {
           setLoaded({
             classes,
             packages: packages.filter(isRoomContent),
+            all: packages,
             profile,
           });
           setFailed(false);
@@ -193,7 +203,7 @@ export function useTeacherStart(): {
     const course = classes.find((item) => item.id === id);
     return course ? classShortName(course.name) : id;
   };
-  const toRow = (entry: RoomContentPackage, meta: string): StartRow => {
+  const toRow = (entry: TeacherContentPackage, meta: string): StartRow => {
     const ids = activeClassIdsOf(entry, activeIds).sort(
       (left, right) =>
         Number(right === selection) - Number(left === selection) ||
@@ -209,14 +219,18 @@ export function useTeacherStart(): {
         own: id === selection,
       })),
       shared: selectedClass !== undefined && ids.length > 1,
-      // K8-2: Vokabelpakete direkt an die Kinder geben (Freigabe, LernBox).
-      ...(contentKindOf(entry) === "vocabulary"
-        ? { transferHref: transferHrefFor(entry.id) }
-        : {}),
+      // K8-2: Vokabelpakete und Lernwortlisten direkt an die Kinder geben.
+      ...(isForKids(entry) ? { transferHref: transferHrefFor(entry.id) } : {}),
     };
   };
 
   const mine = filterByClass(packages, selection, activeIds);
+  // K8-3: alles, was per QR-Code auf die Geräte geht, neueste zuerst.
+  const forKids = filterByClass(
+    (loaded?.all ?? []).filter(isForKids),
+    selection,
+    activeIds,
+  ).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   const prepared = sortPrepared(mine.filter((entry) => !isArchived(entry)));
   const archived = sortArchived(mine.filter((entry) => isArchived(entry)));
 
@@ -275,14 +289,17 @@ export function useTeacherStart(): {
   // Solange die Klassen laden, steht die Wahl nur in der Adresse.
   const linkClass = loaded ? selection : requested;
   const classParam = linkClass ? `klasse=${encodeURIComponent(linkClass)}` : "";
-  const find = (id: string) => packages.find((entry) => entry.id === id);
+  const find = (id: string) =>
+    (loaded?.all ?? []).find((entry) => entry.id === id);
 
   async function change(action: () => Promise<unknown>) {
     try {
       await action();
-      const next = (await library.list()).filter(isRoomContent);
+      const all = await library.list();
       setLoaded((current) =>
-        current ? { ...current, packages: next } : current,
+        current
+          ? { ...current, packages: all.filter(isRoomContent), all }
+          : current,
       );
       window.dispatchEvent(new Event(TEACHER_DATA_EVENT));
     } catch {
@@ -357,7 +374,14 @@ export function useTeacherStart(): {
         toRow(entry, describePrepared(entry.prepared)),
       ),
       archived: archived.map((entry) => toRow(entry, describeRun(entry))),
-      emptyText: { prepared: emptyPrepared, archive: emptyArchive },
+      kids: forKids.map((entry) => toRow(entry, describeContent(entry))),
+      emptyText: {
+        prepared: emptyPrepared,
+        archive: emptyArchive,
+        kids: loading
+          ? "Wird geladen …"
+          : "Noch keine Vokabelpakete oder Lernwortlisten für diese Klasse.",
+      },
       onStart: (id) => {
         const entry = find(id);
         if (!entry) return;
@@ -371,7 +395,10 @@ export function useTeacherStart(): {
       },
       onEdit: (id) =>
         router.push(
-          `/lehrer/live?inhalt=${encodeURIComponent(id)}&schritt=inhalt&${classParam}`,
+          // Lernwortlisten bearbeitet die Freigabe; alles andere der Editor.
+          find(id)?.kind === "wordlist"
+            ? transferHrefFor(id)
+            : `/lehrer/live?inhalt=${encodeURIComponent(id)}&schritt=inhalt&${classParam}`,
         ),
       onDelete: (id, scope) =>
         scope === "class" && selectedClass

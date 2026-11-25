@@ -201,3 +201,60 @@ describe("StartScreen: An die Kinder geben (K8-2)", () => {
     expect(links[0]).toHaveAttribute("href", "/lehrer/material?paket=p1");
   });
 });
+
+describe("StartScreen: Reiter „Für die Kinder“ (K8-3)", () => {
+  const kids = [
+    {
+      id: "w1",
+      title: "Lernwörter Woche 12",
+      kind: "wordlist" as const,
+      meta: "8 Lernwörter",
+      classes: [],
+      transferHref: "/lehrer/material?paket=w1",
+    },
+  ];
+
+  it("fehlt ohne Angabe und zeigt sonst Lernwortlisten mit „An die Kinder geben“", async () => {
+    const { rerender } = render(<StartScreen {...props()} />);
+    expect(screen.getAllByRole("tab")).toHaveLength(2);
+    const onTab = vi.fn();
+    rerender(<StartScreen {...props({ kids, tab: "kids", onTab })} />);
+    expect(screen.getAllByRole("tab")).toHaveLength(3);
+    expect(screen.getByRole("tab", { name: /Für die Kinder/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).getAllByText("Lernwörter").length).toBeGreaterThan(0);
+    expect(
+      within(panel).getByRole("link", {
+        name: "Lernwörter Woche 12 an die Kinder geben",
+      }),
+    ).toHaveAttribute("href", "/lehrer/material?paket=w1");
+    // Lernwortlisten starten keinen Raum.
+    expect(
+      within(panel).queryByRole("button", { name: /starten$/ }),
+    ).toBeNull();
+    // Pfeiltaste nach rechts springt vom letzten Reiter zum ersten.
+    screen.getByRole("tab", { name: /Für die Kinder/ }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(onTab).toHaveBeenCalledWith("prepared");
+  });
+
+  it("nennt einen leeren Reiter mit eigenem Text", () => {
+    render(
+      <StartScreen
+        {...props({
+          kids: [],
+          tab: "kids",
+          emptyText: {
+            prepared: "Nichts vorbereitet.",
+            archive: "Kein Archiv.",
+            kids: "Nichts für die Kinder.",
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText("Nichts für die Kinder.")).toBeVisible();
+  });
+});
