@@ -335,7 +335,7 @@ export function useLiveRoomSession({
     setError("");
     if (!liveRoomConfig) {
       setError(
-        "Live-Räume sind lokal noch nicht konfiguriert. Das Dashboard ist vollständig vorbereitet; URL und Publishable Key verbinden wir anschließend.",
+        "Live-Räume sind auf diesem Server nicht eingerichtet. Du kannst den Inhalt trotzdem vorbereiten.",
       );
       return;
     }

@@ -75,6 +75,8 @@ Funktionen wurden im Audit nicht vollständig nachgeprüft.
 | [umsetzungsplan-spiegelschrift.md](umsetzungsplan-spiegelschrift.md)                       | Spiegelschrift (Textbox)               | umgesetzt, Freigabe `vorschau` (Merge #28, `release.ts`)         |
 | [umsetzungsplan-tagesportion.md](umsetzungsplan-tagesportion.md)                           | Tagesportion 20 (E 57)                 | umgesetzt (Commits 19.10.2026)                                   |
 | [umsetzungsplan-audit-welle-2.md](umsetzungsplan-audit-welle-2.md)                         | Audit Welle 2 (C1–C7)                  | Plan, Stand 26.10.2026, noch nicht umgesetzt                     |
+| [umsetzungsplan-vision-etappe-1.md](umsetzungsplan-vision-etappe-1.md)                     | Vision: Sofortliste und Etappe 1       | umgesetzt bis auf K8 (Statustafel, Merge #62)                    |
+| [umsetzungsplan-inhalte-zuerst.md](umsetzungsplan-inhalte-zuerst.md)                       | Inhalte zuerst (K8, Audit C-010)       | Plan; K8-1 bis K8-3 in Arbeit (Statustafel im Plan)              |
 
 ## Hinweise zur Pflege
 

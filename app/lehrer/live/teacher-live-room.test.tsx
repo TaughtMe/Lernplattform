@@ -167,7 +167,7 @@ describe("TeacherLiveRoom (Lehrerbereich v2, 14b/14c)", () => {
     await user.click(screen.getByRole("button", { name: "Weiter zu Modus" }));
     await user.click(screen.getByRole("button", { name: "Raum jetzt öffnen" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Live-Räume sind lokal noch nicht konfiguriert",
+      "Live-Räume sind auf diesem Server nicht eingerichtet",
     );
   });
 });

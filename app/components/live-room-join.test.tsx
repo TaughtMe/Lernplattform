@@ -111,7 +111,7 @@ describe("LiveRoomJoin", () => {
     await user.click(screen.getByRole("button", { name: "Beitreten" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "noch nicht mit dem Laufdiktat-Raumdienst verbunden",
+      "auf diesem Server nicht eingerichtet",
     );
     expect(screen.queryByText(/Du bist dabei/)).not.toBeInTheDocument();
   });

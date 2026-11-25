@@ -952,7 +952,7 @@ test("teachers can prepare every native live-room content type", async ({
 
   await page.getByRole("button", { name: /^Raum (jetzt )?öffnen$/ }).click();
   await expect(page.getByRole("alert")).toContainText(
-    "Live-Räume sind lokal noch nicht konfiguriert",
+    "Live-Räume sind auf diesem Server nicht eingerichtet",
   );
   await expect(
     page.getByRole("heading", { name: "Modus wählen" }),
