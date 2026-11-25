@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   pickerLocale,
   VOCABULARY_LANGUAGES,
@@ -35,64 +37,27 @@ import {
   useTransferClock,
   type TransferClock,
 } from "./teacher-transfer-shared";
+import { VocabularyPreview } from "./teacher-vocabulary-preview";
 import { TeacherWordListTransfer } from "./teacher-word-list-transfer";
 import { manageStyles as m, ManagePage } from "../views/lehrer/manage-parts";
 import {
   KindSwitch,
   LiveTransfers,
-  PackageEditor,
   PackageList,
   TransferLayout,
-  type SaveState,
 } from "../views/lehrer/transfer-screen";
-import {
-  completePairs,
-  rowsFromSource,
-  sourceFromRows,
-  swapRows,
-  type VocabularyRowValue,
-} from "../views/lehrer/vocabulary-rows";
+import { completePairs, rowsFromSource } from "../views/lehrer/vocabulary-rows";
 
-/** Wartezeit nach der letzten Änderung, bevor das Paket gespeichert wird. */
-const SAVE_DELAY = 600;
-const NEW_TITLE = "Neues Vokabelpaket";
+const NEW_HREF = "/lehrer/live?neu=vocabulary";
 const DEFAULT_LEFT = "en-GB";
 const DEFAULT_RIGHT = "de-DE";
 
-/** Das Paket im Editor; `id` fehlt, solange es noch nie gespeichert wurde. */
-type Draft = {
-  id: string | null;
-  revision: number;
-  title: string;
-  rows: VocabularyRowValue[];
-  left: string;
-  right: string;
-  existing?: TeacherContentPackage | undefined;
-};
+const editHref = (id: string) =>
+  `/lehrer/live?inhalt=${encodeURIComponent(id)}&schritt=inhalt`;
 
-function draftOf(entry: TeacherContentPackage): Draft {
-  return {
-    id: entry.id,
-    revision: entry.revision,
-    title: entry.title,
-    rows: rowsFromSource(entry.source),
-    left: pickerLocale(entry.promptLocale, DEFAULT_LEFT),
-    right: pickerLocale(entry.answerLocale, DEFAULT_RIGHT),
-    existing: entry,
-  };
-}
-
-const emptyDraft = (): Draft => ({
-  id: null,
-  revision: 0,
-  title: NEW_TITLE,
-  rows: [],
-  left: DEFAULT_LEFT,
-  right: DEFAULT_RIGHT,
-});
-
-const canSave = (draft: Draft) =>
-  draft.title.trim().length > 0 && completePairs(draft.rows) > 0;
+const languageLabel = (locale: string) =>
+  VOCABULARY_LANGUAGES.find((language) => language.locale === locale)?.label ??
+  locale;
 
 type Kind = "vocabulary" | "wordlist";
 
@@ -107,7 +72,28 @@ export function TeacherContentTransfer({
   transferConfig: LiveRoomConfig | null;
 }) {
   const [kind, setKind] = useState<Kind>("vocabulary");
+  const [listId, setListId] = useState<string | undefined>();
   const clock = useTransferClock();
+  const library = useMemo(() => createTeacherContentLibraryRepository(), []);
+  // „?paket=“ mit einer Lernwortliste öffnet gleich den Reiter „Lernwortlisten“.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("paket");
+    if (!wanted) return;
+    let active = true;
+    void library
+      .list()
+      .then((stored) => {
+        const entry = stored.find((item) => item.id === wanted);
+        if (active && entry && contentKindOf(entry) === "wordlist") {
+          setListId(wanted);
+          setKind("wordlist");
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [library]);
   return (
     <ManagePage
       title="Freigabe an Schüler"
@@ -127,6 +113,7 @@ export function TeacherContentTransfer({
         <TeacherWordListTransfer
           transferConfig={transferConfig}
           clock={clock}
+          {...(listId ? { selectId: listId } : {})}
         />
       )}
     </ManagePage>
@@ -141,21 +128,15 @@ function VocabularyTransfer({
   clock: TransferClock;
 }) {
   const { transfers, setTransfers, now, setNow } = clock;
+  const router = useRouter();
   const library = useMemo(() => createTeacherContentLibraryRepository(), []);
   const [packages, setPackages] = useState<TeacherContentPackage[]>([]);
-  const [draft, setDraft] = useState<Draft>(emptyDraft);
-  const [save, setSave] = useState<SaveState>("unsaved");
+  const [selectedId, setSelectedId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [big, setBig] = useState(false);
-  const pending = useRef<number | null>(null);
-  // Der neueste Stand für verzögertes Speichern und Freigeben.
-  const latest = useRef(draft);
-  useEffect(() => {
-    latest.current = draft;
-  });
 
   const vocabularyPackages = useMemo(
     () =>
@@ -179,10 +160,7 @@ function VocabularyTransfer({
         const wanted = new URLSearchParams(window.location.search).get("paket");
         const first =
           vocabulary.find((entry) => entry.id === wanted) ?? vocabulary[0];
-        if (first) {
-          setDraft(draftOf(first));
-          setSave("saved");
-        }
+        if (first) setSelectedId(first.id);
       })
       .catch(() =>
         setError(
@@ -194,121 +172,36 @@ function VocabularyTransfer({
     };
   }, [library]);
 
-  const store = useCallback(
-    async (value: Draft, revision = value.revision) => {
-      const time = new Date().toISOString();
-      const id = value.id ?? `teacher-package-${crypto.randomUUID()}`;
-      const existing = value.existing;
-      const entry: TeacherContentPackage = {
-        id,
-        revision,
-        title: value.title.trim(),
-        source: sourceFromRows(value.rows),
-        promptLocale: value.left,
-        answerLocale: value.right,
-        createdAt: existing?.createdAt ?? time,
-        updatedAt: time,
-        // Art, Klassenzuordnung, letzte Nutzung und Vorbereitung bleiben erhalten.
-        ...(existing?.kind ? { kind: existing.kind } : {}),
-        ...(existing?.classIds ? { classIds: existing.classIds } : {}),
-        ...(existing?.lastUsedAt ? { lastUsedAt: existing.lastUsedAt } : {}),
-        ...(existing?.textSplit ? { textSplit: existing.textSplit } : {}),
-        ...(existing?.splitMarks ? { splitMarks: existing.splitMarks } : {}),
-        ...(existing?.splitCustom ? { splitCustom: existing.splitCustom } : {}),
-        ...(existing?.lineMode ? { lineMode: existing.lineMode } : {}),
-        ...(existing?.prepared ? { prepared: existing.prepared } : {}),
-        ...(existing?.preparedAt ? { preparedAt: existing.preparedAt } : {}),
-      };
-      await library.put(entry);
-      setPackages(await library.list());
-      // Nur übernehmen, wenn inzwischen kein anderes Paket geöffnet wurde.
-      setDraft((current) =>
-        current.id === value.id
-          ? { ...current, id, revision, existing: entry }
-          : current,
-      );
-      window.dispatchEvent(new Event("teacher-data-changed"));
-      return entry;
-    },
-    [library],
+  const current = vocabularyPackages.find((entry) => entry.id === selectedId);
+  const rows = useMemo(
+    () => (current ? rowsFromSource(current.source) : []),
+    [current],
   );
 
-  const flush = useCallback(async () => {
-    if (pending.current === null) return;
-    window.clearTimeout(pending.current);
-    pending.current = null;
-    const value = latest.current;
-    if (!canSave(value)) return;
-    try {
-      await store(value);
-      setSave("saved");
-    } catch {
-      setError("Das Paket konnte nicht lokal gespeichert werden.");
-    }
-  }, [store]);
-
-  // Beim Verlassen der Seite wird eine wartende Änderung noch gespeichert.
-  useEffect(() => () => void flush(), [flush]);
-
-  function edit(change: Partial<Draft>) {
-    const next = { ...latest.current, ...change };
-    latest.current = next;
-    setDraft(next);
-    setConfirmDelete(false);
-    if (pending.current !== null) window.clearTimeout(pending.current);
-    pending.current = null;
-    if (!canSave(next)) {
-      setSave("unsaved");
-      return;
-    }
-    setSave("saving");
-    pending.current = window.setTimeout(() => {
-      pending.current = null;
-      void store(latest.current)
-        .then(() => {
-          if (pending.current === null) setSave("saved");
-        })
-        .catch(() => {
-          setSave("unsaved");
-          setError("Das Paket konnte nicht lokal gespeichert werden.");
-        });
-    }, SAVE_DELAY);
-  }
-
-  async function open(next: Draft, message: string) {
-    await flush();
-    setDraft(next);
-    latest.current = next;
-    setSave(next.id ? "saved" : "unsaved");
-    setError("");
-    setConfirmDelete(false);
-    setNotice(message);
-  }
-
   function pick(id: string) {
-    const entry = vocabularyPackages.find((item) => item.id === id);
-    if (entry) void open(draftOf(entry), "");
+    setSelectedId(id);
+    setConfirmDelete(false);
+    setNotice("");
+    setError("");
   }
 
   async function removeCurrent() {
-    const { id, title } = latest.current;
     setConfirmDelete(false);
-    if (!id) return;
+    if (!current) return;
     try {
-      await library.remove(id);
+      await library.remove(current.id);
       const remaining = await library.list();
       setPackages(remaining);
-      setTransfers(forgetTransfers(id, Date.now()));
+      setTransfers(forgetTransfers(current.id, Date.now()));
       const next = remaining
         .filter((entry) => contentKindOf(entry) === "vocabulary")
         .sort((left, right) =>
           right.updatedAt.localeCompare(left.updatedAt),
         )[0];
-      const draftNext = next ? draftOf(next) : emptyDraft();
-      setDraft(draftNext);
-      latest.current = draftNext;
-      setSave(next ? "saved" : "unsaved");
-      setNotice(`„${title}“ wurde aus der lokalen Bibliothek gelöscht.`);
+      setSelectedId(next?.id ?? "");
+      setNotice(
+        `„${current.title}“ wurde aus der lokalen Bibliothek gelöscht.`,
+      );
       window.dispatchEvent(new Event("teacher-data-changed"));
     } catch {
       setError("Das Paket konnte nicht gelöscht werden.");
@@ -348,47 +241,24 @@ function VocabularyTransfer({
     }
   }
 
-  async function importVocabularyFile(file: File) {
-    setError("");
-    setNotice("");
-    const rows = rowsFromSource(await file.text());
-    const pairs = completePairs(rows);
-    if (pairs === 0) {
-      setError(
-        "Die Datei enthält noch keine erkennbaren Vokabelpaare. Trenne Vorder- und Rückseite mit Semikolon oder Tab.",
-      );
-      return;
-    }
-    edit({ rows });
-    setNotice(`${pairs} Vokabelpaare aus „${file.name}“ wurden übernommen.`);
-  }
-
   async function publish() {
     setError("");
     setNotice("");
+    if (!current) return;
     if (!transferConfig) {
       setError("Die Inhaltsübertragung ist noch nicht konfiguriert.");
       return;
     }
-    if (pending.current !== null) {
-      window.clearTimeout(pending.current);
-      pending.current = null;
-    }
-    const value = latest.current;
     setBusy(true);
     try {
-      const id = value.id ?? `teacher-package-${crypto.randomUUID()}`;
-      const withId = { ...value, id };
-      latest.current = withId;
-      setDraft(withId);
-      const revision = value.revision + 1;
+      const revision = current.revision + 1;
       const bundle = buildTeacherVocabularyBundle({
-        id,
+        id: current.id,
         revision,
-        title: value.title,
-        source: sourceFromRows(value.rows),
-        promptLocale: value.left,
-        answerLocale: value.right,
+        title: current.title,
+        source: current.source,
+        promptLocale: pickerLocale(current.promptLocale, DEFAULT_LEFT),
+        answerLocale: pickerLocale(current.answerLocale, DEFAULT_RIGHT),
       });
       const result = await publishTransferPayload(
         getLiveRoomClient(transferConfig),
@@ -398,9 +268,9 @@ function VocabularyTransfer({
       setTransfers(
         rememberTransfer(
           {
-            packageId: id,
-            title: value.title.trim(),
-            pairs: completePairs(value.rows),
+            packageId: current.id,
+            title: current.title.trim(),
+            pairs: completePairs(rows),
             code: result.manualTransferCode,
             publishedAt: new Date(time).toISOString(),
             expiresAt: result.expiresAt,
@@ -410,8 +280,13 @@ function VocabularyTransfer({
       );
       setNow(time);
       try {
-        await store(withId, revision);
-        setSave("saved");
+        // Nur die Fassung zählt hoch; Inhalt und Änderungsdatum bleiben.
+        const saved = { ...current, revision };
+        await library.put(saved);
+        setPackages((all) =>
+          all.map((entry) => (entry.id === saved.id ? saved : entry)),
+        );
+        window.dispatchEvent(new Event("teacher-data-changed"));
       } catch {
         setNotice(
           "Die Freigabe ist gültig, konnte aber nicht zusätzlich lokal gespeichert werden.",
@@ -431,7 +306,9 @@ function VocabularyTransfer({
   const mine = transfers.filter(
     (entry) => transferKindOf(entry) === "vocabulary",
   );
-  const live = mine.find(({ packageId }) => packageId === draft.id);
+  const live = current
+    ? mine.find(({ packageId }) => packageId === current.id)
+    : undefined;
   const liveOf = (id: string) => mine.find(({ packageId }) => packageId === id);
   const items = vocabularyPackages.map((entry) => {
     const share = liveOf(entry.id);
@@ -442,37 +319,21 @@ function VocabularyTransfer({
       live: share ? transferTimeLeft(share, now).short : undefined,
     };
   });
-  // Ein neues, noch nie gespeichertes Paket steht oben in der Liste.
-  const listed = draft.id
-    ? items
-    : [
-        {
-          id: "",
-          title: draft.title.trim() || NEW_TITLE,
-          meta: "noch nicht gespeichert",
-          live: undefined,
-        },
-        ...items,
-      ];
   const qrValue =
     live && typeof window !== "undefined"
       ? createTransferLink(window.location.origin, live.code)
       : "";
+  const pairs = completePairs(rows);
 
   return (
     <TransferLayout
       side={
         <>
           <PackageList
-            items={listed}
-            selectedId={draft.id ?? ""}
+            items={items}
+            selectedId={selectedId}
             onPick={pick}
-            onNew={() =>
-              void open(
-                emptyDraft(),
-                "Neues, noch nicht gespeichertes Paket geöffnet.",
-              )
-            }
+            onNew={() => router.push(NEW_HREF)}
             onExport={exportLibrary}
             onImport={(file) => void importLibrary(file)}
           />
@@ -493,39 +354,38 @@ function VocabularyTransfer({
         </>
       }
     >
-      <PackageEditor
-        title={draft.title}
-        languages={VOCABULARY_LANGUAGES}
-        left={draft.left}
-        right={draft.right}
-        rows={draft.rows}
-        save={save}
-        live={Boolean(live)}
-        busy={busy}
-        shareDisabled={!canSave(draft)}
-        onTitle={(title) => edit({ title })}
-        onLeft={(left) => edit({ left })}
-        onRight={(right) => edit({ right })}
-        onSwap={() =>
-          edit({
-            left: draft.right,
-            right: draft.left,
-            rows: swapRows(draft.rows),
-          })
-        }
-        onRows={(rows) => edit({ rows })}
-        onImportFile={(file) => void importVocabularyFile(file)}
-        onShare={() => void publish()}
-        onDelete={draft.id ? () => setConfirmDelete(true) : undefined}
-      />
-      {confirmDelete ? (
+      {current ? (
+        <VocabularyPreview
+          title={current.title}
+          pairs={pairs}
+          rows={rows}
+          leftLabel={languageLabel(
+            pickerLocale(current.promptLocale, DEFAULT_LEFT),
+          )}
+          rightLabel={languageLabel(
+            pickerLocale(current.answerLocale, DEFAULT_RIGHT),
+          )}
+          editHref={editHref(current.id)}
+          live={Boolean(live)}
+          busy={busy}
+          shareDisabled={pairs === 0}
+          onShare={() => void publish()}
+          onDelete={() => setConfirmDelete(true)}
+        />
+      ) : (
+        <p className={m.notice}>
+          Noch kein Vokabelpaket.{" "}
+          <Link href={NEW_HREF}>Neues Vokabelpaket anlegen</Link>
+        </p>
+      )}
+      {confirmDelete && current ? (
         <div
           className={cx(m.notice, m.noticeBad)}
           role="alertdialog"
           aria-label="Paket löschen"
         >
           <p className={m.noticeText}>
-            „{draft.title}“ aus der lokalen Bibliothek löschen? Eine laufende
+            „{current.title}“ aus der lokalen Bibliothek löschen? Eine laufende
             Freigabe bleibt bis zu ihrem Ablauf gültig.
           </p>
           <span className={m.actions}>

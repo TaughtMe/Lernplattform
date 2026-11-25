@@ -10,8 +10,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ACTIVE_TRANSFERS_KEY } from "../lehrer/material/active-transfers";
 import { TeacherContentTransfer } from "./teacher-content-transfer";
 
-const { publishTransferPayload, libraryRepository } = vi.hoisted(() => ({
+const { publishTransferPayload, libraryRepository, push } = vi.hoisted(() => ({
   publishTransferPayload: vi.fn(),
+  push: vi.fn(),
   libraryRepository: {
     get: vi.fn(),
     list: vi.fn(),
@@ -30,6 +31,8 @@ vi.mock(
     publishTransferPayload,
   }),
 );
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 vi.mock("../../src/integrations/laufdiktat/live-room-client", () => ({
   getLiveRoomClient: () => ({}),
@@ -61,6 +64,7 @@ const entry = (
 describe("TeacherContentTransfer", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    push.mockReset();
     libraryRepository.get.mockReset().mockResolvedValue(undefined);
     libraryRepository.list.mockReset().mockResolvedValue([]);
     libraryRepository.put.mockReset().mockResolvedValue(undefined);
@@ -77,7 +81,7 @@ describe("TeacherContentTransfer", () => {
     });
   });
 
-  it("lists only vocabulary packages and opens the newest one", async () => {
+  it("lists only vocabulary packages and previews the newest one", async () => {
     libraryRepository.list.mockResolvedValue([
       entry("v-alt", "Altes Vokabelpaket"),
       entry("t", "Ein Text", "Der Hund.", "text"),
@@ -89,12 +93,36 @@ describe("TeacherContentTransfer", () => {
     await within(list).findByText("Altes Vokabelpaket");
     expect(within(list).queryByText("Ein Text")).toBeNull();
     expect(within(list).getByText("2 Paare · geändert 02.09.")).toBeVisible();
-    expect(screen.getByLabelText("Titel des Pakets")).toHaveValue(
-      "Altes Vokabelpaket",
+    const preview = screen.getByRole("region", { name: "Vokabelpaket" });
+    expect(
+      within(preview).getByRole("heading", { name: "Altes Vokabelpaket" }),
+    ).toBeVisible();
+    expect(within(preview).getByText("2 Paare")).toBeVisible();
+    expect(within(preview).getByText("school")).toBeVisible();
+    expect(within(preview).getByText("Klassenzimmer")).toBeVisible();
+    // Entscheidung 87: hier wird nicht mehr bearbeitet.
+    expect(screen.queryByLabelText("Titel des Pakets")).toBeNull();
+    expect(screen.queryByLabelText("Englisch, Zeile 1")).toBeNull();
+    expect(libraryRepository.put).not.toHaveBeenCalled();
+  });
+
+  it("verweist mit „Bearbeiten“ in den Live-Raum-Editor", async () => {
+    libraryRepository.list.mockResolvedValue([entry("v 1", "Schule Unit 3")]);
+    render(<TeacherContentTransfer transferConfig={null} />);
+    await screen.findByRole("heading", { name: "Schule Unit 3" });
+    expect(screen.getByRole("link", { name: "Bearbeiten" })).toHaveAttribute(
+      "href",
+      "/lehrer/live?inhalt=v%201&schritt=inhalt",
     );
-    expect(screen.getByLabelText("Englisch, Zeile 1")).toHaveValue("school");
-    expect(screen.getByLabelText("Tag, Zeile 1")).toHaveValue("Unit 3");
-    expect(screen.getByText("Lokal gespeichert")).toBeVisible();
+  });
+
+  it("öffnet mit „Neues Vokabelpaket“ den Live-Raum-Editor", async () => {
+    const user = userEvent.setup();
+    render(<TeacherContentTransfer transferConfig={null} />);
+    await user.click(
+      screen.getByRole("button", { name: "Neues Vokabelpaket" }),
+    );
+    expect(push).toHaveBeenCalledWith("/lehrer/live?neu=vocabulary");
   });
 
   it("öffnet das Paket aus „An die Kinder geben“ (?paket=)", async () => {
@@ -107,79 +135,34 @@ describe("TeacherContentTransfer", () => {
       entry("v-alt", "Altes Vokabelpaket"),
     ]);
     render(<TeacherContentTransfer transferConfig={null} />);
-    await waitFor(() =>
-      expect(screen.getByLabelText("Titel des Pakets")).toHaveValue(
-        "Altes Vokabelpaket",
-      ),
-    );
+    expect(
+      await screen.findByRole("heading", { name: "Altes Vokabelpaket" }),
+    ).toBeVisible();
     window.history.replaceState(null, "", "/");
   });
 
-  it("saves a new package while typing, with a new row after the last", async () => {
-    const user = userEvent.setup();
+  it("öffnet bei ?paket= mit einer Lernwortliste den Reiter „Lernwortlisten“", async () => {
+    window.history.replaceState(null, "", "/lehrer/material?paket=w-alt");
+    libraryRepository.list.mockResolvedValue([
+      {
+        ...entry("w-neu", "Neue Liste", "Brief", "wordlist"),
+        updatedAt: "2026-09-05T10:00:00.000Z",
+      },
+      entry("w-alt", "Alte Liste", "Sieb", "wordlist"),
+    ]);
     render(<TeacherContentTransfer transferConfig={null} />);
-    await user.click(
-      screen.getByRole("button", { name: "Neues Vokabelpaket" }),
-    );
-    expect(screen.getByText("Noch nicht gespeichert")).toBeVisible();
-
-    await user.type(screen.getByLabelText("Englisch, Zeile 1"), "go");
-    // Wer in der leeren letzten Zeile tippt, bekommt eine neue darunter.
-    expect(screen.getByLabelText("Englisch, Zeile 2")).toHaveValue("");
-    await user.type(screen.getByLabelText("Deutsch, Zeile 1"), "gehen");
-
-    await waitFor(() => expect(libraryRepository.put).toHaveBeenCalled());
-    expect(libraryRepository.put).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        title: "Neues Vokabelpaket",
-        source: "go;gehen",
-        promptLocale: "en-GB",
-        answerLocale: "de-DE",
-      }),
-    );
-    expect(await screen.findByText("Lokal gespeichert")).toBeVisible();
-  });
-
-  it("splits a pasted list from Excel into rows and swaps languages", async () => {
-    const user = userEvent.setup();
-    render(<TeacherContentTransfer transferConfig={null} />);
-    await user.click(screen.getByLabelText("Englisch, Zeile 1"));
-    await user.paste("red\trot\nblue\tblau");
-    expect(screen.getByLabelText("Englisch, Zeile 2")).toHaveValue("blue");
-    expect(screen.getByLabelText("Deutsch, Zeile 2")).toHaveValue("blau");
-    expect(screen.getByText("2 Paare")).toBeVisible();
-
-    await user.click(screen.getByRole("button", { name: "Sprachen tauschen" }));
-    expect(screen.getByLabelText("Deutsch, Zeile 1")).toHaveValue("rot");
-    expect(screen.getByLabelText("Sprache 1")).toHaveValue("de-DE");
-
-    await user.click(screen.getByRole("button", { name: "Zeile 1 entfernen" }));
-    expect(screen.getByText("1 Paare")).toBeVisible();
-  });
-
-  it("imports vocabulary pairs from a text file into the table", async () => {
-    const user = userEvent.setup();
-    render(<TeacherContentTransfer transferConfig={null} />);
-
-    const file = new File(["hello;Hallo\nworld\tWelt"], "words.tsv", {
-      type: "text/tab-separated-values",
-    });
-    await user.upload(
-      screen.getByLabelText("Datei mit Vokabelpaaren auswählen"),
-      file,
-    );
-
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "2 Vokabelpaare",
-    );
-    expect(screen.getByLabelText("Englisch, Zeile 2")).toHaveValue("world");
+    expect(await screen.findByDisplayValue("Alte Liste")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Lernwortlisten" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    window.history.replaceState(null, "", "/");
   });
 
   it("encrypts, publishes and shows QR, code and the remaining time", async () => {
     const user = userEvent.setup();
     libraryRepository.list.mockResolvedValue([entry("v1", "Schule Unit 3")]);
     render(<TeacherContentTransfer transferConfig={CONFIG} />);
-    await screen.findByDisplayValue("Schule Unit 3");
+    await screen.findByRole("heading", { name: "Schule Unit 3" });
 
     await user.click(
       screen.getByRole("button", { name: "Für Schüler freigeben" }),
@@ -229,7 +212,7 @@ describe("TeacherContentTransfer", () => {
     const user = userEvent.setup();
     libraryRepository.list.mockResolvedValue([entry("v1", "Schule Unit 3")]);
     render(<TeacherContentTransfer transferConfig={null} />);
-    await screen.findByDisplayValue("Schule Unit 3");
+    await screen.findByRole("heading", { name: "Schule Unit 3" });
     await user.click(
       screen.getByRole("button", { name: "Für Schüler freigeben" }),
     );
@@ -243,7 +226,7 @@ describe("TeacherContentTransfer", () => {
     const user = userEvent.setup();
     libraryRepository.list.mockResolvedValue([entry("v1", "Schule Unit 3")]);
     render(<TeacherContentTransfer transferConfig={null} />);
-    await screen.findByDisplayValue("Schule Unit 3");
+    await screen.findByRole("heading", { name: "Schule Unit 3" });
     await user.click(screen.getByRole("button", { name: "Paket löschen" }));
     expect(libraryRepository.remove).not.toHaveBeenCalled();
     libraryRepository.list.mockResolvedValue([]);
@@ -272,7 +255,7 @@ describe("TeacherContentTransfer", () => {
         list("w1", "Wörter mit ie"),
       ]);
       render(<TeacherContentTransfer transferConfig={CONFIG} />);
-      await screen.findByDisplayValue("Schule Unit 3");
+      await screen.findByRole("heading", { name: "Schule Unit 3" });
       expect(
         screen.getByRole("button", { name: "Vokabelpakete" }),
       ).toHaveAttribute("aria-pressed", "true");
@@ -386,7 +369,7 @@ describe("TeacherContentTransfer", () => {
         list("w1", "Wörter mit ie"),
       ]);
       render(<TeacherContentTransfer transferConfig={CONFIG} />);
-      await screen.findByDisplayValue("Schule Unit 3");
+      await screen.findByRole("heading", { name: "Schule Unit 3" });
       await user.click(
         screen.getByRole("button", { name: "Für Schüler freigeben" }),
       );

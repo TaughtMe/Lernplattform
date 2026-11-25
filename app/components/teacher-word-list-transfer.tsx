@@ -110,9 +110,12 @@ function noteOf(draft: Draft) {
 export function TeacherWordListTransfer({
   transferConfig,
   clock,
+  selectId,
 }: {
   transferConfig: LiveRoomConfig | null;
   clock: TransferClock;
+  /** Liste, die beim Öffnen vorgewählt wird (sonst die neueste). */
+  selectId?: string;
 }) {
   const { transfers, setTransfers, now, setNow } = clock;
   const library = useMemo(() => createTeacherContentLibraryRepository(), []);
@@ -146,11 +149,11 @@ export function TeacherWordListTransfer({
       .then((stored) => {
         if (!active) return;
         setPackages(stored);
-        const first = stored
+        const sorted = stored
           .filter((entry) => contentKindOf(entry) === "wordlist")
-          .sort((left, right) =>
-            right.updatedAt.localeCompare(left.updatedAt),
-          )[0];
+          .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+        const first =
+          sorted.find((entry) => entry.id === selectId) ?? sorted[0];
         if (first) {
           setDraft(draftOf(first));
           setSave("saved");
@@ -164,7 +167,7 @@ export function TeacherWordListTransfer({
     return () => {
       active = false;
     };
-  }, [library]);
+  }, [library, selectId]);
 
   const store = useCallback(
     async (value: Draft, revision = value.revision) => {
