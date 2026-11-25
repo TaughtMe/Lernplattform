@@ -100,6 +100,7 @@ declare const styles: {
   readonly title: string;
   readonly titleBlock: string;
   readonly toolButton: string;
+  readonly transfer: string;
   readonly ui: string;
 };
 export default styles;

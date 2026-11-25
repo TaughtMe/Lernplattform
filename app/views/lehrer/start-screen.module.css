@@ -478,6 +478,14 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+.transfer:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.transfer:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
 .remove:hover {
   border-color: var(--bad);
   background: var(--bad-bg);

@@ -131,7 +131,9 @@ describe("useLiveRoomSession: Raum öffnen", () => {
     const { result, setError } = setup({ liveRoomConfig: null });
     await act(() => result.current.openLobby());
     expect(setError).toHaveBeenLastCalledWith(
-      expect.stringContaining("Live-Räume sind lokal noch nicht konfiguriert"),
+      expect.stringContaining(
+        "Live-Räume sind auf diesem Server nicht eingerichtet",
+      ),
     );
     expect(mocks.openLiveRoom).not.toHaveBeenCalled();
   });

@@ -172,11 +172,13 @@ function VocabularyTransfer({
       .then((stored) => {
         if (!active) return;
         setPackages(stored);
-        const first = stored
+        const vocabulary = stored
           .filter((entry) => contentKindOf(entry) === "vocabulary")
-          .sort((left, right) =>
-            right.updatedAt.localeCompare(left.updatedAt),
-          )[0];
+          .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+        // „An die Kinder geben“ aus der Ablage (K8-2) wählt das Paket vor.
+        const wanted = new URLSearchParams(window.location.search).get("paket");
+        const first =
+          vocabulary.find((entry) => entry.id === wanted) ?? vocabulary[0];
         if (first) {
           setDraft(draftOf(first));
           setSave("saved");

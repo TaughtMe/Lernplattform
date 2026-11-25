@@ -301,6 +301,7 @@ export function LearningBoxApp({
         );
       }
       const loaded = await refresh();
+      if (!active) return;
       // ?stapel=<id> öffnet das Start-Fenster eines Stapels, z. B. nach dem Laufdiktat.
       const requested = new URLSearchParams(window.location.search).get(
         "stapel",
@@ -332,6 +333,8 @@ export function LearningBoxApp({
     });
     return () => {
       active = false;
+      // Laufende Ladevorgänge verfallen: kein Zustand mehr nach dem Verlassen.
+      refreshRevision.current += 1;
     };
   }, [refresh]);
 

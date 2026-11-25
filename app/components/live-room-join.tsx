@@ -379,9 +379,7 @@ export function LiveRoomJoin({
       return;
     }
     if (!liveRoomConfig) {
-      setError(
-        "Live-Räume sind in dieser lokalen Vorschau noch nicht mit dem Laufdiktat-Raumdienst verbunden.",
-      );
+      setError("Live-Räume sind auf diesem Server nicht eingerichtet.");
       return;
     }
 
