@@ -106,13 +106,27 @@ describe("TeacherContentTransfer", () => {
     expect(libraryRepository.put).not.toHaveBeenCalled();
   });
 
-  it("verweist mit „Bearbeiten“ in den Live-Raum-Editor", async () => {
+  it("verweist mit „Bearbeiten“ in den Live-Raum-Editor, ohne fremde Klasse", async () => {
     libraryRepository.list.mockResolvedValue([entry("v 1", "Schule Unit 3")]);
+    const { unmount } = render(
+      <TeacherContentTransfer transferConfig={null} />,
+    );
+    await screen.findByRole("heading", { name: "Schule Unit 3" });
+    // Ohne Klasse: „ohne“, damit der Editor keine zuletzt genutzte Klasse ergänzt.
+    expect(screen.getByRole("link", { name: "Bearbeiten" })).toHaveAttribute(
+      "href",
+      "/lehrer/live?inhalt=v%201&schritt=inhalt&klasse=ohne",
+    );
+    unmount();
+    const classId = "123e4567-e89b-42d3-a456-426614174001";
+    libraryRepository.list.mockResolvedValue([
+      { ...entry("v 1", "Schule Unit 3"), classIds: [classId] },
+    ]);
     render(<TeacherContentTransfer transferConfig={null} />);
     await screen.findByRole("heading", { name: "Schule Unit 3" });
     expect(screen.getByRole("link", { name: "Bearbeiten" })).toHaveAttribute(
       "href",
-      "/lehrer/live?inhalt=v%201&schritt=inhalt",
+      `/lehrer/live?inhalt=v%201&schritt=inhalt&klasse=${classId}`,
     );
   });
 

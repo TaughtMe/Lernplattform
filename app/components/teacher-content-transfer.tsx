@@ -21,7 +21,10 @@ import {
   getLiveRoomClient,
   type LiveRoomConfig,
 } from "../../src/integrations/laufdiktat/live-room-client";
-import { contentKindOf } from "../../src/domain/teacher-content-summary";
+import {
+  contentKindOf,
+  UNASSIGNED,
+} from "../../src/domain/teacher-content-summary";
 import { createTeacherContentLibraryRepository } from "../../src/storage/teacher-class-settings";
 import {
   forgetTransfers,
@@ -52,8 +55,16 @@ const NEW_HREF = "/lehrer/live?neu=vocabulary";
 const DEFAULT_LEFT = "en-GB";
 const DEFAULT_RIGHT = "de-DE";
 
-const editHref = (id: string) =>
-  `/lehrer/live?inhalt=${encodeURIComponent(id)}&schritt=inhalt`;
+/**
+ * „Bearbeiten“ im Live-Raum-Editor. Die Klasse kommt aus dem Paket selbst:
+ * Ohne `klasse=` nähme der Editor die zuletzt genutzte Live-Klasse und
+ * ordnete das Paket beim Speichern zusätzlich ihr zu. Ohne Klasse gilt
+ * „ohne“ (Nicht zugeordnet), dann bleibt die Zuordnung leer.
+ */
+const editHref = (entry: Pick<TeacherContentPackage, "id" | "classIds">) =>
+  `/lehrer/live?inhalt=${encodeURIComponent(entry.id)}&schritt=inhalt&klasse=${encodeURIComponent(
+    entry.classIds?.[0] ?? UNASSIGNED,
+  )}`;
 
 const languageLabel = (locale: string) =>
   VOCABULARY_LANGUAGES.find((language) => language.locale === locale)?.label ??
@@ -365,7 +376,7 @@ function VocabularyTransfer({
           rightLabel={languageLabel(
             pickerLocale(current.answerLocale, DEFAULT_RIGHT),
           )}
-          editHref={editHref(current.id)}
+          editHref={editHref(current)}
           live={Boolean(live)}
           busy={busy}
           shareDisabled={pairs === 0}
