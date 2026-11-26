@@ -391,6 +391,39 @@ describe("Startblatt", () => {
     ).toBeInTheDocument();
   });
 
+  it("wählt mit ?stufe= die Stufe der Übungskarte vor, startet aber nicht", async () => {
+    await setup({ query: "?sammlung=silent-h&stufe=3" });
+    const sheet = await screen.findByRole("dialog", { name: "Dehnungs-h" });
+    await waitFor(() =>
+      expect(
+        within(sheet).getByRole("button", { name: /^Stufe 3:/ }),
+      ).toHaveAttribute("aria-pressed", "true"),
+    );
+    expect(
+      within(sheet).getByRole("button", { name: "Starten" }),
+    ).toBeEnabled();
+  });
+
+  it("behält bei gesperrter Kartenstufe die Vorauswahl und erklärt es", async () => {
+    await setup({ query: "?sammlung=silent-h&stufe=6" });
+    const sheet = await screen.findByRole("dialog", { name: "Dehnungs-h" });
+    expect(await within(sheet).findByTestId("card-hint")).toHaveTextContent(
+      /Stufe 6/,
+    );
+    expect(
+      within(sheet).getByRole("button", { name: /^Stufe 1:/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("ignoriert eine ungültige ?stufe= und ungültige Adressparameter", async () => {
+    await setup({ query: "?sammlung=silent-h&stufe=9" });
+    const sheet = await screen.findByRole("dialog", { name: "Dehnungs-h" });
+    expect(within(sheet).queryByTestId("card-hint")).not.toBeInTheDocument();
+    expect(
+      within(sheet).getByRole("button", { name: /^Stufe 1:/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("ignoriert ungültige Adressparameter", async () => {
     await setup({ query: "?woerter=<b>&sammlung=gibt-es-nicht" });
     expect(

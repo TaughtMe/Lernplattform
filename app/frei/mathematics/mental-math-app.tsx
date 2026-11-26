@@ -55,9 +55,15 @@ import {
   PLAN_FAILED_NOTICE,
   wantsDailyPlan,
 } from "../../lernen/plan-today";
+import { CardNote, useCardPreset } from "./card-preset";
 import { MathKindPicker } from "./math-kind-picker";
 import { SolutionHelp } from "./solution-help";
-import { describeRound, operationLabels, todaysReviews } from "./round-text";
+import {
+  describeRound,
+  operationLabels,
+  symbols,
+  todaysReviews,
+} from "./round-text";
 import { Icon } from "../../ui/icons";
 import { ReadAloudButton } from "../../ui/read-aloud-button";
 import { useRoundGuard } from "../../ui/round-guard";
@@ -71,12 +77,6 @@ import {
   Toggle,
 } from "../../ui/primitives";
 
-const symbols: Record<MentalMathOperation, string> = {
-  add: "+",
-  subtract: "−",
-  multiply: "·",
-  divide: ":",
-};
 type Screen = "setup" | "round" | "complete";
 
 /**
@@ -122,6 +122,7 @@ export function MentalMathApp({
   const [excludeZeroResult, setExcludeZeroResult] = useState(false);
   const [tables, setTables] = useState<number[]>([]);
   const [kinds, setKinds] = useState<MathKindId[]>([]);
+  const card = useCardPreset(setKinds, setOperations, setMaxValue);
   const [gapMode, setGapMode] = useState(false);
   const [gapPosition, setGapPosition] = useState<MathGapSlot | "mixed">(
     "mixed",
@@ -219,6 +220,7 @@ export function MentalMathApp({
         setLoadState("ready");
         const params = new URLSearchParams(window.location.search);
         const lesson = params.get("round");
+        card.apply(params); // Übungskarte: nur vorbelegen
         if (!lesson) {
           // ?heute=1 (Startseite „Weiterlernen“): die Portion dieses Moduls.
           if (wantsDailyPlan(params)) {
@@ -559,6 +561,7 @@ export function MentalMathApp({
             Kopfrechnen
           </h1>
           <p className="ui-small ui-muted">{SETUP_INTRO}</p>
+          <CardNote title={card.title} />
         </div>
 
         {roundSnapshot.snapshot ? (
