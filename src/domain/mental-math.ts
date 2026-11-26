@@ -2,6 +2,7 @@ export type MentalMathOperation = "add" | "subtract" | "multiply" | "divide";
 export type MathOperator = "+" | "-" | "*" | "/";
 export type MathGapSlot = "left" | "right" | "result";
 
+import type { MathKindId } from "./mental-math-kinds";
 import {
   isTrivialMathTask,
   matchesMathFeature,
@@ -29,6 +30,11 @@ export type MentalMathTask = {
   skillId: string;
   operation: MentalMathOperation | "mixed-expression";
   gap?: MathGapSlot | undefined;
+  /**
+   * Aufgabenart der Mittelschule (MA-11, `mental-math-kinds.ts`). Fehlt bei
+   * allen Aufgaben, die vorher gespeichert wurden und bei normalen Rechenaufgaben.
+   */
+  kind?: MathKindId | undefined;
 };
 
 export type MentalMathOptions = {
@@ -984,11 +990,45 @@ export function mathNumbersEqual(left: number, right: number) {
   return expected !== null && expected === canonicalSolution(right);
 }
 
+/**
+ * Einheit, die hinter der Antwort stehen darf: „€“ (auch „Euro“) bei Geldaufgaben,
+ * bei „3 m = _ cm“ die Einheit nach der Lücke („cm“). Sonst `null`.
+ */
+export function expectedAnswerUnit(task: {
+  prompt?: unknown;
+  kind?: unknown;
+  [key: string]: unknown;
+}): string | null {
+  if (typeof task.prompt !== "string") return null;
+  if (task.kind === "units")
+    return task.prompt.match(/=\s*_\s*(\S+)\s*$/)?.[1] ?? null;
+  if (task.kind === "decimal" && task.prompt.includes("€")) return "€";
+  return null;
+}
+
+/**
+ * Antwort ohne die erwartete Einheit am Ende („4,25 €“ → „4,25“, „300 cm“ →
+ * „300“). Eine andere Einheit bleibt stehen und macht die Antwort ungültig.
+ */
+export function stripAnswerUnit(
+  task: { prompt?: unknown; kind?: unknown; [key: string]: unknown },
+  value: string,
+) {
+  const unit = expectedAnswerUnit(task);
+  if (!unit) return value;
+  const escaped = unit.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const alternatives = unit === "€" ? `${escaped}|euro` : escaped;
+  const match = value
+    .trim()
+    .match(new RegExp(`^(.*?\\d)\\s*(?:${alternatives})$`, "i"));
+  return match ? match[1]! : value;
+}
+
 export function checkMentalMathAnswer(
   task: { answer: number; [key: string]: unknown },
   value: string,
 ) {
-  return mathAnswerMatches(task.answer, value);
+  return mathAnswerMatches(task.answer, stripAnswerUnit(task, value));
 }
 
 /** Zerlegt den Aufgabentext der Lehrkraft in getrimmte, nicht leere Zeilen. */

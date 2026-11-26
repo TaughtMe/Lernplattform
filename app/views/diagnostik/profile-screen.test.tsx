@@ -170,3 +170,45 @@ describe("ProfileScreen", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("Kompetenzprofil: Meinen Stand zeigen (L25-7)", () => {
+  it("zeigt nur Bereiche und Stand, ohne Erklärungen und Üben, und kehrt zurück", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    const groups = profileGroups([
+      entry(),
+      entry({
+        id: "mathe:add",
+        kind: "rechenart",
+        module: "mathematics",
+        label: "Plus bis 100",
+        level: "sicher",
+        reason: { code: "safe" },
+      }),
+    ]);
+    render(<ProfileScreen status="ready" groups={groups} />);
+    await user.click(
+      screen.getByRole("button", { name: "Meinen Stand zeigen" }),
+    );
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Mein Stand" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Rechtschreibung" }),
+    ).toBeVisible();
+    expect(screen.getByText("ck und tz")).toBeVisible();
+    expect(screen.queryByText(/von 100 Wörtern/)).toBeNull();
+    expect(screen.queryByRole("link", { name: /^Üben/ })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Zurück" }));
+    expect(
+      screen.getByRole("button", { name: "Meinen Stand zeigen" }),
+    ).toBeVisible();
+  });
+
+  it("bietet das Zeigen ohne Einträge nicht an", () => {
+    render(<ProfileScreen status="ready" groups={[]} />);
+    expect(
+      screen.queryByRole("button", { name: "Meinen Stand zeigen" }),
+    ).toBeNull();
+  });
+});

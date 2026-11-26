@@ -10,7 +10,6 @@ import {
 } from "react";
 import {
   MULTIPLICATION_TABLES,
-  generateMentalMathTasks,
   isLatexMathTask,
   spokenMathTask,
   spokenMathText,
@@ -25,6 +24,10 @@ import {
   mentalMathHint,
   mentalMathSolutionSteps,
 } from "../../../src/domain/mental-math-feedback";
+import {
+  generateMathTasks,
+  type MathKindId,
+} from "../../../src/domain/mental-math-kinds";
 import { MathDisplay } from "../../components/math-display";
 import { createDailyPlanRepository } from "../../../src/storage/daily-plan";
 import {
@@ -52,6 +55,7 @@ import {
   PLAN_FAILED_NOTICE,
   wantsDailyPlan,
 } from "../../lernen/plan-today";
+import { MathKindPicker } from "./math-kind-picker";
 import { SolutionHelp } from "./solution-help";
 import { describeRound, operationLabels, todaysReviews } from "./round-text";
 import { Icon } from "../../ui/icons";
@@ -117,6 +121,7 @@ export function MentalMathApp({
   const [excludeZeroOperand, setExcludeZeroOperand] = useState(false);
   const [excludeZeroResult, setExcludeZeroResult] = useState(false);
   const [tables, setTables] = useState<number[]>([]);
+  const [kinds, setKinds] = useState<MathKindId[]>([]);
   const [gapMode, setGapMode] = useState(false);
   const [gapPosition, setGapPosition] = useState<MathGapSlot | "mixed">(
     "mixed",
@@ -136,6 +141,7 @@ export function MentalMathApp({
     excludeZeroOperand,
     excludeZeroResult,
     tables,
+    kinds,
     gapMode,
     gapPosition,
   ]);
@@ -305,22 +311,28 @@ export function MentalMathApp({
     );
   }
 
+  /** Die gewählte Einstellung; sie gehört zu den gespeicherten Antworten der Runde. */
+  function currentOptions(): MathOptions {
+    return {
+      operations,
+      minValue,
+      maxValue,
+      count,
+      allowNegativeResults: allowNegative,
+      excludeZeroOperand,
+      excludeZeroResult,
+      multiplicationTables: tables,
+      gapMode,
+      ...(kinds.length ? { kinds } : {}),
+    };
+  }
+
   function createTasks() {
-    return generateMentalMathTasks(
+    return generateMathTasks(
       {
-        operations,
-        minValue,
-        maxValue,
-        count,
-        allowNegativeResults: allowNegative,
-        excludeZeroOperand,
-        excludeZeroResult,
-        multiplicationTables: tables,
-        gapMode,
+        ...currentOptions(),
         ...(gapMode && gapPosition !== "mixed"
-          ? {
-              gapSlots: Array.from({ length: count }, () => gapPosition),
-            }
+          ? { gapSlots: Array.from({ length: count }, () => gapPosition) }
           : {}),
       },
       random,
@@ -353,20 +365,7 @@ export function MentalMathApp({
                 : createTasks(),
               random,
             ),
-        // Die Einstellung gehört zu den gespeicherten Antworten der erzeugten Runde.
-        manualMode
-          ? null
-          : {
-              operations,
-              minValue,
-              maxValue,
-              count,
-              allowNegativeResults: allowNegative,
-              excludeZeroOperand,
-              excludeZeroResult,
-              multiplicationTables: tables,
-              gapMode,
-            },
+        manualMode ? null : currentOptions(),
       );
     } catch {
       setNotice(
@@ -675,6 +674,11 @@ export function MentalMathApp({
               </>
             ) : (
               <>
+                <MathKindPicker
+                  kinds={kinds}
+                  disabled={!interactionReady}
+                  onChange={setKinds}
+                />
                 <fieldset className="ui-math__fieldset">
                   <legend className="ui-label">Rechenarten</legend>
                   <div
@@ -875,6 +879,7 @@ export function MentalMathApp({
                     maxValue,
                     tables,
                     gapMode,
+                    kinds,
                   })}
                 </p>
                 <p className="ui-tiny ui-muted">

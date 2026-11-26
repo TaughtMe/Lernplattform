@@ -9,6 +9,7 @@ import {
   type MentalMathTask,
 } from "./mental-math";
 import { mathTaskFeature, type MathTaskFeature } from "./mental-math-features";
+import { MATH_KINDS, generateMathKindTasks } from "./mental-math-kinds";
 import type { LearningEventV1 } from "./learning-bundle";
 import { REPETITION_RULES, reviewRepetition } from "./spaced-repetition";
 
@@ -33,6 +34,8 @@ export const mathOptionsSchema = z
       .array(z.enum(["left", "right", "result"]))
       .max(50)
       .optional(),
+    /** Gewählte Aufgabenarten der Mittelschule (MA-11); fehlt bei älteren Daten. */
+    kinds: z.array(z.enum(MATH_KINDS)).max(MATH_KINDS.length).optional(),
   })
   .strict()
   .refine(
@@ -55,6 +58,8 @@ export const mathTaskSchema = z
       "mixed-expression",
     ]),
     gap: z.enum(["left", "right", "result"]).optional(),
+    /** Aufgabenart der Mittelschule (MA-11); fehlt bei älteren Daten. */
+    kind: z.enum(MATH_KINDS).optional(),
   })
   .strict();
 
@@ -128,6 +133,20 @@ export function mathTaskFromPrompt(
 }
 
 export function optionsForMathTask(task: MentalMathTask): MathOptions {
+  if (task.kind) {
+    return {
+      operations: [
+        task.operation === "mixed-expression" ? "add" : task.operation,
+      ],
+      minValue: 0,
+      maxValue: Math.min(
+        1000000,
+        Math.max(1, Math.ceil(Math.abs(task.answer))),
+      ),
+      count: 5,
+      kinds: [task.kind],
+    };
+  }
   const expression = parseMentalMathExpression(task.source);
   const numbers = expression
     ? [expression.left, expression.right, expression.result]
@@ -293,8 +312,10 @@ export function mathRoundReviews(
  * berechnet, nicht gespeichert.
  */
 export function mathFeatureOfTask(
-  task: Pick<MentalMathTask, "source" | "operation">,
+  task: Pick<MentalMathTask, "source" | "operation" | "kind">,
 ): MathTaskFeature | null {
+  // Aufgaben der Mittelschul-Arten (MA-11) haben ihre eigene Familie.
+  if (task.kind) return null;
   if (task.operation !== "add" && task.operation !== "subtract") return null;
   const expression = parseMentalMathExpression(task.source);
   return expression
@@ -333,10 +354,21 @@ export function mathFamilyKeyWithFeature(
     : key;
 }
 
+/** Familien der Aufgabenarten; `mathFamilyLabel` übersetzt sie in Kinderworte. */
+const MATH_KIND_FAMILY = {
+  tens: "zehner",
+  big: "gross",
+  round: "runden",
+  decimal: "komma",
+  units: "groessen",
+} as const;
+
 function baseMathFamilyKey(
   review: Pick<MathReview, "task" | "options">,
 ): string {
   const { task, options } = review;
+  // Aufgabenarten der Mittelschule (MA-11): eine Familie je Art, ohne Zahlenraum.
+  if (task.kind) return MATH_KIND_FAMILY[task.kind];
   if (task.operation === "mixed-expression") return "mixed-expression";
   const prefix = `${task.operation}:${task.gap ?? "normal"}`;
   if (task.operation === "multiply" || task.operation === "divide") {
@@ -378,6 +410,26 @@ export function buildMathReviewRound(
       id: `review-${index}`,
       practiceKey: review.id,
     };
+    // MA-11: Neue Aufgaben derselben Art; fehlt die Art an der Aufgabe (Zeilen
+    // aus dem Live-Raum), gelten die gewählten Arten der Einstellung.
+    const kinds = review.task.kind
+      ? [review.task.kind]
+      : review.task.operation === "mixed-expression"
+        ? []
+        : (review.options.kinds ?? []);
+    if (kinds.length) {
+      const variants = generateMathKindTasks(
+        { kinds, count: Math.max(1, Math.floor(10 / chosen.length) - 1) },
+        random,
+      )
+        .filter((task) => task.source !== review.task.source)
+        .map((task, offset) => ({
+          ...task,
+          id: `variant-${index}-${offset}`,
+          practiceKey: review.id,
+        }));
+      return includeOriginal ? [original, ...variants] : variants;
+    }
     if (review.task.operation === "mixed-expression") return [original];
     const expression = parseMentalMathExpression(review.task.source);
     if (

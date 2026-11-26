@@ -1,5 +1,10 @@
 import type { MathReview } from "../../../src/domain/math-practice";
 import type { MentalMathOperation } from "../../../src/domain/mental-math";
+import {
+  MATH_KINDS,
+  MATH_KIND_LABELS,
+  type MathKindId,
+} from "../../../src/domain/mental-math-kinds";
 import { openModuleItems } from "../../lernen/plan-today";
 
 export const operationLabels: Record<MentalMathOperation, string> = {
@@ -20,7 +25,18 @@ export function describeRound(settings: {
   maxValue: number;
   tables: readonly number[];
   gapMode: boolean;
+  /** Gewählte Aufgabenarten der Mittelschule; dann gelten Rechenarten und Zahlenraum nicht. */
+  kinds?: readonly MathKindId[];
 }) {
+  if (settings.kinds?.length) {
+    const labels = MATH_KINDS.filter((kind) => settings.kinds!.includes(kind))
+      .map((kind) => MATH_KIND_LABELS[kind])
+      .join(", ");
+    return [
+      `${settings.count} ${settings.count === 1 ? "Aufgabe" : "Aufgaben"}`,
+      labels,
+    ].join(" · ");
+  }
   const names = (Object.keys(operationLabels) as MentalMathOperation[])
     .filter((operation) => settings.operations.includes(operation))
     .map((operation) => operationLabels[operation]);

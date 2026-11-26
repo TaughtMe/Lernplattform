@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateMentalMathTasks } from "./mental-math";
+import { generateMathKindTasks } from "./mental-math-kinds";
 import {
   buildMathRoundSnapshot,
   mathRoundSnapshotSchema,
@@ -71,6 +72,25 @@ describe("buildMathRoundSnapshot", () => {
         state: mathRoundSnapshotSchema,
       })?.state,
     ).toEqual(content);
+  });
+
+  it("hält Aufgaben der Mittelschul-Arten samt Art und Einstellung fest (MA-11)", () => {
+    const tasks = generateMathKindTasks(
+      { kinds: ["tens", "round", "decimal", "units"], count: 8 },
+      () => 0.3,
+    );
+    const content = buildMathRoundSnapshot(
+      source({
+        tasks,
+        options: { ...options, operations: ["add"], kinds: ["tens", "round"] },
+      }),
+    )!;
+    expect(content.tasks.map((task) => task.kind)).toEqual(
+      tasks.map((task) => task.kind),
+    );
+    const restored = restoreMathTasks(content);
+    expect(restored).toEqual(tasks);
+    expect(content.options?.kinds).toEqual(["tens", "round"]);
   });
 
   it("behält den Wiederholungsposten (practiceKey) und lässt die Einstellung weg", () => {

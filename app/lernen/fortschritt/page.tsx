@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdaptiveProgressPanel } from "../../components/adaptive-progress-panel";
+import { MathProgressSection } from "../../components/math-progress-section";
 import { WordStoreProgressSection } from "../../components/word-store-progress-section";
 import { TextboxProgressSection } from "../../components/textbox-progress-section";
 import { StudentPage } from "../../ui/shell/student-page";
@@ -16,6 +17,7 @@ export default function Page() {
         </PageHeader>
         <AdaptiveProgressPanel />
         <WordStoreProgressSection />
+        <MathProgressSection />
         <TextboxProgressSection />
       </div>
     </StudentPage>

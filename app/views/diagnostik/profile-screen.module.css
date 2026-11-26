@@ -1,0 +1,54 @@
+/* „Meinen Stand zeigen“ (L25-7): ruhig, groß, ohne Erklärungen und Knöpfe. */
+.show {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.showHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.showTitle {
+  margin: 0;
+  font-family: var(--font-fun);
+  font-size: 30px;
+  font-weight: 600;
+}
+.showGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.showGroupTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+.showList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.showRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: 56px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 20px;
+  font-weight: 700;
+}
+.showLevel {
+  font-size: 18px;
+}
