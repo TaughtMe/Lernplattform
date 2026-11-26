@@ -109,7 +109,7 @@ export function TeacherContentTransfer({
   return (
     <ManagePage
       title="Freigabe an Schüler"
-      lead="Vokabelpakete und Lernwortlisten per QR-Code auf die Geräte der Schüler geben. Verschlüsselt und nach 24 Stunden gelöscht."
+      lead="Vokabelpakete und Lernwortlisten per QR-Code auf die Geräte der Schüler geben, verschlüsselt und nach 24 Stunden gelöscht. Übungskarten führen ohne Übertragung zu mitgelieferten Übungen."
     >
       <KindSwitch
         value={kind}
