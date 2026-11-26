@@ -39,6 +39,7 @@ export function StartSheet({
   blockSize,
   starting,
   error,
+  hint,
   onStage,
   onRoundSize,
   onBlockSize,
@@ -58,6 +59,8 @@ export function StartSheet({
   blockSize: 1 | 2 | 3 | 5;
   starting?: boolean | undefined;
   error?: string | undefined;
+  /** Hinweis zur Vorauswahl einer Übungskarte (z. B. gesperrte Stufe). */
+  hint?: string | undefined;
   onStage: (stage: LearningWordStage) => void;
   onRoundSize: (size: RoundSize) => void;
   onBlockSize: (size: 1 | 2 | 3 | 5) => void;
@@ -81,6 +84,12 @@ export function StartSheet({
           <p className="ui-small">
             Aus dem Lernarchiv: <strong>{archiveWords.join(", ")}</strong>
           </p>
+        ) : null}
+
+        {hint ? (
+          <Notice role="status" data-testid="card-hint">
+            {hint}
+          </Notice>
         ) : null}
 
         <h3 className="ui-label" id="stufen-title">

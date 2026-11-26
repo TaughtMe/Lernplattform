@@ -27,7 +27,8 @@ export function ManagePage({
 }) {
   return (
     <div className={cx(styles.page, className)}>
-      <div className={styles.head}>
+      {/* Druckbare Bögen (Übungskarten) drucken ohne Seitenkopf. */}
+      <div className={cx(styles.head, "ui-print-hidden")}>
         <div className={styles.headText}>
           <span className={styles.eyebrow}>Verwalten</span>
           <h1 className={styles.title} id={titleId}>

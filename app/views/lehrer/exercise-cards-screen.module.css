@@ -1,0 +1,169 @@
+/*
+ * Übungskarten der Lehrkraft (L25-4): Auswahl, Liste „Auf dem Bogen“ und der
+ * druckbare Bogen. Im Druck bleibt nur der Bogen sichtbar (2 × 3 je A4-Seite).
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.panel {
+  gap: 14px;
+  padding: 16px;
+}
+.legend {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--m-field);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---------- Bogen ---------- */
+.sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: #211f1b;
+  text-align: center;
+  break-inside: avoid;
+}
+.cardTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.qr {
+  display: block;
+  line-height: 0;
+}
+.qr svg {
+  width: 160px;
+  height: 160px;
+}
+.scan {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  /*
+   * Nur der Bogen: Seitenkopf und Umschalter tragen `ui-print-hidden`, die
+   * Bedienfelder `screenOnly`; der Lehrer-Rahmen druckt in natürlicher Höhe
+   * (teacher-frame.module.css). Der Bogen bleibt im normalen Fluss.
+   */
+  .screenOnly {
+    display: none !important;
+  }
+  .layout {
+    display: block;
+  }
+  .sheet {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8mm;
+  }
+  /*
+   * Feste Höhe für 2 × 3 Karten je A4-Seite. Ein langer Titel (alle fünf
+   * Mittelschul-Arten) nimmt mehr Zeilen; der QR-Code schrumpft dann in der
+   * mittleren Zeile, statt über den Schnittrand zu laufen.
+   */
+  .card {
+    height: 80mm;
+    box-sizing: border-box;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-content: stretch;
+    padding: 5mm;
+    border: 0.4mm dashed #777;
+    border-radius: 4mm;
+    overflow: hidden;
+    break-inside: avoid;
+  }
+  .cardTitle {
+    font-size: 14pt;
+  }
+  .qr {
+    min-height: 0;
+    height: 100%;
+  }
+  .qr svg {
+    width: auto;
+    height: 100%;
+    max-width: 46mm;
+    max-height: 46mm;
+  }
+  .scan {
+    font-size: 12pt;
+  }
+}

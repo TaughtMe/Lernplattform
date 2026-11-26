@@ -478,6 +478,56 @@ describe("Hinweis und Lösungsweg bei Fehlern (D-008)", () => {
   });
 });
 
+describe("Übungskarte (L25-4)", () => {
+  it("belegt Rechenarten und Zahlenraum vor und startet nicht", async () => {
+    window.history.pushState(
+      null,
+      "",
+      "/frei/mathematics?rechnen=plus,mal&bis=100",
+    );
+    render(<MentalMathApp />);
+    expect(await screen.findByTestId("card-note")).toHaveTextContent(
+      "Plus und Mal bis 100",
+    );
+    expect(screen.getByRole("button", { name: /Plus/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: /Minus/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getByRole("spinbutton", { name: "Bis" })).toHaveValue(100);
+    expect(screen.getByRole("heading", { name: "Kopfrechnen" })).toBeVisible();
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it("belegt Aufgabenarten mit ?arten= vor", async () => {
+    window.history.pushState(null, "", "/frei/mathematics?arten=tens,decimal");
+    render(<MentalMathApp />);
+    expect(await screen.findByTestId("card-note")).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { pressed: true }).length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("ignoriert ungültige Kartenwerte und lässt ?heute=1 den Vortritt", async () => {
+    window.history.pushState(null, "", "/frei/mathematics?rechnen=x&bis=7");
+    const { unmount } = render(<MentalMathApp />);
+    await screen.findByRole("heading", { name: "Kopfrechnen" });
+    expect(screen.queryByTestId("card-note")).not.toBeInTheDocument();
+    unmount();
+    window.history.pushState(
+      null,
+      "",
+      "/frei/mathematics?heute=1&rechnen=plus&bis=100",
+    );
+    render(<MentalMathApp />);
+    await waitFor(() => expect(progress).toHaveBeenCalled());
+    expect(screen.queryByTestId("card-note")).not.toBeInTheDocument();
+  });
+});
+
 describe("Tagesportion mit ?heute=1", () => {
   async function mistake(source: string, occurredAt: string) {
     return createMathAttempt({
