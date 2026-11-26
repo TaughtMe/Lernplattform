@@ -76,6 +76,7 @@ import {
 } from "../views/wortspeicher/overview-screen";
 import { RoundScreen } from "../views/wortspeicher/round-screen";
 import type { RoundSize } from "../views/wortspeicher/stage-copy";
+import { useCardStage } from "./learning-word-card-stage";
 import { StartSheet } from "../views/wortspeicher/start-sheet";
 import {
   TEXTBOX_BOX_TITLE,
@@ -154,6 +155,7 @@ function messageOf(error: unknown, fallback: string) {
     : fallback;
 }
 
+const VOICES_LOADING = "Stimmen werden geladen …";
 const NO_VOICE = missingVoiceMessage("de-DE");
 const VOICE_FAILED =
   "Die Stimme konnte nicht vorbereitet werden. Wähle eine andere Stufe oder versuche es noch einmal.";
@@ -793,6 +795,19 @@ export function LearningWordApp({
     ? getLearningWordCollection(sheetView.id)
     : undefined;
 
+  function stageHint(boxId: string, stage: LearningWordStage) {
+    if (lockedStage(boxId, stage)) return FALLIGE_STAGE_HINT;
+    if (stage !== 6 || speech.hasVoice === true) return undefined;
+    return speech.hasVoice === undefined ? VOICES_LOADING : NO_VOICE;
+  }
+  const cardStage = useCardStage({
+    search: searchParams,
+    sheetId: sheetView?.id,
+    blocked: (stage) => stageHint(sheetView?.id ?? "", stage),
+    waiting: (stage) => stage === 6 && speech.hasVoice === undefined,
+    onStage: (stage) => setConfig((current) => ({ ...current, stage })),
+  });
+
   let body;
   if (store.status === "unavailable") {
     body = (
@@ -1053,17 +1068,12 @@ export function LearningWordApp({
                         }
                       : { percent: last.lastPercent },
               recommended: recommended === stage && !locked,
-              disabledHint: locked
-                ? FALLIGE_STAGE_HINT
-                : stage === 6 && speech.hasVoice !== true
-                  ? speech.hasVoice === undefined
-                    ? "Stimmen werden geladen …"
-                    : NO_VOICE
-                  : undefined,
+              disabledHint: stageHint(sheetView.id, stage),
             };
           })}
           starting={starting}
           error={startError}
+          hint={cardStage.hint}
           onHistory={() => openHistory(sheetView.id)}
           stage={config.stage}
           roundSize={config.roundSize}

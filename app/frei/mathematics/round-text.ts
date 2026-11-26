@@ -77,3 +77,11 @@ export function todaysReviews(
     return review ? [review] : [];
   });
 }
+
+/** Rechenzeichen je Rechenart (Tasten im Einstellungsschritt). */
+export const symbols: Record<MentalMathOperation, string> = {
+  add: "+",
+  subtract: "−",
+  multiply: "·",
+  divide: ":",
+};
