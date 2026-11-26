@@ -139,6 +139,19 @@ describe("TeacherContentTransfer", () => {
     expect(push).toHaveBeenCalledWith("/lehrer/live?neu=vocabulary");
   });
 
+  it("zeigt unter „Übungskarten“ die Kartenauswahl", async () => {
+    const user = userEvent.setup();
+    render(<TeacherContentTransfer transferConfig={null} />);
+    await user.click(screen.getByRole("button", { name: "Übungskarten" }));
+    expect(
+      screen.getByRole("button", { name: "Übungskarten" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Auf dem Bogen")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Neues Vokabelpaket" }),
+    ).toBeNull();
+  });
+
   it("öffnet das Paket aus „An die Kinder geben“ (?paket=)", async () => {
     window.history.replaceState(null, "", "/lehrer/material?paket=v-alt");
     libraryRepository.list.mockResolvedValue([

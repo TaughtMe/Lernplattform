@@ -41,6 +41,7 @@ import {
   type TransferClock,
 } from "./teacher-transfer-shared";
 import { VocabularyPreview } from "./teacher-vocabulary-preview";
+import { TeacherExerciseCards } from "./teacher-exercise-cards";
 import { TeacherWordListTransfer } from "./teacher-word-list-transfer";
 import { manageStyles as m, ManagePage } from "../views/lehrer/manage-parts";
 import {
@@ -70,7 +71,7 @@ const languageLabel = (locale: string) =>
   VOCABULARY_LANGUAGES.find((language) => language.locale === locale)?.label ??
   locale;
 
-type Kind = "vocabulary" | "wordlist";
+type Kind = "vocabulary" | "wordlist" | "cards";
 
 /**
  * Freigabe an Schüler (Lehrerbereich v2, 17b): Vokabelpakete und Lernwortlisten
@@ -115,11 +116,14 @@ export function TeacherContentTransfer({
         options={[
           { value: "vocabulary", label: "Vokabelpakete" },
           { value: "wordlist", label: "Lernwortlisten" },
+          { value: "cards", label: "Übungskarten" },
         ]}
         onChange={setKind}
       />
       {kind === "vocabulary" ? (
         <VocabularyTransfer transferConfig={transferConfig} clock={clock} />
+      ) : kind === "cards" ? (
+        <TeacherExerciseCards />
       ) : (
         <TeacherWordListTransfer
           transferConfig={transferConfig}
