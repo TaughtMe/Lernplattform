@@ -134,20 +134,34 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8mm;
   }
+  /*
+   * Feste Höhe für 2 × 3 Karten je A4-Seite. Ein langer Titel (alle fünf
+   * Mittelschul-Arten) nimmt mehr Zeilen; der QR-Code schrumpft dann in der
+   * mittleren Zeile, statt über den Schnittrand zu laufen.
+   */
   .card {
     height: 80mm;
     box-sizing: border-box;
-    padding: 6mm;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-content: stretch;
+    padding: 5mm;
     border: 0.4mm dashed #777;
     border-radius: 4mm;
+    overflow: hidden;
     break-inside: avoid;
   }
   .cardTitle {
-    font-size: 16pt;
+    font-size: 14pt;
+  }
+  .qr {
+    min-height: 0;
+    height: 100%;
   }
   .qr svg {
-    width: 46mm;
-    height: 46mm;
+    width: auto;
+    height: 100%;
+    max-width: 46mm;
+    max-height: 46mm;
   }
   .scan {
     font-size: 12pt;
