@@ -521,7 +521,7 @@ export function KindSwitch<T extends string>({
 }) {
   return (
     <div
-      className={m.actions}
+      className={cx(m.actions, "ui-print-hidden")}
       role="group"
       aria-label="Was möchtest du freigeben?"
     >

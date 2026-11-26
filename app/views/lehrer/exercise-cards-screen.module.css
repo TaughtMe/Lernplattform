@@ -118,21 +118,18 @@
     size: A4;
     margin: 12mm;
   }
-  /* Alles außer dem Bogen unsichtbar; der Bogen steht oben auf der Seite. */
-  body:has(.sheet) * {
-    visibility: hidden;
-  }
+  /*
+   * Nur der Bogen: Seitenkopf und Umschalter tragen `ui-print-hidden`, die
+   * Bedienfelder `screenOnly`; der Lehrer-Rahmen druckt in natürlicher Höhe
+   * (teacher-frame.module.css). Der Bogen bleibt im normalen Fluss.
+   */
   .screenOnly {
     display: none !important;
   }
-  .sheet,
-  .sheet * {
-    visibility: visible;
+  .layout {
+    display: block;
   }
   .sheet {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8mm;
